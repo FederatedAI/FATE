@@ -26,7 +26,7 @@ There are a few algorithms under `examples/` folder, try them out!
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 
-To deploy FATE on a cluster, please refer to cluster deploy guide at [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/cluster-deploy). 
+To deploy FATE on a cluster, please refer to cluster deploy guide at [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy). 
 
 ## Running Tests
 
