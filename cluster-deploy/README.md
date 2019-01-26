@@ -34,7 +34,7 @@ Example configuration files can be found under
 `arch/${module_name}/src/main/resources/`
 
 Users can find a detailed configuration document in 
-[`cluster-deploy/doc` ](https://https://github.com/WeBankFinTech/FATE/cluster-deploy/doc)
+[`cluster-deploy/doc` ](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
 
 ### 2.4. How to run
 Main function is named after module name. Currently we have following Main functions:
@@ -49,13 +49,13 @@ Number | Module Name     | Main Function
 
 Please note that users should add directory of configuration files to Java's classpath, so that these configurations can be loaded.
 
-We provide example management scripts to run these services. Users can find them under [`cluster-deploy/example-dir-tree`](https://https://github.com/WeBankFinTech/FATE/cluster-deploy/example-dir-tree), along with example directory tree described in section 5.
+We provide example management scripts to run these services. Users can find them under [`cluster-deploy/example-dir-tree`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/example-dir-tree), along with example directory tree described in section 5.
 
 ## 3. Python Components
 
 
 ## 4. How to Run in Cluster Mode
-Please refer to configuation guide [here](https://https://github.com/WeBankFinTech/FATE/cluster-deploy/doc/configuration.md)
+Please refer to configuation guide [here](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc/configuration.md)
 
 
 ## 5. Example Directory Tree
