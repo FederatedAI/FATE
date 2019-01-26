@@ -1,0 +1,7 @@
+# common file patterns
+.DS_STORE
+.idea
+.iml
+.pyc
+__pycache__
+
