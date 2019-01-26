@@ -1,0 +1,35 @@
+{
+
+    "local": {
+        "role": "host",
+        "party_id": _host_party_id
+    },
+
+    "role": {
+        "host": [
+            _host_party_id
+        ],
+        "guest": [
+            _guest_party_id
+        ]
+    },
+
+    "DataIOParam": {
+        "with_label": false,
+        "partition": 10
+    },
+    "WorkFlowParam": {
+        "method": "_workflow_method",
+        "data_input_table": "_intersect_table_name",
+        "data_input_namespace": "example_data_namespace",
+        "intersect_data_output_table": "intersect_host_output",
+        "intersect_data_output_namespace": "intersect",
+        "work_mode": _work_mode
+        },
+    "IntersectParam": {
+        "intersect_method": "rsa",
+        "random_bit": 128,
+        "is_send_intersect_ids": true,
+        "is_get_intersect_ids": true
+    }
+}
