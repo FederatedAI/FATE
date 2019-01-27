@@ -20,7 +20,6 @@ ppft==1.6.4.8
 protobuf==3.6.1
 pycparser==2.19
 pycryptodomex==3.6.6
-pycrypto==2.6.1
 pydot==1.2.4
 pyparsing==2.3.0
 python-dateutil==2.7.5
