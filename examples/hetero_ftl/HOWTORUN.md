@@ -109,7 +109,7 @@ For running FTL algorithm, we only need to know four sections of parameters.
       * predict: predict labels for samples from the host
     * *work_mode*: if 0, we would run FTL algorithm in standalone mode. if 1, we would run FTL algorithm in cluster mode.
     
-    > Host, guest and/or arbiter must have the value for *work_mode* in a particular job.
+    > Host, guest and/or arbiter must have the same value for *work_mode* in a particular job.
     
     > Host and guest must have the same value for *method* parameter in a particular job. Arbiter should always have the value of "train" for this parameter.
     
