@@ -10,7 +10,7 @@ You can turn on the encryption version by setting the <b style="color:red">is_en
 
 #### Standalone vs Cluster
 
-You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to this [article]() for more details.
+You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy) for more details.
 
 You can turn on the cluster mode by setting the <b style="color:red">work_mode</b> parameter to 1. Otherwise set it to 0 (default). You can find this parameter in **guest_runtime_conf.json**, **host_runtime_conf.json**  and  **arbiter_runtime_conf.json** located in **examples/hetero_ftl/conf** folder.
 
