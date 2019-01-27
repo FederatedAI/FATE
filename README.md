@@ -18,10 +18,10 @@ FATE $ docker exec -t -i ${CONTAINER_ID} bash
 There are a few algorithms under `examples/` folder, try them out!
 
 ##### Manual version
-
+```
  > FATE (venv) $ pip install -r requirementes.txt
  > FATE (venv) $ export PYTHONPATH=`pwd -P`
-
+```
 
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
