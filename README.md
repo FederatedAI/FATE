@@ -19,7 +19,7 @@ There are a few algorithms under `examples/` folder, try them out!
 
 ##### Manual version
 ```
- > FATE (venv) $ pip install -r requirementes.txt
+ > FATE (venv) $ pip install -r requirements.txt
  > FATE (venv) $ export PYTHONPATH=`pwd -P`
 ```
 
