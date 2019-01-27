@@ -8,7 +8,7 @@ to the other. This is illustrated in Figure 1.
 
 <div style="text-align:center", align=center>
 <img src="./images/sample.png" alt="sample" width="500" height="250" /><br/>
-Figure 1ï¼?RSA Intersection between party A and party B</div>
+Figure 1 RSA Intersection between party A and party B</div>
 
 In Figure 1,Party A has user id u1,u2,u3,u5, while Party B has u1,u2,u3,u4. After Intersection,
 party A and party B know their same user id, which are u1,u2,u3, but party A know nothing about
