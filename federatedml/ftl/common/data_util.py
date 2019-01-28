@@ -77,6 +77,25 @@ def shuffle_X_y(X, y, seed=5):
     return X, y
 
 
+def load_data(infile, id_index, feature_range, label_index):
+
+    ids = []
+    X = []
+    y = []
+
+    with open(infile, "r") as fi:
+        fi.readline()
+        reader = csv.reader(fi)
+        for row in reader:
+            ids.append(row[id_index])
+            X.append(row[feature_range[0]: feature_range[1]])
+            yo = int(row[label_index])
+            if yo == 0:
+                yo = -1
+            y.append(yo)
+    return ids, X, y
+
+
 def load_UCI_Credit_Card_data(infile=None, balanced=True, seed=5):
 
     X = []
@@ -162,8 +181,8 @@ def overlapping_samples_converter(target_features_dict, target_sample_indexes, r
         return features, new_overlap_indexes, new_non_overlap_indexes, labels_stack
 
 
-def split_guest_host_data(X, y, overlap_ratio=0.2, guest_split_ratio=0.5, guest_feature_num=16,
-                          tables_name=None, partition=1):
+def split_into_guest_host_dtable(X, y, overlap_ratio=0.2, guest_split_ratio=0.5, guest_feature_num=16,
+                                 tables_name=None, partition=1):
     data_size = X.shape[0]
     overlap_size = int(data_size * overlap_ratio)
     overlap_indexes = np.array(range(overlap_size))
@@ -193,6 +212,38 @@ def split_guest_host_data(X, y, overlap_ratio=0.2, guest_split_ratio=0.5, guest_
     host_data = table(name=host_table_name, namespace=host_table_ns, partition=partition)
     host_data.put_all(host_temp)
     return guest_data, host_data, overlap_indexes
+
+
+def feed_into_dtable(ids, X, y, sample_range, feature_range, tables_name=None, partition=1):
+    """
+    Create an eggroll table feed with data specified by parameters provided
+
+    parameters
+    ----------
+    :param ids: 1D numpy array
+    :param X: 2D numpy array
+    :param y: 2D numpy array
+    :param sample_range: a tuple specifies the range of samples to feed into dtable
+    :param feature_range: a tuple specifies the range of features to feed into dtable
+    :param tables_name: a dictionary specifies table namespace (with key table_ns) and table name (with key table_name)
+    :param partition: number of partition used when creating the dtable
+    :return: an eggroll dtable
+    """
+
+    table_ns = "default_table_namespace"
+    table_name = get_timestamp()
+    if tables_name is not None:
+        table_ns = tables_name["table_ns"]
+        table_name = tables_name["table_name"]
+
+    sample_list = []
+    for i in range(sample_range[0], sample_range[1]):
+        sample_list.append((ids[i], Instance(inst_id=ids[i],
+                                             features=X[i, feature_range[0]:feature_range[1]],
+                                             label=y[i, 0])))
+    data_table = table(name=table_name, namespace=table_ns, partition=partition)
+    data_table.put_all(sample_list)
+    return data_table
 
 
 def create_data_generator(X, y, start_end_index_list, feature_index_range):
@@ -241,10 +292,10 @@ def load_guest_host_dtable_from_UCI_Credit_Card(file_path, tables_name, num_samp
         X = X[:num_samples]
         y = y[:num_samples]
 
-    guest_data, host_data, _ = split_guest_host_data(X, y, overlap_ratio=overlap_ratio,
-                                                     guest_split_ratio=guest_split_ratio,
-                                                     guest_feature_num=guest_feature_num,
-                                                     tables_name=tables_name)
+    guest_data, host_data, _ = split_into_guest_host_dtable(X, y, overlap_ratio=overlap_ratio,
+                                                            guest_split_ratio=guest_split_ratio,
+                                                            guest_feature_num=guest_feature_num,
+                                                            tables_name=tables_name)
 
     return guest_data, host_data
 
@@ -323,6 +374,13 @@ def convert_instance_table_to_array(instances_table):
 def generate_table_namespace_n_name(input_file_path):
     last = input_file_path.split("/")[-1]
     namespace = last.split(".")[0]
-    local_time = time.localtime(time.time())
-    table_name = time.strftime("%Y%m%d%H%M%S", local_time)
+    # local_time = time.localtime(time.time())
+    # table_name = time.strftime("%Y%m%d%H%M%S", local_time)
+    table_name = get_timestamp()
     return namespace, table_name
+
+
+def get_timestamp():
+    local_time = time.localtime(time.time())
+    timestamp = time.strftime("%Y%m%d%H%M%S", local_time)
+    return timestamp
