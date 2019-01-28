@@ -72,10 +72,10 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.y_overlap2 = self.y_overlap * self.y_overlap
 
         if self.is_trace:
-            self.logger.info("y_A_u_A shape" + str(self.y_A_u_A.shape))
-            self.logger.info("y_A_u_A_2 shape" + str(self.y_A_u_A_2.shape))
-            self.logger.info("y_overlap shape" + str(self.y_overlap.shape))
-            self.logger.info("y_overlap2 shape" + str(self.y_overlap2.shape))
+            self.logger.debug("y_A_u_A shape" + str(self.y_A_u_A.shape))
+            self.logger.debug("y_A_u_A_2 shape" + str(self.y_A_u_A_2.shape))
+            self.logger.debug("y_overlap shape" + str(self.y_overlap.shape))
+            self.logger.debug("y_overlap2 shape" + str(self.y_overlap2.shape))
 
         # following two parameters will be sent to host
         # comp_A_beta1 has shape (len(overlap_indexes), feature_dim, feature_dim)
@@ -91,9 +91,9 @@ class PlainFTLGuestModel(PartyModelInterface):
         mapping_comp_A = - self.U_A_overlap / self.feature_dim
 
         if self.is_trace:
-            self.logger.info("comp_A_beta1 shape" + str(self.comp_A_beta1.shape))
-            self.logger.info("comp_A_beta2 shape" + str(self.comp_A_beta2.shape))
-            self.logger.info("mapping_comp_A shape" + str(mapping_comp_A.shape))
+            self.logger.debug("comp_A_beta1 shape" + str(self.comp_A_beta1.shape))
+            self.logger.debug("comp_A_beta2 shape" + str(self.comp_A_beta2.shape))
+            self.logger.debug("mapping_comp_A shape" + str(mapping_comp_A.shape))
 
         return [self.comp_A_beta1, self.comp_A_beta2, mapping_comp_A]
 
@@ -116,9 +116,9 @@ class PlainFTLGuestModel(PartyModelInterface):
         tmp = 0.25 * np.squeeze(np.matmul(y_overlap2_y_A_u_A, self.U_B_2_overlap), axis=1)
 
         if self.is_trace:
-            self.logger.info("tmp shape" + str(tmp.shape))
-            self.logger.info("y_overlap shape" + str(self.y_overlap.shape))
-            self.logger.info("U_B_overlap shape" + str(self.U_B_overlap.shape))
+            self.logger.debug("tmp shape" + str(tmp.shape))
+            self.logger.debug("y_overlap shape" + str(self.y_overlap.shape))
+            self.logger.debug("U_B_overlap shape" + str(self.U_B_overlap.shape))
 
         const = np.sum(tmp, axis=0) - 0.5 * np.sum(self.y_overlap * self.U_B_overlap, axis=0)
         # grad_A_nonoverlap has shape (len(non_overlap_indexes), feature_dim)
@@ -191,9 +191,9 @@ class PlainFTLHostModel(PartyModelInterface):
         mapping_comp_B = - self.U_B_overlap / self.feature_dim
 
         if self.is_trace:
-            self.logger.info("U_B_overlap shape" + str(self.U_B_overlap.shape))
-            self.logger.info("U_B_overlap_2 shape" + str(U_B_overlap_2.shape))
-            self.logger.info("mapping_comp_B shape" + str(mapping_comp_B.shape))
+            self.logger.debug("U_B_overlap shape" + str(self.U_B_overlap.shape))
+            self.logger.debug("U_B_overlap_2 shape" + str(U_B_overlap_2.shape))
+            self.logger.debug("mapping_comp_B shape" + str(mapping_comp_B.shape))
 
         return [self.U_B_overlap, U_B_overlap_2, mapping_comp_B]
 

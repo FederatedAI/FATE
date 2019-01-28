@@ -65,8 +65,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         tmp2 = 0.25 * np.squeeze(tmp1, axis=1)
 
         if self.is_trace:
-            self.logger.info("tmp1 shape" + str(tmp1.shape))
-            self.logger.info("tmp2 shape" + str(tmp2.shape))
+            self.logger.debug("tmp1 shape" + str(tmp1.shape))
+            self.logger.debug("tmp2 shape" + str(tmp2.shape))
 
         y_overlap = np.tile(self.y_overlap, (1, self.U_B_overlap.shape[-1]))
         tmp3 = compute_sum_XY(y_overlap * 0.5, self.U_B_overlap)
@@ -78,17 +78,17 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         y_non_overlap = np.tile(self.y[self.non_overlap_indexes], (1, self.U_B_overlap.shape[-1]))
 
         if self.is_trace:
-            self.logger.info("encrypt_const shape:" + str(encrypt_const.shape))
-            self.logger.info("encrypt_const_overlap shape" + str(encrypt_const_overlap.shape))
-            self.logger.info("encrypt_const_nonoverlap shape" + str(encrypt_const_nonoverlap.shape))
-            self.logger.info("y_non_overlap shape" + str(y_non_overlap.shape))
+            self.logger.debug("encrypt_const shape:" + str(encrypt_const.shape))
+            self.logger.debug("encrypt_const_overlap shape" + str(encrypt_const_overlap.shape))
+            self.logger.debug("encrypt_const_nonoverlap shape" + str(encrypt_const_nonoverlap.shape))
+            self.logger.debug("y_non_overlap shape" + str(y_non_overlap.shape))
 
         encrypt_grad_A_nonoverlap = compute_XY(self.alpha * y_non_overlap / len(self.y), encrypt_const_nonoverlap)
         encrypt_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), encrypt_const_overlap, self.mapping_comp_B)
 
         if self.is_trace:
-            self.logger.info("encrypt_grad_A_nonoverlap shape" + str(encrypt_grad_A_nonoverlap.shape))
-            self.logger.info("encrypt_grad_A_overlap shape" + str(encrypt_grad_A_overlap.shape))
+            self.logger.debug("encrypt_grad_A_nonoverlap shape" + str(encrypt_grad_A_nonoverlap.shape))
+            self.logger.debug("encrypt_grad_A_overlap shape" + str(encrypt_grad_A_overlap.shape))
 
         encrypt_grad_loss_A = [[0 for _ in range(self.U_B_overlap.shape[1])] for _ in range(len(self.y))]
         # TODO: need more efficient way to do following task
@@ -100,8 +100,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         encrypt_grad_loss_A = np.array(encrypt_grad_loss_A)
 
         if self.is_trace:
-            self.logger.info("encrypt_grad_loss_A shape" + str(encrypt_grad_loss_A.shape))
-            self.logger.info("encrypt_grad_loss_A" + str(encrypt_grad_loss_A))
+            self.logger.debug("encrypt_grad_loss_A shape" + str(encrypt_grad_loss_A.shape))
+            self.logger.debug("encrypt_grad_loss_A" + str(encrypt_grad_loss_A))
 
         self.loss_grads = encrypt_grad_loss_A
         grads = self.localModel.compute_gradients(self.X)
@@ -114,16 +114,16 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
 
         if self.is_trace:
-            self.logger.info("grads_W shape" + str(grads_W.shape))
-            self.logger.info("grads_b shape" + str(grads_b.shape))
-            self.logger.info("encrypt_grads_ex shape" + str(encrypt_grads_ex.shape))
+            self.logger.debug("grads_W shape" + str(grads_W.shape))
+            self.logger.debug("grads_b shape" + str(grads_b.shape))
+            self.logger.debug("encrypt_grads_ex shape" + str(encrypt_grads_ex.shape))
 
         encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
         encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
 
         if self.is_trace:
-            self.logger.info("encrypt_grads_W shape" + str(encrypt_grads_W.shape))
-            self.logger.info("encrypt_grads_b shape" + str(encrypt_grads_b.shape))
+            self.logger.debug("encrypt_grads_W shape" + str(encrypt_grads_W.shape))
+            self.logger.debug("encrypt_grads_b shape" + str(encrypt_grads_b.shape))
 
         return encrypt_grads_W, encrypt_grads_b
 
