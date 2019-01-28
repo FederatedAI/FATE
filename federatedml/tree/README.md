@@ -17,12 +17,12 @@ Figure 1: Framework of Federated SecureBoost</div>
 Active Party:
 We define the active party as the data provider who holds both a data matrix and the class label.
 Since the class label information is indispensable for supervised learning, there must be an active party with access 
-to the label y. The active party naturally takes the responsi- bility as a dominating server in federated learning.
+to the label y. The active party naturally takes the responsibility as a dominating server in federated learning.
 
 Passive Party:
 We define the data provider which has only a data matrix as a passive party.
 Passive parties play the role of clients in the federated learning setting. They are also in need of building a model 
-to predict the class label y for their prediction purpos- es. Thus they must collaborate with the active party to 
+to predict the class label y for their prediction purposes. Thus they must collaborate with the active party to 
 build their model to predict y for their future users using their own features.
 
 We align the data samples under an encryption scheme by using the privacy-preserving protocol for inter-database 
