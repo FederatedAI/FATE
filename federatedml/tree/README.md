@@ -1,7 +1,7 @@
 ### SecureBoost
 
 Gradient Boosting Decision Tree(GBDT) is a widely used statistic model for classification and regression problems. 
-FATE has provided a novel lossless privacy-perserving tree-boosting system known as [SecureBoost: A Lossless Federated Learning Framework](https://arxiv.org/abs/1901.08755).
+FATE has provided a novel lossless privacy-preserving tree-boosting system known as [SecureBoost: A Lossless Federated Learning Framework](https://arxiv.org/abs/1901.08755).
 
 This federated learning system allows a learning process to be jointly conducted over multiple parties with partially 
 common user samples but different feature sets, which corresponds to a vertically partitioned virtual data set. An 
