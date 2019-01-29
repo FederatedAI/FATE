@@ -75,5 +75,10 @@
             "num_samples" : 500,
             "balanced"  : true,
             "is_read_table" : false
+    },
+    "FTLValidDataParam": {
+            "file_path" : "../data/UCI_Credit_Card_val.csv",
+            "num_samples" : 500,
+            "is_read_table" : false
     }
 }

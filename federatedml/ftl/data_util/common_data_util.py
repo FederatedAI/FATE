@@ -17,7 +17,6 @@
 import csv
 import numpy as np
 import time
-from sklearn.preprocessing.data import StandardScaler, OneHotEncoder
 import matplotlib.pyplot as plt
 from federatedml.feature.instance import Instance
 from arch.api.eggroll import parallelize, table
@@ -77,7 +76,7 @@ def shuffle_X_y(X, y, seed=5):
     return X, y
 
 
-def load_data(infile, id_index, feature_range, label_index):
+def load_data(infile, id_index, feature_index_range, label_index):
 
     ids = []
     X = []
@@ -88,48 +87,12 @@ def load_data(infile, id_index, feature_range, label_index):
         reader = csv.reader(fi)
         for row in reader:
             ids.append(row[id_index])
-            X.append(row[feature_range[0]: feature_range[1]])
+            X.append(row[feature_index_range[0]: feature_index_range[1]])
             yo = int(row[label_index])
             if yo == 0:
                 yo = -1
             y.append(yo)
     return ids, X, y
-
-
-def load_UCI_Credit_Card_data(infile=None, balanced=True, seed=5):
-
-    X = []
-    y = []
-    sids = []
-
-    with open(infile, "r") as fi:
-        fi.readline()
-        reader = csv.reader(fi)
-        for row in reader:
-            sids.append(row[0])
-            X.append(row[1:-1])
-            y0 = int(row[-1])
-            if y0 == 0:
-                y0 = -1
-            y.append(y0)
-    y = np.array(y)
-
-    if balanced:
-        X, y = balance_X_y(X, y, seed)
-
-    X = np.array(X, dtype=np.float32)
-    y = np.array(y, dtype=np.float32)
-
-    encoder = OneHotEncoder(categorical_features=[1, 2, 3])
-    encoder.fit(X)
-    X = encoder.transform(X).toarray()
-
-    X, y = shuffle_X_y(X, y, seed)
-
-    scale_model = StandardScaler()
-    X = scale_model.fit_transform(X)
-
-    return X, np.expand_dims(y, axis=1)
 
 
 def split_data_combined(X, y, overlap_ratio=0.3, ab_split_ratio=0.1, n_feature_b=16):
@@ -266,40 +229,6 @@ def create_guest_host_data_generator(X, y, overlap_ratio=0.2, guest_split_ratio=
     return guest_data_generator, host_data_generator, overlap_indexes
 
 
-def load_guest_host_generators_for_UCI_Credit_Card(file_path, num_samples=None, overlap_ratio=0.2,
-                                                   guest_split_ratio=0.5, guest_feature_num=16, balanced=True):
-
-    X, y = load_UCI_Credit_Card_data(infile=file_path, balanced=balanced)
-
-    if num_samples is not None:
-        X = X[:num_samples]
-        y = y[:num_samples]
-
-    guest_data_generator, host_data_generator, overlap_indexes = create_guest_host_data_generator(X, y,
-                                                                                    overlap_ratio=overlap_ratio,
-                                                                                    guest_split_ratio=guest_split_ratio,
-                                                                                    guest_feature_num=guest_feature_num)
-
-    return guest_data_generator, host_data_generator, overlap_indexes
-
-
-def load_guest_host_dtable_from_UCI_Credit_Card(file_path, tables_name, num_samples=None, overlap_ratio=0.2,
-                                                guest_split_ratio=0.5, guest_feature_num=16, balanced=True):
-
-    X, y = load_UCI_Credit_Card_data(infile=file_path, balanced=balanced)
-
-    if num_samples is not None:
-        X = X[:num_samples]
-        y = y[:num_samples]
-
-    guest_data, host_data, _ = split_into_guest_host_dtable(X, y, overlap_ratio=overlap_ratio,
-                                                            guest_split_ratio=guest_split_ratio,
-                                                            guest_feature_num=guest_feature_num,
-                                                            tables_name=tables_name)
-
-    return guest_data, host_data
-
-
 def load_model_parameters(model_table_name, model_namespace):
     model = table(model_table_name, model_namespace)
     model_parameters = {}
@@ -374,8 +303,6 @@ def convert_instance_table_to_array(instances_table):
 def generate_table_namespace_n_name(input_file_path):
     last = input_file_path.split("/")[-1]
     namespace = last.split(".")[0]
-    # local_time = time.localtime(time.time())
-    # table_name = time.strftime("%Y%m%d%H%M%S", local_time)
     table_name = get_timestamp()
     return namespace, table_name
 

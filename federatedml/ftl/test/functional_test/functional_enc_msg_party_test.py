@@ -18,7 +18,8 @@ import numpy as np
 import time
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
-from federatedml.ftl.common.data_util import series_plot, load_UCI_Credit_Card_data, split_data_combined
+from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
+from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, LocalEncryptedFederatedTransferLearning
 from federatedml.secureprotol.encrypt import PaillierEncrypt

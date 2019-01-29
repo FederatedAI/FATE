@@ -18,7 +18,8 @@ import numpy as np
 import time
 import tensorflow as tf
 from federatedml.ftl.test.fake_models import FakeFTLModelParam
-from federatedml.ftl.common.data_util import series_plot, load_UCI_Credit_Card_data, split_data_combined
+from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
+from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
 from sklearn.metrics import precision_recall_fscore_support, roc_auc_score

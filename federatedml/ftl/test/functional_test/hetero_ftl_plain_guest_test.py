@@ -17,10 +17,10 @@
 import numpy as np
 import unittest
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
-from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest, HeteroFTLGuest
+from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel
 from federatedml.feature.instance import Instance
-from federatedml.ftl.common.data_util import create_table
+from federatedml.ftl.data_util.common_data_util import create_table
 from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeDiffConverge
 from federatedml.param.param import FTLModelParam
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable

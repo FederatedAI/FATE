@@ -18,7 +18,7 @@ import numpy as np
 import time
 from federatedml.ftl.encrypted_ftl import EncryptedFTLGuestModel
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel
-from federatedml.ftl.common.data_util import overlapping_samples_converter, load_model_parameters, \
+from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, convert_instance_table_to_dict, convert_instance_table_to_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.util import consts
@@ -67,8 +67,8 @@ class HeteroFTLGuest(HeteroFTLParty):
         features, labels, instances_indexes = convert_instance_table_to_array(guest_data)
         guest_x = np.squeeze(features)
         guest_y = np.expand_dims(labels, axis=1)
+        LOGGER.debug("guest_x, guest_y: " + str(guest_x.shape) + ", " + str(guest_y.shape))
 
-        LOGGER.debug("get guest_x, guest_y: " + str(guest_x.shape) + ", " + str(guest_y.shape))
         host_prob = self._do_get(name=self.transfer_variable.host_prob.name,
                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_prob),
                                  idx=-1)[0]
@@ -76,6 +76,7 @@ class HeteroFTLGuest(HeteroFTLParty):
         self.guest_model.set_batch(guest_x, guest_y)
         pred_prob = self.guest_model.predict(host_prob)
         LOGGER.debug("pred_prob: " + str(pred_prob.shape))
+
         self._do_remote(pred_prob,
                         name=self.transfer_variable.pred_prob.name,
                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.pred_prob),
@@ -109,7 +110,6 @@ class HeteroPlainFTLGuest(HeteroFTLGuest):
         LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
 
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
-
         is_stop = False
         while self.n_iter_ < self.max_iter:
             guest_comp = self.guest_model.send_components()
@@ -162,7 +162,6 @@ class HeteroEncryptFTLGuest(HeteroFTLGuest):
 
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
         self.guest_model.set_public_key(public_key)
-
         while self.n_iter_ < self.max_iter:
             guest_comp = self.guest_model.send_components()
 

@@ -19,8 +19,8 @@ import sys
 import json
 import argparse
 import traceback
-from federatedml.ftl.common.data_util import load_guest_host_generators_for_UCI_Credit_Card, \
-    save_data_to_eggroll_table, generate_table_namespace_n_name
+from federatedml.ftl.data_util.common_data_util import save_data_to_eggroll_table, generate_table_namespace_n_name
+from federatedml.ftl.data_util.uci_credit_card_util import load_guest_host_generators_for_UCI_Credit_Card
 from arch.api.eggroll import init
 
 

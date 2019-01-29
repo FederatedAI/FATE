@@ -62,6 +62,7 @@ class FTLHostWorkFlow(FTLWorkFlow):
             train_eval = self.evaluate(train_pred)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
+                LOGGER.debug("@ validation")
                 val_pred = self.model.predict(validation_data, self.workflow_param.predict_param)
                 val_eval = self.evaluate(val_pred)
                 eval_result[consts.VALIDATE_EVALUATE] = val_eval

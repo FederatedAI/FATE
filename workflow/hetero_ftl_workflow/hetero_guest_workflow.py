@@ -57,6 +57,7 @@ class FTLGuestWorkFlow(FTLWorkFlow):
             self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             self.model.predict(train_data_instance)
             if validation_data is not None:
+                LOGGER.debug("@ validation")
                 self.model.predict(validation_data)
 
     def predict(self, data_instance):

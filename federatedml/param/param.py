@@ -192,3 +192,10 @@ class FTLDataParam(object):
         self.num_samples = num_samples
         self.balanced = balanced
         self.is_read_table = is_read_table
+
+
+class FTLValidDataParam(object):
+    def __init__(self, file_path=None, num_samples=None, is_read_table=False):
+        self.file_path = file_path
+        self.num_samples = num_samples
+        self.is_read_table = is_read_table

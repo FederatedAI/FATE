@@ -1,12 +1,12 @@
 import numpy as np
-from federatedml.ftl.common.data_util import load_data
+from federatedml.ftl.data_util.common_data_util import load_data, feed_into_dtable
 from federatedml.ftl.test.util import assert_array, assert_matrix
-
+from arch.api.eggroll import init
 
 if __name__ == '__main__':
-    
+
     expected_ids = np.array([133, 273, 175, 551, 199, 274])
-    expected_y = np.array([1, 1, 1, 1, 0, 0])
+    expected_y = np.array([1, 1, 1, 1, -1, -1])
 
     expected_X = np.array([[0.254879, -1.046633, 0.209656, 0.074214, -0.441366, -0.377645],
                            [-1.142928, - 0.781198, - 1.166747, - 0.923578, 0.62823, - 1.021418],
@@ -29,3 +29,24 @@ if __name__ == '__main__':
     assert_array(expected_ids, ids)
     assert_array(expected_y, y)
     assert_matrix(expected_X, X)
+
+    expected_data = {}
+    for i, id in enumerate(expected_ids):
+        expected_data[id] = {
+            "X": expected_X[i],
+            "y": expected_y[i]
+        }
+
+    init()
+    data_table = feed_into_dtable(ids, X, y.reshape(-1, 1), (0, len(ids)), (0, X.shape[-1]))
+    for item in data_table.collect():
+        id = item[0]
+        inst = item[1]
+        expected_item = expected_data[id]
+        X_i = expected_item["X"]
+        y_i = expected_item["y"]
+
+        features = inst.features
+        label = inst.label
+        assert_array(X_i, features)
+        assert y_i == label

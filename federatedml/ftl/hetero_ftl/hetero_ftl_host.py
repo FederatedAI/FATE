@@ -18,7 +18,7 @@ import numpy as np
 import time
 from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
-from federatedml.ftl.common.data_util import overlapping_samples_converter, load_model_parameters, \
+from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, create_table, convert_instance_table_to_dict, convert_instance_table_to_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.util import consts
@@ -27,6 +27,7 @@ from federatedml.evaluation import Evaluation
 from federatedml.param.param import FTLModelParam
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
 
 class HeteroFTLHost(HeteroFTLParty):
 
@@ -85,6 +86,8 @@ class HeteroFTLHost(HeteroFTLParty):
         LOGGER.info("@ start host predict")
         features, labels, instances_indexes = convert_instance_table_to_array(host_data)
         host_x = np.squeeze(features)
+        LOGGER.debug("host_x： " + str(host_x.shape))
+
         host_prob = self.host_model.predict(host_x)
         self._do_remote(host_prob,
                         name=self.transfer_variable.host_prob.name,
@@ -97,6 +100,8 @@ class HeteroFTLHost(HeteroFTLParty):
                                  idx=-1)[0]
 
         pred_prob = np.squeeze(pred_prob)
+        LOGGER.debug("pred_prob: " + str(pred_prob.shape))
+
         pred_prob_table = create_table(pred_prob, instances_indexes)
         actual_label_table = create_table(labels, instances_indexes)
         pred_label_table = self.classified(pred_prob_table, predict_param.threshold)
@@ -126,8 +131,11 @@ class HeteroPlainFTLHost(HeteroFTLHost):
         LOGGER.info("@ start host fit")
 
         host_x, overlap_indexes = self.prepare_data(host_data)
-        self.host_model.set_batch(host_x, overlap_indexes)
 
+        LOGGER.debug("host_x： " + str(host_x.shape))
+        LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
+
+        self.host_model.set_batch(host_x, overlap_indexes)
         while self.n_iter_ < self.max_iter:
             host_comp = self.host_model.send_components()
             self._do_remote(host_comp, name=self.transfer_variable.host_component_list.name,
@@ -166,9 +174,11 @@ class HeteroEncryptFTLHost(HeteroFTLHost):
 
         host_x, overlap_indexes = self.prepare_data(host_data)
 
+        LOGGER.debug("host_x： " + str(host_x.shape))
+        LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
+
         self.host_model.set_batch(host_x, overlap_indexes)
         self.host_model.set_public_key(public_key)
-
         while self.n_iter_ < self.max_iter:
             host_comp = self.host_model.send_components()
             self._do_remote(host_comp, name=self.transfer_variable.host_component_list.name,
