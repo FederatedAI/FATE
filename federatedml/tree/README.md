@@ -33,3 +33,5 @@ To ensure security, passive parties cannot get access to gradient and hessian di
 We use a "XGBoost" like tree-learning algorithm. In order to keep gradient and hessian confidential, we require the active party to 
 encrypt gradient and hessian before sending them to passive parties. 
 
+By following the SecureBoost framework, multiple parties can jointly build tree ensembled model without leaking privacy 
+in federated learning. If you want to learn more about the algorithm details, you can read the paper attached above.
