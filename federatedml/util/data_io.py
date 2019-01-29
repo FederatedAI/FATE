@@ -109,7 +109,6 @@ class DenseFeatureReader(object):
             raise ValueError("output format %s is not define" % (output_format))
 
         if output_format == "dense":
-            result = np.asarray(features, dtype=data_type)
             return np.asarray(features, dtype=data_type)
 
         elif output_format == "sparse":
