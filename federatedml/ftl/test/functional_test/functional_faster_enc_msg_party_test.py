@@ -70,8 +70,8 @@ if __name__ == '__main__':
     autoencoder_A = Autoencoder(1)
     autoencoder_B = Autoencoder(2)
 
-    autoencoder_A.build(X_A.shape[-1], 10, learning_rate=0.01)
-    autoencoder_B.build(X_B.shape[-1], 10, learning_rate=0.01)
+    autoencoder_A.build(X_A.shape[-1], 32, learning_rate=0.01)
+    autoencoder_B.build(X_B.shape[-1], 32, learning_rate=0.01)
 
     paillierEncrypt = PaillierEncrypt()
     paillierEncrypt.generate_key()

@@ -62,6 +62,7 @@ class PlainFTLGuestModel(PartyModelInterface):
         return np.expand_dims(np.sum(y * U_A, axis=0) / length_y, axis=0)
 
     def _compute_components(self):
+        self.U_A = self.localModel.transform(self.X)
         # y_A_u_A has shape (1, feature_dim)
         # y_A_u_A_2 has shape (feature_dim, feature_dim)
         self.y_A_u_A = self.__compute_yA_uA(self.U_A, self.y)
@@ -69,37 +70,36 @@ class PlainFTLGuestModel(PartyModelInterface):
 
         # y_overlap and y_overlap2 have shape (len(overlap_indexes), 1)
         self.y_overlap = self.y[self.overlap_indexes]
-        self.y_overlap2 = self.y_overlap * self.y_overlap
+        self.y_overlap_2 = self.y_overlap * self.y_overlap
 
         if self.is_trace:
             self.logger.debug("y_A_u_A shape" + str(self.y_A_u_A.shape))
             self.logger.debug("y_A_u_A_2 shape" + str(self.y_A_u_A_2.shape))
             self.logger.debug("y_overlap shape" + str(self.y_overlap.shape))
-            self.logger.debug("y_overlap2 shape" + str(self.y_overlap2.shape))
+            self.logger.debug("y_overlap2 shape" + str(self.y_overlap_2.shape))
 
         # following two parameters will be sent to host
         # comp_A_beta1 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # comp_A_beta2 has shape (len(overlap_indexes), feature_dim)
-        self.comp_A_beta1 = 0.25 * np.expand_dims(self.y_overlap2, axis=2) * self.y_A_u_A_2
+        self.comp_A_beta1 = 0.25 * np.expand_dims(self.y_overlap_2, axis=2) * self.y_A_u_A_2
         self.comp_A_beta2 = -0.5 * self.y_overlap * self.y_A_u_A
 
-    def send_components(self):
-        self.U_A = self.localModel.transform(self.X)
-        self._compute_components()
         self.U_A_overlap = self.U_A[self.overlap_indexes]
         # mapping_comp_A has shape (len(overlap_indexes), feature_dim)
-        mapping_comp_A = - self.U_A_overlap / self.feature_dim
+        self.mapping_comp_A = - self.U_A_overlap / self.feature_dim
 
         if self.is_trace:
             self.logger.debug("comp_A_beta1 shape" + str(self.comp_A_beta1.shape))
             self.logger.debug("comp_A_beta2 shape" + str(self.comp_A_beta2.shape))
-            self.logger.debug("mapping_comp_A shape" + str(mapping_comp_A.shape))
+            self.logger.debug("mapping_comp_A shape" + str(self.mapping_comp_A.shape))
 
-        return [self.comp_A_beta1, self.comp_A_beta2, mapping_comp_A]
+    def send_components(self):
+        self._compute_components()
+        return [self.comp_A_beta1, self.comp_A_beta2, self.mapping_comp_A]
 
     def receive_components(self, components):
         self.U_B_overlap = components[0]
-        self.U_B_2_overlap = components[1]
+        self.U_B_overlap_2 = components[1]
         self.mapping_comp_B = components[2]
         self._update_gradients()
         self._update_loss()
@@ -109,11 +109,11 @@ class PlainFTLGuestModel(PartyModelInterface):
         # y_overlap2 have shape (len(overlap_indexes), 1),
         # y_A_u_A has shape (1, feature_dim),
         # y_overlap2_y_A_u_A has shape (len(overlap_indexes), 1, feature_dim)
-        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap2 * self.y_A_u_A, axis=1)
+        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.y_A_u_A, axis=1)
 
-        # U_B_2_overlap has shape (len(overlap_indexes), feature_dim, feature_dim)
+        # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # tmp has shape (len(overlap_indexes), feature_dim)
-        tmp = 0.25 * np.squeeze(np.matmul(y_overlap2_y_A_u_A, self.U_B_2_overlap), axis=1)
+        tmp = 0.25 * np.squeeze(np.matmul(y_overlap2_y_A_u_A, self.U_B_overlap_2), axis=1)
 
         if self.is_trace:
             self.logger.debug("tmp shape" + str(tmp.shape))
@@ -179,7 +179,7 @@ class PlainFTLHostModel(PartyModelInterface):
         self.X = X
         self.overlap_indexes = overlap_indexes
 
-    def send_components(self):
+    def _compute_components(self):
         self.U_B = self.localModel.transform(self.X)
 
         # following three parameters will be sent to guest
@@ -187,15 +187,17 @@ class PlainFTLHostModel(PartyModelInterface):
         # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
         self.U_B_overlap = self.U_B[self.overlap_indexes]
-        U_B_overlap_2 = np.matmul(np.expand_dims(self.U_B_overlap, axis=2), np.expand_dims(self.U_B_overlap, axis=1))
-        mapping_comp_B = - self.U_B_overlap / self.feature_dim
+        self.U_B_overlap_2 = np.matmul(np.expand_dims(self.U_B_overlap, axis=2), np.expand_dims(self.U_B_overlap, axis=1))
+        self.mapping_comp_B = - self.U_B_overlap / self.feature_dim
 
         if self.is_trace:
             self.logger.debug("U_B_overlap shape" + str(self.U_B_overlap.shape))
-            self.logger.debug("U_B_overlap_2 shape" + str(U_B_overlap_2.shape))
-            self.logger.debug("mapping_comp_B shape" + str(mapping_comp_B.shape))
+            self.logger.debug("U_B_overlap_2 shape" + str(self.U_B_overlap_2.shape))
+            self.logger.debug("mapping_comp_B shape" + str(self.mapping_comp_B.shape))
 
-        return [self.U_B_overlap, U_B_overlap_2, mapping_comp_B]
+    def send_components(self):
+        self._compute_components()
+        return [self.U_B_overlap, self.U_B_overlap_2, self.mapping_comp_B]
 
     def receive_components(self, components):
         self.comp_A_beta1 = components[0]

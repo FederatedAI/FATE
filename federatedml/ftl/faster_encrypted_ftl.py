@@ -36,22 +36,9 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         self.private_key = private_key
 
     def send_components(self):
-        # components = super(EncryptedFTLGuestModel, self).send_components()
-
-        self.U_A = self.localModel.transform(self.X)
         self._compute_components()
-        self.U_A_overlap = self.U_A[self.overlap_indexes]
-        # mapping_comp_A has shape (len(overlap_indexes), feature_dim)
-        mapping_comp_A = - self.U_A_overlap / self.feature_dim
-
-        if self.is_trace:
-            self.logger.info("comp_A_beta1 shape" + str(self.comp_A_beta1.shape))
-            self.logger.info("comp_A_beta2 shape" + str(self.comp_A_beta2.shape))
-            self.logger.info("mapping_comp_A shape" + str(mapping_comp_A.shape))
-
-        # Important: send self.y_A_u_A_2 to host to indirectly compute part of loss
-        components = [self.comp_A_beta2, mapping_comp_A, self.y_A_u_A, self.y_A_u_A_2]
-
+        # Important: send self.y_A_u_A_2 to host indirectly computing part of loss
+        components = [self.comp_A_beta2, self.mapping_comp_A, self.y_A_u_A, self.y_A_u_A_2]
         return self.__encrypt_components(components)
 
     def __encrypt_components(self, components):
@@ -77,10 +64,10 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         print("encrypted_U_B_comp_A_beta1.shape", encrypted_U_B_comp_A_beta1.shape)
         self.intermediate_computing_component = np.squeeze(encrypted_U_B_comp_A_beta1, axis=1)
 
-    def send_swaped_computed_components(self):
+    def send_precomputed_components(self):
         return [self.intermediate_computing_component]
 
-    def receive_swaped_computed_components(self, components):
+    def receive_precomputed_components(self, components):
         self.tmp2 = components[0]
         self.wx2 = components[1]
         self._update_gradients()
@@ -99,7 +86,6 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         # tmp2 = 0.25 * np.squeeze(tmp1, axis=1)
 
         if self.is_trace:
-            # self.logger.info("tmp1 shape" + str(tmp1.shape))
             self.logger.debug("tmp2 shape" + str(self.tmp2.shape))
 
         y_overlap = np.tile(self.y_overlap, (1, self.U_B_overlap.shape[-1]))
@@ -112,17 +98,17 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         y_non_overlap = np.tile(self.y[self.non_overlap_indexes], (1, self.U_B_overlap.shape[-1]))
 
         if self.is_trace:
-            self.logger.info("encrypt_const shape:" + str(encrypt_const.shape))
-            self.logger.info("encrypt_const_overlap shape" + str(encrypt_const_overlap.shape))
-            self.logger.info("encrypt_const_nonoverlap shape" + str(encrypt_const_nonoverlap.shape))
-            self.logger.info("y_non_overlap shape" + str(y_non_overlap.shape))
+            self.logger.debug("encrypt_const shape:" + str(encrypt_const.shape))
+            self.logger.debug("encrypt_const_overlap shape" + str(encrypt_const_overlap.shape))
+            self.logger.debug("encrypt_const_nonoverlap shape" + str(encrypt_const_nonoverlap.shape))
+            self.logger.debug("y_non_overlap shape" + str(y_non_overlap.shape))
 
         encrypt_grad_A_nonoverlap = compute_XY(self.alpha * y_non_overlap / len(self.y), encrypt_const_nonoverlap)
         encrypt_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), encrypt_const_overlap, self.mapping_comp_B)
 
         if self.is_trace:
-            self.logger.info("encrypt_grad_A_nonoverlap shape" + str(encrypt_grad_A_nonoverlap.shape))
-            self.logger.info("encrypt_grad_A_overlap shape" + str(encrypt_grad_A_overlap.shape))
+            self.logger.debug("encrypt_grad_A_nonoverlap shape" + str(encrypt_grad_A_nonoverlap.shape))
+            self.logger.debug("encrypt_grad_A_overlap shape" + str(encrypt_grad_A_overlap.shape))
 
         encrypt_grad_loss_A = [[0 for _ in range(self.U_B_overlap.shape[1])] for _ in range(len(self.y))]
         # TODO: need more efficient way to do following task
@@ -134,32 +120,12 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         encrypt_grad_loss_A = np.array(encrypt_grad_loss_A)
 
         if self.is_trace:
-            self.logger.info("encrypt_grad_loss_A shape" + str(encrypt_grad_loss_A.shape))
-            self.logger.info("encrypt_grad_loss_A" + str(encrypt_grad_loss_A))
+            self.logger.debug("encrypt_grad_loss_A shape" + str(encrypt_grad_loss_A.shape))
+            self.logger.debug("encrypt_grad_loss_A" + str(encrypt_grad_loss_A))
 
         self.loss_grads = encrypt_grad_loss_A
-        grads = self.localModel.compute_gradients(self.X)
-        self.encrypt_grads_W, self.encrypt_grads_b = self.__compute_encrypt_grads(grads, encrypt_grad_loss_A)
-
-    def __compute_encrypt_grads(self, grads, encrypt_grads):
-
-        grads_W = grads[0]
-        grads_b = grads[1]
-        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
-
-        if self.is_trace:
-            self.logger.info("grads_W shape" + str(grads_W.shape))
-            self.logger.info("grads_b shape" + str(grads_b.shape))
-            self.logger.info("encrypt_grads_ex shape" + str(encrypt_grads_ex.shape))
-
-        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
-        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
-
-        if self.is_trace:
-            self.logger.info("encrypt_grads_W shape" + str(encrypt_grads_W.shape))
-            self.logger.info("encrypt_grads_b shape" + str(encrypt_grads_b.shape))
-
-        return encrypt_grads_W, encrypt_grads_b
+        self.encrypt_grads_W, self.encrypt_grads_b = self.localModel.compute_encrypted_params_grads(
+            self.X, encrypt_grad_loss_A)
 
     def send_gradients(self):
         return self.encrypt_grads_W, self.encrypt_grads_b
@@ -204,30 +170,13 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
         self.private_key = private_key
 
     def send_components(self):
-        # components = super(EncryptedFTLHostModel, self).send_components()
-        self.U_B = self.localModel.transform(self.X)
-
-        # following three parameters will be sent to guest
-        # U_B_overlap has shape (len(overlap_indexes), feature_dim)
-        # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
-        # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
-        self.U_B_overlap = self.U_B[self.overlap_indexes]
-        self.U_B_overlap_2 = np.matmul(np.expand_dims(self.U_B_overlap, axis=2), np.expand_dims(self.U_B_overlap, axis=1))
-        mapping_comp_B = - self.U_B_overlap / self.feature_dim
-
-        if self.is_trace:
-            self.logger.info("U_B_overlap shape" + str(self.U_B_overlap.shape))
-            self.logger.info("U_B_overlap_2 shape" + str(self.U_B_overlap_2.shape))
-            self.logger.info("mapping_comp_B shape" + str(mapping_comp_B.shape))
-
-        # components = [self.U_B_overlap, U_B_overlap_2, mapping_comp_B]
-        components = [self.U_B_overlap, mapping_comp_B]
+        self._compute_components()
+        components = [self.U_B_overlap, self.mapping_comp_B]
         return self.__encrypt_components(components)
 
     def __encrypt_components(self, components):
         encrypt_UB_1 = encrypt_matrix(self.public_key, components[0])
         encrypt_UB_2 = encrypt_matrix(self.public_key, components[1])
-        # encrypt_mapping_comp_B = encrypt_matrix(self.public_key, components[2])
         return [encrypt_UB_1, encrypt_UB_2]
 
     def receive_components(self, components):
@@ -272,16 +221,16 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
 
         # ------------------------------------------------------------
 
-    def send_swaped_computed_components(self):
+    def send_precomputed_components(self):
         return [self.intermediate_computing_component_1, self.intermediate_computing_component_2]
 
-    def receive_swaped_computed_components(self, components):
+    def receive_precomputed_components(self, components):
         self.encrypted_U_B_comp_A_beta1 = components[0]
         self._update_gradients()
 
     def _update_gradients(self):
         # U_B_overlap_ex = np.expand_dims(self.U_B_overlap, axis=1)
-        grads = self.localModel.compute_gradients(self.X[self.overlap_indexes])
+        # grads = self.localModel.compute_gradients(self.X[self.overlap_indexes])
 
         # # following computed from guest
         # encrypted_U_B_comp_A_beta1 = encrypt_matmul_3(U_B_overlap_ex, self.comp_A_beta1)
@@ -291,14 +240,8 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
         encrypted_grad_loss_B = compute_X_plus_Y(self.alpha * encrypted_grad_l1_B, self.mapping_comp_A)
 
         self.loss_grads = encrypted_grad_loss_B
-        self.encrypt_grads_W, self.encrypt_grads_b = self.__compute_encrypt_grads(grads, encrypted_grad_loss_B)
-
-    def __compute_encrypt_grads(self, grads, encrypt_grads):
-        grads_W = grads[0]
-        grads_b = grads[1]
-        encrypt_grads_W = compute_sum_XY(np.expand_dims(encrypt_grads, axis=1), grads_W)
-        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
-        return encrypt_grads_W, encrypt_grads_b
+        self.encrypt_grads_W, self.encrypt_grads_b = self.localModel.compute_encrypted_params_grads(
+            self.X[self.overlap_indexes], encrypted_grad_loss_B)
 
     def send_gradients(self):
         return self.encrypt_grads_W, self.encrypt_grads_b
@@ -328,11 +271,11 @@ class LocalFasterEncryptedFederatedTransferLearning(object):
         self.guest.receive_components(comp_B)
         self.host.receive_components(comp_A)
 
-        swaped_computed_components_B = self.host.send_swaped_computed_components()
-        swaped_computed_components_A = self.guest.send_swaped_computed_components()
+        precomputed_components_B = self.host.send_precomputed_components()
+        precomputed_components_A = self.guest.send_precomputed_components()
 
-        self.guest.receive_swaped_computed_components(swaped_computed_components_B)
-        self.host.receive_swaped_computed_components(swaped_computed_components_A)
+        self.guest.receive_precomputed_components(precomputed_components_B)
+        self.host.receive_precomputed_components(precomputed_components_A)
 
         encrypt_gradients_A = self.guest.send_gradients()
         encrypt_gradients_B = self.host.send_gradients()

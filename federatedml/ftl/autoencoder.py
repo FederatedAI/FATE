@@ -17,6 +17,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from federatedml.ftl.eggroll_computation.helper import compute_sum_XY
 
 
 class Autoencoder(object):
@@ -113,6 +114,15 @@ class Autoencoder(object):
             grads_W_collector.append(grads_w_i)
             grads_b_collector.append(grads_b_i)
         return [np.array(grads_W_collector), np.array(grads_b_collector)]
+
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
+        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
+        return encrypt_grads_W, encrypt_grads_b
 
     def apply_gradients(self, gradients):
         grads_W = gradients[0]

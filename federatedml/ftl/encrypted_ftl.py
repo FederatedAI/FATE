@@ -57,7 +57,7 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         # y_overlap2 have shape (len(overlap_indexes), 1),
         # y_A_u_A has shape (1, feature_dim),
         # y_overlap2_y_A_u_A has shape (len(overlap_indexes), 1, feature_dim)
-        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap2 * self.y_A_u_A, axis=1)
+        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.y_A_u_A, axis=1)
 
         # U_B_2_overlap has shape (len(overlap_indexes), feature_dim, feature_dim)
         # tmp has shape (len(overlap_indexes), feature_dim)
@@ -104,28 +104,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
             self.logger.debug("encrypt_grad_loss_A" + str(encrypt_grad_loss_A))
 
         self.loss_grads = encrypt_grad_loss_A
-        grads = self.localModel.compute_gradients(self.X)
-        self.encrypt_grads_W, self.encrypt_grads_b = self.__compute_encrypt_grads(grads, encrypt_grad_loss_A)
-
-    def __compute_encrypt_grads(self, grads, encrypt_grads):
-
-        grads_W = grads[0]
-        grads_b = grads[1]
-        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
-
-        if self.is_trace:
-            self.logger.debug("grads_W shape" + str(grads_W.shape))
-            self.logger.debug("grads_b shape" + str(grads_b.shape))
-            self.logger.debug("encrypt_grads_ex shape" + str(encrypt_grads_ex.shape))
-
-        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
-        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
-
-        if self.is_trace:
-            self.logger.debug("encrypt_grads_W shape" + str(encrypt_grads_W.shape))
-            self.logger.debug("encrypt_grads_b shape" + str(encrypt_grads_b.shape))
-
-        return encrypt_grads_W, encrypt_grads_b
+        self.encrypt_grads_W, self.encrypt_grads_b = self.localModel.compute_encrypted_params_grads(
+            self.X, encrypt_grad_loss_A)
 
     def send_gradients(self):
         return self.encrypt_grads_W, self.encrypt_grads_b
@@ -187,21 +167,13 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
 
     def _update_gradients(self):
         U_B_overlap_ex = np.expand_dims(self.U_B_overlap, axis=1)
-        grads = self.localModel.compute_gradients(self.X[self.overlap_indexes])
-
         encrypted_U_B_comp_A_beta1 = encrypt_matmul_3(U_B_overlap_ex, self.comp_A_beta1)
         encrypted_grad_l1_B = compute_X_plus_Y(np.squeeze(encrypted_U_B_comp_A_beta1, axis=1), self.comp_A_beta2)
         encrypted_grad_loss_B = compute_X_plus_Y(self.alpha * encrypted_grad_l1_B, self.mapping_comp_A)
 
         self.loss_grads = encrypted_grad_loss_B
-        self.encrypt_grads_W, self.encrypt_grads_b = self.__compute_encrypt_grads(grads, encrypted_grad_loss_B)
-
-    def __compute_encrypt_grads(self, grads, encrypt_grads):
-        grads_W = grads[0]
-        grads_b = grads[1]
-        encrypt_grads_W = compute_sum_XY(np.expand_dims(encrypt_grads, axis=1), grads_W)
-        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
-        return encrypt_grads_W, encrypt_grads_b
+        self.encrypt_grads_W, self.encrypt_grads_b = self.localModel.compute_encrypted_params_grads(
+            self.X[self.overlap_indexes], encrypted_grad_loss_B)
 
     def send_gradients(self):
         return self.encrypt_grads_W, self.encrypt_grads_b
