@@ -6,7 +6,7 @@ The detailed documentation of parameters is [here](./param/README.md)
 ### Algorithm List
 1. [Logistic Regression](./logistic_regression/)
 
-2. [Secure boost](./tree)
+2. [SecureBoost](./tree)
 
 
 More available algorithms are coming soon.
