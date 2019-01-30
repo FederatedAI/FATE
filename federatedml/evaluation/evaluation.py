@@ -97,7 +97,7 @@ class Evaluation(object):
                     score = np.around(score, 4)
                 res = (thresholds[i], score)
             else:
-                res = ("score", np.around(results))
+                res = ("score", np.around(results, 4))
             evaluation_format.append(res)
 
         return evaluation_format
