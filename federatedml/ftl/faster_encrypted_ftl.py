@@ -38,7 +38,7 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
     def send_components(self):
         self._compute_components()
         # Important: send self.y_A_u_A_2 to host indirectly computing part of loss
-        components = [self.comp_A_beta2, self.mapping_comp_A, self.y_A_u_A, self.y_A_u_A_2]
+        components = [self.y_overlap_phi, self.mapping_comp_A, self.phi, self.phi_2]
         return self.__encrypt_components(components)
 
     def __encrypt_components(self, components):
@@ -50,26 +50,20 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
 
     def receive_components(self, components):
         self.U_B_overlap = components[0]
-
-        # TODO will not pass U_B_2_overlap from host
-        # self.U_B_2_overlap = components[1]
         self.mapping_comp_B = components[1]
-        # self._update_gradients()
-        # self._update_loss()
         self.__precompute()
 
     def __precompute(self):
         U_B_overlap_ex = np.expand_dims(self.U_B_overlap, axis=1)
-        encrypted_U_B_comp_A_beta1 = encrypt_matmul_3(U_B_overlap_ex, self.comp_A_beta1)
-        print("encrypted_U_B_comp_A_beta1.shape", encrypted_U_B_comp_A_beta1.shape)
-        self.intermediate_computing_component = np.squeeze(encrypted_U_B_comp_A_beta1, axis=1)
+        uB_overlap_y_overlap_2_phi_2 = encrypt_matmul_3(U_B_overlap_ex, self.y_overlap_2_phi_2)
+        self.precomputed_component = np.squeeze(uB_overlap_y_overlap_2_phi_2, axis=1)
 
     def send_precomputed_components(self):
-        return [self.intermediate_computing_component]
+        return [self.precomputed_component]
 
     def receive_precomputed_components(self, components):
-        self.tmp2 = components[0]
-        self.wx2 = components[1]
+        self.y_overlap_2_phi_uB_overlap_2 = components[0]
+        self.phi_uB_overlap_2_phi = components[1]
         self._update_gradients()
         self._update_loss()
 
@@ -86,13 +80,12 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         # tmp2 = 0.25 * np.squeeze(tmp1, axis=1)
 
         if self.is_trace:
-            self.logger.debug("tmp2 shape" + str(self.tmp2.shape))
+            self.logger.debug("y_overlap_2_phi_uB_overlap_2 shape" + str(self.y_overlap_2_phi_uB_overlap_2.shape))
 
         y_overlap = np.tile(self.y_overlap, (1, self.U_B_overlap.shape[-1]))
-        part2 = compute_sum_XY(y_overlap * 0.5, self.U_B_overlap)
+        y_overlap_uB_overlap = compute_sum_XY(y_overlap * 0.5, self.U_B_overlap)
 
-        # TODO: do sum effectively
-        encrypt_const = np.sum(self.tmp2, axis=0) - part2
+        encrypt_const = np.sum(self.y_overlap_2_phi_uB_overlap_2, axis=0) - y_overlap_uB_overlap
         encrypt_const_overlap = np.tile(encrypt_const, (len(self.overlap_indexes), 1))
         encrypt_const_nonoverlap = np.tile(encrypt_const, (len(self.non_overlap_indexes), 1))
         y_non_overlap = np.tile(self.y[self.non_overlap_indexes], (1, self.U_B_overlap.shape[-1]))
@@ -142,14 +135,12 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
     def _update_loss(self):
         U_A_overlap_prime = - self.U_A_overlap / self.feature_dim
         loss_overlap = np.sum(compute_sum_XY(U_A_overlap_prime, self.U_B_overlap))
-        loss_Y = self.__compute_encrypt_loss_y(self.U_B_overlap, self.y_overlap, self.y_A_u_A)
+        loss_Y = self.__compute_encrypt_loss_y(self.U_B_overlap, self.y_overlap, self.phi)
         self.loss = self.alpha * loss_Y + loss_overlap
 
     def __compute_encrypt_loss_y(self, encrypt_U_B_overlap, y_overlap, y_A_u_A):
         encrypt_UB_yAuA = encrypt_matmul_2_ob(encrypt_U_B_overlap, y_A_u_A.transpose())
-        # encrypt_UB_T_UB = np.sum(encrypt_U_B_2_overlap, axis=0)
-        # wx2 = encrypt_matmul_2(encrypt_matmul_2(y_A_u_A, encrypt_UB_T_UB), y_A_u_A.transpose())
-        encrypt_loss_Y = (-0.5 * compute_sum_XY(y_overlap, encrypt_UB_yAuA)[0] + 1.0 / 8 * np.sum(self.wx2)) + len(y_overlap) * np.log(2)
+        encrypt_loss_Y = (-0.5 * compute_sum_XY(y_overlap, encrypt_UB_yAuA)[0] + 1.0 / 8 * np.sum(self.phi_uB_overlap_2_phi)) + len(y_overlap) * np.log(2)
         return encrypt_loss_Y
 
     def get_loss_grads(self):
@@ -180,49 +171,38 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
         return [encrypt_UB_1, encrypt_UB_2]
 
     def receive_components(self, components):
-        # self.comp_A_beta1 = components[0]
         self.comp_A_beta2 = components[0]
         self.mapping_comp_A = components[1]
         self.y_A_u_A = components[2]
         self.y_A_u_A_2 = components[3]
-        # self._update_gradients()
         self.__precompute()
 
     def __precompute(self):
         # ------------------------------------------------------------
         # y_overlap2 have shape (len(overlap_indexes), 1),
         # y_A_u_A has shape (1, feature_dim),
-        # y_overlap2_y_A_u_A has shape (len(overlap_indexes), 1, feature_dim)
-        # y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap2 * self.y_A_u_A, axis=1)
+        # y_overlap_2_phi has shape (len(overlap_indexes), 1, feature_dim)
+        # y_overlap_2_phi = np.expand_dims(self.y_overlap2 * self.y_A_u_A, axis=1)
         # U_B_2_overlap has shape (len(overlap_indexes), feature_dim, feature_dim)
         # tmp has shape (len(overlap_indexes), feature_dim)
-        # tmp1 = encrypt_matmul_3(y_overlap2_y_A_u_A, self.U_B_2_overlap)
-        # tmp2 = 0.25 * np.squeeze(tmp1, axis=1)
+        # y_overlap_2_phi_uB_overlap_2 = encrypt_matmul_3(y_overlap_2_phi, self.U_B_2_overlap)
+        # tmp2 = 0.25 * np.squeeze(y_overlap_2_phi_uB_overlap_2, axis=1)
 
-        y_overlap2_y_A_u_A = np.expand_dims(np.tile(self.y_A_u_A, (len(self.overlap_indexes), 1)), axis=1)
-        print("y_overlap2_y_A_u_A.shape", y_overlap2_y_A_u_A.shape)
-        tmp1 = encrypt_matmul_3(y_overlap2_y_A_u_A, self.U_B_overlap_2)
-        print("tmp1 shape", str(tmp1.shape))
-        self.intermediate_computing_component_1 = 0.25 * np.squeeze(tmp1, axis=1)
-
-        # encrypt_UB_T_UB = np.sum(encrypt_U_B_2_overlap, axis=0)
-        # wx2 = encrypt_matmul_2(encrypt_matmul_2(y_A_u_A, encrypt_UB_T_UB), y_A_u_A.transpose())
-
-        # UB_sum = np.sum(self.U_B_overlap, axis=0).reshape(1, -1)
-        # print("UB_sum shape", UB_sum.shape)
-        # self.intermediate_computing_components2 = encrypt_matmul_2(encrypt_matmul_2(UB_sum, self.y_A_u_A_2), UB_sum.transpose())
+        y_overlap_2_phi = np.expand_dims(np.tile(self.y_A_u_A, (len(self.overlap_indexes), 1)), axis=1)
+        print("y_overlap_2_phi.shape", y_overlap_2_phi.shape)
+        y_overlap_2_phi_uB_overlap_2 = encrypt_matmul_3(y_overlap_2_phi, self.U_B_overlap_2)
+        print("y_overlap_2_phi_uB_overlap_2 shape", str(y_overlap_2_phi_uB_overlap_2.shape))
+        self.precomputed_grad_component = 0.25 * np.squeeze(y_overlap_2_phi_uB_overlap_2, axis=1)
 
         # compute part of the loss for guest
-        loss_part = 0
+        phi_uB_overlap_2_phi = 0
         for UB_row in self.U_B_overlap:
             UB_row = UB_row.reshape(1, -1)
-            loss_part += encrypt_matmul_2_ob(encrypt_matmul_2_ob(UB_row, self.y_A_u_A_2), UB_row.transpose())
-        self.intermediate_computing_component_2 = loss_part
-
-        # ------------------------------------------------------------
+            phi_uB_overlap_2_phi += encrypt_matmul_2_ob(encrypt_matmul_2_ob(UB_row, self.y_A_u_A_2), UB_row.transpose())
+        self.precomputed_loss_component = phi_uB_overlap_2_phi
 
     def send_precomputed_components(self):
-        return [self.intermediate_computing_component_1, self.intermediate_computing_component_2]
+        return [self.precomputed_grad_component, self.precomputed_loss_component]
 
     def receive_precomputed_components(self, components):
         self.encrypted_U_B_comp_A_beta1 = components[0]

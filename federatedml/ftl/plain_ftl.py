@@ -55,9 +55,9 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.y = y
         self.non_overlap_indexes = non_overlap_indexes
         self.overlap_indexes = overlap_indexes
-        self.y_A_u_A = None
+        self.phi = None
 
-    def __compute_yA_uA(self, U_A, y):
+    def __compute_phi(self, U_A, y):
         length_y = len(y)
         return np.expand_dims(np.sum(y * U_A, axis=0) / length_y, axis=0)
 
@@ -65,37 +65,37 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.U_A = self.localModel.transform(self.X)
         # y_A_u_A has shape (1, feature_dim)
         # y_A_u_A_2 has shape (feature_dim, feature_dim)
-        self.y_A_u_A = self.__compute_yA_uA(self.U_A, self.y)
-        self.y_A_u_A_2 = np.matmul(self.y_A_u_A.transpose(), self.y_A_u_A)
+        self.phi = self.__compute_phi(self.U_A, self.y)
+        self.phi_2 = np.matmul(self.phi.transpose(), self.phi)
 
         # y_overlap and y_overlap2 have shape (len(overlap_indexes), 1)
         self.y_overlap = self.y[self.overlap_indexes]
         self.y_overlap_2 = self.y_overlap * self.y_overlap
 
         if self.is_trace:
-            self.logger.debug("y_A_u_A shape" + str(self.y_A_u_A.shape))
-            self.logger.debug("y_A_u_A_2 shape" + str(self.y_A_u_A_2.shape))
+            self.logger.debug("phi shape" + str(self.phi.shape))
+            self.logger.debug("phi_2 shape" + str(self.phi_2.shape))
             self.logger.debug("y_overlap shape" + str(self.y_overlap.shape))
-            self.logger.debug("y_overlap2 shape" + str(self.y_overlap_2.shape))
+            self.logger.debug("y_overlap_2 shape" + str(self.y_overlap_2.shape))
 
         # following two parameters will be sent to host
-        # comp_A_beta1 has shape (len(overlap_indexes), feature_dim, feature_dim)
-        # comp_A_beta2 has shape (len(overlap_indexes), feature_dim)
-        self.comp_A_beta1 = 0.25 * np.expand_dims(self.y_overlap_2, axis=2) * self.y_A_u_A_2
-        self.comp_A_beta2 = -0.5 * self.y_overlap * self.y_A_u_A
+        # y_overlap_2_phi_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
+        # y_overlap_phi has shape (len(overlap_indexes), feature_dim)
+        self.y_overlap_2_phi_2 = 0.25 * np.expand_dims(self.y_overlap_2, axis=2) * self.phi_2
+        self.y_overlap_phi = -0.5 * self.y_overlap * self.phi
 
         self.U_A_overlap = self.U_A[self.overlap_indexes]
         # mapping_comp_A has shape (len(overlap_indexes), feature_dim)
         self.mapping_comp_A = - self.U_A_overlap / self.feature_dim
 
         if self.is_trace:
-            self.logger.debug("comp_A_beta1 shape" + str(self.comp_A_beta1.shape))
-            self.logger.debug("comp_A_beta2 shape" + str(self.comp_A_beta2.shape))
+            self.logger.debug("y_overlap_2_phi_2 shape" + str(self.y_overlap_2_phi_2.shape))
+            self.logger.debug("y_overlap_phi shape" + str(self.y_overlap_phi.shape))
             self.logger.debug("mapping_comp_A shape" + str(self.mapping_comp_A.shape))
 
     def send_components(self):
         self._compute_components()
-        return [self.comp_A_beta1, self.comp_A_beta2, self.mapping_comp_A]
+        return [self.y_overlap_2_phi_2, self.y_overlap_phi, self.mapping_comp_A]
 
     def receive_components(self, components):
         self.U_B_overlap = components[0]
@@ -109,7 +109,7 @@ class PlainFTLGuestModel(PartyModelInterface):
         # y_overlap2 have shape (len(overlap_indexes), 1),
         # y_A_u_A has shape (1, feature_dim),
         # y_overlap2_y_A_u_A has shape (len(overlap_indexes), 1, feature_dim)
-        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.y_A_u_A, axis=1)
+        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.phi, axis=1)
 
         # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # tmp has shape (len(overlap_indexes), feature_dim)
@@ -141,7 +141,7 @@ class PlainFTLGuestModel(PartyModelInterface):
     def _update_loss(self):
         U_A_overlap_prime = - self.U_A_overlap / self.feature_dim
         loss_overlap = np.sum(U_A_overlap_prime * self.U_B_overlap)
-        loss_Y = self.__compute_loss_y(self.U_B_overlap, self.y_overlap, self.y_A_u_A)
+        loss_Y = self.__compute_loss_y(self.U_B_overlap, self.y_overlap, self.phi)
         self.loss = self.alpha * loss_Y + loss_overlap
 
     def __compute_loss_y(self, U_B_overlap, y_overlap, y_A_u_A):
@@ -153,10 +153,10 @@ class PlainFTLGuestModel(PartyModelInterface):
         return self.loss_grads
 
     def predict(self, U_B):
-        if self.y_A_u_A is None:
+        if self.phi is None:
             self.U_A = self.localModel.transform(self.X)
-            self.y_A_u_A = self.__compute_yA_uA(self.U_A, self.y)
-        return sigmoid(np.matmul(U_B, self.y_A_u_A.transpose()))
+            self.phi = self.__compute_phi(self.U_A, self.y)
+        return sigmoid(np.matmul(U_B, self.phi.transpose()))
 
     def restore_model(self, model_parameters):
         self.localModel.restore_model(model_parameters)

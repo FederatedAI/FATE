@@ -57,7 +57,7 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         # y_overlap2 have shape (len(overlap_indexes), 1),
         # y_A_u_A has shape (1, feature_dim),
         # y_overlap2_y_A_u_A has shape (len(overlap_indexes), 1, feature_dim)
-        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.y_A_u_A, axis=1)
+        y_overlap2_y_A_u_A = np.expand_dims(self.y_overlap_2 * self.phi, axis=1)
 
         # U_B_2_overlap has shape (len(overlap_indexes), feature_dim, feature_dim)
         # tmp has shape (len(overlap_indexes), feature_dim)
@@ -122,7 +122,7 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
     def _update_loss(self):
         U_A_overlap_prime = - self.U_A_overlap / self.feature_dim
         loss_overlap = np.sum(compute_sum_XY(U_A_overlap_prime, self.U_B_overlap))
-        loss_Y = self.__compute_encrypt_loss_y(self.U_B_overlap, self.U_B_2_overlap, self.y_overlap, self.y_A_u_A)
+        loss_Y = self.__compute_encrypt_loss_y(self.U_B_overlap, self.U_B_2_overlap, self.y_overlap, self.phi)
         self.loss = self.alpha * loss_Y + loss_overlap
 
     def __compute_encrypt_loss_y(self, encrypt_U_B_overlap, encrypt_U_B_2_overlap, y_overlap, y_A_u_A):
