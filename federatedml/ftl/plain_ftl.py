@@ -61,7 +61,7 @@ class PlainFTLGuestModel(PartyModelInterface):
         length_y = len(y)
         return np.expand_dims(np.sum(y * U_A, axis=0) / length_y, axis=0)
 
-    def __compute_components(self):
+    def _compute_components(self):
         # y_A_u_A has shape (1, feature_dim)
         # y_A_u_A_2 has shape (feature_dim, feature_dim)
         self.y_A_u_A = self.__compute_yA_uA(self.U_A, self.y)
@@ -85,7 +85,7 @@ class PlainFTLGuestModel(PartyModelInterface):
 
     def send_components(self):
         self.U_A = self.localModel.transform(self.X)
-        self.__compute_components()
+        self._compute_components()
         self.U_A_overlap = self.U_A[self.overlap_indexes]
         # mapping_comp_A has shape (len(overlap_indexes), feature_dim)
         mapping_comp_A = - self.U_A_overlap / self.feature_dim

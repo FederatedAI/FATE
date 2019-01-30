@@ -21,7 +21,8 @@ from sklearn.metrics import precision_recall_fscore_support
 from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, LocalEncryptedFederatedTransferLearning
+from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel, FasterEncryptedFTLGuestModel, \
+    LocalFasterEncryptedFederatedTransferLearning
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 from federatedml.ftl.test.fake_models import FakeFTLModelParam
 from arch.api.eggroll import init
@@ -55,7 +56,10 @@ if __name__ == '__main__':
     print("y_B shape", y_B.shape)
 
     print("overlap_indexes len", len(overlap_indexes))
+    # print("overlap_indexes", overlap_indexes)
     print("non_overlap_indexes len", len(non_overlap_indexes))
+    # print("non_overlap_indexes", non_overlap_indexes)
+
     print("validate_indexes len", len(validate_indexes))
     print("test_indexes len", len(test_indexes))
 
@@ -75,10 +79,10 @@ if __name__ == '__main__':
     privatekey = paillierEncrypt.get_privacy_key()
 
     fake_model_param = FakeFTLModelParam(alpha=100)
-    partyA = EncryptedFTLGuestModel(autoencoder_A, fake_model_param, public_key=publickey)
-    partyB = EncryptedFTLHostModel(autoencoder_B, fake_model_param, public_key=publickey)
+    partyA = FasterEncryptedFTLGuestModel(autoencoder_A, fake_model_param, public_key=publickey)
+    partyB = FasterEncryptedFTLHostModel(autoencoder_B, fake_model_param, public_key=publickey)
 
-    federatedLearning = LocalEncryptedFederatedTransferLearning(partyA, partyB, privatekey)
+    federatedLearning = LocalFasterEncryptedFederatedTransferLearning(partyA, partyB, privatekey)
 
     print("################################ Train Federated Models ############################")
     start_time = time.time()
@@ -118,6 +122,6 @@ if __name__ == '__main__':
                 # aucs.append(auc)
 
         end_time = time.time()
-        series_plot(losses, fscores, aucs)
+        # series_plot(losses, fscores, aucs)
         print("running time", end_time - start_time)
 
