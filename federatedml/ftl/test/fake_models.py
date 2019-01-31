@@ -44,6 +44,18 @@ class FakeAutoencoder(object):
     def apply_gradients(self, gradients):
         pass
 
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = np.sum(encrypt_grads_ex * grads_W, axis=1)
+        encrypt_grads_b = np.sum(encrypt_grads * grads_b, axis=1)
+        print("encrypt_grads_ex shape", encrypt_grads_ex.shape)
+        print("encrypt_grads_W shape", encrypt_grads_W.shape)
+        print("encrypt_grads_b shape", encrypt_grads_b.shape)
+        return encrypt_grads_W, encrypt_grads_b
+
     def backpropogate(self, X, y, in_grad):
         # print("in backpropogate with model ", self.id)
         # print("X shape", X.shape)

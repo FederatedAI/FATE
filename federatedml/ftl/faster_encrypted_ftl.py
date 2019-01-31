@@ -95,7 +95,6 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
             self.logger.debug("enc_grad_A_overlap shape" + str(enc_grad_A_overlap.shape))
 
         enc_loss_grad_A = [[0 for _ in range(self.enc_uB_overlap.shape[1])] for _ in range(len(self.y))]
-        # TODO: need more efficient way to do following task
         for i, j in enumerate(self.non_overlap_indexes):
             enc_loss_grad_A[j] = enc_grad_A_nonoverlap[i]
         for i, j in enumerate(self.overlap_indexes):
@@ -222,14 +221,14 @@ class LocalFasterEncryptedFederatedTransferLearning(object):
         self.guest.set_batch(X_A, y, non_overlap_indexes, overlap_indexes)
         self.host.set_batch(X_B, overlap_indexes)
 
-        comp_B = self.host.send_components()
         comp_A = self.guest.send_components()
+        comp_B = self.host.send_components()
 
         self.guest.receive_components(comp_B)
         self.host.receive_components(comp_A)
 
-        precomputed_components_B = self.host.send_precomputed_components()
         precomputed_components_A = self.guest.send_precomputed_components()
+        precomputed_components_B = self.host.send_precomputed_components()
 
         self.guest.receive_precomputed_components(precomputed_components_B)
         self.host.receive_precomputed_components(precomputed_components_A)
