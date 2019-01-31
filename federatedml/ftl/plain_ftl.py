@@ -63,8 +63,8 @@ class PlainFTLGuestModel(PartyModelInterface):
 
     def _compute_components(self):
         self.uA = self.localModel.transform(self.X)
-        # y_A_u_A has shape (1, feature_dim)
-        # y_A_u_A_2 has shape (feature_dim, feature_dim)
+        # phi has shape (1, feature_dim)
+        # phi_2 has shape (feature_dim, feature_dim)
         self.phi = self.__compute_phi(self.uA, self.y)
         self.phi_2 = np.matmul(self.phi.transpose(), self.phi)
 
@@ -185,8 +185,8 @@ class PlainFTLHostModel(PartyModelInterface):
         self.uB = self.localModel.transform(self.X)
 
         # following three parameters will be sent to guest
-        # U_B_overlap has shape (len(overlap_indexes), feature_dim)
-        # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
+        # uB_overlap has shape (len(overlap_indexes), feature_dim)
+        # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
         self.uB_overlap = self.uB[self.overlap_indexes]
         self.uB_overlap_2 = np.matmul(np.expand_dims(self.uB_overlap, axis=2), np.expand_dims(self.uB_overlap, axis=1))
