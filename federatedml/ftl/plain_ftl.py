@@ -128,11 +128,11 @@ class PlainFTLGuestModel(PartyModelInterface):
         grad_A_nonoverlap = self.alpha * const * self.y[self.non_overlap_indexes] / len(self.y)
         grad_A_overlap = self.alpha * const * self.y_overlap / len(self.y) + self.mapping_comp_B
 
-        loss_grads_A = np.zeros((len(self.y), self.uB_overlap.shape[1]))
-        loss_grads_A[self.non_overlap_indexes, :] = grad_A_nonoverlap
-        loss_grads_A[self.overlap_indexes, :] = grad_A_overlap
-        self.loss_grads = loss_grads_A
-        self.localModel.backpropogate(self.X, self.y, loss_grads_A)
+        loss_grad_A = np.zeros((len(self.y), self.uB_overlap.shape[1]))
+        loss_grad_A[self.non_overlap_indexes, :] = grad_A_nonoverlap
+        loss_grad_A[self.overlap_indexes, :] = grad_A_overlap
+        self.loss_grads = loss_grad_A
+        self.localModel.backpropogate(self.X, self.y, loss_grad_A)
 
     def send_loss(self):
         return self.loss
@@ -154,11 +154,11 @@ class PlainFTLGuestModel(PartyModelInterface):
     def get_loss_grads(self):
         return self.loss_grads
 
-    def predict(self, U_B):
+    def predict(self, uB):
         if self.phi is None:
             self.uA = self.localModel.transform(self.X)
             self.phi = self.__compute_phi(self.uA, self.y)
-        return sigmoid(np.matmul(U_B, self.phi.transpose()))
+        return sigmoid(np.matmul(uB, self.phi.transpose()))
 
     def restore_model(self, model_parameters):
         self.localModel.restore_model(model_parameters)
@@ -182,38 +182,38 @@ class PlainFTLHostModel(PartyModelInterface):
         self.overlap_indexes = overlap_indexes
 
     def _compute_components(self):
-        self.U_B = self.localModel.transform(self.X)
+        self.uB = self.localModel.transform(self.X)
 
         # following three parameters will be sent to guest
         # U_B_overlap has shape (len(overlap_indexes), feature_dim)
         # U_B_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
-        self.U_B_overlap = self.U_B[self.overlap_indexes]
-        self.U_B_overlap_2 = np.matmul(np.expand_dims(self.U_B_overlap, axis=2), np.expand_dims(self.U_B_overlap, axis=1))
-        self.mapping_comp_B = - self.U_B_overlap / self.feature_dim
+        self.uB_overlap = self.uB[self.overlap_indexes]
+        self.uB_overlap_2 = np.matmul(np.expand_dims(self.uB_overlap, axis=2), np.expand_dims(self.uB_overlap, axis=1))
+        self.mapping_comp_B = - self.uB_overlap / self.feature_dim
 
         if self.is_trace:
-            self.logger.debug("U_B_overlap shape" + str(self.U_B_overlap.shape))
-            self.logger.debug("U_B_overlap_2 shape" + str(self.U_B_overlap_2.shape))
+            self.logger.debug("uB_overlap shape" + str(self.uB_overlap.shape))
+            self.logger.debug("uB_overlap_2 shape" + str(self.uB_overlap_2.shape))
             self.logger.debug("mapping_comp_B shape" + str(self.mapping_comp_B.shape))
 
     def send_components(self):
         self._compute_components()
-        return [self.U_B_overlap, self.U_B_overlap_2, self.mapping_comp_B]
+        return [self.uB_overlap, self.uB_overlap_2, self.mapping_comp_B]
 
     def receive_components(self, components):
-        self.comp_A_beta1 = components[0]
-        self.comp_A_beta2 = components[1]
+        self.y_overlap_2_phi_2 = components[0]
+        self.y_overlap_phi = components[1]
         self.mapping_comp_A = components[2]
         self._update_gradients()
 
     def _update_gradients(self):
-        U_B_overlap_ex = np.expand_dims(self.U_B_overlap, axis=1)
-        U_B_comp_A_beta1 = np.matmul(U_B_overlap_ex, self.comp_A_beta1)
-        grad_l1_B = np.squeeze(U_B_comp_A_beta1, axis=1) + self.comp_A_beta2
-        grad_loss_B = self.alpha * grad_l1_B + self.mapping_comp_A
-        self.loss_grads = grad_loss_B
-        self.localModel.backpropogate(self.X[self.overlap_indexes], None, grad_loss_B)
+        uB_overlap_ex = np.expand_dims(self.uB_overlap, axis=1)
+        uB_overlap_y_overlap_2_phi_2 = np.matmul(uB_overlap_ex, self.y_overlap_2_phi_2)
+        l1_grad_B = np.squeeze(uB_overlap_y_overlap_2_phi_2, axis=1) + self.y_overlap_phi
+        loss_grad_B = self.alpha * l1_grad_B + self.mapping_comp_A
+        self.loss_grads = loss_grad_B
+        self.localModel.backpropogate(self.X[self.overlap_indexes], None, loss_grad_B)
 
     def get_loss_grads(self):
         return self.loss_grads

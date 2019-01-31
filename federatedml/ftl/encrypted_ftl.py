@@ -166,7 +166,7 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
         self._update_gradients()
 
     def _update_gradients(self):
-        U_B_overlap_ex = np.expand_dims(self.U_B_overlap, axis=1)
+        U_B_overlap_ex = np.expand_dims(self.uB_overlap, axis=1)
         encrypted_U_B_comp_A_beta1 = encrypt_matmul_3(U_B_overlap_ex, self.comp_A_beta1)
         encrypted_grad_l1_B = compute_X_plus_Y(np.squeeze(encrypted_U_B_comp_A_beta1, axis=1), self.comp_A_beta2)
         encrypted_grad_loss_B = compute_X_plus_Y(self.alpha * encrypted_grad_l1_B, self.mapping_comp_A)
