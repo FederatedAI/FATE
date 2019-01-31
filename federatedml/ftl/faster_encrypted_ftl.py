@@ -133,7 +133,7 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
         self.loss = loss
 
     def _update_loss(self):
-        U_A_overlap_prime = - self.U_A_overlap / self.feature_dim
+        U_A_overlap_prime = - self.uA_overlap / self.feature_dim
         loss_overlap = np.sum(compute_sum_XY(U_A_overlap_prime, self.U_B_overlap))
         loss_Y = self.__compute_encrypt_loss_y(self.U_B_overlap, self.y_overlap, self.phi)
         self.loss = self.alpha * loss_Y + loss_overlap
