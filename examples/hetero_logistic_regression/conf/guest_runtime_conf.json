@@ -46,7 +46,7 @@
         "key_length": 1024
     },
     "InitParam": {
-        "init_method": "random_normal",
+        "init_method": "random_uniform",
         "fit_intercept": true
     },
     "EvaluateParam":{
