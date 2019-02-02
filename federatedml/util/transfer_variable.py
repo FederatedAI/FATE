@@ -143,6 +143,8 @@ class HeteroFTLTransferVariable(BaseTransferVariable):
         self.batch_data_index = Variable(name="HeteroFTLTransferVariable.batch_data_index", auth={'src': "guest", 'dst': ['host']})
         self.host_component_list = Variable(name="HeteroFTLTransferVariable.host_component_list", auth={'src': "host", 'dst': ['guest']})
         self.guest_component_list = Variable(name="HeteroFTLTransferVariable.guest_component_list", auth={'src': "guest", 'dst': ['host']})
+        self.host_precomputed_comp_list = Variable(name="HeteroFTLTransferVariable.host_precomputed_comp_list", auth={'src': "host", 'dst': ['guest']})
+        self.guest_precomputed_comp_list = Variable(name="HeteroFTLTransferVariable.guest_precomputed_comp_list", auth={'src': "guest", 'dst': ['host']})
         self.encrypt_guest_gradient = Variable(name="HeteroFTLTransferVariable.encrypt_guest_gradient", auth={'src': "guest", 'dst': ['arbiter']})
         self.decrypt_guest_gradient = Variable(name="HeteroFTLTransferVariable.decrypt_guest_gradient", auth={'src': "arbiter", 'dst': ['guest']})
         self.encrypt_host_gradient = Variable(name="HeteroFTLTransferVariable.encrypt_host_gradient", auth={'src': "host", 'dst': ['arbiter']})

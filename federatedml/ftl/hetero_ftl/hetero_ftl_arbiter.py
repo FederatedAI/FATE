@@ -117,6 +117,7 @@ class HeteroFTLArbiter(HeteroFTLParty):
             self.n_iter_ += 1
             if is_stop:
                 break
+
         end_time = time.time()
         LOGGER.info("@ running time: " + str(end_time - start_time))
 

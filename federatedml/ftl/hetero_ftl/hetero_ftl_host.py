@@ -16,8 +16,9 @@
 
 import numpy as np
 import time
-from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
+from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
+from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
 from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, create_table, convert_instance_table_to_dict, convert_instance_table_to_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
@@ -161,9 +162,12 @@ class HeteroPlainFTLHost(HeteroFTLHost):
 
 class HeteroEncryptFTLHost(HeteroFTLHost):
 
-    def __init__(self, host: EncryptedFTLHostModel, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
+    def __init__(self, host, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
         super(HeteroEncryptFTLHost, self).__init__(host, model_param, transfer_variable)
-        self.host_model = host
+        self.host_model: EncryptedFTLHostModel = host
+
+    def _precompute(self):
+        pass
 
     def fit(self, host_data):
         LOGGER.info("@ start host fit")
@@ -179,6 +183,8 @@ class HeteroEncryptFTLHost(HeteroFTLHost):
 
         self.host_model.set_batch(host_x, overlap_indexes)
         self.host_model.set_public_key(public_key)
+
+        start_time = time.time()
         while self.n_iter_ < self.max_iter:
             host_comp = self.host_model.send_components()
             self._do_remote(host_comp, name=self.transfer_variable.host_component_list.name,
@@ -191,6 +197,8 @@ class HeteroEncryptFTLHost(HeteroFTLHost):
                                           self.transfer_variable.guest_component_list, self.n_iter_),
                                       idx=-1)[0]
             self.host_model.receive_components(guest_comp)
+
+            self._precompute()
 
             encrypt_host_gradients = self.host_model.send_gradients()
             self._do_remote(encrypt_host_gradients, name=self.transfer_variable.encrypt_host_gradient.name,
@@ -212,4 +220,30 @@ class HeteroEncryptFTLHost(HeteroFTLHost):
             self.n_iter_ += 1
             if is_stop:
                 break
+
+        end_time = time.time()
+        LOGGER.info("@ running time: " + str(end_time - start_time))
+
+
+class FasterHeteroEncryptFTLHost(HeteroEncryptFTLHost):
+
+    def __init__(self, host, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
+        super(FasterHeteroEncryptFTLHost, self).__init__(host, model_param, transfer_variable)
+        self.host_model: FasterEncryptedFTLHostModel = host
+
+    def _precompute(self):
+
+        host_precomputed_comp = self.host_model.send_precomputed_components()
+        self._do_remote(host_precomputed_comp, name=self.transfer_variable.host_precomputed_comp_list.name,
+                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_precomputed_comp_list,
+                                                                       self.n_iter_),
+                        role=consts.GUEST,
+                        idx=-1)
+
+        guest_precomputed_comp = self._do_get(name=self.transfer_variable.guest_precomputed_comp_list.name,
+                                  tag=self.transfer_variable.generate_transferid(
+                                      self.transfer_variable.guest_precomputed_comp_list, self.n_iter_),
+                                  idx=-1)[0]
+        self.host_model.receive_precomputed_components(guest_precomputed_comp)
+
 

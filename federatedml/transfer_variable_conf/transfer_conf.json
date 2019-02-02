@@ -350,6 +350,18 @@
         "host"
       ]
     },
+    "host_precomputed_comp_list": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_precomputed_comp_list": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
     "encrypt_guest_gradient": {
       "src": "guest",
       "dst": [
