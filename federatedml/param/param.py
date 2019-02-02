@@ -92,7 +92,7 @@ class WorkFlowParam(object):
 
 
 class InitParam(object):
-    def __init__(self, init_method='random_normal', init_const=1, fit_intercept=False):
+    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
         self.init_method = init_method
         self.init_const = init_const
         self.fit_intercept = fit_intercept
