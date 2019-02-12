@@ -22,6 +22,7 @@ from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel
 from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, convert_instance_table_to_dict, convert_instance_table_to_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
+from federatedml.ftl.data_util.log_util import create_shape_msg
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 from federatedml.optim.convergence import DiffConverge
@@ -169,10 +170,9 @@ class HeteroEncryptFTLGuest(HeteroFTLGuest):
 
         start_time = time.time()
         while self.n_iter_ < self.max_iter:
-            guest_comp = self.guest_model.send_components()
 
-            LOGGER.debug("send guest_comp: " + str(guest_comp[0].shape) + ", " + str(guest_comp[1].shape) + ", " + str(
-                guest_comp[2].shape))
+            guest_comp = self.guest_model.send_components()
+            LOGGER.debug("send guest_comp: " + create_shape_msg(guest_comp))
             self._do_remote(guest_comp, name=self.transfer_variable.guest_component_list.name,
                             tag=self.transfer_variable.generate_transferid(self.transfer_variable.guest_component_list, self.n_iter_),
                             role=consts.HOST,
@@ -181,22 +181,23 @@ class HeteroEncryptFTLGuest(HeteroFTLGuest):
             host_comp = self._do_get(name=self.transfer_variable.host_component_list.name,
                                      tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_component_list, self.n_iter_),
                                      idx=-1)[0]
-
-            LOGGER.debug("receive host_comp: " + str(host_comp[0].shape) + ", " + str(host_comp[1].shape) + ", " + str(host_comp[2].shape))
+            LOGGER.debug("receive host_comp: " + create_shape_msg(host_comp))
             self.guest_model.receive_components(host_comp)
 
             self._precompute()
 
             encrypt_guest_gradients = self.guest_model.send_gradients()
+            LOGGER.debug("send encrypt_guest_gradients: " + create_shape_msg(encrypt_guest_gradients))
             self._do_remote(encrypt_guest_gradients, name=self.transfer_variable.encrypt_guest_gradient.name,
                             tag=self.transfer_variable.generate_transferid(self.transfer_variable.encrypt_guest_gradient, self.n_iter_),
                             role=consts.ARBITER,
                             idx=-1)
 
-            decrypt_guest_gradient = self._do_get(name=self.transfer_variable.decrypt_guest_gradient.name,
-                                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.decrypt_guest_gradient, self.n_iter_),
-                                                  idx=-1)[0]
-            self.guest_model.receive_gradients(decrypt_guest_gradient)
+            decrypt_guest_gradients = self._do_get(name=self.transfer_variable.decrypt_guest_gradient.name,
+                                                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.decrypt_guest_gradient, self.n_iter_),
+                                                   idx=-1)[0]
+            LOGGER.debug("receive decrypt_guest_gradients: " + create_shape_msg(decrypt_guest_gradients))
+            self.guest_model.receive_gradients(decrypt_guest_gradients)
 
             encrypt_loss = self.guest_model.send_loss()
             self._do_remote(encrypt_loss, name=self.transfer_variable.encrypt_loss.name,
@@ -224,6 +225,7 @@ class FasterHeteroEncryptFTLGuest(HeteroEncryptFTLGuest):
         self.guest_model: FasterEncryptedFTLGuestModel = guest
 
     def _precompute(self):
+        LOGGER.info("@ start guest precompute")
 
         guest_precomputed_comp = self.guest_model.send_precomputed_components()
         self._do_remote(guest_precomputed_comp, name=self.transfer_variable.guest_precomputed_comp_list.name,
@@ -233,9 +235,29 @@ class FasterHeteroEncryptFTLGuest(HeteroEncryptFTLGuest):
                         idx=-1)
 
         host_precomputed_comp = self._do_get(name=self.transfer_variable.host_precomputed_comp_list.name,
-                                 tag=self.transfer_variable.generate_transferid(
-                                     self.transfer_variable.host_precomputed_comp_list, self.n_iter_),
-                                 idx=-1)[0]
+                                             tag=self.transfer_variable.generate_transferid(
+                                                 self.transfer_variable.host_precomputed_comp_list, self.n_iter_),
+                                             idx=-1)[0]
         self.guest_model.receive_precomputed_components(host_precomputed_comp)
+
+
+class GuestFactory(object):
+
+    @staticmethod
+    def create(ftl_model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable, ftl_local_model):
+        if ftl_model_param.is_encrypt:
+            if ftl_model_param.enc_ftl == "enc_ftl2":
+                LOGGER.debug("@ create encrypt faster ftl_guest")
+                host_model = FasterEncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
+                host = FasterHeteroEncryptFTLGuest(host_model, ftl_model_param, transfer_variable)
+            else:
+                LOGGER.debug("@ create encrypt ftl_guest")
+                host_model = EncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
+                host = HeteroEncryptFTLGuest(host_model, ftl_model_param, transfer_variable)
+        else:
+            LOGGER.debug("@ create plain ftl_guest")
+            host_model = PlainFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
+            host = HeteroPlainFTLGuest(host_model, ftl_model_param, transfer_variable)
+        return host
 
 

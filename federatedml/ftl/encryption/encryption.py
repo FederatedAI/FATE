@@ -16,9 +16,9 @@
 
 import numpy as np
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
-
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
 
 def encrypt_array(public_key: PaillierPublicKey, A):
     encrypt_A = []

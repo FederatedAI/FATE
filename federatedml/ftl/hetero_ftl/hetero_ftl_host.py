@@ -206,11 +206,11 @@ class HeteroEncryptFTLHost(HeteroFTLHost):
                             role=consts.ARBITER,
                             idx=-1)
 
-            decrypt_host_gradient = self._do_get(name=self.transfer_variable.decrypt_host_gradient.name,
+            decrypt_host_gradients = self._do_get(name=self.transfer_variable.decrypt_host_gradient.name,
                                                  tag=self.transfer_variable.generate_transferid(
                                                      self.transfer_variable.decrypt_host_gradient, self.n_iter_),
                                                  idx=-1)[0]
-            self.host_model.receive_gradients(decrypt_host_gradient)
+            self.host_model.receive_gradients(decrypt_host_gradients)
 
             is_stop = self._do_get(name=self.transfer_variable.is_encrypted_ftl_stopped.name,
                                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.is_encrypted_ftl_stopped, self.n_iter_),
@@ -232,6 +232,7 @@ class FasterHeteroEncryptFTLHost(HeteroEncryptFTLHost):
         self.host_model: FasterEncryptedFTLHostModel = host
 
     def _precompute(self):
+        LOGGER.info("@ start host precompute")
 
         host_precomputed_comp = self.host_model.send_precomputed_components()
         self._do_remote(host_precomputed_comp, name=self.transfer_variable.host_precomputed_comp_list.name,
@@ -241,9 +242,30 @@ class FasterHeteroEncryptFTLHost(HeteroEncryptFTLHost):
                         idx=-1)
 
         guest_precomputed_comp = self._do_get(name=self.transfer_variable.guest_precomputed_comp_list.name,
-                                  tag=self.transfer_variable.generate_transferid(
-                                      self.transfer_variable.guest_precomputed_comp_list, self.n_iter_),
-                                  idx=-1)[0]
+                                              tag=self.transfer_variable.generate_transferid(
+                                                  self.transfer_variable.guest_precomputed_comp_list, self.n_iter_),
+                                              idx=-1)[0]
         self.host_model.receive_precomputed_components(guest_precomputed_comp)
+
+
+class HostFactory(object):
+
+    @staticmethod
+    def create(ftl_model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable, ftl_local_model):
+        if ftl_model_param.is_encrypt:
+            if ftl_model_param.enc_ftl == "enc_ftl2":
+                LOGGER.debug("@ create encrypt faster ftl_host")
+                host_model = FasterEncryptedFTLHostModel(local_model=ftl_local_model, model_param=ftl_model_param)
+                host = FasterHeteroEncryptFTLHost(host_model, ftl_model_param, transfer_variable)
+            else:
+                LOGGER.debug("@ create encrypt ftl_host")
+                host_model = EncryptedFTLHostModel(local_model=ftl_local_model, model_param=ftl_model_param)
+                host = HeteroEncryptFTLHost(host_model, ftl_model_param, transfer_variable)
+
+        else:
+            LOGGER.debug("@ create plain ftl_host")
+            host_model = PlainFTLHostModel(local_model=ftl_local_model, model_param=ftl_model_param)
+            host = HeteroPlainFTLHost(host_model, ftl_model_param, transfer_variable)
+        return host
 
 

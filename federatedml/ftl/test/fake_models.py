@@ -75,8 +75,8 @@ class FakeAutoencoder(object):
 
 
 class FakeFTLModelParam(object):
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
+    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5, alpha=100, lr_decay=0.001,
+                 l2_para=1, is_encrypt=True, enc_ftl="enc_ftl2"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
@@ -84,6 +84,7 @@ class FakeFTLModelParam(object):
         self.lr_decay = lr_decay
         self.l2_para = l2_para
         self.is_encrypt = is_encrypt
+        self.enc_ftl = enc_ftl
 
 
 class FakeDiffConverge(ConvergeFunction):
