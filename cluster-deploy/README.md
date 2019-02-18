@@ -34,11 +34,12 @@ Output tar file names are like `fate-${module}-${version}.tar.gz`. It contains `
 [`cluster-deploy/example-dir-tree`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/example-dir-tree) contains an example dir trees. You can extract each tar file in the corresponding dir.
 
 Let's take `federation` module as an example. After packaing for version 0.1, you get a `fate-federation-0.1.tar.gz`. Then you can perform the followings:
-a. `cd ${path-to-example-dir-tree}/federation`. 
-b. `tar xzf fate-federation-0.1.tar.gz`, so that tar file is extracted.
-c. `cp -r FATE/arch/driver/federation/src/main/resources/ conf/`, so that example configuration files are copied and a `conf` dir is created for them.
-d. Modify configuration files. See section 2.3 for more details.
-e. `ln -s fate-federation-0.1.jar fate-federation.jar` to create a symlink, removing version-specific dependency for other tools.
+
+1. `cd ${path-to-example-dir-tree}/federation`. 
+2. `tar xzf fate-federation-0.1.tar.gz`, so that tar file is extracted.
+3. `cp -r FATE/arch/driver/federation/src/main/resources/ conf/`, so that example configuration files are copied and a `conf` dir is created for them.
+4. Modify configuration files. See section 2.3 for more details.
+5. `ln -s fate-federation-0.1.jar fate-federation.jar` to create a symlink, removing version-specific dependency for other tools.
 
 You can perform the same to Java modules.
 
