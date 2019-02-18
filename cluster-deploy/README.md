@@ -76,6 +76,11 @@ git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEA
 cd ${path-to-example-dir-tree}/python
 tar -xf python.tar
 ```
+
+### 3.2. Configuration Files
+Configuration file path: 
+`python/arch/conf/server_conf.json`
+
 Users can find a detailed configuration document in 
 [`cluster-deploy/doc` ](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
 
