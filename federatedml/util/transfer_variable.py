@@ -160,4 +160,13 @@ class HeteroFTLTransferVariable(BaseTransferVariable):
         self.decrypt_prob = Variable(name="HeteroFTLTransferVariable.decrypt_prob", auth={'src': "arbiter", 'dst': ['guest']})
         self.guest_sample_indexes = Variable(name="HeteroFTLTransferVariable.guest_sample_indexes", auth={'src': "guest", 'dst': ['host']})
         self.host_sample_indexes = Variable(name="HeteroFTLTransferVariable.host_sample_indexes", auth={'src': "host", 'dst': ['guest']})
+        self.guest_public_key = Variable(name="HeteroFTLTransferVariable.guest_public_key", auth={'src': "guest", 'dst': ['host']})
+        self.host_public_key = Variable(name="HeteroFTLTransferVariable.host_public_key", auth={'src': "host", 'dst': ['guest']})
+        self.masked_enc_guest_gradients = Variable(name="HeteroFTLTransferVariable.masked_enc_guest_gradients", auth={'src': "guest", 'dst': ['host']})
+        self.masked_enc_host_gradients = Variable(name="HeteroFTLTransferVariable.masked_enc_host_gradients", auth={'src': "host", 'dst': ['guest']})
+        self.masked_dec_guest_gradients = Variable(name="HeteroFTLTransferVariable.masked_dec_guest_gradients", auth={'src': "host", 'dst': ['guest']})
+        self.masked_dec_host_gradients = Variable(name="HeteroFTLTransferVariable.masked_dec_host_gradients", auth={'src': "guest", 'dst': ['host']})
+        self.masked_enc_loss = Variable(name="HeteroFTLTransferVariable.masked_enc_loss", auth={'src': "guest", 'dst': ['host']})
+        self.masked_dec_loss = Variable(name="HeteroFTLTransferVariable.masked_dec_loss", auth={'src': "host", 'dst': ['guest']})
+        self.is_decentralized_enc_ftl_stopped = Variable(name="HeteroFTLTransferVariable.is_decentralized_enc_ftl_stopped", auth={'src': "guest", 'dst': ['host']})
         pass

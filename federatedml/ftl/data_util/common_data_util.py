@@ -311,3 +311,30 @@ def get_timestamp():
     local_time = time.localtime(time.time())
     timestamp = time.strftime("%Y%m%d%H%M%S", local_time)
     return timestamp
+
+
+def add_random_mask(value):
+    if type(value) is list or type(value) is tuple:
+        masked_components = []
+        masks = []
+        for c in value:
+            mask = np.random.random_sample(c.shape)
+            c = c + mask
+            masked_components.append(c)
+            masks.append(mask)
+        return masked_components, masks
+    else:
+        mask = np.random.rand(1)[0]
+        return value + mask, mask
+
+
+def remove_random_mask(value, mask):
+    if type(value) is list or type(value) is tuple:
+        cleared_components = []
+        for c, m in zip(value, mask):
+            c = c - m
+            cleared_components.append(c)
+        return cleared_components
+    else:
+        return value - mask
+

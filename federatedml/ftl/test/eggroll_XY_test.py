@@ -23,15 +23,32 @@ from arch.api.eggroll import init
 
 class TestSum(unittest.TestCase):
 
-    def test_distributed_calculate_XY(self):
-        print("--- test_distributed_calculate_XY ---")
+    def test_distributed_calculate_XY_1(self):
+        print("--- test_distributed_calculate_XY_1 ---")
+        # X has shape (4, 3)
         X = np.array([[1., 2., 3.],
-                        [4., 5., 6.],
-                        [7., 8., 9.]])
+                      [4., 5., 6.],
+                      [7., 8., 9.],
+                      [10, 11, 12]])
 
-        Y = np.array([[1], [-1], [1]])
+        # Y has shape (4, 1)
+        Y = np.array([[2], [1], [-1], [1]])
 
         actual_XY = X * Y
+        print(actual_XY, actual_XY.shape)
+        XY = compute_XY(X, Y)
+        assert_matrix(actual_XY, XY)
+
+    def test_distributed_calculate_XY_2(self):
+        print("--- test_distributed_calculate_XY_2 ---")
+        # X has shape (4, 3, 3)
+        X = np.random.rand(4, 3, 3)
+
+        # Y has shape (4, 1, 1)
+        Y = np.random.rand(4, 1, 1)
+
+        actual_XY = X * Y
+        print(actual_XY, actual_XY.shape)
         XY = compute_XY(X, Y)
         assert_matrix(actual_XY, XY)
 
@@ -39,8 +56,8 @@ class TestSum(unittest.TestCase):
         print("--- test_distributed_calculate_avg_XY_1 ---")
 
         X = np.array([[1., 2., 3.],
-                        [4., 5., 6.],
-                        [7., 8., 9.]])
+                      [4., 5., 6.],
+                      [7., 8., 9.]])
 
         Y = np.array([[1], [-1], [1]])
 

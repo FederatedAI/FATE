@@ -16,8 +16,17 @@
 
 import numpy as np
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
+
+def generate_encryption_key_pair():
+    paillierEncrypt = PaillierEncrypt()
+    paillierEncrypt.generate_key()
+    public_key = paillierEncrypt.get_public_key()
+    private_key = paillierEncrypt.get_privacy_key()
+    return public_key, private_key
 
 
 def encrypt_array(public_key: PaillierPublicKey, A):

@@ -453,6 +453,61 @@
       "dst": [
         "guest"
       ]
+    },
+
+    "guest_public_key": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_public_key": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_enc_guest_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_host_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_guest_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_host_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_loss": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_dec_loss": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "is_decentralized_enc_ftl_stopped": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
     }
   }
 }
