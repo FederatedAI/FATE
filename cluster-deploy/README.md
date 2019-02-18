@@ -20,7 +20,7 @@ There is a script in this project that can ease this. It packs up target jars an
 
 You need to change `base_dir` and `output_dir` with respect to the arch directory of this project and output directory. 
 
-`base_dir`is `FATE/arch` in your local environment, and `output_dir` is the dir where you want to put the packging output tar files.
+`base_dir` is the path of `FATE/arch` in your local environment, and `output_dir` is the dir where you want to put the packging output tar files.
 
 Then you can run the following command:
 
