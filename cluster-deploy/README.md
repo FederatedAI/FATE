@@ -68,6 +68,17 @@ We provide example management scripts to run these services. Users can find them
 
 ## 3. Python Components
 
+### 3.1. Packaging
+
+```
+mkdir -p ${path-to-example-dir-tree}/python
+git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEAD) arch/api federatedml workflow examples
+cd ${path-to-example-dir-tree}/python
+tar -xf python.tar
+```
+Users can find a detailed configuration document in 
+[`cluster-deploy/doc` ](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
+
 
 ## 4. How to Run in Cluster Mode
 Please refer to configuation guide [here](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc/configuration.md)
