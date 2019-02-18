@@ -25,11 +25,14 @@ Initial release of FATE.
 	
 
 > Architecture
-*	Support Standalone Computing
-*   Support Distributed Computing
-*	Support Distributed k-v Storage
-*   Support MapReduce Programming Mode
-*	Support Cross-Site Heterogenous Infrastructure 
+* Initial release of Computing APIs
+* Initial release of Storage APIs
+* Initial release of Federation APIs
+* Initial release of cross-site network communication (i.e. 'Federation')
+* Initial release of Standalone runtime, including computing engine and k-v storage
+* Initial release of Distributed runtime, including distributed computing engine, distributed k-v storage, metadata management and intra-site/cross-site network communication
+* Support cross-site heterogenous infrastructure
+* Architectural support of offline modeling and inference
 
   
 > Deploy
