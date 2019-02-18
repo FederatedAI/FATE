@@ -32,7 +32,7 @@ Initial release of FATE.
 * Initial release of Standalone runtime, including computing engine and k-v storage
 * Initial release of Distributed runtime, including distributed computing engine, distributed k-v storage, metadata management and intra-site/cross-site network communication
 * Support cross-site heterogenous infrastructure
-* Architectural support of offline modeling and inference
+* Initial support of modeling and inference
 
   
 > Deploy
