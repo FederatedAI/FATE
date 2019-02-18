@@ -84,6 +84,15 @@ Configuration file path:
 Users can find a detailed configuration document in 
 [`cluster-deploy/doc` ](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
 
+### 3.3 How to run
+
+```
+#enter virtual env fisrt
+(venv) $ pip install -r requirements.txt
+(venv) $ export PYTHONPATH=${path-to-example-dir-tree}/python
+(venv) $ python ${path-to-example-dir-tree}/python/processor/processor.py 2>&1 > ${path-to-example-dir-tree}/python/processor.out &
+```
+
 
 ## 4. How to Run in Cluster Mode
 Please refer to configuation guide [here](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc/configuration.md)
