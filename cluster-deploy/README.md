@@ -64,7 +64,7 @@ Number | Module Name     | Main Function                              | Configur
 
 Please note that users should add directory of configuration files to Java's classpath, so that these configurations can be loaded.
 
-We provide example management scripts to run these services. Users can find them under [`cluster-deploy/example-dir-tree`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/example-dir-tree), along with example directory tree described in section 5.
+We have also provided example management scripts to run these services. Users can find them under [`cluster-deploy/example-dir-tree`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/example-dir-tree), along with example directory tree described in section 5.
 
 ## 3. Python Components
 
