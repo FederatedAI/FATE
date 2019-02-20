@@ -57,7 +57,7 @@
         "predict_threshold": [0.5]
     },
     "FTLModelParam": {
-            "eps": 1e-3,
+            "eps": 10,
             "alpha": 100,
             "max_iter": 10,
             "is_encrypt": false,

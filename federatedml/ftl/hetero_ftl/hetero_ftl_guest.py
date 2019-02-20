@@ -290,6 +290,7 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
         LOGGER.debug("guest_y： " + str(guest_y.shape))
         LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
         LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
+        LOGGER.debug("converge eps: " + str(self.converge_func.eps))
 
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
         self.guest_model.set_public_key(self.public_key)
