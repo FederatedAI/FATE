@@ -22,7 +22,7 @@
         "output_format": "dense"
     },
     "WorkFlowParam": {
-        "method": "_method",
+        "method": "_workflow_method",
         "train_input_table": "_train_table_name",
         "train_input_namespace": "example_data_namespace",
         "model_table": "hetero_lr_model",
