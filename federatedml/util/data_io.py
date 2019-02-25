@@ -51,7 +51,7 @@ class DenseFeatureReader(object):
 
     def read_data(self, table_name, namespace):
         input_data = eggroll.table(table_name, namespace)
-        LOGGER.info("start to read data and change data to instance")
+        LOGGER.info("start to read dense data and change data to instance")
 
         params = [self.delimitor, self.data_type, self.missing_fill,
                   self.default_value, self.with_label, self.label_idx,
@@ -89,7 +89,7 @@ class DenseFeatureReader(object):
 
             if label_type == 'int':
                 label = int(label)
-            elif label_type == 'float64':
+            elif label_type in ["float", "float64"]:
                 label = float(label)
 
             if col_len > 1:
@@ -106,7 +106,7 @@ class DenseFeatureReader(object):
     def gen_output_format(features, data_type='float', output_format='dense'):
 
         if output_format not in ["dense", "sparse"]:
-            raise ValueError("output format %s is not define" % (output_format))
+            raise ValueError("output format {} is not define".format(output_format))
 
         if output_format == "dense":
             return np.asarray(features, dtype=data_type)
@@ -135,7 +135,8 @@ class DenseFeatureReader(object):
                 data.append(int(features[i]))
 
             else:
-                raise ValueError("data type %s is not define" % (data_type))
+                indices.append(i)
+                data.append(features[i])
 
         return SparseVector(indices, data, column_shape)
 
@@ -144,21 +145,98 @@ class DenseFeatureReader(object):
 # SparseFeatureReader: mainly for libsvm input format
 # =============================================================================
 class SparseFeatureReader(object):
-    def __init__(self):
-        pass
+    def __init__(self, data_io_param):
+        self.delimitor = data_io_param.delimitor
+        self.data_type = data_io_param.data_type
+        self.missing_fill = data_io_param.missing_fill
+        self.default_value = data_io_param.default_value
+        self.label_type = data_io_param.label_type
+        self.output_format = data_io_param.output_format
+
+    def get_max_feature_index(self, line, delimitor=' '):
+        if line.strip() == '':
+            raise ValueError("find an empty line, please check!!!")
+
+        cols = line.split(delimitor, -1)
+        if len(cols) <= 1:
+            return -1
+
+        return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[1:]])
+
+    def read_data(self, table_name, namespace):
+        input_data = eggroll.table(table_name, namespace)
+        LOGGER.info("start to read sparse data and change data to instance")
+
+        get_max_fid = functools.partial(self.get_max_feature_index, delimitor=self.delimitor)
+        max_feature = input_data.mapValues(get_max_fid).reduce(lambda max_fid1, max_fid2: max(max_fid1, max_fid2))
+
+        if max_feature == -1:
+            raise ValueError("no feature value in input data, please check!")
+
+        params = [self.delimitor, self.data_type, self.missing_fill,
+                  self.default_value, self.label_type,
+                  self.output_format, max_feature]
+
+        to_instance_with_param = functools.partial(self.to_instance, params)
+        data_instance = input_data.mapValues(to_instance_with_param)
+
+        return data_instance
 
     @staticmethod
-    def to_instance(kv_pair,
-                    delimitor=",",
-                    data_type='float64',
-                    with_label=None,
-                    label_idx=None,
-                    label_type='int',
-                    output_format="dense"):
-        key, value = kv_pair
+    def to_instance(param_list, value):
+        delimitor = param_list[0]
+        data_type = param_list[1]
+        missing_fill = param_list[2]
+        default_value = param_list[3]
+        label_type = param_list[4]
+        output_format = param_list[5]
+        max_fid = param_list[6]
 
-        label = None
-        features = None
-        """
-        need to implement
-        """
+        if output_format not in ["dense", "sparse"]:
+            raise ValueError("output format {} is not define".format(output_format))
+
+        cols = value.split(delimitor, -1)
+
+        label = cols[0]
+        if label_type == 'int':
+            label = int(label)
+        elif label_type in ["float", "float64"]:
+            label = float(label)
+
+        fid_value = []
+        for i in range(1, len(cols)):
+            fid, val = cols[i].split(":", -1)
+
+            if missing_fill:
+                if val in ['', 'NULL', 'null', 'NA']:
+                    val = default_value
+
+            fid = int(fid)
+            if data_type in ["float", "float64"]:
+                val = float(val)
+            elif data_type in ["int", "int64"]:
+                val = int(val)
+
+            fid_value.append((fid, val))
+
+        if output_format == "dense":
+            features = [default_value for i in range(max_fid + 1)]
+            for fid, val in fid_value:
+                features[fid] = val
+            
+            features = np.asarray(features, dtype=data_type)
+
+        else:
+            indices = []
+            data = []
+            for fid, val in fid_value:
+                indices.append(fid)
+                data.append(val)
+            
+            features = SparseVector(indices, data, max_fid + 1)
+
+        return Instance(inst_id=None,
+                        features=features,
+                        label=label)
+
+
