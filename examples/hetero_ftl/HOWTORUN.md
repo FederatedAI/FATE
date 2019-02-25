@@ -10,7 +10,7 @@ You can turn on the encryption version by setting the <b style="color:red">is_en
 
 #### Standalone vs Cluster
 
-You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to this [article]() for more details.
+You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy) for more details.
 
 You can turn on the cluster mode by setting the <b style="color:red">work_mode</b> parameter to 1. Otherwise set it to 0 (default). You can find this parameter in **guest_runtime_conf.json**, **host_runtime_conf.json**  and  **arbiter_runtime_conf.json** located in **examples/hetero_ftl/conf** folder.
 
@@ -86,7 +86,7 @@ For plain version, you only need to check logs for host and guest since arbiter 
 For encryption version, in addition to above two logs, you may also want to check log for arbiter:
 
 * **hetero_ftl_arbiter.log**, records log information for arbiter side of running the FTL algorithm. 
-  * In encryption version of FTL algorithm, only arbiter knows the loss for each iteration. Therefore, you can check the change loss in this log file. 
+  * In encryption version of FTL algorithm, only arbiter knows the loss for each iteration. Therefore, you can check the change of loss in this log file. 
 
 If you run the FTL algorithm by using **sh run_ftl_plain_standalone.sh {job_id}** or **sh run_ftl_enc_standalone.sh {job_id}**, two or three logs would be generated under **examples/hetero_ftl/** folder:
 
@@ -109,7 +109,7 @@ For running FTL algorithm, we only need to know four sections of parameters.
       * predict: predict labels for samples from the host
     * *work_mode*: if 0, we would run FTL algorithm in standalone mode. if 1, we would run FTL algorithm in cluster mode.
     
-    > Host, guest and/or arbiter must have the value for *work_mode* in a particular job.
+    > Host, guest and/or arbiter must have the same value for *work_mode* in a particular job.
     
     > Host and guest must have the same value for *method* parameter in a particular job. Arbiter should always have the value of "train" for this parameter.
     

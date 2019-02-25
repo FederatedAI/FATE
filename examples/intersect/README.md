@@ -36,7 +36,7 @@ In role guest:
 
 > sh run_intersect_cluster.sh guest job_id123 9999 10000
 
-This will run role guest. "job_id123" is the job id, "9999" is the party id of role guest, which is set during installation of Fate, while "10000"
+This will run role guest. "job_id123" is the job id, "9999" is the party id of role guest, which is set during installation of FATE, while "10000"
 is the party id of role host.
 
 In role arbiter:

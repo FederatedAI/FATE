@@ -27,6 +27,18 @@ class DataIOParam(object):
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  missing_fill=False, default_value=0, with_label=False, label_idx=0,
                  label_type='int', output_format='dense'):
+        """
+        Define some data io parameters.
+        :param input_format: Support 'dense' only in this version. 'sparse' format will be support in the future version
+        :param delimitor: Delimiter of data.
+        :param data_type: Data type
+        :param missing_fill: If True, missed value will be filled by specified value.
+        :param default_value: Use when missing_fill is True. The value to filled.
+        :param with_label: Specify whether the data contains label or not.
+        :param label_idx: Specify which column is the label if with_label is True
+        :param label_type: The label type
+        :param output_format: The output format.
+        """
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
@@ -40,12 +52,26 @@ class DataIOParam(object):
 
 class EncryptParam(object):
     def __init__(self, method=consts.PAILLIER, key_length=1024):
+        """
+        Set the encryption parameters.
+        :param method: Encrypt method, support 'Paillier' and 'rsa'
+        :param key_length: length of key.
+        """
         self.method = method
         self.key_length = key_length
 
 
 class EvaluateParam(object):
     def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+        """
+        Specify the evaluate parameters.
+        :param metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy'.
+                For example, metrics can be set as ['auc', 'precision', 'recall'], then these indexes will be output.
+        :param classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. Support 'multi' for
+                HeteroLR and Secureboosting.
+        :param pos_label: specify positive label type
+        :param thresholds: Specify the threshold use to separate positive and negative class.
+        """
         self.metrics = metrics
         self.classi_type = classi_type
         self.pos_label = pos_label
@@ -54,6 +80,11 @@ class EvaluateParam(object):
 
 class PredictParam(object):
     def __init__(self, with_proba=True, threshold=0.5):
+        """
+        Specify the predict parameters
+        :param with_proba: Specify whether the result contains probability
+        :param threshold: The threshold use to separate positive and negative class.
+        """
         self.with_proba = with_proba
         self.threshold = threshold
 
@@ -67,6 +98,33 @@ class WorkFlowParam(object):
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
                  n_splits=5):
+        """
+        Parameters that used in workflow.
+        :param method: workflow methods, string, support 'train', 'predict' 'cross_validation' and 'intersect'
+        :param train_input_table: The table name of input table
+        :param train_input_namespace: The db name or namespace of input table
+        :param model_table: The table name use to save model or load saved model
+        :param model_namespace: The namespace use to save model or load saved model
+        :param predict_input_table: The table name use to load predict input data
+        :param predict_input_namespace: The namespace use to load predict input data
+        :param predict_result_partition: Abandoned
+        :param predict_output_table: The table name use to save predict output data
+        :param predict_output_namespace: The namespace use to save predict output data
+        :param evaluation_output_table: The table name use to save evaluate output result
+        :param evaluation_output_namespace: The namespace use to save evaluate output result
+        :param data_input_table: The table name of input data when method is "cross_validation"
+        :param data_input_namespace: The namespace of input data when method is "cross_validation"
+        :param intersect_data_output_table: The table name of intersect output data
+        :param intersect_data_output_namespace: The namespace of intersect output result
+        :param dataio_param: An object contains dataio parameters. Set in DataIOParam class. Should not specify here.
+        :param predict_param: An object contains predict parameters. Set in PredictParam class. Should not specify here.
+        :param evaluate_param: An object contains evaluate parameters.
+                Set in EvaluateParam class. Should not specify here.
+        :param do_cross_validation: Abandoned
+        :param work_mode: Specify whether use standalone mode or cluster mode. 0 represent for standalone while
+                1 represent for cluster mode.
+        :param n_splits: Specify how many folds the split in KFlod method. Used in cross validation method only.
+        """
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -92,7 +150,14 @@ class WorkFlowParam(object):
 
 
 class InitParam(object):
-    def __init__(self, init_method='random_normal', init_const=1, fit_intercept=False):
+    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
+        """
+        Set how to initialize a model
+        :param init_method: init method, string, support 'random_uniform', 'random_normal',
+                'ones', 'zeros' and 'const'
+        :param init_const: Used when method is 'const'. Specify the constant.
+        :param fit_intercept: if True, an extra weight will be initialized as intercept.
+        """
         self.init_method = init_method
         self.init_const = init_const
         self.fit_intercept = fit_intercept
@@ -114,6 +179,29 @@ class LogisticParam(object):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  model_path='lr_model', table_name='lr_table'):
+        """
+        Set LR parameters. This is used by both homoLR and HeteroLR
+        :param penalty: penalty, should be 'L1' or 'L2'
+        :param eps: The tolerance of convergence
+        :param alpha: regularization strength
+        :param optimizer: optimize methods. Support 'sgd', 'rmsprop', 'adam' and 'adagrad'
+        :param party_weight: Specify the weight of current party.
+        :param batch_size: Specify the batch size during fitting. If not given or set to -1, batch size is set to
+                the same length of total data.
+        :param learning_rate: learning rate
+        :param init_param: An object contains init model parameters. Set in InitParam class. Should not specify here.
+        :param max_iter: Maximum number of iteration taken.
+        :param converge_func: Method used to judge converge or not. Support 'diff' or 'abs'.
+                a)	diff： Use difference of loss between two iterations to judge whether converge.
+                b)	abs: Use the absolute value of loss to judge whether converge.
+                Both thresholds are set by eps
+        :param encrypt_param: An object contains encryption parameters. Set in EncryptParam class. Should not specify here.
+        :param re_encrypt_batches: Used in HomoLR only. Specify how many batches to do an re-encrypt operation.
+                Re-encryption is needed since multiple add and multiply operations
+                would cause overflow in Paillier encryption. Note, too large batches may cause overflow error.
+        :param model_path: The db name to save this model.
+        :param table_name: The table name to save this model.
+        """
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha

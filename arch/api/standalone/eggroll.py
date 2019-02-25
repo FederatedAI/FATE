@@ -76,18 +76,18 @@ def _evict(_, env):
 
 
 @cached(cache=cache_utils.EvictTTLCache(maxsize=64, ttl=3600, evict=_evict))
-def _open_env(path):
+def _open_env(path, write=False):
     os.makedirs(path, exist_ok=True)
-    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, sync=False, map_size=10_737_418_240)
+    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, lock=write, sync=False, map_size=10_737_418_240)
 
 
 def _get_db_path(*args):
     return os.sep.join([Standalone.get_instance().data_dir, *args])
 
 
-def _get_env(*args):
+def _get_env(*args, write=False):
     _path = _get_db_path(*args)
-    return _open_env(_path)
+    return _open_env(_path, write=write)
 
 
 def _hash_key_to_partition(key, partitions):
@@ -121,8 +121,8 @@ class _Operand:
     def __str__(self):
         return _get_db_path(self._type, self._namespace, self._name, str(self._partition))
 
-    def as_env(self):
-        return _get_env(self._type, self._namespace, self._name, str(self._partition))
+    def as_env(self, write=False):
+        return _get_env(self._type, self._namespace, self._name, str(self._partition), write=write)
 
 
 class _UnaryProcess:
@@ -159,7 +159,7 @@ def do_map(p: _UnaryProcess):
     txn_map = {}
     partitions = Standalone.get_instance().meta_table.get(_table_key)
     for p in range(partitions):
-        env = _get_env(rtn._type, rtn._namespace, rtn._name, str(p))
+        env = _get_env(rtn._type, rtn._namespace, rtn._name, str(p), write=True)
         txn = env.begin(write=True)
         txn_map[p] = txn
     with source_env.begin() as source_txn:
@@ -182,7 +182,7 @@ def do_map_partitions(p: _UnaryProcess):
     op = p._operand
     rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
     source_env = op.as_env()
-    dst_env = rtn.as_env()
+    dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
     with source_env.begin() as source_txn:
         with dst_env.begin(write=True) as dst_txn:
@@ -200,7 +200,7 @@ def do_map_values(p: _UnaryProcess):
     op = p._operand
     rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
     source_env = op.as_env()
-    dst_env = rtn.as_env()
+    dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
     deserialize = c_pickle.loads
     with source_env.begin() as source_txn:
@@ -221,7 +221,7 @@ def do_join(p: _BinaryProcess):
     rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
     right_env = right_op.as_env()
     left_env = left_op.as_env()
-    dst_env = rtn.as_env()
+    dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
     deserialize = c_pickle.loads
     with left_env.begin() as left_txn:
@@ -260,7 +260,7 @@ def do_glom(p: _UnaryProcess):
     op = p._operand
     rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
     source_env = op.as_env()
-    dst_env = rtn.as_env()
+    dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
     deserialize = c_pickle.loads
     with source_env.begin() as source_txn:
@@ -280,7 +280,7 @@ def do_sample(p: _UnaryProcess):
     op = p._operand
     rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
     source_env = op.as_env()
-    dst_env = rtn.as_env()
+    dst_env = rtn.as_env(write=True)
     deserialize = c_pickle.loads
     fraction, seed = deserialize(p._info._function_bytes)
     with source_env.begin() as source_txn:
