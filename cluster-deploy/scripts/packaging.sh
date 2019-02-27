@@ -31,7 +31,7 @@ cd $output_dir
 output_dir=`pwd`
 
 cd $base_dir
-targets=`find "$base_dir" -type dir -name "target" -mindepth 2`
+targets=`find "$base_dir" -type d -name "target" -mindepth 2`
 
 module="test"
 sub_module="test"
