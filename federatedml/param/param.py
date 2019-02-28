@@ -163,13 +163,23 @@ class InitParam(object):
         self.fit_intercept = fit_intercept
 
 
+class EncodeParam(object):
+    def __init__(self, salt='', encode_method=None, base64=0):
+        self.salt = salt
+        self.encode_method = encode_method
+        self.base64 = base64
+
+
 class IntersectParam(object):
     def __init__(self, intersect_method=consts.RAW, random_bit=128, is_send_intersect_ids=True,
-                 is_get_intersect_ids=True):
+                 is_get_intersect_ids=True, join_role="guest", with_encode=False, encode_params=EncodeParam()):
         self.intersect_method = intersect_method
         self.random_bit = random_bit
         self.is_send_intersect_ids = is_send_intersect_ids
         self.is_get_intersect_ids = is_get_intersect_ids
+        self.join_role = join_role
+        self.with_encode = with_encode
+        self.encode_params = encode_params
 
 
 class LogisticParam(object):

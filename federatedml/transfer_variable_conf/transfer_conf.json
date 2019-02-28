@@ -32,13 +32,25 @@
     }
   },
   "RawIntersectTransferVariable": {
-    "intersect_host_ids": {
+    "send_ids_host": {
       "src": "host",
       "dst": [
         "guest"
       ]
     },
-    "intersect_ids": {
+    "send_ids_guest": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "intersect_ids_host": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_ids_guest": {
       "src": "guest",
       "dst": [
         "host"
