@@ -295,6 +295,28 @@ class TestEggrollStorage(unittest.TestCase):
             else:
                 assert_matrix(actual_model_parameters[k], model_parameters[k])
 
+    def test_destroy_table(self):
+
+        row_count = 10
+        expect_data = np.random.rand(row_count, 10)
+        # actual_data = np.zeros((row_count, 10))
+
+        table_name = "table_name"
+        table_ns = "table_ns"
+        dtable = create_table(expect_data,  model_table_name=table_name, model_namespace=table_ns)
+        # for item in dtable.collect():
+        #     actual_data[item[0]] = item[1]
+
+        dtable_2 = table(name=table_name, namespace=table_ns)
+
+        assert dtable.count() == dtable_2.count()
+
+        dtable_2.destroy()
+
+        dtable_3 = table(name=table_name, namespace=table_ns)
+        print("dtable_3", dtable_3)
+        print("dtable_3.count()", dtable_3.count())
+
 
 if __name__ == '__main__':
     init()

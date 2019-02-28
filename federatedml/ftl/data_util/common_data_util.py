@@ -59,6 +59,7 @@ def balance_X_y(X, y, seed=5):
 
     if num_pos < num_neg:
         np.random.shuffle(neg_indexes)
+        # randomly pick negative samples of size equal to that of positive samples
         rand_indexes = neg_indexes[:num_pos]
         indexes = pos_indexes + rand_indexes
         y = [y[i] for i in indexes]
