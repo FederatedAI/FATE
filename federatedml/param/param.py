@@ -150,7 +150,7 @@ class WorkFlowParam(object):
 
 
 class InitParam(object):
-    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=False):
+    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
         """
         Set how to initialize a model
         :param init_method: init method, string, support 'random_uniform', 'random_normal',

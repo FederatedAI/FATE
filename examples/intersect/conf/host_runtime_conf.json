@@ -26,7 +26,7 @@
         "work_mode": _work_mode
     },
     "IntersectParam": {
-        "intersect_method": "raw",
+        "intersect_method": "rsa",
         "random_bit": 128,
         "is_send_intersect_ids": true,
         "is_get_intersect_ids": true,
