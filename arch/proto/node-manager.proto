@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.eggroll.egg.node.sandbox;
+syntax = "proto3";
 
-public class ProcessorStarter {
+import "basic-meta.proto";
 
-    public Process startProcessor() {
-        ProcessBuilder pb = new ProcessBuilder();
-        pb.command();
+package com.webank.ai.fate.api.eggroll.egg;
 
-        return null;
-    }
+service NodeService {
+    rpc getProcessor (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoint);
+    rpc getAllPossibleProcessors (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoints);
+    rpc killProcessor (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoint);
+    rpc killAllProcessors (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoints);
 }
+

@@ -18,18 +18,61 @@ package com.webank.ai.fate.eggroll.egg.api.grpc.server;
 
 import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.egg.NodeServiceGrpc;
+import com.webank.ai.fate.core.utils.RuntimeUtils;
+import com.webank.ai.fate.eggroll.egg.node.manager.ProcessorManager;
 import io.grpc.stub.StreamObserver;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 
+@Component
+@Scope("prototype")
 public class NodeServiceImpl extends NodeServiceGrpc.NodeServiceImplBase {
+    @Autowired
+    private ProcessorManager processorManager;
+    @Autowired
+    private RuntimeUtils runtimeUtils;
 
     @Override
     public void getProcessor(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoint> responseObserver) {
-        super.getProcessor(request, responseObserver);
+        int port = processorManager.get();
+
+        BasicMeta.Endpoint.Builder resultBuilder = BasicMeta.Endpoint.newBuilder()
+                .setIp(runtimeUtils.getMySiteLocalAddress())
+                .setPort(port);
+
+        responseObserver.onNext(resultBuilder.build());
+        responseObserver.onCompleted();
     }
 
     @Override
+    // todo: cache result when it is not changed
     public void getAllPossibleProcessors(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoints> responseObserver) {
-        super.getAllPossibleProcessors(request, responseObserver);
+        ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
+
+        String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
+
+        BasicMeta.Endpoint.Builder endpointBuilder = BasicMeta.Endpoint.newBuilder().setIp(mySiteLocalAddress);
+        BasicMeta.Endpoints.Builder resultBuilder = BasicMeta.Endpoints.newBuilder();
+
+        for (Integer port : allAvailables) {
+            BasicMeta.Endpoint endpoint = endpointBuilder.clone().setPort(port).build();
+            resultBuilder.addEndpoints(endpoint);
+        }
+
+        responseObserver.onNext(resultBuilder.build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void killProcessor(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoint> responseObserver) {
+        super.killProcessor(request, responseObserver);
+    }
+
+    @Override
+    public void killAllProcessors(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoints> responseObserver) {
+        super.killAllProcessors(request, responseObserver);
     }
 }

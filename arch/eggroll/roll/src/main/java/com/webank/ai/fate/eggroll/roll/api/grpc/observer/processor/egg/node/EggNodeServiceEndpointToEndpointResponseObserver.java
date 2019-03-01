@@ -14,37 +14,20 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.core.utils;
+package com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.node;
 
-import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
-import org.apache.commons.lang3.StringUtils;
+import com.webank.ai.fate.api.core.BasicMeta.Endpoint;
+import com.webank.ai.fate.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
+import com.webank.ai.fate.core.model.DelayedResult;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.concurrent.CountDownLatch;
 
 @Component
 @Scope("prototype")
-public class NetworkingUtils {
-
-    public String getIpOrHost(Node node) {
-        String result = null;
-
-        if (node != null) {
-            result = node.getIp();
-            if (StringUtils.isBlank(result)) {
-                result = node.getHost();
-            }
-        }
-
-        return result;
+public class EggNodeServiceEndpointToEndpointResponseObserver extends CallerWithSameTypeDelayedResultResponseStreamObserver<Endpoint, Endpoint> {
+    public EggNodeServiceEndpointToEndpointResponseObserver(CountDownLatch finishLatch, DelayedResult<Endpoint> delayedResult) {
+        super(finishLatch, delayedResult);
     }
-
-
 }
