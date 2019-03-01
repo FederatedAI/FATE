@@ -14,17 +14,20 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import time
+
+import numpy as np
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
+
+from arch.api.eggroll import init
+from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
-from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, LocalEncryptedFederatedTransferLearning
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, \
+    LocalEncryptedFederatedTransferLearning
 from federatedml.ftl.test.fake_models import FakeFTLModelParam
-from arch.api.eggroll import init
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 if __name__ == '__main__':
 

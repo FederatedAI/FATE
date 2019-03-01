@@ -15,14 +15,15 @@
 #
 
 import csv
+
 import numpy as np
 from sklearn.preprocessing.data import StandardScaler, OneHotEncoder
+
 from federatedml.ftl.data_util.common_data_util import balance_X_y, shuffle_X_y, generate_table_namespace_n_name, \
     create_guest_host_data_generator, split_into_guest_host_dtable
 
 
 def load_UCI_Credit_Card_data(infile=None, balanced=True, seed=5):
-
     X = []
     y = []
     sids = []
@@ -59,7 +60,6 @@ def load_UCI_Credit_Card_data(infile=None, balanced=True, seed=5):
 
 def load_guest_host_generators_for_UCI_Credit_Card(file_path, num_samples=None, overlap_ratio=0.2,
                                                    guest_split_ratio=0.5, guest_feature_num=16, balanced=True):
-
     X, y = load_UCI_Credit_Card_data(infile=file_path, balanced=balanced)
 
     if num_samples is not None:
@@ -67,9 +67,9 @@ def load_guest_host_generators_for_UCI_Credit_Card(file_path, num_samples=None, 
         y = y[:num_samples]
 
     guest_data_generator, host_data_generator, overlap_indexes = create_guest_host_data_generator(X, y,
-                                                                                    overlap_ratio=overlap_ratio,
-                                                                                    guest_split_ratio=guest_split_ratio,
-                                                                                    guest_feature_num=guest_feature_num)
+                                                                                                  overlap_ratio=overlap_ratio,
+                                                                                                  guest_split_ratio=guest_split_ratio,
+                                                                                                  guest_feature_num=guest_feature_num)
 
     return guest_data_generator, host_data_generator, overlap_indexes
 
@@ -102,7 +102,6 @@ def load_guest_host_dtable_from_UCI_Credit_Card(data_model_param_dict: dict):
 
 def _load_guest_host_dtable_from_UCI_Credit_Card(file_path, tables_name, num_samples=None, overlap_ratio=0.2,
                                                  guest_split_ratio=0.5, guest_feature_num=16, balanced=True):
-
     X, y = load_UCI_Credit_Card_data(infile=file_path, balanced=balanced)
 
     if num_samples is not None:

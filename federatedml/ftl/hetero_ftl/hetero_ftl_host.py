@@ -14,23 +14,26 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import time
-from federatedml.ftl.plain_ftl import PlainFTLHostModel
-from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
-from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
+
+import numpy as np
+
+from arch.api.utils import log_utils
+from federatedml.evaluation import Evaluation
 from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, create_table, convert_instance_table_to_dict, convert_instance_table_to_array, \
     add_random_mask, remove_random_mask
 from federatedml.ftl.data_util.log_util import create_shape_msg
-from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
-from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, decrypt_scalar, decrypt_array
 from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
+from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
+from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, decrypt_scalar, decrypt_array
+from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
+from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
+from federatedml.ftl.plain_ftl import PlainFTLHostModel
+from federatedml.param.param import FTLModelParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
-from federatedml.evaluation import Evaluation
-from federatedml.param.param import FTLModelParam
-from arch.api.utils import log_utils
+
 LOGGER = log_utils.getLogger()
 
 

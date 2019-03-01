@@ -14,11 +14,12 @@
 #  limitations under the License.
 #
 
+from arch.api.utils import log_utils
 from federatedml.param.param import FTLModelParam, FTLLocalModelParam, FTLDataParam, FTLValidDataParam
 from federatedml.util import ParamExtract
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 from workflow.workflow import WorkFlow
-from arch.api.utils import log_utils
+
 LOGGER = log_utils.getLogger()
 
 

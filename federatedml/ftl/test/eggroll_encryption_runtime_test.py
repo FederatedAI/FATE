@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import time
 import unittest
-from federatedml.ftl.encryption import encryption
-from federatedml.ftl.eggroll_computation.helper import encrypt_matrix
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+
+import numpy as np
+
 from arch.api.eggroll import init
+from federatedml.ftl.eggroll_computation.helper import encrypt_matrix
+from federatedml.ftl.encryption import encryption
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class TestEncryptionMatmul(unittest.TestCase):

@@ -14,8 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
 import numpy as np
+
+from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
 
 
 def distribute_compute_XY(X, Y):

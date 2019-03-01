@@ -117,6 +117,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # Get mini-batch train data
                 batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
 
+                # TODO batch_data_inst goes through feature extractor e.g. autoencoder or CNN
                 # guest/host forward
                 self.compute_forward(batch_data_inst, self.coef_, self.intercept_)
                 host_forward = federation.get(name=self.transfer_variable.host_forward_dict.name,
@@ -139,6 +140,8 @@ class HeteroLRGuest(BaseLogisticRegression):
                                                                                  batch_index),
                                   role=consts.HOST,
                                   idx=0)
+
+                # TODO pass decrypted fore_gradient to feature extractor for local model update
                 LOGGER.info("Remote fore_gradient to Host")
                 # compute guest gradient and loss
                 guest_gradient, loss = self.gradient_operator.compute_gradient_and_loss(batch_data_inst,

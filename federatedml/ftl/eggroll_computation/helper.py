@@ -14,12 +14,14 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import math
 import uuid
+
+import numpy as np
+
+from arch.api.eggroll import parallelize, table
 from federatedml.ftl.eggroll_computation.util import distribute_compute_vAvg_XY, distribute_compute_hSum_XY, \
     distribute_encrypt, distribute_decrypt, distribute_compute_XY, distribute_compute_X_plus_Y
-from arch.api.eggroll import parallelize, table
 
 
 def prepare_table(matrix, batch_size=1, max_partition=20):

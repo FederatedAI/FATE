@@ -14,10 +14,12 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
+
+import numpy as np
+
 from federatedml.ftl.encrypted_ftl import EncryptedFTLGuestModel, EncryptedFTLHostModel
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
 from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeFTLModelParam
 
 

@@ -1,7 +1,8 @@
 import numpy as np
+
+from arch.api.eggroll import init
 from federatedml.ftl.data_util.common_data_util import load_data, feed_into_dtable
 from federatedml.ftl.test.util import assert_array, assert_matrix
-from arch.api.eggroll import init
 
 if __name__ == '__main__':
 
@@ -12,8 +13,8 @@ if __name__ == '__main__':
                            [-1.142928, - 0.781198, - 1.166747, - 0.923578, 0.62823, - 1.021418],
                            [-1.451067, - 1.406518, - 1.456564, - 1.092337, - 0.708765, - 1.168557],
                            [-0.879933, 0.420589, - 0.877527, - 0.780484, - 1.037534, - 0.48388],
-                           [0.426758, 0.723479,  0.316885, 0.287273,  1.000835, 0.962702],
-                           [0.963102, 1.467675, 0.829202,  0.772457, - 0.038076, - 0.468613]])
+                           [0.426758, 0.723479, 0.316885, 0.287273, 1.000835, 0.962702],
+                           [0.963102, 1.467675, 0.829202, 0.772457, - 0.038076, - 0.468613]])
 
     infile = "../../../../examples/data/unittest_data.csv"
     ids, X, y = load_data(infile, 0, (2, 8), 1)

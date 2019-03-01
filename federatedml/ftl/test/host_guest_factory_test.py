@@ -15,11 +15,13 @@
 #
 
 import unittest
+
 import numpy as np
-from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory, HeteroEncryptFTLHost, \
-    FasterHeteroEncryptFTLHost, HeteroPlainFTLHost
+
 from federatedml.ftl.hetero_ftl.hetero_ftl_guest import GuestFactory, HeteroEncryptFTLGuest, \
     FasterHeteroEncryptFTLGuest, HeteroPlainFTLGuest
+from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory, HeteroEncryptFTLHost, \
+    FasterHeteroEncryptFTLHost, HeteroPlainFTLHost
 from federatedml.ftl.test.fake_models import FakeAutoencoder
 from federatedml.param.param import FTLModelParam
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable

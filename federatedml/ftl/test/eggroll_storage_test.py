@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
 import uuid
+
+import numpy as np
+
+from arch.api.eggroll import init, table
 from federatedml.ftl.data_util.common_data_util import save_data_to_eggroll_table, create_guest_host_data_generator, \
     create_table, split_into_guest_host_dtable, load_model_parameters, save_model_parameters, feed_into_dtable
 from federatedml.ftl.test.util import assert_array, assert_matrix
-from arch.api.eggroll import init, parallelize, table
 
 
 class TestEggrollStorage(unittest.TestCase):
@@ -47,7 +49,7 @@ class TestEggrollStorage(unittest.TestCase):
             actual_data[item[0]] = item[1]
 
         assert dtable.count() == feature_count
-        assert_matrix(np.expand_dims(expect_data,axis=1), actual_data)
+        assert_matrix(np.expand_dims(expect_data, axis=1), actual_data)
 
     def test_create_table_with_dict(self):
 
@@ -104,9 +106,9 @@ class TestEggrollStorage(unittest.TestCase):
         expected_data = {}
         for i, id in enumerate(expected_ids):
             expected_data[id] = {
-                                    "X": expected_X[i],
-                                    "y": expected_y[i]
-                                 }
+                "X": expected_X[i],
+                "y": expected_y[i]
+            }
 
         data_table = feed_into_dtable(ids, X, y, sample_range, feature_range)
 
@@ -303,7 +305,7 @@ class TestEggrollStorage(unittest.TestCase):
 
         table_name = "table_name"
         table_ns = "table_ns"
-        dtable = create_table(expect_data,  model_table_name=table_name, model_namespace=table_ns)
+        dtable = create_table(expect_data, model_table_name=table_name, model_namespace=table_ns)
         # for item in dtable.collect():
         #     actual_data[item[0]] = item[1]
 
@@ -321,7 +323,3 @@ class TestEggrollStorage(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
-
-
-
-

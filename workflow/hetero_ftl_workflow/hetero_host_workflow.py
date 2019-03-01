@@ -15,12 +15,15 @@
 #
 
 import sys
+
 import tensorflow as tf
-from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory
+
+from arch.api.utils import log_utils
 from federatedml.ftl.autoencoder import Autoencoder
+from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory
 from federatedml.util import consts
 from workflow.hetero_ftl_workflow.hetero_workflow import FTLWorkFlow
-from arch.api.utils import log_utils
+
 LOGGER = log_utils.getLogger()
 
 

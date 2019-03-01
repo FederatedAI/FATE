@@ -15,16 +15,18 @@
 #
 
 import numpy as np
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
-from federatedml.ftl.encryption.encryption import decrypt_array, decrypt_scalar
+
 from federatedml.ftl.eggroll_computation.helper import compute_sum_XY, \
     compute_XY, encrypt_matrix, decrypt_matrix, compute_XY_plus_Z, \
     encrypt_matmul_2_ob, encrypt_matmul_3, compute_X_plus_Y
+from federatedml.ftl.encryption.encryption import decrypt_array, decrypt_scalar
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
 
 
 class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
 
-    def __init__(self, local_model, model_param, public_key=None, host_public_key=None, private_key=None, is_trace=False):
+    def __init__(self, local_model, model_param, public_key=None, host_public_key=None, private_key=None,
+                 is_trace=False):
         super(FasterEncryptedFTLGuestModel, self).__init__(local_model, model_param, is_trace)
         self.public_key = public_key
         self.private_key = private_key
@@ -75,11 +77,13 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
     def _update_gradients(self):
         # enc_y_overlap_2_phi_uB_overlap_2 was calculated by host
         if self.is_trace:
-            self.logger.debug("enc_y_overlap_2_phi_uB_overlap_2 shape" + str(self.enc_y_overlap_2_phi_uB_overlap_2.shape))
+            self.logger.debug(
+                "enc_y_overlap_2_phi_uB_overlap_2 shape" + str(self.enc_y_overlap_2_phi_uB_overlap_2.shape))
 
         if self.host_public_key is not None and self.public_key != self.host_public_key:
             # TODO: decrypt enc_y_overlap_2_phi_uB_overlap_2
-            self.enc_y_overlap_2_phi_uB_overlap_2 = decrypt_matrix(self.private_key, self.enc_y_overlap_2_phi_uB_overlap_2)
+            self.enc_y_overlap_2_phi_uB_overlap_2 = decrypt_matrix(self.private_key,
+                                                                   self.enc_y_overlap_2_phi_uB_overlap_2)
 
         y_overlap = np.tile(self.y_overlap, (1, self.enc_uB_overlap.shape[-1]))
         enc_y_overlap_uB_overlap = compute_sum_XY(y_overlap * 0.5, self.enc_uB_overlap)
@@ -96,7 +100,8 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
             self.logger.debug("y_non_overlap shape" + str(y_non_overlap.shape))
 
         enc_grad_A_nonoverlap = compute_XY(self.alpha * y_non_overlap / len(self.y), enc_const_nonoverlap)
-        enc_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), enc_const_overlap, self.enc_mapping_comp_B)
+        enc_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), enc_const_overlap,
+                                               self.enc_mapping_comp_B)
 
         if self.is_trace:
             self.logger.debug("enc_grad_A_nonoverlap shape" + str(enc_grad_A_nonoverlap.shape))
@@ -141,7 +146,8 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
             self.enc_phi_uB_overlap_2_phi = decrypt_matrix(self.private_key, self.enc_phi_uB_overlap_2_phi)
 
         enc_uB_phi = encrypt_matmul_2_ob(enc_uB_overlap, phi.transpose())
-        enc_loss_y = (-0.5 * compute_sum_XY(y_overlap, enc_uB_phi)[0] + 1.0 / 8 * np.sum(self.enc_phi_uB_overlap_2_phi)) + len(y_overlap) * np.log(2)
+        enc_loss_y = (-0.5 * compute_sum_XY(y_overlap, enc_uB_phi)[0] + 1.0 / 8 * np.sum(
+            self.enc_phi_uB_overlap_2_phi)) + len(y_overlap) * np.log(2)
         return enc_loss_y
 
     def get_loss_grads(self):
@@ -150,7 +156,8 @@ class FasterEncryptedFTLGuestModel(PlainFTLGuestModel):
 
 class FasterEncryptedFTLHostModel(PlainFTLHostModel):
 
-    def __init__(self, local_model, model_param, public_key=None, guest_public_key=None, private_key=None, is_trace=False):
+    def __init__(self, local_model, model_param, public_key=None, guest_public_key=None, private_key=None,
+                 is_trace=False):
         super(FasterEncryptedFTLHostModel, self).__init__(local_model, model_param, is_trace)
         self.public_key = public_key
         self.private_key = private_key
@@ -195,7 +202,8 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
         enc_phi_uB_overlap_2_phi = 0
         for uB_row in self.uB_overlap:
             uB_row = uB_row.reshape(1, -1)
-            enc_phi_uB_overlap_2_phi += encrypt_matmul_2_ob(encrypt_matmul_2_ob(uB_row, self.enc_phi_2), uB_row.transpose())
+            enc_phi_uB_overlap_2_phi += encrypt_matmul_2_ob(encrypt_matmul_2_ob(uB_row, self.enc_phi_2),
+                                                            uB_row.transpose())
         self.precomputed_loss_component = enc_phi_uB_overlap_2_phi
 
     def send_precomputed_components(self):
@@ -208,7 +216,8 @@ class FasterEncryptedFTLHostModel(PlainFTLHostModel):
     def _update_gradients(self):
         # enc_uB_overlap_y_overlap_2_phi_2 was calculated by guest
         if self.guest_public_key is not None and self.public_key != self.guest_public_key:
-            self.enc_uB_overlap_y_overlap_2_phi_2 = decrypt_matrix(self.private_key, self.enc_uB_overlap_y_overlap_2_phi_2)
+            self.enc_uB_overlap_y_overlap_2_phi_2 = decrypt_matrix(self.private_key,
+                                                                   self.enc_uB_overlap_y_overlap_2_phi_2)
             pass
 
         enc_l1_grad_B = compute_X_plus_Y(self.enc_uB_overlap_y_overlap_2_phi_2, self.enc_y_overlap_phi)
@@ -268,7 +277,8 @@ class LocalFasterEncryptedFederatedTransferLearning(object):
         return self.guest.predict(msg)
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key, encrypt_gradients[1])
+        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
+                                                                                     encrypt_gradients[1])
 
     def __decrypt_loss(self, encrypt_loss):
         return decrypt_scalar(self.private_key, encrypt_loss)

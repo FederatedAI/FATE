@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
+
+import numpy as np
+
+from arch.api.eggroll import init
+from federatedml.ftl.encryption import encryption
 from federatedml.ftl.test.fake_models import FakeAutoencoder
 from federatedml.ftl.test.whitebox_plain_gradients_test import run_one_party_msg_exchange
 from federatedml.secureprotol.encrypt import PaillierEncrypt
-from federatedml.ftl.encryption import encryption
-from arch.api.eggroll import init
 
 
 class TestEncryptedGradients(unittest.TestCase):

@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+
 from federatedml.optim.convergence import ConvergeFunction
 
 
@@ -96,5 +97,3 @@ class FakeDiffConverge(ConvergeFunction):
 
     def is_converge(self, loss):
         return True
-
-

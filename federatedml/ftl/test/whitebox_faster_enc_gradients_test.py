@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
-from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeFTLModelParam
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+
+import numpy as np
+
+from arch.api.eggroll import init
 from federatedml.ftl.encryption import encryption
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel, FasterEncryptedFTLHostModel
-from arch.api.eggroll import init
+from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeFTLModelParam
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 def run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes, non_overlap_indexes,

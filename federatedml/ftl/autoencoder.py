@@ -14,9 +14,10 @@
 #  limitations under the License.
 #
 
-import tensorflow as tf
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
 from federatedml.ftl.eggroll_computation.helper import compute_sum_XY
 
 
@@ -79,7 +80,8 @@ class Autoencoder(object):
         vars_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.encoder_vars_scope)
 
         self.init_grad = tf.placeholder(tf.float64, shape=(None, self.hidden_dim))
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train, grad_loss=self.init_grad)
+        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train,
+                                                                               grad_loss=self.init_grad)
 
     def _add_e2e_training_ops(self):
         self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels=self.X_in))
@@ -127,7 +129,8 @@ class Autoencoder(object):
     def apply_gradients(self, gradients):
         grads_W = gradients[0]
         grads_b = gradients[1]
-        _, _ = self.sess.run([self.new_Wh, self.new_bh], feed_dict={self.grads_W_new: grads_W, self.grads_b_new: grads_b})
+        _, _ = self.sess.run([self.new_Wh, self.new_bh],
+                             feed_dict={self.grads_W_new: grads_W, self.grads_b_new: grads_b})
 
     def backpropogate(self, X, y, in_grad):
         self.sess.run(self.train_op, feed_dict={self.X_in: X, self.init_grad: in_grad})
@@ -176,4 +179,3 @@ class Autoencoder(object):
         if show_fig:
             plt.plot(costs)
             plt.show()
-

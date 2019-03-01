@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+
+import numpy as np
+
+from arch.api.eggroll import init
 from federatedml.ftl.data_util.common_data_util import add_random_mask, remove_random_mask
 from federatedml.ftl.eggroll_computation.helper import encrypt_matrix, decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
-from arch.api.eggroll import init
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class TestRandomMask(unittest.TestCase):

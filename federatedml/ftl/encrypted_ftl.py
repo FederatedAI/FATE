@@ -14,14 +14,16 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import time
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
+
+import numpy as np
+
+from federatedml.ftl.eggroll_computation.helper import compute_sum_XY, \
+    compute_XY, encrypt_matrix, compute_XY_plus_Z, \
+    encrypt_matmul_2_ob, encrypt_matmul_3, compute_X_plus_Y
 from federatedml.ftl.encryption import encryption
 from federatedml.ftl.encryption.encryption import decrypt_array, decrypt_matrix, decrypt_scalar
-from federatedml.ftl.eggroll_computation.helper import compute_sum_XY, \
-    compute_XY, encrypt_matrix, compute_XY_plus_Z,\
-    encrypt_matmul_2_ob, encrypt_matmul_3, compute_X_plus_Y
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
 
 
 class EncryptedFTLGuestModel(PlainFTLGuestModel):
@@ -60,7 +62,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
 
             # enc_y_overlap_2_phi_2 = 0.25 * np.expand_dims(self.y_overlap_2, axis=2) * enc_phi_2
             # enc_y_overlap_phi = -0.5 * self.y_overlap * enc_phi
-            enc_y_overlap_2_phi_2 = compute_XY(0.25 * np.expand_dims(self.y_overlap_2, axis=2), np.tile(enc_phi_2, (self.y_overlap_2.shape[0], 1, 1)))
+            enc_y_overlap_2_phi_2 = compute_XY(0.25 * np.expand_dims(self.y_overlap_2, axis=2),
+                                               np.tile(enc_phi_2, (self.y_overlap_2.shape[0], 1, 1)))
             enc_y_overlap_phi = compute_XY(-0.5 * self.y_overlap, np.tile(enc_phi, (self.y_overlap.shape[0], 1)))
             enc_mapping_comp_A = encrypt_matrix(self.public_key, self.mapping_comp_A)
 
@@ -120,7 +123,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
             self.logger.debug("y_non_overlap shape" + str(y_non_overlap.shape))
 
         enc_grad_A_nonoverlap = compute_XY(self.alpha * y_non_overlap / len(self.y), enc_const_nonoverlap)
-        enc_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), enc_const_overlap, self.enc_mapping_comp_B)
+        enc_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), enc_const_overlap,
+                                               self.enc_mapping_comp_B)
 
         if self.is_trace:
             self.logger.debug("enc_grad_A_nonoverlap shape" + str(enc_grad_A_nonoverlap.shape))
@@ -170,7 +174,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         enc_uB_phi = encrypt_matmul_2_ob(enc_uB_overlap, phi.transpose())
         enc_uB_2 = np.sum(enc_uB_overlap_2, axis=0)
         enc_phi_uB_2_Phi = encrypt_matmul_2_ob(encrypt_matmul_2_ob(phi, enc_uB_2), phi.transpose())
-        enc_loss_y = (-0.5 * compute_sum_XY(y_overlap, enc_uB_phi)[0] + 1.0 / 8 * np.sum(enc_phi_uB_2_Phi)) + len(y_overlap) * np.log(2)
+        enc_loss_y = (-0.5 * compute_sum_XY(y_overlap, enc_uB_phi)[0] + 1.0 / 8 * np.sum(enc_phi_uB_2_Phi)) + len(
+            y_overlap) * np.log(2)
         return enc_loss_y
 
     def get_loss_grads(self):
@@ -210,7 +215,8 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
             # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
             # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
             enc_uB_overlap = encrypt_matrix(self.public_key, self.uB_overlap)
-            enc_uB_overlap_2 = encrypt_matmul_3(np.expand_dims(self.uB_overlap, axis=2), np.expand_dims(enc_uB_overlap, axis=1))
+            enc_uB_overlap_2 = encrypt_matmul_3(np.expand_dims(self.uB_overlap, axis=2),
+                                                np.expand_dims(enc_uB_overlap, axis=1))
             # self.mapping_comp_B = - self.uB_overlap / self.feature_dim
 
             scale_factor = np.tile((-1 / self.feature_dim), (enc_uB_overlap.shape[0], enc_uB_overlap.shape[1]))
@@ -302,7 +308,8 @@ class LocalEncryptedFederatedTransferLearning(object):
         return self.guest.predict(msg)
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key, encrypt_gradients[1])
+        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
+                                                                                     encrypt_gradients[1])
 
     def __decrypt_loss(self, encrypt_loss):
         return decrypt_scalar(self.private_key, encrypt_loss)

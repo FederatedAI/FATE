@@ -15,9 +15,11 @@
 #
 
 import numpy as np
-from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+
 from arch.api.utils import log_utils
+from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
+
 LOGGER = log_utils.getLogger()
 
 

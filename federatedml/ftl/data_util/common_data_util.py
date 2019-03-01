@@ -15,15 +15,16 @@
 #
 
 import csv
-import numpy as np
 import time
+
 import matplotlib.pyplot as plt
-from federatedml.feature.instance import Instance
+import numpy as np
+
 from arch.api.eggroll import parallelize, table
+from federatedml.feature.instance import Instance
 
 
 def series_plot(losses, fscores, aucs):
-
     fig = plt.figure(figsize=(20, 40))
 
     plt.subplot(311)
@@ -78,7 +79,6 @@ def shuffle_X_y(X, y, seed=5):
 
 
 def load_data(infile, id_index, feature_index_range, label_index):
-
     ids = []
     X = []
     y = []
@@ -127,8 +127,8 @@ def stack_overlap_nonoverlap(data_dict, overlap_data_indexes, nonoverlap_data_in
     return data_stack
 
 
-def overlapping_samples_converter(target_features_dict, target_sample_indexes, ref_sample_indexes, target_labels_dict=None):
-
+def overlapping_samples_converter(target_features_dict, target_sample_indexes, ref_sample_indexes,
+                                  target_labels_dict=None):
     overlap_indexes = np.intersect1d(target_sample_indexes, ref_sample_indexes, assume_unique=True)
     non_overlap_indexes = np.setdiff1d(target_sample_indexes, overlap_indexes)
 
@@ -164,15 +164,18 @@ def split_into_guest_host_dtable(X, y, overlap_ratio=0.2, guest_split_ratio=0.5,
 
     guest_temp = []
     for i in range(0, overlap_size + guest_size):
-        guest_temp.append((i, Instance(inst_id=None, weight=1.0, features=X[i, :guest_feature_num].reshape(1, -1), label=y[i, 0])))
+        guest_temp.append(
+            (i, Instance(inst_id=None, weight=1.0, features=X[i, :guest_feature_num].reshape(1, -1), label=y[i, 0])))
     guest_data = table(name=guest_table_name, namespace=guest_table_ns, partition=partition)
     guest_data.put_all(guest_temp)
 
     host_temp = []
     for i in range(0, overlap_size):
-        host_temp.append((i, Instance(inst_id=None, weight=1.0, features=X[i, guest_feature_num:].reshape(1, -1), label=y[i, 0])))
+        host_temp.append(
+            (i, Instance(inst_id=None, weight=1.0, features=X[i, guest_feature_num:].reshape(1, -1), label=y[i, 0])))
     for i in range(overlap_size + guest_size, len(X)):
-        host_temp.append((i, Instance(inst_id=None, weight=1.0, features=X[i, guest_feature_num:].reshape(1, -1), label=y[i, 0])))
+        host_temp.append(
+            (i, Instance(inst_id=None, weight=1.0, features=X[i, guest_feature_num:].reshape(1, -1), label=y[i, 0])))
     host_data = table(name=host_table_name, namespace=host_table_ns, partition=partition)
     host_data.put_all(host_temp)
     return guest_data, host_data, overlap_indexes
@@ -225,7 +228,8 @@ def create_guest_host_data_generator(X, y, overlap_ratio=0.2, guest_split_ratio=
     guest_size = int((data_size - overlap_size) * guest_split_ratio)
 
     guest_data_generator = create_data_generator(X, y, [(0, overlap_size + guest_size)], (0, guest_feature_num))
-    host_data_generator = create_data_generator(X, y, [(0, overlap_size), (overlap_size + guest_size, len(X))], (guest_feature_num, X.shape[-1]))
+    host_data_generator = create_data_generator(X, y, [(0, overlap_size), (overlap_size + guest_size, len(X))],
+                                                (guest_feature_num, X.shape[-1]))
 
     return guest_data_generator, host_data_generator, overlap_indexes
 
@@ -338,4 +342,3 @@ def remove_random_mask(value, mask):
         return cleared_components
     else:
         return value - mask
-
