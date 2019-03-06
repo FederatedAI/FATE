@@ -62,7 +62,7 @@ class EncryptParam(object):
 
 
 class EvaluateParam(object):
-    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+    def __init__(self, metrics=None, classi_type="binary", pos_label=None, thresholds=None):
         """
         Specify the evaluate parameters.
         :param metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy'.
@@ -164,7 +164,7 @@ class InitParam(object):
 
 
 class EncodeParam(object):
-    def __init__(self, salt='', encode_method=None, base64=0):
+    def __init__(self, salt='', encode_method=None, base64=False):
         self.salt = salt
         self.encode_method = encode_method
         self.base64 = base64
