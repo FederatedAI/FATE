@@ -158,7 +158,7 @@ public class TestRollKvServiceClient {
                 .build();
 
         Kv.Operand operand = null;
-        for (int i = 0; i < 150000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
             operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }

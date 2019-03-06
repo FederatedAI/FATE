@@ -28,6 +28,7 @@ import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.StorageServiceClient;
+import com.webank.ai.fate.eggroll.roll.helper.NodeHelper;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.util.RollServerUtils;
 import org.apache.logging.log4j.LogManager;
@@ -48,18 +49,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @Scope("prototype")
 public class IterateProcessor implements Callable<OperandBroker> {
-    @Autowired
-    private StorageServiceClient storageServiceClient;
     private static final long DEFAULT_MIN_CHUNK_SIZE = 4 << 20;
     private static final long DEFAULT_MAX_CHUNK_SIZE = 32 << 20;
     private static final Logger LOGGER = LogManager.getLogger();
+
     private final OperandBroker result;
     private final Kv.Range range;
     private final StoreInfo storeInfo;
+
+    @Autowired
+    private StorageServiceClient storageServiceClient;
     @Autowired
     private StorageMetaClient storageMetaClient;
     @Autowired
     private RollServerUtils rollServerUtils;
+    @Autowired
+    private NodeHelper nodeHelper;
+
     private int[] loserTree;
     private ArrayList<OperandBroker> eggBrokers;
     private ArrayList<Boolean> isEggFinished;
@@ -78,7 +84,6 @@ public class IterateProcessor implements Callable<OperandBroker> {
         this.storeInfo = storeInfo;
         this.result = operandBroker;
 
-        this.nodeIdToNodes = Maps.newConcurrentMap();
         this.eggFinishedCount = new AtomicInteger(0);
 
         this.curChunkSize = 0;
@@ -96,12 +101,12 @@ public class IterateProcessor implements Callable<OperandBroker> {
     @Override
     public OperandBroker call() throws Exception {
         dtable = storageMetaClient.getTable(storeInfo);
-        List<Node> nodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
-        for (Node node : nodes) {
-            nodeIdToNodes.put(node.getNodeId(), node);
-        }
 
-        fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
+        long tableId = dtable.getTableId();
+
+        nodeIdToNodes = nodeHelper.getNodeIdToStorageNodesOfTable(tableId);
+
+        fragments = nodeHelper.getFragmentListOfTable(tableId);
         totalFragments = fragments.size();
 
         if (minChunkSize == 0) {

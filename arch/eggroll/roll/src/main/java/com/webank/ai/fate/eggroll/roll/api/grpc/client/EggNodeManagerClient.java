@@ -45,16 +45,18 @@ public class EggNodeManagerClient {
     @Autowired
     private EggNodeServiceCallModelTemplateFactory eggNodeServiceCallModelTemplateFactory;
 
-    public BasicMeta.Endpoint getProcessor(Node request) {
+    public BasicMeta.Endpoint getProcessor(Node node) {
+        return getProcessor(typeConversionUtils.toEndpoint(node));
+    }
+
+    public BasicMeta.Endpoint getProcessor(BasicMeta.Endpoint request) {
         GrpcAsyncClientContext<NodeServiceGrpc.NodeServiceStub, BasicMeta.Endpoint, BasicMeta.Endpoint> context
                 = eggNodeServiceCallModelTemplateFactory.createEndpointToEndpointContext();
 
         DelayedResult<BasicMeta.Endpoint> delayedResult = new SingleDelayedResult<>();
 
-        BasicMeta.Endpoint target = typeConversionUtils.toEndpoint(request);
-
         context.setLatchInitCount(1)
-                .setEndpoint(target)
+                .setEndpoint(request)
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(NodeServiceGrpc.NodeServiceStub::getProcessor)
                 .setCallerStreamObserverClassAndArguments(EggNodeServiceEndpointToEndpointResponseObserver.class, delayedResult);
@@ -67,7 +69,7 @@ public class EggNodeManagerClient {
         BasicMeta.Endpoint result;
 
         try {
-            result = template.calleeStreamingRpcWithImmediateDelayedResult(target, delayedResult);
+            result = template.calleeStreamingRpcWithImmediateDelayedResult(request, delayedResult);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }

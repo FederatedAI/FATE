@@ -19,6 +19,7 @@ package com.webank.ai.fate.eggroll;
 import com.webank.ai.fate.core.factory.DefaultGrpcServerFactory;
 import com.webank.ai.fate.core.server.DefaultServerConf;
 import com.webank.ai.fate.eggroll.egg.api.grpc.server.NodeServiceImpl;
+import com.webank.ai.fate.eggroll.egg.node.manager.ProcessorManager;
 import io.grpc.Server;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -48,6 +49,9 @@ public class Egg {
         DefaultServerConf serverConf = (DefaultServerConf) serverFactory.parseConfFile(confFilePath);
 
         NodeServiceImpl nodeService = context.getBean(NodeServiceImpl.class);
+
+        ProcessorManager processorManager = context.getBean(ProcessorManager.class);
+        processorManager.getAllAvailable();
 
         serverConf
                 .addService(nodeService);

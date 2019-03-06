@@ -111,8 +111,15 @@ public class TestStorageMetaClient {
     }
 
     @Test
-    public void testGetNodesByTableId() {
+    public void testGetStorageNodesByTableId() {
         List<Node> result = storageMetaClient.getStorageNodesByTableId(3L);
+        LOGGER.info(result);
+    }
+
+    @Test
+    public void testGetEggNodeManagerByIp() {
+        Node result = storageMetaClient.getEggNodeManagerByIp("127.0.0.1");
+
         LOGGER.info(result);
     }
 

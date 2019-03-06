@@ -18,12 +18,22 @@ package com.webank.ai.fate.eggroll.egg.node.manager;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.webank.ai.fate.core.serdes.impl.GeneralJsonBytesSerDes;
+import com.webank.ai.fate.core.server.ServerConf;
 import com.webank.ai.fate.core.utils.RandomUtils;
+import com.webank.ai.fate.core.utils.RuntimeUtils;
 import com.webank.ai.fate.eggroll.egg.node.sandbox.ProcessorOperator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -36,20 +46,55 @@ public class ProcessorManager {
     private ProcessorOperator processorOperator;
     @Autowired
     private RandomUtils randomUtils;
+    @Autowired
+    private GeneralJsonBytesSerDes serDes;
+    @Autowired
+    private RuntimeUtils runtimeUtils;
+    @Autowired
+    private ServerConf serverConf;
 
     private Set<Integer> availableProcessors;
     private ArrayList<Integer> availableProcessorMirror;
     private volatile int lastPort;
     private final Object availableProcessorsLock;
+    private final Path statusPath;
+    private int maxProcessorCount;
 
-    private static final int maxProcessorCount =
-            Runtime.getRuntime().availableProcessors() > 1 ? Runtime.getRuntime().availableProcessors() - 1 : 1;
+    private static final String statusFileLocation = "/tmp/FATE/node-manager/processor-manager";
+    private static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public ProcessorManager() {
         availableProcessors = Sets.newConcurrentHashSet();
-        availableProcessorMirror = Lists.newArrayListWithExpectedSize(maxProcessorCount);
+        availableProcessorMirror = Lists.newArrayListWithExpectedSize(PROCESSOR_COUNT);
         lastPort = 50000;
         availableProcessorsLock = new Object();
+
+        statusPath = Paths.get(statusFileLocation);
+    }
+
+    @PostConstruct
+    public void init() {
+        if (Files.exists(statusPath)) {
+            LOGGER.info("restoring processors");
+            try {
+                byte[] previousStatus = Files.readAllBytes(statusPath);
+                if (previousStatus == null || previousStatus.length == 0) {
+                    return;
+                }
+
+                ArrayList<Integer> deserializedFileContent = serDes.deserialize(previousStatus, ArrayList.class);
+                synchronized (availableProcessorsLock) {
+                    availableProcessors = Sets.newConcurrentHashSet(deserializedFileContent);
+
+                    checkAvailable();
+                }
+            } catch (IOException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        LOGGER.info("restored processors: {}", availableProcessors);
     }
 
     /**
@@ -57,6 +102,7 @@ public class ProcessorManager {
      * @return port of available processor
      */
     public int get() {
+        initProcessorCount();
         int resultPort = lastPort + 1;
         if (availableProcessors.size() < maxProcessorCount) {
             boolean created = false;
@@ -77,9 +123,16 @@ public class ProcessorManager {
                 if (availableProcessors.size() >= maxProcessorCount) {
                     availableProcessorMirror = Lists.newArrayList(availableProcessors);
                 }
+
+                try {
+                    writeStatusFile();
+                } catch (IOException e) {
+                    Thread.currentThread().interrupt();
+                    kill(resultPort);
+                }
             }
         } else {
-            int target = randomUtils.nextInt(0, maxProcessorCount - 1);
+            int target = randomUtils.nextInt(0, maxProcessorCount);
             resultPort = availableProcessorMirror.get(target);
         }
 
@@ -87,7 +140,8 @@ public class ProcessorManager {
     }
 
     public ArrayList<Integer> getAllAvailable() {
-        while (availableProcessorMirror.size() == 0 && availableProcessors.size() < 10) {
+        initProcessorCount();
+        while (availableProcessorMirror.size() == 0 && availableProcessors.size() < 128) {
             get();
         }
         return Lists.newArrayList(availableProcessorMirror);
@@ -120,5 +174,40 @@ public class ProcessorManager {
             }
         }
         return result;
+    }
+
+    private synchronized void writeStatusFile() throws IOException {
+        synchronized (availableProcessorsLock) {
+            if (Files.notExists(statusPath)) {
+                Files.createDirectories(statusPath.getParent());
+                Files.createFile(statusPath);
+            }
+            Files.write(statusPath, serDes.serialize(Lists.newArrayList(availableProcessors)),
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        }
+    }
+
+    private synchronized void checkAvailable() {
+        Set<Integer> refreshedAvailableProcessors = Sets.newConcurrentHashSet();
+        synchronized (availableProcessorsLock) {
+            for (Integer port : availableProcessors) {
+                if (!runtimeUtils.isPortAvailable(port)) {
+                    refreshedAvailableProcessors.add(port);
+                }
+            }
+
+            availableProcessors = refreshedAvailableProcessors;
+        }
+        if (availableProcessors.size() >= maxProcessorCount) {
+            availableProcessorMirror = Lists.newArrayList(availableProcessors);
+        }
+    }
+
+    private void initProcessorCount() {
+        if (maxProcessorCount <= 0) {
+            int userDefinedMaxProcessorCount = Integer.valueOf(serverConf.getProperties().getProperty("max.processors.count", "0"));
+            maxProcessorCount = Math.min(userDefinedMaxProcessorCount, PROCESSOR_COUNT > 1 ? PROCESSOR_COUNT - 1 : 1);
+            LOGGER.info("user defined processor count: {}, processor count: {}, max processor count: {}", userDefinedMaxProcessorCount, PROCESSOR_COUNT, maxProcessorCount);
+        }
     }
 }

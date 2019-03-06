@@ -18,9 +18,13 @@ package com.webank.ai.fate.eggroll.egg.api.grpc.server;
 
 import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.egg.NodeServiceGrpc;
+import com.webank.ai.fate.core.api.grpc.server.GrpcServerWrapper;
 import com.webank.ai.fate.core.utils.RuntimeUtils;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.eggroll.egg.node.manager.ProcessorManager;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -34,45 +38,90 @@ public class NodeServiceImpl extends NodeServiceGrpc.NodeServiceImplBase {
     private ProcessorManager processorManager;
     @Autowired
     private RuntimeUtils runtimeUtils;
+    @Autowired
+    private GrpcServerWrapper grpcServerWrapper;
+    @Autowired
+    private ToStringUtils toStringUtils;
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     public void getProcessor(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoint> responseObserver) {
-        int port = processorManager.get();
+        LOGGER.info("[EGG][NODEMANAGER] getProcessor. request: {}", toStringUtils.toOneLineString(request));
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            int port = processorManager.get();
 
-        BasicMeta.Endpoint.Builder resultBuilder = BasicMeta.Endpoint.newBuilder()
-                .setIp(runtimeUtils.getMySiteLocalAddress())
-                .setPort(port);
+            BasicMeta.Endpoint.Builder resultBuilder = BasicMeta.Endpoint.newBuilder()
+                    .setIp(runtimeUtils.getMySiteLocalAddress())
+                    .setPort(port);
 
-        responseObserver.onNext(resultBuilder.build());
-        responseObserver.onCompleted();
+            LOGGER.info("[EGG][NODEMANAGER] getProcessor. result: {}", toStringUtils.toOneLineString(resultBuilder.build()));
+            responseObserver.onNext(resultBuilder.build());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     // todo: cache result when it is not changed
     public void getAllPossibleProcessors(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoints> responseObserver) {
-        ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
+        LOGGER.info("[EGG][NODEMANAGER] getAllPossibleProcessors. request: {}", toStringUtils.toOneLineString(request));
 
-        String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
 
-        BasicMeta.Endpoint.Builder endpointBuilder = BasicMeta.Endpoint.newBuilder().setIp(mySiteLocalAddress);
-        BasicMeta.Endpoints.Builder resultBuilder = BasicMeta.Endpoints.newBuilder();
+            String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
 
-        for (Integer port : allAvailables) {
-            BasicMeta.Endpoint endpoint = endpointBuilder.clone().setPort(port).build();
-            resultBuilder.addEndpoints(endpoint);
-        }
+            BasicMeta.Endpoint.Builder endpointBuilder = BasicMeta.Endpoint.newBuilder().setIp(mySiteLocalAddress);
+            BasicMeta.Endpoints.Builder resultBuilder = BasicMeta.Endpoints.newBuilder();
 
-        responseObserver.onNext(resultBuilder.build());
-        responseObserver.onCompleted();
+            for (Integer port : allAvailables) {
+                BasicMeta.Endpoint endpoint = endpointBuilder.clone().setPort(port).build();
+                resultBuilder.addEndpoints(endpoint);
+            }
+
+            responseObserver.onNext(resultBuilder.build());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void killProcessor(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoint> responseObserver) {
-        super.killProcessor(request, responseObserver);
+        LOGGER.info("[EGG][NODEMANAGER] killProcessor. request: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            int port = request.getPort();
+            processorManager.kill(port);
+
+            BasicMeta.Endpoint.Builder resultBuilder = BasicMeta.Endpoint.newBuilder()
+                    .setIp(runtimeUtils.getMySiteLocalAddress())
+                    .setPort(port);
+
+            responseObserver.onNext(resultBuilder.build());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void killAllProcessors(BasicMeta.Endpoint request, StreamObserver<BasicMeta.Endpoints> responseObserver) {
-        super.killAllProcessors(request, responseObserver);
+        LOGGER.info("[EGG][NODEMANAGER] killAllProcessor. request: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
+
+            String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
+
+            BasicMeta.Endpoint.Builder endpointBuilder = BasicMeta.Endpoint.newBuilder().setIp(mySiteLocalAddress);
+            BasicMeta.Endpoints.Builder resultBuilder = BasicMeta.Endpoints.newBuilder();
+
+            for (Integer port : allAvailables) {
+                BasicMeta.Endpoint endpoint = endpointBuilder.clone().setPort(port).build();
+                resultBuilder.addEndpoints(endpoint);
+            }
+
+            processorManager.killAll();
+
+            responseObserver.onNext(resultBuilder.build());
+            responseObserver.onCompleted();
+        });
     }
 }
