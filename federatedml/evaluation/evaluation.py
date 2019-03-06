@@ -87,29 +87,28 @@ class Evaluation(object):
         elif self.eval_type == consts.MULTY:
             self.thresholds = None
 
-        if self.eval_type == consts.BINARY and pos_label is not None:
-            new_labels = []
-            new_pred_scores = []
-            for i in range(labels.shape[0]):
-                if labels[i] is not None:
+        new_labels = []
+        new_pred_scores = []
+        for i in range(labels.shape[0]):
+            if labels[i] is not None:
+                if self.eval_type == consts.BINARY and pos_label is not None:
                     if pos_label == labels[i]:
                         new_labels.append(1)
                     else:
                         new_labels.append(0)
-                    new_pred_scores.append(pred_scores[i])
-
-            labels = new_labels
-            pred_scores = new_pred_scores
+                else:
+                    new_labels.append(labels[i])
+                new_pred_scores.append(pred_scores[i])
 
         eval_res = {}
-        if len(labels) == 0:
+        if len(new_labels) == 0:
             LOGGER.warning("Each of labels is None, can not evaluation!")
             for metric in metrics:
                 eval_res[metric] = None
             return eval_res
 
-        labels = np.array(labels)
-        pred_scores = np.array(pred_scores)
+        labels = np.array(new_labels)
+        pred_scores = np.array(new_pred_scores)
         for metric in metrics:
             if metric in self.eval_func:
                 res = self.eval_func[metric](labels, pred_scores)

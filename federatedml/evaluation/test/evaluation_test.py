@@ -274,6 +274,30 @@ class TestClassificationEvaluaction(unittest.TestCase):
         self.assertFloatEqual(eval_results['mean_squared_log_error'], 0.0667)
         self.assertFloatEqual(eval_results['median_absolute_error'], 1.000)
         self.assertFloatEqual(eval_results['r2_score'], 0.6800)
+
+    def test_multi_report_with_absent_value(self):
+        eva = Evaluation("multi")
+        y_true = np.array([1, 1, 1, 1, 1, None, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, None])
+        y_predict = np.array([1, 1, 2, 2, 3, 3, 2, 1, 1, 1, 1, 3, 3, 3, 3, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 6])
+
+        metrics = ["auc", "ks", "lift", "precision", "recall", "accuracy",
+                   "explained_variance", "mean_absolute_error", "mean_squared_error",
+                   "mean_squared_log_error", "median_absolute_error", "r2_score", "root_mean_squared_error"]
+
+        eval_results = eva.report(y_true, y_predict, metrics)
+        self.assertIsNone(eval_results['auc'])
+        self.assertIsNone(eval_results['ks'])
+        self.assertIsNone(eval_results['lift'])
+        self.assertDictEqual(eval_results['precision'], {1: 0.3333, 2: 0.25, 3: 0.8, 4: 1.0, 5: 0.0, 6: 0.0})
+        self.assertDictEqual(eval_results['recall'], {1: 0.4, 2: 0.2, 3: 0.8, 4: 1.0, 5: 0.0, 6: 0.0})
+        self.assertFloatEqual(eval_results['accuracy'], 0.48)
+        self.assertFloatEqual(eval_results['explained_variance'], 0.6928)
+        self.assertFloatEqual(eval_results['mean_absolute_error'], 0.5600)
+        self.assertFloatEqual(eval_results['mean_squared_error'], 0.6400)
+        self.assertFloatEqual(eval_results['mean_squared_log_error'], 0.0667)
+        self.assertFloatEqual(eval_results['median_absolute_error'], 1.000)
+        self.assertFloatEqual(eval_results['r2_score'], 0.6800)
+        self.assertFloatEqual(eval_results['root_mean_squared_error'], 0.800)
         self.assertFloatEqual(eval_results['root_mean_squared_error'], 0.800)
 
     def test_regression_report(self):
