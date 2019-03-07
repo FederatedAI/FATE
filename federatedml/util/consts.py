@@ -20,6 +20,7 @@ GUEST = 'guest'
 
 BINARY = 'binary'
 MULTY = 'multi'
+REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
@@ -43,6 +44,13 @@ LIFT = "lift"
 PRECISION = "precision"
 RECALL = "recall"
 ACCURACY = "accuracy"
+EXPLAINED_VARIANCE = "explained_variance"
+MEAN_ABSOLUTE_ERROR = "mean_absolute_error"
+MEAN_SQUARED_ERROR = "mean_squared_error"
+MEAN_SQUARED_LOG_ERROR = "mean_squared_log_error"
+MEDIAN_ABSOLUTE_ERROR = "median_absolute_error"
+R2_SCORE = "r2_score"
+ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
 
 # workflow
 TRAIN_DATA = "train_data"
