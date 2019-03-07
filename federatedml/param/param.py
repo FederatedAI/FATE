@@ -97,7 +97,7 @@ class WorkFlowParam(object):
                  data_input_table=None, data_input_namespace=None, intersect_data_output_table=None,
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
-                 n_splits=5):
+                 n_splits=5, need_intersect=True):
         """
         Parameters that used in workflow.
         :param method: workflow methods, string, support 'train', 'predict' 'cross_validation' and 'intersect'
@@ -147,6 +147,7 @@ class WorkFlowParam(object):
         self.work_mode = work_mode
         self.predict_param = predict_param
         self.evaluate_param = evaluate_param
+        self.need_intersect = need_intersect
 
 
 class InitParam(object):

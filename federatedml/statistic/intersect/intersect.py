@@ -25,26 +25,31 @@ LOGGER = log_utils.getLogger()
 
 class Intersect(object):
     def __init__(self, intersect_params):
-        pass
+        self.transfer_variable = None
 
     def run(self, data_instances):
         raise NotImplementedError("method init must be define")
 
+    def set_flowid(self, flowid=0):
+        if self.transfer_variable is not None:
+            self.transfer_variable.set_flowid(flowid)
+
 
 class RsaIntersect(Intersect):
     def __init__(self, intersect_params):
-        pass
+        super().__init__(intersect_params)
 
 
 class RawIntersect(Intersect):
     def __init__(self, intersect_params):
+        super().__init__(intersect_params)
         self.role = None
         self.send_intersect_id_flag = intersect_params.is_send_intersect_ids
         self.with_encode = intersect_params.with_encode
         self.transfer_variable = RawIntersectTransferVariable()
         self.encode_params = intersect_params.encode_params
 
-    def RawIntersectRoleSendId(self, data_instances):
+    def intersect_send_id(self, data_instances):
         sid_encode_pair = None
         if self.with_encode and self.encode_params.encode_method != "none":
             if Encode.is_support(self.encode_params.encode_method):
@@ -106,7 +111,7 @@ class RawIntersect(Intersect):
 
         return intersect_ids
 
-    def RawIntersectRoleJoinId(self, data_instances):
+    def intersect_join_id(self, data_instances):
         LOGGER.info("Join id role is {}".format(self.role))
 
         sid_encode_pair = None

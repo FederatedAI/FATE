@@ -145,9 +145,9 @@ class RawIntersectionGuest(RawIntersect):
         LOGGER.info("Start raw intersection")
 
         if self.join_role == consts.HOST:
-            intersect_ids = self.RawIntersectRoleSendId(data_instances)
+            intersect_ids = self.intersect_send_id(data_instances)
         elif self.join_role == consts.GUEST:
-            intersect_ids = self.RawIntersectRoleJoinId(data_instances)
+            intersect_ids = self.intersect_join_id(data_instances)
         else:
             raise ValueError("Unknown intersect join role, please check the configure of guest")
 

@@ -30,7 +30,9 @@ import numpy as np
 from arch.api import eggroll
 from arch.api import federation
 from federatedml.model_selection import KFold
+from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
+from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
@@ -115,7 +117,13 @@ class WorkFlow(object):
         #                    filemode='w')
 
     def train(self, train_data, validation_data=None):
-        LOGGER.debug("Enter train function")
+        if self.mode == consts.HETERO:
+            LOGGER.debug("Enter train function")
+            LOGGER.debug("Star intersection before train")
+            intersect_flowid = "train_0"
+            train_data = self.intersect(train_data, intersect_flowid)
+            LOGGER.debug("End intersection before train")
+
         self.model.fit(train_data)
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
@@ -123,16 +131,20 @@ class WorkFlow(object):
                 self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
-            # train_pred = self.model.predict(train_data)
             predict_result = self.model.predict(train_data,
                                                 self.workflow_param.predict_param)
             LOGGER.debug("evaluating...")
             train_eval = self.evaluate(predict_result)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
-                # val_pred = self.model.predict(validation_data)
+                if self.mode == consts.HETERO:
+                    LOGGER.debug("Star intersection before predict")
+                    intersect_flowid = "predict_0"
+                    validation_data = self.intersect(validation_data, intersect_flowid)
+                    LOGGER.debug("End intersection before predict")
+
                 val_pred = self.model.predict(validation_data,
-                                                    self.workflow_param.predict_param)
+                                              self.workflow_param.predict_param)
                 val_eval = self.evaluate(val_pred)
                 eval_result[consts.VALIDATE_EVALUATE] = val_eval
             LOGGER.info("{} eval_result: {}".format(self.role, eval_result))
@@ -148,8 +160,12 @@ class WorkFlow(object):
                             )
 
     def predict(self, data_instance):
-        # self.load_model()
-        # LOGGER.debug("predict data size: {}".format(data_instance.count()))
+        if self.mode == consts.HETERO:
+            LOGGER.debug("Star intersection before predict")
+            intersect_flowid = "predict_module_0"
+            data_instance = self.intersect(data_instance, intersect_flowid)
+            LOGGER.debug("End intersection before predict")
+
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
 
@@ -175,8 +191,33 @@ class WorkFlow(object):
 
         return predict_result
 
-    def intersect(self, data_instance):
-        raise NotImplementedError("method init must be define")
+    def intersect(self, data_instance, intersect_flowid=''):
+        if self.workflow_param.need_intersect:
+            LOGGER.info("need_intersect: true!")
+            intersect_param = IntersectParam()
+            self.intersect_params = ParamExtract.parse_param_from_config(intersect_param, self.config_path)
+
+            LOGGER.info("Start intersection!")
+            if self.role == consts.HOST:
+                intersect_operator = RawIntersectionHost(self.intersect_params)
+            elif self.role == consts.GUEST:
+                intersect_operator = RawIntersectionGuest(self.intersect_params)
+            elif self.role == consts.ARBITER:
+                return data_instance
+            else:
+                raise ValueError("Unknown role of workflow")
+            intersect_operator.set_flowid(intersect_flowid)
+            intersect_ids = intersect_operator.run(data_instance)
+            LOGGER.info("finish intersection!")
+
+            intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
+            LOGGER.info("get intersect data_instance!")
+            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
+            return intersect_data_instance
+
+        else:
+            LOGGER.info("need_intersect: false!")
+            return data_instance
 
     def cross_validation(self, data_instance):
         if self.mode == consts.HETERO:
@@ -207,8 +248,13 @@ class WorkFlow(object):
                 LOGGER.info("evaluate name: {}, mean: {}, std: {}".format(eval_name, mean_value, std_value))
 
     def hetero_cross_validation(self, data_instance):
-        n_splits = self.workflow_param.n_splits
+        LOGGER.debug("Enter train function")
+        LOGGER.debug("Star intersection before train")
+        intersect_flowid = "cross_validation_0"
+        data_instance = self.intersect(data_instance, intersect_flowid)
+        LOGGER.debug("End intersection before train")
 
+        n_splits = self.workflow_param.n_splits
         if self.role == consts.GUEST:
             LOGGER.info("In hetero cross_validation Guest")
             k_fold_obj = KFold(n_splits=n_splits)
@@ -372,7 +418,6 @@ class WorkFlow(object):
                 ))
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace)
-                # LOGGER.debug("train_data_instance count:{}".format(train_data_instance.count()))
                 LOGGER.debug("gen_data_finish")
                 if self.workflow_param.predict_input_table is not None and self.workflow_param.predict_input_namespace is not None:
                     LOGGER.debug("Input table:{}, input namesapce: {}".format(
