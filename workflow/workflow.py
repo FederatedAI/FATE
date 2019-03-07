@@ -248,8 +248,13 @@ class WorkFlow(object):
                 LOGGER.info("evaluate name: {}, mean: {}, std: {}".format(eval_name, mean_value, std_value))
 
     def hetero_cross_validation(self, data_instance):
-        n_splits = self.workflow_param.n_splits
+        LOGGER.debug("Enter train function")
+        LOGGER.debug("Star intersection before train")
+        intersect_flowid = "cross_validation_0"
+        data_instance = self.intersect(data_instance, intersect_flowid)
+        LOGGER.debug("End intersection before train")
 
+        n_splits = self.workflow_param.n_splits
         if self.role == consts.GUEST:
             LOGGER.info("In hetero cross_validation Guest")
             k_fold_obj = KFold(n_splits=n_splits)
@@ -258,15 +263,10 @@ class WorkFlow(object):
             cv_results = []
             for train_data, test_data in kfold_data_generator:
                 LOGGER.info("flowid:{}".format(flowid))
-                LOGGER.debug("Star guest intersection of train_data")
-                intersect_flowid = "train_" + str(flowid)
-                train_data = self.intersect(train_data, intersect_flowid)
-                LOGGER.debug("Finish guest intersection of train_data")
-
-                LOGGER.debug("Star guest intersection of test_data")
-                intersect_flowid = "test_" + str(flowid)
-                test_data = self.intersect(test_data, intersect_flowid)
-                LOGGER.debug("Finish guest intersection of test_data")
+                self._synchronous_data(train_data, flowid, consts.TRAIN_DATA)
+                LOGGER.info("synchronous train data")
+                self._synchronous_data(test_data, flowid, consts.TEST_DATA)
+                LOGGER.info("synchronous test data")
 
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
@@ -284,15 +284,10 @@ class WorkFlow(object):
             LOGGER.info("In hetero cross_validation Host")
             for flowid in range(n_splits):
                 LOGGER.info("flowid:{}".format(flowid))
-                LOGGER.debug("Star host intersection of train_data")
-                intersect_flowid = "train_" + str(flowid)
-                train_data = self.intersect(data_instance, intersect_flowid)
-                LOGGER.debug("Finish host intersection of train_data")
-
-                LOGGER.debug("Star host intersection of test_data")
-                intersect_flowid = "test_" + str(flowid)
-                test_data = self.intersect(data_instance, intersect_flowid)
-                LOGGER.debug("Finish host intersection of test_data")
+                train_data = self._synchronous_data(data_instance, flowid, consts.TRAIN_DATA)
+                LOGGER.info("synchronous train data")
+                test_data = self._synchronous_data(data_instance, flowid, consts.TEST_DATA)
+                LOGGER.info("synchronous test data")
 
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
