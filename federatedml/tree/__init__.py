@@ -30,5 +30,5 @@ from federatedml.tree.hetero_secureboosting_tree_host import HeteroSecureBoostin
 
 __all__ = ["Node", "SplitInfo", "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost",
            "HeteroDecisionTreeHost", "HeteroDecisionTreeGuest", "Splitter",
-           "FeatureHistogram", "XgboostCriterion", "DecisionTree", 
+           "FeatureHistogram", "XgboostCriterion", "DecisionTree",
            "DecisionTreeModelMeta", "BoostingTreeModelMeta"]

@@ -78,6 +78,12 @@ class EvaluateParam(object):
         self.thresholds = thresholds
 
 
+class ObjectiveParam(object):
+    def __init__(self, objective=None, params=None):
+        self.objective = objective
+        self.params = params
+
+
 class PredictParam(object):
     def __init__(self, with_proba=True, threshold=0.5):
         """
@@ -231,25 +237,28 @@ class LogisticParam(object):
 
 class DecisionTreeParam(object):
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
-                 min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1, n_iter_no_change=True, tol=0.001):
+                 min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
+                 max_split_nodes=consts.MAX_SPLIT_NODES, n_iter_no_change=True, tol=0.001):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
         self.min_sample_split = min_sample_split
         self.min_impurity_split = min_imputiry_split
         self.min_leaf_node = min_leaf_node
+        self.max_split_nodes = max_split_nodes
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
 
 class BoostingTreeParam(object):
-    def __init__(self, tree_param=DecisionTreeParam(), task_type="classification", loss_type="cross_entropy",
+    def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
+                 objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
                  bin_num=32, bin_gap=1e-3, bin_sample_num=10000):
         self.tree_param = tree_param
         self.task_type = task_type
-        self.loss_type = loss_type
+        self.objective_param = objective_param
         self.learning_rate = learning_rate
         self.num_trees = num_trees
         self.subsample_feature_rate = subsample_feature_rate

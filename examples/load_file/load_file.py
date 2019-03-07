@@ -82,11 +82,11 @@ def data_to_eggroll_table(data, namespace, table_name,partition=1, work_mode=0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', required=False, type=str, help="指定一个配置文件路径(json格式)")
+    parser.add_argument('-c', '--config', required=False, type=str, help="you should provide a path of configure file with json format")
     try:
         args = parser.parse_args()
         if not args.config:
-            print("找不到配置文件")
+            print("Can not find the parameter -c")
             sys.exit()
 
         data = {}
@@ -151,10 +151,10 @@ if __name__ == "__main__":
             data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
 
         except ValueError:
-            print('json解析错误')
+            print('json parse error')
             exit(-102)
         except IOError:
-            print('文件读取错误')
+            print('read file error')
             exit(-103)
     except:
         traceback.print_exc()

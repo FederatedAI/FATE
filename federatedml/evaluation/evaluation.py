@@ -92,7 +92,7 @@ class Evaluation(object):
         for i in range(labels.shape[0]):
             if labels[i] is not None:
                 if self.eval_type == consts.BINARY and pos_label is not None:
-                    if str(pos_label) == labels[i]:
+                    if pos_label == labels[i]:
                         new_labels.append(1)
                     else:
                         new_labels.append(0)

@@ -30,7 +30,7 @@ class BoostingTree(object):
     def __init__(self, boostingtree_param):
         self.tree_param = boostingtree_param.tree_param
         self.task_type = boostingtree_param.task_type
-        self.loss_type = boostingtree_param.loss_type
+        self.objective_param = boostingtree_param.objective_param
         self.learning_rate = boostingtree_param.learning_rate
         self.num_trees = boostingtree_param.num_trees
         self.subsample_feature_rate = boostingtree_param.subsample_feature_rate

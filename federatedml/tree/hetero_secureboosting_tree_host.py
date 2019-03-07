@@ -141,7 +141,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         LOGGER.info("save model")
         modelmeta = BoostingTreeModelMeta()
         modelmeta.trees_ = self.trees_
-        modelmeta.loss_type = self.loss_type
+        modelmeta.objective_param = self.objective_param
         modelmeta.tree_dim = self.tree_dim
         modelmeta.task_type = self.task_type
 
@@ -152,6 +152,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         LOGGER.info("load model")
         modelmeta = list(eggroll.table(model_table, model_namespace).collect())[0][1]
         self.task_type = modelmeta.task_type
-        self.loss_type = modelmeta.loss_type
+        self.objective_param = modelmeta.object_param
         self.tree_dim = modelmeta.tree_dim
         self.trees_ = modelmeta.trees_
