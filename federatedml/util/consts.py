@@ -20,6 +20,7 @@ GUEST = 'guest'
 
 BINARY = 'binary'
 MULTY = 'multi'
+CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 L1_PENALTY = 'L1'
@@ -62,6 +63,9 @@ RANDOM_UNIFORM = 'random_uniform'
 ONES = 'ones'
 ZEROS = 'zeros'
 CONST = 'const'
+
+# decision tree
+MAX_SPLIT_NODES = 2 ** 16
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
