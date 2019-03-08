@@ -518,13 +518,25 @@ class LogisticParamChecker:
                     logistic_param.party_weight))
 
 
+class FTLModelParamChecker(object):
+
+    @staticmethod
+    def check_param(ftl_model_param):
+        model_param_descr = "ftl model param's "
+        check_positive_integer(ftl_model_param.max_iter, model_param_descr + "max_iter")
+        check_positive_number(ftl_model_param.eps, model_param_descr + "eps")
+        check_positive_number(ftl_model_param.alpha, model_param_descr + "alpha")
+        check_boolean(ftl_model_param.is_encrypt, model_param_descr + "is_encrypt")
+        return True
+
+
 class FTLLocalModelParamChecker(object):
 
     @staticmethod
     def check_param(ftl_local_model_param):
         model_param_descr = "ftl local model param's "
         check_positive_integer(ftl_local_model_param.encode_dim, model_param_descr + "encode_dim")
-        check_positive_number(ftl_local_model_param.learning_rate, model_param_descr + "learning_rate")
+        check_open_unit_interval(ftl_local_model_param.learning_rate, model_param_descr + "learning_rate")
         return True
 
 
@@ -544,15 +556,15 @@ class FTLDataParamChecker(object):
         return True
 
 
-class FTLValidDataParamChecker(object):
-
-    @staticmethod
-    def check_param(ftl_valid_data_param):
-        model_param_descr = "ftl validation data model param's "
-        check_string(ftl_valid_data_param.file_path, model_param_descr + "file_path")
-        check_positive_integer(ftl_valid_data_param.num_samples, model_param_descr + "num_samples")
-        check_boolean(ftl_valid_data_param.is_read_table, model_param_descr + "is_read_table")
-        return True
+# class FTLValidDataParamChecker(object):
+#
+#     @staticmethod
+#     def check_param(ftl_valid_data_param):
+#         model_param_descr = "ftl validation data model param's "
+#         check_string(ftl_valid_data_param.file_path, model_param_descr + "file_path")
+#         check_positive_integer(ftl_valid_data_param.num_samples, model_param_descr + "num_samples")
+#         check_boolean(ftl_valid_data_param.is_read_table, model_param_descr + "is_read_table")
+#         return True
 
 
 def check_string(param, descr):

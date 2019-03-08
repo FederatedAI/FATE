@@ -272,24 +272,84 @@ class BoostingTreeParam(object):
 
 
 class FTLModelParam(object):
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
+    """
+    Defines parameters for FTL model
+
+    Parameters (of __init__ method)
+    ----------
+    max_iteration：integer, default: 10
+        The number of passes over the training data (aka epochs).
+        Defaults to 10, must be positive integer
+
+    eps: numeric, default: 1e-3
+        The converge threshold, must be positive number
+
+    alpha: numeric, default: 100
+        The weight for objective function loss, must be positive number
+
+    is_encrypt: bool, default; True
+        The indicator indicating whether we use encrypted version of ftl or plain version, must be bool
+
+    """
+
+    def __init__(self, max_iteration=10, eps=1e-3, alpha=100, is_encrypt=True):
         self.max_iter = max_iteration
-        self.batch_size = batch_size
         self.eps = eps
         self.alpha = alpha
-        self.lr_decay = lr_decay
-        self.l2_para = l2_para
         self.is_encrypt = is_encrypt
 
 
 class FTLLocalModelParam(object):
+    """
+    Defines parameters for FTL model
+
+    Parameters (of __init__ method)
+    ----------
+    encode_dim：integer, default: 5
+        The dimension for the encoded representation of input, must be positive integer
+
+    learning_rate：float, default: 0.001
+        The learning rate for training model, must between 0 and 1 exclusively
+
+
+    """
     def __init__(self, encode_dim=5, learning_rate=0.001):
         self.encode_dim = encode_dim
         self.learning_rate = learning_rate
 
 
 class FTLDataParam(object):
+    """
+    Defines parameters for FTL data model
+
+    Parameters (of __init__ method)
+    ----------
+    file_path：str, default: None
+        The file path to FTL data configuration JSON file, must be string or None
+
+    n_feature_guest：integer, default: 10
+        The number of features at guest side, must be positive integer
+
+    n_feature_host: integer, default: 23
+        The number of features at host side, must be positive integer
+
+    overlap_ratio: float, default: 0.1
+        The ratio of overlapping samples between guest and host, must between 0 and 1 exclusively
+
+    guest_split_ratio: float, default: 0.9
+        The ratio of number of samples excluding overlapping samples at guest side, must between 0 and 1 exclusively
+
+    num_samples: numeric, default: None
+        The total number of samples used for train/valid/test, must be positive integer or None. If None, all samples
+        would be used.
+
+    balanced: bool, default; True
+        The indicator indicating whether balance samples, must be bool
+
+    is_read_table: bool, default; False
+        The indicator indicating whether read data from dtable, must be bool
+
+    """
     def __init__(self, file_path=None, n_feature_guest=10, n_feature_host=23, overlap_ratio=0.1, guest_split_ratio=0.9,
                  num_samples=None, balanced=True, is_read_table=False):
         self.file_path = file_path

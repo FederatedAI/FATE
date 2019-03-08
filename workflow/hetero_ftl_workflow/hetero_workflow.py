@@ -14,11 +14,13 @@
 #  limitations under the License.
 #
 
+from arch.api.utils import log_utils
 from federatedml.param.param import FTLModelParam, FTLLocalModelParam, FTLDataParam
 from federatedml.util import ParamExtract
+from federatedml.util.param_checker import FTLDataParamChecker, FTLLocalModelParamChecker, FTLModelParamChecker
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 from workflow.workflow import WorkFlow
-from arch.api.utils import log_utils
+
 LOGGER = log_utils.getLogger()
 
 
@@ -35,7 +37,12 @@ class FTLWorkFlow(WorkFlow):
         ftl_local_model_param = ParamExtract.parse_param_from_config(ftl_local_model_param, config)
         self.ftl_data_param = ParamExtract.parse_param_from_config(ftl_data_param, config)
         self.ftl_transfer_variable = HeteroFTLTransferVariable()
-        self._do_initialize_model(ftl_model_param, ftl_local_model_param, ftl_data_param)
+
+        FTLModelParamChecker.check_param(ftl_model_param)
+        FTLLocalModelParamChecker.check_param(ftl_local_model_param)
+        FTLDataParamChecker.check_param(self.ftl_data_param)
+
+        self._do_initialize_model(ftl_model_param, ftl_local_model_param, self.ftl_data_param)
 
     def _get_transfer_variable(self):
         return self.ftl_transfer_variable
