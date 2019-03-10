@@ -23,6 +23,7 @@ from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
+from federatedml.util import IntersectParamChecker
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -30,6 +31,8 @@ LOGGER = log_utils.getLogger()
 
 class RsaIntersectionGuest(RsaIntersect):
     def __init__(self, intersect_params):
+        IntersectParamChecker.check_param(intersect_params)
+
         self.send_intersect_id_flag = intersect_params.is_send_intersect_ids
         self.random_bit = intersect_params.random_bit
 

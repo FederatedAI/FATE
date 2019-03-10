@@ -24,10 +24,12 @@
 # =============================================================================
 # Boostring Tree
 # =============================================================================
+from federatedml.util import BoostingTreeParamChecker
 
 
 class BoostingTree(object):
     def __init__(self, boostingtree_param):
+        BoostingTreeParamChecker.check_param(boostingtree_param)  
         self.tree_param = boostingtree_param.tree_param
         self.task_type = boostingtree_param.task_type
         self.objective_param = boostingtree_param.objective_param

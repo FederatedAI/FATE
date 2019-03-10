@@ -64,7 +64,7 @@ class HomoLRHost(BaseLogisticRegression):
         self.transfer_variable = HomoLRTransferVariable()
         self.initializer = Initializer()
         self.mini_batch_obj = None
-        self.evaluator = Evaluation(classi_type=consts.BINARY)
+        # self.evaluator = Evaluation(classi_type=consts.BINARY)
         self.classes_ = [0, 1]
         self.has_sychronized_encryption = False
 

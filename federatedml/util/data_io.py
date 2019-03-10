@@ -28,6 +28,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import consts
+from federatedml.util import DataIOParamChecker
 from arch.api import eggroll
 
 LOGGER = log_utils.getLogger()
@@ -40,6 +41,7 @@ LOGGER = log_utils.getLogger()
 
 class DenseFeatureReader(object):
     def __init__(self, data_io_param):
+        DataIOParamChecker.check_param(data_io_param)  
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.missing_fill = data_io_param.missing_fill
@@ -146,6 +148,7 @@ class DenseFeatureReader(object):
 # =============================================================================
 class SparseFeatureReader(object):
     def __init__(self, data_io_param):
+        DataIOParamChecker.check_param(data_io_param)  
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.missing_fill = data_io_param.missing_fill

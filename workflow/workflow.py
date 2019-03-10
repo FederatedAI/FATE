@@ -35,6 +35,7 @@ from federatedml.param import WorkFlowParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
 from federatedml.util import consts
+from federatedml.util import WorkFlowParamChecker
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -107,6 +108,8 @@ class WorkFlow(object):
     def _initialize_workflow_param(self, config_path):
         workflow_param = WorkFlowParam()
         self.workflow_param = ParamExtract.parse_param_from_config(workflow_param, config_path)
+
+        WorkFlowParamChecker.check_param(self.workflow_param)
 
     def _init_logger(self, LOGGER_path):
         pass

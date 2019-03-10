@@ -164,7 +164,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def generate_encrypter(self):
         LOGGER.info("generate encrypter")
-        if self.encrypt_param.method == "paillier":
+        if self.encrypt_param.method == consts.PAILLIER:
             self.encrypter = PaillierEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
