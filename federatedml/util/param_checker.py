@@ -238,10 +238,11 @@ class EncodeParamChecker(object):
             raise ValueError(
                 "encode param's salt {] not supported, should be str type".format(
                     encode_param.salt))
-
-        if encode_param.encode_method not in ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]:
+        
+        encode_method = encode_param.encode_method.lower()
+        if encode_method not in ["none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512"]:
             raise ValueError(
-                "encode param's encode_method {} not supported, now just supported md5, sha1, sha224, sha256, sha384, sha512".format(
+                "encode param's encode_method {} not supported, now just supported none, md5, sha1, sha224, sha256, sha384, sha512".format(
                     encode_param.encode_method))
 
         if type(encode_param.base64).__name__ != "bool":

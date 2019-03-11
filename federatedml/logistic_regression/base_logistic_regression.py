@@ -27,6 +27,7 @@ from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util import LogisticParamChecker
 
 LOGGER = log_utils.getLogger()
 
@@ -34,6 +35,7 @@ LOGGER = log_utils.getLogger()
 class BaseLogisticRegression(object):
     def __init__(self, logistic_params: LogisticParam):
         # set params
+        LogisticParamChecker.check_param(logistic_params)
         self.alpha = logistic_params.alpha
         self.init_param_obj = logistic_params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept

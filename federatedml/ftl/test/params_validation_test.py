@@ -17,10 +17,11 @@
 import inspect
 import unittest
 
-from arch.api.eggroll import init
 from federatedml.param.param import FTLDataParam, FTLModelParam, FTLLocalModelParam
 from federatedml.util import ParamExtract
 from federatedml.util.param_checker import FTLDataParamChecker, FTLLocalModelParamChecker, FTLModelParamChecker
+
+from arch.api.eggroll import init
 
 
 def get_filled_param(param_var, config_json):
@@ -274,7 +275,6 @@ class TestParamValidation(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, param_to_validate):
             FTLDataParamChecker.check_param(ftl_data_param)
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     init()
     unittest.main()

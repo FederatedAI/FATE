@@ -286,7 +286,7 @@ class EncodeParam(object):
 
     base64: boolean, if True, the result of encode will be changed to base64, default by False
     """
-    def __init__(self, salt='', encode_method=None, base64=False):
+    def __init__(self, salt='', encode_method='none', base64=False):
         self.salt = salt
         self.encode_method = encode_method
         self.base64 = base64

@@ -22,7 +22,7 @@ from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
-from federatedml.util import IntersectParamChecker
+# from federatedml.util import IntersectParamChecker
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -30,7 +30,7 @@ LOGGER = log_utils.getLogger()
 
 class RsaIntersectionHost(RsaIntersect):
     def __init__(self, intersect_params):
-        IntersectParamChecker.check_param(intersect_params)
+        super().__init__(intersect_params)
        
         self.get_intersect_ids_flag = intersect_params.is_get_intersect_ids
         self.transfer_variable = RsaIntersectTransferVariable()
