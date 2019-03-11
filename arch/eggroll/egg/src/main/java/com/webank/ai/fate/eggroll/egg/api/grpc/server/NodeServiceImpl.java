@@ -67,7 +67,7 @@ public class NodeServiceImpl extends NodeServiceGrpc.NodeServiceImplBase {
         LOGGER.info("[EGG][NODEMANAGER] getAllPossibleProcessors. request: {}", toStringUtils.toOneLineString(request));
 
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
-            ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
+            ArrayList<Integer> allAvailables = processorManager.getAllPossible();
 
             String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
 
@@ -106,7 +106,7 @@ public class NodeServiceImpl extends NodeServiceGrpc.NodeServiceImplBase {
         LOGGER.info("[EGG][NODEMANAGER] killAllProcessor. request: {}", toStringUtils.toOneLineString(request));
 
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
-            ArrayList<Integer> allAvailables = processorManager.getAllAvailable();
+            ArrayList<Integer> allAvailables = processorManager.getAllPossible();
 
             String mySiteLocalAddress = runtimeUtils.getMySiteLocalAddress();
 

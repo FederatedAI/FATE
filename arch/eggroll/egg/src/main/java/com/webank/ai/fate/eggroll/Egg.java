@@ -51,7 +51,7 @@ public class Egg {
         NodeServiceImpl nodeService = context.getBean(NodeServiceImpl.class);
 
         ProcessorManager processorManager = context.getBean(ProcessorManager.class);
-        processorManager.getAllAvailable();
+        processorManager.getAllPossible();
 
         serverConf
                 .addService(nodeService);

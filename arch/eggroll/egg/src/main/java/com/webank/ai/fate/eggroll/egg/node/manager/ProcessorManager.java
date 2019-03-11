@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.webank.ai.fate.core.serdes.impl.GeneralJsonBytesSerDes;
 import com.webank.ai.fate.core.server.ServerConf;
+import com.webank.ai.fate.core.utils.ErrorUtils;
 import com.webank.ai.fate.core.utils.RandomUtils;
 import com.webank.ai.fate.core.utils.RuntimeUtils;
 import com.webank.ai.fate.eggroll.egg.node.sandbox.ProcessorOperator;
@@ -52,6 +53,8 @@ public class ProcessorManager {
     private RuntimeUtils runtimeUtils;
     @Autowired
     private ServerConf serverConf;
+    @Autowired
+    private ErrorUtils errorUtils;
 
     private Set<Integer> availableProcessors;
     private ArrayList<Integer> availableProcessorMirror;
@@ -60,6 +63,7 @@ public class ProcessorManager {
     private final Path statusPath;
     private int maxProcessorCount;
 
+    private static final int START_PORT_NOT_INCLUDED = 50000;
     private static final String statusFileLocation = "/tmp/FATE/node-manager/processor-manager";
     private static final int PROCESSOR_COUNT = Runtime.getRuntime().availableProcessors();
     private static final Logger LOGGER = LogManager.getLogger();
@@ -67,7 +71,7 @@ public class ProcessorManager {
     public ProcessorManager() {
         availableProcessors = Sets.newConcurrentHashSet();
         availableProcessorMirror = Lists.newArrayListWithExpectedSize(PROCESSOR_COUNT);
-        lastPort = 50000;
+        lastPort = START_PORT_NOT_INCLUDED;
         availableProcessorsLock = new Object();
 
         statusPath = Paths.get(statusFileLocation);
@@ -76,7 +80,7 @@ public class ProcessorManager {
     @PostConstruct
     public void init() {
         if (Files.exists(statusPath)) {
-            LOGGER.info("restoring processors");
+            LOGGER.info("[EGG][PROCESSOR][MANAGER] restoring processors");
             try {
                 byte[] previousStatus = Files.readAllBytes(statusPath);
                 if (previousStatus == null || previousStatus.length == 0) {
@@ -94,7 +98,7 @@ public class ProcessorManager {
             }
         }
 
-        LOGGER.info("restored processors: {}", availableProcessors);
+        LOGGER.info("[EGG][PROCESSOR][MANAGER] restored processors: {}", availableProcessors);
     }
 
     /**
@@ -139,11 +143,28 @@ public class ProcessorManager {
         return resultPort;
     }
 
-    public ArrayList<Integer> getAllAvailable() {
+    public ArrayList<Integer> getAllPossible() {
         initProcessorCount();
-        while (availableProcessorMirror.size() == 0 && availableProcessors.size() < 128) {
-            get();
+
+        if (availableProcessors.size() != maxProcessorCount) {
+            synchronized (availableProcessorsLock) {
+                int beforeAdjustCount = availableProcessors.size();
+                if (availableProcessors.size() < maxProcessorCount) {
+                    while (availableProcessors.size() < maxProcessorCount && availableProcessors.size() < 128) {
+                        get();
+                    }
+                } else if (availableProcessors.size() > maxProcessorCount) {
+                    while (availableProcessors.size() > maxProcessorCount) {
+                        kill(availableProcessorMirror.get(availableProcessors.size() - 1));
+                    }
+                    availableProcessorMirror = Lists.newArrayList(availableProcessorMirror);
+                }
+
+                LOGGER.info("[EGG][PROCESSOR][MANAGER] all possible count before adjusted: {}, after adjusted: {}, ports: {}",
+                        beforeAdjustCount, availableProcessors.size(), availableProcessors);
+            }
         }
+
         return Lists.newArrayList(availableProcessorMirror);
     }
 
@@ -158,6 +179,13 @@ public class ProcessorManager {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e);
                 }
+
+                try {
+                    writeStatusFile();
+                } catch (IOException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.error(errorUtils.getStackTrace(e));
+                }
             } else {
                 result = false;
             }
@@ -171,6 +199,13 @@ public class ProcessorManager {
         synchronized (availableProcessorsLock) {
             for (Integer port : availableProcessors) {
                 result = kill(port);
+            }
+
+            try {
+                writeStatusFile();
+            } catch (IOException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.error(errorUtils.getStackTrace(e));
             }
         }
         return result;
@@ -205,9 +240,15 @@ public class ProcessorManager {
 
     private void initProcessorCount() {
         if (maxProcessorCount <= 0) {
-            int userDefinedMaxProcessorCount = Integer.valueOf(serverConf.getProperties().getProperty("max.processors.count", "0"));
+            int userDefinedMaxProcessorCount = Integer.valueOf(
+                    serverConf.getProperties().getProperty("max.processors.count", "1"));
+
             maxProcessorCount = Math.min(userDefinedMaxProcessorCount, PROCESSOR_COUNT > 1 ? PROCESSOR_COUNT - 1 : 1);
-            LOGGER.info("user defined processor count: {}, processor count: {}, max processor count: {}", userDefinedMaxProcessorCount, PROCESSOR_COUNT, maxProcessorCount);
+            if (maxProcessorCount < 1) {
+                maxProcessorCount = 1;
+            }
+            LOGGER.info("[EGG][PROCESS][MANAGER] user defined processor count: {}, processor count: {}, final max processor count: {}",
+                    userDefinedMaxProcessorCount, PROCESSOR_COUNT, maxProcessorCount);
         }
     }
 }

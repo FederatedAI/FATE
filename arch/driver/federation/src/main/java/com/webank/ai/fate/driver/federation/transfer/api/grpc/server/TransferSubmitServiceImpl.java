@@ -137,10 +137,10 @@ public class TransferSubmitServiceImpl extends TransferSubmitServiceGrpc.Transfe
                     Federation.TransferType transferType = request.getType();
 
                     long startTime = System.currentTimeMillis();
-                    CountDownLatch finishLatch = new CountDownLatch(1);
+                    CountDownLatch finishLatch = recvBrokerManager.getFinishLatch(transferMetaId);
                     boolean latchWaitResult = false;
                     while (!latchWaitResult) {
-                        latchWaitResult = finishLatch.await(500, TimeUnit.MILLISECONDS);
+                        latchWaitResult = finishLatch.await(10, TimeUnit.SECONDS);
 
                         switch (transferType) {
                             case SEND:
@@ -156,27 +156,28 @@ public class TransferSubmitServiceImpl extends TransferSubmitServiceGrpc.Transfe
                                 throw new IllegalArgumentException("Invalid transferType: " + (transferType == null ? transferType : transferType.name()));
                         }
 
-
                         if (result == null) {
                             result = request;
-                            finishLatch.countDown();
                         }
-
-                        transferStatus = result.getTransferStatus();
-                        if (transferStatus == Federation.TransferStatus.COMPLETE
-                                || transferStatus == Federation.TransferStatus.ERROR) {
-                            finishLatch.countDown();
-                        }
-
                         long now = System.currentTimeMillis();
                         long timeInterval = now - startTime;
-                        if ((timeInterval / 1000) % 10  == 0) {
-                            LOGGER.info("[FEDERATION][CHECKSTATUS] transferMetaId: {}, status: {}, type: {}",
-                                    transferMetaId, transferStatus.name(), transferType.name());
-                        }
 
-                        if (timeInterval >= 300000) {
-                            finishLatch.countDown();
+                        // if not finished (COMPLETE / ERROR / CANCELLED) yet
+                        if (!latchWaitResult) {
+                            transferStatus = result.getTransferStatus();
+
+
+                            if (timeInterval >= 300000) {
+                                LOGGER.info("[FEDERATION][CHECKSTATUS] breaking. transferMetaId: {}, status: {}, type: {}",
+                                        transferMetaId, transferStatus.name(), transferType.name());
+                                break;
+                            } else {
+                                LOGGER.info("[FEDERATION][CHECKSTATUS] waiting. transferMetaId: {}, status: {}, type: {}",
+                                        transferMetaId, transferStatus.name(), transferType.name());
+                            }
+                        } else {
+                            LOGGER.info("[FEDERATION][CHECKSTATUS] finished. transferMetaId: {}, status: {}, type: {}",
+                                    transferMetaId, transferStatus.name(), transferType.name());
                         }
                     }
 

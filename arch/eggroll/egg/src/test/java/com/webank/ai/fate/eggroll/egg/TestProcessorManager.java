@@ -21,7 +21,6 @@ import com.webank.ai.fate.core.factory.GrpcServerFactory;
 import com.webank.ai.fate.core.server.ServerConf;
 import com.webank.ai.fate.core.utils.RuntimeUtils;
 import com.webank.ai.fate.eggroll.egg.node.manager.ProcessorManager;
-import com.webank.ai.fate.eggroll.egg.node.sandbox.ProcessorOperator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +56,7 @@ public class TestProcessorManager {
 
     @Test
     public void testGetAll() throws Exception {
-        ArrayList<Integer> all = processorManager.getAllAvailable();
+        ArrayList<Integer> all = processorManager.getAllPossible();
 
         for (Integer port : all) {
             System.out.println(port);
