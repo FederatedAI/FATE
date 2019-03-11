@@ -464,10 +464,10 @@ class InitParamChecker(object):
                 "Init param's init_method {} not supported, should be str type".format(init_param.init_method))
         else:
             init_param.init_method = init_param.init_method.lower()
-            if init_param.init_method not in ['random_uniform', 'random_normal' 'ones', 'zeros', 'const']:
+            if init_param.init_method not in ['random_uniform', 'random_normal', 'ones', 'zeros', 'const']:
                 raise ValueError(
-                    "Init param's init_method not supported, init_method should in 'random_uniform',"
-                    " 'random_normal' 'ones', 'zeros' or 'const'")
+                    "Init param's init_method {} not supported, init_method should in 'random_uniform',"
+                    " 'random_normal' 'ones', 'zeros' or 'const'".format(init_param.init_method))
 
         if type(init_param.init_const).__name__ not in ['int', 'float']:
             raise ValueError(
@@ -488,9 +488,9 @@ class LogisticParamChecker(object):
                 "logistic_param's penalty {} not supported, should be str type".format(logistic_param.penalty))
         else:
             logistic_param.penalty = logistic_param.penalty.upper()
-            if logistic_param.penalty not in ['L1', 'L2']:
+            if logistic_param.penalty not in ['L1', 'L2', 'NONE']:
                 raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1' or 'L2'")
+                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
         if type(logistic_param.eps).__name__ != "float":
             raise ValueError(
