@@ -23,12 +23,14 @@ from federatedml.optim.convergence import DiffConverge
 from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.util import HeteroLRTransferVariable
 from federatedml.util import consts
+# from federatedml.util import LogisticParamChecker
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroLRArbiter(BaseLogisticRegression):
     def __init__(self, logistic_params):
+        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRArbiter, self).__init__(logistic_params)
         self.converge_func = DiffConverge(logistic_params.eps)
 

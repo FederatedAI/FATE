@@ -22,6 +22,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.util import consts
+# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -29,6 +30,7 @@ LOGGER = log_utils.getLogger()
 
 class HeteroLRGuest(BaseLogisticRegression):
     def __init__(self, logistic_params):
+        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRGuest, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []

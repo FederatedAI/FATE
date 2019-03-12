@@ -48,8 +48,8 @@ class HomoLRHost(BaseLogisticRegression):
         else:
             self.use_encrypt = False
 
-        if self.use_encrypt and params.penalty != consts.L2_PENALTY:
-            raise RuntimeError("Encrypted homo-lr supports L2 penalty only")
+        if self.use_encrypt and params.penalty == 'L1':
+            raise RuntimeError("Encrypted homo-lr supports L2 penalty or 'none' only")
 
         if self.use_encrypt:
             self.gradient_operator = TaylorLogisticGradient()
@@ -64,7 +64,7 @@ class HomoLRHost(BaseLogisticRegression):
         self.transfer_variable = HomoLRTransferVariable()
         self.initializer = Initializer()
         self.mini_batch_obj = None
-        self.evaluator = Evaluation(classi_type=consts.BINARY)
+        # self.evaluator = Evaluation(classi_type=consts.BINARY)
         self.classes_ = [0, 1]
         self.has_sychronized_encryption = False
 

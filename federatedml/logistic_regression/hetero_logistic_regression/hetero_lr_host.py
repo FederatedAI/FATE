@@ -19,6 +19,7 @@ from arch.api import federation
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.util import consts
+# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 from arch.api.utils import log_utils
 
@@ -27,6 +28,7 @@ LOGGER = log_utils.getLogger()
 
 class HeteroLRHost(BaseLogisticRegression):
     def __init__(self, logistic_params):
+        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRHost, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.batch_num = None
