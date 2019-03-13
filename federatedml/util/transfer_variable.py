@@ -208,3 +208,16 @@ class HeteroFTLTransferVariable(BaseTransferVariable):
         self.host_sample_indexes = Variable(name="HeteroFTLTransferVariable.host_sample_indexes",
                                             auth={'src': "host", 'dst': ['guest']})
         pass
+
+
+class HeteroDNNLRTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.guest_dec_gradient = Variable(name="HeteroDNNLRTransferVariable.guest_dec_gradient",
+                                           auth={'src': "arbiter", 'dst': ['guest']})
+        self.guest_enc_gradient = Variable(name="HeteroDNNLRTransferVariable.guest_enc_gradient",
+                                           auth={'src': "guest", 'dst': ['arbiter']})
+        self.host_dec_gradient = Variable(name="HeteroDNNLRTransferVariable.host_dec_gradient",
+                                          auth={'src': "arbiter", 'dst': ['host']})
+        self.host_enc_gradient = Variable(name="HeteroDNNLRTransferVariable.host_enc_gradient",
+                                          auth={'src': "host", 'dst': ['arbiter']})
+        pass
