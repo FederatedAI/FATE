@@ -90,7 +90,10 @@ Users can find a detailed configuration document in
 #enter virtual env fisrt
 (venv) $ pip install -r requirements.txt
 (venv) $ export PYTHONPATH=${path-to-example-dir-tree}/python
+# run processor
 (venv) $ python ${path-to-example-dir-tree}/python/processor/processor.py 2>&1 > ${path-to-example-dir-tree}/python/processor.out &
+# run task_manager
+(venv) $ python ${path-to-example-dir-tree}/python/task_manager/manager.py 2>&1 > ${path-to-example-dir-tree}/python/manager.out &
 ```
 
 
@@ -140,6 +143,7 @@ deploy-dir
 |    |  |- api/
 |    |  |- conf/
 |    |  |- processor/
+|    |  |- task_manager/
 |    |
 |    |- federatedml/
 |    |- examples/
