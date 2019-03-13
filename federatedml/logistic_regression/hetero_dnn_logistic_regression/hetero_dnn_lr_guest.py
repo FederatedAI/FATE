@@ -14,15 +14,10 @@
 #  limitations under the License.
 #
 
-import numpy as np
-from arch.api import federation
 from arch.api.utils import log_utils
+from federatedml.ftl.common.data_util import load_model_parameters, save_model_parameters
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import LocalModelProxy
 from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRGuest
-from federatedml.model_selection import MiniBatch
-from federatedml.optim import activation
-from federatedml.optim.gradient import HeteroLogisticGradient
-from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -30,12 +25,45 @@ LOGGER = log_utils.getLogger()
 class HeteroDNNLRGuest(HeteroLRGuest):
     def __init__(self, local_model, logistic_params):
         super(HeteroDNNLRGuest, self).__init__(logistic_params)
+        self.data_shape = local_model.get_encode_dim()
+        self.index_tracking_list = []
+        self.local_model = local_model
+        self.local_model_proxy = LocalModelProxy(local_model)
 
-        self.localModel = local_model
-        self.feature_dim = local_model.get_encode_dim()
+    def transform(self, instance_table, **training_info):
+        """
+        Transform instances into features
+        :param instance_table: dtable with a collection of (index, instance) pairs
+        :return:
+        """
+        # delegate to local_model_proxy for performing the task
+        dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)
+        training_info["is_host"] = False
+        return dtable
 
-    def transform(self, batch_data_inst):
-        return batch_data_inst
+    def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
+        """
+        Update local model
+        :param fore_gradient_table: dtable with a collection of (index, gradient) pairs
+        :param instance_table: dtable with a collection of (index, instance) pairs
+        :param coef:
+        """
+        # delegate to local_model_proxy for performing the task
+        training_info["index_tracking_list"] = self.index_tracking_list
+        training_info["is_host"] = False
+        self.local_model_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)
 
-    def update_local_model(self, fore_gradient, coef):
-        pass
+    def save_model(self, model_table_name, model_namespace):
+        LOGGER.info("@ save guest model to name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
+        lr_model_name = model_table_name + "_lr_model"
+        local_model_name = model_table_name + "_local_model"
+        super(HeteroDNNLRGuest, self).save_model(lr_model_name, model_namespace)
+        save_model_parameters(self.local_model.get_model_parameters(), local_model_name, model_namespace)
+
+    def load_model(self, model_table_name, model_namespace):
+        LOGGER.info("@ load guest model from name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
+        lr_model_name = model_table_name + "_lr_model"
+        local_model_name = model_table_name + "_local_model"
+        super(HeteroDNNLRGuest, self).load_model(lr_model_name, model_namespace)
+        model_parameters = load_model_parameters(local_model_name, model_namespace)
+        self.local_model.restore_model(model_parameters)

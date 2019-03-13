@@ -13,3 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_arbiter import HeteroDNNLRArbiter
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_host import HeteroDNNLRHost
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_guest import HeteroDNNLRGuest
+
+__all__ = ["HeteroDNNLRHost", "HeteroDNNLRGuest", "HeteroDNNLRArbiter"]

@@ -6,8 +6,8 @@ from arch.api import eggroll
 from federatedml.feature.instance import Instance
 from federatedml.ftl.test.util import assert_matrix
 from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import LocalModelProxy
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.fake_models import FakeAutoencoder
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.fake_models import FakeFATEFederationClient
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.mock_models import MockAutoencoder
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.mock_models import MockFATEFederationClient
 
 
 def create_instance_table(data, index_list):
@@ -53,7 +53,7 @@ class TestDNNLR(unittest.TestCase):
                        [5, 6, 7, 8],
                        [1, 4, 2, 1]])
         bh = np.zeros(X.shape[1])
-        local_model = FakeAutoencoder(0)
+        local_model = MockAutoencoder(0)
         local_model.build(Wh.shape[0], Wh=Wh, bh=bh)
 
         # create expected transformed features
@@ -99,10 +99,10 @@ class TestDNNLR(unittest.TestCase):
                        [1, 4, 2, 1]])
         bh = np.zeros(X.shape[1])
 
-        local_model = FakeAutoencoder(0)
+        local_model = MockAutoencoder(0)
         local_model.build(Wh.shape[0], Wh=Wh, bh=bh)
 
-        federation_client = FakeFATEFederationClient()
+        federation_client = MockFATEFederationClient()
 
         proxy = LocalModelProxy(local_model)
         proxy.set_federation_client(federation_client)

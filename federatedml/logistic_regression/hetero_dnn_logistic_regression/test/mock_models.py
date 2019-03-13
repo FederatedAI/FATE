@@ -19,10 +19,10 @@ from federatedml.optim.convergence import ConvergeFunction
 from federatedml.logistic_regression.hetero_dnn_logistic_regression.federation_client import FederationClient
 
 
-class FakeAutoencoder(object):
+class MockAutoencoder(object):
 
     def __init__(self, an_id):
-        super(FakeAutoencoder, self).__init__()
+        super(MockAutoencoder, self).__init__()
         self.id = str(an_id)
 
     def build(self, encode_dim, Wh=None, bh=None):
@@ -70,7 +70,7 @@ class FakeAutoencoder(object):
         return self.encode_dim
 
 
-class FakeFTLModelParam(object):
+class MockFTLModelParam(object):
     def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
                  alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
         self.max_iter = max_iteration
@@ -82,10 +82,10 @@ class FakeFTLModelParam(object):
         self.is_encrypt = is_encrypt
 
 
-class FakeDiffConverge(ConvergeFunction):
+class MockDiffConverge(ConvergeFunction):
 
     def __init__(self, expected_loss, eps=0.00001):
-        super(FakeDiffConverge, self).__init__(eps)
+        super(MockDiffConverge, self).__init__(eps)
         self.eps = eps
         self.expected_loss = expected_loss
 
@@ -93,7 +93,7 @@ class FakeDiffConverge(ConvergeFunction):
         return True
 
 
-class FakeFATEFederationClient(FederationClient):
+class MockFATEFederationClient(FederationClient):
 
     def remote(self, value=None, name=None, tag=None, role=None, idx=None):
         self.value = value

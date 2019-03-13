@@ -300,3 +300,10 @@ class FTLDataParam(object):
         self.num_samples = num_samples
         self.balanced = balanced
         self.is_read_table = is_read_table
+
+
+class DNNLocalModelParam(object):
+    def __init__(self, input_dim=None, encode_dim=5, learning_rate=0.001):
+        self.input_dim = input_dim
+        self.encode_dim = encode_dim
+        self.learning_rate = learning_rate

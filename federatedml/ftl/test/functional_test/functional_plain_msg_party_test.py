@@ -17,7 +17,7 @@
 import numpy as np
 import time
 import tensorflow as tf
-from federatedml.ftl.test.fake_models import FakeFTLModelParam
+from federatedml.ftl.test.mock_models import MockFTLModelParam
 from federatedml.ftl.common.data_util import series_plot, load_UCI_Credit_Card_data, split_data_combined
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     autoencoder_B.build(X_B.shape[-1], 200, learning_rate=0.01)
 
     # alpha = 100
-    fake_model_param = FakeFTLModelParam()
+    fake_model_param = MockFTLModelParam()
     partyA = PlainFTLGuestModel(autoencoder_A, fake_model_param)
     partyB = PlainFTLHostModel(autoencoder_B, fake_model_param)
 

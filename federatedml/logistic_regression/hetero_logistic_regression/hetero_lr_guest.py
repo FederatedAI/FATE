@@ -47,6 +47,12 @@ class HeteroLRGuest(BaseLogisticRegression):
                                                         lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
         return aggregate_forward_res
 
+    def transform(self, batch_data_inst):
+        return batch_data_inst
+
+    def update_local_model(self, fore_gradient, batch_data_inst, coef, **training_info):
+        pass
+
     @staticmethod
     def load_data(data_instance):
         if data_instance.label != 1:
@@ -117,8 +123,11 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # Get mini-batch train data
                 batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
 
+                # TODO: extract feature from batch_feat_inst
+                batch_feat_inst = self.transform(batch_data_inst)
+
                 # guest/host forward
-                self.compute_forward(batch_data_inst, self.coef_, self.intercept_)
+                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
                 host_forward = federation.get(name=self.transfer_variable.host_forward_dict.name,
                                               tag=self.transfer_variable.generate_transferid(
                                                   self.transfer_variable.host_forward_dict, self.n_iter_, batch_index),
@@ -131,7 +140,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # compute [[d]]
                 if self.gradient_operator is None:
                     self.gradient_operator = HeteroLogisticGradient(self.encrypt_operator)
-                fore_gradient = self.gradient_operator.compute_fore_gradient(batch_data_inst, en_aggregate_wx)
+                fore_gradient = self.gradient_operator.compute_fore_gradient(batch_feat_inst, en_aggregate_wx)
                 federation.remote(fore_gradient,
                                   name=self.transfer_variable.fore_gradient.name,
                                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.fore_gradient,
@@ -141,7 +150,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                                   idx=0)
                 LOGGER.info("Remote fore_gradient to Host")
                 # compute guest gradient and loss
-                guest_gradient, loss = self.gradient_operator.compute_gradient_and_loss(batch_data_inst,
+                guest_gradient, loss = self.gradient_operator.compute_gradient_and_loss(batch_feat_inst,
                                                                                         fore_gradient,
                                                                                         en_aggregate_wx,
                                                                                         en_aggregate_wx_square,
@@ -171,6 +180,10 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # update model
                 LOGGER.info("update_model")
                 self.update_model(optim_guest_gradient)
+
+                # TODO: compute gradients of local model and update local model based on fore_gradient
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
                 # Get loss regulation from Host if regulation is set
                 if self.updater is not None:

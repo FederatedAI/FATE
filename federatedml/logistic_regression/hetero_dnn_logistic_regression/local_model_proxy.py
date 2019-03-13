@@ -4,7 +4,7 @@ from arch.api import eggroll
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroLRTransferVariable
+from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -13,7 +13,7 @@ class LocalModelProxy(object):
 
     def __init__(self, model):
         self.model = model
-        self.transfer_variable = HeteroLRTransferVariable()
+        self.transfer_variable = HeteroDNNLRTransferVariable()
         self.federation_client = FATEFederationClient()
 
     def set_transfer_variable(self, transfer_variable):
@@ -78,19 +78,7 @@ class LocalModelProxy(object):
         grads = np.array(grad_list)
         feats = np.array(feat_list)
 
-        # TODO: decrypt grads
-        remote_tag, get_tag = self.__create_tag(is_host, n_iter, batch_index)
-
-        LOGGER.info("Remote guest_gradient to arbiter")
-        self.federation_client.remote(grads,
-                                      name=self.transfer_variable.guest_gradient.name,
-                                      tag=remote_tag,
-                                      role=consts.ARBITER,
-                                      idx=0)
-
-        dec_grads = self.federation_client.get(name=self.transfer_variable.guest_optim_gradient.name,
-                                               tag=get_tag,
-                                               idx=0)
+        dec_grads = self.__decrypt_gradients(grads, is_host, n_iter, batch_index)
 
         dec_grads = grads.reshape(len(dec_grads), 1)
         coef = coef.reshape(1, len(coef))
@@ -98,16 +86,24 @@ class LocalModelProxy(object):
         back_grad = np.matmul(dec_grads, coef)
         self.model.backpropogate(feats, None, back_grad)
 
-    def __create_tag(self, is_host, n_iter, batch_index):
+    def __decrypt_gradients(self, enc_grads, is_host, n_iter, batch_index):
 
         if is_host:
-            remote_tag = self.transfer_variable.generate_transferid(self.transfer_variable.guest_gradient, n_iter,
+            remote_name = self.transfer_variable.host_enc_gradient.name
+            get_name = self.transfer_variable.host_dec_gradient.name
+            remote_tag = self.transfer_variable.generate_transferid(self.transfer_variable.host_enc_gradient, n_iter,
                                                                     batch_index)
-            get_tag = self.transfer_variable.generate_transferid(self.transfer_variable.guest_optim_gradient, n_iter,
+            get_tag = self.transfer_variable.generate_transferid(self.transfer_variable.host_dec_gradient, n_iter,
                                                                  batch_index)
         else:
-            remote_tag = self.transfer_variable.generate_transferid(self.transfer_variable.host_gradient, n_iter,
+            remote_name = self.transfer_variable.guest_enc_gradient.name
+            get_name = self.transfer_variable.guest_dec_gradient.name
+            remote_tag = self.transfer_variable.generate_transferid(self.transfer_variable.guest_enc_gradient, n_iter,
                                                                     batch_index)
-            get_tag = self.transfer_variable.generate_transferid(self.transfer_variable.host_optim_gradient, n_iter,
+            get_tag = self.transfer_variable.generate_transferid(self.transfer_variable.guest_dec_gradient, n_iter,
                                                                  batch_index)
-        return remote_tag, get_tag
+
+        self.federation_client.remote(enc_grads, name=remote_name, tag=remote_tag, role=consts.ARBITER, idx=0)
+        dec_grads = self.federation_client.get(name=get_name, tag=get_tag, idx=0)
+
+        return dec_grads

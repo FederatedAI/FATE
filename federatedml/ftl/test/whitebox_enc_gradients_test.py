@@ -16,7 +16,7 @@
 
 import numpy as np
 import unittest
-from federatedml.ftl.test.fake_models import FakeAutoencoder
+from federatedml.ftl.test.mock_models import MockAutoencoder
 from federatedml.ftl.test.whitebox_plain_gradients_test import run_one_party_msg_exchange
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 from federatedml.ftl.encryption import encryption
@@ -49,9 +49,9 @@ class TestEncryptedGradients(unittest.TestCase):
         Wh = np.ones((4, U_A.shape[1]))
         bh = np.zeros(U_A.shape[1])
 
-        autoencoderA = FakeAutoencoder(0)
+        autoencoderA = MockAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
-        autoencoderB = FakeAutoencoder(1)
+        autoencoderB = MockAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         partyA, partyB = run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes,
@@ -97,9 +97,9 @@ class TestEncryptedGradients(unittest.TestCase):
         Wh = np.ones((4, U_A.shape[1]))
         bh = np.zeros(U_A.shape[1])
 
-        autoencoderA = FakeAutoencoder(0)
+        autoencoderA = MockAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
-        autoencoderB = FakeAutoencoder(1)
+        autoencoderB = MockAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         partyA, _ = run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes,

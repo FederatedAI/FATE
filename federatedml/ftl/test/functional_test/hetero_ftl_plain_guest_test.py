@@ -21,7 +21,7 @@ from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest, Het
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel
 from federatedml.feature.instance import Instance
 from federatedml.ftl.common.data_util import create_table
-from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeDiffConverge
+from federatedml.ftl.test.mock_models import MockAutoencoder, MockDiffConverge
 from federatedml.param.param import FTLModelParam
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 from arch.api.eggroll import init
@@ -42,7 +42,7 @@ class TestHeteroFTLGuest(HeteroPlainFTLGuest):
         Wh = np.ones((5, U_B.shape[1]))
         bh = np.zeros(U_B.shape[1])
 
-        autoencoderB = FakeAutoencoder(1)
+        autoencoderB = MockAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         self.host = PlainFTLHostModel(autoencoderB, self.model_param)
@@ -74,11 +74,11 @@ class TestCreateGuestHostEggrollTable(unittest.TestCase):
 
         model_param = FTLModelParam(alpha=1, max_iteration=1)
 
-        autoencoderA = FakeAutoencoder(0)
+        autoencoderA = MockAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
         guest = PlainFTLGuestModel(autoencoderA, model_param)
 
-        converge_func = FakeDiffConverge(None)
+        converge_func = MockDiffConverge(None)
         ftl_guest = TestHeteroFTLGuest(guest, model_param, HeteroFTLTransferVariable())
         ftl_guest.set_converge_function(converge_func)
 
