@@ -28,6 +28,8 @@
         <module>driver</module>
         <module>eggroll</module>
         <module>networking</module>
+        <module>common</module>
+        <module>serving</module>
     </modules>
 
     <packaging>pom</packaging>
@@ -47,7 +49,7 @@
         <junit.version>4.12</junit.version>
         <log4j.version>2.11.1</log4j.version>
 
-        <protobuf-maven-plugin.version>0.5.1</protobuf-maven-plugin.version>
+        <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
     </properties>
     <dependencies>

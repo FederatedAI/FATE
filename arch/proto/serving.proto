@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.api.serving;
+option java_outer_classname = "ServingProto";
+
+message DataMap{
+    map<string, float> floatData = 1;
+    map<string, string> stringData = 2;
+}
+
+message PredictRequest{
+    string modelId = 1;
+    int32 partId = 2;
+    string role = 3;
+    map<string, DataMap> data = 4;
+}
+
+message PredictResponse{
+    string modelId = 1;
+    int32 partId = 2;
+    string role = 3;
+    map<string, DataMap> data = 4;
+}
+
+service PredictionService{
+    rpc predict(PredictRequest) returns (PredictResponse);
+}

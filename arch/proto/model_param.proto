@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.common.mlmodel.buffer;
+option java_outer_classname = "ModelParamProto";
+
+message ModelParam{
+    repeated float weight = 1;
+}
