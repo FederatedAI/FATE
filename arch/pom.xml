@@ -28,8 +28,8 @@
         <module>driver</module>
         <module>eggroll</module>
         <module>networking</module>
-        <module>common</module>
         <module>serving</module>
+        <module>common</module>
     </modules>
 
     <packaging>pom</packaging>

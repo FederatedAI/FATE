@@ -17,6 +17,11 @@
             <version>0.1</version>
         </dependency>
         <dependency>
+            <groupId>com.webank.ai.fate</groupId>
+            <artifactId>fate-common</artifactId>
+            <version>0.1</version>
+        </dependency>
+        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-core</artifactId>
             <version>1.19.0</version>
