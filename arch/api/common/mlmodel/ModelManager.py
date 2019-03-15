@@ -39,14 +39,15 @@ def save_data_transform(name, proto_buffer, model_id=None):
     return model_id
 
 
-def read_data_transform(proto_buffer, model_id):
+def read_data_transform(name, proto_buffer, model_id):
     model_id = str(uuid.uuid1().hex) if not model_id else model_id
-    data_table = eggroll.table("data_transform_%s" % (model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
+    data_table = eggroll.table("%s_%s" % (name, model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
     proto_buffer.ParseFromString(data_table.get("transform"))
 
 
 if __name__ == '__main__':
     job_id = str(uuid.uuid1().hex)
+    print(job_id)
     eggroll.init()
 
     model_meta1 = ModelMeta()
@@ -57,12 +58,17 @@ if __name__ == '__main__':
     save_model("HeteroLRHost", "HeteroLR", "meta", model_meta1, job_id)
 
     model_param1 = ModelParam()
-    model_param1.weight.append(1)
-    model_param1.weight.append(2)
-    model_param1.weight.append(3)
+    model_param1.weight['k1'] = 1
+    model_param1.weight['k2'] = 2
+    model_param1.weight['k3'] = 3
+    model_param1.intercept = 0.1
     save_model("HeteroLRGuest", "HeteroLR", "param", model_param1, job_id)
 
-    save_model("HeteroLRHost", "HeteroLR", "param", model_param1, job_id)
+    model_param11 = ModelParam()
+    model_param11.weight['k4'] = 4
+    model_param11.weight['k5'] = 5
+    model_param11.intercept = 0.2
+    save_model("HeteroLRHost", "HeteroLR", "param", model_param11, job_id)
 
     # read
     model_meta2 = ModelMeta()
@@ -73,10 +79,15 @@ if __name__ == '__main__':
     read_model("HeteroLRGuest", "HeteroLR", "param", model_param2, job_id)
     print(model_param2)
 
+    model_param22 = ModelParam()
+    read_model("HeteroLRHost", "HeteroLR", "param", model_param22, job_id)
+    print(model_param22)
+
+    # data transform
     data_transform1 = ModelMeta()
     data_transform1.name = "xxxxx"
-    save_data_transform(data_transform1, job_id)
+    save_data_transform("data_transform_guest", data_transform1, job_id)
 
     data_transform2 = ModelMeta()
-    read_data_transform(data_transform2, job_id)
+    read_data_transform("data_transform_guest", data_transform2, job_id)
     print(data_transform2)
