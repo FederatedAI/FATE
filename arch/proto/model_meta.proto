@@ -5,7 +5,8 @@ option java_outer_classname = "ModelMetaProto";
 
 message ModelMeta{
     string name = 1;
-    string nameSpace = 2;
-    string extra = 3;
-    int32 id = 4;
+    bool fit_intercept = 2;
+    int32 coef_size = 3;
+    bool data_transform = 4;
+    string data_transform_config_path = 5;
 }

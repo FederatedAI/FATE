@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.common.mlmodel.buffer;
+option java_outer_classname = "DataTransformProto";
+
+message DataTransformConf{
+    bool missing_fill = 1;
+    string missing_replace_method = 2;
+    repeated string missing_value = 3;
+    repeated string missing_replace_value = 4;
+
+    bool outlier_replace = 5;
+    string outlier_replace_method = 6;
+    repeated string outlier_value = 7;
+    repeated string outlier_replace_value = 8;
+
+    bool is_scale = 9;
+    string scale_method = 10;
+    repeated float upperValue = 11;
+    repeated float lowerValue = 12;
+    repeated float outUpper = 13;
+    repeated float outLower = 14;
+}
