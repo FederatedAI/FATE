@@ -15,67 +15,68 @@
 #
 
 import uuid
-import os
-from arch.api.common.mlmodel.ModelBuffer import ModelBuffer
-from arch.api.common.mlmodel.DataTransformBuffer import DataTransformBuffer
-from arch.api.utils import file_utils
-
-data_dir = os.path.join(file_utils.get_project_base_directory(), 'data')
+from arch.api.proto.model_meta_pb2 import ModelMeta
+from arch.api.proto.model_param_pb2 import ModelParam
+from arch.api import eggroll
 
 
-def save_model(model_buffer, model_id=None):
+def save_model(name, name_space, buffer_type, proto_buffer, model_id=None):
     model_id = str(uuid.uuid1().hex) if not model_id else model_id
-    check_storage()
-    meta_stream, param_stream = model_buffer.serialize()
-    with open(os.path.join(data_dir, "%s.meta" % (model_id)), 'wb') as fw:
-        fw.write(meta_stream)
-    with open(os.path.join(data_dir, "%s.param" % (model_id)), 'wb') as fw:
-        fw.write(param_stream)
+    data_table = eggroll.table("%s_%s" % (name, model_id), name_space, partition=2, create_if_missing=True, error_if_exist=False)
+    data_table.put(buffer_type, proto_buffer.SerializeToString())
     return model_id
 
 
-def read_model(modelId):
-    with open(os.path.join(data_dir, "%s.meta" % (modelId)), 'rb') as fr:
-        meta_stream = fr.read()
-    with open(os.path.join(data_dir, "%s.param" % (modelId)), 'rb') as fr:
-        param_stream = fr.read()
-    return meta_stream, param_stream
+def read_model(name, name_space, buffer_type, proto_buffer, model_id):
+    data_table = eggroll.table("%s_%s" % (name, model_id), name_space, partition=2, create_if_missing=True, error_if_exist=False)
+    proto_buffer.ParseFromString(data_table.get(buffer_type))
 
-def save_data_transform(data_transform_buffer, model_id=None):
+
+def save_data_transform(proto_buffer, model_id=None):
     model_id = str(uuid.uuid1().hex) if not model_id else model_id
-    check_storage()
-    stream = data_transform_buffer.serialize()
-    with open(os.path.join(data_dir, "%s.transform" % (model_id)), 'wb') as fw:
-        fw.write(stream)
-    return modelId
+    data_table = eggroll.table("data_transform_%s" % (model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
+    data_table.put("transform", proto_buffer.SerializeToString())
+    return model_id
 
-def read_data_transform(model_id):
+
+def read_data_transform(proto_buffer, model_id):
     model_id = str(uuid.uuid1().hex) if not model_id else model_id
-    with open(os.path.join(data_dir, "%s.transform" % (model_id)), 'rb') as fr:
-        stream = fr.read()
-    return stream
+    data_table = eggroll.table("data_transform_%s" % (model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
+    proto_buffer.ParseFromString(data_table.get("transform"))
 
-
-def check_storage():
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
 
 if __name__ == '__main__':
-    modelBuffer1 = ModelBuffer()
-    modelBuffer1.set_meta_field("name", "test")
-    modelId = save_model(modelBuffer1)
-    print(modelId)
+    job_id = str(uuid.uuid1().hex)
+    eggroll.init()
 
-    meta_stream, param_stream = read_model(modelId)
-    modelBuffer2 = ModelBuffer()
-    print(modelBuffer2.meta)
-    modelBuffer2.deserialize(meta_stream, param_stream)
-    print(modelBuffer2.meta)
+    model_meta1 = ModelMeta()
+    model_meta1.name = "HeteroLRGuest"
+    save_model("HeteroLRGuest", "HeteroLR", "meta", model_meta1, job_id)
 
-    data_transform_buffer1 = DataTransformBuffer()
-    data_transform_buffer1.set_transform_fields({"name": "xxxx"})
-    modelId = save_data_transform(data_transform_buffer1, modelId)
-    data_transform_stream = read_data_transform(modelId)
-    data_transform_buffer2 = DataTransformBuffer()
-    data_transform_buffer2.deserialize(data_transform_stream)
-    print(data_transform_buffer2.data_transform)
+    model_meta1.name = "HeteroLRHost"
+    save_model("HeteroLRHost", "HeteroLR", "meta", model_meta1, job_id)
+
+    model_param1 = ModelParam()
+    model_param1.weight.append(1)
+    model_param1.weight.append(2)
+    model_param1.weight.append(3)
+    save_model("HeteroLRGuest", "HeteroLR", "param", model_param1, job_id)
+
+    save_model("HeteroLRHost", "HeteroLR", "param", model_param1, job_id)
+
+    # read
+    model_meta2 = ModelMeta()
+    read_model("HeteroLRGuest", "HeteroLR", "meta", model_meta2, job_id)
+    print(model_meta2)
+
+    model_param2 = ModelParam()
+    read_model("HeteroLRGuest", "HeteroLR", "param", model_param2, job_id)
+    print(model_param2)
+
+    data_transform1 = ModelMeta()
+    data_transform1.name = "xxxxx"
+    save_data_transform(data_transform1, job_id)
+
+    data_transform2 = ModelMeta()
+    read_data_transform(data_transform2, job_id)
+    print(data_transform2)
