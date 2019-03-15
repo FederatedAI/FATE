@@ -53,11 +53,16 @@ if __name__ == '__main__':
     model_meta1.name = "HeteroLRGuest"
     save_model("HeteroLRGuest", "HeteroLR", "meta", model_meta1, job_id)
 
+    model_meta1.name = "HeteroLRHost"
+    save_model("HeteroLRHost", "HeteroLR", "meta", model_meta1, job_id)
+
     model_param1 = ModelParam()
     model_param1.weight.append(1)
     model_param1.weight.append(2)
     model_param1.weight.append(3)
     save_model("HeteroLRGuest", "HeteroLR", "param", model_param1, job_id)
+
+    save_model("HeteroLRHost", "HeteroLR", "param", model_param1, job_id)
 
     # read
     model_meta2 = ModelMeta()
