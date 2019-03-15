@@ -1,43 +1,19 @@
 package com.webank.ai.fate.common.mlmodel.model;
 
-import com.webank.ai.fate.common.mlmodel.buffer.ModelBuffer;
 import com.webank.ai.fate.common.mlmodel.buffer.ProtoModelBuffer;
-import com.webank.ai.fate.common.mlmodel.model.BaseModel;
 import com.webank.ai.fate.common.statuscode.ReturnCode;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
-public abstract class HeteroLR extends BaseModel<ModelBuffer, HashMap<String, Object>, HashMap<String, Object>, HashMap<String, Object>> {
-    protected HashMap<String, Float> weight;
+public abstract class HeteroLR extends BaseModel<ProtoModelBuffer, HashMap<String, Object>, HashMap<String, Object>> {
+    protected Map<String, Float> weight;
     protected float intercept = 0;
-    protected HashMap<String, Object> meta;
-
-    public void setWeight(HashMap<String, Float> weight) {
-        this.weight = (HashMap<String, Float>) weight.clone();
-    }
-
-    public HashMap<String, Float> getWeight() {
-        return this.weight;
-    }
+    protected Map<String, Object> meta;
 
     @Override
-    public ModelBuffer export_model() {
-//        ArrayList<Float> weight = new ArrayList<>();
-//        Collections.addAll(weight, ArrayUtils.toObject(this.weight));
-//        ModelBuffer modelBuffer = new ProtoModelBuffer();
-//        modelBuffer.setMetaField("name", this.getClass().getName());
-//        modelBuffer.setParamField("weight", weight);
-        return new ProtoModelBuffer();
-    }
-
-    @Override
-    public int init_model(ModelBuffer modelBuffer) {
-        this.weight = (HashMap<String, Float>) modelBuffer.getParamField("weight");
-        this.intercept = (float) modelBuffer.getParamField("intercept");
+    public int initModel(ProtoModelBuffer modelBuffer) {
+        this.weight = modelBuffer.getParam().getWeightMap();
+        this.intercept = modelBuffer.getParam().getIntercept();
         return ReturnCode.OK;
     }
 

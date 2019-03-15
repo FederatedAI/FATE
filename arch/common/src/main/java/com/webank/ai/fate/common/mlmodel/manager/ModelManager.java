@@ -1,61 +1,54 @@
 package com.webank.ai.fate.common.mlmodel.manager;
 
-import com.webank.ai.fate.common.mlmodel.buffer.ModelBuffer;
 import com.webank.ai.fate.common.mlmodel.model.MLModel;
-import com.webank.ai.fate.common.storage.kv.LocalFileKVPool;
 import com.webank.ai.fate.common.mlmodel.buffer.ProtoModelBuffer;
-import com.webank.ai.fate.common.utils.Configuration;
+import com.webank.ai.fate.common.storage.kv.StandaloneDTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.UUID;
+import java.util.Map;
 
 public class ModelManager {
-    private LocalFileKVPool storage;
     private ModelPool modelPool;
     private static final Logger LOGGER = LogManager.getLogger();
+    private String modelPackage = "com.webank.ai.fate.common.mlmodel.model";
 
     public ModelManager(){
         this.modelPool = new ModelPool();
-        this.storage = new LocalFileKVPool();
     }
 
     public void updatePool(){
-        ArrayList<String[]> modelInfo = this.getAllModelInfo();
+        ArrayList<Map<String, String>> modelInfo = this.getAllModelInfo();
         modelInfo.forEach((item)->{
-            this.modelPool.put(getModelKey(item[0], item[1], item[2]), this.loadModel(item[4]));
+            this.modelPool.put(getOnlineModelKey(item.get("sceneId"), item.get("partnerPartyId"), item.get("myRole")),
+                    this.loadModel(item.get("name"), item.get("nameSpace"), item.get("modelId")));
         });
     }
 
-    public MLModel getModel(String role, String name){
-        LOGGER.info(Configuration.getProperties());
-        return this.modelPool.get(this.getModelKey(role, Configuration.getProperty(String.format("%s.partyId", role)), name));
+    public MLModel getModel(String sceneId, String partnerPartyId, String myRole){
+        return this.modelPool.get(this.getOnlineModelKey(sceneId, partnerPartyId, myRole));
     }
 
-    public String saveModel(ModelBuffer modelBuffer){
-        ArrayList<byte[]> bufferStream = modelBuffer.serialize();
-        String modelId = UUID.randomUUID().toString().replace("-", "");
-        this.storage.put(String.format("%s.meta", modelId), bufferStream.get(0));
-        this.storage.put(String.format("%s.param", modelId), bufferStream.get(1));
-        return modelId;
-    }
-
-    public ModelBuffer readModel(String modelId){
-        byte[] metaStream = this.storage.get(String.format("%s.meta", modelId));
-        byte[] paramStream = this.storage.get(String.format("%s.param", modelId));
+    public ProtoModelBuffer readModel(String name, String nameSpace, String modelId){
+        String DTableName = String.format("%s_%s", name, modelId);
+        StandaloneDTable standaloneDTable = new StandaloneDTable(DTableName, nameSpace, 0);
+        byte[] metaStream = standaloneDTable.get("meta");
+        byte[] paramStream = standaloneDTable.get("param");
         ProtoModelBuffer modelBuffer = new ProtoModelBuffer();
         modelBuffer.deserialize(metaStream, paramStream);
         return modelBuffer;
     }
 
-    public MLModel loadModel(String modelId){
+
+    public MLModel loadModel(String name, String nameSpace, String modelId){
         try{
-            ModelBuffer modelBuffer = this.readModel(modelId);
-            Class modelClass = Class.forName((String)modelBuffer.getMetaField("name"));
+            ProtoModelBuffer modelBuffer = this.readModel(name, nameSpace, modelId);
+            Class modelClass = Class.forName(this.modelPackage + "." + modelBuffer.getMeta().getName());
             MLModel mlModel = (MLModel)modelClass.getConstructor().newInstance();
-            mlModel.init_model(modelBuffer);
+            mlModel.setModelId(modelId);
+            mlModel.initModel(modelBuffer);
             return mlModel;
         }
         catch (Exception ex){
@@ -64,55 +57,27 @@ public class ModelManager {
         }
     }
 
-    private String getModelKey(String role, String partyId, String name){
-        LOGGER.info(StringUtils.join(role, partyId, name));
-        return StringUtils.join(role, partyId, name);
+    private String getOnlineModelKey(String sceneId, String partnerPartyId, String myRole){
+        String[] tmp = {sceneId, partnerPartyId, myRole};
+        return StringUtils.join(tmp, "-");
     }
 
-    private ArrayList<String[]> getAllModelInfo(){
-        ArrayList<String[]> modelInfo = new ArrayList<>();
-        // query from mysql by host.partyId and guest.partId
-        String[] tmp1 = {"host", "100001", "HeteroLRGuest", "HeteroLR", "7a067108a2ba44358bb3c70a001d5152"};
-        modelInfo.add(tmp1);
-        String[] tmp2 = {"guest", "100001", "HeteroLRHost", "HeteroLR", "9fabf840fa4a4c3e88b2a3f634bdd6c8"};
-        modelInfo.add(tmp2);
+    private ArrayList<Map<String, String>> getAllModelInfo(){
+        ArrayList<Map<String, String>> modelInfo = new ArrayList<>();
+        // query from mysql by partyId
+        HashMap<String, String> tmp = new HashMap<>();
+        tmp.put("sceneId", "500001");
+        tmp.put("partnerPartyId", "100001");
+        tmp.put("myPartyId", "100001");
+        tmp.put("myRole", "guest");
+        tmp.put("name", "HeteroLRGuest");
+        tmp.put("nameSpace", "HeteroLR");
+        tmp.put("modelId", "2d5374d2471511e9a2e5acde48001122");
+        modelInfo.add((HashMap<String, String>) tmp.clone());
+
+        tmp.put("role", "host");
+        tmp.put("name", "HeteroLRHost");
+        modelInfo.add((HashMap<String, String>) tmp.clone());
         return modelInfo;
-    }
-
-
-    public static void main(String[] args){
-        ModelManager modelManager = new ModelManager();
-        modelManager.updatePool();
-        /*
-
-        //save guest
-        HeteroLRGuest heteroLRGuest = new HeteroLRGuest();
-        float[] weight1 = {1, 2};
-        heteroLRGuest.setWeight(weight1);
-        ModelBuffer modelBuffer1 = heteroLRGuest.export_model();
-        String guestModelId = modelManager.saveModel(modelBuffer1);
-        LOGGER.info(guestModelId);
-
-        //host
-        HeteroLRHost heteroLRHost = new HeteroLRHost();
-        float[] weight2 = {2, 4};
-        heteroLRHost.setWeight(weight2);
-        ModelBuffer modelBuffer2 = heteroLRHost.export_model();
-        String hostModelId = modelManager.saveModel(modelBuffer2);
-        LOGGER.info(hostModelId);
-        */
-
-        //get
-        //MLModel mlModel1 = modelManager.loadModel(guestModelId);
-        MLModel mlModel1 = modelManager.getModel("guest", "HeteroLRGuest");
-        float[] inputData = {10, 20};
-        HashMap<String, String> param = new HashMap<>();
-        param.put("p1", "ddd");
-        LOGGER.info(mlModel1.predict(inputData, param));
-
-        //MLModel mlModel2 = modelManager.loadModel(hostModelId);
-        MLModel mlModel2 = modelManager.getModel("host", "HeteroLRHost");
-        LOGGER.info(mlModel2.predict(inputData, param));
-
     }
 }

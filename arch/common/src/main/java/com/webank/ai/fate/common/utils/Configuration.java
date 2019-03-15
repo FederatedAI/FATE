@@ -15,7 +15,6 @@ public class Configuration {
 
     public Configuration(String confPath){
         this.confPath = confPath;
-        this.load();
     }
 
     public int load(){

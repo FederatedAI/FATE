@@ -4,9 +4,9 @@ import com.webank.ai.fate.api.serving.PredictionServiceGrpc;
 import com.webank.ai.fate.api.serving.ServingProto;
 import com.webank.ai.fate.api.serving.ServingProto.PredictRequest;
 import com.webank.ai.fate.api.serving.ServingProto.PredictResponse;
-import com.webank.ai.fate.common.network.grpc.client.ClientPool;
+import com.webank.ai.fate.common.mlmodel.manager.ModelManager;
+import com.webank.ai.fate.common.mlmodel.model.MLModel;
 import com.webank.ai.fate.common.utils.Configuration;
-import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,12 +20,11 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
 
     @Override
     public void predict(PredictRequest req, StreamObserver<PredictResponse> responseObserver){
-        float score = 0;
         String myRole;
         PredictResponse.Builder response = PredictResponse.newBuilder();
 
-        response.setModelId(req.getModelId());
-        response.setPartId(10001);
+        response.setPartyId(Configuration.getProperty("partyId"));
+        response.setSceneId(req.getSceneId());
         switch (req.getRole()){
             case "guestUser":
                 myRole = "guest";
@@ -38,40 +37,34 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
         }
         response.setRole(myRole);
 
-        Map<String, Object> features = new HashMap<>();
+        // get model
+        MLModel model = new ModelManager().getModel(req.getSceneId(), req.getPartyId(), myRole);
+        response.setModelId(model.getModelId());
         req.getDataMap().forEach((id, f)->{
+            Map<String, Object> predictInputData = new HashMap<>();
             f.getFloatDataMap().forEach((k, v)->{
-                features.put(k, v);
+                predictInputData.put(k, v);
             });
             f.getStringDataMap().forEach((k, v)->{
-                features.put(k, v);
+                predictInputData.put(k, v);
             });
-            if (myRole.equals("guest")){
-                PredictResponse hostResponse = this.getHostPredict(id, req.getModelId());
-                LOGGER.info(hostResponse);
-            }
+
+            Map<String, String> predictParams = new HashMap<>();
+            predictParams.put("sceneId", req.getSceneId());
+            predictParams.put("id", id);
+            predictParams.put("modelId", model.getModelId());
+            Map<String, Object> result = model.predict(predictInputData, predictParams);
+
             ServingProto.DataMap.Builder dataBuilder = ServingProto.DataMap.newBuilder();
-            dataBuilder.putFloatData("score", 10);
+            dataBuilder.putFloatData("prob", (float)result.get("prob")); // just a test
             response.putData(id, dataBuilder.build());
         });
 
-        // get model
         // new thread send fpredict
         // preprocess
         // fpredict
         LOGGER.info(response);
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
-    }
-
-    private PredictResponse getHostPredict(String userId, String modelId){
-        ManagedChannel channel = ClientPool.getChannel(Configuration.getProperty("proxy"));
-        PredictRequest.Builder builder = PredictRequest.newBuilder();
-        builder.putData(userId, ServingProto.DataMap.newBuilder().putStringData("xxx", "xxx").build());
-        builder.setRole("guest");
-        builder.setModelId(modelId);
-        PredictionServiceGrpc.PredictionServiceBlockingStub stub = PredictionServiceGrpc.newBlockingStub(channel);
-        PredictResponse response = stub.predict(builder.build());
-        return response;
     }
 }

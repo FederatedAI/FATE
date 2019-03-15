@@ -9,17 +9,20 @@ message DataMap{
 }
 
 message PredictRequest{
-    string modelId = 1;
-    int32 partId = 2;
+    string partyId = 1;
+    string sceneId = 2;
     string role = 3;
-    map<string, DataMap> data = 4;
+    string modelId = 4;
+    map<string, DataMap> data = 5;
 }
 
 message PredictResponse{
-    string modelId = 1;
-    int32 partId = 2;
+    string partyId = 1;
+    string sceneId = 2;
     string role = 3;
-    map<string, DataMap> data = 4;
+    string modelId = 4;
+    map<string, DataMap> data = 5;
+    string dataJson = 6;
 }
 
 service PredictionService{

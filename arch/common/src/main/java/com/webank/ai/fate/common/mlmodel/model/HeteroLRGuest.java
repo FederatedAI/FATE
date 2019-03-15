@@ -1,5 +1,7 @@
 package com.webank.ai.fate.common.mlmodel.model;
 
+import com.webank.ai.fate.api.serving.ServingProto;
+
 import java.util.HashMap;
 
 import static java.lang.Math.exp;
@@ -23,7 +25,8 @@ public class HeteroLRGuest extends HeteroLR {
 
         score += this.intercept;
 
-        score += get_host_predict_result();
+        //score += get_host_predict_result();
+        ServingProto.PredictResponse hostPredictResponse = this.getHostPredict((String)predictParams.get("sceneId"), (String)predictParams.get("id"), (String)predictParams.get("modelId"));
         double prob = sigmod(score);
 
         result.put("prob", prob);
@@ -40,5 +43,4 @@ public class HeteroLRGuest extends HeteroLR {
 //        }
 //        return result;
     }
-}
 }

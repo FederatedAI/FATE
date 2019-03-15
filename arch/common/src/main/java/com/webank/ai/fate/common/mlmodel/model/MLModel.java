@@ -1,7 +1,10 @@
 package com.webank.ai.fate.common.mlmodel.model;
 
-public interface MLModel<B, X, P, R> {
-    B export_model();
-    int init_model(B modelBuffer);
-    R predict(X inputData, P predictParams);
+import java.util.Map;
+
+public interface MLModel<B, X, P> {
+    int setModelId(String modelId);
+    String getModelId();
+    int initModel(B modelBuffer);
+    Map<String, Object> predict(X inputData, P predictParams);
 }

@@ -1,6 +1,7 @@
 package com.webank.ai.fate.serving;
 
 import com.webank.ai.fate.common.mlmodel.manager.ModelManager;
+import com.webank.ai.fate.common.mlmodel.model.MLModel;
 import com.webank.ai.fate.common.network.grpc.client.ClientPool;
 import com.webank.ai.fate.serving.service.PredictService;
 import com.webank.ai.fate.common.utils.Configuration;
@@ -28,7 +29,7 @@ public class ServingServer {
             // just a test
             this.confPath = String.format("%s/serving.properties", this.getClass().getResource("/").getPath());
         }
-        Configuration configuration = new Configuration(this.confPath);
+        new Configuration(this.confPath).load();
         ModelManager modelManager = new ModelManager();
         modelManager.updatePool();
 

@@ -16,5 +16,27 @@
             <artifactId>fate-core</artifactId>
             <version>0.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.deephacks.lmdbjni</groupId>
+            <artifactId>lmdbjni</artifactId>
+            <version>0.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.deephacks.lmdbjni</groupId>
+            <artifactId>lmdbjni-linux64</artifactId>
+            <version>0.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.deephacks.lmdbjni</groupId>
+            <artifactId>lmdbjni-osx64</artifactId>
+            <version>0.4.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.deephacks.lmdbjni</groupId>
+            <artifactId>lmdbjni-win64</artifactId>
+            <version>0.4.6</version>
+        </dependency>
+
+
     </dependencies>
 </project>
