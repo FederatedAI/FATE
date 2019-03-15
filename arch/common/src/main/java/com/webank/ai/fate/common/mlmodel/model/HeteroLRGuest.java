@@ -2,17 +2,43 @@ package com.webank.ai.fate.common.mlmodel.model;
 
 import java.util.HashMap;
 
-public class HeteroLRGuest extends HeteroLR{
+import static java.lang.Math.exp;
+
+public class HeteroLRGuest extends HeteroLR {
+    private double sigmod(float x) {
+        return 1. / (1. + exp(-x));
+    }
+
     @Override
-    public HashMap<String, Object> predict(float[] inputData, HashMap<String, Object> predictParams){
+    public HashMap<String, Object> predict(HashMap<String, Object> inputData, HashMap<String, Object> predictParams) {
+        HashMap<String, Object> newInputData = data_transform(inputData);
+
         HashMap<String, Object> result = new HashMap<>();
         float score = 0;
-        for(int i=0;i<this.weight.length;i++){
-            if (inputData.length>i){
-                score += this.weight[i] * inputData[i];
+        for (String key : newInputData.keySet()) {
+            if (this.weight.containsKey(key)) {
+                score += (float) newInputData.get(key) * this.weight.get(key);
             }
         }
-        result.put("score", score);
+
+        score += this.intercept;
+
+        score += get_host_predict_result();
+        double prob = sigmod(score);
+
+        result.put("prob", prob);
+
         return result;
+//        String strThresholds = "thresholds";
+//        if (predictParams.containsKey(strThresholds)) {
+//            List<Float> thresholds = (List<Float>) predictParams.get(strThresholds);
+//            for (int i = 0; i < thresholds.size(); i++) {
+//                if(prob > thresholds[i]){
+//
+//                }
+//            }
+//        }
+//        return result;
     }
+}
 }
