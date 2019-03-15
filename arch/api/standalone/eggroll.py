@@ -309,9 +309,13 @@ class _DTable(object):
     def _get_env_for_partition(self, p: int):
         return _get_env(self._type, self._namespace, self._name, str(p))
 
-    def put(self, k, v):
-        k_bytes = c_pickle.dumps(k)
-        v_bytes = c_pickle.dumps(v)
+    def put(self, k, v, use_pickle=True):
+        if use_pickle:
+            k_bytes = c_pickle.dumps(k)
+            v_bytes = c_pickle.dumps(v)
+        else:
+            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
+            v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -325,8 +329,11 @@ class _DTable(object):
             cnt += env.stat()['entries']
         return cnt
 
-    def delete(self, k):
-        k_bytes = c_pickle.dumps(k)
+    def delete(self, k, use_pickle=True):
+        if use_pickle:
+            k_bytes = c_pickle.dumps(k)
+        else:
+            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -335,18 +342,25 @@ class _DTable(object):
                 return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
             return None
 
-    def put_if_absent(self, k, v):
-        k_bytes = c_pickle.dumps(k)
+    def put_if_absent(self, k, v, use_pickle=True):
+        if use_pickle:
+            k_bytes = c_pickle.dumps(k)
+        else:
+            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if old_value_bytes is None:
-                txn.put(k_bytes, c_pickle.dumps(v))
+                if use_pickle:
+                    v_bytes = c_pickle.dumps(v)
+                else:
+                    v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
+                txn.put(k_bytes, v_bytes)
                 return None
             return c_pickle.loads(old_value_bytes)
 
-    def put_all(self, kv_list: Iterable):
+    def put_all(self, kv_list: Iterable, use_pickle=True):
         txn_map = {}
         _succ = True
         for p in range(self._partitions):
@@ -355,8 +369,12 @@ class _DTable(object):
             txn_map[p] = env, txn
         for k, v in kv_list:
             try:
-                k_bytes = c_pickle.dumps(k)
-                v_bytes = c_pickle.dumps(v)
+                if use_pickle:
+                    k_bytes = c_pickle.dumps(k)
+                    v_bytes = c_pickle.dumps(v)
+                else:
+                    k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
+                    v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
                 p = _hash_key_to_partition(k_bytes, self._partitions)
                 _succ = _succ and txn_map[p][1].put(k_bytes, v_bytes)
             except:
@@ -365,13 +383,16 @@ class _DTable(object):
         for p, (env, txn) in txn_map.items():
             txn.commit() if _succ else txn.abort()
 
-    def get(self, k):
-        k_bytes = c_pickle.dumps(k)
+    def get(self, k, use_pickle=True):
+        if use_pickle:
+            k_bytes = c_pickle.dumps(k)
+        else:
+            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
-            return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
+            return None if old_value_bytes is None else (c_pickle.loads(old_value_bytes) if use_pickle else old_value_bytes)
 
     def destroy(self):
         for p in range(self._partitions):
