@@ -32,9 +32,9 @@ def read_model(name, name_space, buffer_type, proto_buffer, model_id):
     proto_buffer.ParseFromString(data_table.get(buffer_type))
 
 
-def save_data_transform(proto_buffer, model_id=None):
+def save_data_transform(name, proto_buffer, model_id=None):
     model_id = str(uuid.uuid1().hex) if not model_id else model_id
-    data_table = eggroll.table("data_transform_%s" % (model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
+    data_table = eggroll.table("%s_%s" % (name, model_id), "preprocessing", partition=2, create_if_missing=True, error_if_exist=False)
     data_table.put("transform", proto_buffer.SerializeToString())
     return model_id
 
