@@ -131,8 +131,7 @@ class WorkFlow(object):
                 self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
-            predict_result = self.model.predict(train_data,
-                                                self.workflow_param.predict_param)
+            predict_result = self.model.predict(train_data, self.workflow_param.predict_param)
             LOGGER.debug("evaluating...")
             train_eval = self.evaluate(predict_result)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
@@ -143,8 +142,7 @@ class WorkFlow(object):
                     validation_data = self.intersect(validation_data, intersect_flowid)
                     LOGGER.debug("End intersection before predict")
 
-                val_pred = self.model.predict(validation_data,
-                                              self.workflow_param.predict_param)
+                val_pred = self.model.predict(validation_data, self.workflow_param.predict_param)
                 val_eval = self.evaluate(val_pred)
                 eval_result[consts.VALIDATE_EVALUATE] = val_eval
             LOGGER.info("{} eval_result: {}".format(self.role, eval_result))

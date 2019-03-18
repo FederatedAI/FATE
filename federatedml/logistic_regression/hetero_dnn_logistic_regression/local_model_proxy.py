@@ -78,13 +78,23 @@ class LocalModelProxy(object):
         grads = np.array(grad_list)
         feats = np.array(feat_list)
 
-        dec_grads = self.__decrypt_gradients(grads, is_host, n_iter, batch_index)
+        # dec_grads = self.__decrypt_gradients(grads, is_host, n_iter, batch_index)
+        #
+        # dec_grads = grads.reshape(len(dec_grads), 1)
+        # coef = coef.reshape(1, len(coef))
+        #
+        # back_grad = np.matmul(dec_grads, coef)
+        # self.model.backpropogate(feats, None, back_grad)
 
-        dec_grads = grads.reshape(len(dec_grads), 1)
+        grads = grads.reshape(len(grads), 1)
         coef = coef.reshape(1, len(coef))
 
-        back_grad = np.matmul(dec_grads, coef)
-        self.model.backpropogate(feats, None, back_grad)
+        enc_back_grad = np.matmul(grads, coef)
+
+        print("enc_back_grad shape", enc_back_grad.shape)
+
+        dec_back_grad = self.__decrypt_gradients(enc_back_grad, is_host, n_iter, batch_index)
+        self.model.backpropogate(feats, None, dec_back_grad)
 
     def __decrypt_gradients(self, enc_grads, is_host, n_iter, batch_index):
 
