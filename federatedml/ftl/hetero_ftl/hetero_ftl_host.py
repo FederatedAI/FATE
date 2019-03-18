@@ -336,11 +336,8 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
             encrypt_host_gradients = self.host_model.send_gradients()
             LOGGER.debug("send encrypt_guest_gradients: " + create_shape_msg(encrypt_host_gradients))
 
-            start = time.time()
             # add random mask to encrypt_host_gradients and send them to guest for decryption
             masked_enc_host_gradients, gradients_masks = add_random_mask(encrypt_host_gradients)
-            end = time.time()
-            LOGGER.debug("add random mask to host gradients and loss time: " + str(end - start))
 
             LOGGER.debug("send masked_enc_host_gradients: " + create_shape_msg(masked_enc_host_gradients))
             self._do_remote(masked_enc_host_gradients, name=self.transfer_variable.masked_enc_host_gradients.name,
@@ -359,11 +356,8 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
                                                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.masked_enc_loss, self.n_iter_),
                                                    idx=-1)[0]
 
-            start = time.time()
             masked_dec_guest_gradients = self.__decrypt_gradients(masked_enc_guest_gradients)
             masked_dec_guest_loss = self.__decrypt_loss(masked_enc_guest_loss)
-            end = time.time()
-            LOGGER.debug("decrypt guest gradient and loss time (at host): " + str(end - start))
 
             LOGGER.debug("send masked_dec_guest_gradients: " + create_shape_msg(masked_dec_guest_gradients))
             self._do_remote(masked_dec_guest_gradients, name=self.transfer_variable.masked_dec_guest_gradients.name,
@@ -385,10 +379,7 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
                                                      idx=-1)[0]
             LOGGER.debug("receive masked_dec_host_gradients: " + create_shape_msg(masked_dec_host_gradients))
 
-            start = time.time()
             cleared_dec_host_gradients = remove_random_mask(masked_dec_host_gradients, gradients_masks)
-            end = time.time()
-            LOGGER.debug("remove random mask from masked_dec_host_gradients time: " + str(end - start))
 
             # update host model parameters using these gradients.
             self.host_model.receive_gradients(cleared_dec_host_gradients)

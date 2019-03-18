@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-import time
-
 import numpy as np
 
 from federatedml.ftl.eggroll_computation.helper import compute_sum_XY, \
@@ -49,12 +47,8 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         if self.is_min_gen_enc:
             self.logger.debug("using min_gen_enc")
 
-            start = time.time()
             self._compute_components()
-            end = time.time()
-            self.logger.debug("---> guest compute components time: " + str(end - start))
 
-            start = time.time()
             # phi has shape (1, feature_dim)
             # phi_2 has shape (feature_dim, feature_dim)
             enc_phi = encryption.encrypt_matrix(self.public_key, self.phi)
@@ -66,9 +60,6 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
                                                np.tile(enc_phi_2, (self.y_overlap_2.shape[0], 1, 1)))
             enc_y_overlap_phi = compute_XY(-0.5 * self.y_overlap, np.tile(enc_phi, (self.y_overlap.shape[0], 1)))
             enc_mapping_comp_A = encrypt_matrix(self.public_key, self.mapping_comp_A)
-
-            end = time.time()
-            self.logger.debug("---> guest encrypt components time: " + str(end - start))
 
             return [enc_y_overlap_2_phi_2, enc_y_overlap_phi, enc_mapping_comp_A]
         else:
@@ -82,16 +73,11 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         return [enc_comp_0, enc_comp_1, enc_comp_2]
 
     def receive_components(self, components):
-        start = time.time()
-
         self.enc_uB_overlap = components[0]
         self.enc_uB_overlap_2 = components[1]
         self.enc_mapping_comp_B = components[2]
         self._update_gradients()
         self._update_loss()
-
-        end = time.time()
-        self.logger.debug("---> guest compute gradient and loss time: " + str(end - start))
 
     def _update_gradients(self):
 
@@ -151,12 +137,7 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
         return [self.enc_grads_W, self.enc_grads_b]
 
     def receive_gradients(self, gradients):
-        start = time.time()
-
         self.localModel.apply_gradients(gradients)
-
-        end = time.time()
-        self.logger.debug("---> guest compute local gradient time: " + str(end - start))
 
     def send_loss(self):
         return self.loss
@@ -205,12 +186,8 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
         if self.is_min_gen_enc:
             self.logger.debug("using min_gen_enc")
 
-            start = time.time()
             self._compute_components()
-            end = time.time()
-            self.logger.debug("---> host compute components time: " + str(end - start))
 
-            start = time.time()
             # uB_overlap has shape (len(overlap_indexes), feature_dim)
             # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
             # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
@@ -224,9 +201,6 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
             # enc_mapping_comp_B = enc_uB_overlap * (-1 / self.feature_dim)
             # enc_mapping_comp_B = encrypt_matrix(self.public_key, self.mapping_comp_B)
 
-            end = time.time()
-            self.logger.debug("---> host encrypt components time: " + str(end - start))
-
             return [enc_uB_overlap, enc_uB_overlap_2, enc_mapping_comp_B]
         else:
             components = super(EncryptedFTLHostModel, self).send_components()
@@ -239,15 +213,10 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
         return [enc_comp_0, enc_comp_1, enc_comp_2]
 
     def receive_components(self, components):
-        start = time.time()
-
         self.enc_y_overlap_2_phi_2 = components[0]
         self.enc_y_overlap_phi = components[1]
         self.enc_mapping_comp_A = components[2]
         self._update_gradients()
-
-        end = time.time()
-        self.logger.debug("---> host compute gradient and loss time: " + str(end - start))
 
     def _update_gradients(self):
         uB_overlap_ex = np.expand_dims(self.uB_overlap, axis=1)
@@ -263,12 +232,7 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
         return [self.enc_grads_W, self.enc_grads_b]
 
     def receive_gradients(self, gradients):
-        start = time.time()
-
         self.localModel.apply_gradients(gradients)
-
-        end = time.time()
-        self.logger.debug("---> host compute local gradient time: " + str(end - start))
 
     def get_loss_grads(self):
         return self.loss_grads

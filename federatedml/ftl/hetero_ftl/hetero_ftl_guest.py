@@ -121,6 +121,8 @@ class HeteroPlainFTLGuest(HeteroFTLGuest):
         LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
 
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
+
+        start_time = time.time()
         is_stop = False
         while self.n_iter_ < self.max_iter:
             guest_comp = self.guest_model.send_components()
@@ -154,6 +156,9 @@ class HeteroPlainFTLGuest(HeteroFTLGuest):
             self.n_iter_ += 1
             if is_stop:
                 break
+
+        end_time = time.time()
+        LOGGER.info("@ running time: " + str(end_time - start_time))
 
 
 """
@@ -348,12 +353,9 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
             LOGGER.debug("compute encrypt_guest_gradients: " + create_shape_msg(encrypt_guest_gradients))
             encrypt_loss = self.guest_model.send_loss()
 
-            start = time.time()
             # add random mask to encrypt_guest_gradients and encrypt_loss, and send them to host for decryption
             masked_enc_guest_gradients, gradients_masks = add_random_mask(encrypt_guest_gradients)
             masked_enc_loss, loss_mask = add_random_mask(encrypt_loss)
-            end = time.time()
-            LOGGER.debug("add random mask to guest gradients and loss time: " + str(end - start))
 
             LOGGER.debug("send masked_enc_guest_gradients: " + create_shape_msg(masked_enc_guest_gradients))
             self._do_remote(masked_enc_guest_gradients, name=self.transfer_variable.masked_enc_guest_gradients.name,
@@ -376,10 +378,7 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
                                                          self.n_iter_),
                                                      idx=-1)[0]
 
-            start = time.time()
             masked_dec_host_gradients = self.__decrypt_gradients(masked_enc_host_gradients)
-            end = time.time()
-            LOGGER.debug("decrypt host gradient time (at guest): " + str(end - start))
 
             LOGGER.debug("send masked_dec_host_gradients: " + create_shape_msg(masked_dec_host_gradients))
             self._do_remote(masked_dec_host_gradients, name=self.transfer_variable.masked_dec_host_gradients.name,
@@ -398,10 +397,7 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
                                                       idx=-1)[0]
             LOGGER.debug("receive masked_dec_guest_gradients: " + create_shape_msg(masked_dec_guest_gradients))
 
-            start = time.time()
             cleared_dec_guest_gradients = remove_random_mask(masked_dec_guest_gradients, gradients_masks)
-            end = time.time()
-            LOGGER.debug("remove random mask from masked_dec_guest_gradients time: " + str(end - start))
 
             # update guest model parameters using these gradients.
             self.guest_model.receive_gradients(cleared_dec_guest_gradients)
@@ -412,10 +408,7 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
                                            idx=-1)[0]
             LOGGER.debug("receive masked_dec_loss: " + str(masked_dec_loss))
 
-            start = time.time()
             loss = remove_random_mask(masked_dec_loss, loss_mask)
-            end = time.time()
-            LOGGER.debug("remove random mask from masked_dec_loss time: " + str(end - start))
 
             # Stage 5: determine whether training is terminated based on loss and send stop signal to host.
             LOGGER.debug("@ Stage 5: ")
@@ -442,9 +435,6 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
     def __decrypt_gradients(self, encrypt_gradients):
         return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
                                                                                      encrypt_gradients[1])
-
-    # def __decrypt_loss(self, encrypt_loss):
-    #     return decrypt_scalar(self.private_key, encrypt_loss)
 
 
 class FasterHeteroDecentralizedEncryptFTLGuest(HeteroDecentralizedEncryptFTLGuest):
