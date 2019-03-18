@@ -93,8 +93,8 @@ public class RollServerUtils {
 
     public synchronized BasicMeta.Endpoint getRollEndpoint() {
         if (rollEndpoint == null) {
-            init();
             try {
+                init();
                 Node node = new Node();
                 node.setType(NodeType.ROLL.name());
                 node.setStatus(NodeStatus.HEALTHY.name());

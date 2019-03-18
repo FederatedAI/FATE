@@ -71,6 +71,11 @@ public class GenericDaoService<M, E, P> implements BaseDaoService<M, E, P> {
     }
 
     @Override
+    public Integer updateByPrimaryKeySelective(Object record) {
+        return (Integer) invokeMethodInternal("updateByPrimaryKeySelective", record);
+    }
+
+    @Override
     public Integer updateByExampleSelective(M record, E example) {
         return (Integer) invokeMethodInternal("updateByExampleSelective", record, example);
     }
