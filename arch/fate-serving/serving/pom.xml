@@ -18,11 +18,6 @@
         </dependency>
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
-            <artifactId>fate-common</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-serving-federatedml</artifactId>
             <version>0.1</version>
         </dependency>

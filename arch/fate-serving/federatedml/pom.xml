@@ -5,7 +5,7 @@
     <parent>
         <artifactId>fate-serving</artifactId>
         <groupId>com.webank.ai.fate</groupId>
-        <version>0.1</version>
+        <version>${fate.version}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,11 +14,6 @@
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-core</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.webank.ai.fate</groupId>
-            <artifactId>fate-common</artifactId>
             <version>0.1</version>
         </dependency>
     </dependencies>
