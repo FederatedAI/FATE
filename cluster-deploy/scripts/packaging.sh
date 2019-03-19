@@ -17,8 +17,8 @@
 #
 
 version=0.1
-base_dir=
-output_dir=
+base_dir=../../
+output_dir=./output
 
 cwd=`pwd`
 
@@ -53,7 +53,7 @@ for target in ${targets[@]}; do
         echo "[INFO] $sub_module output_file: $output_file"
 
         rm -f $output_file
-        gtar czf $output_file lib fate-$sub_module-$version.jar
+        tar czf $output_file lib fate-$sub_module-$version.jar
     done
     echo "--------------"
 done
