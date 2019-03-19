@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.api.mlmodel.manager;
+option java_outer_classname = "ModelServiceProto";
+
+message PublishRequest{
+    string partnerPartyId = 1;
+    string sceneId = 2;
+    string myRole = 3;
+    string modelId = 4;
+}
+
+message PublishResponse{
+    string modelId = 1;
+    int32 statusCode = 2;
+    string msg = 3;
+}
+
+
+service ModelService{
+    rpc publishLoad(PublishRequest) returns (PublishResponse);
+    rpc publishOnline(PublishRequest) returns (PublishResponse);
+}

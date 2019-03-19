@@ -28,8 +28,7 @@
         <module>driver</module>
         <module>eggroll</module>
         <module>networking</module>
-        <module>serving</module>
-        <module>common</module>
+        <module>fate-serving</module>
     </modules>
 
     <packaging>pom</packaging>
