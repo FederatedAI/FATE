@@ -37,6 +37,7 @@ from federatedml.util.transfer_variable import HeteroLRTransferVariable
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 from federatedml.util.transfer_variable import HomoLRTransferVariable
 from federatedml.util.transfer_variable import HeteroSecureBoostingTreeTransferVariable
+from federatedml.util.transfer_variable import SecureAddExampleTransferVariable
 
 __all__ = ['consts',
            'fate_operator',
@@ -53,6 +54,7 @@ __all__ = ['consts',
            "HeteroLRTransferVariable",
            "RsaIntersectTransferVariable",
            "HomoLRTransferVariable",
+           "SecureAddExampleTransferVariable",
            "Statistics",
            "EncodeParamChecker",
            "IntersectParamChecker",
