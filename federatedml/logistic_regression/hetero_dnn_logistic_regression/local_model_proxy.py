@@ -72,24 +72,22 @@ class LocalModelProxy(object):
         for idx in index_tracking_list:
             grad = fore_gradients_dict[idx]
             inst = instances_dict[idx]
-            grad_list.append(grad.features)
+            grad_list.append(grad)
             feat_list.append(inst.features)
 
         grads = np.array(grad_list)
         feats = np.array(feat_list)
 
-        # dec_grads = self.__decrypt_gradients(grads, is_host, n_iter, batch_index)
-        #
-        # dec_grads = grads.reshape(len(dec_grads), 1)
-        # coef = coef.reshape(1, len(coef))
-        #
-        # back_grad = np.matmul(dec_grads, coef)
-        # self.model.backpropogate(feats, None, back_grad)
-
         grads = grads.reshape(len(grads), 1)
         coef = coef.reshape(1, len(coef))
 
-        enc_back_grad = np.matmul(grads, coef)
+        grads = np.tile(grads, (1, coef.shape[1]))
+        coef = np.tile(coef, (grads.shape[0], 1))
+
+        print("grads:", grads.shape)
+        print("coef:", coef.shape)
+        # enc_back_grad = np.matmul(grads, coef)
+        enc_back_grad = grads * coef
 
         print("enc_back_grad shape", enc_back_grad.shape)
 

@@ -113,11 +113,16 @@ class HeteroLRHost(BaseLogisticRegression):
                                                tag=self.transfer_variable.generate_transferid(
                                                    self.transfer_variable.fore_gradient, self.n_iter_, batch_index),
                                                idx=0)
+
+                # print("fore_gradient:", fore_gradient.shape)
+
                 LOGGER.info("Get fore_gradient from guest")
                 if self.gradient_operator is None:
                     self.gradient_operator = HeteroLogisticGradient(self.encrypt_operator)
-                host_gradient = self.gradient_operator.compute_gradient(data_instances, fore_gradient,
+                host_gradient = self.gradient_operator.compute_gradient(batch_feat_inst, fore_gradient,
                                                                         fit_intercept=False)
+
+                print("host_gradient:", host_gradient.shape)
                 # regulation if necessary
                 if self.updater is not None:
                     loss_regular = self.updater.loss_norm(self.coef_)
@@ -150,6 +155,7 @@ class HeteroLRHost(BaseLogisticRegression):
                 LOGGER.info("Get optim_host_gradient from arbiter")
 
                 LOGGER.info("update_model")
+                print("optim_host_gradient:", optim_host_gradient.shape)
                 self.update_model(optim_host_gradient)
 
                 # TODO: compute gradients of local model and update local model based on fore_gradient
@@ -176,7 +182,10 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def predict(self, data_instances, predict_param=None):
         LOGGER.info("Start predict ...")
-        prob_host = self.compute_wx(data_instances, self.coef_, self.intercept_)
+
+        data_features = self.transform(data_instances)
+
+        prob_host = self.compute_wx(data_features, self.coef_, self.intercept_)
         federation.remote(prob_host,
                           name=self.transfer_variable.host_prob.name,
                           tag=self.transfer_variable.generate_transferid(

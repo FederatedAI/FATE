@@ -28,6 +28,7 @@ from federatedml.param.param import FTLModelParam
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
+
 class HeteroFTLHost(HeteroFTLParty):
 
     def __init__(self, host: PlainFTLHostModel, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
@@ -44,10 +45,10 @@ class HeteroFTLHost(HeteroFTLParty):
         host_sample_indexes = np.array(host_sample_indexes)
 
         self._do_remote(host_sample_indexes,
-               name=self.transfer_variable.host_sample_indexes.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_sample_indexes),
-               role=consts.GUEST,
-               idx=-1)
+                        name=self.transfer_variable.host_sample_indexes.name,
+                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_sample_indexes),
+                        role=consts.GUEST,
+                        idx=-1)
 
         guest_sample_indexes = self._do_get(name=self.transfer_variable.guest_sample_indexes.name,
                                             tag=self.transfer_variable.generate_transferid(self.transfer_variable.guest_sample_indexes),

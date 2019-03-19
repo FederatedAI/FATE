@@ -222,7 +222,10 @@ class HeteroLRGuest(BaseLogisticRegression):
 
     def predict(self, data_instances, predict_param):
         LOGGER.info("Start predict ...")
-        prob_guest = self.compute_wx(data_instances, self.coef_, self.intercept_)
+
+        data_features = self.transform(data_instances)
+
+        prob_guest = self.compute_wx(data_features, self.coef_, self.intercept_)
         prob_host = federation.get(name=self.transfer_variable.host_prob.name,
                                    tag=self.transfer_variable.generate_transferid(
                                        self.transfer_variable.host_prob),

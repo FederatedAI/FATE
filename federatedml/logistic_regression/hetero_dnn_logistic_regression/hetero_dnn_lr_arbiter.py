@@ -16,7 +16,8 @@ class HeteroDNNLRArbiter(HeteroLRArbiter):
 
     def __decrypt_grads(self, enc_grads):
         for i in range(enc_grads.shape[0]):
-            enc_grads[i] = self.encrypt_operator.decrypt(enc_grads[i])
+            for j in range(enc_grads.shape[1]):
+                enc_grads[i][j] = self.encrypt_operator.decrypt(enc_grads[i][j])
         return enc_grads
 
     def perform_subtasks(self, **training_info):
