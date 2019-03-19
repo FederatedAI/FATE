@@ -24,13 +24,15 @@
 # =============================================================================
 # DecisionTree Base Class
 # =============================================================================
+from federatedml.util import consts
 
 
 class BoostingTreeModelMeta(object):
     def __init__(self):
-        self.loss_type = "cross_entropy"
-        self.task_type = "classification"
+        self.objective_param = None
+        self.task_type = consts.CLASSIFICATION
         self.trees_ = []
+        self.init_score = []
         self.tree_dim = 0
         self.num_classes = 0
         self.classes_ = None

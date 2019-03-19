@@ -22,7 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
     save_model_parameters, create_table, convert_instance_table_to_dict, convert_instance_table_to_array, \
-    add_random_mask, remove_random_mask
+    add_random_mask_for_list_of_values, remove_random_mask_from_list_of_values
 from federatedml.ftl.data_util.log_util import create_shape_msg
 from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
 from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
@@ -337,7 +337,7 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
             LOGGER.debug("send encrypt_guest_gradients: " + create_shape_msg(encrypt_host_gradients))
 
             # add random mask to encrypt_host_gradients and send them to guest for decryption
-            masked_enc_host_gradients, gradients_masks = add_random_mask(encrypt_host_gradients)
+            masked_enc_host_gradients, gradients_masks = add_random_mask_for_list_of_values(encrypt_host_gradients)
 
             LOGGER.debug("send masked_enc_host_gradients: " + create_shape_msg(masked_enc_host_gradients))
             self._do_remote(masked_enc_host_gradients, name=self.transfer_variable.masked_enc_host_gradients.name,
@@ -379,7 +379,7 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
                                                      idx=-1)[0]
             LOGGER.debug("receive masked_dec_host_gradients: " + create_shape_msg(masked_dec_host_gradients))
 
-            cleared_dec_host_gradients = remove_random_mask(masked_dec_host_gradients, gradients_masks)
+            cleared_dec_host_gradients = remove_random_mask_from_list_of_values(masked_dec_host_gradients, gradients_masks)
 
             # update host model parameters using these gradients.
             self.host_model.receive_gradients(cleared_dec_host_gradients)

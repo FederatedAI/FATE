@@ -27,6 +27,7 @@ class Autoencoder(object):
         super(Autoencoder, self).__init__()
         self.id = str(an_id)
         self.sess = None
+        self.built = False
 
     def set_session(self, sess):
         self.sess = sess
@@ -35,6 +36,8 @@ class Autoencoder(object):
         return self.sess
 
     def build(self, input_dim, hidden_dim, learning_rate=1e-2):
+        if self.built:
+            return
 
         self.lr = learning_rate
         self.input_dim = input_dim
@@ -56,6 +59,7 @@ class Autoencoder(object):
         self._add_representation_training_ops()
         self._add_e2e_training_ops()
         self._add_encrypt_grad_update_ops()
+        self.built = True
 
     def _add_input_placeholder(self):
         self.X_in = tf.placeholder(tf.float64, shape=(None, self.input_dim))

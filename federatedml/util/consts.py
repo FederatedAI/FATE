@@ -1,9 +1,27 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 ARBITER = 'arbiter'
 HOST = 'host'
 GUEST = 'guest'
 
 BINARY = 'binary'
 MULTY = 'multi'
+CLASSIFICATION = "classification"
+REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
@@ -20,21 +38,6 @@ HOMO = "homo"
 RAW = "raw"
 RSA = "rsa"
 
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
 # evaluation
 AUC = "auc"
 KS = "ks"
@@ -42,6 +45,13 @@ LIFT = "lift"
 PRECISION = "precision"
 RECALL = "recall"
 ACCURACY = "accuracy"
+EXPLAINED_VARIANCE = "explained_variance"
+MEAN_ABSOLUTE_ERROR = "mean_absolute_error"
+MEAN_SQUARED_ERROR = "mean_squared_error"
+MEAN_SQUARED_LOG_ERROR = "mean_squared_log_error"
+MEDIAN_ABSOLUTE_ERROR = "median_absolute_error"
+R2_SCORE = "r2_score"
+ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
 
 # workflow
 TRAIN_DATA = "train_data"
@@ -53,6 +63,9 @@ RANDOM_UNIFORM = 'random_uniform'
 ONES = 'ones'
 ZEROS = 'zeros'
 CONST = 'const'
+
+# decision tree
+MAX_SPLIT_NODES = 2 ** 16
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'

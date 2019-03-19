@@ -24,7 +24,7 @@ from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
-from federatedml.ftl.test.fake_models import FakeFTLModelParam
+from federatedml.ftl.test.mock_models import MockFTLModelParam
 
 if __name__ == '__main__':
 
@@ -65,8 +65,7 @@ if __name__ == '__main__':
     autoencoder_A.build(X_A.shape[-1], 200, learning_rate=0.01)
     autoencoder_B.build(X_B.shape[-1], 200, learning_rate=0.01)
 
-    # alpha = 100
-    fake_model_param = FakeFTLModelParam()
+    fake_model_param = MockFTLModelParam(alpha=100)
     partyA = PlainFTLGuestModel(autoencoder_A, fake_model_param)
     partyB = PlainFTLHostModel(autoencoder_B, fake_model_param)
 

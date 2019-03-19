@@ -86,7 +86,7 @@ For plain version, you only need to check logs for host and guest since arbiter 
 For encryption version, in addition to above two logs, you may also want to check log for arbiter:
 
 * **hetero_ftl_arbiter.log**, records log information for arbiter side of running the FTL algorithm. 
-  * In encryption version of FTL algorithm, only arbiter knows the loss for each iteration. Therefore, you can check the change loss in this log file. 
+  * In encryption version of FTL algorithm, only arbiter knows the loss for each iteration. Therefore, you can check the change of loss in this log file. 
 
 If you run the FTL algorithm by using **sh run_ftl_plain_standalone.sh {job_id}** or **sh run_ftl_enc_standalone.sh {job_id}**, two or three logs would be generated under **examples/hetero_ftl/** folder:
 

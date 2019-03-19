@@ -19,15 +19,15 @@ from arch.api.federation import remote, get
 from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
-from federatedml.statistic.intersect import Intersect
+from federatedml.statistic.intersect import RawIntersect
+from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
-from federatedml.util.transfer_variable import RawIntersectTransferVariable
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class RsaIntersectionHost(Intersect):
+class RsaIntersectionHost(RsaIntersect):
     def __init__(self, intersect_params):
         self.get_intersect_ids_flag = intersect_params.is_get_intersect_ids
         self.transfer_variable = RsaIntersectTransferVariable()
@@ -56,11 +56,13 @@ class RsaIntersectionHost(Intersect):
         LOGGER.info("Remote public key to Guest.")
 
         # (host_id_process, 1)
-        table_host_ids_process = data_instances.map(
+        host_ids_process_pair = data_instances.map(
             lambda k, v: (
-                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k), 16), self.d, self.n)), 1)
+                RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k), 16), self.d, self.n)), k)
         )
-        remote(table_host_ids_process,
+
+        host_ids_process = host_ids_process_pair.mapValues(lambda v: 1)
+        remote(host_ids_process,
                name=self.transfer_variable.intersect_host_ids_process.name,
                tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_host_ids_process),
                role=consts.GUEST,
@@ -85,36 +87,32 @@ class RsaIntersectionHost(Intersect):
         # recv intersect ids
         intersect_ids = None
         if self.get_intersect_ids_flag:
-            intersect_ids = get(name=self.transfer_variable.intersect_ids.name,
-                                tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
-                                idx=0)
+            encrypt_intersect_ids = get(name=self.transfer_variable.intersect_ids.name,
+                                        tag=self.transfer_variable.generate_transferid(
+                                            self.transfer_variable.intersect_ids),
+                                        idx=0)
+
+            intersect_ids_pair = encrypt_intersect_ids.join(host_ids_process_pair, lambda e, h: h)
+            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "intersect_id"))
+
             LOGGER.info("Get intersect ids from Guest")
         return intersect_ids
 
 
-class RawIntersectionHost(Intersect):
+class RawIntersectionHost(RawIntersect):
     def __init__(self, intersect_params):
-        self.get_intersect_id_flag = intersect_params.is_get_intersect_ids
-        self.transfer_variable = RawIntersectTransferVariable()
+        super().__init__(intersect_params)
+        self.join_role = intersect_params.join_role
+        self.role = consts.HOST
 
     def run(self, data_instances):
         LOGGER.info("Start raw intersection")
-        data_sid = data_instances.mapValues(lambda v: 1)
 
-        remote(data_sid,
-               name=self.transfer_variable.intersect_host_ids.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_host_ids),
-               role=consts.GUEST,
-               idx=0)
-
-        LOGGER.info("Remote data_sid to Guest")
-        intersect_ids = None
-        if self.get_intersect_id_flag:
-            intersect_ids = get(name=self.transfer_variable.intersect_ids.name,
-                                tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
-                                idx=0)
-            LOGGER.info("Get intersect ids from Guest")
+        if self.join_role == consts.GUEST:
+            intersect_ids = self.intersect_send_id(data_instances)
+        elif self.join_role == consts.HOST:
+            intersect_ids = self.intersect_join_id(data_instances)
         else:
-            LOGGER.info("Not Get intersect ids from Guest")
-            
+            raise ValueError("Unknown intersect join role, please check the configure of host")
+
         return intersect_ids

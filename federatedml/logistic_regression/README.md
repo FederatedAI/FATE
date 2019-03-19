@@ -23,7 +23,7 @@ The HomoLR process can be shown as above figure, Party A and Party B has same st
 In each iteration, each party train model among their own data. After that, they upload their
 encrypted(or not, depends on your configuration) gradient to arbiter. The arbiter will aggregate these gradients to form
 a federated gradient with which the parties can update their model. Just like the traditional LR, the fitting stop when 
-model converge or reach the max iterations. 
+model converge or reach the max iterations. More details is available in this [paper](https://dl.acm.org/citation.cfm?id=3133982)
 
  <div style="text-align:center", align=center>
 <img src="./images/HeteroLR.png" alt="samples" width="500" height="250" /><br/>
@@ -35,4 +35,4 @@ The intersect process will **not** leakage the sample ids between the parties si
 the paper for more details. 
 
 In the fitting process, party A and party B compute out the elements needed for final gradients. Arbiter aggregate them and compute
-out the gradient and then transfer back to each party. Check out the paper for more details.
+out the gradient and then transfer back to each party. Check out the [paper](https://arxiv.org/abs/1711.10677) for more details.

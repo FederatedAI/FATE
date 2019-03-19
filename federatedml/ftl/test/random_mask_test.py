@@ -19,7 +19,8 @@ import unittest
 import numpy as np
 
 from arch.api.eggroll import init
-from federatedml.ftl.data_util.common_data_util import add_random_mask, remove_random_mask
+from federatedml.ftl.data_util.common_data_util import add_random_mask_for_list_of_values, add_random_mask, \
+    remove_random_mask_from_list_of_values, remove_random_mask
 from federatedml.ftl.eggroll_computation.helper import encrypt_matrix, decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
 from federatedml.secureprotol.encrypt import PaillierEncrypt
@@ -27,7 +28,7 @@ from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 class TestRandomMask(unittest.TestCase):
 
-    def test_mask_2_dim(self):
+    def test_mask_2_dim_matrix(self):
         print("----test_mask_2_dim----")
         matrix = np.array([[1, 2, 3],
                            [4, 5, 6],
@@ -39,7 +40,7 @@ class TestRandomMask(unittest.TestCase):
 
         self.__test_matrix(matrix)
 
-    def test_mask_3_dim_1(self):
+    def test_mask_3_dim_matrix_1(self):
         print("----test_mask_3_dim_1----")
         matrix = np.array([[[33, 22, 31],
                             [14, 15, 16],
@@ -50,7 +51,7 @@ class TestRandomMask(unittest.TestCase):
 
         self.__test_matrix(matrix)
 
-    def test_mask_3_dim_2(self):
+    def test_mask_3_dim_matrix_2(self):
         print("----test_encrypt_3_dim_2----")
         matrix = np.array([[[1, 2, 3],
                             [4, 5, 6],
@@ -65,10 +66,44 @@ class TestRandomMask(unittest.TestCase):
 
         self.__test_matrix(matrix)
 
-    def test_mask_scalar(self):
-        print("----test_mask_scalar----")
+    def test_mask_integer(self):
+        print("----test_mask_integer----")
         value = 31
         self.__test_scalar(value)
+
+    def test_mask_float(self):
+        print("----test_mask_float----")
+        value = 31.444
+        self.__test_scalar(value)
+
+    def test_mask_raise_type_error(self):
+        print("----test_mask_scalar----")
+        value = "exception"
+        with self.assertRaises(TypeError):
+            self.__test_scalar(value)
+
+    def test_mask_list_of_values(self):
+        matrix_1 = np.array([[1, 2, 3],
+                             [4, 5, 6],
+                             [7, 8, 9],
+                             [10, 11, 12],
+                             [13, 14, 15],
+                             [16, 17, 18],
+                             [19, 20, 21]])
+
+        matrix_2 = np.array([[[33, 22, 31],
+                              [14, 15, 16],
+                              [17, 18, 19]],
+                             [[10, 11, 12],
+                              [13, 14, 15],
+                              [16, 17, 18]]])
+
+        matrix_list = [matrix_1, matrix_2]
+        masked_value_list, mask_list = add_random_mask_for_list_of_values(matrix_list)
+        cleared_value_list = remove_random_mask_from_list_of_values(masked_value_list, mask_list)
+
+        for matrix, cleared_matrix in zip(matrix_list, cleared_value_list):
+            assert_matrix(matrix, cleared_matrix)
 
     def __test_matrix(self, matrix):
 
@@ -78,16 +113,10 @@ class TestRandomMask(unittest.TestCase):
         privatekey = paillierEncrypt.get_privacy_key()
 
         enc_matrix = encrypt_matrix(publickey, matrix)
-        masked_enc_matrix_list, mask_list = add_random_mask([enc_matrix])
+        masked_enc_matrix, mask = add_random_mask(enc_matrix)
 
-        # masked_matrix = decrypt_matrix(privatekey, masked_enc_matrix_list[0])
-        # print("masked_matrix", masked_matrix, masked_matrix.shape)
-        # print("@", masked_matrix - mask_list[0])
-
-        cleared_enc_matrix_list = remove_random_mask(masked_enc_matrix_list, mask_list)
-        cleared_matrix = decrypt_matrix(privatekey, cleared_enc_matrix_list[0])
-        print("original matrix", matrix, matrix.shape)
-        print("cleared_matrix", cleared_matrix, cleared_matrix.shape)
+        cleared_enc_matrix = remove_random_mask(masked_enc_matrix, mask)
+        cleared_matrix = decrypt_matrix(privatekey, cleared_enc_matrix)
         assert_matrix(matrix, cleared_matrix)
 
     def __test_scalar(self, value):

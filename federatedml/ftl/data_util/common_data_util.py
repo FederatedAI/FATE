@@ -318,27 +318,39 @@ def get_timestamp():
     return timestamp
 
 
-def add_random_mask(value):
-    if type(value) is list or type(value) is tuple:
-        masked_components = []
+def add_random_mask_for_list_of_values(value_list):
+    if type(value_list) is list or type(value_list) is tuple:
+        masked_value_list = []
         masks = []
-        for c in value:
-            mask = np.random.random_sample(c.shape)
-            c = c + mask
-            masked_components.append(c)
+        for value in value_list:
+            masked_value, mask = add_random_mask(value)
+            masked_value_list.append(masked_value)
             masks.append(mask)
-        return masked_components, masks
+        return masked_value_list, masks
     else:
+        raise TypeError("the input is not a list")
+
+
+def add_random_mask(value):
+    if isinstance(value, np.ndarray):
+        mask = np.random.random_sample(value.shape)
+        return value + mask, mask
+    elif hasattr(value, '__add__'):
         mask = np.random.rand(1)[0]
         return value + mask, mask
+    else:
+        raise TypeError("does not support type of ", type(value))
+
+
+def remove_random_mask_from_list_of_values(value_list, mask_list):
+    if type(value_list) is list or type(value_list) is tuple:
+        cleared_value_list = []
+        for c, m in zip(value_list, mask_list):
+            cleared_value_list.append(remove_random_mask(c, m))
+        return cleared_value_list
+    else:
+        raise TypeError("the input is not a list")
 
 
 def remove_random_mask(value, mask):
-    if type(value) is list or type(value) is tuple:
-        cleared_components = []
-        for c, m in zip(value, mask):
-            c = c - m
-            cleared_components.append(c)
-        return cleared_components
-    else:
-        return value - mask
+    return value - mask

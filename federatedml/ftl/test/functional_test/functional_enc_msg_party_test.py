@@ -26,8 +26,9 @@ from federatedml.ftl.data_util.common_data_util import series_plot, split_data_c
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, \
     LocalEncryptedFederatedTransferLearning
-from federatedml.ftl.test.fake_models import FakeFTLModelParam
+from federatedml.ftl.test.mock_models import MockFTLModelParam
 from federatedml.secureprotol.encrypt import PaillierEncrypt
+
 
 if __name__ == '__main__':
 
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     publickey = paillierEncrypt.get_public_key()
     privatekey = paillierEncrypt.get_privacy_key()
 
-    fake_model_param = FakeFTLModelParam(alpha=100)
+    fake_model_param = MockFTLModelParam(alpha=100)
     partyA = EncryptedFTLGuestModel(autoencoder_A, fake_model_param, public_key=publickey)
     partyB = EncryptedFTLHostModel(autoencoder_B, fake_model_param, public_key=publickey)
 

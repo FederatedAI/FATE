@@ -34,6 +34,7 @@ class DecisionTree(object):
         self.min_sample_split = tree_param.min_sample_split
         self.min_impurity_split = tree_param.min_impurity_split
         self.min_leaf_node = tree_param.min_leaf_node
+        self.max_split_nodes = tree_param.max_split_nodes
         self.n_iter_no_change = tree_param.n_iter_no_change
         self.tol = tree_param.tol
 

@@ -33,6 +33,8 @@ load_data_conf=$conf_dir/load_file.json
 guest_runtime_conf=$conf_dir/guest_runtime_conf.json
 host_runtime_conf=$conf_dir/host_runtime_conf.json
 
+#data_set=vehicle_scale
+#data_set=student-mat
 data_set=breast
 #data_set=default_credit
 #data_set=give_credit
@@ -46,6 +48,16 @@ cv_data_guest=$data_dir/${data_set}_b.csv
 echo "data dir is : "$data_dir
 mode=cross_validation
 #mode=train
+task_type="\"classification\""
+#task_type="\"regression\""
+eval_type="\"binary\""
+#eval_type="\"multi\""
+#eval_type="\"evaluation\""
+objective="\"cross_entropy\""
+#objective="\"lse\""
+eval_method="\"auc\""
+#eval_method="\"accuracy\"" 
+#eval_method="\"root_mean_squared_error\""
 data_table=''
 log_file=''
 
@@ -88,6 +100,13 @@ train() {
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
     
+    if [ $role = 'guest' ]; then
+        sed -i "s/_task_type/$task_type/g" $cur_runtime_conf
+        sed -i "s/_objective/$objective/g" $cur_runtime_conf
+        sed -i "s/_eval_type/$eval_type/g" $cur_runtime_conf
+        sed -i "s/_eval_method/$eval_method/g" $cur_runtime_conf
+    fi
+
     log_file=$log_dir/$jobid
     echo "pleask check log file in "$log_file
     if [ $role == 'guest' ]; then
@@ -121,6 +140,13 @@ cross_validation() {
     sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
+
+    if [ $role = 'guest' ]; then
+        sed -i "s/_task_type/$task_type/g" $cur_runtime_conf
+        sed -i "s/_objective/$objective/g" $cur_runtime_conf
+        sed -i "s/_eval_type/$eval_type/g" $cur_runtime_conf
+        sed -i "s/_eval_method/$eval_method/g" $cur_runtime_conf
+    fi
 
     log_file=$log_dir/$jobid
     echo "pleask check log file in "$log_file

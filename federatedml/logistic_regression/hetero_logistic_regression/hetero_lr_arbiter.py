@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
@@ -38,6 +39,9 @@ class HeteroLRArbiter(BaseLogisticRegression):
         self.transfer_variable = HeteroLRTransferVariable()
         self.optimizer = Optimizer(logistic_params.learning_rate, logistic_params.optimizer)
         self.key_length = logistic_params.encrypt_param.key_length
+
+    def perform_subtasks(self, **training_info):
+        pass
 
     def fit(self, data_instance=None):
         # Generate encrypt keys
@@ -118,6 +122,9 @@ class HeteroLRArbiter(BaseLogisticRegression):
                                   role=consts.GUEST,
                                   idx=0)
                 LOGGER.info("Remote guest_optim_gradient to Guest")
+
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.perform_subtasks(**training_info)
 
                 loss = federation.get(name=self.transfer_variable.loss.name,
                                       tag=self.transfer_variable.generate_transferid(
