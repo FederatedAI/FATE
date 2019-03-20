@@ -291,12 +291,12 @@
         "host"
       ]
     },
-	"dispatch_node_host_result": {
-	  "src": "host",
-	  "dst": [
-	    "guest"
-	  ]
-	},
+    "dispatch_node_host_result": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
     "tree": {
       "src": "guest",
       "dst": [
@@ -427,8 +427,8 @@
     "pred_prob": {
       "src": "guest",
       "dst": [
-         "host"
-       ]
+        "host"
+      ]
     },
     "encrypt_prob": {
       "src": "guest",
@@ -449,6 +449,26 @@
       ]
     },
     "host_sample_indexes": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    }
+  },
+  "HeteroFeatureBinningTransferVariable": {
+    "paillier_pubkey": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_label": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_bin_sum": {
       "src": "host",
       "dst": [
         "guest"

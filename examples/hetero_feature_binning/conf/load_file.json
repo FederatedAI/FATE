@@ -1,0 +1,8 @@
+{
+  "file": "_input_path",
+  "head": 1,
+  "partition": 10,
+  "table_name": "TO SET",
+  "namespace": "example",
+  "work_mode": "TO SET"
+}

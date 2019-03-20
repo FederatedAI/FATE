@@ -81,7 +81,8 @@ class ObjectiveParamChecker(object):
             params = objective_param.params
             if objective_param.objective in ["huber", "fair", "tweedie"]:
                 if type(params).__name__ != 'list' or len(params) < 1:
-                    raise ValueError("objective param's params {} not supported, should be non-empty list".format(params))
+                    raise ValueError(
+                        "objective param's params {} not supported, should be non-empty list".format(params))
 
                 if type(params[0]).__name__ not in ["float", "int", "long"]:
                     raise ValueError("objective param's params[0] {} not supported".format(objective_param.params[0]))
@@ -92,8 +93,9 @@ class ObjectiveParamChecker(object):
 
                 if objective_param.objective == 'fair' or 'huber':
                     if params[0] <= 0.0:
-                        raise ValueError("in {} regression, objective params[0] should greater than 0.0".format(objective_param.objective))
-                
+                        raise ValueError("in {} regression, objective params[0] should greater than 0.0".format(
+                            objective_param.objective))
+
         return True
 
 
@@ -108,9 +110,9 @@ class EncryptParamChecker(object):
             user_input = encrypt_param.method.lower()
             if user_input == 'paillier':
                 encrypt_param.method = 'Paillier'
-            # else:
-            #     raise ValueError(
-            #         "encode encrypt_param's method {} not supported, Supported 'Paillier' only")
+                # else:
+                #     raise ValueError(
+                #         "encode encrypt_param's method {} not supported, Supported 'Paillier' only")
 
         if type(encrypt_param.key_length).__name__ != "int":
             raise ValueError(
@@ -199,7 +201,7 @@ class BoostingTreeParamChecker(object):
                 boost_param.num_trees))
 
         if type(boost_param.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
-                boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
+                        boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
@@ -217,7 +219,8 @@ class BoostingTreeParamChecker(object):
 
         if type(boost_param.bin_num).__name__ not in ["int", "long"] or boost_param.bin_num < 2:
             raise ValueError(
-                "boosting tree param's bin_num {} not supported, should be positive integer greater than 1".format(boost_param.bin_num))
+                "boosting tree param's bin_num {} not supported, should be positive integer greater than 1".format(
+                    boost_param.bin_num))
 
         if type(boost_param.bin_gap).__name__ not in ["float", "int", "long"]:
             raise ValueError(
@@ -238,7 +241,7 @@ class EncodeParamChecker(object):
             raise ValueError(
                 "encode param's salt {] not supported, should be str type".format(
                     encode_param.salt))
-        
+
         encode_method = encode_param.encode_method.lower()
         if encode_method not in ["none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512"]:
             raise ValueError(
@@ -251,6 +254,7 @@ class EncodeParamChecker(object):
 
         LOGGER.debug("Finish encode parameter check!")
         return True
+
 
 class IntersectParamChecker(object):
     @staticmethod
@@ -289,7 +293,6 @@ class IntersectParamChecker(object):
         return True
 
 
-
 class PredictParamChecker(object):
     @staticmethod
     def check_param(predict_param):
@@ -299,8 +302,8 @@ class PredictParamChecker(object):
 
         if type(predict_param.threshold).__name__ not in ["float", "int"]:
             raise ValueError("predict param's predict_param {} not supported, should be float or int".format(
-                predict_param.cross_validation))
-        
+                predict_param.threshold))
+
         LOGGER.debug("Finish predict parameter check!")
         return True
 
@@ -324,16 +327,20 @@ class EvaluateParamChecker(object):
                 "evaluate param's classi_type {} not supported, now just supported binary, multi and regression".format(
                     evaluate_param.classi_type))
 
-        if type(evaluate_param.pos_label).__name__ not in [ "str", "float", "int" ]:
+        if type(evaluate_param.pos_label).__name__ not in ["str", "float", "int"]:
             raise ValueError(
-                "evaluate param's pos_label {} not supported, should be str or float or int type".format(evaluate_param.pos_label))
+                "evaluate param's pos_label {} not supported, should be str or float or int type".format(
+                    evaluate_param.pos_label))
 
         if type(evaluate_param.thresholds).__name__ != "list":
-            raise ValueError("evaluate param's thresholds {} not supported, should be list".format(evaluate_param.thresholds))
+            raise ValueError(
+                "evaluate param's thresholds {} not supported, should be list".format(evaluate_param.thresholds))
         else:
             for threshold in evaluate_param.thresholds:
                 if type(threshold).__name__ not in ["float", "int"]:
-                    raise ValueError("threshold {} in evaluate param's thresholds not supported, should be positive integer".format(thresholds))
+                    raise ValueError(
+                        "threshold {} in evaluate param's thresholds not supported, should be positive integer".format(
+                            threshold))
 
         LOGGER.debug("Finish evaluation parameter check!")
         return True
@@ -345,10 +352,10 @@ class WorkFlowParamChecker(object):
         if type(workflow_param.method).__name__ != "str":
             raise ValueError(
                 "workflow param's method {} not supported, should be str type".format(workflow_param.method))
-        elif workflow_param.method not in ['train', 'predict', 'cross_validation', 'intersect']:
+        elif workflow_param.method not in ['train', 'predict', 'cross_validation', 'intersect', 'binning']:
             raise ValueError("workflow param's method {} not supported".format(workflow_param.method))
 
-        if workflow_param.method == 'train':
+        if workflow_param.method in ['train', 'binning']:
             if type(workflow_param.train_input_table).__name__ != "str":
                 raise ValueError(
                     "workflow param's train_input_table {} not supported, should be str type".format(
@@ -358,8 +365,8 @@ class WorkFlowParamChecker(object):
                 raise ValueError(
                     "workflow param's train_input_namespace {} not supported, should be str type".format(
                         workflow_param.train_input_namespace))
-        
-        if workflow_param.method in [ "train", "predict", "cross_validation"]:
+
+        if workflow_param.method in ["train", "predict", "cross_validation"]:
             if type(workflow_param.model_table).__name__ != "str":
                 raise ValueError(
                     "workflow param's model_table {} not supported, should be str type".format(
@@ -391,7 +398,7 @@ class WorkFlowParamChecker(object):
                     "workflow param's predict_output_namespace {} not supported, should be str type".format(
                         workflow_param.predict_output_namespace))
 
-        if workflow_param.method in [ "train", "predict", "cross_validation"]:
+        if workflow_param.method in ["train", "predict", "cross_validation"]:
             if type(workflow_param.predict_result_partition).__name__ != "int":
                 raise ValueError(
                     "workflow param's predict_result_partition {} not supported, should be int type".format(
@@ -447,12 +454,11 @@ class WorkFlowParamChecker(object):
         elif workflow_param.work_mode not in [0, 1]:
             raise ValueError(
                 "workflow param's work_mode must be 0 (represent to standalone mode) or 1 (represent to cluster mode)")
-        
 
-        if workflow_param.method in [ "train", "predict", "cross_validation"]:
+        if workflow_param.method in ["train", "predict", "cross_validation"]:
             PredictParamChecker.check_param(workflow_param.predict_param)
             EvaluateParamChecker.check_param(workflow_param.evaluate_param)
-        
+
         LOGGER.debug("Finish workerflow parameter check!")
         return True
 
@@ -480,6 +486,7 @@ class InitParamChecker(object):
 
         LOGGER.debug("Finish init parameter check!")
         return True
+
 
 class LogisticParamChecker(object):
     @staticmethod
@@ -569,8 +576,29 @@ class LogisticParamChecker(object):
         return True
 
 
-class FTLModelParamChecker(object):
+class FeatureBinningParamChecker(object):
+    @staticmethod
+    def check_param(binning_param):
+        descr = "hetero binning param's"
+        check_string(binning_param.method, descr)
+        binning_param.method = binning_param.method.lower()
+        check_valid_value(binning_param.method, descr, [consts.QUANTILE])
+        check_positive_integer(binning_param.compress_thres, descr)
+        check_positive_integer(binning_param.head_size, descr)
+        check_decimal_float(binning_param.error, descr)
+        check_positive_integer(binning_param.bin_num, descr)
+        check_defined_type(binning_param.cols, descr, ['list', 'int'])
+        check_open_unit_interval(binning_param.adjustment_factor, descr)
+        check_string(binning_param.result_table, descr)
+        check_string(binning_param.result_namespace, descr)
+        check_defined_type(binning_param.display_result, descr, ['list'])
+        for d_s in binning_param.display_result:
+            check_valid_value(d_s, descr, ['iv', 'woe_array', 'iv_array', 'event_count_array', 'non_event_count_array',
+                                           'event_rate_array', 'bin_nums', 'split_points',
+                                           'non_event_rate_array', 'is_woe_monotonic'])
 
+
+class FTLModelParamChecker(object):
     @staticmethod
     def check_param(ftl_model_param):
         model_param_descr = "ftl model param's "
@@ -582,7 +610,6 @@ class FTLModelParamChecker(object):
 
 
 class FTLLocalModelParamChecker(object):
-
     @staticmethod
     def check_param(ftl_local_model_param):
         model_param_descr = "ftl local model param's "
@@ -592,7 +619,6 @@ class FTLLocalModelParamChecker(object):
 
 
 class FTLDataParamChecker(object):
-
     @staticmethod
     def check_param(ftl_data_param):
         model_param_descr = "ftl data model param's "
@@ -633,6 +659,11 @@ def check_positive_number(param, descr):
         raise ValueError(descr + " {} not supported, should be positive numeric".format(param))
 
 
+def check_decimal_float(param, descr):
+    if type(param).__name__ not in ["float"] or param < 0 or param > 1:
+        raise ValueError(descr + " {} not supported, should be a float number in range [0, 1]".format(param))
+
+
 def check_boolean(param, descr):
     if type(param).__name__ != "bool":
         raise ValueError(descr + " {} not supported, should be bool type".format(param))
@@ -641,3 +672,13 @@ def check_boolean(param, descr):
 def check_open_unit_interval(param, descr):
     if type(param).__name__ not in ["float"] or param <= 0 or param >= 1:
         raise ValueError(descr + " should be a numeric number between 0 and 1 exclusively")
+
+
+def check_valid_value(param, descr, valid_values):
+    if param not in valid_values:
+        raise ValueError(descr + "{} is not supported, it should be in {}".format(param, valid_values))
+
+
+def check_defined_type(param, descr, types):
+    if type(param).__name__ not in types:
+        raise ValueError(descr + " {} not supported, should be one of {}".format(param, types))

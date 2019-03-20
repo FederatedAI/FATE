@@ -24,7 +24,7 @@ from federatedml.util.param_checker import IntersectParamChecker
 from federatedml.util.param_checker import LogisticParamChecker
 from federatedml.util.param_checker import WorkFlowParamChecker
 from federatedml.util.param_checker import DecisionTreeParamChecker
-from federatedml.util.param_checker import BoostingTreeParamChecker
+from federatedml.util.param_checker import BoostingTreeParamChecker, FeatureBinningParamChecker
 from federatedml.util.data_io import DenseFeatureReader
 from federatedml.util.data_io import SparseFeatureReader
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
@@ -60,4 +60,5 @@ __all__ = ['consts',
            "WorkFlowParamChecker",
            "DataIOParamChecker",
            "DecisionTreeParamChecker",
-           "BoostingTreeParamChecker"]
+           "BoostingTreeParamChecker",
+           'FeatureBinningParamChecker']
