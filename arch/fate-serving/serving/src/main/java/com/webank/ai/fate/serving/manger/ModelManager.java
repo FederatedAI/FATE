@@ -38,8 +38,8 @@ public class ModelManager {
     public ProtoModelBuffer readModel(String name, String nameSpace, String modelId){
         String DTableName = String.format("%s_%s", name, modelId);
         StandaloneDTable standaloneDTable = new StandaloneDTable(DTableName, nameSpace, 0);
-        byte[] metaStream = standaloneDTable.get("meta");
-        byte[] paramStream = standaloneDTable.get("param");
+        byte[] metaStream = standaloneDTable.get("model_meta");
+        byte[] paramStream = standaloneDTable.get("model_param");
         ProtoModelBuffer modelBuffer = new ProtoModelBuffer();
         modelBuffer.deserialize(metaStream, paramStream);
         return modelBuffer;
