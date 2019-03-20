@@ -17,12 +17,9 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
 from arch.api import federation
 from federatedml.util.transfer_variable import SecureAddExampleTransferVariable
 import numpy as np
-import sys
-import time
 
 
 class SecureAddGuest(object):
@@ -86,52 +83,5 @@ class SecureAddGuest(object):
         secure_sum = self.reconstruct(guest_sum, host_sum)
 
         return secure_sum
-        
 
-def init_eggroll(jobid, work_mode=0):
-    eggroll.init(jobid, work_mode)
-
-
-def init_federation(jobid, guest_partyid, host_partyid):
-    runtime_conf = {"local" : 
-                       {"role": "guest",
-                        "party_id": int(guest_partyid)},
-                    "role":
-                       {"host": [int(host_partyid)],
-                        "guest": [int(guest_partyid)]}}
-
-    federation.init(jobid, runtime_conf)
-
-
-if __name__ == "__main__":
-    jobid = sys.argv[1]
-    guest_partyid = sys.argv[2]
-    host_partyid = sys.argv[3]
-
-    work_mode = 0
-    if len(sys.argv) > 4:
-        work_mode = int(sys.argv[4])
-
-    init_eggroll(jobid, work_mode)
-    init_federation(jobid, guest_partyid, host_partyid)
-
-    n = 1000
-    kvs = [(i, i) for i in range(n)]
-    data_x = eggroll.parallelize(kvs, include_key=True)
-
-    expected_sum = n * (n - 1) // 2 + (n - 1) * n * (2 * n - 1) // 6
-    secure_sum = None
-    start_time = time.time()
-    try:
-        print ("Running...")
-        secure_add_guest_inst = SecureAddGuest(data_x)
-        secure_sum = secure_add_guest_inst.run()
-    finally:
-        end_time = time.time()
-        print ("Finish, time cost is %.4f" % (end_time - start_time))
-
-        if secure_sum is None or np.abs(expected_sum - secure_sum) > 1e-6:
-            print ("Secure Add Example Task Is FAIL!!!")
-        else:
-            print ("Secure ADD Example Task Is OK!!!")
 
