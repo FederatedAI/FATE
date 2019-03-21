@@ -68,6 +68,9 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
         if (!transferBroker.hasError()) {
             transferMetaHelper.onComplete(transferMeta);
             currentTransferStatus = Federation.TransferStatus.COMPLETE;
+        } else {
+            currentTransferStatus = Federation.TransferStatus.ERROR;
+            throw new RuntimeException(transferBroker.getError());
         }
     }
 }

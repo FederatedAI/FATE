@@ -102,7 +102,7 @@ public class TransferBrokerConsumer implements Runnable, TransferBrokerListener 
         startIdleTime = System.currentTimeMillis();
 
         try {
-            // main loop
+            /// main loop
             while (!shouldStop()) {
                 latchAwaitResult = hasReadyLatch.await(5, TimeUnit.SECONDS);
 
@@ -175,6 +175,7 @@ public class TransferBrokerConsumer implements Runnable, TransferBrokerListener 
 
     private void onClose() {
         if (transferBroker.isClosable()) {
+            LOGGER.info("[FEDERATION][CONSUMER] ready to close: {}", transferMetaId);
             transferBroker.close();
             LOGGER.info("[FEDERATION][CONSUMER] transferBroker closed: {}", transferMetaId);
         } else {

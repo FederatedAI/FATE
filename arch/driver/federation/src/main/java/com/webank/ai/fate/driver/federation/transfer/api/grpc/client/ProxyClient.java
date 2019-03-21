@@ -31,6 +31,8 @@ import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.UnaryCall
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.processor.PushStreamProcessor;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferProtoMessageUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -46,6 +48,7 @@ public class ProxyClient {
     private TransferProtoMessageUtils transferProtoMessageUtils;
 
     private GrpcStreamingClientTemplate<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> pushTemplate;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public void initPush(TransferBroker request, BasicMeta.Endpoint endpoint) {
         GrpcAsyncClientContext<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> asyncClientContext
@@ -72,6 +75,7 @@ public class ProxyClient {
     }
 
     public void completePush() {
+        // LOGGER.info("[PUSH][CLIENT] completing push");
         if (pushTemplate == null) {
             throw new IllegalStateException("pushTemplate has not been initialized yet");
         }

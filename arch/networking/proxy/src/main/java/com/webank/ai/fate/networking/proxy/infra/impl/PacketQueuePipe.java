@@ -94,4 +94,8 @@ public class PacketQueuePipe extends BasePipe {
     public synchronized void close() {
         super.close();
     }
+
+    public int getQueueSize() {
+        return queue.size();
+    }
 }

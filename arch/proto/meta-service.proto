@@ -35,6 +35,7 @@ service StorageMetaService {
     rpc getFragmentsByTableId (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
 
     rpc getStorageNodesByTableId (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc getEggNodeManagerByIp (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
     rpc getNodeById (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
     rpc getNodesByIds (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
     rpc getNodesOfStatus (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);

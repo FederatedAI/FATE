@@ -58,7 +58,7 @@ public class TestRollKvServiceClient {
     private ServerConf serverConf;
 
 
-    private String name = "api_create_name_10";
+    private String name = "api_create_name";
     private String namespace = "api_create_namespace";
     private String jobid1 = "jobid1";
     private String federationTable = "__federation__";
@@ -158,7 +158,7 @@ public class TestRollKvServiceClient {
                 .build();
 
         Kv.Operand operand = null;
-        for (int i = 0; i < 150000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
             operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }
@@ -171,7 +171,7 @@ public class TestRollKvServiceClient {
     public void testDelete() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time2")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
@@ -188,7 +188,7 @@ public class TestRollKvServiceClient {
     public void testGet() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time2")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())

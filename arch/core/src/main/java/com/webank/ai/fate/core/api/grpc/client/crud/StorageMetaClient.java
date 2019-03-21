@@ -194,4 +194,14 @@ public class StorageMetaClient extends BaseCrudClient<StorageMetaServiceGrpc.Sto
 
         return result;
     }
+
+    public Node getEggNodeManagerByIp(String ip) {
+        Node result = new Node();
+
+        result = doCrudRequest(ip, (CrudRequestProcessor<StorageMetaServiceGrpc.StorageMetaServiceStub>)
+                        StorageMetaServiceGrpc.StorageMetaServiceStub::getEggNodeManagerByIp,
+                result.getClass());
+
+        return result;
+    }
 }

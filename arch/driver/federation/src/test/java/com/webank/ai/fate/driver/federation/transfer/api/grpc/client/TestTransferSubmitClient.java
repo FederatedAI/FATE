@@ -204,7 +204,7 @@ public class TestTransferSubmitClient {
                 .setSrc(partyBuilder.setPartyId("10000").setName("wb1").build())
                 .setDst(partyBuilder.setPartyId("9999").setName("wb2").build())
                 .setJob(jobBuilder.setJobId("jobid1").setName("jobName1").build())
-                // .setType(Federation.TransferType.RECV)
+                .setType(Federation.TransferType.RECV)
                 .setTag(tag)
                 .build();
 

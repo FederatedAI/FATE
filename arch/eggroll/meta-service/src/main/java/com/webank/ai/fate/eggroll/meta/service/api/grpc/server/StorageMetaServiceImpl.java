@@ -325,6 +325,45 @@ public class StorageMetaServiceImpl extends StorageMetaServiceGrpc.StorageMetaSe
     }
 
     @Override
+    public void getEggNodeManagerByIp(BasicMeta.CallRequest request, StreamObserver<BasicMeta.CallResponse> responseObserver) {
+        LOGGER.info("getComputingNodeManagerByIp. request: {}", toStringUtils.toOneLineString(request));
+
+        nodeGrpcCrudService.processCrudRequest(request, responseObserver, new CrudServerProcessor<Node>() {
+            @Override
+            public Node process(Object record) throws CrudException {
+                GenericDaoService nodeDaoService = nodeGrpcCrudService.getGenericDaoService();
+
+                Node result = null;
+                String ip = (String) record;
+
+                NodeExample nodeExample = new NodeExample();
+                nodeExample.createCriteria()
+                        .andTypeEqualTo(NodeType.EGG.name())
+                        .andStatusEqualTo(NodeStatus.HEALTHY.name())
+                        .andIpEqualTo(ip);
+
+                List<Node> results = nodeDaoService.selectByExampleWithRowbounds(nodeExample, CrudUtils.ROWBOUNDS_ZERO_TO_ONE);
+
+                if (!results.isEmpty()) {
+                    result = results.get(0);
+                }
+
+                return result;
+            }
+
+            @Override
+            public boolean isValid(Node result) {
+                return true;
+            }
+
+            @Override
+            public Object pickResult(Object originalRecord, Object callResult) {
+                return callResult;
+            }
+        });
+    }
+
+    @Override
     public void getNodesByIds(BasicMeta.CallRequest request, StreamObserver<BasicMeta.CallResponse> responseObserver) {
         LOGGER.info("getNodesByIds. request: {}", toStringUtils.toOneLineString(request));
 
