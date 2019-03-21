@@ -597,7 +597,7 @@ class FTLDataParam(object):
 
 class FeatureBinningParam(object):
     """
-    Define the encode method
+    Define the feature binning method
 
     Parameters
     ----------
@@ -666,3 +666,48 @@ class FeatureBinningParam(object):
         if display_result == 'simple':
             display_result = ['iv']
         self.display_result = display_result
+
+
+class FeatureSelectionParam(object):
+    """
+    Define the feature binning method
+
+    Parameters
+    ----------
+    select_cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns
+
+    filter_method: list, default: ["unique_value", "iv", "coefficient_of_variation"]
+        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
+
+        abnormal_col: filter the columns if the number of values that are same exceeds a given ratio.
+            e.g. There are 100 values in a feature column and abnormal ratio is set as 0.95. If 95 out of 100 number
+            of values is 1, then, this columns will be filtered.
+
+        iv_abs: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+            Filter those columns whose iv is smaller than threshold.
+
+        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+            need to be provided. Pick floor(ratio * feature_num) features with higher iv.
+
+
+    abnormal_col_ratio: float, default: 1.0
+        Required when abonormal_col method is set.
+
+    iv_thres: float, default: 1.0
+
+    iv_ratio_thres: float, default: 1.0
+
+    """
+
+    def __init__(self, select_cols=-1, filter_method=None, abnormal_col_ratio=1.0, iv_abs_thres=1.0,
+                 iv_ratio_thres=1.0):
+        self.select_cols = select_cols
+        if filter_method is None:
+            self.filter_method = ["abnormal_col", "iv"]
+        else:
+            self.filter_method = filter_method
+
+        self.abnormal_col_ratio = abnormal_col_ratio
+        self.iv_abs_thres = iv_abs_thres
+        self.iv_ratio_thres = iv_ratio_thres
