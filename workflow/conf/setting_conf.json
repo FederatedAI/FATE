@@ -102,6 +102,23 @@
             		"tasklist": ["intersect"]
             	}
             }
+	    },
+		"Intersect":
+	    {
+	    	"module_path": "federatedml/workflow/intersect_workflow",
+            "role":
+            {
+            	"guest":
+            	{
+            		"program": "intersect_guest_workflow.py",
+            		"tasklist": ["intersect"]
+            	},
+            	"host":
+            	{
+            		"program": "intersect_host_workflow.py",
+            		"tasklist": ["intersect"]
+            	}
+            }
 	    }
 	}
 }

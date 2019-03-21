@@ -154,3 +154,14 @@ class SecureAddExampleTransferVariable(BaseTransferVariable):
         self.host_share = Variable(name="SecureAddExampleTransferVariable.host_share", auth={'src': "host", 'dst': ['guest']})
         self.host_sum = Variable(name="SecureAddExampleTransferVariable.host_sum", auth={'src': "host", 'dst': ['guest']})
         pass
+
+
+class HeteroFeatureBinningTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.paillier_pubkey = Variable(name="HeteroFeatureBinningTransferVariable.paillier_pubkey",
+                                        auth={'src': "guest", 'dst': ['host']})
+        self.encrypted_label = Variable(name="HeteroFeatureBinningTransferVariable.encrypted_label",
+                                        auth={'src': "guest", 'dst': ['host']})
+        self.encrypted_bin_sum = Variable(name="HeteroFeatureBinningTransferVariable.encrypted_bin_sum",
+                                          auth={'src': "host", 'dst': ['guest']})
+        pass

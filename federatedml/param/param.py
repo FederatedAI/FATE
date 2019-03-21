@@ -51,6 +51,7 @@ class DataIOParam(object):
     output_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
 
     """
+
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  missing_fill=True, default_value=0, with_label=False, label_idx=0,
                  label_type='int', output_format='dense'):
@@ -80,6 +81,7 @@ class EncryptParam(object):
         Used to specify the length of key in this encryption method. Only needed when method is 'Paillier'
 
     """
+
     def __init__(self, method=consts.PAILLIER, key_length=1024):
         self.method = method
         self.key_length = key_length
@@ -101,8 +103,8 @@ class EvaluateParam(object):
 
     thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
     """
-    def __init__(self, metrics=None, classi_type="binary", pos_label=None, thresholds=None):
 
+    def __init__(self, metrics=None, classi_type="binary", pos_label=None, thresholds=None):
         self.metrics = metrics
         self.classi_type = classi_type
         self.pos_label = pos_label
@@ -127,6 +129,7 @@ class ObjectiveParam(object):
              first element of list shoulf be a float-number large than 0.0 when objective is 'fair','huber',
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
+
     def __init__(self, objective=None, params=None):
         self.objective = objective
         self.params = params
@@ -142,6 +145,7 @@ class PredictParam(object):
 
     threshold: float or int, The threshold use to separate positive and negative class. Normally, it should be (0,1)
     """
+
     def __init__(self, with_proba=True, threshold=0.5):
         self.with_proba = with_proba
         self.threshold = threshold
@@ -219,6 +223,7 @@ class WorkFlowParam(object):
         Whether this task need to do intersect. No need to specify in Homo task.
 
     """
+
     def __init__(self, method='train', train_input_table=None, train_input_namespace=None, model_table=None,
                  model_namespace=None, predict_input_table=None, predict_input_namespace=None,
                  predict_result_partition=1, predict_output_table=None, predict_output_namespace=None,
@@ -268,6 +273,7 @@ class InitParam(object):
         Whether to initialize the intercept or not.
 
     """
+
     def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
         self.init_method = init_method
         self.init_const = init_const
@@ -286,6 +292,7 @@ class EncodeParam(object):
 
     base64: boolean, if True, the result of encode will be changed to base64, default by False
     """
+
     def __init__(self, salt='', encode_method='none', base64=False):
         self.salt = salt
         self.encode_method = encode_method
@@ -374,6 +381,7 @@ class LogisticParam(object):
     table_name : Abandoned
 
     """
+
     def __init__(self, penalty='L2',
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
@@ -422,6 +430,7 @@ class DecisionTreeParam(object):
 
     tol: float, only use when n_iter_no_change is set to True, default: 0.001
     """
+
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, n_iter_no_change=True, tol=0.001):
@@ -509,6 +518,7 @@ class FTLModelParam(object):
         The indicator indicating whether we use encrypted version of ftl or plain version, must be bool
 
     """
+
     def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
                  alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
         self.max_iter = max_iteration
@@ -534,6 +544,7 @@ class FTLLocalModelParam(object):
 
 
     """
+
     def __init__(self, encode_dim=5, learning_rate=0.001):
         self.encode_dim = encode_dim
         self.learning_rate = learning_rate
@@ -571,6 +582,7 @@ class FTLDataParam(object):
         The indicator indicating whether read data from dtable, must be bool
 
     """
+
     def __init__(self, file_path=None, n_feature_guest=10, n_feature_host=23, overlap_ratio=0.1, guest_split_ratio=0.9,
                  num_samples=None, balanced=True, is_read_table=False):
         self.file_path = file_path
@@ -581,3 +593,121 @@ class FTLDataParam(object):
         self.num_samples = num_samples
         self.balanced = balanced
         self.is_read_table = is_read_table
+
+
+class FeatureBinningParam(object):
+    """
+    Define the feature binning method
+
+    Parameters
+    ----------
+    method : str, 'quantile', default: 'quantile'
+        Binning method.
+
+    compress_thres: int, default: 10000
+        When the number of saved summaries exceed this threshold, it will call its compress function
+
+    head_size: int, default: 10000
+        The buffer size to store inserted observations. When head list reach this buffer size, the
+        QuantileSummaries object start to generate summary(or stats) and insert into its sampled list.
+
+    error: float, 0 <= error < 1 default: 0.001
+        The error of tolerance of binning. The final split point comes from original data, and the rank
+        of this value is close to the exact rank. More precisely,
+        floor((p - 2 * error) * N) <= rank(x) <= ceil((p + 2 * error) * N)
+        where p is the quantile in float, and N is total number of data.
+
+    bin_num: int, bin_num > 0, default: 10
+        The max bin number for binning
+
+    cols : list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns
+
+    adjustment_factor : float, default: 0.5
+        the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
+        a bin.
+
+    local_only : bool, default: False
+        Whether just provide binning method to guest party. If true, host party will do nothing.
+
+    result_table : str, default: 'binning_table'
+        Table name to save result
+
+    result_namespace : str, default: 'binning_namespace'
+        Namespace to save result
+
+    display_result : list, default: ['iv']
+        Specify what results to show. The available results include:
+        ['iv', 'woe_array', 'iv_array', 'event_count_array', 'non_event_count_array', 'event_rate_array',
+        'non_event_rate_array', 'is_woe_monotonic', 'bin_nums', 'split_points']
+        for each features
+
+    """
+
+    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+                 head_size=consts.DEFAULT_HEAD_SIZE,
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
+                 local_only=False,
+                 result_table='binning_table',
+                 result_namespace='binning_namespace',
+                 display_result='simple'):
+        self.method = method
+        self.compress_thres = compress_thres
+        self.head_size = head_size
+        self.error = error
+        self.adjustment_factor = adjustment_factor
+        self.bin_num = bin_num
+        self.cols = cols
+        self.local_only = local_only
+        self.result_table = result_table
+        self.result_namespace = result_namespace
+
+        if display_result == 'simple':
+            display_result = ['iv']
+        self.display_result = display_result
+
+
+class FeatureSelectionParam(object):
+    """
+    Define the feature binning method
+
+    Parameters
+    ----------
+    select_cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns
+
+    filter_method: list, default: ["unique_value", "iv", "coefficient_of_variation"]
+        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
+
+        abnormal_col: filter the columns if the number of values that are same exceeds a given ratio.
+            e.g. There are 100 values in a feature column and abnormal ratio is set as 0.95. If 95 out of 100 number
+            of values is 1, then, this columns will be filtered.
+
+        iv_abs: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+            Filter those columns whose iv is smaller than threshold.
+
+        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+            need to be provided. Pick floor(ratio * feature_num) features with higher iv.
+
+
+    abnormal_col_ratio: float, default: 1.0
+        Required when abonormal_col method is set.
+
+    iv_thres: float, default: 1.0
+
+    iv_ratio_thres: float, default: 1.0
+
+    """
+
+    def __init__(self, select_cols=-1, filter_method=None, abnormal_col_ratio=1.0, iv_abs_thres=1.0,
+                 iv_ratio_thres=1.0):
+        self.select_cols = select_cols
+        if filter_method is None:
+            self.filter_method = ["abnormal_col", "iv"]
+        else:
+            self.filter_method = filter_method
+
+        self.abnormal_col_ratio = abnormal_col_ratio
+        self.iv_abs_thres = iv_abs_thres
+        self.iv_ratio_thres = iv_ratio_thres
