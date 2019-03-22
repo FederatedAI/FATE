@@ -15,7 +15,8 @@
 #
 # -*- coding: utf-8 -*-
 
-import ujson
+#import ujson
+import json
 import time
 from arch.api.utils import snowflake
 
@@ -47,16 +48,16 @@ def bytes_string(byte):
 
 def json_dumps(src, byte=False):
     if byte:
-        return string_bytes(ujson.dumps(src))
+        return string_bytes(json.dumps(src))
     else:
-        return ujson.dumps(src)
+        return json.dumps(src)
 
 
 def json_loads(src):
     if isinstance(src, bytes):
-        return ujson.loads(bytes_string(src))
+        return json.loads(bytes_string(src))
     else:
-        return ujson.loads(src)
+        return json.loads(src)
 
 
 def current_timestamp():
