@@ -57,6 +57,11 @@ class DNNLRGuestWorkFlow(WorkFlow):
         super(DNNLRGuestWorkFlow, self).train(train_data_instance, validation_data)
         sess.close()
 
+    def load_model(self):
+        LOGGER.debug("@ enter host workflow load model")
+        tf.reset_default_graph()
+        self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+
     def predict(self, data_instance):
         LOGGER.debug("@ enter guest workflow predict function")
         init = tf.global_variables_initializer()

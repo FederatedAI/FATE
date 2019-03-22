@@ -28,6 +28,9 @@ class Autoencoder(object):
         self.id = str(an_id)
         self.sess = None
         self.built = False
+        self.lr = None
+        self.input_dim = None
+        self.hidden_dim = None
 
     def set_session(self, sess):
         self.sess = sess
@@ -82,7 +85,6 @@ class Autoencoder(object):
 
     def _add_representation_training_ops(self):
         vars_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.encoder_vars_scope)
-
         self.init_grad = tf.placeholder(tf.float64, shape=(None, self.hidden_dim))
         self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train,
                                                                                grad_loss=self.init_grad)
@@ -151,17 +153,17 @@ class Autoencoder(object):
         _bh = self.sess.run(self.bh)
         _bo = self.sess.run(self.bo)
 
-        model_meta = {"learning_rate": self.lr,
-                      "input_dim": self.input_dim,
-                      "hidden_dim": self.hidden_dim}
-        return {"Wh": _Wh, "bh": _bh, "Wo": _Wo, "bo": _bo, "model_meta": model_meta}
+        hyperparameters = {"learning_rate": self.lr,
+                           "input_dim": self.input_dim,
+                           "hidden_dim": self.hidden_dim}
+        return {"Wh": _Wh, "bh": _bh, "Wo": _Wo, "bo": _bo, "hyperparameters": hyperparameters}
 
     def restore_model(self, model_parameters):
         self.Wh_initializer = model_parameters["Wh"]
         self.bh_initializer = model_parameters["bh"]
         self.Wo_initializer = model_parameters["Wo"]
         self.bo_initializer = model_parameters["bo"]
-        model_meta = model_parameters["model_meta"]
+        model_meta = model_parameters["hyperparameters"]
 
         self.lr = model_meta["learning_rate"]
         self.input_dim = model_meta["input_dim"]
