@@ -40,11 +40,11 @@ public class ModelManager {
         StandaloneDTable standaloneDTable = new StandaloneDTable(DTableName, nameSpace, 0);
         byte[] metaStream = standaloneDTable.get("model_meta");
         byte[] paramStream = standaloneDTable.get("model_param");
+        byte[] dataTransformStream = standaloneDTable.get("data_transform");
         ProtoModelBuffer modelBuffer = new ProtoModelBuffer();
-        modelBuffer.deserialize(metaStream, paramStream);
+        modelBuffer.deserialize(metaStream, paramStream, dataTransformStream);
         return modelBuffer;
     }
-
 
     public MLModel loadModel(Map<String, String> modelInfo){
         try{

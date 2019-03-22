@@ -19,25 +19,18 @@ public class HeteroLRGuest extends HeteroLR {
         HashMap<String, Object> newInputData = data_transform(inputData);
 
         HashMap<String, Object> result = new HashMap<>();
-        float score = 0;
-        for (String key : newInputData.keySet()) {
-            if (this.weight.containsKey(key)) {
-                score += (float) newInputData.get(key) * this.weight.get(key);
-            }
-        }
-
-        score += this.intercept;
-        double prob = sigmod(score);
+        float score = forward(newInputData);
+        LOGGER.info("guest score:{}", score);
 
         try{
             Map<String, Object> hostPredictResponse = this.getHostPredict((String)predictParams.get("sid"));
-            prob += (double)hostPredictResponse.get("score");
+            score += (double)hostPredictResponse.get("score");
         }
         catch (Exception ex){
             LOGGER.error(ex);
         }
 
-
+        double prob = sigmod(score);
         result.put("prob", (float)prob);
 
         return result;
