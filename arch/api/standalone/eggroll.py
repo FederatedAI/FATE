@@ -18,6 +18,7 @@ import os
 import pickle as c_pickle
 from arch.api import StoreType
 from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
+from arch.api.utils.core import string_bytes, bytes_string
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid
@@ -314,8 +315,8 @@ class _DTable(object):
             k_bytes = c_pickle.dumps(k)
             v_bytes = c_pickle.dumps(v)
         else:
-            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
-            v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
+            k_bytes = string_bytes(k, check=True)
+            v_bytes = string_bytes(v, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -333,7 +334,7 @@ class _DTable(object):
         if use_pickle:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
+            k_bytes = string_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -346,7 +347,7 @@ class _DTable(object):
         if use_pickle:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
+            k_bytes = string_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -355,7 +356,7 @@ class _DTable(object):
                 if use_pickle:
                     v_bytes = c_pickle.dumps(v)
                 else:
-                    v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
+                    v_bytes = string_bytes(v, check=True)
                 txn.put(k_bytes, v_bytes)
                 return None
             return c_pickle.loads(old_value_bytes)
@@ -373,8 +374,8 @@ class _DTable(object):
                     k_bytes = c_pickle.dumps(k)
                     v_bytes = c_pickle.dumps(v)
                 else:
-                    k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
-                    v_bytes = v.encode(encoding="utf-8") if not isinstance(v, bytes) else v
+                    k_bytes = string_bytes(k, check=True)
+                    v_bytes = string_bytes(v, check=True)
                 p = _hash_key_to_partition(k_bytes, self._partitions)
                 _succ = _succ and txn_map[p][1].put(k_bytes, v_bytes)
             except:
@@ -387,7 +388,7 @@ class _DTable(object):
         if use_pickle:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = k.encode(encoding="utf-8") if not isinstance(k, bytes) else k
+            k_bytes = string_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -403,13 +404,13 @@ class _DTable(object):
         _table_key = ".".join([self._type, self._namespace, self._name])
         Standalone.get_instance().meta_table.delete(_table_key)
 
-    def collect(self):
+    def collect(self, use_pickle=True):
         iterators = []
         for p in range(self._partitions):
             env = self._get_env_for_partition(p)
             txn = env.begin()
             iterators.append(txn.cursor())
-        return self._merge(iterators)
+        return self._merge(iterators, use_pickle)
 
     def save_as(self, name, namespace, partition=None):
         if partition is None:
@@ -419,7 +420,7 @@ class _DTable(object):
         return dup
 
     @staticmethod
-    def _merge(cursors):
+    def _merge(cursors, use_pickle=True):
         ''' Merge sorted iterators. '''
         entries = []
         for _id, it in enumerate(cursors):
@@ -431,7 +432,10 @@ class _DTable(object):
         heapify(entries)
         while entries:
             key, value, _, it = entry = entries[0]
-            yield c_pickle.loads(key), c_pickle.loads(value)
+            if use_pickle:
+                yield c_pickle.loads(key), c_pickle.loads(value)
+            else:
+                yield bytes_string(key), value
             if it.next():
                 entry[0], entry[1] = it.item()
                 heapreplace(entries, entry)

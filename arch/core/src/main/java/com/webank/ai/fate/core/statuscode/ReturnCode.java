@@ -10,6 +10,7 @@ public class ReturnCode {
     public static int PARAMERROR = 2;
     public static int ILLEGALDATA = 3;
     public static int NOMODEL= 4;
+    public static int NOTME = 5;
     public static int TIMEOUT = -1;
     public static int NOFILE = -2;
     public static int IOERROR = -3;
