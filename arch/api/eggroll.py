@@ -54,3 +54,6 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=1, names
     return RuntimeInstance.EGGROLL.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
                                                persistent=persistent)
+
+def get_field(name):
+    return getattr(RuntimeInstance.EGGROLL, name)

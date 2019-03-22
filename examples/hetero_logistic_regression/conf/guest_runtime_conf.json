@@ -2,7 +2,8 @@
 
     "local": {
         "role": "guest",
-        "party_id": _guest_party_id
+        "party_id": _guest_party_id,
+        "scene_id": _scene_id
     },
 
     "role": {
@@ -21,19 +22,20 @@
         "with_label": true,
         "label_idx": 0,
         "label_type": "int",
-        "output_format": "dense"
+        "output_format": "dense",
+        "missing_fill": true
     },
     "WorkFlowParam": {
         "method": "_workflow_method",
         "train_input_table": "_train_table_name",
         "train_input_namespace": "example_data_namespace",
-        "model_table": "hetero_lr_guest_model",
+        "model_table": "hetero_lr_guest_model__jobid",
         "model_namespace": "hetero_lr",
-        "predict_input_table": "_predict_table_name",
-        "predict_input_namespace": "example_data_namespace",
-        "predict_output_table": "hetero_lr_guest_predict_output",
+        "predict_input_table": null,
+        "predict_input_namespace": null,
+        "predict_output_table": "hetero_lr_guest_predict_output__jobid",
         "predict_output_namespace": "hetero_lr",
-        "evaluation_output_table": "hetero_lr_evaluation_output",
+        "evaluation_output_table": "hetero_lr_evaluation_output__jobid",
         "evaluation_output_namespace": "hetero_lr",
         "data_input_table": "_cross_validation_table_name",
         "data_input_namespace": "example_data_namespace",
@@ -54,7 +56,7 @@
         "metrics": ["auc", "precision"],
         "classi_type": "binary",
         "pos_label": 1,
-        "predict_threshold": [0.5]
+        "thresholds": [0.5]
     },
     "LogisticParam": {
         "penalty": "L2",
@@ -75,6 +77,19 @@
     "EncodeParam": {
         "encode_method": "sha256",
         "salt": "12345",
-        "base64": 1
+        "base64": false
+    },
+    "PredictParam":{
+        "with_proba": true,
+        "threshold": 0.5
+    },
+    "DataTransformParam":{
+        "method": "MinMaxScale",
+        "mode": "normal",
+        "area": "all",
+        "feat_upper": null,
+        "feat_lower": null,
+        "out_upper": null, 
+        "out_lower": null
     }
 }

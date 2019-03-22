@@ -21,14 +21,16 @@ public class ProtoModelBuffer{
     }
 
     public ModelParam getParam() {
-        return param;
+        return this.param;
     }
 
     public ModelMeta getMeta() {
-        return meta;
+        return this.meta;
     }
 
-    public DataTransform getDataTransform() { return  dataTransform; }
+    public DataTransform getDataTransform() {
+        return this.dataTransform;
+    }
 
     public ArrayList<byte[]> serialize(){
         try {
@@ -46,9 +48,9 @@ public class ProtoModelBuffer{
 
     public int deserialize(byte[] metaStream, byte[] paramStream, byte[] dataTransformStream){
         try{
-            this.meta = ModelMetaProto.ModelMeta.parseFrom(metaStream);
-            this.param = ModelParamProto.ModelParam.parseFrom(paramStream);
-            this.dataTransform = DataTransformProto.DataTransform.parseFrom(dataTransformStream);
+            this.meta = ModelMeta.parseFrom(metaStream);
+            this.param = ModelParam.parseFrom(paramStream);
+            this.dataTransform = DataTransform.parseFrom(dataTransformStream);
             return ReturnCode.OK;
         }
         catch (Exception ex){

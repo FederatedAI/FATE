@@ -3,7 +3,8 @@ package com.webank.ai.fate.serving.manger;
 import com.webank.ai.fate.core.mlmodel.model.MLModel;
 import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
 import com.webank.ai.fate.core.statuscode.ReturnCode;
-import com.webank.ai.fate.core.storage.kv.StandaloneDTable;
+import com.webank.ai.fate.core.storage.kv.DTable;
+import com.webank.ai.fate.core.utils.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.lang3.StringUtils;
@@ -23,34 +24,32 @@ public class ModelManager {
         this.modelPool = new ModelPool();
     }
 
-    public void updatePool(){
-        ArrayList<Map<String, String>> modelInfos = this.getAllModelInfo();
-        modelInfos.forEach((modelInfo)->{
-            this.onlineModels.put(getOnlineModelKey(modelInfo.get("sceneId"), modelInfo.get("partnerPartyId"), modelInfo.get("myRole")),
-                    this.loadModel(modelInfo));
-        });
-    }
 
     public MLModel getModel(String sceneId, String partnerPartyId, String myRole){
         return this.onlineModels.get(this.getOnlineModelKey(sceneId, partnerPartyId, myRole));
     }
 
-    public ProtoModelBuffer readModel(String name, String nameSpace, String modelId){
-        String DTableName = String.format("%s_%s", name, modelId);
-        StandaloneDTable standaloneDTable = new StandaloneDTable(DTableName, nameSpace, 0);
-        byte[] metaStream = standaloneDTable.get("model_meta");
-        byte[] paramStream = standaloneDTable.get("model_param");
-        byte[] dataTransformStream = standaloneDTable.get("data_transform");
+    public ProtoModelBuffer readModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
+        String sceneKey = Version.getSceneKey(sceneId, Configuration.getProperty("partyId"), partnerPartyId, myRole);
+        DTable dataTable = Version.getDTable("model_data", sceneKey, commitId, tag, branch);
         ProtoModelBuffer modelBuffer = new ProtoModelBuffer();
-        modelBuffer.deserialize(metaStream, paramStream, dataTransformStream);
+        modelBuffer.deserialize(dataTable.get("model_meta"), dataTable.get("model_param"), dataTable.get("data_transform"));
         return modelBuffer;
     }
 
-    public MLModel loadModel(Map<String, String> modelInfo){
+
+    public MLModel loadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch){
         try{
-            ProtoModelBuffer modelBuffer = this.readModel(modelInfo.get("name"), modelInfo.get("nameSpace"), modelInfo.get("modelId"));
+            ProtoModelBuffer modelBuffer = this.readModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
             Class modelClass = Class.forName(this.modelPackage + "." + modelBuffer.getMeta().getName());
             MLModel mlModel = (MLModel)modelClass.getConstructor().newInstance();
+            Map<String, String> modelInfo = new HashMap<>();
+            modelInfo.put("sceneId", sceneId);
+            modelInfo.put("partnerPartyId", partnerPartyId);
+            modelInfo.put("myRole", myRole);
+            modelInfo.put("commitId", commitId);
+            modelInfo.put("tag", tag);
+            modelInfo.put("branch", branch);
             mlModel.setModelInfo(modelInfo);
             mlModel.initModel(modelBuffer);
             return mlModel;
@@ -66,65 +65,19 @@ public class ModelManager {
         return StringUtils.join(tmp, "-");
     }
 
-    private String genModelKey(String sceneId, String partnerPartyId, String myRole, String modelId){
-        String[] tmp = {sceneId, partnerPartyId, myRole, modelId};
+    private String genModelKey(String sceneId, String partnerPartyId, String myRole, String commitId){
+        String[] tmp = {sceneId, partnerPartyId, myRole, commitId};
         return StringUtils.join(tmp, "-");
     }
 
-    private ArrayList<Map<String, String>> getAllModelInfo(){
-        ArrayList<Map<String, String>> modelInfos = new ArrayList<>();
-        // query from mysql by partyId
-        HashMap<String, String> tmp = new HashMap<>();
-        tmp.put("sceneId", "500001");
-        tmp.put("partnerPartyId", "100001");
-        tmp.put("myPartyId", "100001");
-        tmp.put("myRole", "guest");
-        tmp.put("name", "HeteroLRGuest");
-        tmp.put("nameSpace", "HeteroLR");
-        tmp.put("modelId", "f0a5b7ca48c711e9b5f2acde48001122");
-        modelInfos.add((HashMap<String, String>) tmp.clone());
 
-        tmp.put("myRole", "host");
-        tmp.put("name", "HeteroLRHost");
-        modelInfos.add((HashMap<String, String>) tmp.clone());
-        return modelInfos;
+    public String publishLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch){
+        this.modelPool.put(this.genModelKey(sceneId, partnerPartyId, myRole, commitId), this.loadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch));
+        return commitId;
     }
 
-    private ArrayList<Map<String, String>> queryModelInfo(String modelId){
-        // query from mysql by partyId and modelId
-        ArrayList<Map<String, String>> modelInfos = new ArrayList<>();
-        // query from mysql by partyId
-        HashMap<String, String> tmp = new HashMap<>();
-        tmp.put("sceneId", "500001");
-        tmp.put("partnerPartyId", "100001");
-        tmp.put("partnerPartyName", "DT");
-        tmp.put("myPartyId", "100001");
-        tmp.put("myPartyName", "YH");
-        tmp.put("myRole", "guest");
-        tmp.put("name", "HeteroLRGuest");
-        tmp.put("nameSpace", "HeteroLR");
-        tmp.put("modelId", modelId);
-        modelInfos.add((HashMap<String, String>) tmp.clone());
-
-        tmp.put("myRole", "host");
-        tmp.put("name", "HeteroLRHost");
-        tmp.put("myPartyName", "DT");
-        tmp.put("partnerPartyName", "YH");
-        modelInfos.add((HashMap<String, String>) tmp.clone());
-        return modelInfos;
-    }
-
-    public int publishLoadModel(String modelId){
-        ArrayList<Map<String, String>> modelInfos = this.queryModelInfo(modelId);
-        modelInfos.forEach((modelInfo)->{
-            this.modelPool.put(this.genModelKey(modelInfo.get("sceneId"), modelInfo.get("partnerPartyId"), modelInfo.get("myRole"), modelInfo.get("modelId")),
-                    this.loadModel(modelInfo));
-        });
-        return ReturnCode.OK;
-    }
-
-    public int publishOnlineModel(String sceneId, String partnerPartyId, String myRole, String modelId){
-        MLModel model = this.modelPool.get(this.genModelKey(sceneId, partnerPartyId, myRole, modelId));
+    public int publishOnlineModel(String sceneId, String partnerPartyId, String myRole, String commitId){
+        MLModel model = this.modelPool.get(this.genModelKey(sceneId, partnerPartyId, myRole, commitId));
         if (model != null){
             this.onlineModels.put(this.getOnlineModelKey(sceneId, partnerPartyId, myRole), model);
             return ReturnCode.OK;
