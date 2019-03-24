@@ -47,8 +47,8 @@ class HeteroLRGuest(BaseLogisticRegression):
                                                         lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
         return aggregate_forward_res
 
-    def transform(self, batch_data_inst):
-        return batch_data_inst
+    def transform(self, data_inst):
+        return data_inst
 
     def update_local_model(self, fore_gradient, batch_data_inst, coef, **training_info):
         pass

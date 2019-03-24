@@ -31,25 +31,27 @@ class HeteroDNNLRHost(HeteroLRHost):
         self.local_model = local_model
         self.local_model_proxy = LocalModelProxy(local_model)
 
-    def transform(self, instance_table, **training_info):
+    def transform(self, instance_table):
         """
-        transform instances into features
-        :param instance_table: dtable with a collection of (index, instance) pairs
-        :return:
+        Extract features from instances
+        :param instance_table: dtable consists of a collection of (index, instance) pairs
+        :return: instance_table: dtable consists of a collection of (index, instance) pairs,
+        in which each instance holds newly extracted features.
         """
-        # delegate to local_model_proxy for performing the task
+        # delegate to local_model_proxy for performing the feature extraction task
         dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)
-        training_info["is_host"] = True
         return dtable
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """
-        Update local model
-        :param fore_gradient_table: dtable with a collection of (index, gradient) pairs
-        :param instance_table: dtable with a collection of (index, instance) pairs
-        :param coef:
+        Update local model (i.e., the parameters of local model) based on specified fore_gradient_table, instance_table,
+        and coef.
+        :param fore_gradient_table: dtable consists of a collection of (index, gradient) pairs
+        :param instance_table: dtable consists of a collection of (index, instance) pairs
+        :param coef: the coefficients of the logistic regression model
+        :param training_info: a dictionary holding information on states of training process
         """
-        # delegate to local_model_proxy for performing the task
+        # delegate to local_model_proxy for performing the local model update task
         training_info["index_tracking_list"] = self.index_tracking_list
         training_info["is_host"] = True
         self.local_model_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)

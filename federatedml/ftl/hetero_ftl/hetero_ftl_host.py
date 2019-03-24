@@ -430,8 +430,8 @@ class FasterHeteroDecentralizedEncryptFTLHost(HeteroDecentralizedEncryptFTLHost)
 
 class HostFactory(object):
 
-    @staticmethod
-    def create(ftl_model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable, ftl_local_model):
+    @classmethod
+    def create(cls, ftl_model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable, ftl_local_model):
         if ftl_model_param.is_encrypt:
             if ftl_model_param.enc_ftl == "dct_enc_ftl":
                 # decentralized encrypted ftl host
