@@ -36,7 +36,7 @@ class HeteroDNNLRHost(HeteroLRHost):
         Extract features from instances
         :param instance_table: dtable consists of a collection of (index, instance) pairs
         :return: instance_table: dtable consists of a collection of (index, instance) pairs,
-        in which each instance holds newly extracted features.
+        that each instance holds newly extracted features.
         """
         # delegate to local_model_proxy for performing the feature extraction task
         dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)

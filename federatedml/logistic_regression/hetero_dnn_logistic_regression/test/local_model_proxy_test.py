@@ -24,9 +24,8 @@ def create_instance_table(data, index_list):
 
 def create_shared_gradient_table(gradients, index_list):
     indexed_instances = []
-    for idx, row in zip(index_list, gradients):
-        inst = Instance(inst_id=idx, features=row)
-        indexed_instances.append((idx, inst))
+    for idx, grad in zip(index_list, gradients):
+        indexed_instances.append((idx, grad))
 
     dtable = eggroll.parallelize(indexed_instances, include_key=True)
     return dtable

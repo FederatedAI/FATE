@@ -60,8 +60,8 @@
             "eps": 10,
             "alpha": 100,
             "max_iter": 10,
-            "is_encrypt": false,
-            "enc_ftl": "enc_ftl2"
+            "is_encrypt": true,
+            "enc_ftl": "dct_enc_ftl2"
     },
     "FTLLocalModelParam": {
             "encode_dim": 32,
