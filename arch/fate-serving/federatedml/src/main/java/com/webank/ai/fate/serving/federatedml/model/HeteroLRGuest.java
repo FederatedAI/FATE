@@ -18,7 +18,7 @@ public class HeteroLRGuest extends HeteroLR {
     @Override
     public HashMap<String, Object> predict(HashMap<String, Object> inputData, HashMap<String, Object> predictParams){
         DataTransform dataTransform = new DataTransform();
-        HashMap<String, Object> newInputData = dataTransform.fit(inputData, this.dataTransform);
+        HashMap<String, Object> newInputData = dataTransform.fit(inputData, this.dataTransformServer);
 
         HashMap<String, Object> result = new HashMap<>();
         float score = forward(newInputData);

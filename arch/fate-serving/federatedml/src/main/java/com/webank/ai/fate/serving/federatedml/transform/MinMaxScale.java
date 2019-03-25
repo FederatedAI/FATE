@@ -1,16 +1,18 @@
 package com.webank.ai.fate.serving.federatedml.transform;
 
-import com.webank.ai.fate.core.mlmodel.buffer.DataTransformProto;
+import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.Scale;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MinMaxScale {
-    public HashMap<String, Object> fit(HashMap<String, Object> inputData, Map<String, DataTransformProto.ScaleObject> scales) {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public HashMap<String, Object> fit(HashMap<String, Object> inputData, Map<String, Scale> scales) {
         for (String key : inputData.keySet()) {
             try {
-                DataTransformProto.ScaleObject scale = scales.get(key);
-
+                Scale scale = scales.get(key);
                 float value = (float) inputData.get(key);
                 if (value > scale.getFeatUpper())
                     value = 1;
