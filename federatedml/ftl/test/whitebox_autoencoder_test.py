@@ -14,11 +14,13 @@
 #  limitations under the License.
 #
 
-import tensorflow as tf
-import numpy as np
 import unittest
-from federatedml.ftl.test.util import assert_matrix, assert_array
+
+import numpy as np
+import tensorflow as tf
+
 from federatedml.ftl.autoencoder import Autoencoder
+from federatedml.ftl.test.util import assert_matrix
 
 
 class TestAutoencoder(unittest.TestCase):

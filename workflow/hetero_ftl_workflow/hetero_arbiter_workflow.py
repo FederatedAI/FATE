@@ -15,6 +15,7 @@
 #
 
 import sys
+
 from federatedml.ftl.hetero_ftl.hetero_ftl_arbiter import HeteroFTLArbiter
 from workflow.hetero_ftl_workflow.hetero_workflow import FTLWorkFlow
 

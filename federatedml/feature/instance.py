@@ -21,8 +21,6 @@
 #
 ################################################################################
 
-import numpy as np
-
 
 class Instance(object):
     def __init__(self, inst_id=None, weight=1.0, features=None, label=None):

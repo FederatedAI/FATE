@@ -517,10 +517,13 @@ class FTLModelParam(object):
     is_encrypt: bool, default; True
         The indicator indicating whether we use encrypted version of ftl or plain version, must be bool
 
+    enc_ftl: str default "dct_enc_ftl"
+        The name for encrypted federated transfer learning algorithm
+
     """
 
     def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
+                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True, enc_ftl="dct_enc_ftl"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
@@ -528,16 +531,20 @@ class FTLModelParam(object):
         self.lr_decay = lr_decay
         self.l2_para = l2_para
         self.is_encrypt = is_encrypt
+        self.enc_ftl = enc_ftl
 
 
-class FTLLocalModelParam(object):
+class LocalModelParam(object):
     """
     Defines parameters for FTL model
 
     Parameters
     ----------
+    input_dim: integer, default: None
+        The dimension of input samples, must be positive integer
+
     encode_dim: integer, default: 5
-        The dimension for the encoded representation of input, must be positive integer
+        The dimension of the encoded representation of input samples, must be positive integer
 
     learning_rate: float, default: 0.001
         The learning rate for training model, must between 0 and 1 exclusively
@@ -545,7 +552,8 @@ class FTLLocalModelParam(object):
 
     """
 
-    def __init__(self, encode_dim=5, learning_rate=0.001):
+    def __init__(self, input_dim=None, encode_dim=5, learning_rate=0.001):
+        self.input_dim = input_dim
         self.encode_dim = encode_dim
         self.learning_rate = learning_rate
 
@@ -572,7 +580,7 @@ class FTLDataParam(object):
         The ratio of number of samples excluding overlapping samples at guest side, must between 0 and 1 exclusively
 
     num_samples: numeric, default: None
-        The total number of samples used for train/valid/test, must be positive integer or None. If None, all samples
+        The total number of samples used for train/validation/test, must be positive integer or None. If None, all samples
         would be used.
 
     balanced: bool, default; True
@@ -592,6 +600,29 @@ class FTLDataParam(object):
         self.guest_split_ratio = guest_split_ratio
         self.num_samples = num_samples
         self.balanced = balanced
+        self.is_read_table = is_read_table
+
+
+class FTLValidDataParam(object):
+    """
+    Defines parameters for FTL validation data model
+
+    Parameters
+    ----------
+    file_path: str, default: None
+        The file path to FTL data configuration JSON file, must be string or None
+
+    num_samples: numeric, default: None
+        The total number of samples used for validation, must be positive integer or None. If None, all samples
+        would be used.
+
+    is_read_table: bool, default; False
+        The indicator indicating whether read data from dtable, must be bool
+
+    """
+    def __init__(self, file_path=None, num_samples=None, is_read_table=False):
+        self.file_path = file_path
+        self.num_samples = num_samples
         self.is_read_table = is_read_table
 
 
