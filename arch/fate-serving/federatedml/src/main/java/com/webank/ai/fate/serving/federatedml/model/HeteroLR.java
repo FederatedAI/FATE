@@ -2,10 +2,10 @@ package com.webank.ai.fate.serving.federatedml.model;
 
 import com.webank.ai.fate.core.mlmodel.model.BaseModel;
 import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.StatusCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.webank.ai.fate.core.mlmodel.buffer.DataTransformProto.DataTransform;
+import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTransformServer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,15 +13,15 @@ import java.util.Map;
 public abstract class HeteroLR extends BaseModel<ProtoModelBuffer, HashMap<String, Object>, HashMap<String, Object>> {
     protected Map<String, Float> weight;
     protected float intercept = 0;
-    DataTransform dataTransform;
+    DataTransformServer dataTransformServer;
 
     @Override
     public int initModel(ProtoModelBuffer modelBuffer) {
         this.weight = modelBuffer.getParam().getWeightMap();
         this.intercept = modelBuffer.getParam().getIntercept();
-        this.dataTransform = modelBuffer.getDataTransform();
+        this.dataTransformServer = modelBuffer.getDataTransformServer();
 
-        return ReturnCode.OK;
+        return StatusCode.OK;
     }
 
     protected float forward(HashMap<String, Object> inputData) {
