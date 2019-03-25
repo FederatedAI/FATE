@@ -115,6 +115,8 @@ class PlainFTLGuestModel(PartyModelInterface):
         # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # loss_grads_const_part1 has shape (len(overlap_indexes), feature_dim)
         loss_grads_const_part1 = 0.25 * np.squeeze(np.matmul(y_overlap_2_phi, self.uB_overlap_2), axis=1)
+
+        # loss_grads_const_part2 has shape (len(overlap_indexes), feature_dim)
         loss_grads_const_part2 = self.y_overlap * self.uB_overlap
 
         if self.is_trace:
@@ -142,12 +144,13 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.loss = loss
 
     def _update_loss(self):
-        uA_overlap_prime = - self.uA_overlap / self.feature_dim
-        loss_overlap = np.sum(uA_overlap_prime * self.uB_overlap)
+        uA_overlap = - self.uA_overlap / self.feature_dim
+        loss_overlap = np.sum(uA_overlap * self.uB_overlap)
         loss_y = self.__compute_loss_y(self.uB_overlap, self.y_overlap, self.phi)
         self.loss = self.alpha * loss_y + loss_overlap
 
     def __compute_loss_y(self, uB_overlap, y_overlap, phi):
+        # uB_phi has shape (len(overlap_indexes), 1)
         uB_phi = np.matmul(uB_overlap, phi.transpose())
         loss_y = (-0.5 * np.sum(y_overlap * uB_phi) + 1.0 / 8 * np.sum(uB_phi * uB_phi)) + len(y_overlap) * np.log(2)
         return loss_y
@@ -209,8 +212,14 @@ class PlainFTLHostModel(PartyModelInterface):
         self._update_gradients()
 
     def _update_gradients(self):
+        # uB_overlap_ex has shape (len(overlap_indexes), 1, feature_dim)
         uB_overlap_ex = np.expand_dims(self.uB_overlap, axis=1)
+
+        # y_overlap_2_phi_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
+        # uB_overlap_y_overlap_2_phi_2 has shape (len(overlap_indexes), 1, feature_dim)
         uB_overlap_y_overlap_2_phi_2 = np.matmul(uB_overlap_ex, self.y_overlap_2_phi_2)
+
+        # y_overlap_phi has shape (len(overlap_indexes), feature_dim)
         l1_grad_B = np.squeeze(uB_overlap_y_overlap_2_phi_2, axis=1) + self.y_overlap_phi
         loss_grad_B = self.alpha * l1_grad_B + self.mapping_comp_A
         self.loss_grads = loss_grad_B
