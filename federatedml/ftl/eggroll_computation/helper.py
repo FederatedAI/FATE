@@ -270,8 +270,8 @@ def encrypt_matmul_2_ob(X, Y, partition=20):
     XT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
     YT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
 
-    print("encrypt_matmul_2_ob XT", XT)
-    print("encrypt_matmul_2_ob YT", YT)
+    # print("encrypt_matmul_2_ob XT", XT)
+    # print("encrypt_matmul_2_ob YT", YT)
     for m in range(len(X)):
         for k in range(Y.shape[1]):
             key = str(m) + "_" + str(k)
