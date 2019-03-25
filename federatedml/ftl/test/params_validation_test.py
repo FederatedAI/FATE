@@ -99,7 +99,7 @@ class TestParamValidation(unittest.TestCase):
 
     def test_correct_local_model_param_validation_test(self):
         correct_local_model_param = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 32,
                 "learning_rate": 0.01
             }
@@ -110,7 +110,7 @@ class TestParamValidation(unittest.TestCase):
 
     def test_model_param_incorrect_encode_dim_validation_test(self):
         incorrect_encode_dim = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 0.9,
                 "learning_rate": 0.01
             }
@@ -119,7 +119,7 @@ class TestParamValidation(unittest.TestCase):
 
     def test_model_param_incorrect_learning_rate_validation_test(self):
         incorrect_learning_rate = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 32,
                 "learning_rate": 2
             }

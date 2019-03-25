@@ -22,7 +22,7 @@ from federatedml.ftl.hetero_ftl.hetero_ftl_guest import GuestFactory, HeteroEncr
     FasterHeteroEncryptFTLGuest, HeteroPlainFTLGuest
 from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory, HeteroEncryptFTLHost, \
     FasterHeteroEncryptFTLHost, HeteroPlainFTLHost
-from federatedml.ftl.test.fake_models import FakeAutoencoder
+from federatedml.ftl.test.mock_models import MockAutoencoder
 from federatedml.param.param import FTLModelParam
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 
@@ -64,7 +64,7 @@ class TestHostGuestConstructor(unittest.TestCase):
         transfer_variable = HeteroFTLTransferVariable()
         Wh = np.ones((4, 2))
         bh = np.zeros(2)
-        ftl_local_model = FakeAutoencoder("01")
+        ftl_local_model = MockAutoencoder("01")
         ftl_local_model.build(2, Wh, bh)
         return HostFactory.create(ftl_model_param, transfer_variable, ftl_local_model)
 
@@ -73,7 +73,7 @@ class TestHostGuestConstructor(unittest.TestCase):
         transfer_variable = HeteroFTLTransferVariable()
         Wh = np.ones((4, 2))
         bh = np.zeros(2)
-        ftl_local_model = FakeAutoencoder("02")
+        ftl_local_model = MockAutoencoder("02")
         ftl_local_model.build(2, Wh, bh)
         return GuestFactory.create(ftl_model_param, transfer_variable, ftl_local_model)
 

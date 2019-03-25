@@ -63,7 +63,7 @@
             "is_encrypt": true,
             "enc_ftl": "dct_enc_ftl"
     },
-    "FTLLocalModelParam": {
+    "LocalModelParam": {
             "encode_dim": 32,
             "learning_rate": 0.01
     },

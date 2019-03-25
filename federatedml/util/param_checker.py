@@ -612,7 +612,7 @@ class FTLModelParamChecker(object):
 class LocalModelParamChecker(object):
     @staticmethod
     def check_param(local_model_param):
-        model_param_descr = "ftl local model param's "
+        model_param_descr = "local model param's "
         if local_model_param.input_dim is not None:
             check_positive_integer(local_model_param.input_dim, model_param_descr + "input_dim")
         check_positive_integer(local_model_param.encode_dim, model_param_descr + "encode_dim")

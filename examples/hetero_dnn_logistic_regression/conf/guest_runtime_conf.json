@@ -77,7 +77,7 @@
         "salt": "12345",
         "base64": 1
     },
-    "DNNLocalModelParam": {
+    "LocalModelParam": {
         "input_dim": 10,
         "encode_dim": 6,
         "learning_rate": 0.01
