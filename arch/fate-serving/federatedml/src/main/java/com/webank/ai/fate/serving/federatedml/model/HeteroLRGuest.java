@@ -2,6 +2,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.webank.ai.fate.serving.federatedml.transform.DataTransform;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,40 +17,24 @@ public class HeteroLRGuest extends HeteroLR {
 
     @Override
     public HashMap<String, Object> predict(HashMap<String, Object> inputData, HashMap<String, Object> predictParams){
-        HashMap<String, Object> newInputData = data_transform(inputData);
+        DataTransform dataTransform = new DataTransform();
+        HashMap<String, Object> newInputData = dataTransform.fit(inputData, this.dataTransform);
 
         HashMap<String, Object> result = new HashMap<>();
-        float score = 0;
-        for (String key : newInputData.keySet()) {
-            if (this.weight.containsKey(key)) {
-                score += (float) newInputData.get(key) * this.weight.get(key);
-            }
-        }
-
-        score += this.intercept;
-        double prob = sigmod(score);
+        float score = forward(newInputData);
+        LOGGER.info("guest score:{}", score);
 
         try{
             Map<String, Object> hostPredictResponse = this.getFederatedPredict(predictParams);
-            prob += (double)hostPredictResponse.get("score");
+            score += (double)hostPredictResponse.get("score");
         }
         catch (Exception ex){
             LOGGER.error(ex);
         }
 
-
+        double prob = sigmod(score);
         result.put("prob", (float)prob);
 
         return result;
-//        String strThresholds = "thresholds";
-//        if (predictParams.containsKey(strThresholds)) {
-//            List<Float> thresholds = (List<Float>) predictParams.get(strThresholds);
-//            for (int i = 0; i < thresholds.size(); i++) {
-//                if(prob > thresholds[i]){
-//
-//                }
-//            }
-//        }
-//        return result;
     }
 }
