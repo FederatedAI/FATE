@@ -5,9 +5,10 @@ option java_outer_classname = "PredictionServiceProto";
 
 message FederatedMeta{
     string sceneId = 1;
-    string partyId = 2;
-    string role = 3;
-    string modelId = 4;
+    string myPartyId = 2;
+    string partnerPartyId = 3;
+    string myRole = 4;
+    string commitId = 5;
 }
 
 message DataMap{

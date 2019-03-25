@@ -3,21 +3,21 @@ package com.webank.ai.fate.core.mlmodel.buffer;
 import java.util.ArrayList;
 import com.webank.ai.fate.core.mlmodel.buffer.ModelMetaProto.ModelMeta;
 import com.webank.ai.fate.core.mlmodel.buffer.ModelParamProto.ModelParam;
-import com.webank.ai.fate.core.mlmodel.buffer.DataTransformProto.DataTransform;
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTransformServer;
+import com.webank.ai.fate.core.result.StatusCode;
 
 public class ProtoModelBuffer{
     private ModelParam.Builder paramBuilder;
     private ModelMeta.Builder metaBuilder;
-    private DataTransform.Builder dataTransformBuilder;
+    private DataTransformServer.Builder dataTransformServerBuilder;
     private ModelParam param;
     private ModelMeta meta;
-    private DataTransform dataTransform;
+    private DataTransformServer dataTransformServer;
 
     public ProtoModelBuffer(){
         this.metaBuilder = ModelMeta.newBuilder();
         this.paramBuilder = ModelParam.newBuilder();
-        this.dataTransformBuilder = DataTransform.newBuilder();
+        this.dataTransformServerBuilder = DataTransformServer.newBuilder();
     }
 
     public ModelParam getParam() {
@@ -28,8 +28,8 @@ public class ProtoModelBuffer{
         return this.meta;
     }
 
-    public DataTransform getDataTransform() {
-        return this.dataTransform;
+    public DataTransformServer getDataTransformServer() {
+        return this.dataTransformServer;
     }
 
     public ArrayList<byte[]> serialize(){
@@ -37,7 +37,7 @@ public class ProtoModelBuffer{
             ArrayList<byte[]> bufferSteam = new ArrayList<>();
             bufferSteam.add(this.metaBuilder.build().toByteArray());
             bufferSteam.add(this.paramBuilder.build().toByteArray());
-            bufferSteam.add(this.dataTransformBuilder.build().toByteArray());
+            bufferSteam.add(this.dataTransformServerBuilder.build().toByteArray());
             return bufferSteam;
         }
         catch (Exception ex){
@@ -46,16 +46,16 @@ public class ProtoModelBuffer{
         }
     }
 
-    public int deserialize(byte[] metaStream, byte[] paramStream, byte[] dataTransformStream){
+    public int deserialize(byte[] metaStream, byte[] paramStream, byte[] dataTransformServerStream){
         try{
             this.meta = ModelMeta.parseFrom(metaStream);
             this.param = ModelParam.parseFrom(paramStream);
-            this.dataTransform = DataTransform.parseFrom(dataTransformStream);
-            return ReturnCode.OK;
+            this.dataTransformServer = DataTransformServer.parseFrom(dataTransformServerStream);
+            return StatusCode.OK;
         }
         catch (Exception ex){
             ex.printStackTrace();
-            return ReturnCode.UNKNOWNERROR;
+            return StatusCode.UNKNOWNERROR;
         }
     }
 }

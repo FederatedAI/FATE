@@ -2,7 +2,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 
 import com.webank.ai.fate.core.mlmodel.model.BaseModel;
 import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.StatusCode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +15,7 @@ public abstract class HeteroLR extends BaseModel<ProtoModelBuffer, HashMap<Strin
     public int initModel(ProtoModelBuffer modelBuffer) {
         this.weight = modelBuffer.getParam().getWeightMap();
         this.intercept = modelBuffer.getParam().getIntercept();
-        return ReturnCode.OK;
+        return StatusCode.OK;
     }
 
     protected HashMap<String, Object> data_transform(HashMap<String, Object> inputData) {

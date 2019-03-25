@@ -13,13 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# -*- coding: utf-8 -*-
-from arch.api.io.table import gen_data_table_info, get_version_table, get_data_table, save_version_info
+from arch.api.io.version_control import read_version, save_version, gen_data_table_info, get_data_table, save_version_info
 from arch.api.utils.core import json_dumps, json_loads, bytes_string
 
 
-def save_feature_header(features, labels, commit_log="", branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version", branch=branch, new_commit_id=True)
+def save_feature_header(features, labels, commit_log="", commit_id=None,  tag=None, branch="master"):
+    version_table, data_table_info, scene_key, parent, commit_id = save_version("feature_header_version",
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     data_table_info = gen_data_table_info("feature_header", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
     data_table.put("features", json_dumps(features), use_pickle=False)
@@ -33,7 +35,10 @@ def save_feature_header(features, labels, commit_log="", branch="master"):
 
 
 def read_feature_header(commit_id=None, tag=None, branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version", commit_id=commit_id, tag=tag, branch=branch, new_commit_id=False)
+    version_table, data_table_info, scene_key, parent, commit_id = read_version("feature_header_version",
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     if commit_id:
         # Maybe param commit id or get commit id by current branch commit
         data_table_info = data_table_info if data_table_info else gen_data_table_info("feature_header", scene_key=scene_key, commit_id=commit_id)
@@ -43,8 +48,11 @@ def read_feature_header(commit_id=None, tag=None, branch="master"):
         return None, None
 
 
-def save_feature_meta(kv_meta, commit_log="", branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version", branch=branch, new_commit_id=True)
+def save_feature_meta(kv_meta, commit_log="", commit_id=None, tag="", branch="master"):
+    version_table, data_table_info, scene_key, parent, commit_id = save_version("feature_version",
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     data_table_info = gen_data_table_info("feature_meta", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
     for k, v in kv_meta.items():
@@ -58,11 +66,16 @@ def save_feature_meta(kv_meta, commit_log="", branch="master"):
 
 
 def read_feature_meta(commit_id=None, tag=None, branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version", commit_id=commit_id, tag=tag, branch=branch, new_commit_id=False)
+    version_table, data_table_info, scene_key, parent, commit_id = read_version("feature_version",
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     feature_meta = dict()
     if commit_id:
         # Maybe param commit id or get commit id by current branch commit
-        data_table_info = data_table_info if data_table_info else gen_data_table_info("feature_meta", scene_key=scene_key, commit_id=commit_id)
+        data_table_info = data_table_info if data_table_info else gen_data_table_info("feature_meta",
+                                                                                      scene_key=scene_key,
+                                                                                      commit_id=commit_id)
         data_table = get_data_table(data_table_info=data_table_info, create_if_missing=False)
         for k, v in data_table.collect(use_pickle=False):
             feature_meta[k] = bytes_string(v)
@@ -71,13 +84,15 @@ def read_feature_meta(commit_id=None, tag=None, branch="master"):
         return feature_meta
 
 
-def save_feature_data(kv_data, scene_id, my_party_id, partner_party_id, my_role, commit_log="", branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version",
-                                                                                     scene_id=scene_id,
-                                                                                     my_party_id=my_party_id,
-                                                                                     partner_party_id=partner_party_id,
-                                                                                     my_role=my_role,
-                                                                                     branch=branch, new_commit_id=True)
+def save_feature_data(kv_data, scene_id, my_party_id, partner_party_id, my_role, commit_log="", commit_id=None, tag="", branch="master"):
+    version_table, data_table_info, scene_key, parent, commit_id = save_version("feature_version",
+                                                                                 scene_id=scene_id,
+                                                                                 my_party_id=my_party_id,
+                                                                                 partner_party_id=partner_party_id,
+                                                                                 my_role=my_role,
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     data_table_info = gen_data_table_info("feature_data", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
     data_table.put_all(kv_data)
@@ -89,12 +104,14 @@ def save_feature_data(kv_data, scene_id, my_party_id, partner_party_id, my_role,
 
 
 def get_feature_data_table(scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
-    version_table, data_table_info, scene_key, parent, commit_id = get_version_table("feature_version",
-                                                                                     scene_id=scene_id,
-                                                                                     my_party_id=my_party_id,
-                                                                                     partner_party_id=partner_party_id,
-                                                                                     my_role=my_role,
-                                                                                     commit_id=commit_id, tag=tag, branch=branch, new_commit_id=False)
+    version_table, data_table_info, scene_key, parent, commit_id = read_version("feature_version",
+                                                                                 scene_id=scene_id,
+                                                                                 my_party_id=my_party_id,
+                                                                                 partner_party_id=partner_party_id,
+                                                                                 my_role=my_role,
+                                                                                 commit_id=commit_id,
+                                                                                 tag=tag,
+                                                                                 branch=branch)
     if commit_id:
         data_table_info = data_table_info if data_table_info else gen_data_table_info("feature_data", scene_key=scene_key, commit_id=commit_id)
         return get_data_table(data_table_info=data_table_info, create_if_missing=False)

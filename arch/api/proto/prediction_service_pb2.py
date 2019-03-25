@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.serving',
   syntax='proto3',
   serialized_options=_b('B\026PredictionServiceProto'),
-  serialized_pb=_b('\n\x18prediction_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\"P\n\rFederatedMeta\x12\x0f\n\x07sceneId\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\x12\x0c\n\x04role\x18\x03 \x01(\t\x12\x0f\n\x07modelId\x18\x04 \x01(\t\"\x86\x02\n\x07\x44\x61taMap\x12I\n\tfloatData\x18\x01 \x03(\x0b\x32\x36.com.webank.ai.fate.api.serving.DataMap.FloatDataEntry\x12K\n\nstringData\x18\x02 \x03(\x0b\x32\x37.com.webank.ai.fate.api.serving.DataMap.StringDataEntry\x1a\x30\n\x0e\x46loatDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\x1a\x31\n\x0fStringDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xeb\x01\n\x0ePredictRequest\x12;\n\x04meta\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12\x46\n\x04\x64\x61ta\x18\x05 \x03(\x0b\x32\x38.com.webank.ai.fate.api.serving.PredictRequest.DataEntry\x1aT\n\tDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x36\n\x05value\x18\x02 \x01(\x0b\x32\'.com.webank.ai.fate.api.serving.DataMap:\x02\x38\x01\"\x93\x02\n\x0fPredictResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12;\n\x04meta\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12G\n\x04\x64\x61ta\x18\x03 \x03(\x0b\x32\x39.com.webank.ai.fate.api.serving.PredictResponse.DataEntry\x12\x10\n\x08\x64\x61taJson\x18\x06 \x01(\t\x1aT\n\tDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x36\n\x05value\x18\x02 \x01(\x0b\x32\'.com.webank.ai.fate.api.serving.DataMap:\x02\x38\x01\"h\n\x17\x46\x65\x64\x65ratedPredictRequest\x12;\n\x04meta\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12\x10\n\x08vectorId\x18\x05 \x01(\t\"\xf0\x01\n\x18\x46\x65\x64\x65ratedPredictResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12;\n\x04meta\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12T\n\x06result\x18\x05 \x03(\x0b\x32\x44.com.webank.ai.fate.api.serving.FederatedPredictResponse.ResultEntry\x1a-\n\x0bResultEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\x32\x87\x02\n\x11PredictionService\x12j\n\x07predict\x12..com.webank.ai.fate.api.serving.PredictRequest\x1a/.com.webank.ai.fate.api.serving.PredictResponse\x12\x85\x01\n\x10\x66\x65\x64\x65ratedPredict\x12\x37.com.webank.ai.fate.api.serving.FederatedPredictRequest\x1a\x38.com.webank.ai.fate.api.serving.FederatedPredictResponseB\x18\x42\x16PredictionServiceProtob\x06proto3')
+  serialized_pb=_b('\n\x18prediction_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\"m\n\rFederatedMeta\x12\x0f\n\x07sceneId\x18\x01 \x01(\t\x12\x11\n\tmyPartyId\x18\x02 \x01(\t\x12\x16\n\x0epartnerPartyId\x18\x03 \x01(\t\x12\x0e\n\x06myRole\x18\x04 \x01(\t\x12\x10\n\x08\x63ommitId\x18\x05 \x01(\t\"\x86\x02\n\x07\x44\x61taMap\x12I\n\tfloatData\x18\x01 \x03(\x0b\x32\x36.com.webank.ai.fate.api.serving.DataMap.FloatDataEntry\x12K\n\nstringData\x18\x02 \x03(\x0b\x32\x37.com.webank.ai.fate.api.serving.DataMap.StringDataEntry\x1a\x30\n\x0e\x46loatDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\x1a\x31\n\x0fStringDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xeb\x01\n\x0ePredictRequest\x12;\n\x04meta\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12\x46\n\x04\x64\x61ta\x18\x05 \x03(\x0b\x32\x38.com.webank.ai.fate.api.serving.PredictRequest.DataEntry\x1aT\n\tDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x36\n\x05value\x18\x02 \x01(\x0b\x32\'.com.webank.ai.fate.api.serving.DataMap:\x02\x38\x01\"\x93\x02\n\x0fPredictResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12;\n\x04meta\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12G\n\x04\x64\x61ta\x18\x03 \x03(\x0b\x32\x39.com.webank.ai.fate.api.serving.PredictResponse.DataEntry\x12\x10\n\x08\x64\x61taJson\x18\x06 \x01(\t\x1aT\n\tDataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x36\n\x05value\x18\x02 \x01(\x0b\x32\'.com.webank.ai.fate.api.serving.DataMap:\x02\x38\x01\"h\n\x17\x46\x65\x64\x65ratedPredictRequest\x12;\n\x04meta\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12\x10\n\x08vectorId\x18\x05 \x01(\t\"\xf0\x01\n\x18\x46\x65\x64\x65ratedPredictResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12;\n\x04meta\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.serving.FederatedMeta\x12T\n\x06result\x18\x05 \x03(\x0b\x32\x44.com.webank.ai.fate.api.serving.FederatedPredictResponse.ResultEntry\x1a-\n\x0bResultEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\x32\x87\x02\n\x11PredictionService\x12j\n\x07predict\x12..com.webank.ai.fate.api.serving.PredictRequest\x1a/.com.webank.ai.fate.api.serving.PredictResponse\x12\x85\x01\n\x10\x66\x65\x64\x65ratedPredict\x12\x37.com.webank.ai.fate.api.serving.FederatedPredictRequest\x1a\x38.com.webank.ai.fate.api.serving.FederatedPredictResponseB\x18\x42\x16PredictionServiceProtob\x06proto3')
 )
 
 
@@ -40,22 +40,29 @@ _FEDERATEDMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='partyId', full_name='com.webank.ai.fate.api.serving.FederatedMeta.partyId', index=1,
+      name='myPartyId', full_name='com.webank.ai.fate.api.serving.FederatedMeta.myPartyId', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='role', full_name='com.webank.ai.fate.api.serving.FederatedMeta.role', index=2,
+      name='partnerPartyId', full_name='com.webank.ai.fate.api.serving.FederatedMeta.partnerPartyId', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='modelId', full_name='com.webank.ai.fate.api.serving.FederatedMeta.modelId', index=3,
+      name='myRole', full_name='com.webank.ai.fate.api.serving.FederatedMeta.myRole', index=3,
       number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='commitId', full_name='com.webank.ai.fate.api.serving.FederatedMeta.commitId', index=4,
+      number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -73,7 +80,7 @@ _FEDERATEDMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=60,
-  serialized_end=140,
+  serialized_end=169,
 )
 
 
@@ -110,8 +117,8 @@ _DATAMAP_FLOATDATAENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=306,
-  serialized_end=354,
+  serialized_start=335,
+  serialized_end=383,
 )
 
 _DATAMAP_STRINGDATAENTRY = _descriptor.Descriptor(
@@ -147,8 +154,8 @@ _DATAMAP_STRINGDATAENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=356,
-  serialized_end=405,
+  serialized_start=385,
+  serialized_end=434,
 )
 
 _DATAMAP = _descriptor.Descriptor(
@@ -184,8 +191,8 @@ _DATAMAP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=405,
+  serialized_start=172,
+  serialized_end=434,
 )
 
 
@@ -222,8 +229,8 @@ _PREDICTREQUEST_DATAENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=559,
-  serialized_end=643,
+  serialized_start=588,
+  serialized_end=672,
 )
 
 _PREDICTREQUEST = _descriptor.Descriptor(
@@ -259,8 +266,8 @@ _PREDICTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=408,
-  serialized_end=643,
+  serialized_start=437,
+  serialized_end=672,
 )
 
 
@@ -297,8 +304,8 @@ _PREDICTRESPONSE_DATAENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=559,
-  serialized_end=643,
+  serialized_start=588,
+  serialized_end=672,
 )
 
 _PREDICTRESPONSE = _descriptor.Descriptor(
@@ -348,8 +355,8 @@ _PREDICTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=646,
-  serialized_end=921,
+  serialized_start=675,
+  serialized_end=950,
 )
 
 
@@ -386,8 +393,8 @@ _FEDERATEDPREDICTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=923,
-  serialized_end=1027,
+  serialized_start=952,
+  serialized_end=1056,
 )
 
 
@@ -424,8 +431,8 @@ _FEDERATEDPREDICTRESPONSE_RESULTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1225,
-  serialized_end=1270,
+  serialized_start=1254,
+  serialized_end=1299,
 )
 
 _FEDERATEDPREDICTRESPONSE = _descriptor.Descriptor(
@@ -468,8 +475,8 @@ _FEDERATEDPREDICTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1030,
-  serialized_end=1270,
+  serialized_start=1059,
+  serialized_end=1299,
 )
 
 _DATAMAP_FLOATDATAENTRY.containing_type = _DATAMAP
@@ -592,8 +599,8 @@ _PREDICTIONSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=1273,
-  serialized_end=1536,
+  serialized_start=1302,
+  serialized_end=1565,
   methods=[
   _descriptor.MethodDescriptor(
     name='predict',

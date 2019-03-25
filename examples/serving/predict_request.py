@@ -7,7 +7,7 @@ import threading
 
 def run():
     ths = []
-    with grpc.insecure_channel('localhost:50051') as channel:
+    with grpc.insecure_channel('localhost:7778') as channel:
         for i in range(1):
             th = threading.Thread(target=send, args=(channel, ))
             ths.append(th)
@@ -22,9 +22,10 @@ def run():
 def send(channel):
     stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
     request = prediction_service_pb2.PredictRequest()
-    request.meta.partyId = '100001'
-    request.meta.role = 'guestUser'
-    request.meta.sceneId = '500001'
+    request.meta.sceneId = '50000'
+    request.meta.myPartyId = '10000'
+    request.meta.partnerPartyId = "9999"
+    request.meta.myRole = 'guestUser'
 
     request.data["123456"].floatData["k1"] = 5
     request.data["123456"].floatData["k2"] = 3

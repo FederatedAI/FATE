@@ -15,6 +15,7 @@ public class StandaloneDTable implements DTable{
     @Override
     public void init(String name, String nameSpace, int partition) {
         String path = Paths.get(this.dataDir, "LMDB", nameSpace, name, Integer.toString(partition)).toString();
+        LOGGER.info(path);
         Env env = new Env(path);
         this.db = env.openDatabase();
     }

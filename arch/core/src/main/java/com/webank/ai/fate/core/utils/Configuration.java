@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.Properties;
 
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.StatusCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,15 +21,15 @@ public class Configuration {
         try{
             properties = new Properties();
             properties.load(new FileInputStream(this.confPath));
-            return ReturnCode.OK;
+            return StatusCode.OK;
         }
         catch (FileNotFoundException ex){
             LOGGER.error("Can not found this file: {}", this.confPath);
-            return ReturnCode.NOFILE;
+            return StatusCode.NOFILE;
         }
         catch (Exception ex){
             LOGGER.error(ex);
-            return ReturnCode.UNKNOWNERROR;
+            return StatusCode.UNKNOWNERROR;
         }
     }
 

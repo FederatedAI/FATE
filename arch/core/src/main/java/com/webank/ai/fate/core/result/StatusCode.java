@@ -1,10 +1,10 @@
-package com.webank.ai.fate.core.statuscode;
+package com.webank.ai.fate.core.result;
 
 /**
  * Business logic error > 0
  * System error < 0
  */
-public class ReturnCode {
+public class StatusCode {
     public static int OK = 0;
     public static int UNKNOWNERROR = 1;
     public static int PARAMERROR = 2;
@@ -14,4 +14,5 @@ public class ReturnCode {
     public static int TIMEOUT = -1;
     public static int NOFILE = -2;
     public static int IOERROR = -3;
+    public static int FEDERATEDERROR = -4;
 }

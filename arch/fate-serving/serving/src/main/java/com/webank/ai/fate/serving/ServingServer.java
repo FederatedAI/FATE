@@ -30,9 +30,7 @@ public class ServingServer {
             // just a test
             this.confPath = String.format("%s/serving.properties", this.getClass().getResource("/").getPath());
         }
-        new Configuration(this.confPath).load();
-        ModelManager modelManager = new ModelManager();
-        //modelManager.updatePool();
+        this.init();
 
         int port = Integer.parseInt(Configuration.getProperty("port"));
         server = ServerBuilder.forPort(port)
@@ -41,7 +39,6 @@ public class ServingServer {
                 .addService(new ProxyService())
                 .build();
         LOGGER.info("Server started listening on port: {}, use configuration: {}", port, this.confPath);
-        this.initClientPool();
         server.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -65,10 +62,16 @@ public class ServingServer {
         }
     }
 
+    private void init(){
+        new Configuration(this.confPath).load();
+        new ModelManager();
+        this.initClientPool();
+    }
+
     private void initClientPool(){
         ArrayList<String> allAddress = new ArrayList<>();
         allAddress.add(Configuration.getProperty("proxy"));
-        allAddress.add(Configuration.getProperty("serving"));
+        //allAddress.add(Configuration.getProperty("serving"));
         new Thread(new Runnable() {
             @Override
             public void run() {

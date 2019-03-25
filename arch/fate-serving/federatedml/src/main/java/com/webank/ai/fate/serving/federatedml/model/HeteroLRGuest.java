@@ -30,7 +30,7 @@ public class HeteroLRGuest extends HeteroLR {
         double prob = sigmod(score);
 
         try{
-            Map<String, Object> hostPredictResponse = this.getHostPredict((String)predictParams.get("sid"));
+            Map<String, Object> hostPredictResponse = this.getFederatedPredict(predictParams);
             prob += (double)hostPredictResponse.get("score");
         }
         catch (Exception ex){

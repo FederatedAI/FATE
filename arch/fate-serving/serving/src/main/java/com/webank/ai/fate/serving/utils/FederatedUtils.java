@@ -4,12 +4,13 @@ import com.webank.ai.fate.api.serving.PredictionServiceProto.FederatedMeta;
 import com.webank.ai.fate.core.utils.Configuration;
 
 public class FederatedUtils {
-    public static FederatedMeta.Builder genResponseMetaBuilder(FederatedMeta requestMeta, String modelId){
+    public static FederatedMeta.Builder genResponseMetaBuilder(FederatedMeta requestMeta, String commitId){
         FederatedMeta.Builder responseMetaBuilder = FederatedMeta.newBuilder();
-        responseMetaBuilder.setPartyId(Configuration.getProperty("partyId"));
         responseMetaBuilder.setSceneId(requestMeta.getSceneId());
-        responseMetaBuilder.setModelId(modelId);
-        responseMetaBuilder.setRole(getMyRole(requestMeta.getRole()));
+        responseMetaBuilder.setMyPartyId(Configuration.getProperty("partyId"));
+        responseMetaBuilder.setPartnerPartyId(requestMeta.getMyPartyId());
+        responseMetaBuilder.setCommitId(commitId);
+        responseMetaBuilder.setMyRole(getMyRole(requestMeta.getMyRole()));
         return responseMetaBuilder;
     }
 

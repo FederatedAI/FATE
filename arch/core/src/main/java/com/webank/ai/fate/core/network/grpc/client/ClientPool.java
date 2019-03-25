@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.StatusCode;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +25,7 @@ public class ClientPool {
                 LOGGER.error(ex);
             }
         });
-        return ReturnCode.OK;
+        return StatusCode.OK;
     }
 
     private static ManagedChannel createChannel(String ip, int port) throws Exception{

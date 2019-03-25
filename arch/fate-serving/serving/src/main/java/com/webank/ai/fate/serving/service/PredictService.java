@@ -7,7 +7,7 @@ import com.webank.ai.fate.api.serving.PredictionServiceProto.PredictResponse;
 import com.webank.ai.fate.api.serving.PredictionServiceProto.FederatedMeta;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.mlmodel.model.MLModel;
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.StatusCode;
 import com.webank.ai.fate.serving.utils.FederatedUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
@@ -29,12 +29,12 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
         FederatedMeta requestMeta = req.getMeta();
 
         PredictResponse.Builder response = PredictResponse.newBuilder();
-        String myRole = FederatedUtils.getMyRole(requestMeta.getRole());
+        String myRole = FederatedUtils.getMyRole(requestMeta.getMyRole());
 
         // get model
-        MLModel model = new ModelManager().getModel(requestMeta.getSceneId(), requestMeta.getPartyId(), myRole);
+        MLModel model = new ModelManager().getModel(requestMeta.getSceneId(), requestMeta.getPartnerPartyId(), myRole);
         if (model == null){
-            response.setStatusCode(ReturnCode.NOMODEL);
+            response.setStatusCode(StatusCode.NOMODEL);
             FederatedMeta.Builder federatedMetaBuilder = FederatedUtils.genResponseMetaBuilder(requestMeta, "");
             response.setMeta(federatedMetaBuilder.build());
             responseObserver.onNext(response.build());
@@ -43,7 +43,7 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
         }
 
 
-        FederatedMeta.Builder federatedMetaBuilder = FederatedUtils.genResponseMetaBuilder(requestMeta, (String)model.getModelInfo().get("modelId"));
+        FederatedMeta.Builder federatedMetaBuilder = FederatedUtils.genResponseMetaBuilder(requestMeta, (String)model.getModelInfo().get("commitId"));
         // set response meta
         response.setMeta(federatedMetaBuilder.build());
         // deal data
@@ -59,7 +59,7 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
             Map<String, String> predictParams = new HashMap<>();
             predictParams.put("sceneId", requestMeta.getSceneId());
             predictParams.put("sid", sid);
-            predictParams.put("modelId", (String)model.getModelInfo().get("modelId"));
+            predictParams.put("commitId", (String)model.getModelInfo().get("commitId"));
             Map<String, Object> result = model.predict(predictInputData, predictParams);
 
             PredictionServiceProto.DataMap.Builder dataBuilder = PredictionServiceProto.DataMap.newBuilder();
@@ -71,13 +71,13 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
         responseObserver.onCompleted();
     }
 
-    public Map<String, Object> federatedPredict(Map<String, Object> requestInfo){
-        MLModel model = new ModelManager().getModel((String)requestInfo.get("sceneId"), (String)requestInfo.get("partnerPartyId"), "host");
+    public Map<String, Object> federatedPredict(Map<String, Object> requestData){
+        MLModel model = new ModelManager().getModel((String)requestData.get("sceneId"), (String)requestData.get("myPartyId"), "host", (String)requestData.get("commitId"));
         Map<String, String> predictParams = new HashMap<>();
-        predictParams.put("sceneId", (String)requestInfo.get("sceneId"));
-        predictParams.put("sid", (String)requestInfo.get("sid"));
-        predictParams.put("modelId", (String)model.getModelInfo().get("modelId"));
-        Map<String, Object> result = model.predict(getFeatureData((String)requestInfo.get("sid")), predictParams);
+        predictParams.put("sceneId", (String)requestData.get("sceneId"));
+        predictParams.put("sid", (String)requestData.get("sid"));
+        predictParams.put("commitId", (String)model.getModelInfo().get("commitId"));
+        Map<String, Object> result = model.predict(getFeatureData((String)requestData.get("sid")), predictParams);
         result.putAll(model.getModelInfo());
         return result;
     }

@@ -3,11 +3,11 @@ package com.webank.ai.fate.serving.service;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceGrpc;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishRequest;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishResponse;
-import com.webank.ai.fate.core.statuscode.ReturnCode;
+import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.result.StatusCode;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import io.grpc.stub.StreamObserver;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,17 +21,12 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
         LOGGER.info(Configuration.getProperty("partyId"));
         LOGGER.info(req.getMyPartyId());
         if (Configuration.getProperty("partyId").equals(req.getMyPartyId())){
-            String commitId = new ModelManager().publishLoadModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId(), req.getTag(), req.getBranch());
-            if (StringUtils.isEmpty(commitId)){
-                loadStatus = ReturnCode.NOMODEL;
-            }
-            else{
-                loadStatus = ReturnCode.OK;
-                builder.setCommitId(commitId);
-            }
+            ReturnResult returnResult = new ModelManager().publishLoadModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId(), req.getTag(), req.getBranch());
+            loadStatus = returnResult.getStatusCode();
+            builder.setCommitId((String)returnResult.getData().get("commitId"));
         }
         else{
-            loadStatus = ReturnCode.NOTME;
+            loadStatus = StatusCode.NOTME;
         }
         builder.setStatusCode(loadStatus);
         responseStreamObserver.onNext(builder.build());

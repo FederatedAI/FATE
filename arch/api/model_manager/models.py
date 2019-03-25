@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# -*- coding: utf-8 -*-
 from arch.api.db.base_model import BaseModel
 from arch.api.utils import log_utils
 from peewee import CharField, IntegerField, BigIntegerField, DateTimeField
