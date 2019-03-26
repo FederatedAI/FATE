@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
-from federatedml.ftl.encryption.encryption import decrypt_matrix
-from federatedml.ftl.eggroll_computation.helper import encrypt_matmul_2_ob, encrypt_matmul_3
-from federatedml.secureprotol import PaillierEncrypt
-from federatedml.ftl.test.util import assert_matrix
+
+import numpy as np
+
 from arch.api.eggroll import init
+from federatedml.ftl.eggroll_computation.helper import encrypt_matmul_2_ob, encrypt_matmul_3
+from federatedml.ftl.encryption.encryption import decrypt_matrix
+from federatedml.ftl.test.util import assert_matrix
+from federatedml.secureprotol import PaillierEncrypt
 
 
 class TestEncryptionMatmul(unittest.TestCase):
@@ -77,11 +79,11 @@ class TestEncryptionMatmul(unittest.TestCase):
         X = np.array([[[1, 2, 3]],
                       [[10, 11, 12]]], dtype=np.float64)
         Y = np.array([[[10, 11, 12],
-                      [13, 14, 15],
-                      [16, 17, 18]],
+                       [13, 14, 15],
+                       [16, 17, 18]],
                       [[19, 20, 21],
-                      [22, 23, 24],
-                      [25, 26, 27]]], dtype=np.float64)
+                       [22, 23, 24],
+                       [25, 26, 27]]], dtype=np.float64)
 
         Z = np.matmul(X, Y)
 
@@ -96,17 +98,17 @@ class TestEncryptionMatmul(unittest.TestCase):
     def test_encrypt_matmul_3_dim_2(self):
 
         X = np.array([[[1, 2, 3],
-                      [4, 5, 6],
-                      [7, 8, 9]],
+                       [4, 5, 6],
+                       [7, 8, 9]],
                       [[10, 11, 12],
-                      [13, 14, 15],
-                      [16, 17, 18]]], dtype=np.float64)
+                       [13, 14, 15],
+                       [16, 17, 18]]], dtype=np.float64)
         Y = np.array([[[10, 11, 12],
-                      [13, 14, 15],
-                      [16, 17, 18]],
+                       [13, 14, 15],
+                       [16, 17, 18]],
                       [[19, 20, 21],
-                      [22, 23, 24],
-                      [25, 26, 27]]], dtype=np.float64)
+                       [22, 23, 24],
+                       [25, 26, 27]]], dtype=np.float64)
 
         Z = np.matmul(X, Y)
 
@@ -121,11 +123,11 @@ class TestEncryptionMatmul(unittest.TestCase):
         X = np.array([[[1, 2, 3]],
                       [[10, 11, 12]]], dtype=np.float64)
         Y = np.array([[[10, 11, 12],
-                      [13, 14, 15],
-                      [16, 17, 18]],
+                       [13, 14, 15],
+                       [16, 17, 18]],
                       [[19, 20, 21],
-                      [22, 23, 24],
-                      [25, 26, 27]]], dtype=np.float64)
+                       [22, 23, 24],
+                       [25, 26, 27]]], dtype=np.float64)
 
         Z = np.matmul(X, Y)
 
@@ -139,5 +141,3 @@ class TestEncryptionMatmul(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
-
-

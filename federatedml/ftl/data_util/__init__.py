@@ -1,5 +1,3 @@
-#!/usr/env/bin bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,9 +14,4 @@
 #  limitations under the License.
 #
 
-cd $(dirname "$0")
 
-echo "start job_id: "$1
-
-nohup python run_host.py $1 > ./host.log 2>&1 &
-nohup python run_guest.py $1 > ./guest.log 2>&1 &

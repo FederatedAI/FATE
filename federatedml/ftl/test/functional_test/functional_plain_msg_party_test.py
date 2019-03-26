@@ -14,15 +14,17 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import time
+
+import numpy as np
 import tensorflow as tf
-from federatedml.ftl.test.fake_models import FakeFTLModelParam
-from federatedml.ftl.common.data_util import series_plot, load_UCI_Credit_Card_data, split_data_combined
-from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
 from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
+from federatedml.ftl.autoencoder import Autoencoder
+from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
+from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
+from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
+from federatedml.ftl.test.mock_models import MockFTLModelParam
 
 if __name__ == '__main__':
 
@@ -37,7 +39,7 @@ if __name__ == '__main__':
     valid_ratio = 0.3
     non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
     validate_indexes = non_overlap_indexes[:int(valid_ratio * len(non_overlap_indexes))]
-    test_indexes = non_overlap_indexes[int(valid_ratio*len(non_overlap_indexes)):]
+    test_indexes = non_overlap_indexes[int(valid_ratio * len(non_overlap_indexes)):]
     x_B_valid = X_B[validate_indexes]
     y_B_valid = y_B[validate_indexes]
     x_B_test = X_B[test_indexes]
@@ -63,8 +65,7 @@ if __name__ == '__main__':
     autoencoder_A.build(X_A.shape[-1], 200, learning_rate=0.01)
     autoencoder_B.build(X_B.shape[-1], 200, learning_rate=0.01)
 
-    # alpha = 100
-    fake_model_param = FakeFTLModelParam()
+    fake_model_param = MockFTLModelParam(alpha=100)
     partyA = PlainFTLGuestModel(autoencoder_A, fake_model_param)
     partyB = PlainFTLHostModel(autoencoder_B, fake_model_param)
 
@@ -101,7 +102,8 @@ if __name__ == '__main__':
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
                 print("neg：", neg_count, "pos:", pos_count)
-                precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label, average="weighted")
+                precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label,
+                                                                               average="weighted")
                 fscores.append(fscore)
                 auc = roc_auc_score(y_B_test, y_pred, average="weighted")
                 aucs.append(auc)
@@ -109,10 +111,3 @@ if __name__ == '__main__':
         end_time = time.time()
         series_plot(losses, fscores, aucs)
         print("running time", end_time - start_time)
-
-
-
-
-
-
-

@@ -62,11 +62,18 @@ class BaseLogisticRegression(object):
         self.coef_ = None
         self.intercept_ = 0
         self.classes_ = None
+        self.data_shape = None
 
         self.gradient_operator = None
         self.initializer = Initializer()
         self.transfer_variable = None
         self.model_meta = LogisticRegressionModelMeta()
+
+    def set_data_shape(self, data_shape):
+        self.data_shape = data_shape
+
+    def get_data_shape(self):
+        return self.data_shape
 
     def load_model(self, model_table, model_namespace):
 
@@ -141,6 +148,11 @@ class BaseLogisticRegression(object):
         # LOGGER.debug("In get features shape method, data_instances count: {}".format(
         #     data_instances.count()
         # ))
+
+        data_shape = self.get_data_shape()
+        if data_shape is not None:
+            return data_shape
+
         features = data_instances.collect()
         try:
             one_feature = features.__next__()

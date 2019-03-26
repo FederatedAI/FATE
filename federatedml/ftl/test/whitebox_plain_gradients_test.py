@@ -14,17 +14,19 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
+
+import numpy as np
+
 from federatedml.ftl.encrypted_ftl import EncryptedFTLGuestModel, EncryptedFTLHostModel
-from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeFTLModelParam
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
+from federatedml.ftl.test.mock_models import MockAutoencoder, MockFTLModelParam
 
 
 def run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes, non_overlap_indexes,
                                public_key=None, private_key=None, is_encrypted=False):
 
-    fake_model_param = FakeFTLModelParam(alpha=1)
+    fake_model_param = MockFTLModelParam(alpha=1)
     if is_encrypted:
         partyA = EncryptedFTLGuestModel(autoencoderA, fake_model_param, public_key=public_key, private_key=private_key)
         partyA.set_batch(U_A, y, non_overlap_indexes, overlap_indexes)
@@ -65,9 +67,9 @@ class TestPlainGradients(unittest.TestCase):
         Wh = np.ones((5, U_A.shape[1]))
         bh = np.zeros(U_A.shape[1])
 
-        autoencoderA = FakeAutoencoder(0)
+        autoencoderA = MockAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
-        autoencoderB = FakeAutoencoder(1)
+        autoencoderB = MockAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         partyA, partyB = run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes, non_overlap_indexes)
@@ -106,9 +108,9 @@ class TestPlainGradients(unittest.TestCase):
         Wh = np.ones((5, U_A.shape[1]))
         bh = np.zeros(U_A.shape[1])
 
-        autoencoderA = FakeAutoencoder(0)
+        autoencoderA = MockAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
-        autoencoderB = FakeAutoencoder(1)
+        autoencoderB = MockAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         partyA, _ = run_one_party_msg_exchange(autoencoderA, autoencoderB, U_A, U_B, y, overlap_indexes, non_overlap_indexes)

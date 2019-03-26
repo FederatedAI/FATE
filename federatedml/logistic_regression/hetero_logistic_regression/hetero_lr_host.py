@@ -40,6 +40,12 @@ class HeteroLRHost(BaseLogisticRegression):
         host_forward = wx.mapValues(lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v))))
         return host_forward
 
+    def transform(self, batch_data_inst):
+        return batch_data_inst
+
+    def update_local_model(self, fore_gradient, batch_data_inst, coef, **training_info):
+        pass
+
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr host")
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
@@ -89,8 +95,11 @@ class HeteroLRHost(BaseLogisticRegression):
                 # Get mini-batch train data
                 batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
 
+                # extract feature from batch_feat_inst
+                batch_feat_inst = self.transform(batch_data_inst)
+
                 # compute forward
-                host_forward = self.compute_forward(batch_data_inst, self.coef_, self.intercept_)
+                host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
                 federation.remote(host_forward,
                                   name=self.transfer_variable.host_forward_dict.name,
                                   tag=self.transfer_variable.generate_transferid(
@@ -109,7 +118,7 @@ class HeteroLRHost(BaseLogisticRegression):
                 LOGGER.info("Get fore_gradient from guest")
                 if self.gradient_operator is None:
                     self.gradient_operator = HeteroLogisticGradient(self.encrypt_operator)
-                host_gradient = self.gradient_operator.compute_gradient(data_instances, fore_gradient,
+                host_gradient = self.gradient_operator.compute_gradient(batch_feat_inst, fore_gradient,
                                                                         fit_intercept=False)
                 # regulation if necessary
                 if self.updater is not None:
@@ -145,6 +154,9 @@ class HeteroLRHost(BaseLogisticRegression):
                 LOGGER.info("update_model")
                 self.update_model(optim_host_gradient)
 
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
+
                 # is converge
                 is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                             tag=self.transfer_variable.generate_transferid(
@@ -165,7 +177,10 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def predict(self, data_instances, predict_param=None):
         LOGGER.info("Start predict ...")
-        prob_host = self.compute_wx(data_instances, self.coef_, self.intercept_)
+
+        data_features = self.transform(data_instances)
+
+        prob_host = self.compute_wx(data_features, self.coef_, self.intercept_)
         federation.remote(prob_host,
                           name=self.transfer_variable.host_prob.name,
                           tag=self.transfer_variable.generate_transferid(
