@@ -11,9 +11,8 @@ Figure 1： Federated Transfer Learning in the sample and feature space for two-
 
 Our solution employs an architecture of two layers: local layer and federation layer.
 
-
 <div style="text-align:center", align=center>
-<img src="./images/architecture.png" alt="architecture" width="500" height="250" />
+<img src="./images/architecture.png" alt="architecture" width="500" height="300" />
 <br/>
 Figure 2: Architecture of Federated Transfer Learning </div>
 
