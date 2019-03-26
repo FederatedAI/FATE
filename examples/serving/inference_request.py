@@ -1,13 +1,14 @@
 import grpc
 import time
+import json
 
-from arch.api.proto import prediction_service_pb2
-from arch.api.proto import prediction_service_pb2_grpc
+from arch.api.proto import inference_service_pb2
+from arch.api.proto import inference_service_pb2_grpc
 import threading
 
 def run():
     ths = []
-    with grpc.insecure_channel('localhost:7778') as channel:
+    with grpc.insecure_channel('localhost:8001') as channel:
         for i in range(1):
             th = threading.Thread(target=send, args=(channel, ))
             ths.append(th)
@@ -20,17 +21,20 @@ def run():
         print(et - st)
 
 def send(channel):
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-    request = prediction_service_pb2.PredictRequest()
+    stub = inference_service_pb2_grpc.InferenceServiceStub(channel)
+    request = inference_service_pb2.InferenceRequest()
     request.meta.sceneId = '50000'
     request.meta.myPartyId = '10000'
     request.meta.partnerPartyId = "9999"
     request.meta.myRole = 'guestUser'
 
-    request.data["123456"].floatData["k1"] = 5
-    request.data["123456"].floatData["k2"] = 3
-    request.data["123456"].floatData["k3"] = 4
+    data = {}
+    data["123456"] = {}
+    data["123456"]["k1"] = 5.1
+    data["123456"]["k2"] = 6.2
+    data["123456"]["k3"] = 7.3
 
+    request.data = json.dumps(data).encode(encoding="utf-8")
     response = stub.predict(request)
     print(response)
     #print("%d Client received: %s" % (threading.currentThread().ident, request.msg))

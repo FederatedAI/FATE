@@ -14,9 +14,10 @@ message PublishRequest{
 }
 
 message PublishResponse{
-    string commitId = 1;
-    int32 statusCode = 2;
-    string msg = 3;
+    int32 statusCode = 1;
+    string message = 2;
+    string error = 3;
+    bytes data = 4;
 }
 
 

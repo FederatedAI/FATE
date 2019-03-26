@@ -2,9 +2,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 
 import com.webank.ai.fate.core.mlmodel.model.BaseModel;
 import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
-import com.webank.ai.fate.core.result.StatusCode;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTransformServer;
 
 import java.util.HashMap;
@@ -28,7 +26,7 @@ public abstract class HeteroLR extends BaseModel<ProtoModelBuffer, HashMap<Strin
         float score = 0;
         for (String key : inputData.keySet()) {
             if (this.weight.containsKey(key)) {
-                score += (float) inputData.get(key) * this.weight.get(key);
+                score += Float.valueOf(inputData.get(key).toString()) * this.weight.get(key);
             }
         }
         score += this.intercept;

@@ -1,26 +1,51 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.webank.ai.fate.core.utils;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.Properties;
 
-import com.webank.ai.fate.core.result.StatusCode;
+import com.webank.ai.fate.core.constant.StatusCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Configuration {
     private static final Logger LOGGER = LogManager.getLogger();
     private final String confPath;
-    private static Properties properties;
+    private static HashMap<String, String> properties;
+    private static HashMap<String, Integer> intProperties;
 
     public Configuration(String confPath){
         this.confPath = confPath;
+        properties = new HashMap<>();
+        intProperties = new HashMap<>();
     }
 
     public int load(){
         try{
-            properties = new Properties();
-            properties.load(new FileInputStream(this.confPath));
+            Properties pro = new Properties();
+            pro.load(new FileInputStream(this.confPath));
+            pro.entrySet().forEach(e->{
+                properties.put((String)e.getKey(), (String)e.getValue());
+            });
+            Configuration.putIntProperty("workMode", Integer.parseInt(Optional.ofNullable(pro.getProperty("workMode")).orElse("0")));
             return StatusCode.OK;
         }
         catch (FileNotFoundException ex){
@@ -33,11 +58,24 @@ public class Configuration {
         }
     }
 
-    public static Properties getProperties() {
+
+    public static HashMap<String, String> getProperties() {
         return properties;
     }
 
     public static String getProperty(String key){
-        return properties.getProperty(key);
+        return properties.get(key);
+    }
+
+    public static void putProperty(String key, String value){
+        properties.put(key, value);
+    }
+
+    public static Integer getIntProperty(String key) {
+        return intProperties.get(key);
+    }
+
+    public static void putIntProperty(String key, int value){
+        intProperties.put(key, value);
     }
 }

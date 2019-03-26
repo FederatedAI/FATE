@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.core.storage.kv;
+package com.webank.ai.fate.core.constant;
 
-import java.util.Map;
-
-public abstract class BaseKVPool<K, V> implements KVPool<K, V> {
-    public abstract void put(K key, V value);
-    public abstract void putIfAbsent(K key, V value);
-    public abstract void putAll(Map<K, V> kv);
-    public abstract V get(K key);
-
-    @Override
-    public void put(K key, V value, boolean onlyIfAbsent){
-        if(onlyIfAbsent){
-            this.putIfAbsent(key, value);
-        }
-        else{
-            this.put(key, value);
-        }
-    }
+/**
+ * Business logic error > 0
+ * System error < 0
+ */
+public class StatusCode {
+    public static final int OK = 0;
+    public static final int UNKNOWNERROR = 1;
+    public static final int PARAMERROR = 2;
+    public static final int ILLEGALDATA = 3;
+    public static final int NOMODEL= 4;
+    public static final int NOTME = 5;
+    public static final int FEDERATEDERROR = 6;
+    public static final int TIMEOUT = -1;
+    public static final int NOFILE = -2;
+    public static final int NETWORKERROR = -3;
+    public static final int IOERROR = -4;
 }

@@ -1,6 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.transform;
 
-import com.webank.ai.fate.core.mlmodel.buffer.DataTransformProto;
+import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,34 +22,34 @@ public class DataTransform {
         return inputData;
     }
 
-    public HashMap<String, Object> fit(HashMap<String, Object> inputData, DataTransformProto.DataTransform dataTransform) {
+    public HashMap<String, Object> fit(HashMap<String, Object> inputData, DataTransformServerProto.DataTransformServer dataTransformServer) {
         // missing fill
-        boolean isMissingFill = dataTransform.getMissingFill();
+        boolean isMissingFill = dataTransformServer.getMissingFill();
         if (isMissingFill) {
-            ArrayList<String> missingValues = (ArrayList<String>) dataTransform.getMissingValueList();
-            Map<String, String> missingReplaceValues = dataTransform.getMissingReplaceValueMap();
+            ArrayList<String> missingValues = (ArrayList<String>) dataTransformServer.getMissingValueList();
+            Map<String, String> missingReplaceValues = dataTransformServer.getMissingReplaceValueMap();
             inputData = replace(inputData, missingValues, missingReplaceValues);
         }
 
         //outlier replace
-        boolean isOutlierReplace = dataTransform.getOutlierReplace();
+        boolean isOutlierReplace = dataTransformServer.getOutlierReplace();
         if (isOutlierReplace) {
-            ArrayList<String> outlierValues = (ArrayList<String>) dataTransform.getOutlierValueList();
-            Map<String, String> outlierReplaceValues = dataTransform.getOutlierReplaceValueMap();
+            ArrayList<String> outlierValues = (ArrayList<String>) dataTransformServer.getOutlierValueList();
+            Map<String, String> outlierReplaceValues = dataTransformServer.getOutlierReplaceValueMap();
             inputData = replace(inputData, outlierValues, outlierReplaceValues);
         }
 
         //scale
-        boolean isScale = dataTransform.getIsScale();
+        boolean isScale = dataTransformServer.getIsScale();
         if (isScale) {
-            String scaleMethod = dataTransform.getScaleMethod();
+            String scaleMethod = dataTransformServer.getScaleMethod();
             if (scaleMethod.equals("MinMaxScale")) {
                 MinMaxScale minMaxScale = new MinMaxScale();
-                inputData = minMaxScale.fit(inputData, dataTransform.getScaleReplaceValueMap());
+                inputData = minMaxScale.fit(inputData, dataTransformServer.getScaleReplaceValueMap());
             }
             else if (scaleMethod.equals("StandardScale")) {
                 StandardScale standardScale = new StandardScale();
-                inputData = standardScale.fit(inputData, dataTransform.getScaleReplaceValueMap());
+                inputData = standardScale.fit(inputData, dataTransformServer.getScaleReplaceValueMap());
             }
         }
         return inputData;

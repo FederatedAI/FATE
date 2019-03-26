@@ -7,17 +7,7 @@ from arch.api.proto import model_service_pb2_grpc
 import threading
 
 def run(model_id):
-    with grpc.insecure_channel('localhost:7777') as channel:
-        stub = model_service_pb2_grpc.ModelServiceStub(channel)
-        request = model_service_pb2.PublishRequest()
-        request.commitId = model_id
-        request.sceneId = "50000"
-        request.myPartyId = "9999"
-        request.partnerPartyId = "10000"
-        request.myRole = "host"
-        response = stub.publishLoad(request)
-        print(response)
-    with grpc.insecure_channel('localhost:7778') as channel:
+    with grpc.insecure_channel('localhost:8001') as channel:
         stub = model_service_pb2_grpc.ModelServiceStub(channel)
         request = model_service_pb2.PublishRequest()
         request.commitId = model_id
@@ -26,6 +16,7 @@ def run(model_id):
         request.partnerPartyId = "9999"
         request.myRole = "guest"
         response = stub.publishLoad(request)
+        print(response)
         response = stub.publishOnline(request)
         print(response)
 

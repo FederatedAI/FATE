@@ -24,13 +24,12 @@ def save_feature_header(features, labels, commit_log="", commit_id=None,  tag=No
                                                                                  branch=branch)
     data_table_info = gen_data_table_info("feature_header", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
-    data_table.put("features", json_dumps(features), use_pickle=False)
-    data_table.put("labels", json_dumps(labels), use_pickle=False)
+    data_table.put("features", json_dumps(features), use_serialize=False)
+    data_table.put("labels", json_dumps(labels), use_serialize=False)
 
     # save version info
     data_table_info["commitLog"] = commit_log
-    data_table_info["parent"] = parent
-    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, data_table_info=data_table_info)
+    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, parent=parent, data_table_info=data_table_info)
     return commit_id
 
 
@@ -43,7 +42,7 @@ def read_feature_header(commit_id=None, tag=None, branch="master"):
         # Maybe param commit id or get commit id by current branch commit
         data_table_info = data_table_info if data_table_info else gen_data_table_info("feature_header", scene_key=scene_key, commit_id=commit_id)
         data_table = get_data_table(data_table_info=data_table_info, create_if_missing=False)
-        return json_loads(data_table.get("features", use_pickle=False)), json_loads(data_table.get("labels", use_pickle=False))
+        return json_loads(data_table.get("features", use_serialize=False)), json_loads(data_table.get("labels", use_serialize=False))
     else:
         return None, None
 
@@ -56,12 +55,11 @@ def save_feature_meta(kv_meta, commit_log="", commit_id=None, tag="", branch="ma
     data_table_info = gen_data_table_info("feature_meta", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
     for k, v in kv_meta.items():
-        data_table.put(k, json_dumps(v), use_pickle=False)
+        data_table.put(k, json_dumps(v), use_serialize=False)
 
     # save version info
     data_table_info["commitLog"] = commit_log
-    data_table_info["parent"] = parent
-    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, data_table_info=data_table_info)
+    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, parent=parent, data_table_info=data_table_info)
     return commit_id
 
 
@@ -77,7 +75,7 @@ def read_feature_meta(commit_id=None, tag=None, branch="master"):
                                                                                       scene_key=scene_key,
                                                                                       commit_id=commit_id)
         data_table = get_data_table(data_table_info=data_table_info, create_if_missing=False)
-        for k, v in data_table.collect(use_pickle=False):
+        for k, v in data_table.collect(use_serialize=False):
             feature_meta[k] = bytes_string(v)
         return feature_meta
     else:
@@ -98,8 +96,7 @@ def save_feature_data(kv_data, scene_id, my_party_id, partner_party_id, my_role,
     data_table.put_all(kv_data)
     # save version info
     data_table_info["commitLog"] = commit_log
-    data_table_info["parent"] = parent
-    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, data_table_info=data_table_info)
+    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, parent=parent, data_table_info=data_table_info)
     return commit_id
 
 

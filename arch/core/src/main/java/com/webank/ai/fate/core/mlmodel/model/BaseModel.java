@@ -1,13 +1,29 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.webank.ai.fate.core.mlmodel.model;
 
 
-import java.util.HashMap;
 import java.util.Map;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
+import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
+import com.webank.ai.fate.core.utils.ObjectTransform;
 import io.grpc.ManagedChannel;
 import com.webank.ai.fate.api.networking.proxy.Proxy.Packet;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
@@ -25,23 +41,18 @@ public abstract class BaseModel<B, X, P> implements MLModel<B, X, P>{
         return this.modelInfo;
     }
 
-    public String getModelId(){
-        return this.modelInfo.get("modelId");
-    }
-
     @Override
     public abstract int initModel(B modelBuffer);
 
     @Override
     public abstract Map<String, Object> predict(X inputData, P predictParams);
 
-    protected Map<String, Object> getFederatedPredict(Map<String, Object> requestData) throws Exception{
+    protected Map<String, Object> getFederatedPredict(Map<String, Object> requestData){
         Packet.Builder packetBuilder = Packet.newBuilder();
         requestData.putAll(this.modelInfo);
         requestData.put("myPartyId", Configuration.getProperty("partyId"));
-        ObjectMapper objectMapper = new ObjectMapper();
         packetBuilder.setBody(Proxy.Data.newBuilder()
-                        .setValue(ByteString.copyFrom(objectMapper.writeValueAsString(requestData).getBytes()))
+                        .setValue(ByteString.copyFrom(ObjectTransform.bean2Json(requestData).getBytes()))
                         .build());
 
         Proxy.Metadata.Builder metaDataBuilder = Proxy.Metadata.newBuilder();
@@ -64,7 +75,7 @@ public abstract class BaseModel<B, X, P> implements MLModel<B, X, P>{
         DataTransferServiceGrpc.DataTransferServiceBlockingStub stub1 = DataTransferServiceGrpc.newBlockingStub(channel1);
         Packet packet = stub1.unaryCall(packetBuilder.build());
 
-        Map<String, Object> result = objectMapper.readValue(packet.getBody().getValue().toStringUtf8(), HashMap.class);
-        return result;
+        ReturnResult result = (ReturnResult) ObjectTransform.json2Bean(packet.getBody().getValue().toStringUtf8(), ReturnResult.class);
+        return result.getData();
     }
 }

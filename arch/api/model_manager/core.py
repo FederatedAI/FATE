@@ -28,12 +28,11 @@ def save_model(buffer_type, proto_buffer, commit_log="", branch="master"):
     data_table_info = gen_data_table_info("model_data", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
     # todo:  model slice?
-    data_table.put(buffer_type, proto_buffer.SerializeToString(), use_pickle=False)
+    data_table.put(buffer_type, proto_buffer.SerializeToString(), use_serialize=False)
 
     # save model version info
     data_table_info["commitLog"] = commit_log
-    data_table_info["parent"] = parent
-    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, data_table_info=data_table_info)
+    save_version_info(version_table=version_table, branch=branch, commit_id=commit_id, parent=parent, data_table_info=data_table_info)
     return commit_id
 
 
@@ -47,7 +46,7 @@ def read_model(buffer_type, proto_buffer, commit_id=None, tag=None, branch="mast
         data_table_info = data_table_info if data_table_info else gen_data_table_info("model_data", scene_key=scene_key, commit_id=commit_id)
         data_table = get_data_table(data_table_info=data_table_info, create_if_missing=False)
         # todo:  model slice?
-        buffer_bytes = data_table.get(buffer_type, use_pickle=False)
+        buffer_bytes = data_table.get(buffer_type, use_serialize=False)
         proto_buffer.ParseFromString(buffer_bytes)
         return True
     else:
@@ -86,7 +85,7 @@ def test_model(role1, role2):
 if __name__ == '__main__':
     import uuid
     job_id = str(uuid.uuid1().hex)
-    eggroll.init(job_id=job_id)
+    eggroll.init(job_id=job_id, mode=1)
 
     test_model("guest", "Guest")
     test_model("host", "Host")

@@ -1,13 +1,32 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.webank.ai.fate.serving.service;
 
-import com.webank.ai.fate.api.serving.PredictionServiceGrpc;
-import com.webank.ai.fate.api.serving.PredictionServiceProto;
-import com.webank.ai.fate.api.serving.PredictionServiceProto.PredictRequest;
-import com.webank.ai.fate.api.serving.PredictionServiceProto.PredictResponse;
-import com.webank.ai.fate.api.serving.PredictionServiceProto.FederatedMeta;
+import com.google.protobuf.ByteString;
+import com.webank.ai.fate.api.serving.InferenceServiceGrpc;
+import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceRequest;
+import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceResponse;
+import com.webank.ai.fate.api.serving.InferenceServiceProto.FederatedMeta;
+import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.utils.Configuration;
+import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.mlmodel.model.MLModel;
-import com.webank.ai.fate.core.result.StatusCode;
+import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.serving.utils.FederatedUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
@@ -21,14 +40,14 @@ import java.util.List;
 import java.util.Map;
 
 
-public class PredictService extends PredictionServiceGrpc.PredictionServiceImplBase {
+public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBase {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void predict(PredictRequest req, StreamObserver<PredictResponse> responseObserver){
+    public void predict(InferenceRequest req, StreamObserver<InferenceResponse> responseObserver){
         FederatedMeta requestMeta = req.getMeta();
 
-        PredictResponse.Builder response = PredictResponse.newBuilder();
+        InferenceResponse.Builder response = InferenceResponse.newBuilder();
         String myRole = FederatedUtils.getMyRole(requestMeta.getMyRole());
 
         // get model
@@ -47,39 +66,61 @@ public class PredictService extends PredictionServiceGrpc.PredictionServiceImplB
         // set response meta
         response.setMeta(federatedMetaBuilder.build());
         // deal data
-        req.getDataMap().forEach((sid, f)->{
-            Map<String, Object> predictInputData = new HashMap<>();
-            f.getFloatDataMap().forEach((k, v)->{
-                predictInputData.put(k, v);
-            });
-            f.getStringDataMap().forEach((k, v)->{
-                predictInputData.put(k, v);
-            });
-
+        Object inputObject = ObjectTransform.json2Bean(req.getData().toStringUtf8(), HashMap.class);
+        if (inputObject == null){
+            response.setStatusCode(StatusCode.ILLEGALDATA);
+            response.setMessage("Can not parse data json.");
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+            return;
+        }
+        Map<String, Object> inputData = (Map<String, Object>) inputObject;
+        inputData.forEach((sid, f)->{
+            Map<String, Object> predictInputData = (Map<String, Object>)f;
             Map<String, String> predictParams = new HashMap<>();
             predictParams.put("sceneId", requestMeta.getSceneId());
             predictParams.put("sid", sid);
             predictParams.put("commitId", (String)model.getModelInfo().get("commitId"));
             Map<String, Object> result = model.predict(predictInputData, predictParams);
-
-            PredictionServiceProto.DataMap.Builder dataBuilder = PredictionServiceProto.DataMap.newBuilder();
-            dataBuilder.putFloatData("prob", (float)result.get("prob")); // just a test
-            response.putData(sid, dataBuilder.build());
+            response.setData(ByteString.copyFrom(ObjectTransform.bean2Json(result).getBytes()));
         });
 
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
     }
 
-    public Map<String, Object> federatedPredict(Map<String, Object> requestData){
-        MLModel model = new ModelManager().getModel((String)requestData.get("sceneId"), (String)requestData.get("myPartyId"), "host", (String)requestData.get("commitId"));
-        Map<String, String> predictParams = new HashMap<>();
-        predictParams.put("sceneId", (String)requestData.get("sceneId"));
-        predictParams.put("sid", (String)requestData.get("sid"));
-        predictParams.put("commitId", (String)model.getModelInfo().get("commitId"));
-        Map<String, Object> result = model.predict(getFeatureData((String)requestData.get("sid")), predictParams);
-        result.putAll(model.getModelInfo());
-        return result;
+    public ReturnResult federatedPredict(Map<String, Object> requestData){
+        ReturnResult returnResult = new ReturnResult();
+        String myPartyId = Configuration.getProperty("partyId");
+        String partnerPartyId = requestData.get("myPartyId").toString();
+        String myRole = FederatedUtils.getMyRole(requestData.get("myRole").toString());
+        MLModel model = new ModelManager().getModel(requestData.get("sceneId").toString(), partnerPartyId, myRole, requestData.get("commitId").toString());
+        if (model == null){
+            returnResult.setStatusCode(StatusCode.NOMODEL);
+            returnResult.setMessage("Can not found model.");
+            return returnResult;
+        }
+        Map<String, Object> predictParams = new HashMap<>();
+        predictParams.putAll(requestData);
+        predictParams.put("myPartyId", myPartyId);
+        predictParams.put("partnerPartyId", partnerPartyId);
+        predictParams.put("myRole", myRole);
+        try{
+            Map<String, Object> inputData = getFeatureData(requestData.get("sid").toString());
+            if (inputData == null || inputData.size() < 1){
+                returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
+                returnResult.setMessage("Can not get feature data.");
+                return returnResult;
+            }
+            Map<String, Object> result = model.predict(inputData, predictParams);
+            returnResult.setStatusCode(StatusCode.OK);
+            returnResult.putAllData(result);
+        }
+        catch (Exception ex){
+            returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
+            returnResult.setMessage(ex.getMessage());
+        }
+        return returnResult;
     }
 
     private Map<String, Object> getFeatureData(String sid){

@@ -14,23 +14,10 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.core.storage.kv;
+package com.webank.ai.fate.core.storage.dtable;
 
-import java.util.Map;
-
-public abstract class BaseKVPool<K, V> implements KVPool<K, V> {
-    public abstract void put(K key, V value);
-    public abstract void putIfAbsent(K key, V value);
-    public abstract void putAll(Map<K, V> kv);
-    public abstract V get(K key);
-
-    @Override
-    public void put(K key, V value, boolean onlyIfAbsent){
-        if(onlyIfAbsent){
-            this.putIfAbsent(key, value);
-        }
-        else{
-            this.put(key, value);
-        }
-    }
+public interface DTable {
+    void init(String name, String nameSpace, int partition);
+    byte[] get(String key);
+    void put(String key, byte[] value);
 }
