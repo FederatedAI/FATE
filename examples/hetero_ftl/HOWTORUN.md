@@ -129,7 +129,7 @@ For running FTL algorithm, we only need to know four sections of parameters.
      
 Following two sections of parameters only exist in configuration files of host and guest since arbiter is not responsible for training a model and predicting results, and thus it does not require these parameters.
       
-3. **FTLLocalModelParam** specifies parameters for building local model such as Autoencoder.
+3. **LocalModelParam** specifies parameters for building local model such as Autoencoder.
     * *input_dim:*: the dimension of the original input samples
     * *encode_dim:*: the dimension of the encoded (or hidden) representation.
     * *learning_rate*: learning rate for the local model.
