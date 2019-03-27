@@ -1,14 +1,17 @@
 package com.webank.ai.fate.serving.federatedml.transform;
 
 import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataTransform {
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    private HashMap<String, Object> replace(HashMap<String, Object> inputData, ArrayList<String> values, Map<String, String> replaceValues) {
+    private HashMap<String, Object> replace(HashMap<String, Object> inputData, List<String> values, Map<String, String> replaceValues) {
         for (String key : inputData.keySet()) {
             if (values.contains(inputData.get(key))) {
                 try {
@@ -26,7 +29,7 @@ public class DataTransform {
         // missing fill
         boolean isMissingFill = dataTransformServer.getMissingFill();
         if (isMissingFill) {
-            ArrayList<String> missingValues = (ArrayList<String>) dataTransformServer.getMissingValueList();
+            List<String> missingValues = dataTransformServer.getMissingValueList();
             Map<String, String> missingReplaceValues = dataTransformServer.getMissingReplaceValueMap();
             inputData = replace(inputData, missingValues, missingReplaceValues);
         }
@@ -34,7 +37,7 @@ public class DataTransform {
         //outlier replace
         boolean isOutlierReplace = dataTransformServer.getOutlierReplace();
         if (isOutlierReplace) {
-            ArrayList<String> outlierValues = (ArrayList<String>) dataTransformServer.getOutlierValueList();
+            List<String> outlierValues = dataTransformServer.getOutlierValueList();
             Map<String, String> outlierReplaceValues = dataTransformServer.getOutlierReplaceValueMap();
             inputData = replace(inputData, outlierValues, outlierReplaceValues);
         }
@@ -46,8 +49,7 @@ public class DataTransform {
             if (scaleMethod.equals("MinMaxScale")) {
                 MinMaxScale minMaxScale = new MinMaxScale();
                 inputData = minMaxScale.fit(inputData, dataTransformServer.getScaleReplaceValueMap());
-            }
-            else if (scaleMethod.equals("StandardScale")) {
+            } else if (scaleMethod.equals("StandardScale")) {
                 StandardScale standardScale = new StandardScale();
                 inputData = standardScale.fit(inputData, dataTransformServer.getScaleReplaceValueMap());
             }
