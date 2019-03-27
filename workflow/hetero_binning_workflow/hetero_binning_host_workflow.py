@@ -55,17 +55,33 @@ class HeteroBinningHostWorkflow(WorkFlow):
     def run(self):
         self._init_argument()
         LOGGER.debug("Host workflow inited")
+
         if self.workflow_param.method == "binning":
 
-            if self.binning_param.local_only:
-                LOGGER.debug("For local binning only, nothing is needed for host")
-                pass
+            if self.binning_param.process_method == 'fit':
+                train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
+                                                             self.workflow_param.train_input_namespace)
+                if self.binning_param.local_only:
+                    LOGGER.debug("For local binning only, nothing is needed for host")
+                    pass
+                else:
+                    self.model.fit(train_data_instance)
+                self.model.save_model()
             else:
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace)
-                self.model.fit(train_data_instance)
+                self.load_model()
+
+                if self.binning_param.local_only:
+                    LOGGER.debug("For local binning only, nothing is needed for host")
+                    pass
+                else:
+                    self.model.transform(train_data_instance)
         else:
             raise TypeError("method %s is not support yet" % (self.workflow_param.method))
+
+        LOGGER.info("Task end")
+
 
 
 if __name__ == "__main__":

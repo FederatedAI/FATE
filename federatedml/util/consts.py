@@ -77,3 +77,11 @@ DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
 
 QUANTILE = 'quantile'
+
+# Feature selection methods
+UNIQUE_VALUE = 'unique_value'
+IV_VALUE_THRES = 'iv_value_thres'
+IV_PERCENTILE = 'iv_percentile'
+COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
+COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
+OUTLIER_COLS = 'outlier_cols'

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -12,11 +15,28 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
-from federatedml.param.param import LogisticParam, InitParam, DecisionTreeParam, ObjectiveParam, DataIOParam, \
-    WorkFlowParam, FeatureBinningParam, FeatureSelectionParam, \
-    EncryptParam, BoostingTreeParam, IntersectParam, EvaluateParam, PredictParam
 
-__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam", "ObjectiveParam",
-           "WorkFlowParam", "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam']
+import unittest
+
+# from arch.api import eggroll
+
+# eggroll.init("123")
+
+from federatedml.feature.feature_selection import UniqueValueFilter
+from federatedml.param.param import UniqueValueParam
+
+
+class TestFeatureSelect(unittest.TestCase):
+    def setUp(self):
+        param = UniqueValueParam()
+        self.filter_obj = UniqueValueFilter(param, select_cols=[0, 1])
+        self.filter_obj.left_cols = [0, 1]
+
+    def test_protobuf(self):
+        result = self.filter_obj.to_result()
+        print(result)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -38,7 +38,7 @@ LOAD_DATA_COUNT = 10000
 MAX_PARTITION_NUM = 32
 
 
-def make_config_file(work_mode, job_id, guest_partyid, host_partyid):
+def make_config_file(work_mode, job_id, guest_partyid, host_partyid, result_table, result_namespace):
     with open(config_path + '/guest_runtime_conf.json', 'r', encoding='utf-8') as load_f:
         guest_config = json.load(load_f)
 
@@ -46,8 +46,8 @@ def make_config_file(work_mode, job_id, guest_partyid, host_partyid):
     guest_config['role']['host'][0] = host_partyid
     guest_config['role']['guest'][0] = guest_partyid
     guest_config['WorkFlowParam']['work_mode'] = int(work_mode)
-    # guest_config['FeatureBinningParam']['result_table'] = result_table
-    # guest_config['FeatureBinningParam']['result_namespace'] = result_namespace
+    guest_config['FeatureBinningParam']['result_table'] = result_table
+    guest_config['FeatureBinningParam']['result_namespace'] = result_namespace
     guest_config['WorkFlowParam']['train_input_table'] = data_set + '_guest_' + job_id
 
     guest_config_path = config_path + '/guest_runtime_conf.json_' + str(job_id)
@@ -62,8 +62,8 @@ def make_config_file(work_mode, job_id, guest_partyid, host_partyid):
     host_config['role']['host'][0] = host_partyid
     host_config['role']['guest'][0] = guest_partyid
     host_config['WorkFlowParam']['work_mode'] = int(work_mode)
-    # host_config['FeatureBinningParam']['result_table'] = result_table
-    # host_config['FeatureBinningParam']['result_namespace'] = result_namespace
+    host_config['FeatureBinningParam']['result_table'] = result_table
+    host_config['FeatureBinningParam']['result_namespace'] = result_namespace
     host_config['WorkFlowParam']['train_input_table'] = data_set + '_host_' + job_id
 
     host_config_path = config_path + '/host_runtime_conf.json_' + str(job_id)
@@ -216,27 +216,28 @@ if __name__ == '__main__':
     jobid = sys.argv[2]
     guest_partyid = sys.argv[3]
     host_partyid = sys.argv[4]
-
+    result_table = sys.argv[5]
+    result_namespace = sys.argv[6]
 
     guest_config_path, host_config_path, load_file_guest, load_file_host = make_config_file(work_mode, jobid,
-                                                                                            guest_partyid,
-                                                                                            host_partyid
-                                                                                            )
+                                                                                            guest_partyid, host_partyid,
+                                                                                            result_table,
+                                                                                            result_namespace)
     load_file(load_file_guest)
     load_file(load_file_host)
 
-    binning_path = home_dir + '/../../workflow/hetero_binning_workflow/hetero_binning_guest_workflow.py'
+    work_path = home_dir + '/../../workflow/hetero_feature_select_workflow/hetero_feature_select_guest_workflow.py'
     subprocess.Popen(["python",
-                      binning_path,
+                      work_path,
                       "-c",
                       guest_config_path,
                       "-j",
                       jobid
                       ])
 
-    binning_path = home_dir + '/../../workflow/hetero_binning_workflow/hetero_binning_host_workflow.py'
+    work_path = home_dir + '/../../workflow/hetero_feature_select_workflow/hetero_feature_select_host_workflow.py'
     subprocess.Popen(["python",
-                      binning_path,
+                      work_path,
                       "-c",
                       host_config_path,
                       "-j",

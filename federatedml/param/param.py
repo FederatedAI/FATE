@@ -601,6 +601,9 @@ class FeatureBinningParam(object):
 
     Parameters
     ----------
+    process_method : str, 'fit' or 'transform', default: "fit"
+        Specify what process to do.
+
     method : str, 'quantile', default: 'quantile'
         Binning method.
 
@@ -644,7 +647,8 @@ class FeatureBinningParam(object):
 
     """
 
-    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+    def __init__(self, process_method='fit',
+                 method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
@@ -652,6 +656,7 @@ class FeatureBinningParam(object):
                  result_table='binning_table',
                  result_namespace='binning_namespace',
                  display_result='simple'):
+        self.process_method = process_method
         self.method = method
         self.compress_thres = compress_thres
         self.head_size = head_size
@@ -668,46 +673,135 @@ class FeatureBinningParam(object):
         self.display_result = display_result
 
 
-class FeatureSelectionParam(object):
+class UniqueValueParam(object):
     """
-    Define the feature binning method
+    Use the difference between max-value and min-value to judge.
 
     Parameters
     ----------
+    eps: float, default: 1e-5
+        The column(s) will be filtered if its difference is smaller than eps.
+    """
+
+    def __init__(self, eps=1e-5):
+        self.eps = eps
+
+
+class IVSelectionParam(object):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
+    value_threshold: float, default: 1.0
+        Used if iv_value_thres method is used in feature selection.
+
+    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
+        Percentile threshold for iv_percentile method
+
+    """
+
+    def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
+        self.value_threshold = value_threshold
+        self.percentile_threshold = percentile_threshold
+        self.bin_param = bin_param
+
+
+class CoeffOfVarSelectionParam(object):
+    """
+    Use coefficient of variation to select features. When judging, the absolute value will be used.
+
+    Parameters
+    ----------
+    value_threshold: float, default: 1.0
+        Used if coefficient_of_variation_value_thres method is used in feature selection.
+
+    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
+        Percentile threshold for coefficient_of_variation_percentile method
+
+    """
+
+    def __init__(self, value_threshold=1.0):
+        self.value_threshold = value_threshold
+
+
+class OutlierColsSelectionParam(object):
+    """
+    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.
+
+    Parameters
+    ----------
+    percentile: float, [0., 1.] default: 1.0
+        The percentile points to compare.
+
+    upper_threshold: float, default: 1.0
+        Percentile threshold for coefficient_of_variation_percentile method
+
+    """
+
+    def __init__(self, percentile=1.0, upper_threshold=1.0):
+        self.percentile = percentile
+        self.upper_threshold = upper_threshold
+
+
+class FeatureSelectionParam(object):
+    """
+    Define the feature selection parameters.
+
+    Parameters
+    ----------
+    method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
+        Decide what process to do.
+
     select_cols: list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns
+        Specify which columns need to calculated. -1 represent for all columns.
 
-    filter_method: list, default: ["unique_value", "iv", "coefficient_of_variation"]
+    filter_method: list, default: ["unique_value", "iv_value_thres", "iv_percentile",
+                "coefficient_of_variation_value_thres", "outlier_cols"]
+
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
+        Please be notified that, if a percentile method is used after some certain filter method,
+        the percentile represent for the ratio of rest features.
+        e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
+        top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
-        abnormal_col: filter the columns if the number of values that are same exceeds a given ratio.
-            e.g. There are 100 values in a feature column and abnormal ratio is set as 0.95. If 95 out of 100 number
-            of values is 1, then, this columns will be filtered.
+        unique_value: filter the columns if all values in this feature is the same
 
-        iv_abs: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+        iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
             Filter those columns whose iv is smaller than threshold.
 
         iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
             need to be provided. Pick floor(ratio * feature_num) features with higher iv.
 
+        coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
 
-    abnormal_col_ratio: float, default: 1.0
-        Required when abonormal_col method is set.
+        coefficient_of_variation_percentile: Pick floor(ratio * feature_num) features with higher coefficient of
+                                variation (which means filter the rest)
 
-    iv_thres: float, default: 1.0
+        outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
 
-    iv_ratio_thres: float, default: 1.0
 
     """
 
-    def __init__(self, select_cols=-1, filter_method=None, abnormal_col_ratio=1.0, iv_abs_thres=1.0,
-                 iv_ratio_thres=1.0):
+    def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
+                 unique_param=UniqueValueParam(),
+                 iv_param=IVSelectionParam(), coe_param=CoeffOfVarSelectionParam(),
+                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
+                 result_table='binning_table',
+                 result_namespace='binning_namespace',
+                 ):
+        self.method = method
         self.select_cols = select_cols
         if filter_method is None:
-            self.filter_method = ["abnormal_col", "iv"]
+            self.filter_method = [consts.UNIQUE_VALUE]
         else:
             self.filter_method = filter_method
 
-        self.abnormal_col_ratio = abnormal_col_ratio
-        self.iv_abs_thres = iv_abs_thres
-        self.iv_ratio_thres = iv_ratio_thres
+        self.local_only = local_only
+        self.unique_param = unique_param
+        self.iv_param = iv_param
+        self.coe_param = coe_param
+        self.outlier_param = outlier_param
+        self.bin_param = bin_param
+        self.result_table = result_table
+        self.result_namespace = result_namespace

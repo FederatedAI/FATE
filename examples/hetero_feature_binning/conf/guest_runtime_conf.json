@@ -25,8 +25,8 @@
         "train_input_table": "TO SET",
         "train_input_namespace": "example",
         "work_mode": "TO SET",
-        "model_table": "whatever",
-        "model_namespace": "example"
+        "model_table": "feature_binning_guest_table",
+        "model_namespace": "feature_binning_namespace"
         },
 
     "EncryptParam": {
@@ -35,6 +35,7 @@
     },
 
     "FeatureBinningParam": {
+        "process_method": "fit",
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,
@@ -43,8 +44,8 @@
         "bin_num": 10,
         "cols": -1,
         "local_only": false,
-        "result_table": "TO SET",
-        "result_namespace": "TO SET",
+        "result_table": "feature_binning_guest_table",
+        "result_namespace": "feature_binning_namespace",
         "display_result": ["iv"]
     }
 }

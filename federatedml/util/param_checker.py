@@ -109,7 +109,7 @@ class EncryptParamChecker(object):
         else:
             user_input = encrypt_param.method.lower()
             if user_input == 'paillier':
-                encrypt_param.method = 'Paillier'
+                encrypt_param.method = consts.PAILLIER
                 # else:
                 #     raise ValueError(
                 #         "encode encrypt_param's method {} not supported, Supported 'Paillier' only")
@@ -352,10 +352,11 @@ class WorkFlowParamChecker(object):
         if type(workflow_param.method).__name__ != "str":
             raise ValueError(
                 "workflow param's method {} not supported, should be str type".format(workflow_param.method))
-        elif workflow_param.method not in ['train', 'predict', 'cross_validation', 'intersect', 'binning']:
+        elif workflow_param.method not in ['train', 'predict', 'cross_validation',
+                                           'intersect', 'binning', 'feature_select']:
             raise ValueError("workflow param's method {} not supported".format(workflow_param.method))
 
-        if workflow_param.method in ['train', 'binning']:
+        if workflow_param.method in ['train', 'binning', 'feature_select']:
             if type(workflow_param.train_input_table).__name__ != "str":
                 raise ValueError(
                     "workflow param's train_input_table {} not supported, should be str type".format(
@@ -598,6 +599,22 @@ class FeatureBinningParamChecker(object):
                                            'non_event_rate_array', 'is_woe_monotonic'])
 
 
+class FeatureSelectionParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "hetero feature selection param's"
+        check_defined_type(feature_param.filter_method, descr, ['list'])
+        for idx, method in enumerate(feature_param.filter_method):
+            method = method.lower()
+            check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
+                                              "coefficient_of_variation_value_thres",
+                                              "outlier_cols"])
+            feature_param.filter_method[idx] = method
+        check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
+        check_string(feature_param.result_table, descr)
+        check_string(feature_param.result_namespace, descr)
+
+
 class FTLModelParamChecker(object):
     @staticmethod
     def check_param(ftl_model_param):
@@ -676,7 +693,7 @@ def check_open_unit_interval(param, descr):
 
 def check_valid_value(param, descr, valid_values):
     if param not in valid_values:
-        raise ValueError(descr + "{} is not supported, it should be in {}".format(param, valid_values))
+        raise ValueError(descr + " {} is not supported, it should be in {}".format(param, valid_values))
 
 
 def check_defined_type(param, descr, types):
