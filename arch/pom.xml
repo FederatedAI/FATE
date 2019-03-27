@@ -28,13 +28,14 @@
         <module>driver</module>
         <module>eggroll</module>
         <module>networking</module>
+        <module>fate-serving</module>
     </modules>
 
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <fate.version>0.2</fate.version>
+        <fate.version>0.1</fate.version>
         <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -47,7 +48,7 @@
         <junit.version>4.12</junit.version>
         <log4j.version>2.11.1</log4j.version>
 
-        <protobuf-maven-plugin.version>0.5.1</protobuf-maven-plugin.version>
+        <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
     </properties>
     <dependencies>

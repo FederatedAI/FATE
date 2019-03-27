@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "ModelMetaProto";
+
+message ModelMeta{
+    string name = 1;
+    bool fit_intercept = 2;
+    int32 coef_size = 3;
+    bool data_transform = 4;
+    string data_transform_config_path = 5;
+}
