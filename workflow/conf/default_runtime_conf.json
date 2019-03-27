@@ -1,7 +1,7 @@
 {
     "DataIOParam": {
-        "with_label": "True",
-        "label_idx": "0",
+        "with_label": true,
+        "label_idx": 0,
         "label_type": "int",
         "output_format": "sparse"
     },
@@ -12,6 +12,8 @@
         "predict_input_table": "some_predict_data_table_name",
         "predict_input_namespace": "some_predict_data_path",
         "predict_result_partition": 2,
+        "model_table": "hetero_dnn_lr_guest_model",
+        "model_namespace": "hetero_dnn_lr",
         "predict_output_table": "some_predict_output_table_name",
         "predict_output_namespace": "some_predict_output_path",
         "evaluation_output_table": "some_evaluate_output_table_name",
@@ -87,5 +89,30 @@
         "result_table": "TO SET",
         "result_namespace": "TO SET",
         "display_result": ["iv"]
+    },
+
+    "FeatureSelectionParam": {
+        "method": "fit",
+        "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
+                "coefficient_of_variation_value_thres", "outlier_cols"],
+        "select_cols": -1,
+        "local_only": false,
+        "result_table": "feature_selection_guest_model_table",
+        "result_namespace": "feature_select_namespace"
+    },
+    "UniqueValueParam": {
+        "eps": 1e-5
+    },
+    "IVSelectionParam": {
+        "value_threshold": 0.1,
+        "percentile_threshold": 1.0
+    },
+    "CoeffOfVarSelectionParam": {
+        "value_threshold": 0.1,
+        "percentile_threshold": 0.8
+    },
+    "OutlierColsSelectionParam": {
+        "percentile": 0.9,
+        "upper_threshold": 1000
     }
 }

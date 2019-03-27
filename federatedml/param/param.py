@@ -730,6 +730,9 @@ class IVSelectionParam(object):
     percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
         Percentile threshold for iv_percentile method
 
+    bin_param : FeatureBinningParam
+        Use to calculate iv.
+
     """
 
     def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
@@ -746,9 +749,6 @@ class CoeffOfVarSelectionParam(object):
     ----------
     value_threshold: float, default: 1.0
         Used if coefficient_of_variation_value_thres method is used in feature selection.
-
-    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
-        Percentile threshold for coefficient_of_variation_percentile method
 
     """
 

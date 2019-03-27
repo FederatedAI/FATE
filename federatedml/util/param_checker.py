@@ -32,14 +32,19 @@ class DataIOParamChecker(object):
         if type(dataio_param).__name__ != "DataIOParam":
             raise ValueError("dataio_param {} not supported, should be DataIOParam object".format(dataio_param))
 
-        if dataio_param.input_format not in ["dense", "sparse"]:
-            raise ValueError("dataio param's input format {} not supported".format(dataio_param.input_format))
+        descr = "dataio param's"
 
-        if dataio_param.output_format not in ["dense", "sparse"]:
-            raise ValueError("dataio param's output format {} not supported".format(dataio_param.output_format))
+        dataio_param.input_format = check_and_change_lower(dataio_param.input_format,
+                                                           ["dense", "sparse"],
+                                                           descr)
 
-        if dataio_param.data_type not in ["int", "int64", "float", "float64", "str", "long"]:
-            raise ValueError("dataio param's data_type {} not supported".format(dataio_param.data_type))
+        dataio_param.output_format = check_and_change_lower(dataio_param.output_format,
+                                                            ["dense", "sparse"],
+                                                            descr)
+
+        dataio_param.data_type = check_and_change_lower(dataio_param.data_type,
+                                                        ["int", "int64", "float", "float64", "str", "long"],
+                                                        descr)
 
         if type(dataio_param.missing_fill).__name__ != 'bool':
             raise ValueError("dataio param's missing_fill {} not supported".format(dataio_param.missing_fill))
@@ -51,9 +56,9 @@ class DataIOParamChecker(object):
             if type(dataio_param.label_idx).__name__ not in ["long", "int"]:
                 raise ValueError("dataio param's label_idx {} not supported".format(dataio_param.label_idx))
 
-            if dataio_param.label_type not in ["int", "int64", "float", "float64", "str", "long"]:
-                raise ValueError("dataio param's label_type {} not supported".format(dataio_param.label_type))
-
+            dataio_param.label_type = check_and_change_lower(dataio_param.label_type,
+                                                             ["int", "int64", "float", "float64", "str", "long"],
+                                                             descr)
         return True
 
 
@@ -66,17 +71,22 @@ class ObjectiveParamChecker(object):
         if objective_param.objective is None:
             return True
 
+        descr = "objective param's"
+
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
-            if objective_param.objective not in ["cross_entropy", "lse", "lae", "huber", "fair", "log_cosh", "tweedie"]:
-                raise ValueError("objective param's objective {} not supported".format(objective_param.objective))
+            objective_param.objective = check_and_change_lower(objective_param.objective,
+                                                               ["cross_entropy", "lse", "lae", "huber", "fair",
+                                                                "log_cosh", "tweedie"],
+                                                               descr)
 
         if task_type == consts.CLASSIFICATION:
             if objective_param.objective != "cross_entropy":
                 raise ValueError("objective param's objective {} not supported".format(objective_param.objective))
 
         elif task_type == consts.REGRESSION:
-            if objective_param.objective not in ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"]:
-                raise ValueError("objective param's objective {} not supported".format(objective_param.objective))
+            objective_param.objective = check_and_change_lower(objective_param.objective,
+                                                               ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
+                                                               descr)
 
             params = objective_param.params
             if objective_param.objective in ["huber", "fair", "tweedie"]:
@@ -95,7 +105,6 @@ class ObjectiveParamChecker(object):
                     if params[0] <= 0.0:
                         raise ValueError("in {} regression, objective params[0] should greater than 0.0".format(
                             objective_param.objective))
-
         return True
 
 
@@ -104,15 +113,12 @@ class EncryptParamChecker(object):
     def check_param(encrypt_param):
         if type(encrypt_param.method).__name__ != "str":
             raise ValueError(
-                "encrypt_param's method {] not supported, should be str type".format(
+                "encrypt_param's method {} not supported, should be str type".format(
                     encrypt_param.method))
         else:
             user_input = encrypt_param.method.lower()
             if user_input == 'paillier':
                 encrypt_param.method = consts.PAILLIER
-                # else:
-                #     raise ValueError(
-                #         "encode encrypt_param's method {} not supported, Supported 'Paillier' only")
 
         if type(encrypt_param.key_length).__name__ != "int":
             raise ValueError(
@@ -132,10 +138,16 @@ class DecisionTreeParamChecker(object):
             raise ValueError(
                 "decision tree param {} not supported, should be DecisionTreeParam object".format(tree_param))
 
+        descr = "decision tree param"
+
         if tree_param.criterion_method not in ["xgboost"]:
             raise ValueError(
                 "decision tree param's criterion_method {} not supported, now just supported xgboost".format(
                     tree_param.criterion_method))
+
+        tree_param.criterion_method = check_and_change_lower(tree_param.criterion_method,
+                                                             ["xgboost"],
+                                                             descr)
 
         if type(tree_param.criterion_params).__name__ != "list":
             raise ValueError("decision tree param's criterion_params {} not supported, should be list".format(
@@ -172,7 +184,7 @@ class DecisionTreeParamChecker(object):
                                                                                   consts.MAX_SPLIT_NODES))
 
         if type(tree_param.n_iter_no_change).__name__ != "bool":
-            raise ValueError("decision tree param's n_iter_no_change {] not supported, should be bool type".format(
+            raise ValueError("decision tree param's n_iter_no_change {} not supported, should be bool type".format(
                 tree_param.n_iter_no_change))
 
         if type(tree_param.tol).__name__ not in ["float", "int", "long"]:
@@ -185,6 +197,8 @@ class BoostingTreeParamChecker(object):
     @staticmethod
     def check_param(boost_param):
         DecisionTreeParamChecker.check_param(boost_param.tree_param)
+
+        descr = "boosting tree param's"
 
         if boost_param.task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             raise ValueError("boosting tree param's task_type {} not supported, should be {} or {}".format(
@@ -205,7 +219,7 @@ class BoostingTreeParamChecker(object):
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
-            raise ValueError("boosting tree param's n_iter_no_change {] not supported, should be bool type".format(
+            raise ValueError("boosting tree param's n_iter_no_change {} not supported, should be bool type".format(
                 boost_param.n_iter_no_change))
 
         if type(boost_param.tol).__name__ not in ["float", "int", "long"]:
@@ -213,9 +227,9 @@ class BoostingTreeParamChecker(object):
 
         EncryptParamChecker.check_param(boost_param.encrypt_param)
 
-        if boost_param.quantile_method not in ["bin_by_data_block", "bin_by_sample_data"]:
-            raise ValueError(
-                "boosting tree param's quantile_method {} not supported, should be bin_by_data_block/bin_by_sample_data")
+        boost_param.quantile_method = check_and_change_lower(boost_param.quantile_method,
+                                                             ["bin_by_data_block", "bin_by_sample_data"],
+                                                             "boosting tree param's quantile_method")
 
         if type(boost_param.bin_num).__name__ not in ["int", "long"] or boost_param.bin_num < 2:
             raise ValueError(
@@ -242,11 +256,12 @@ class EncodeParamChecker(object):
                 "encode param's salt {} not supported, should be str type".format(
                     encode_param.salt))
 
-        encode_method = encode_param.encode_method.lower()
-        if encode_method not in ["none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512"]:
-            raise ValueError(
-                "encode param's encode_method {} not supported, now just supported none, md5, sha1, sha224, sha256, sha384, sha512".format(
-                    encode_param.encode_method))
+        descr = "encode param's "
+
+        encode_param.encode_method = check_and_change_lower(encode_param.encode_method,
+                                                            ["none", "md5", "sha1", "sha224", "sha256", "sha384",
+                                                             "sha512"],
+                                                            descr)
 
         if type(encode_param.base64).__name__ != "bool":
             raise ValueError(
@@ -259,10 +274,11 @@ class EncodeParamChecker(object):
 class IntersectParamChecker(object):
     @staticmethod
     def check_param(intersect_param):
-        if intersect_param.intersect_method not in [consts.RSA, consts.RAW]:
-            raise ValueError(
-                "intersect param's intersect_method {} not supported, now just supported rsa and raw".format(
-                    intersect_param.intersect_method))
+        descr = "intersect param's"
+
+        intersect_param.intersect_method = check_and_change_lower(intersect_param.intersect_method,
+                                                                  [consts.RSA, consts.RAW],
+                                                                  descr)
 
         if type(intersect_param.random_bit).__name__ not in ["int"]:
             raise ValueError("intersect param's random_bit {} not supported, should be positive integer".format(
@@ -278,10 +294,9 @@ class IntersectParamChecker(object):
                 "intersect param's is_get_intersect_ids {} not supported, should be bool type".format(
                     intersect_param.is_get_intersect_ids))
 
-        if intersect_param.join_role not in [consts.GUEST, consts.HOST]:
-            raise ValueError(
-                "intersect param's join_role {} not supported, now just supported guest and host".format(
-                    intersect_param.join_role))
+        intersect_param.join_role = check_and_change_lower(intersect_param.join_role,
+                                                           [consts.GUEST, consts.HOST],
+                                                           descr)
 
         if type(intersect_param.with_encode).__name__ != "bool":
             raise ValueError(
@@ -314,18 +329,23 @@ class EvaluateParamChecker(object):
         if type(evaluate_param.metrics).__name__ != "list":
             raise ValueError("evaluate param's metrics {} not supported, should be list".format(evaluate_param.metrics))
         else:
-            for metric in evaluate_param.metrics:
-                if metric not in [consts.AUC, consts.KS, consts.LIFT, consts.PRECISION, consts.RECALL, consts.ACCURACY,
-                                  consts.EXPLAINED_VARIANCE,
-                                  consts.MEAN_ABSOLUTE_ERROR, consts.MEAN_SQUARED_ERROR, consts.MEAN_SQUARED_LOG_ERROR,
-                                  consts.MEDIAN_ABSOLUTE_ERROR,
-                                  consts.R2_SCORE, consts.ROOT_MEAN_SQUARED_ERROR]:
-                    raise ValueError("evaluate param's metrics {} not supported".format(metric))
+            descr = "evaluate param's metrics"
+            for idx, metric in enumerate(evaluate_param.metrics):
+                evaluate_param.metrics[idx] = check_and_change_lower(metric,
+                                                                     [consts.AUC, consts.KS, consts.LIFT,
+                                                                      consts.PRECISION, consts.RECALL, consts.ACCURACY,
+                                                                      consts.EXPLAINED_VARIANCE,
+                                                                      consts.MEAN_ABSOLUTE_ERROR,
+                                                                      consts.MEAN_SQUARED_ERROR,
+                                                                      consts.MEAN_SQUARED_LOG_ERROR,
+                                                                      consts.MEDIAN_ABSOLUTE_ERROR,
+                                                                      consts.R2_SCORE, consts.ROOT_MEAN_SQUARED_ERROR],
+                                                                     descr)
+        descr = "evaluate param's "
 
-        if evaluate_param.classi_type not in [consts.BINARY, consts.MULTY, consts.REGRESSION]:
-            raise ValueError(
-                "evaluate param's classi_type {} not supported, now just supported binary, multi and regression".format(
-                    evaluate_param.classi_type))
+        evaluate_param.classi_type = check_and_change_lower(evaluate_param.classi_type,
+                                                            [consts.BINARY, consts.MULTY, consts.REGRESSION],
+                                                            descr)
 
         if type(evaluate_param.pos_label).__name__ not in ["str", "float", "int"]:
             raise ValueError(
@@ -349,12 +369,13 @@ class EvaluateParamChecker(object):
 class WorkFlowParamChecker(object):
     @staticmethod
     def check_param(workflow_param):
-        if type(workflow_param.method).__name__ != "str":
-            raise ValueError(
-                "workflow param's method {} not supported, should be str type".format(workflow_param.method))
-        elif workflow_param.method not in ['train', 'predict', 'cross_validation',
-                                           'intersect', 'binning', 'feature_select']:
-            raise ValueError("workflow param's method {} not supported".format(workflow_param.method))
+
+        descr = "workflow param's "
+
+        workflow_param.method = check_and_change_lower(workflow_param.method,
+                                                       ['train', 'predict', 'cross_validation',
+                                                        'intersect', 'binning', 'feature_select'],
+                                                       descr)
 
         if workflow_param.method in ['train', 'binning', 'feature_select']:
             if type(workflow_param.train_input_table).__name__ != "str":
@@ -593,10 +614,13 @@ class FeatureBinningParamChecker(object):
         check_string(binning_param.result_table, descr)
         check_string(binning_param.result_namespace, descr)
         check_defined_type(binning_param.display_result, descr, ['list'])
-        for d_s in binning_param.display_result:
-            check_valid_value(d_s, descr, ['iv', 'woe_array', 'iv_array', 'event_count_array', 'non_event_count_array',
-                                           'event_rate_array', 'bin_nums', 'split_points',
-                                           'non_event_rate_array', 'is_woe_monotonic'])
+        for idx, d_s in enumerate(binning_param.display_result):
+            binning_param.display_result[idx] = check_and_change_lower(d_s,
+                                                                       ['iv', 'woe_array', 'iv_array',
+                                                                        'event_count_array', 'non_event_count_array',
+                                                                        'event_rate_array', 'bin_nums', 'split_points',
+                                                                        'non_event_rate_array', 'is_woe_monotonic'],
+                                                                       descr)
 
 
 class FeatureSelectionParamChecker(object):
@@ -613,6 +637,48 @@ class FeatureSelectionParamChecker(object):
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
         check_string(feature_param.result_table, descr)
         check_string(feature_param.result_namespace, descr)
+        check_boolean(feature_param.local_only, descr)
+        UniqueValueParamChecker.check_param(feature_param.unique_param)
+        IVSelectionParamChecker.check_param(feature_param.iv_param)
+        CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
+        OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
+        FeatureBinningParamChecker.check_param(feature_param.bin_param)
+        return True
+
+
+class UniqueValueParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "Unique value param's"
+        check_positive_number(feature_param.eps, descr)
+        return True
+
+
+class IVSelectionParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "IV selection param's"
+        check_positive_number(feature_param.value_threshold, descr)
+        check_decimal_float(feature_param.percentile_threshold, descr)
+        FeatureBinningParamChecker.check_param(feature_param.bin_param)
+        return True
+
+
+class CoeffOfVarSelectionParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "Coff of Variances param's"
+        check_positive_number(feature_param.value_threshold, descr)
+        return True
+
+
+class OutlierColsSelectionParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "Outlier Filter param's"
+        check_decimal_float(feature_param.percentile, descr)
+        check_defined_type(feature_param.upper_threshold, descr, ['float', 'int'])
+        return True
 
 
 class FTLModelParamChecker(object):
@@ -706,3 +772,15 @@ def check_valid_value(param, descr, valid_values):
 def check_defined_type(param, descr, types):
     if type(param).__name__ not in types:
         raise ValueError(descr + " {} not supported, should be one of {}".format(param, types))
+
+
+# Used when param is a string.
+def check_and_change_lower(param, valid_list, descr=''):
+    if type(param).__name__ != 'str':
+        raise ValueError(descr + " {} not supported, should be one of {}".format(param, valid_list))
+
+    lower_param = param.lower()
+    if lower_param in valid_list:
+        return lower_param
+    else:
+        raise ValueError(descr + " {} not supported, should be one of {}".format(param, valid_list))
