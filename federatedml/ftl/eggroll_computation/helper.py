@@ -14,12 +14,14 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import math
 import uuid
+
+import numpy as np
+
+from arch.api.eggroll import parallelize, table
 from federatedml.ftl.eggroll_computation.util import distribute_compute_vAvg_XY, distribute_compute_hSum_XY, \
     distribute_encrypt, distribute_decrypt, distribute_compute_XY, distribute_compute_X_plus_Y
-from arch.api.eggroll import parallelize, table
 
 
 def prepare_table(matrix, batch_size=1, max_partition=20):
@@ -45,7 +47,11 @@ def compute_sum_XY(X, Y):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
-    return distribute_compute_vAvg_XY(XT, YT, 1)
+    res = distribute_compute_vAvg_XY(XT, YT, 1)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return res
 
 
 def compute_avg_XY(X, Y):
@@ -53,7 +59,11 @@ def compute_avg_XY(X, Y):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
-    return distribute_compute_vAvg_XY(XT, YT, length)
+    res = distribute_compute_vAvg_XY(XT, YT, length)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return res
 
 
 def compute_XY(X, Y):
@@ -66,7 +76,11 @@ def compute_XY(X, Y):
     result = []
     for i in range(len(val)):
         result.append(val[i])
-    return np.array(result)
+    res = np.array(result)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return res
 
 
 def compute_XY_plus_Z(X, Y, Z):
@@ -82,7 +96,12 @@ def compute_XY_plus_Z(X, Y, Z):
     result = []
     for i in range(len(val)):
         result.append(val[i])
-    return np.array(result)
+    res = np.array(result)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    destroy_table(ZT)
+    return res
 
 
 def compute_X_plus_Y(X, Y):
@@ -95,7 +114,11 @@ def compute_X_plus_Y(X, Y):
     result = []
     for i in range(len(val)):
         result.append(val[i])
-    return np.array(result)
+    res = np.array(result)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return res
 
 
 def _convert_3d_to_2d_matrix(matrix):
@@ -131,6 +154,8 @@ def decrypt_matrix(private_key, matrix):
 
     if len(_shape) == 3:
         result = result.reshape(_shape)
+
+    destroy_table(X)
     return result
 
 
@@ -160,6 +185,8 @@ def encrypt_matrix(public_key, matrix):
 
     if len(_shape) == 3:
         result = result.reshape(_shape)
+
+    destroy_table(X)
     return result
 
 
@@ -229,7 +256,11 @@ def encrypt_matmul_3(X, Y, partition=20):
             second_dim_list.append(third_dim_list)
         res[i] = second_dim_list
 
-    return np.array(res)
+    result = np.array(res)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return result
 
 
 def encrypt_matmul_2_ob(X, Y, partition=20):
@@ -239,6 +270,8 @@ def encrypt_matmul_2_ob(X, Y, partition=20):
     XT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
     YT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
 
+    # print("encrypt_matmul_2_ob XT", XT)
+    # print("encrypt_matmul_2_ob YT", YT)
     for m in range(len(X)):
         for k in range(Y.shape[1]):
             key = str(m) + "_" + str(k)
@@ -255,7 +288,11 @@ def encrypt_matmul_2_ob(X, Y, partition=20):
             row_list.append(dictionary[key])
         res[m] = row_list
 
-    return np.array(res)
+    result = np.array(res)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return result
 
 
 def encrypt_matmul_3_ob(X, Y, partition=20):
@@ -284,4 +321,12 @@ def encrypt_matmul_3_ob(X, Y, partition=20):
             second_dim_list.append(third_dim_list)
         res[i] = second_dim_list
 
-    return np.array(res)
+    result = np.array(res)
+
+    destroy_table(XT)
+    destroy_table(YT)
+    return result
+
+
+def destroy_table(table):
+    table.destroy()

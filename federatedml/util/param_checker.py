@@ -239,7 +239,7 @@ class EncodeParamChecker(object):
     def check_param(encode_param):
         if type(encode_param.salt).__name__ != "str":
             raise ValueError(
-                "encode param's salt {] not supported, should be str type".format(
+                "encode param's salt {} not supported, should be str type".format(
                     encode_param.salt))
 
         encode_method = encode_param.encode_method.lower()
@@ -250,7 +250,7 @@ class EncodeParamChecker(object):
 
         if type(encode_param.base64).__name__ != "bool":
             raise ValueError(
-                "encode param's base64 {] not supported, should be bool type".format(encode_param.base64))
+                "encode param's base64 {} not supported, should be bool type".format(encode_param.base64))
 
         LOGGER.debug("Finish encode parameter check!")
         return True
@@ -626,12 +626,14 @@ class FTLModelParamChecker(object):
         return True
 
 
-class FTLLocalModelParamChecker(object):
+class LocalModelParamChecker(object):
     @staticmethod
-    def check_param(ftl_local_model_param):
-        model_param_descr = "ftl local model param's "
-        check_positive_integer(ftl_local_model_param.encode_dim, model_param_descr + "encode_dim")
-        check_open_unit_interval(ftl_local_model_param.learning_rate, model_param_descr + "learning_rate")
+    def check_param(local_model_param):
+        model_param_descr = "local model param's "
+        if local_model_param.input_dim is not None:
+            check_positive_integer(local_model_param.input_dim, model_param_descr + "input_dim")
+        check_positive_integer(local_model_param.encode_dim, model_param_descr + "encode_dim")
+        check_open_unit_interval(local_model_param.learning_rate, model_param_descr + "learning_rate")
         return True
 
 
@@ -639,10 +641,13 @@ class FTLDataParamChecker(object):
     @staticmethod
     def check_param(ftl_data_param):
         model_param_descr = "ftl data model param's "
-        check_string(ftl_data_param.file_path, model_param_descr + "file_path")
+        if ftl_data_param.file_path is not None:
+            check_string(ftl_data_param.file_path, model_param_descr + "file_path")
+        if ftl_data_param.num_samples is not None:
+            check_positive_integer(ftl_data_param.num_samples, model_param_descr + "num_samples")
+
         check_positive_integer(ftl_data_param.n_feature_guest, model_param_descr + "n_feature_guest")
         check_positive_integer(ftl_data_param.n_feature_host, model_param_descr + "n_feature_host")
-        check_positive_integer(ftl_data_param.num_samples, model_param_descr + "num_samples")
         check_boolean(ftl_data_param.balanced, model_param_descr + "balanced")
         check_boolean(ftl_data_param.is_read_table, model_param_descr + "is_read_table")
         check_open_unit_interval(ftl_data_param.overlap_ratio, model_param_descr + "overlap_ratio")
@@ -650,15 +655,17 @@ class FTLDataParamChecker(object):
         return True
 
 
-# class FTLValidDataParamChecker(object):
-#
-#     @staticmethod
-#     def check_param(ftl_valid_data_param):
-#         model_param_descr = "ftl validation data model param's "
-#         check_string(ftl_valid_data_param.file_path, model_param_descr + "file_path")
-#         check_positive_integer(ftl_valid_data_param.num_samples, model_param_descr + "num_samples")
-#         check_boolean(ftl_valid_data_param.is_read_table, model_param_descr + "is_read_table")
-#         return True
+class FTLValidDataParamChecker(object):
+    @staticmethod
+    def check_param(ftl_valid_data_param):
+        model_param_descr = "ftl validation data model param's "
+        if ftl_valid_data_param.file_path is not None:
+            check_string(ftl_valid_data_param.file_path, model_param_descr + "file_path")
+        if ftl_valid_data_param.num_samples is not None:
+            check_positive_integer(ftl_valid_data_param.num_samples, model_param_descr + "num_samples")
+
+        check_boolean(ftl_valid_data_param.is_read_table, model_param_descr + "is_read_table")
+        return True
 
 
 def check_string(param, descr):

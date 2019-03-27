@@ -17,9 +17,9 @@
 import inspect
 import unittest
 
-from federatedml.param.param import FTLDataParam, FTLModelParam, FTLLocalModelParam
+from federatedml.param.param import FTLDataParam, FTLModelParam, LocalModelParam
 from federatedml.util import ParamExtract
-from federatedml.util.param_checker import FTLDataParamChecker, FTLLocalModelParamChecker, FTLModelParamChecker
+from federatedml.util.param_checker import FTLDataParamChecker, LocalModelParamChecker, FTLModelParamChecker
 
 from arch.api.eggroll import init
 
@@ -99,18 +99,18 @@ class TestParamValidation(unittest.TestCase):
 
     def test_correct_local_model_param_validation_test(self):
         correct_local_model_param = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 32,
                 "learning_rate": 0.01
             }
         }
-        ftl_local_model_param = FTLLocalModelParam()
+        ftl_local_model_param = LocalModelParam()
         ftl_local_model_param = get_filled_param(ftl_local_model_param, correct_local_model_param)
-        FTLLocalModelParamChecker.check_param(ftl_local_model_param)
+        LocalModelParamChecker.check_param(ftl_local_model_param)
 
     def test_model_param_incorrect_encode_dim_validation_test(self):
         incorrect_encode_dim = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 0.9,
                 "learning_rate": 0.01
             }
@@ -119,7 +119,7 @@ class TestParamValidation(unittest.TestCase):
 
     def test_model_param_incorrect_learning_rate_validation_test(self):
         incorrect_learning_rate = {
-            "FTLLocalModelParam": {
+            "LocalModelParam": {
                 "encode_dim": 32,
                 "learning_rate": 2
             }
@@ -127,10 +127,10 @@ class TestParamValidation(unittest.TestCase):
         self.assertFTLLocalModelParamValueError(incorrect_learning_rate, " learning_rate ")
 
     def assertFTLLocalModelParamValueError(self, param_json, param_to_validate):
-        ftl_local_model_param = FTLLocalModelParam()
+        ftl_local_model_param = LocalModelParam()
         ftl_local_model_param = get_filled_param(ftl_local_model_param, param_json)
         with self.assertRaisesRegex(ValueError, param_to_validate):
-            FTLLocalModelParamChecker.check_param(ftl_local_model_param)
+            LocalModelParamChecker.check_param(ftl_local_model_param)
 
     def test_correct_data_param_validation_test(self):
         correct_data_param = {

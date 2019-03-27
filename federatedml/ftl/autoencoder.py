@@ -14,9 +14,11 @@
 #  limitations under the License.
 #
 
-import tensorflow as tf
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
+from federatedml.ftl.eggroll_computation.helper import compute_sum_XY
 
 
 class Autoencoder(object):
@@ -25,6 +27,10 @@ class Autoencoder(object):
         super(Autoencoder, self).__init__()
         self.id = str(an_id)
         self.sess = None
+        self.built = False
+        self.lr = None
+        self.input_dim = None
+        self.hidden_dim = None
 
     def set_session(self, sess):
         self.sess = sess
@@ -33,6 +39,8 @@ class Autoencoder(object):
         return self.sess
 
     def build(self, input_dim, hidden_dim, learning_rate=1e-2):
+        if self.built:
+            return
 
         self.lr = learning_rate
         self.input_dim = input_dim
@@ -54,6 +62,7 @@ class Autoencoder(object):
         self._add_representation_training_ops()
         self._add_e2e_training_ops()
         self._add_encrypt_grad_update_ops()
+        self.built = True
 
     def _add_input_placeholder(self):
         self.X_in = tf.placeholder(tf.float64, shape=(None, self.input_dim))
@@ -76,9 +85,9 @@ class Autoencoder(object):
 
     def _add_representation_training_ops(self):
         vars_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.encoder_vars_scope)
-
         self.init_grad = tf.placeholder(tf.float64, shape=(None, self.hidden_dim))
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train, grad_loss=self.init_grad)
+        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train,
+                                                                               grad_loss=self.init_grad)
 
     def _add_e2e_training_ops(self):
         self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels=self.X_in))
@@ -114,10 +123,20 @@ class Autoencoder(object):
             grads_b_collector.append(grads_b_i)
         return [np.array(grads_W_collector), np.array(grads_b_collector)]
 
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
+        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
+        return encrypt_grads_W, encrypt_grads_b
+
     def apply_gradients(self, gradients):
         grads_W = gradients[0]
         grads_b = gradients[1]
-        _, _ = self.sess.run([self.new_Wh, self.new_bh], feed_dict={self.grads_W_new: grads_W, self.grads_b_new: grads_b})
+        _, _ = self.sess.run([self.new_Wh, self.new_bh],
+                             feed_dict={self.grads_W_new: grads_W, self.grads_b_new: grads_b})
 
     def backpropogate(self, X, y, in_grad):
         self.sess.run(self.train_op, feed_dict={self.X_in: X, self.init_grad: in_grad})
@@ -134,17 +153,17 @@ class Autoencoder(object):
         _bh = self.sess.run(self.bh)
         _bo = self.sess.run(self.bo)
 
-        model_meta = {"learning_rate": self.lr,
-                      "input_dim": self.input_dim,
-                      "hidden_dim": self.hidden_dim}
-        return {"Wh": _Wh, "bh": _bh, "Wo": _Wo, "bo": _bo, "model_meta": model_meta}
+        hyperparameters = {"learning_rate": self.lr,
+                           "input_dim": self.input_dim,
+                           "hidden_dim": self.hidden_dim}
+        return {"Wh": _Wh, "bh": _bh, "Wo": _Wo, "bo": _bo, "hyperparameters": hyperparameters}
 
     def restore_model(self, model_parameters):
         self.Wh_initializer = model_parameters["Wh"]
         self.bh_initializer = model_parameters["bh"]
         self.Wo_initializer = model_parameters["Wo"]
         self.bo_initializer = model_parameters["bo"]
-        model_meta = model_parameters["model_meta"]
+        model_meta = model_parameters["hyperparameters"]
 
         self.lr = model_meta["learning_rate"]
         self.input_dim = model_meta["input_dim"]
@@ -166,4 +185,3 @@ class Autoencoder(object):
         if show_fig:
             plt.plot(costs)
             plt.show()
-

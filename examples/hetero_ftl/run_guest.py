@@ -15,10 +15,9 @@
 #
 
 import json
-import uuid
 import sys
 from workflow.hetero_ftl_workflow.hetero_guest_workflow import FTLGuestWorkFlow
-from federatedml.ftl.common.data_util import load_guest_host_dtable_from_UCI_Credit_Card, generate_table_namespace_n_name
+from federatedml.ftl.data_util.uci_credit_card_util import load_guest_host_dtable_from_UCI_Credit_Card
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.utils import log_utils
@@ -44,34 +43,34 @@ class TestFTLGuest(FTLGuestWorkFlow):
         LOGGER.debug("Finish eggroll and federation init")
 
     def gen_data_instance(self, table_name, namespace):
-        data_model = self._get_data_model_param()
-        if data_model.is_read_table:
+        data_model_param = self._get_data_model_param()
+        if data_model_param.is_read_table:
             return eggroll.table(table_name, namespace)
         else:
+            data_model_param_dict = {}
+            data_model_param_dict["file_path"] = data_model_param.file_path
+            data_model_param_dict["num_samples"] = data_model_param.num_samples
+            data_model_param_dict["overlap_ratio"] = data_model_param.overlap_ratio
+            data_model_param_dict["guest_split_ratio"] = data_model_param.guest_split_ratio
+            data_model_param_dict["n_feature_guest"] = data_model_param.n_feature_guest
+            data_model_param_dict["balanced"] = data_model_param.balanced
+            guest_data, _ = load_guest_host_dtable_from_UCI_Credit_Card(data_model_param_dict)
+            return guest_data
 
-            file_path = data_model.file_path
-            overlap_ratio = data_model.overlap_ratio
-            guest_split_ratio = data_model.guest_split_ratio
-            guest_feature_num = data_model.n_feature_guest
-            num_samples = data_model.num_samples
-            balanced = data_model.balanced
-
-            namespace, table_name = generate_table_namespace_n_name(file_path)
-            suffix = "_" + str(uuid.uuid1())
-            tables_name = {
-                "guest_table_ns": "guest_" + namespace + suffix,
-                "guest_table_name": "guest_" + table_name + suffix,
-                "host_table_ns": "host_" + namespace + suffix,
-                "host_table_name": "host_" + table_name + suffix,
-            }
-
-            guest_data, host_data = load_guest_host_dtable_from_UCI_Credit_Card(file_path=file_path,
-                                                                                num_samples=num_samples,
-                                                                                tables_name=tables_name,
-                                                                                overlap_ratio=overlap_ratio,
-                                                                                guest_split_ratio=guest_split_ratio,
-                                                                                guest_feature_num=guest_feature_num,
-                                                                                balanced=balanced)
+    def gen_validation_data_instance(self, table_name, namespace):
+        data_model_param = self._get_data_model_param()
+        valid_data_model_param = self._get_valid_data_model_param()
+        if valid_data_model_param.is_read_table:
+            return eggroll.table(table_name, namespace)
+        else:
+            data_model_param_dict = {}
+            data_model_param_dict["file_path"] = valid_data_model_param.file_path
+            data_model_param_dict["num_samples"] = valid_data_model_param.num_samples
+            data_model_param_dict["overlap_ratio"] = data_model_param.overlap_ratio
+            data_model_param_dict["guest_split_ratio"] = data_model_param.guest_split_ratio
+            data_model_param_dict["n_feature_guest"] = data_model_param.n_feature_guest
+            data_model_param_dict["balanced"] = data_model_param.balanced
+            guest_data, _ = load_guest_host_dtable_from_UCI_Credit_Card(data_model_param_dict)
             return guest_data
 
 

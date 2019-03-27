@@ -362,6 +362,18 @@
         "host"
       ]
     },
+    "host_precomputed_comp_list": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_precomputed_comp_list": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
     "encrypt_guest_gradient": {
       "src": "guest",
       "dst": [
@@ -452,6 +464,87 @@
       "src": "host",
       "dst": [
         "guest"
+      ]
+    },
+
+    "guest_public_key": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_public_key": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_enc_guest_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_host_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_guest_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_host_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_loss": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_dec_loss": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "is_decentralized_enc_ftl_stopped": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  },
+  "HeteroDNNLRTransferVariable": {
+    "guest_dec_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_enc_gradient": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_dec_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_enc_gradient": {
+      "src": "host",
+      "dst": [
+        "arbiter"
       ]
     }
   },

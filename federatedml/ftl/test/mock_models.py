@@ -15,13 +15,14 @@
 #
 
 import numpy as np
+
 from federatedml.optim.convergence import ConvergeFunction
 
 
-class FakeAutoencoder(object):
+class MockAutoencoder(object):
 
     def __init__(self, an_id):
-        super(FakeAutoencoder, self).__init__()
+        super(MockAutoencoder, self).__init__()
         self.id = str(an_id)
 
     def build(self, encode_dim, Wh=None, bh=None):
@@ -44,6 +45,18 @@ class FakeAutoencoder(object):
     def apply_gradients(self, gradients):
         pass
 
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = np.sum(encrypt_grads_ex * grads_W, axis=1)
+        encrypt_grads_b = np.sum(encrypt_grads * grads_b, axis=1)
+        print("encrypt_grads_ex shape", encrypt_grads_ex.shape)
+        print("encrypt_grads_W shape", encrypt_grads_W.shape)
+        print("encrypt_grads_b shape", encrypt_grads_b.shape)
+        return encrypt_grads_W, encrypt_grads_b
+
     def backpropogate(self, X, y, in_grad):
         # print("in backpropogate with model ", self.id)
         # print("X shape", X.shape)
@@ -62,9 +75,9 @@ class FakeAutoencoder(object):
         return self.encode_dim
 
 
-class FakeFTLModelParam(object):
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True):
+class MockFTLModelParam(object):
+    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5, alpha=100, lr_decay=0.001,
+                 l2_para=1, is_encrypt=True, enc_ftl="enc_ftl2"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
@@ -72,16 +85,15 @@ class FakeFTLModelParam(object):
         self.lr_decay = lr_decay
         self.l2_para = l2_para
         self.is_encrypt = is_encrypt
+        self.enc_ftl = enc_ftl
 
 
-class FakeDiffConverge(ConvergeFunction):
+class MockDiffConverge(ConvergeFunction):
 
-    def __init__(self, expected_loss, eps=0.00001):
-        super(FakeDiffConverge, self).__init__(eps)
+    def __init__(self, expected_loss, eps=0.001):
+        super(MockDiffConverge, self).__init__(eps)
         self.eps = eps
         self.expected_loss = expected_loss
 
     def is_converge(self, loss):
         return True
-
-
