@@ -71,3 +71,7 @@ def remote(obj, name: str, tag: str, role=None, idx=-1):
     :return: None
     """
     return RuntimeInstance.FEDERATION.remote(obj=obj, name=name, tag=tag, role=role, idx=idx)
+
+
+def get_field(name):
+    return getattr(RuntimeInstance.FEDERATION, name)

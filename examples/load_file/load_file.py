@@ -22,6 +22,7 @@ import csv
 import sys
 import time
 from arch.api import eggroll
+from arch.api.io.feature import save_feature_data
 
 
 CSV = 'csv'
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             namespace = None
             with open(args.config, 'r') as f:
                 data = json.load(f)
-                
+
                 try:
                     input_file_path = data['file']
                 except:
@@ -143,12 +144,21 @@ if __name__ == "__main__":
 
 
             input_data = read_data(input_file_path, head)
-            _namespace, _table_name = generate_table_name(input_file_path)
-            if namespace is None:
-                namespace = _namespace
-            if table_name is None:
-                table_name = _table_name
-            data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
+            if data.get("scene_id") and data.get("role") and data.get("my_party_id") and data.get("partner_party_id"):
+                eggroll.init(mode=work_mode)
+                save_feature_data(input_data,
+                                  scene_id=data["scene_id"],
+                                  my_role=data["role"],
+                                  my_party_id=data["my_party_id"],
+                                  partner_party_id=data["partner_party_id"]
+                                  )
+            else:
+                _namespace, _table_name = generate_table_name(input_file_path)
+                if namespace is None:
+                    namespace = _namespace
+                if table_name is None:
+                    table_name = _table_name
+                data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
 
         except ValueError:
             print('json parse error')
