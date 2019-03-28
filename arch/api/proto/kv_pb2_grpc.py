@@ -69,6 +69,11 @@ class KVServiceStub(object):
         request_serializer=kv__pb2.Empty.SerializeToString,
         response_deserializer=kv__pb2.Empty.FromString,
         )
+    self.destroyAll = channel.unary_unary(
+        '/com.webank.ai.fate.api.eggroll.storage.KVService/destroyAll',
+        request_serializer=kv__pb2.Empty.SerializeToString,
+        response_deserializer=kv__pb2.Empty.FromString,
+        )
     self.count = channel.unary_unary(
         '/com.webank.ai.fate.api.eggroll.storage.KVService/count',
         request_serializer=kv__pb2.Empty.SerializeToString,
@@ -136,9 +141,16 @@ class KVServiceServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def destroyAll(self, request, context):
+    """destroy multiple tables
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
   def count(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
+    """count record amount of a table
+    """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -183,6 +195,11 @@ def add_KVServiceServicer_to_server(servicer, server):
       ),
       'destroy': grpc.unary_unary_rpc_method_handler(
           servicer.destroy,
+          request_deserializer=kv__pb2.Empty.FromString,
+          response_serializer=kv__pb2.Empty.SerializeToString,
+      ),
+      'destroyAll': grpc.unary_unary_rpc_method_handler(
+          servicer.destroyAll,
           request_deserializer=kv__pb2.Empty.FromString,
           response_serializer=kv__pb2.Empty.SerializeToString,
       ),

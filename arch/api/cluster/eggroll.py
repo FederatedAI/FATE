@@ -174,6 +174,20 @@ class _EggRoll(object):
         LOGGER.debug("created table: %s", _table)
         return _table
 
+    def cleanup(self, name, namespace, persistent):
+        if namespace is None or name is None:
+            raise ValueError("neither name nor namespace can be None")
+
+        type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
+
+        storage_locator = storage_basic_pb2.StorageLocator(type=type, namespace=namespace, name=name)
+        _table = _DTable(storage_locator=storage_locator)
+
+        self.destroy_all(_table)
+
+        LOGGER.debug("cleaned up: %s", _table)
+
+
     @staticmethod
     def serialize_and_hash_func(func):
         pickled_function = cloudpickle.dumps(func)
@@ -233,6 +247,9 @@ class _EggRoll(object):
 
     def destroy(self, _table):
         self.kv_stub.destroy(empty, metadata=_get_meta(_table))
+
+    def destroy_all(self, _table):
+        self.kv_stub.destroyAll(empty, metadata=_get_meta(_table))
 
     def count(self, _table):
         return self.kv_stub.count(empty, metadata=_get_meta(_table)).value
