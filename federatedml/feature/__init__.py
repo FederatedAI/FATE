@@ -16,6 +16,6 @@
 
 from federatedml.feature.instance import Instance
 from federatedml.feature.quantile import Quantile
-from federatedml.feature.sparse_vector import SparseVector
+from federatedml.feature.imputer import ImputerProcess
 
-__all__ = ['Instance', 'Quantile', "SparseVector"]
+__all__ = ['Instance', 'Quantile', 'ImputerProcess']

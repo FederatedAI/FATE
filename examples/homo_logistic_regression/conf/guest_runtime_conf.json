@@ -2,7 +2,8 @@
 
     "local": {
         "role": "guest",
-        "party_id": _guest_party_id
+        "party_id": _guest_party_id,
+        "scene_id": _scene_id
     },
 
     "role": {

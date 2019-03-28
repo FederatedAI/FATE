@@ -46,6 +46,27 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
         LOGGER.info("No need to evaluate")
         pass
 
+    def run(self):
+        self._init_argument()
+
+        if self.workflow_param.method == "train":
+            LOGGER.debug("In running function, enter train method")
+            train_data_instance = None
+            predict_data_instance = None
+            self.train(train_data_instance, validation_data=predict_data_instance)
+
+        elif self.workflow_param.method == "predict":
+            data_instance = None
+            self.load_model()
+            self.predict(data_instance)
+
+        elif self.workflow_param.method == "cross_validation":
+            data_instance = None
+            self.cross_validation(data_instance)
+
+        else:
+            raise TypeError("method %s is not support yet" % (self.workflow_param.method))
+
 
 if __name__ == "__main__":
     workflow = ArbiterWorkFlow()

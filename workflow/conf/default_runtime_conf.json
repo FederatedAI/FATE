@@ -6,7 +6,7 @@
         "output_format": "sparse"
     },
     "WorkFlowParam": {
-        "method": "train",
+        "method": "cross_validation",
         "train_input_table": "some_lr_input_table_name",
         "train_input_namespace": "some_lr_input_path",
         "predict_input_table": "some_predict_data_table_name",
@@ -23,7 +23,7 @@
         "intersect_data_output_table": null,
         "intersect_data_output_namespace": null,
         "do_cross_validation": false,
-        "n_split": 5
+        "n_splits": 5
     },
     "EncryptParam": {
         "method": "paillier"

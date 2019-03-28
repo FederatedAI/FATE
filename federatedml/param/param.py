@@ -51,15 +51,23 @@ class DataIOParam(object):
     output_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
 
     """
-
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
-                 missing_fill=True, default_value=0, with_label=False, label_idx=0,
+                 missing_fill=True, default_value=0, missing_fill_method=None,
+                 missing_impute=None, outlier_replace=True, outlier_replace_method=None,
+                 outlier_impute=None, outlier_replace_value=0,
+                 with_label=False, label_idx=0,
                  label_type='int', output_format='dense'):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
         self.missing_fill = missing_fill
         self.default_value = default_value
+        self.missing_fill_method = missing_fill_method
+        self.missing_impute = missing_impute
+        self.outlier_replace = outlier_replace
+        self.outlier_replace_method = outlier_replace_method
+        self.outlier_impute = outlier_impute
+        self.outlier_replace_value = outlier_replace_value
         self.with_label = with_label
         self.label_idx = label_idx
         self.label_type = label_type
@@ -104,7 +112,7 @@ class EvaluateParam(object):
     thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
     """
 
-    def __init__(self, metrics=None, classi_type="binary", pos_label=None, thresholds=None):
+    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
         self.metrics = metrics
         self.classi_type = classi_type
         self.pos_label = pos_label
@@ -836,3 +844,18 @@ class FeatureSelectionParam(object):
         self.bin_param = bin_param
         self.result_table = result_table
         self.result_namespace = result_namespace
+
+
+class DataTransformParam(object):
+    def __init__(self, method=None, mode="normal", area="all", feat_upper=None, feat_lower=None, out_upper=None,
+                 out_lower=None, with_mean=True, with_std=True):
+        self.method = method
+        self.mode = mode
+        self.area = area
+        self.feat_upper = feat_upper
+        self.feat_lower = feat_lower
+        self.out_upper = out_upper
+        self.out_lower = out_lower
+
+        self.with_mean = with_mean
+        self.with_std = with_std

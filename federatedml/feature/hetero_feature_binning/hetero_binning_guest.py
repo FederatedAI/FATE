@@ -63,12 +63,15 @@ class HeteroFeatureGuest(object):
         label_table = data_instances.mapValues(lambda x: x.label)
 
         # 3. Transfer encrypted label
-        encrypted_label_table = label_table.mapValues(lambda x: (self.encryptor.encrypt(x),
-                                                                 self.encryptor.encrypt(1 - x)))
+        f = functools.partial(self.encrypt,
+                              encryptor=self.encryptor)
+        encrypted_label_table = label_table.mapValues(f)
+
         encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
         federation.remote(encrypted_label_table, name=self.transfer_variable.encrypted_label.name,
                           tag=encrypted_label_table_id, role=consts.HOST, idx=0)
         LOGGER.info("Sent encrypted_label_table to host")
+
         # 4. Calculates self's binning. In case the other party need time to compute its data,
         #  do binning calculation at this point.
         local_iv = self.fit_local(data_instances, label_table)

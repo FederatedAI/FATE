@@ -15,11 +15,16 @@
 #
 
 import functools
-from arch.api.utils import log_utils
 
 import numpy as np
 
 from arch.api import federation
+from arch.api.io import feature
+from arch.api.model_manager import core
+from arch.api.proto.data_transform_pb2 import DataTransform as DataTransformProto
+from arch.api.proto.model_meta_pb2 import ModelMeta
+from arch.api.proto.model_param_pb2 import ModelParam
+from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.model_selection import MiniBatch
@@ -138,8 +143,8 @@ class HomoLRGuest(BaseLogisticRegression):
             if converge_flag:
                 # self.save_model(w)
                 break
-        # LOGGER.info("trainning finish, final coef: {}, final intercept: {}".format(
-        #     self.coef_, self.intercept_))
+                # LOGGER.info("trainning finish, final coef: {}, final intercept: {}".format(
+                #     self.coef_, self.intercept_))
 
     def __init_parameters(self):
 
@@ -186,3 +191,49 @@ class HomoLRGuest(BaseLogisticRegression):
 
     def set_flowid(self, flowid=0):
         self.transfer_variable.set_flowid(flowid)
+
+    def save_model(self, model_table, model_namespace, job_id=None, model_name=None):
+        # In case arbiter has no header
+        data_header = feature.read_feature_header()[0]
+        data_header_reverse = {}
+        for k in data_header:
+            data_header_reverse[data_header[k]] = k
+
+        model_meta = ModelMeta()
+        model_meta.name = "HomoLRGuest"
+        model_meta.fit_intercept = self.fit_intercept
+        model_meta.coef_size = self.coef_.shape[0]
+        model_meta.data_transform = 0
+
+        core.save_model(buffer_type="model_meta",
+                        proto_buffer=model_meta)
+
+        model_param = ModelParam()
+        model_param.intercept = self.intercept_
+
+        for i in range(self.coef_.shape[0]):
+            index = data_header_reverse[i]
+            model_param.weight[index] = self.coef_[i]
+        core.save_model(buffer_type="model_param",
+                        proto_buffer=model_param)
+
+    def load_model(self, model_table, model_namespace):
+
+        data_header = feature.read_feature_header()[0]
+        data_header_reverse = {}
+        for k in data_header:
+            data_header_reverse[data_header[k]] = k
+
+        feature_shape = len(data_header)
+        self.coef_ = np.zeros(feature_shape)
+
+        model_param = ModelParam()
+        core.read_model(buffer_type="model_param",
+                        proto_buffer=model_param)
+        LOGGER.debug("model_param:{}".format(model_param))
+
+        self.intercept_ = model_param.intercept
+
+        for i in range(self.coef_.shape[0]):
+            index = data_header_reverse[i]
+            self.coef_[i] = model_param.weight[index]

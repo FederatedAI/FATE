@@ -2,7 +2,8 @@
 
     "local": {
         "role": "host",
-        "party_id": _host_party_id
+        "party_id": _host_party_id,
+        "scene_id": _scene_id
     },
 
     "role": {
@@ -54,7 +55,7 @@
     "EvaluateParam":{
         "metrics": ["auc", "precision"],
         "classi_type": "binary",
-        "pos_label": 1,
+        "pos_label": -1,
         "predict_threshold": [0.5]
     },
     "LogisticParam": {

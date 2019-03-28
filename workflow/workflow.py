@@ -23,19 +23,21 @@
 
 import argparse
 import json
-from arch.api.utils import log_utils
 
 import numpy as np
 
 from arch.api import eggroll
 from arch.api import federation
+from arch.api.utils import log_utils
+from federatedml.feature.data_transform import DataTransform
 from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
-from federatedml.util import consts
 from federatedml.util import WorkFlowParamChecker
+from federatedml.util import consts
+from federatedml.util.data_io import SparseTagReader
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -46,6 +48,7 @@ class WorkFlow(object):
         # self._initialize(config_path)
         self.model = None
         self.role = None
+        self.job_id = None
         self.mode = None
         self.workflow_param = None
         self.intersection = None
@@ -113,29 +116,29 @@ class WorkFlow(object):
 
     def _init_logger(self, LOGGER_path):
         pass
-        # LOGGER.basicConfig(level=LOGGER.DEBUG,
-        #                    format='%(asctime)s %(levelname)s %(message)s',
-        #                    datefmt='%a, %d %b %Y %H:%M:%S',
-        #                    filename=LOGGER_path,
-        #                    filemode='w')
 
     def train(self, train_data, validation_data=None):
-        if self.mode == consts.HETERO:
+
+        if self.mode == consts.HETERO and self.role != consts.ARBITER:
             LOGGER.debug("Enter train function")
             LOGGER.debug("Star intersection before train")
             intersect_flowid = "train_0"
             train_data = self.intersect(train_data, intersect_flowid)
             LOGGER.debug("End intersection before train")
 
+            data_transform_obj = DataTransform(self.config_path)
+            train_data, cols_transform_value = data_transform_obj.fit_transform(train_data)
+
         self.model.fit(train_data)
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                self.mode == consts.HOMO:
+                        self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
                                                 self.workflow_param.predict_param)
+
             LOGGER.debug("evaluating...")
             train_eval = self.evaluate(predict_result)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
@@ -145,6 +148,9 @@ class WorkFlow(object):
                     intersect_flowid = "predict_0"
                     validation_data = self.intersect(validation_data, intersect_flowid)
                     LOGGER.debug("End intersection before predict")
+
+                    validation_data, cols_transform_value = data_transform_obj.fit_transform(validation_data,
+                                                                                             cols_transform_value)
 
                 val_pred = self.model.predict(validation_data,
                                               self.workflow_param.predict_param)
@@ -215,7 +221,7 @@ class WorkFlow(object):
 
             intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
             LOGGER.info("get intersect data_instance!")
-            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
+            LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
             return intersect_data_instance
 
         else:
@@ -375,13 +381,19 @@ class WorkFlow(object):
                                                 evaluate_param=self.workflow_param.evaluate_param)
         return evaluation_result
 
-    def gen_data_instance(self, table, namespace):
+    def gen_data_instance(self, table, namespace, mode="fit"):
         reader = None
         if self.workflow_param.dataio_param.input_format == "dense":
             reader = DenseFeatureReader(self.workflow_param.dataio_param)
-        else:
+        elif self.workflow_param.dataio_param.input_format == "sparse":
             reader = SparseFeatureReader(self.workflow_param.dataio_param)
-        data_instance = reader.read_data(table, namespace)
+        else:
+            reader = SparseTagReader(self.workflow_param.dataio_param)
+
+        LOGGER.debug("mode is {}".format(mode))
+        data_instance = reader.read_data(table,
+                                         namespace,
+                                         mode=mode)
         return data_instance
 
     def _init_argument(self):
@@ -396,16 +408,16 @@ class WorkFlow(object):
         if not args.config:
             LOGGER.error("Config File should be provided")
             exit(-100)
-        job_id = args.job_id
+        self.job_id = args.job_id
         # party_id = args.party_id
         # LOGGER_path = args.LOGGER_path
         # self._init_LOGGER(LOGGER_path)
         self._initialize(config_path)
         with open(config_path) as conf_f:
             runtime_json = json.load(conf_f)
-        eggroll.init(job_id, self.workflow_param.work_mode)
-        LOGGER.debug("The job id is {}".format(job_id))
-        federation.init(job_id, runtime_json)
+        eggroll.init(self.job_id, self.workflow_param.work_mode)
+        LOGGER.debug("The job id is {}".format(self.job_id))
+        federation.init(self.job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")
 
     def run(self):
@@ -427,13 +439,14 @@ class WorkFlow(object):
                         self.workflow_param.predict_input_table, self.workflow_param.predict_input_namespace
                     ))
                     predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
-                                                                   self.workflow_param.predict_input_namespace)
+                                                                   self.workflow_param.predict_input_namespace,
+                                                                   mode="transform")
 
             self.train(train_data_instance, validation_data=predict_data_instance)
 
         elif self.workflow_param.method == "predict":
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
-                                                   self.workflow_param.predict_input_namespace)
+                                                   self.workflow_param.predict_input_namespace, mode="transform")
             self.load_model()
             self.predict(data_instance)
 
@@ -448,8 +461,10 @@ class WorkFlow(object):
             self.intersect(data_instance)
 
         elif self.workflow_param.method == "cross_validation":
-            data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
-                                                   self.workflow_param.data_input_namespace)
+            data_instance = None
+            if self.role != consts.ARBITER:
+                data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
+                                                       self.workflow_param.data_input_namespace)
             self.cross_validation(data_instance)
         # elif self.workflow_param.method == 'test_methods':
         #     print("This is a test method, Start workflow success!")

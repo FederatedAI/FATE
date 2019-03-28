@@ -142,7 +142,6 @@ if __name__ == "__main__":
                 print("%s is not exist, please check the configure" % (input_file_path))
                 sys.exit()
 
-
             input_data = read_data(input_file_path, head)
             if data.get("scene_id") and data.get("role") and data.get("my_party_id") and data.get("partner_party_id"):
                 eggroll.init(mode=work_mode)

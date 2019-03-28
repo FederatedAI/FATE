@@ -14,9 +14,15 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
+import numpy as np
 
 from arch.api import federation
+from arch.api.io import feature
+from arch.api.model_manager import core
+from arch.api.proto.data_transform_pb2 import DataTransform as DataTransformProto
+from arch.api.proto.model_meta_pb2 import ModelMeta
+from arch.api.proto.model_param_pb2 import ModelParam
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import DiffConverge
 from federatedml.optim import activation
@@ -273,3 +279,39 @@ class HomoLRArbiter(BaseLogisticRegression):
 
             if sum(self.curt_re_encrypt_times) == 0:
                 break
+
+    def save_model(self, model_table, model_namespace, job_id=None, model_name=None):
+        # In case arbiter has no header
+
+        model_meta = ModelMeta()
+        model_meta.name = "HomoLRArbiter"
+        model_meta.fit_intercept = self.fit_intercept
+        model_meta.coef_size = self.coef_.shape[0]
+        model_meta.data_transform = 0
+
+        core.save_model(buffer_type="model_meta",
+                        proto_buffer=model_meta)
+
+        model_param = ModelParam()
+        model_param.intercept = self.intercept_
+
+        # model_param.weight = list(self.coef_)
+
+        for i in range(self.coef_.shape[0]):
+            model_param.weight[str(i)] = self.coef_[i]
+        core.save_model(buffer_type="model_param",
+                        proto_buffer=model_param)
+
+    def load_model(self, model_table, model_namespace):
+
+        model_param = ModelParam()
+        core.read_model(buffer_type="model_param",
+                        proto_buffer=model_param)
+        LOGGER.debug("model_param:{}".format(model_param))
+
+        self.intercept_ = model_param.intercept
+        feature_shape = len(model_param.weight)
+        self.coef_ = np.zeros(feature_shape)
+
+        for i in range(self.coef_.shape[0]):
+            self.coef_[i] = model_param.weight[str(i)]

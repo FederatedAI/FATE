@@ -85,3 +85,19 @@ IV_PERCENTILE = 'iv_percentile'
 COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
 OUTLIER_COLS = 'outlier_cols'
+
+# imputer
+MIN = 'min'
+MAX = 'max'
+MEAN = 'mean'
+DESIGNATED = 'designated'
+STR = 'str'
+FLOAT = 'float'
+INT = 'int'
+ORIGIN = 'origin'
+
+# min_max_scaler
+NORMAL = 'normal'
+CAP = 'cap'
+MINMAXSCALE = 'MinMaxScale'
+STANDARDSCALE = 'StandardScale'

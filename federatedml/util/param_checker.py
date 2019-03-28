@@ -447,6 +447,14 @@ class WorkFlowParamChecker(object):
                     "workflow param's data_input_namespace {} not supported, should be str type".format(
                         workflow_param.data_input_namespace))
 
+            if type(workflow_param.n_splits).__name__ != "int":
+                raise ValueError(
+                    "workflow param's n_splits {} not supported, should be int type".format(
+                        workflow_param.n_splits))
+            elif workflow_param.n_splits <= 0:
+                raise ValueError(
+                    "workflow param's n_splits must be greater or equal to 1")
+
         if workflow_param.intersect_data_output_table is not None:
             if type(workflow_param.intersect_data_output_table).__name__ != "str":
                 raise ValueError(
@@ -461,13 +469,7 @@ class WorkFlowParamChecker(object):
 
         DataIOParamChecker.check_param(workflow_param.dataio_param)
 
-        if type(workflow_param.n_splits).__name__ != "int":
-            raise ValueError(
-                "workflow param's n_splits {} not supported, should be int type".format(
-                    workflow_param.n_splits))
-        elif workflow_param.n_splits <= 0:
-            raise ValueError(
-                "workflow param's n_splits must be greater or equal to 1")
+
 
         if type(workflow_param.work_mode).__name__ != "int":
             raise ValueError(
@@ -513,6 +515,8 @@ class InitParamChecker(object):
 class LogisticParamChecker(object):
     @staticmethod
     def check_param(logistic_param):
+        descr = "logistic_param's"
+
         if type(logistic_param.penalty).__name__ != "str":
             raise ValueError(
                 "logistic_param's penalty {} not supported, should be str type".format(logistic_param.penalty))
@@ -543,6 +547,8 @@ class LogisticParamChecker(object):
         if type(logistic_param.batch_size).__name__ != "int":
             raise ValueError(
                 "logistic_param's batch_size {} not supported, should be int type".format(logistic_param.batch_size))
+        if logistic_param.batch_size != -1:
+            check_positive_integer(logistic_param.batch_size, descr)
 
         if type(logistic_param.learning_rate).__name__ != "float":
             raise ValueError(

@@ -15,9 +15,4 @@
 #  limitations under the License.
 #
 
-jobid=binning_$(date +%Y%m%d%H%M%S)
-cur_dir=$(pwd)
-mode='fit'
-#mode='transform'
-
-nohup python ${cur_dir}/run_binning.py 0 ${jobid} 9999 10000 50001 ${mode} &
+ps -ef | grep homo_lr | grep -v grep | cut -c 9-15 | xargs kill -s 9

@@ -106,7 +106,7 @@ def gen_data_table_info(name_space, scene_key, commit_id):
         # todo: max size limit?
         data_table_info["tablePartition"] = 4 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
     elif name_space == 'feature_data':
-        data_table_info["tablePartition"] = 10 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
+        data_table_info["tablePartition"] = 10 if RuntimeInstance.MODE == WorkMode.CLUSTER else 10
     elif name_space == 'feature_meta':
         data_table_info["tablePartition"] = 1 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
     elif name_space == 'feature_header':

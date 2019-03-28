@@ -25,9 +25,9 @@ from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
 from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
 from federatedml.util import fate_operator
-from federatedml.util import LogisticParamChecker
 
 LOGGER = log_utils.getLogger()
 
@@ -135,8 +135,8 @@ class BaseLogisticRegression(object):
             else:
                 self.coef_ = self.coef_ - gradient
 
-        # LOGGER.debug("intercept:" + str(self.intercept_))
-        # LOGGER.debug("coef:" + str(self.coef_))
+                # LOGGER.debug("intercept:" + str(self.intercept_))
+                # LOGGER.debug("coef:" + str(self.coef_))
 
     def merge_model(self):
         w = self.coef_.copy()

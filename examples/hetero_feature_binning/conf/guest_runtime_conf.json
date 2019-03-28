@@ -2,7 +2,9 @@
 
     "local": {
         "role": "guest",
-        "party_id": "TO SET"
+        "party_id": "TO SET",
+        "scene_id": "TO SET"
+
     },
 
     "role": {
