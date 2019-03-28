@@ -63,6 +63,7 @@ public class PacketQueuePipe extends BasePipe {
 
     @Override
     public Proxy.Packet read(long timeout, TimeUnit unit) {
+        if (isDrained()) return result;
         Proxy.Packet result = null;
         try {
             result = queue.poll(timeout, unit);
