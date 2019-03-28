@@ -33,6 +33,11 @@ from federatedml.feature.data_transform import DataTransform
 from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
+from federatedml.param import param
+from federatedml.util import param_checker
+from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
+from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
+
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
 from federatedml.util import WorkFlowParamChecker
@@ -226,6 +231,45 @@ class WorkFlow(object):
 
         else:
             LOGGER.info("need_intersect: false!")
+            return data_instance
+
+    def feature_selection(self, data_instance):
+        if self.mode == consts.HOMO:
+            LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
+            return data_instance
+
+        if self.workflow_param.need_intersect:
+            LOGGER.info("Start feature selection")
+            feature_select_param = param.FeatureSelectionParam()
+            feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
+            param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
+
+            LOGGER.info("Start intersection!")
+            if self.role == consts.HOST:
+                feature_selector = HeteroFeatureSelectionHost(feature_select_param)
+            elif self.role == consts.GUEST:
+                feature_selector = HeteroFeatureSelectionGuest(feature_select_param)
+            elif self.role == consts.ARBITER:
+                return data_instance
+            else:
+                raise ValueError("Unknown role of workflow")
+
+            local_only = feature_select_param.local_only       # Decide whether do fit_local or fit
+            need_fit = (feature_select_param.method == 'fit')
+            if local_only and need_fit:
+                data_instance = feature_selector.fit_local_transform(data_instance)
+                feature_selector.save_model()
+            elif not local_only and need_fit:
+                data_instance = feature_selector.fit_transform(data_instance)
+                feature_selector.save_model()
+            else:
+                feature_selector.load_model(feature_select_param.result_table, feature_select_param.result_namespace)
+                data_instance = feature_selector.transform(data_instance)
+
+            LOGGER.info("Finish feature selection")
+            return data_instance
+        else:
+            LOGGER.info("No need to do feature selection")
             return data_instance
 
     def cross_validation(self, data_instance):
@@ -441,13 +485,14 @@ class WorkFlow(object):
                     predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                                    self.workflow_param.predict_input_namespace,
                                                                    mode="transform")
-
+                self.feature_selection(train_data_instance)
             self.train(train_data_instance, validation_data=predict_data_instance)
 
         elif self.workflow_param.method == "predict":
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                    self.workflow_param.predict_input_namespace, mode="transform")
             self.load_model()
+            self.feature_selection(data_instance)
             self.predict(data_instance)
 
         elif self.workflow_param.method == "intersect":
@@ -465,6 +510,7 @@ class WorkFlow(object):
             if self.role != consts.ARBITER:
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                        self.workflow_param.data_input_namespace)
+                self.feature_selection(data_instance)
             self.cross_validation(data_instance)
         # elif self.workflow_param.method == 'test_methods':
         #     print("This is a test method, Start workflow success!")
