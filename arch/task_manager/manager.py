@@ -1,6 +1,7 @@
 from grpc._cython import cygrpc
 import requests
 import json
+from arch.api import eggroll
 from arch.api.proto import proxy_pb2, proxy_pb2_grpc
 from arch.api.proto import basic_meta_pb2
 from arch.api.utils.log_utils import LoggerFactory
@@ -69,6 +70,62 @@ def get_json_result(status=0, msg='success'):
     return jsonify({"status": status, "msg": msg})
 
 
+@manager.route('/data/<data_func>', methods=['post'])
+def download_data(data_func):
+    _data = request.json
+    _job_id = generate_job_id()
+    manager.logger.info('generated job_id {}, body {}'.format(_job_id, _data))
+    _job_dir = get_job_directory(_job_id)
+    os.makedirs(_job_dir, exist_ok=True)
+    _download_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/download.py")
+    _upload_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/load_file.py")
+
+    if data_func == "download":
+        _module = _download_module
+    else:
+        _module = _upload_module
+
+    try:
+        if data_func == "download":
+            progs = ["python3",
+                     _module,
+                     "-j", _job_id,
+                     "-c", os.path.abspath(_data.get("config_path"))
+                     ]
+        else:
+            progs = ["python3",
+                     _module,
+                     "-c", os.path.abspath(_data.get("config_path"))
+                     ]
+
+        manager.logger.info('Starting progs: {}'.format(progs))
+
+        std_log = open(os.path.join(_job_dir, 'std.log'), 'w')
+        task_pid_path = os.path.join(_job_dir, 'pids')
+    
+        if os.name == 'nt':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+        else:
+            startupinfo = None
+        p = subprocess.Popen(progs,
+                             stdout=std_log,
+                             stderr=std_log,
+                             startupinfo=startupinfo
+                             )
+    
+        os.makedirs(task_pid_path, exist_ok=True)
+        with open(os.path.join(task_pid_path, data_func + ".pid"), 'w') as f:
+            f.truncate()
+            f.write(str(p.pid) + "\n")
+            f.flush()
+
+        return get_json_result(0, "success, job_id {}".format(_job_id)) 
+    except:
+        return get_json_result(-104, "failed, job_id {}".format(_job_id)) 
+        
+
 @manager.route('/job/<job_id>', methods=['DELETE'])
 def stop_job(job_id):
     _job_dir = get_job_directory(job_id)
@@ -127,7 +184,7 @@ def submit_job():
                                                                                                    _url)
             manager.logger.exception(msg)
             return get_json_result(-101, 'UnaryCall submit to remote manager failed')
-    return get_json_result()
+    return get_json_result(0, "success, job_id {}".format(_job_id))
 
 
 @manager.route(WORKFLOW_URL, methods=['POST'])
