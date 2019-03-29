@@ -28,6 +28,7 @@ from federatedml.util.param_checker import FeatureBinningParamChecker, FeatureSe
 from federatedml.util.param_checker import BoostingTreeParamChecker
 from federatedml.util.data_io import DenseFeatureReader
 from federatedml.util.data_io import SparseFeatureReader
+from federatedml.util.data_io import SparseTagReader
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
 from federatedml.util.statistics import Statistics
@@ -46,6 +47,7 @@ __all__ = ['consts',
            "ParamExtract",
            "DenseFeatureReader",
            "SparseFeatureReader",
+           "SparseTagReader",
            "ClassifyLabelChecker",
            "RegressionLabelChecker",
            "BaseTransferVariable",

@@ -35,7 +35,7 @@ class DataIOParamChecker(object):
         descr = "dataio param's"
 
         dataio_param.input_format = check_and_change_lower(dataio_param.input_format,
-                                                           ["dense", "sparse"],
+                                                           ["dense", "sparse", "tag"],
                                                            descr)
 
         dataio_param.output_format = check_and_change_lower(dataio_param.output_format,

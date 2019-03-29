@@ -17,11 +17,13 @@
 import numpy as np
 import time
 import random
+import string
 import unittest
 
-from federatedml.util.data_io import DenseFeatureReader
-from federatedml.util.data_io import SparseFeatureReader
-from federatedml.param.param import DataIOParam
+from federatedml.util import DenseFeatureReader
+from federatedml.util import SparseFeatureReader
+from federatedml.util import SparseTagReader
+from federatedml.param import DataIOParam
 from arch.api import eggroll
 from federatedml.util import consts
 
@@ -212,6 +214,78 @@ class TestSparseFeatureReader(unittest.TestCase):
                         self.assertTrue(np.abs(float(val) - trans_feat) < consts.FLOAT_ZERO)
             else:
                 self.assertTrue(len(features.sparse_vec) == 0)
+           
+
+class TestSparseFeatureReader(unittest.TestCase):
+    def setUp(self):
+        eggroll.init("test_dataio" + str(int(time.time())))
+        self.table = "dataio_sparse_tag_test"
+        self.namespace = "dataio_test"
+        
+        self.data = []
+        for i in range(100):
+            row = []
+            for j in range(100):
+                if random.randint(1, 100) > 30:
+                    continue
+                str_r = ''.join(random.sample(string.ascii_letters + string.digits, 10))
+                row.append(str_r)
+
+            self.data.append(' '.join(row))
+        
+        table = eggroll.parallelize(self.data, include_key=False)
+        table.save_as(self.table, self.namespace)
+
+    def test_sparse_output_format(self):
+        dataio_param = DataIOParam()
+        dataio_param.input_format = "tag"
+        dataio_param.data_type = "int"
+        dataio_param.delimitor = ' '
+        dataio_param.with_label = False
+        dataio_param.output_format = "sparse"
+        reader = SparseTagReader(dataio_param)
+        tag_insts, tags = reader.read_data(self.table, self.namespace)
+        features = [inst.features for key, inst in tag_insts.collect()]
+
+        ori_tags = set()
+        for row in self.data:
+            ori_tags |= set(row.split(" ", -1))
+
+        self.assertTrue(tags == sorted(list(ori_tags)))
+
+        tag_dict = dict(zip(tags, range(len(tags))))
+        for i in range(len(self.data)):
+            ori_feature = {}
+            for tag in self.data[i].split(" ", -1):
+                ori_feature[tag_dict.get(tag)] = 1
+
+            self.assertTrue(ori_feature == features[i].sparse_vec)
+
+    def test_dense_output_format(self):
+        dataio_param = DataIOParam()
+        dataio_param.input_format = "tag"
+        dataio_param.data_type = 'int'
+        dataio_param.delimitor = ' '
+        dataio_param.with_label = False
+        dataio_param.output_format = "dense"
+        reader = SparseTagReader(dataio_param)
+        tag_insts, tags = reader.read_data(self.table, self.namespace)
+        features = [inst.features for key, inst in tag_insts.collect()]
+
+        ori_tags = set()
+        for row in self.data:
+            ori_tags |= set(row.split(" ", -1))
+        
+        tag_dict = dict(zip(tags, range(len(tags))))
+        for i in range(len(self.data)):
+            ori_feature = [0 for i in range(len(tags))]
+
+            for tag in self.data[i].split(" ", -1):
+                ori_feature[tag_dict.get(tag)] = 1
             
+            ori_feature = np.asarray(ori_feature, dtype='int')
+            self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
+
+
 if __name__ == '__main__':
     unittest.main()
