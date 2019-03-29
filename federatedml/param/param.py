@@ -159,6 +159,24 @@ class PredictParam(object):
         self.threshold = threshold
 
 
+class SampleParam(object):
+    """
+    Define the sample method
+
+    Parameters
+    ----------
+    mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
+    fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
+    random_state: int, RandomState instance or None, default: None
+    """
+    def __init__(self, mode="random", method="downsample", fractions=None, random_state=None):
+        self.mode = mode
+        self.method = method
+        self.fractions = fractions
+        self.random_state = random_state
+
+
 class WorkFlowParam(object):
     """
     Define Workflow parameters used in federated ml.
