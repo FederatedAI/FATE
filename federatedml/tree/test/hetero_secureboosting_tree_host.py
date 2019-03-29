@@ -34,7 +34,6 @@ from federatedml.util import consts
 from numpy import random
 from arch.api import federation
 from arch.api import eggroll
-from arch.api.model_manager import core
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -102,7 +101,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.sync_tree_dim()
 
         for i in range(self.num_trees):
-            # n_tree = []
+            n_tree = []
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
 
@@ -114,10 +113,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 tree_inst.set_valid_features(valid_features)
 
                 tree_inst.fit()
-                self.trees_.append(tree_inst.get_tree_model())
-                # n_tree.append(tree_inst.get_tree_model())
+                n_tree.append(tree_inst.get_tree_model())
 
-            # self.trees_.append(n_tree)
+            self.trees_.append(n_tree)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)
@@ -128,35 +126,32 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
     def predict(self, data_inst, predict_param=None):
         LOGGER.info("start predict")
-        rounds = len(self.trees_) // self.tree_dim
-        for i in range(rounds):
-            # n_tree = self.trees_[i]
-            for tidx in range(self.tree_dim):
+        for i in range(len(self.trees_)):
+            n_tree = self.trees_[i]
+            for tidx in range(len(n_tree)):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
-                tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
+                tree_inst.set_tree_model(n_tree[tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
 
                 tree_inst.predict(data_inst)
 
         LOGGER.info("end predict")
 
-    def save_model(self, model_table, model_namespace, jobid=None, module_name=None):
+    def save_model(self, model_table, model_namespace):
         LOGGER.info("save model")
         modelmeta = BoostingTreeModelMeta()
-        modelmeta.module_name = "HeteroBoostingTreeHost"
-        modelmeta.trees_.extend(self.trees_)
+        modelmeta.trees_ = self.trees_
+        modelmeta.objective_param = self.objective_param
         modelmeta.tree_dim = self.tree_dim
         modelmeta.task_type = self.task_type
-        
-        core.save_model(buffer_type="model_meta",
-                        proto_buffer=modelmeta)
 
+        model = eggroll.parallelize([modelmeta], include_key=False)
+        model.save_as(model_table, model_namespace)
 
     def load_model(self, model_table, model_namespace):
         LOGGER.info("load model")
-        modelmeta = BoostingTreeModelMeta()
-        core.read_model(buffer_type="model_meta",
-                        proto_buffer=modelmeta)
+        modelmeta = list(eggroll.table(model_table, model_namespace).collect())[0][1]
         self.task_type = modelmeta.task_type
+        self.objective_param = modelmeta.object_param
         self.tree_dim = modelmeta.tree_dim
         self.trees_ = modelmeta.trees_

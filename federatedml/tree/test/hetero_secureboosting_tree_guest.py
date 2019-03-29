@@ -43,13 +43,11 @@ from federatedml.loss import LeastAbsoluteErrorLoss
 from federatedml.loss import TweedieLoss
 from federatedml.loss import LogCoshLoss
 from federatedml.loss import FairLoss
-from federatedml.tree import ObjectiveParamMeta
 from federatedml.tree import BoostingTreeModelMeta
 from federatedml.evaluation import Evaluation
 
 from arch.api import eggroll
 from arch.api import federation
-from arch.api.model_manager import core
 import numpy as np
 from arch.api.utils import log_utils
 
@@ -138,8 +136,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_label(self):
         LOGGER.info("check label")
         if self.task_type == consts.CLASSIFICATION:
-            LOGGER.debug("y is {}".format(self.y))
-            LOGGER.debug("y is {}".format(list(self.y.collect())))
             self.num_classes, self.classes_ = ClassifyLabelChecker.validate_y(self.y)
             if self.num_classes > 2:
                 self.classify_target = "multinomial"
@@ -275,7 +271,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.sync_tree_dim()
 
         for i in range(self.num_trees):
-            # n_tree = []
+            n_tree = []
             self.compute_grad_and_hess()
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeGuest(self.tree_param)
@@ -289,11 +285,10 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
 
                 tree_inst.fit()
-                self.trees_.append(tree_inst.get_tree_model())
-                # n_tree.append(tree_inst.get_tree_model())
+                n_tree.append(tree_inst.get_tree_model())
                 self.update_f_value(new_f=tree_inst.predict_weights, tidx=tidx)
 
-            # self.trees_.append(n_tree)
+            self.trees_.append(n_tree)
             loss = self.compute_loss()
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(i, loss))
@@ -308,16 +303,14 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         LOGGER.info("end to train secureboosting guest model")
 
     def predict_f_value(self, data_inst):
-        LOGGER.info("predict tree f value, there are {} trees".format(len(self.trees_)))
+        LOGGER.info("predict tree f value")
         tree_dim = self.tree_dim
-        LOGGER.debug("predict f value: init_score is {}".format(self.init_score))
-        init_score = self.init_score
-        self.F = data_inst.mapValues(lambda v: init_score)
-        rounds = len(self.trees_) // self.tree_dim
-        for i in range(rounds):
-            for tidx in range(self.tree_dim):
+        self.F = data_inst.mapValues(lambda v: self.init_score)
+        for i in range(len(self.trees_)):
+            n_tree = self.trees_[i]
+            for tidx in range(len(n_tree)):
                 tree_inst = HeteroDecisionTreeGuest(self.tree_param)
-                tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
+                tree_inst.set_tree_model(n_tree[tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
 
                 predict_data = tree_inst.predict(data_inst)
@@ -364,38 +357,26 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def save_model(self, model_table, model_namespace):
         LOGGER.info("save model")
         modelmeta = BoostingTreeModelMeta()
-        modelmeta.module_name = "HeteroBoostingTreeGuest"
-        modelmeta.trees_.extend(self.trees_)
-        modelmeta.objective.CopyFrom(ObjectiveParamMeta(objective=self.objective_param.objective, param=self.objective_param.params))
-        modelmeta.task_type = self.task_type
-        LOGGER.debug("init_score is {}".format(self.init_score))
-        modelmeta.init_score.extend(self.init_score)
+        modelmeta.trees_ = self.trees_
+        modelmeta.init_score = self.init_score
+        modelmeta.objective_param = self.objective_param
         modelmeta.tree_dim = self.tree_dim
+        modelmeta.task_type = self.task_type
         modelmeta.num_classes = self.num_classes
-        modelmeta.classes_.extend(map(str, self.classes_))
-        modelmeta.loss.extend(self.history_loss)
+        modelmeta.classes_ = self.classes_
+        modelmeta.loss = self.history_loss
 
-        core.save_model(buffer_type="model_meta",
-                        proto_buffer=modelmeta)
-        # serialize_str = modelmeta.SerializeToString()
-        # model = eggroll.parallelize([serialize_str], include_key=False)
-        # model.save_as(model_table, model_namespace)
+        model = eggroll.parallelize([modelmeta], include_key=False)
+        model.save_as(model_table, model_namespace)
 
     def load_model(self, model_table, model_namespace):
         LOGGER.info("load model")
-        # serialize_str = list(eggroll.table(model_table, model_namespace).collect())[0][1]
-        # modelmeta = BoostingTreeModelMeta.ParseFromString(serialize_str)
-        modelmeta = BoostingTreeModelMeta()
-        core.read_model(buffer_type="model_meta",
-                        proto_buffer=modelmeta)
-        
+        modelmeta = list(eggroll.table(model_table, model_namespace).collect())[0][1]
         self.task_type = modelmeta.task_type
-        self.objective_param = ObjectiveParam(modelmeta.objective.objective,
-                                              modelmeta.objective.params)
+        self.objective_param = modelmeta.objective_param
         self.tree_dim = modelmeta.tree_dim
         self.num_classes = modelmeta.num_classes
-        LOGGER.debug("load_model, init_score is {}".format(modelmeta.init_score))
-        self.init_score = np.array(modelmeta.init_score)
+        self.init_score = modelmeta.init_score
         self.trees_ = modelmeta.trees_
         self.classes_ = modelmeta.classes_
         self.history_loss = modelmeta.loss

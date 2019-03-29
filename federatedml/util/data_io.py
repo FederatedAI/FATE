@@ -22,19 +22,17 @@
 ################################################################################
 
 import functools
-
 import numpy as np
-
-from arch.api import eggroll
-from arch.api.io import feature
-from arch.api.model_manager import core
-from arch.api.proto.data_transform_pb2 import DataTransform
 from arch.api.utils import log_utils
 from federatedml.feature import Instance
-from federatedml.feature.sparse_vector import SparseVector
-from federatedml.util import DataIOParamChecker
+from federatedml.feature import SparseVector
 # from federatedml.feature import ImputerProcess
 from federatedml.util import consts
+from federatedml.util import DataIOParamChecker
+from arch.api import eggroll
+from arch.api.proto.data_transform_pb2 import DataTransform
+from arch.api.model_manager import core
+from arch.api.io import feature
 
 LOGGER = log_utils.getLogger()
 
@@ -46,7 +44,7 @@ LOGGER = log_utils.getLogger()
 
 class DenseFeatureReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
+        DataIOParamChecker.check_param(data_io_param)  
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.missing_fill = data_io_param.missing_fill
@@ -75,7 +73,7 @@ class DenseFeatureReader(object):
             # header = [i for i in range(len(feature))]
         # else:
         #    header = header.split(self.delimiter, -1)
-
+        
         if self.with_label:
             label_idx = self.label_idx
         else:
@@ -87,15 +85,12 @@ class DenseFeatureReader(object):
         #                    "label": label_idx}
 
         save_data_header(out_header_dict)
-
+        
         return header
 
     def read_data(self, table_name, namespace, mode="fit"):
         # input_data = eggroll.table(table_name, namespace)
         input_data = feature.get_feature_data_table(table_name)
-        if input_data is None:
-            input_data = eggroll.table(table_name, namespace)
-
         LOGGER.debug("input data init is {}".format(list(input_data.collect())))
         LOGGER.info("start to read dense data and change data to instance")
         input_data_features = None
@@ -105,9 +100,7 @@ class DenseFeatureReader(object):
             if type(self.label_idx).__name__ != "int":
                 raise ValueError("label index should be integer")
 
-            input_data_features = input_data.mapValues(
-                lambda value: value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
-                                                                                 self.label_idx + 1:])
+            input_data_features = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[self.label_idx + 1 :])
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
         else:
@@ -116,10 +109,10 @@ class DenseFeatureReader(object):
         # input_data = input_data.mapValues(lambda value: value.split(self.delimitor, -1))
         if mode == "transform":
             self.missing_fill, self.missing_fill_method, \
-            self.missing_impute, self.default_value, \
-            self.outlier_replace, self.outlier_replace_method, \
-            self.outlier_impute, self.outlier_replace_value = \
-                load_data_transform_result()
+                self.missing_impute, self.default_value, \
+                self.outlier_replace, self.outlier_replace_method, \
+                self.outlier_impute, self.outlier_replace_value = \
+                        load_data_transform_result()
 
         missing_fill_value = None
         outlier_replace_value = None
@@ -129,17 +122,17 @@ class DenseFeatureReader(object):
             imputer_processor = ImputerProcess(self.missing_impute)
             LOGGER.info("missing_replace_method is {}".format(self.missing_fill_method))
             if mode == "fit":
-                input_data_features, missing_fill_value = imputer_processor.fit(input_data_features,
-                                                                                replace_method=self.missing_fill_method,
-                                                                                replace_value=self.default_value)
+                input_data_features, missing_fill_value = imputer_processor.fit(input_data_features, 
+                                                                       replace_method=self.missing_fill_method,
+                                                                       replace_value=self.default_value)
                 if self.missing_impute is None:
                     self.missing_impute = imputer_processor.get_imputer_value_list()
             else:
                 LOGGER.debug("type method is {}".format(type(self.missing_fill_method).__name__))
                 LOGGER.debug("transform value is {}".format(self.default_value))
-                input_data_features = imputer_processor.transform(input_data_features,
+                input_data_features = imputer_processor.transform(input_data_features, 
                                                                   replace_method=self.missing_fill_method,
-                                                                  transform_value=self.default_value)
+                                                         transform_value=self.default_value)
 
             if self.missing_impute is None:
                 self.missing_impute = imputer_processor.get_imputer_value_list()
@@ -150,24 +143,24 @@ class DenseFeatureReader(object):
                 input_data_features, outlier_replace_value = imputer_processor.fit(input_data_features,
                                                                                    replace_method=self.outlier_replace_method,
                                                                                    replace_value=self.outlier_replace_value)
-
+ 
                 if self.outlier_impute is None:
                     self.outlier_impute = imputer_processor.get_imputer_value_list()
             else:
                 LOGGER.info("replace method is {}".format(self.outlier_replace_method))
-                input_data_features = imputer_processor.transform(input_data_features,
+                input_data_features= imputer_processor.transform(input_data_features,
                                                                   replace_method=self.outlier_replace_method,
                                                                   transform_value=self.outlier_replace_value)
 
         if self.with_label:
             data_instance = input_data_features.join(input_data_labels,
                                                      lambda features, label:
-                                                     self.to_instance(features, label))
+                                                         self.to_instance(features, label))
         else:
             data_instance = input_data_features.mapValues(lambda features: self.to_instance(features))
-
+        
         header = self.generate_header(input_data_features, mode)
-
+        
         if mode == "fit":
             save_data_transform_result(self.missing_fill,
                                        self.missing_fill_method,
@@ -175,12 +168,12 @@ class DenseFeatureReader(object):
                                        missing_fill_value,
                                        self.outlier_replace,
                                        self.outlier_replace_method,
-                                       self.outlier_impute,
+                                       self.outlier_impute, 
                                        outlier_replace_value,
                                        header=header)
 
         LOGGER.debug("input data is {}".format(list(input_data_features.collect())))
-
+        
         return data_instance
 
     def to_instance(self, features, label=None):
@@ -190,13 +183,11 @@ class DenseFeatureReader(object):
             elif self.label_type in ["float", "float64"]:
                 label = float(label)
 
-            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.output_format,
-                                                            missing_impute=self.missing_impute)
-
+            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.output_format, missing_impute=self.missing_impute)
+        
         else:
-            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.output_format,
-                                                            missing_impute=self.missing_impute)
-
+            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.output_format, missing_impute=self.missing_impute)
+        
         return Instance(inst_id=None,
                         features=features,
                         label=label)
@@ -217,13 +208,13 @@ class DenseFeatureReader(object):
 
         for i in range(column_shape):
             if (missing_impute is not None and features[i] in missing_impute) or \
-                    (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
+               (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
                 continue
 
             if data_type in ['float', 'float64']:
                 if np.fabs(float(features[i])) < consts.FLOAT_ZERO:
                     continue
-
+            
                 indices.append(i)
                 data.append(float(features[i]))
                 non_zero += 1
@@ -246,7 +237,7 @@ class DenseFeatureReader(object):
 # =============================================================================
 class SparseFeatureReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
+        DataIOParamChecker.check_param(data_io_param)  
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.label_type = data_io_param.label_type
@@ -289,7 +280,7 @@ class SparseFeatureReader(object):
             save_data_transform_result()
 
         params = [self.delimitor, self.data_type,
-                  self.default_value, self.label_type,
+                  self.label_type,
                   self.output_format, max_feature]
 
         to_instance_with_param = functools.partial(self.to_instance, params)
@@ -301,9 +292,9 @@ class SparseFeatureReader(object):
     def to_instance(param_list, value):
         delimitor = param_list[0]
         data_type = param_list[1]
-        label_type = param_list[4]
-        output_format = param_list[5]
-        max_fid = param_list[6]
+        label_type = param_list[2]
+        output_format = param_list[3]
+        max_fid = param_list[4]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
@@ -329,10 +320,10 @@ class SparseFeatureReader(object):
             fid_value.append((fid, val))
 
         if output_format == "dense":
-            features = [default_value for i in range(max_fid + 1)]
+            features = [0 for i in range(max_fid + 1)]
             for fid, val in fid_value:
                 features[fid] = val
-
+            
             features = np.asarray(features, dtype=data_type)
 
         else:
@@ -341,7 +332,7 @@ class SparseFeatureReader(object):
             for fid, val in fid_value:
                 indices.append(fid)
                 data.append(val)
-
+            
             features = SparseVector(indices, data, max_fid + 1)
 
         return Instance(inst_id=None,
@@ -354,7 +345,7 @@ class SparseFeatureReader(object):
 # =============================================================================
 class SparseTagReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
+        DataIOParamChecker.check_param(data_io_param)  
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.with_label = data_io_param.with_label
@@ -366,10 +357,10 @@ class SparseTagReader(object):
         LOGGER.info("delemitor is {}".format(self.delimitor))
         for key, value in kvs:
             if self.with_label:
-                cols = value.split(delimitor, -1)[1:]
+                cols = value.split(delimitor, -1)[1 : ]
             else:
-                cols = value.split(delimitor, -1)[0:]
-
+                cols = value.split(delimitor, -1)[0 : ]
+ 
             LOGGER.debug("tags is {}, value is {}".format(cols, value))
             tags_set |= set(cols)
 
@@ -409,7 +400,7 @@ class SparseTagReader(object):
             tags_dict = dict(zip(tags, range(len(tags))))
 
             self.generate_header(tags_dict)
-
+            
             save_data_transform_result()
 
         params = [self.delimitor,
@@ -427,7 +418,7 @@ class SparseTagReader(object):
     @staticmethod
     def to_instance(param_list, value):
         delimitor = param_list[0]
-        data_type = param_list[1]
+        data_type=param_list[1]
         with_label = param_list[2]
         label_type = param_list[3]
         output_format = param_list[4]
@@ -450,20 +441,20 @@ class SparseTagReader(object):
 
         if output_format == "dense":
             features = [0 for i in range(len(tags_dict))]
-            for tag in cols[start_pos:]:
+            for tag in cols[start_pos : ]:
                 features[tags_dict.get(tag)] = 1
-
+            
             features = np.asarray(features, dtype=data_type)
         else:
             indices = []
             data = []
-            for tag in cols[start_pos:]:
+            for tag in cols[start_pos : ]:
                 indices.append(tags_dict.get(tag))
                 _data = 1
                 if data_type in ["float", "float64"]:
                     _data = float(1)
                 data.append(_data)
-
+            
             features = SparseVector(indices, data, len(tags_dict))
 
         return Instance(inst_id=None,
@@ -487,23 +478,24 @@ def save_data_header(header):
     LOGGER.debug("feature header is : {}".format(feature.read_feature_header()))
 
 
-def save_data_transform_result(missing_fill=False,
-                               missing_replace_method=None,
-                               missing_impute=None,
-                               missing_fill_value=None,
-                               outlier_replace=False,
+def save_data_transform_result(missing_fill=False, 
+                               missing_replace_method=None, 
+                               missing_impute=None, 
+                               missing_fill_value=None, 
+                               outlier_replace=False, 
                                outlier_replace_method=None,
-                               outlier_impute=None,
+                               outlier_impute=None, 
                                outlier_replace_value=None,
                                header=None):
+
     buf = DataTransform()
     buf.missing_fill = missing_fill
     buf.outlier_replace = outlier_replace
-
+   
     if missing_fill:
         if missing_replace_method:
             buf.missing_replace_method = str(missing_replace_method)
-
+        
         if missing_impute is not None:
             if type(missing_impute).__name__ == "list":
                 buf.missing_value.extend(map(str, missing_impute))
@@ -515,15 +507,14 @@ def save_data_transform_result(missing_fill=False,
             if type(missing_fill_value).__name__ == "list":
                 feature_value_dict = dict(zip(range(len(missing_fill_value)), map(str, missing_fill_value)))
             else:
-                feature_value_dict = dict(
-                    zip(range(len(header)), [str(missing_fill_value) for idx in range(len(header))]))
+                feature_value_dict = dict(zip(range(len(header)), [str(missing_fill_value) for idx in range(len(header))]))
 
             buf.missing_replace_value.update(feature_value_dict)
 
     if outlier_replace:
         if outlier_replace_method:
             buf.outlier_replace_method = str(outlier_replace_method)
-
+        
         if outlier_impute is not None:
             if type(outlier_impute).__name__ == "list":
                 buf.outlier_value.extend(map(str, outlier_impute))
@@ -536,11 +527,10 @@ def save_data_transform_result(missing_fill=False,
             if type(outlier_replace_value).__name__ == "list":
                 outlier_value_dict = dict(zip(range(len(outlier_replace_value)), map(str, outlier_replace_value)))
             else:
-                outlier_value_dict = dict(
-                    zip(range(len(header)), [str(outlier_replace_value) for idx in range(len(header))]))
+                outlier_value_dict = dict(zip(range(len(header)), [str(outlier_replace_value) for idx in range(len(header))]))
 
             buf.outlier_replace_value.update(outlier_value_dict)
-
+ 
     LOGGER.debug("conf protobuf is {}".format(buf))
 
     core.save_model("data_transform", buf)
@@ -592,3 +582,4 @@ def load_data_transform_result():
     return missing_fill, missing_replace_method, missing_value, \
            missing_replace_value, outlier_replace, outlier_replace_method, \
            outlier_value, outlier_replace_value
+

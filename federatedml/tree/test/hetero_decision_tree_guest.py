@@ -38,7 +38,6 @@ from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import Node
-from federatedml.tree import NodeMeta
 from federatedml.tree import DecisionTreeModelMeta
 
 LOGGER = log_utils.getLogger()
@@ -534,17 +533,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def get_tree_model(self):
         LOGGER.info("get tree model")
         tree_model = DecisionTreeModelMeta()
-        for node in self.tree_:
-            tree_model.tree_.add(id=node.id, sitename=node.sitename, fid=node.fid, bid=node.bid, weight=node.weight, is_leaf=node.is_leaf, left_nodeid=node.left_nodeid, right_nodeid=node.right_nodeid)
-        
-        tree_model.split_maskdict.update(self.split_maskdict)
+        tree_model.tree_ = self.tree_
+        tree_model.split_maskdict = self.split_maskdict
         return tree_model
 
     def set_tree_model(self, tree_model):
         LOGGER.info("set tree model")
-        self.tree_ = []
-        for node_meta in tree_model.tree_:
-            node = Node(id=node_meta.id, sitename=node_meta.sitename, fid=node_meta.fid, bid=node_meta.bid, weight=node_meta.weight, is_leaf=node_meta.is_leaf, left_nodeid=node_meta.left_nodeid, right_nodeid=node_meta.right_nodeid)
-            self.tree_.append(node)
-
-        self.split_maskdict = dict(tree_model.split_maskdict)
+        self.tree_ = tree_model.tree_
+        self.split_maskdict = tree_model.split_maskdict
