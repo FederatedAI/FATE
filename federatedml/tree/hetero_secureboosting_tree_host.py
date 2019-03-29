@@ -25,7 +25,7 @@
 # HeteroSecureBoostingHost 
 # =============================================================================
 
-from federatedml.feature import Quantile
+from federatedml.feature.quantile import Quantile
 from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.tree import BoostingTree
 from federatedml.tree import BoostingTreeModelMeta

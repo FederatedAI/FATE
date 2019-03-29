@@ -24,11 +24,11 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
-from federatedml.feature import Instance
-from federatedml.feature import SparseVector
+from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.feature.imputer import ImputerProcess
 from federatedml.util import consts
-from federatedml.util import DataIOParamChecker
+from federatedml.util.param_checker import DataIOParamChecker
 from arch.api import eggroll
 from arch.api.proto.data_transform_pb2 import DataTransform
 from arch.api.model_manager import core
