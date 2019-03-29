@@ -35,7 +35,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.eggroll.storage',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x08kv.proto\x12&com.webank.ai.fate.api.eggroll.storage\x1a\x13storage-basic.proto\"9\n\x05Range\x12\r\n\x05start\x18\x01 \x01(\x0c\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x0c\x12\x14\n\x0cminChunkSize\x18\x03 \x01(\x03\"\x07\n\x05\x45mpty\"%\n\x07Operand\x12\x0b\n\x03key\x18\x01 \x01(\x0c\x12\r\n\x05value\x18\x02 \x01(\x0c\"\x16\n\x05\x43ount\x12\r\n\x05value\x18\x01 \x01(\x03\"x\n\x0f\x43reateTableInfo\x12N\n\x0estorageLocator\x18\x01 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x15\n\rfragmentCount\x18\x02 \x01(\x05\x32\xe6\x07\n\tKVService\x12\x82\x01\n\x0e\x63reateIfAbsent\x12\x37.com.webank.ai.fate.api.eggroll.storage.CreateTableInfo\x1a\x37.com.webank.ai.fate.api.eggroll.storage.CreateTableInfo\x12\x65\n\x03put\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty\x12o\n\x0bputIfAbsent\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12j\n\x06putAll\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty(\x01\x12j\n\x06\x64\x65lete\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12g\n\x03get\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12k\n\x07iterate\x12-.com.webank.ai.fate.api.eggroll.storage.Range\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand0\x01\x12g\n\x07\x64\x65stroy\x12-.com.webank.ai.fate.api.eggroll.storage.Empty\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty\x12\x65\n\x05\x63ount\x12-.com.webank.ai.fate.api.eggroll.storage.Empty\x1a-.com.webank.ai.fate.api.eggroll.storage.Countb\x06proto3')
+  serialized_pb=_b('\n\x08kv.proto\x12&com.webank.ai.fate.api.eggroll.storage\x1a\x13storage-basic.proto\"9\n\x05Range\x12\r\n\x05start\x18\x01 \x01(\x0c\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x0c\x12\x14\n\x0cminChunkSize\x18\x03 \x01(\x03\"\x07\n\x05\x45mpty\"%\n\x07Operand\x12\x0b\n\x03key\x18\x01 \x01(\x0c\x12\r\n\x05value\x18\x02 \x01(\x0c\"\x16\n\x05\x43ount\x12\r\n\x05value\x18\x01 \x01(\x03\"x\n\x0f\x43reateTableInfo\x12N\n\x0estorageLocator\x18\x01 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x15\n\rfragmentCount\x18\x02 \x01(\x05\x32\xd2\x08\n\tKVService\x12\x82\x01\n\x0e\x63reateIfAbsent\x12\x37.com.webank.ai.fate.api.eggroll.storage.CreateTableInfo\x1a\x37.com.webank.ai.fate.api.eggroll.storage.CreateTableInfo\x12\x65\n\x03put\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty\x12o\n\x0bputIfAbsent\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12j\n\x06putAll\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty(\x01\x12j\n\x06\x64\x65lete\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12g\n\x03get\x12/.com.webank.ai.fate.api.eggroll.storage.Operand\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand\x12k\n\x07iterate\x12-.com.webank.ai.fate.api.eggroll.storage.Range\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand0\x01\x12g\n\x07\x64\x65stroy\x12-.com.webank.ai.fate.api.eggroll.storage.Empty\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty\x12j\n\ndestroyAll\x12-.com.webank.ai.fate.api.eggroll.storage.Empty\x1a-.com.webank.ai.fate.api.eggroll.storage.Empty\x12\x65\n\x05\x63ount\x12-.com.webank.ai.fate.api.eggroll.storage.Empty\x1a-.com.webank.ai.fate.api.eggroll.storage.Countb\x06proto3')
   ,
   dependencies=[storage__basic__pb2.DESCRIPTOR,])
 
@@ -269,7 +269,7 @@ _KVSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   serialized_start=327,
-  serialized_end=1325,
+  serialized_end=1433,
   methods=[
   _descriptor.MethodDescriptor(
     name='createIfAbsent',
@@ -344,9 +344,18 @@ _KVSERVICE = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='destroyAll',
+    full_name='com.webank.ai.fate.api.eggroll.storage.KVService.destroyAll',
+    index=8,
+    containing_service=None,
+    input_type=_EMPTY,
+    output_type=_EMPTY,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='count',
     full_name='com.webank.ai.fate.api.eggroll.storage.KVService.count',
-    index=8,
+    index=9,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_COUNT,

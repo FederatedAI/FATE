@@ -19,8 +19,8 @@
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 
-module=proxy
-main_class=com.webank.ai.fate.networking.Proxy
+module=egg
+main_class=com.webank.ai.fate.eggroll.Egg
 
 getpid() {
     pid=`ps aux | grep ${main_class} | grep -v grep | awk '{print $2}'`
@@ -43,10 +43,10 @@ status() {
     if [[ -n ${pid} ]]; then
         echo "status:
         `ps aux | grep ${pid} | grep -v grep`"
-        exit 1
+        return 1
     else
         echo "service not running"
-        exit 0
+        return 0
     fi
 }
 
