@@ -76,10 +76,10 @@ def _evict(_, env):
     env.close()
 
 
-@cached(cache=cache_utils.EvictTTLCache(maxsize=64, ttl=3600, evict=_evict))
+@cached(cache=cache_utils.EvictLRUCache(maxsize=64, evict=_evict))
 def _open_env(path, write=False):
     os.makedirs(path, exist_ok=True)
-    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, lock=write, sync=False, map_size=10_737_418_240)
+    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, lock=write, sync=True, map_size=10_737_418_240)
 
 
 def _get_db_path(*args):
@@ -307,8 +307,8 @@ class _DTable(object):
         return "type: {}, namespace: {}, name: {}, partitions: {}".format(self._type, self._namespace, self._name,
                                                                           self._partitions)
 
-    def _get_env_for_partition(self, p: int):
-        return _get_env(self._type, self._namespace, self._name, str(p))
+    def _get_env_for_partition(self, p: int, write=False):
+        return _get_env(self._type, self._namespace, self._name, str(p), write=write)
 
     def put(self, k, v, use_serialize=True):
         if use_serialize:
@@ -318,7 +318,7 @@ class _DTable(object):
             k_bytes = string_bytes(k, check=True)
             v_bytes = string_bytes(v, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             return txn.put(k_bytes, v_bytes)
         return False
@@ -336,7 +336,7 @@ class _DTable(object):
         else:
             k_bytes = string_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if txn.delete(k_bytes):
@@ -349,7 +349,7 @@ class _DTable(object):
         else:
             k_bytes = string_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if old_value_bytes is None:
@@ -365,7 +365,7 @@ class _DTable(object):
         txn_map = {}
         _succ = True
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
+            env = self._get_env_for_partition(p, write=True)
             txn = env.begin(write=True)
             txn_map[p] = env, txn
         for k, v in kv_list:
@@ -397,12 +397,15 @@ class _DTable(object):
 
     def destroy(self):
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
+            env = self._get_env_for_partition(p, write=True)
             db = env.open_db()
             with env.begin(write=True) as txn:
                 txn.drop(db)
         _table_key = ".".join([self._type, self._namespace, self._name])
         Standalone.get_instance().meta_table.delete(_table_key)
+        _path = _get_db_path(self._type, self._namespace, self._name)
+        import shutil
+        shutil.rmtree(_path)
 
     def collect(self, use_serialize=True):
         iterators = []
