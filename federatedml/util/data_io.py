@@ -24,9 +24,9 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
-from federatedml.feature.instance import Instance
-from federatedml.feature.sparse_vector import SparseVector
-# from federatedml.feature import ImputerProcess
+from federatedml.feature import Instance
+from federatedml.feature import SparseVector
+from federatedml.feature.imputer import ImputerProcess
 from federatedml.util import consts
 from federatedml.util import DataIOParamChecker
 from arch.api import eggroll
@@ -90,7 +90,7 @@ class DenseFeatureReader(object):
 
     def read_data(self, table_name, namespace, mode="fit"):
         # input_data = eggroll.table(table_name, namespace)
-        input_data = feature.get_feature_data_table(table_name)
+        input_data = feature.get_feature_data_table(commit_id=table_name)
         LOGGER.debug("input data init is {}".format(list(input_data.collect())))
         LOGGER.info("start to read dense data and change data to instance")
         input_data_features = None
@@ -118,7 +118,6 @@ class DenseFeatureReader(object):
         outlier_replace_value = None
 
         if self.missing_fill:
-            from federatedml.feature.imputer import ImputerProcess
             imputer_processor = ImputerProcess(self.missing_impute)
             LOGGER.info("missing_replace_method is {}".format(self.missing_fill_method))
             if mode == "fit":
@@ -264,7 +263,7 @@ class SparseFeatureReader(object):
 
     def read_data(self, table_name, namespace, mode="fit"):
         # input_data = eggroll.table(table_name, namespace)
-        input_data = feature.get_feature_data_table(table_name)
+        input_data = feature.get_feature_data_table(commit_id=table_name)
         LOGGER.info("start to read sparse data and change data to instance")
 
         if mode == "transform":
@@ -379,7 +378,7 @@ class SparseTagReader(object):
 
     def read_data(self, table_name, namespace, mode="fit"):
         # input_data = eggroll.table(table_name, namespace)
-        input_data = feature.get_feature_data_table(table_name)
+        input_data = feature.get_feature_data_table(commit_id=table_name)
         LOGGER.info("start to read sparse data and change data to instance")
         # LOGGER.info("tag data is {}".format(list(input_data.collect())))
         # LOGGER.info("delemitor is {}".format(self.delimitor))

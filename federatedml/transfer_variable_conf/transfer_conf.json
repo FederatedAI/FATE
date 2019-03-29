@@ -601,5 +601,13 @@
 	    "guest"
 	  ]
 	}
+  },
+  "SampleTransferVariable": {
+    "sample_ids": {
+      "src": "guest",
+      "dst": [
+          "host"
+      ]
+    }
   }
 }
