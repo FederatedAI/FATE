@@ -49,7 +49,7 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
         String myRole = FederatedUtils.getMyRole(requestMeta.getMyRole());
 
         // get model
-        MLModel model = new ModelManager().getModel(requestMeta.getSceneId(), requestMeta.getPartnerPartyId(), myRole);
+        MLModel model = ModelManager.getModel(requestMeta.getSceneId(), requestMeta.getPartnerPartyId(), myRole);
         if (model == null){
             response.setStatusCode(StatusCode.NOMODEL);
             FederatedMeta.Builder federatedMetaBuilder = FederatedUtils.genResponseMetaBuilder(requestMeta, "");
@@ -93,7 +93,8 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
         String myPartyId = Configuration.getProperty("partyId");
         String partnerPartyId = requestData.get("myPartyId").toString();
         String myRole = FederatedUtils.getMyRole(requestData.get("myRole").toString());
-        MLModel model = new ModelManager().getModel(requestData.get("sceneId").toString(), partnerPartyId, myRole, requestData.get("commitId").toString());
+        // federated predict should get model according to commit id
+        MLModel model = ModelManager.getModel(requestData.get("sceneId").toString(), partnerPartyId, myRole, requestData.get("commitId").toString());
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("Can not found model.");

@@ -21,102 +21,56 @@ import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.core.mlmodel.model.MLModel;
-import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.utils.FederatedUtils;
 import io.grpc.ManagedChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ModelManager {
-    private ModelPool onlineModels;
-    private ModelPool modelPool;
+    private static ModelPool sceneModel;
+    private static ModelCache modelCache;
     private static final Logger LOGGER = LogManager.getLogger();
-    private String modelPackage = "com.webank.ai.fate.serving.federatedml.model";
-
     public ModelManager(){
-        this.onlineModels = new ModelPool();
-        this.modelPool = new ModelPool();
+        sceneModel = new ModelPool();
+        modelCache = new ModelCache();
     }
 
-
-    public MLModel getModel(String sceneId, String partnerPartyId, String myRole){
-        return this.onlineModels.get(this.getOnlineModelKey(sceneId, partnerPartyId, myRole));
+    public static MLModel getModel(String sceneId, String partnerPartyId, String myRole){
+        return sceneModel.get(ModelUtils.getOnlineModelKey(sceneId, partnerPartyId, myRole));
     }
 
-    public MLModel getModel(String sceneId, String partnerPartyId, String myRole, String commitId){
-        return this.modelPool.get(this.genModelKey(sceneId, partnerPartyId, myRole, commitId));
+    public static MLModel getModel(String sceneId, String partnerPartyId, String myRole, String commitId){
+        return modelCache.get(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId));
     }
 
-    public ProtoModelBuffer readModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
-        DTable dataTable = VersionControl.dTableForRead("model_data", sceneId, partnerPartyId, myRole, commitId, tag, branch);
-        ProtoModelBuffer modelBuffer = new ProtoModelBuffer();
-        if (modelBuffer.deserialize(dataTable.get("model_meta"), dataTable.get("model_param"), dataTable.get("data_transform")) == StatusCode.OK){
-            return modelBuffer;
-        }
-        else{
-            return null;
-        }
-    }
-
-
-    public MLModel loadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
-        ProtoModelBuffer modelBuffer = this.readModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
-        if (modelBuffer == null){
-            return null;
-        }
-        Class modelClass = Class.forName(this.modelPackage + "." + modelBuffer.getMeta().getName());
-        MLModel mlModel = (MLModel)modelClass.getConstructor().newInstance();
-        Map<String, String> modelInfo = new HashMap<>();
-        modelInfo.put("sceneId", sceneId);
-        modelInfo.put("partnerPartyId", partnerPartyId);
-        modelInfo.put("myRole", myRole);
-        modelInfo.put("commitId", commitId);
-        modelInfo.put("tag", tag);
-        modelInfo.put("branch", branch);
-        mlModel.setModelInfo(modelInfo);
-        mlModel.initModel(modelBuffer);
-        return mlModel;
-    }
-
-    private String getOnlineModelKey(String sceneId, String partnerPartyId, String myRole){
-        String[] tmp = {sceneId, partnerPartyId, myRole};
-        return StringUtils.join(tmp, "-");
-    }
-
-    private String genModelKey(String sceneId, String partnerPartyId, String myRole, String commitId){
-        String[] tmp = {sceneId, partnerPartyId, myRole, commitId};
-        return StringUtils.join(tmp, "-");
-    }
-
-    private int pushModelIntoPool(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
-        MLModel mlModel = this.loadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
+    private static int pushModelIntoPool(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
+        MLModel mlModel = ModelUtils.loadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
         if (mlModel == null){
             return StatusCode.NOMODEL;
         }
-        this.modelPool.put(this.genModelKey(sceneId, partnerPartyId, myRole, commitId), mlModel);
+        modelCache.put(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId), mlModel);
         return StatusCode.OK;
     }
 
-    public ReturnResult publishLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch){
+    public static ReturnResult publishLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch){
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
         returnResult.setData("commitId", commitId);
         try{
-            int localLoadStatus = this.pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch);
+            int localLoadStatus = pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch);
             if (localLoadStatus != StatusCode.OK){
                 returnResult.setStatusCode(localLoadStatus);
                 return returnResult;
             }
-            Map<String, Object> federatedLoadModelResult = this.requestFederatedLoadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
+            Map<String, Object> federatedLoadModelResult = requestFederatedLoadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
             if ((int)federatedLoadModelResult.get("statusCode") != StatusCode.OK){
                 returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
                 return returnResult;
@@ -135,7 +89,7 @@ public class ModelManager {
         return returnResult;
     }
 
-    public ReturnResult federatedLoadModel(Map<String, Object> requestData){
+    public static ReturnResult federatedLoadModel(Map<String, Object> requestData){
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
         try{
@@ -146,7 +100,7 @@ public class ModelManager {
             String branch = String.valueOf(requestData.get("branch"));
             String tag = String.valueOf(requestData.get("tag"));
             returnResult.setData("commitId", commitId);
-            returnResult.setStatusCode(this.pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch));
+            returnResult.setStatusCode(pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch));
         }
         catch (Exception ex){
             returnResult.setStatusCode(StatusCode.UNKNOWNERROR);
@@ -155,16 +109,16 @@ public class ModelManager {
         return returnResult;
     }
 
-    public ReturnResult publishOnlineModel(String sceneId, String partnerPartyId, String myRole, String commitId){
+    public static ReturnResult publishOnlineModel(String sceneId, String partnerPartyId, String myRole, String commitId){
         ReturnResult returnResult = new ReturnResult();
-        MLModel model = this.modelPool.get(this.genModelKey(sceneId, partnerPartyId, myRole, commitId));
+        MLModel model = modelCache.get(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId));
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("Can not found model by these information.");
             return returnResult;
         }
         try{
-            this.onlineModels.put(this.getOnlineModelKey(sceneId, partnerPartyId, myRole), model);
+            sceneModel.put(ModelUtils.getOnlineModelKey(sceneId, partnerPartyId, myRole), model);
             returnResult.setStatusCode(StatusCode.OK);
         }
         catch (Exception ex){
@@ -174,7 +128,7 @@ public class ModelManager {
         return returnResult;
     }
 
-    private Map<String, Object> requestFederatedLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws IOException {
+    private static Map<String, Object> requestFederatedLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws IOException {
         Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
         Map<String, String> requestData = new HashMap<>();
         requestData.put("sceneId", sceneId);

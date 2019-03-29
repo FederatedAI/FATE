@@ -38,7 +38,7 @@ public class DTest implements FeatureData{
         if ((int)Optional.ofNullable(tmp.get("status")).orElse(1) != 0){
             return null;
         }
-        String[] features = ((List<String>)tmp.get("data")).get(0).split("\t");
+        String[] features = StringUtils.split(((List<String>)tmp.get("data")).get(0), "\t");
         Map<String, Object> featureData = new HashMap<>();
         for(int i =1; i < features.length; i++){
             featureData.put(features[i], i);
