@@ -18,7 +18,7 @@ import os
 import pickle as c_pickle
 from arch.api import StoreType
 from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
-from arch.api.utils.core import string_bytes, bytes_string
+from arch.api.utils.core import string_to_bytes, bytes_to_string
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid
@@ -315,8 +315,8 @@ class _DTable(object):
             k_bytes = c_pickle.dumps(k)
             v_bytes = c_pickle.dumps(v)
         else:
-            k_bytes = string_bytes(k, check=True)
-            v_bytes = string_bytes(v, check=True)
+            k_bytes = string_to_bytes(k, check=True)
+            v_bytes = string_to_bytes(v, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
@@ -334,7 +334,7 @@ class _DTable(object):
         if use_serialize:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = string_bytes(k, check=True)
+            k_bytes = string_to_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
@@ -347,7 +347,7 @@ class _DTable(object):
         if use_serialize:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = string_bytes(k, check=True)
+            k_bytes = string_to_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
@@ -356,7 +356,7 @@ class _DTable(object):
                 if use_serialize:
                     v_bytes = c_pickle.dumps(v)
                 else:
-                    v_bytes = string_bytes(v, check=True)
+                    v_bytes = string_to_bytes(v, check=True)
                 txn.put(k_bytes, v_bytes)
                 return None
             return c_pickle.loads(old_value_bytes) if use_serialize else old_value_bytes
@@ -374,8 +374,8 @@ class _DTable(object):
                     k_bytes = c_pickle.dumps(k)
                     v_bytes = c_pickle.dumps(v)
                 else:
-                    k_bytes = string_bytes(k, check=True)
-                    v_bytes = string_bytes(v, check=True)
+                    k_bytes = string_to_bytes(k, check=True)
+                    v_bytes = string_to_bytes(v, check=True)
                 p = _hash_key_to_partition(k_bytes, self._partitions)
                 _succ = _succ and txn_map[p][1].put(k_bytes, v_bytes)
             except:
@@ -388,7 +388,7 @@ class _DTable(object):
         if use_serialize:
             k_bytes = c_pickle.dumps(k)
         else:
-            k_bytes = string_bytes(k, check=True)
+            k_bytes = string_to_bytes(k, check=True)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -438,7 +438,7 @@ class _DTable(object):
             if use_serialize:
                 yield c_pickle.loads(key), c_pickle.loads(value)
             else:
-                yield bytes_string(key), value
+                yield bytes_to_string(key), value
             if it.next():
                 entry[0], entry[1] = it.item()
                 heapreplace(entries, entry)

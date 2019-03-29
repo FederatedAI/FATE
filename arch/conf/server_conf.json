@@ -11,7 +11,8 @@
 		"manager": {
 			"host": "localhost",
 			"grpc.port": 9360,
-			"http.port": 9380
+			"http.port": 9380,
+			"work_mode": 0
 		},
 		"proxy": {
 			"host": "localhost",

@@ -7,6 +7,8 @@ from arch.api.proto import basic_meta_pb2
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils import file_utils
 from arch.api.utils.parameter_utils import ParameterOverride
+from arch.task_manager.adapter.offline_feature.get_feature import GetFeature
+from arch.task_manager.JobManage import save_job, query_job, update_job
 from flask.logging import default_handler
 from flask import Flask, request, jsonify
 import grpc, time, sys
@@ -18,6 +20,8 @@ import subprocess
 import glob
 import psutil
 from psutil import NoSuchProcess
+import traceback
+import uuid
 
 '''
 Initialize the manager
@@ -258,6 +262,87 @@ def stop_workflow(job_id):
     return get_json_result()
 
 
+@manager.route('/v1/data/importId', methods=['POST'])
+def import_id():
+    eggroll.init(job_id=generate_job_id(), mode=WORK_MODE)
+    request_data = request.json
+    table_name_space = "id_library"
+    try:
+        id_library_info = eggroll.table("info", table_name_space, partition=10, create_if_missing=True, error_if_exist=False)
+        if request_data.request("rangeStart") == 0:
+            data_id = generate_job_id()
+            id_library_info.put("tmp_data_id", data_id)
+        else:
+            data_id = id_library_info.request("tmp_data_id")
+        data_table = eggroll.table(data_id, table_name_space, partition=50, create_if_missing=True, error_if_exist=False)
+        for i in request_data.request("ids", []):
+            data_table.put(i, "")
+        if request_data.request("rangeEnd") and request_data.request("total") and (request_data.request("total") - request_data.request("rangeEnd") == 1):
+            # end
+            new_id_count = data_table.count()
+            if new_id_count == request_data["total"]:
+                id_library_info.put(data_id, json.dumps({"salt": request_data.request("salt"), "saltMethod": request_data.request("saltMethod")}))
+                old_data_id = id_library_info.request("use_data_id")
+                id_library_info.put("use_data_id", data_id)
+
+                # TODO: destroy DTable, should be use a lock
+                old_data_table = eggroll.table(old_data_id, table_name_space, partition=50, create_if_missing=True, error_if_exist=False)
+                old_data_table.destroy()
+                id_library_info.delete(old_data_id)
+            else:
+                data_table.destroy()
+                return get_json_result(2, "The actual amount of data is not equal to total.")
+        return get_json_result()
+    except Exception as e:
+        manager.logger.exception(e)
+        return get_json_result(1, "import error.")
+
+
+@manager.route('/v1/data/requestOfflineFeature', methods=['POST'])
+def request_offline_feature():
+    request_data = request.json
+    try:
+        job_id = uuid.uuid1().hex
+        response = GetFeature.request(job_id, request_data)
+        if response.get("status", 1) == 0:
+            job_data = dict()
+            job_data.update(request_data)
+            job_data["begin_date"] = datetime.datetime.now()
+            job_data["status"] = "running"
+            job_data["config"] = json.dumps(request_data)
+            save_job(job_id=job_id, **job_data)
+            return get_json_result()
+        else:
+            return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))
+    except Exception as e:
+        traceback.print_exc()
+        manager.logger.exception(e)
+        return get_json_result(status=1, msg="request offline feature error: %s" % e)
+
+
+@manager.route('/v1/data/importOfflineFeature', methods=['POST'])
+def import_offline_feature():
+    eggroll.init(job_id=generate_job_id(), mode=WORK_MODE)
+    request_data = request.json
+    try:
+        if not request_data.get("jobId"):
+            return get_json_result(status=2, msg="no job id")
+        job_id = request_data.get("jobId")
+        job_data = query_job(job_id=job_id)
+        if not job_data:
+            return get_json_result(status=3, msg="can not found this job id: %s" % request_data.get("jobId", ""))
+        response = GetFeature.import_data(request_data, json.loads(job_data[0]["config"]))
+        if response.get("status", 1) == 0:
+            update_job(job_id=job_id, update_data={"status": "success", "end_date": datetime.datetime.now()})
+            return get_json_result()
+        else:
+            return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))
+    except Exception as e:
+        traceback.print_exc()
+        manager.logger.exception(e)
+        return get_json_result(status=1, msg="request offline feature error: %s" % e)
+
+
 def wrap_grpc_packet(_json_body, _method, _url, _dst_party_id=None, job_id=None):
     _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(PARTY_ID), role=ROLE, callback=_src_end_point)
@@ -333,6 +418,7 @@ if __name__ == '__main__':
     PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
     PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
     PARTY_ID = server_conf.get('party_id')
+    WORK_MODE = server_conf.get(SERVERS).get(ROLE).get('work_mode')
 
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryServicer(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))

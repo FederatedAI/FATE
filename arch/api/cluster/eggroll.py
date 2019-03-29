@@ -25,7 +25,7 @@ from arch.api.utils import eggroll_serdes, file_utils
 from arch.api.utils.log_utils import getLogger
 from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
 from arch.api.utils import cloudpickle
-from arch.api.utils.core import string_bytes, bytes_string
+from arch.api.utils.core import string_to_bytes, bytes_to_string
 
 
 def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
@@ -192,7 +192,7 @@ class _EggRoll(object):
     @staticmethod
     def __generate_operand(kvs: Iterable, use_serialize=True):
         for k, v in kvs:
-            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k) if use_serialize else bytes_string(k), value=_EggRoll.value_serdes.serialize(v) if use_serialize else v)
+            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k) if use_serialize else bytes_to_string(k), value=_EggRoll.value_serdes.serialize(v) if use_serialize else v)
 
     @staticmethod
     def _deserialize_operand(operand: kv_pb2.Operand, include_key=False, use_serialize=True):
@@ -201,7 +201,7 @@ class _EggRoll(object):
                 return (_EggRoll.value_serdes.deserialize(operand.key), _EggRoll.value_serdes.deserialize(
                     operand.value)) if include_key else _EggRoll.value_serdes.deserialize(operand.value)
             else:
-                return (bytes_string(operand.key), operand.value) if include_key else operand.value
+                return (bytes_to_string(operand.key), operand.value) if include_key else operand.value
         return None
 
     '''
@@ -213,8 +213,8 @@ class _EggRoll(object):
             k = self.value_serdes.serialize(k)
             v = self.value_serdes.serialize(v)
         else:
-            k = string_bytes(k, check=True)
-            v = string_bytes(v, check=True)
+            k = string_to_bytes(k, check=True)
+            v = string_to_bytes(v, check=True)
         self.kv_stub.put(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
 
     def put_if_absent(self, _table, k, v, use_serialize=True):
@@ -222,8 +222,8 @@ class _EggRoll(object):
             k = self.value_serdes.serialize(k)
             v = self.value_serdes.serialize(v)
         else:
-            k = string_bytes(k, check=True)
-            v = string_bytes(v, check=True)
+            k = string_to_bytes(k, check=True)
+            v = string_to_bytes(v, check=True)
         operand = self.kv_stub.putIfAbsent(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
@@ -234,7 +234,7 @@ class _EggRoll(object):
         if use_serialize:
             k = self.value_serdes.serialize(k)
         else:
-            k = string_bytes(k, check=True)
+            k = string_to_bytes(k, check=True)
         operand = self.kv_stub.delete(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
@@ -242,7 +242,7 @@ class _EggRoll(object):
         if use_serialize:
             k = self.value_serdes.serialize(k)
         else:
-            k = string_bytes(k, check=True)
+            k = string_to_bytes(k, check=True)
         operand = self.kv_stub.get(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 

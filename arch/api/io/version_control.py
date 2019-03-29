@@ -15,7 +15,7 @@
 #
 from arch.api import federation
 from arch.api import eggroll
-from arch.api.utils.core import get_scene_key, json_loads, json_dumps, bytes_string
+from arch.api.utils.core import get_scene_key, json_loads, json_dumps, bytes_to_string
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
 
@@ -25,14 +25,14 @@ def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
     data_table_info = dict()
     branch_current_commit = version_table.get(branch, use_serialize=False)
     if branch_current_commit:
-        parent = bytes_string(branch_current_commit)
+        parent = bytes_to_string(branch_current_commit)
     else:
         parent = "0"
     if not commit_id:
         # Create new commit id for saving, branch current commit as parent
         # TODO: get job id from task manager
         commit_id = eggroll.get_field("job_id")
-    print(scene_key, parent, commit_id)
+    print(scene_key, commit_id)
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
@@ -47,7 +47,7 @@ def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
         branch_current_commit = version_table.get(branch, use_serialize=False)
         if branch_current_commit:
             # Return branch current commit id for reading
-            commit_id = bytes_string(branch_current_commit)
+            commit_id = bytes_to_string(branch_current_commit)
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
@@ -60,7 +60,7 @@ def version_history(name_space, scene_id=None, my_party_id=None, partner_party_i
     else:
         branch_current_commit = version_table.get(branch, use_serialize=False)
         if branch_current_commit:
-            commit_id = bytes_string(branch_current_commit)
+            commit_id = bytes_to_string(branch_current_commit)
             for i in range(10):
                 info = version_table.get(commit_id, use_serialize=False)
                 if info:
@@ -106,7 +106,7 @@ def gen_data_table_info(name_space, scene_key, commit_id):
         # todo: max size limit?
         data_table_info["tablePartition"] = 4 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
     elif name_space == 'feature_data':
-        data_table_info["tablePartition"] = 10 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
+        data_table_info["tablePartition"] = 10 if RuntimeInstance.MODE == WorkMode.CLUSTER else 10
     elif name_space == 'feature_meta':
         data_table_info["tablePartition"] = 1 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
     elif name_space == 'feature_header':

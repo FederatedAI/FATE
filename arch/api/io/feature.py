@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.io.version_control import read_version, save_version, gen_data_table_info, get_data_table, save_version_info
-from arch.api.utils.core import json_dumps, json_loads, bytes_string
+from arch.api.utils.core import json_dumps, json_loads, bytes_to_string
 
 
 def save_feature_header(features, labels, commit_log="", commit_id=None,  tag=None, branch="master"):
@@ -76,7 +76,7 @@ def read_feature_meta(commit_id=None, tag=None, branch="master"):
                                                                                       commit_id=commit_id)
         data_table = get_data_table(data_table_info=data_table_info, create_if_missing=False)
         for k, v in data_table.collect(use_serialize=False):
-            feature_meta[k] = bytes_string(v)
+            feature_meta[k] = bytes_to_string(v)
         return feature_meta
     else:
         return feature_meta
