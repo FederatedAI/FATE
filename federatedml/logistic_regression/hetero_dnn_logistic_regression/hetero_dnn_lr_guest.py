@@ -33,10 +33,16 @@ class HeteroDNNLRGuest(HeteroLRGuest):
     def transform(self, instance_table):
         """
         Extract features from instances
+
+        Parameters
+        ----------
         :param instance_table: dtable consists of a collection of (index, instance) pairs
         :return: instance_table: dtable consists of a collection of (index, instance) pairs,
         that each instance holds newly extracted features.
         """
+
+        LOGGER.info("@ extract representative features from guest raw input")
+
         # delegate to local_model_proxy for performing the feature extraction task
         dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)
         return dtable
@@ -45,11 +51,16 @@ class HeteroDNNLRGuest(HeteroLRGuest):
         """
         Update local model (i.e., the parameters of local model) based on specified fore_gradient_table, instance_table,
         and coef.
+
+        Parameters
+        ----------
         :param fore_gradient_table: dtable consists of a collection of (index, gradient) pairs
         :param instance_table: dtable consists of a collection of (index, instance) pairs
         :param coef: the coefficients of the logistic regression model
         :param training_info: a dictionary holding information on states of training process
         """
+
+        LOGGER.info("@ update guest local model")
 
         # delegate to local_model_proxy for performing the local model update task
         training_info["index_tracking_list"] = self.index_tracking_list
