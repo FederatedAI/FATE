@@ -22,6 +22,7 @@ import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceRequest;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceResponse;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.FederatedMeta;
 import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.serdes.impl.GeneralJsonBytesSerDes;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;

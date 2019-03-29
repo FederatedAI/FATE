@@ -1,6 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
-import com.webank.ai.fate.core.mlmodel.model.BaseModel;
+import com.webank.ai.fate.core.mlmodel.model.MachineLearningModel;
 import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTransformServer;
@@ -8,7 +8,7 @@ import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTrans
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class HeteroLR extends BaseModel<ProtoModelBuffer, HashMap<String, Object>, HashMap<String, Object>> {
+public abstract class HeteroLR extends MachineLearningModel<ProtoModelBuffer, HashMap<String, Object>, HashMap<String, Object>> {
     protected Map<String, Float> weight;
     protected float intercept = 0;
     DataTransformServer dataTransformServer;

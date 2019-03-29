@@ -20,7 +20,7 @@ from arch.api import RuntimeInstance
 from arch.api import WorkMode
 
 
-def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
+def version_for_save(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
     version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id, partner_party_id=partner_party_id, my_role=my_role)
     data_table_info = dict()
     branch_current_commit = version_table.get(branch, use_serialize=False)
@@ -31,12 +31,12 @@ def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
     if not commit_id:
         # Create new commit id for saving, branch current commit as parent
         # TODO: get job id from task manager
-        commit_id = eggroll.get_field("job_id")
-    print(scene_key, commit_id)
+        commit_id = eggroll.get_job_id()
+    print("version for save, scene_key: {}, commit_id: {}".format(scene_key, commit_id))
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
-def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
+def version_for_read(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
     version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id, partner_party_id=partner_party_id, my_role=my_role)
     parent = None
     if commit_id:
@@ -48,6 +48,7 @@ def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
         if branch_current_commit:
             # Return branch current commit id for reading
             commit_id = bytes_to_string(branch_current_commit)
+    print("version for read, scene_key: {}, commit_id: {}".format(scene_key, commit_id))
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
@@ -91,7 +92,7 @@ def get_version_info(version_table, commit_id):
 
 
 def get_default_scene_info():
-    runtime_conf = federation.get_field("runtime_conf")
+    runtime_conf = federation.get_runtime_conf()
     scene_id = runtime_conf.get("local", {}).get("scene_id")
     my_role = runtime_conf.get("local", {}).get("role")
     my_party_id = runtime_conf.get("local", {}).get("party_id")

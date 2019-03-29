@@ -310,13 +310,22 @@ class _DTable(object):
     def _get_env_for_partition(self, p: int, write=False):
         return _get_env(self._type, self._namespace, self._name, str(p), write=write)
 
+    def kv_to_bytes(self, **kwargs):
+        use_serialize = kwargs.get("use_serialize", True)
+        # can not use is None
+        if "k" in kwargs and "v" in kwargs:
+            k, v = kwargs["k"], kwargs["v"]
+            return (c_pickle.dumps(k), c_pickle.dumps(v)) if use_serialize \
+                else (string_to_bytes(k), string_to_bytes(v))
+        elif "k" in kwargs:
+            k = kwargs["k"]
+            return c_pickle.dumps(k) if use_serialize else string_to_bytes(k)
+        elif "v" in kwargs:
+            v = kwargs["v"]
+            return c_pickle.dumps(v) if use_serialize else string_to_bytes(v)
+
     def put(self, k, v, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-            v_bytes = c_pickle.dumps(v)
-        else:
-            k_bytes = string_to_bytes(k, check=True)
-            v_bytes = string_to_bytes(v, check=True)
+        k_bytes, v_bytes = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
@@ -331,10 +340,7 @@ class _DTable(object):
         return cnt
 
     def delete(self, k, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_to_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
@@ -344,19 +350,13 @@ class _DTable(object):
             return None
 
     def put_if_absent(self, k, v, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_to_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if old_value_bytes is None:
-                if use_serialize:
-                    v_bytes = c_pickle.dumps(v)
-                else:
-                    v_bytes = string_to_bytes(v, check=True)
+                v_bytes = self.kv_to_bytes(v=v, use_serialize=use_serialize)
                 txn.put(k_bytes, v_bytes)
                 return None
             return c_pickle.loads(old_value_bytes) if use_serialize else old_value_bytes
@@ -370,25 +370,17 @@ class _DTable(object):
             txn_map[p] = env, txn
         for k, v in kv_list:
             try:
-                if use_serialize:
-                    k_bytes = c_pickle.dumps(k)
-                    v_bytes = c_pickle.dumps(v)
-                else:
-                    k_bytes = string_to_bytes(k, check=True)
-                    v_bytes = string_to_bytes(v, check=True)
+                k_bytes, v_bytes = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
                 p = _hash_key_to_partition(k_bytes, self._partitions)
                 _succ = _succ and txn_map[p][1].put(k_bytes, v_bytes)
-            except:
+            except Exception as e:
                 _succ = False
                 break
         for p, (env, txn) in txn_map.items():
             txn.commit() if _succ else txn.abort()
 
     def get(self, k, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_to_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:

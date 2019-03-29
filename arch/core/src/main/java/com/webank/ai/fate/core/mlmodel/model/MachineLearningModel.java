@@ -28,7 +28,7 @@ import io.grpc.ManagedChannel;
 import com.webank.ai.fate.api.networking.proxy.Proxy.Packet;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 
-public abstract class BaseModel<B, X, P> implements MLModel<B, X, P>{
+public abstract class MachineLearningModel<B, X, P> implements MLModel<B, X, P>{
     private Map<String, String> modelInfo;
 
     @Override

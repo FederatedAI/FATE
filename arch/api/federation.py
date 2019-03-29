@@ -73,5 +73,6 @@ def remote(obj, name: str, tag: str, role=None, idx=-1):
     return RuntimeInstance.FEDERATION.remote(obj=obj, name=name, tag=tag, role=role, idx=idx)
 
 
-def get_field(name):
-    return getattr(RuntimeInstance.FEDERATION, name)
+def get_runtime_conf():
+    return RuntimeInstance.FEDERATION.runtime_conf
+

@@ -17,11 +17,11 @@
 #import ujson
 import json
 import time
-from arch.api.utils import snowflake
+import uuid
 
 
 def get_fate_uuid():
-    return snowflake.get_id()
+    return uuid.uuid1().hex
 
 
 def get_scene_key(scene_id, my_party_id, partner_party_id, my_role):
@@ -35,10 +35,7 @@ def get_commit_id():
 
 
 def string_to_bytes(string, check=False):
-    if check:
-        return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
-    else:
-        return string.encode(encoding="utf-8")
+    return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
 
 
 def bytes_to_string(byte):

@@ -15,6 +15,7 @@
 #
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
+from arch.api.utils.core import string_to_bytes
 import traceback
 from bottle import post, run, request
 import json
@@ -35,6 +36,13 @@ bucket = 'jarvistest-1256844776'
 send_done_url = 'http://127.0.0.1:9380/v1/data/importOfflineFeature'
 
 job_queue = Queue()
+tags = ['tag%d' % n for n in range(50)]
+
+
+def gen_one_feature(id=None):
+    items = [uuid.uuid1().hex if not id else id]
+    items.extend(random.sample(tags, 30))
+    return '%s\n' % '\t'.join(items)
 
 
 @post('/requestOfflineFeature')
@@ -43,17 +51,10 @@ def request_offline_feature():
     config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key, Token=token, Scheme=scheme)
     client = CosS3Client(config)
     file_name = 'test_feature_%s.csv' % (job_id)
-    tags = ['tag%d' % n for n in range(50)]
-    with open(file_name, 'w') as fw:
-        for li in range(100):
-            items = [uuid.uuid1().hex]
-            items.extend(random.sample(tags, 30))
-            fw.write('%s\n' % '\t'.join(items))
-
-    with open(file_name, 'rb') as fp:
+    for li in range(100):
         response = client.put_object(
             Bucket=bucket,
-            Body=fp,
+            Body=string_to_bytes(gen_one_feature()),
             Key=file_name,
             StorageClass='STANDARD',
             EnableMD5=True
@@ -62,6 +63,13 @@ def request_offline_feature():
     job_queue.put((job_id, file_name))
     return json.dumps({"status": 0, "msg": "success"})
 
+
+@post('/feature')
+def request_offline_feature():
+    ids = request.json.get('id').split(',')
+    data = [gen_one_feature(id) for id in ids]
+    response = {"status": 0, "msg": "success", "data": data}
+    return response
 
 def send_done():
     job_id, file_name = job_queue.get()
