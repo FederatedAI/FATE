@@ -25,10 +25,16 @@ class LocalModelProxy(object):
 
     def transform(self, instance_table):
         """
-        transform instances into features
+        transform instances into features.
+
+        Parameters
+        ----------
         :param instance_table: dtable with a collection of (index, instance) pairs
         :return:
         """
+
+        LOGGER.debug("@ extract representative features from raw input")
+
         index_tracking_list = []
 
         indexed_instances = instance_table.collect()
@@ -51,12 +57,16 @@ class LocalModelProxy(object):
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """
+        Update local model
 
+        Parameters
+        ----------
         :param fore_gradient_table: dtable with a collection of (index, gradient) pairs
         :param instance_table: dtable with a collection of (index, instance) pairs
-        :param coef:
-        :return:
+        :param coef: coefficients or parameters of logistic regression model
         """
+
+        LOGGER.debug("@ update local model")
 
         n_iter = training_info["iteration"]
         batch_index = training_info["batch_index"]
@@ -85,12 +95,7 @@ class LocalModelProxy(object):
         grads = np.tile(grads, (1, coef.shape[1]))
         coef = np.tile(coef, (grads.shape[0], 1))
 
-        print("grads:", grads.shape)
-        print("coef:", coef.shape)
-        # enc_back_grad = np.matmul(grads, coef)
         enc_back_grad = grads * coef
-
-        print("enc_back_grad shape", enc_back_grad.shape)
 
         dec_back_grad = self.__decrypt_gradients(enc_back_grad, is_host, n_iter, batch_index)
         self.model.backpropogate(feats, None, dec_back_grad)

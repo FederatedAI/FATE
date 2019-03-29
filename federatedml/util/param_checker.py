@@ -239,7 +239,7 @@ class EncodeParamChecker(object):
     def check_param(encode_param):
         if type(encode_param.salt).__name__ != "str":
             raise ValueError(
-                "encode param's salt {] not supported, should be str type".format(
+                "encode param's salt {} not supported, should be str type".format(
                     encode_param.salt))
 
         encode_method = encode_param.encode_method.lower()
@@ -250,7 +250,7 @@ class EncodeParamChecker(object):
 
         if type(encode_param.base64).__name__ != "bool":
             raise ValueError(
-                "encode param's base64 {] not supported, should be bool type".format(encode_param.base64))
+                "encode param's base64 {} not supported, should be bool type".format(encode_param.base64))
 
         LOGGER.debug("Finish encode parameter check!")
         return True
