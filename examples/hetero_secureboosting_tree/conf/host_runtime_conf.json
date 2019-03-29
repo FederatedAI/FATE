@@ -1,7 +1,8 @@
 {
     "local": {
         "role": "host",
-        "party_id": _host_party_id
+        "party_id": _host_party_id,
+        "scene_id": _scene_id
     },
     "role": {
         "host": [
@@ -12,9 +13,10 @@
         ]
     },
     "DataIOParam": {
+        "input_format": "sparse",
+        "delimitor": "\t",
         "with_label": false,
         "label_idx": 0,
-        "label_type": "float",
         "output_format": "sparse"
     },
     "WorkFlowParam": {
@@ -33,13 +35,18 @@
         "data_input_table": "_cross_validation_table_name",
         "data_input_namespace": "example_data_namespace",
         "n_splits": 5,
-        "work_mode": _work_mode
+        "work_mode": _work_mode,
+        "need_sample": true
     },
     "EvaluateParam":{
         "metrics": ["auc", "precision"],
         "classi_type": "binary",
         "pos_label": 1,
         "predict_threshold": [0.5]
+    },
+    "SampleParam": { 
+        "mode": "stratified",
+        "method": "downsample"
     },
     "DecisionTreeParam": {
         "criterion_method": "xgboost",

@@ -1,7 +1,8 @@
 {
     "local": {
         "role": "guest",
-        "party_id": _guest_party_id
+        "party_id": _guest_party_id,
+        "scene_id": _scene_id
     },
 
     "role": {
@@ -13,9 +14,11 @@
         ]
     },
     "DataIOParam": {
+        "input_format": "sparse",
+        "delimitor": "\t",
         "with_label": true,
         "label_idx": 0,
-        "label_type": "float",
+        "label_type": "int",
         "output_format": "sparse"
     },
     "WorkFlowParam": {
@@ -33,7 +36,8 @@
         "data_input_table": "_cross_validation_table_name",
         "data_input_namespace": "example_data_namespace",
         "n_splits": 5,
-        "work_mode": _work_mode
+        "work_mode": _work_mode,
+        "need_sample": true
     },
     "EncryptParam": {
         "method": "paillier",
@@ -48,6 +52,11 @@
     "ObjectiveParam": {
         "objective": _objective,
         "params": [1.5]
+    },
+    "SampleParam": { 
+        "mode": "stratified",
+        "method": "downsample",
+        "fractions": [[0, 0.1], [1, 0.3]]
     },
     "DecisionTreeParam": {
         "criterion_method": "xgboost",

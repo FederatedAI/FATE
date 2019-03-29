@@ -23,5 +23,6 @@ role=$1
 jobid=$2
 guest_partyid=$3
 host_partyid=$4
+scene_id = $5
 
-bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $role
+bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $role $scene_id
