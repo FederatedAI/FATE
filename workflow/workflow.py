@@ -29,26 +29,22 @@ import numpy as np
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.utils import log_utils
-from arch.api.model_manager import core
-from federatedml.feature import Sampler
-from arch.api.proto.data_transform_pb2 import ScaleObject
-from federatedml.feature import MinMaxScale
-from federatedml.feature import StandardScale
+from federatedml.feature.sampler import Sampler
 from federatedml.feature.data_transform import DataTransform
-from federatedml.model_selection import KFold
-from federatedml.param import DataTransformParam
-from federatedml.param import IntersectParam
-from federatedml.param import SampleParam
-from federatedml.param import WorkFlowParam
-from federatedml.param import param
-from federatedml.util import param_checker
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
+from federatedml.model_selection import KFold
+from federatedml.param import IntersectParam
+from federatedml.param import WorkFlowParam
+from federatedml.param import param
+from federatedml.param.param import SampleParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
-from federatedml.util.data_io import SparseTagReader
-from federatedml.util import consts
 from federatedml.util import WorkFlowParamChecker
+from federatedml.util import consts
+from federatedml.util import param_checker
+from federatedml.util.data_io import SparseTagReader
+from federatedml.util.param_checker import AllChecker
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -135,10 +131,10 @@ class WorkFlow(object):
             intersect_flowid = "train_0"
             train_data = self.intersect(train_data, intersect_flowid)
             LOGGER.debug("End intersection before train")
- 
+
         sample_flowid = "train_sample_0"
         train_data = self.sample(train_data, sample_flowid)
-       
+
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             data_transform_obj = DataTransform(self.config_path)
             train_data, cols_transform_value = data_transform_obj.fit_transform(train_data)
@@ -147,12 +143,12 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                self.mode == consts.HOMO:
+                        self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
                                                 self.workflow_param.predict_param)
-            
+
             LOGGER.debug("evaluating...")
             train_eval = self.evaluate(predict_result)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
@@ -163,7 +159,8 @@ class WorkFlow(object):
                     validation_data = self.intersect(validation_data, intersect_flowid)
                     LOGGER.debug("End intersection before predict")
 
-                    validation_data, cols_transform_value = data_transform_obj.fit_transform(validation_data, cols_transform_value)
+                    validation_data, cols_transform_value = data_transform_obj.fit_transform(validation_data,
+                                                                                             cols_transform_value)
 
                 val_pred = self.model.predict(validation_data,
                                               self.workflow_param.predict_param)
@@ -246,7 +243,7 @@ class WorkFlow(object):
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
             return data_instance
 
-        if self.workflow_param.need_intersect:
+        if self.workflow_param.need_feature_selection:
             LOGGER.info("Start feature selection")
             feature_select_param = param.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
@@ -262,7 +259,7 @@ class WorkFlow(object):
             else:
                 raise ValueError("Unknown role of workflow")
 
-            local_only = feature_select_param.local_only       # Decide whether do fit_local or fit
+            local_only = feature_select_param.local_only  # Decide whether do fit_local or fit
             need_fit = (feature_select_param.method == 'fit')
             if local_only and need_fit:
                 data_instance = feature_selector.fit_local_transform(data_instance)
@@ -284,17 +281,17 @@ class WorkFlow(object):
         if not self.workflow_param.need_sample:
             LOGGER.info("need_sample: false!")
             return data_instance
- 
+
         if self.role == consts.ARBITER:
             LOGGER.info("arbiter not need sample")
             return data_instance
 
         LOGGER.info("need_sample: true!")
-            
+
         sample_param = SampleParam()
         sample_param = ParamExtract.parse_param_from_config(sample_param, self.config_path)
         sampler = Sampler(sample_param)
-    
+
         sampler.set_flowid(sample_flowid)
         data_instance = sampler.run(data_instance, self.mode, self.role)
         LOGGER.info("sample result size is {}".format(data_instance.count()))
@@ -379,7 +376,7 @@ class WorkFlow(object):
                 sample_flowid = "sample_" + str(flowid)
                 train_data = self.sample(train_data, sample_flowid)
                 LOGGER.info("End sample before_train")
-                
+
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
                 self.model.predict(test_data)
@@ -412,12 +409,12 @@ class WorkFlow(object):
         LOGGER.info("Doing Homo cross validation")
         for train_data, test_data in kfold_data_generator:
             LOGGER.info("This is the {}th fold".format(flowid))
-            
+
             LOGGER.info("Start sample before train")
             sample_flowid = "sample_" + str(flowid)
             train_data = self.sample(train_data, sample_flowid)
             LOGGER.info("End sample before_train")
-        
+
             self.model.set_flowid(flowid)
             self.model.fit(train_data)
             # self.save_model()
@@ -497,9 +494,9 @@ class WorkFlow(object):
             LOGGER.error("Config File should be provided")
             exit(-100)
         self.job_id = args.job_id
-        # party_id = args.party_id
-        # LOGGER_path = args.LOGGER_path
-        # self._init_LOGGER(LOGGER_path)
+
+        all_checker = AllChecker(config_path)
+        all_checker.check_all()
         self._initialize(config_path)
         with open(config_path) as conf_f:
             runtime_json = json.load(conf_f)
@@ -534,7 +531,8 @@ class WorkFlow(object):
 
         elif self.workflow_param.method == "predict":
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
-                                                   self.workflow_param.predict_input_namespace)
+                                                   self.workflow_param.predict_input_namespace,
+                                                   mode='transform')
             self.load_model()
             self.feature_selection(data_instance)
             self.predict(data_instance)
@@ -553,7 +551,7 @@ class WorkFlow(object):
             data_instance = None
             if self.role != consts.ARBITER:
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
-                                                   self.workflow_param.data_input_namespace)
+                                                       self.workflow_param.data_input_namespace)
                 self.feature_selection(data_instance)
             self.cross_validation(data_instance)
         # elif self.workflow_param.method == 'test_methods':

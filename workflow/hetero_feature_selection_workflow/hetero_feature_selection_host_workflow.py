@@ -22,7 +22,7 @@
 ################################################################################
 
 from arch.api.utils import log_utils
-from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
+from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.param import FeatureSelectionParam
 from federatedml.util import FeatureSelectionParamChecker
 from federatedml.util import ParamExtract
@@ -32,14 +32,14 @@ from workflow.workflow import WorkFlow
 LOGGER = log_utils.getLogger()
 
 
-class HeteroFeatureSelectGuestWorkflow(WorkFlow):
+class HeteroFeatureSelectHostWorkflow(WorkFlow):
     def _initialize(self, config_path):
         self._initialize_role_and_mode()
         self._initialize_model(config_path)
         self._initialize_workflow_param(config_path)
 
     def _initialize_role_and_mode(self):
-        self.role = consts.GUEST
+        self.role = consts.HOST
         self.mode = consts.HETERO
 
     def _initialize_intersect(self, config):
@@ -49,14 +49,13 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
         feature_param = FeatureSelectionParam()
         self.feature_param = ParamExtract.parse_param_from_config(feature_param, runtime_conf_path)
         FeatureSelectionParamChecker.check_param(self.feature_param)
-        self.model = HeteroFeatureSelectionGuest(self.feature_param)
+        self.model = HeteroFeatureSelectionHost(self.feature_param)
         LOGGER.debug("Guest model started")
 
     def run(self):
         self._init_argument()
 
         if self.workflow_param.method == "feature_select":
-
             if self.feature_param.method == 'fit':
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace)
@@ -82,7 +81,8 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
 
             elif self.feature_param.method == 'transform':
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
-                                                             self.workflow_param.train_input_namespace)
+                                                             self.workflow_param.train_input_namespace,
+                                                             mode='transform')
                 self.load_model()
                 result_table = self.model.transform(train_data_instance)
                 self.save_predict_result(result_table)
@@ -90,13 +90,12 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
                     "Predict result saved, table: {},"
                     " namespace: {}".format(self.workflow_param.predict_output_table,
                                             self.workflow_param.predict_output_namespace))
-
         else:
             raise TypeError("method %s is not support yet" % (self.workflow_param.method))
 
-        LOGGER.info("Finish guest party feature selection")
+        LOGGER.info("Finish host party feature selection")
 
 
 if __name__ == "__main__":
-    workflow = HeteroFeatureSelectGuestWorkflow()
+    workflow = HeteroFeatureSelectHostWorkflow()
     workflow.run()

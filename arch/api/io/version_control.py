@@ -13,15 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import federation
-from arch.api import eggroll
-from arch.api.utils.core import get_scene_key, json_loads, json_dumps, bytes_string
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
+from arch.api import eggroll
+from arch.api import federation
+from arch.api.utils.core import get_scene_key, json_loads, json_dumps, bytes_string
 
 
-def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
-    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id, partner_party_id=partner_party_id, my_role=my_role)
+def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None,
+                 tag=None, branch="master"):
+    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id,
+                                                 partner_party_id=partner_party_id, my_role=my_role)
     data_table_info = dict()
     branch_current_commit = version_table.get(branch, use_serialize=False)
     if branch_current_commit:
@@ -36,8 +38,11 @@ def save_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
-def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master"):
-    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id, partner_party_id=partner_party_id, my_role=my_role)
+def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None,
+                 tag=None, branch="master"):
+    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id,
+                                                 partner_party_id=partner_party_id, my_role=my_role)
+    print('read_version. scene_key:{}'.format(scene_key))
     parent = None
     if commit_id:
         # Get this commit information
@@ -51,8 +56,10 @@ def read_version(name_space, scene_id=None, my_party_id=None, partner_party_id=N
     return version_table, data_table_info, scene_key, parent, commit_id
 
 
-def version_history(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None, tag=None, branch="master", limit=10):
-    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id, partner_party_id=partner_party_id, my_role=my_role)
+def version_history(name_space, scene_id=None, my_party_id=None, partner_party_id=None, my_role=None, commit_id=None,
+                    tag=None, branch="master", limit=10):
+    version_table, scene_key = get_version_table(name_space=name_space, scene_id=scene_id, my_party_id=my_party_id,
+                                                 partner_party_id=partner_party_id, my_role=my_role)
     data_table_infos = list()
     if commit_id:
         # Get this commit information
@@ -78,7 +85,8 @@ def get_version_table(name_space, scene_id=None, my_party_id=None, partner_party
         scene_id, my_party_id, partner_party_id, my_role = get_default_scene_info()
     scene_key = get_scene_key(scene_id, my_party_id, partner_party_id, my_role)
     version_table_name_space, version_table_name, version_table_partition = name_space, scene_key, 1
-    version_table = eggroll.table(version_table_name, version_table_name_space, partition=version_table_partition, create_if_missing=True, error_if_exist=False)
+    version_table = eggroll.table(version_table_name, version_table_name_space, partition=version_table_partition,
+                                  create_if_missing=True, error_if_exist=False)
     return version_table, scene_key
 
 
@@ -117,7 +125,9 @@ def gen_data_table_info(name_space, scene_key, commit_id):
 
 
 def get_data_table(data_table_info, create_if_missing=True):
-    return eggroll.table(data_table_info["tableName"], data_table_info["tableNameSpace"], partition=data_table_info["tablePartition"], create_if_missing=create_if_missing, error_if_exist=False)
+    return eggroll.table(data_table_info["tableName"], data_table_info["tableNameSpace"],
+                         partition=data_table_info["tablePartition"], create_if_missing=create_if_missing,
+                         error_if_exist=False)
 
 
 def save_version_info(version_table, branch, commit_id, parent, data_table_info):

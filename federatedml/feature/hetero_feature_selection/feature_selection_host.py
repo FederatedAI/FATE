@@ -191,12 +191,12 @@ class HeteroFeatureSelectionHost(object):
             return
         results = FeatureSelectResults()
         results.ParseFromString(serialize_str)
-        self.results = results
+        self.results = list(results.results)
         if len(self.results) == 0:
             self.left_cols = -1
         else:
             result_obj = self.results[-1]
-            self.left_cols = result_obj.left_cols
+            self.left_cols = list(result_obj.left_cols)
 
     def _transfer_data(self, data_instances):
         if self.left_cols == -1:

@@ -19,7 +19,7 @@ import unittest
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.param import LogisticParam
 from arch.api import eggroll
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 import numpy as np
 
 

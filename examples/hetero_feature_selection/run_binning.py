@@ -255,7 +255,7 @@ if __name__ == '__main__':
     load_file(load_file_guest)
     load_file(load_file_host)
 
-    work_path = home_dir + '/../../workflow/hetero_feature_select_workflow/hetero_feature_select_guest_workflow.py'
+    work_path = home_dir + '/../../workflow/hetero_feature_selection_workflow/hetero_feature_selection_guest_workflow.py'
     subprocess.Popen(["python",
                       work_path,
                       "-c",
@@ -264,7 +264,7 @@ if __name__ == '__main__':
                       jobid
                       ])
 
-    work_path = home_dir + '/../../workflow/hetero_feature_select_workflow/hetero_feature_select_host_workflow.py'
+    work_path = home_dir + '/../../workflow/hetero_feature_selection_workflow/hetero_feature_selection_host_workflow.py'
     subprocess.Popen(["python",
                       work_path,
                       "-c",

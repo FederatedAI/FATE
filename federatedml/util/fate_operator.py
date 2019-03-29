@@ -19,7 +19,7 @@ from collections import Iterable
 
 import numpy as np
 
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 
 
 def _one_dimension_dot(X, w):

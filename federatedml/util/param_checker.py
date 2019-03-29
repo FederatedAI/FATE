@@ -22,6 +22,8 @@
 ################################################################################
 from arch.api.utils import log_utils
 from federatedml.util import consts
+from federatedml.util.param_extract import ParamExtract
+from federatedml.param import param
 
 LOGGER = log_utils.getLogger()
 
@@ -35,7 +37,7 @@ class DataIOParamChecker(object):
         descr = "dataio param's"
 
         dataio_param.input_format = check_and_change_lower(dataio_param.input_format,
-                                                           ["dense", "sparse", "tag"],
+                                                           ["dense", "sparse"],
                                                            descr)
 
         dataio_param.output_format = check_and_change_lower(dataio_param.output_format,
@@ -790,3 +792,33 @@ def check_and_change_lower(param, valid_list, descr=''):
         return lower_param
     else:
         raise ValueError(descr + " {} not supported, should be one of {}".format(param, valid_list))
+
+
+class AllChecker(object):
+    def __init__(self, config_path):
+        self.config_path = config_path
+
+    def check_all(self):
+        self._check(param.DataIOParam, DataIOParamChecker)
+        self._check(param.EncryptParam, EncryptParamChecker)
+        self._check(param.EvaluateParam, EvaluateParamChecker)
+        self._check(param.ObjectiveParam, ObjectiveParamChecker)
+        self._check(param.PredictParam, PredictParamChecker)
+        self._check(param.WorkFlowParam, WorkFlowParamChecker)
+        self._check(param.InitParam, InitParamChecker)
+        self._check(param.EncodeParam, EncodeParamChecker)
+        self._check(param.IntersectParam, IntersectParamChecker)
+        self._check(param.LogisticParam, LogisticParamChecker)
+        self._check(param.DecisionTreeParam, DecisionTreeParamChecker)
+        self._check(param.BoostingTreeParam, BoostingTreeParamChecker)
+        self._check(param.FTLModelParam, FTLModelParamChecker)
+        self._check(param.LocalModelParam, LocalModelParamChecker)
+        self._check(param.FTLDataParam, FTLDataParamChecker)
+        self._check(param.FTLValidDataParam, FTLValidDataParamChecker)
+        self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
+        self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
+
+    def _check(self, Param, Checker):
+        param_obj = Param()
+        param_obj = ParamExtract.parse_param_from_config(param_obj, self.config_path)
+        Checker.check_param(param_obj)

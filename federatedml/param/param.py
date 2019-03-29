@@ -248,6 +248,9 @@ class WorkFlowParam(object):
     need_intersect: bool, default: True
         Whether this task need to do intersect. No need to specify in Homo task.
 
+    need_sample: bool, default: False
+        Whether this task need to do feature selection or not.
+
     need_feature_selection: bool, default: False
         Whether this task need to do feature selection or not.
 
@@ -260,7 +263,7 @@ class WorkFlowParam(object):
                  data_input_table=None, data_input_namespace=None, intersect_data_output_table=None,
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
-                 n_splits=5, need_intersect=True, need_feature_selection=False):
+                 n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False):
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -284,6 +287,7 @@ class WorkFlowParam(object):
         self.predict_param = predict_param
         self.evaluate_param = evaluate_param
         self.need_intersect = need_intersect
+        self.need_sample = need_sample
         self.need_feature_selection = need_feature_selection
 
 

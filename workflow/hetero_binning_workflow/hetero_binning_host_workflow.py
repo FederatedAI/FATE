@@ -69,7 +69,8 @@ class HeteroBinningHostWorkflow(WorkFlow):
                 self.model.save_model()
             else:
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
-                                                             self.workflow_param.train_input_namespace)
+                                                             self.workflow_param.train_input_namespace,
+                                                             mode='transform')
                 self.load_model()
 
                 if self.binning_param.local_only:

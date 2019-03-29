@@ -230,7 +230,7 @@ class HeteroFeatureSelectionGuest(object):
             return
         results = FeatureSelectResults()
         results.ParseFromString(serialize_str)
-        self.results = results.results
+        self.results = list(results.results)
         if len(self.results) == 0:
             self.left_cols = -1
         else:

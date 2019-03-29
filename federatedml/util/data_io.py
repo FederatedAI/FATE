@@ -24,8 +24,8 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
-from federatedml.feature import Instance
-from federatedml.feature import SparseVector
+from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
 # from federatedml.feature import ImputerProcess
 from federatedml.util import consts
 from federatedml.util import DataIOParamChecker
@@ -118,7 +118,7 @@ class DenseFeatureReader(object):
         outlier_replace_value = None
 
         if self.missing_fill:
-            from federatedml.feature import ImputerProcess
+            from federatedml.feature.imputer import ImputerProcess
             imputer_processor = ImputerProcess(self.missing_impute)
             LOGGER.info("missing_replace_method is {}".format(self.missing_fill_method))
             if mode == "fit":
