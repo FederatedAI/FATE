@@ -22,7 +22,7 @@ import com.webank.ai.fate.core.utils.Configuration;
 public class DTableFactory {
 
     public static DTable getDTable(){
-        return getDTable(Configuration.getIntProperty("workMode"));
+        return getDTable(Configuration.getPropertyInt("workMode", WorkMode.STANDALONE));
     }
 
     public static DTable getDTable(int workMode){

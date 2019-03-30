@@ -71,6 +71,7 @@ def request_offline_feature():
     response = {"status": 0, "msg": "success", "data": data}
     return response
 
+
 def send_done():
     job_id, file_name = job_queue.get()
     print(job_id, file_name)

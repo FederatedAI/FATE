@@ -33,8 +33,8 @@ public class ModelCache {
 
     public ModelCache(){
         modelCache = CacheBuilder.newBuilder()
-                .expireAfterAccess(Integer.parseInt(Configuration.getProperty("modelCacheAccessTTL")), TimeUnit.HOURS)
-                .maximumSize(50)
+                .expireAfterAccess(Configuration.getPropertyInt("modelCacheAccessTTL"), TimeUnit.HOURS)
+                .maximumSize(Configuration.getPropertyInt("modelCacheMaxSize"))
                 .build(new CacheLoader<String, MLModel>() {
                     @Override
                     public MLModel load(String modelKey) throws Exception {

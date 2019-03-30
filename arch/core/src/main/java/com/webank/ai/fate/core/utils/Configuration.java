@@ -30,12 +30,10 @@ public class Configuration {
     private static final Logger LOGGER = LogManager.getLogger();
     private final String confPath;
     private static HashMap<String, String> properties;
-    private static HashMap<String, Integer> intProperties;
 
     public Configuration(String confPath){
         this.confPath = confPath;
         properties = new HashMap<>();
-        intProperties = new HashMap<>();
     }
 
     public int load(){
@@ -43,9 +41,8 @@ public class Configuration {
             Properties pro = new Properties();
             pro.load(new FileInputStream(this.confPath));
             pro.entrySet().forEach(e->{
-                properties.put((String)e.getKey(), (String)e.getValue());
+                Configuration.putProperty((String)e.getKey(), (String)e.getValue());
             });
-            Configuration.putIntProperty("workMode", Integer.parseInt(Optional.ofNullable(pro.getProperty("workMode")).orElse("0")));
             return StatusCode.OK;
         }
         catch (FileNotFoundException ex){
@@ -58,7 +55,6 @@ public class Configuration {
         }
     }
 
-
     public static HashMap<String, String> getProperties() {
         return properties;
     }
@@ -67,15 +63,25 @@ public class Configuration {
         return properties.get(key);
     }
 
-    public static void putProperty(String key, String value){
+    public static String getProperty(String key, String defaultValue){
+        return Optional.ofNullable(properties.get(key)).orElse(defaultValue);
+    }
+
+    public static Integer getPropertyInt(String key) {
+        if (getProperty(key) == null){
+            return null;
+        }
+        return Integer.parseInt(getProperty(key));
+    }
+
+    public static Integer getPropertyInt(String key, int defaultValue) {
+        if (getProperty(key) == null){
+            return defaultValue;
+        }
+        return Integer.parseInt(getProperty(key));
+    }
+
+    private static void putProperty(String key, String value){
         properties.put(key, value);
-    }
-
-    public static Integer getIntProperty(String key) {
-        return intProperties.get(key);
-    }
-
-    public static void putIntProperty(String key, int value){
-        intProperties.put(key, value);
     }
 }
