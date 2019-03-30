@@ -17,35 +17,24 @@
 syntax = "proto3";
 
 package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "FeatureSelectResultProto";
+option java_outer_classname = "FeatureBinningParam";
 
-message FeatureSelectFilterResult{
-    map<string, float> param_set = 1;
-    repeated int64 original_cols = 2;
-    repeated int64 left_cols = 3;
-    string filter_name = 4;
-    FeatureBinningResult bin_result = 5;
-}
 
-message FeatureSelectResults{
-    repeated FeatureSelectFilterResult results = 1;
-}
-
-message IVResult {
-    repeated float woe_array = 1;
-    repeated float iv_array = 2;
+message IVParam {
+    repeated double woe_array = 1;
+    repeated double iv_array = 2;
     repeated int64 event_count_array = 3;
     repeated int64 non_event_count_array = 4;
-    repeated float event_rate_array = 5;
+    repeated double event_rate_array = 5;
     repeated float non_event_rate_array = 6;
-    repeated float split_points = 7;
-    float iv = 8;
+    repeated double split_points = 7;
+    double iv = 8;
     bool is_woe_monotonic = 9;
     int64 bin_nums = 10;
 }
 
-message FeatureBinningResult{
-    repeated IVResult iv_result = 1;
-    repeated IVResult host_iv_result = 2;
+message FeatureBinningParam{
+    repeated IVParam iv_result = 1;
+    repeated IVParam host_iv_result = 2;
     repeated int64 cols = 3;
 }

@@ -14,10 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
-from arch.api import federation
 import functools
-from arch.api.proto import feature_engineer_result_pb2
+
+from arch.api import federation
+from arch.api.model_manager import core as model_manager
+from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning import QuantileBinning, IVAttributes
 from federatedml.param.param import FeatureBinningParam
@@ -29,7 +30,7 @@ from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVaria
 LOGGER = log_utils.getLogger()
 
 
-class HeteroFeatureGuest(object):
+class HeteroFeatureBinningGuest(object):
     def __init__(self, params: FeatureBinningParam):
         self.bin_param = params
         if self.bin_param.method == consts.QUANTILE:
@@ -47,12 +48,14 @@ class HeteroFeatureGuest(object):
         self.has_synchronized = False
         self.iv_attrs = None
         self.host_iv_attrs = None
+        self.header = []
 
     def fit(self, data_instances):
         """
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
         the specific metric value for specific columns.
         """
+
         self._parse_cols(data_instances)
 
         # 1. Synchronize encryption information
@@ -97,6 +100,8 @@ class HeteroFeatureGuest(object):
         return iv_result
 
     def transform(self, data_instances):
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
         self._parse_cols(data_instances)
 
         # 1. Synchronize encryption information
@@ -130,6 +135,9 @@ class HeteroFeatureGuest(object):
         for idx, iv_attr in enumerate(host_iv_attrs):
             LOGGER.info("The remote iv of {}th measured feature is {}".format(idx, iv_attr.iv))
 
+        data_instances.schema['header'] = self.header
+        return data_instances
+
     @staticmethod
     def encrypt(x, encryptor):
         return encryptor.encrypt(x), encryptor.encrypt(1 - x)
@@ -149,11 +157,32 @@ class HeteroFeatureGuest(object):
         for idx, col in enumerate(self.cols):
             LOGGER.info("The local iv of {}th feature is {}".format(col, self.iv_attrs[idx].iv))
 
-    def save_model(self):
+    def _save_meta(self, name, namespace):
+        meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
+                                                                method=self.bin_param.method,
+                                                                compress_thres=self.bin_param.compress_thres,
+                                                                head_size=self.bin_param.head_size,
+                                                                error=self.bin_param.error,
+                                                                bin_num=self.bin_param.bin_num,
+                                                                cols=self.cols,
+                                                                adjustment_factor=self.bin_param.adjustment_factor,
+                                                                local_only=self.bin_param.local_only)
+        buffer_type = "HeteroFeatureBinningGuest.meta"
+
+        model_manager.save_model(buffer_type=buffer_type,
+                                 proto_buffer=meta_protobuf_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return buffer_type
+
+    def save_model(self, name, namespace):
+        meta_buffer_type = self._save_meta(name, namespace)
+
         iv_attrs = []
         for idx, iv_attr in enumerate(self.iv_attrs):
+            LOGGER.debug("{}th iv attr: {}".format(idx, iv_attr.__dict__))
             iv_result = iv_attr.result_dict()
-            iv_object = feature_engineer_result_pb2.IVResult(**iv_result)
+            iv_object = feature_binning_param_pb2.IVParam(**iv_result)
 
             iv_attrs.append(iv_object)
 
@@ -161,53 +190,43 @@ class HeteroFeatureGuest(object):
         if self.host_iv_attrs is not None:
             for idx, iv_attr in enumerate(self.host_iv_attrs):
                 iv_result = iv_attr.result_dict()
-                iv_object = feature_engineer_result_pb2.IVResult(**iv_result)
+                iv_object = feature_binning_param_pb2.IVParam(**iv_result)
 
                 host_iv_attrs.append(iv_object)
 
-        result_obj = feature_engineer_result_pb2.FeatureBinningResult(iv_result=iv_attrs,
-                                                                      host_iv_result=host_iv_attrs,
-                                                                      cols=self.cols)
+        result_obj = feature_binning_param_pb2.FeatureBinningParam(iv_result=iv_attrs,
+                                                                   host_iv_result=host_iv_attrs,
+                                                                   cols=self.cols)
+        param_buffer_type = "HeteroFeatureBinningGuest.param"
 
-        serialize_str = result_obj.SerializeToString()
-        meta_table = eggroll.parallelize([(1, serialize_str)],
-                                         include_key=True,
-                                         name=self.bin_param.result_table,
-                                         namespace=self.bin_param.result_namespace,
-                                         error_if_exist=False,
-                                         persistent=True
-                                         )
-        LOGGER.info("Model saved, table: {}, namespace: {}".format(self.bin_param.result_table,
-                                                                   self.bin_param.result_namespace))
-        return meta_table
+        model_manager.save_model(buffer_type=param_buffer_type,
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
 
-    def load_model(self, model_table, model_namespace):
-        model = eggroll.table(model_table, model_namespace)
-        model_local = model.collect()
-        try:
-            serialize_str = model_local.__next__()[1]
-        except StopIteration:
-            LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-                model_namespace, model_table
-            ))
-            return
-        results = feature_engineer_result_pb2.FeatureBinningResult()
-        results.ParseFromString(serialize_str)
+        return [(meta_buffer_type, param_buffer_type)]
+
+    def load_model(self, name, namespace):
+
+        model_param = feature_binning_param_pb2.FeatureBinningParam()
+        result_obj = model_manager.read_model(buffer_type="HeteroFeatureBinningGuest.param",
+                                              proto_buffer=model_param,
+                                              name=name,
+                                              namespace=namespace)
 
         self.iv_attrs = []
-        for iv_dict in list(results.iv_result):
+        for iv_dict in list(result_obj.iv_result):
             iv_attr = IVAttributes([], [], [], [], [], [], [])
             iv_attr.reconstruct(iv_dict)
             self.iv_attrs.append(iv_attr)
 
-        # self.host_iv_attrs = list(results.host_iv_result)
         self.host_iv_attrs = []
-        for iv_dict in list(results.host_iv_result):
+        for iv_dict in list(result_obj.host_iv_result):
             iv_attr = IVAttributes([], [], [], [], [], [], [])
             iv_attr.reconstruct(iv_dict)
             self.host_iv_attrs.append(iv_attr)
 
-        self.cols = list(results.cols)
+        self.cols = list(result_obj.cols)
 
     def __synchronize_encryption(self):
         pub_key = self.encryptor.get_public_key()

@@ -19,7 +19,7 @@
 
 import math
 
-from arch.api.proto.feature_engineer_result_pb2 import FeatureSelectFilterResult, FeatureSelectResults
+from arch.api.proto.feature_selection_param_pb2 import FeatureSelectionFilterParam, FeatureSelectionParam
 from arch.api.utils import log_utils
 from federatedml.feature.binning import QuantileBinning
 from federatedml.param.param import FeatureSelectionParam, IVSelectionParam, FeatureBinningParam, UniqueValueParam
@@ -99,10 +99,10 @@ class UniqueValueFilter(FilterMethod):
 
     def to_result(self):
         params = {'eps': self.eps}
-        result = FeatureSelectFilterResult(param_set=params,
-                                           original_cols=self.select_cols,
-                                           left_cols=self.left_cols,
-                                           filter_name=consts.UNIQUE_VALUE)
+        result = FeatureSelectionFilterParam(param_set=params,
+                                             original_cols=self.select_cols,
+                                             left_cols=self.left_cols,
+                                             filter_name=consts.UNIQUE_VALUE)
         return result
 
 
@@ -139,10 +139,10 @@ class IVValueSelectFilter(FilterMethod):
 
     def to_result(self):
         params = {'value_threshold': self.value_threshold}
-        result = FeatureSelectFilterResult(param_set=params,
-                                           original_cols=self.select_cols,
-                                           left_cols=self.left_cols,
-                                           filter_name=consts.IV_VALUE_THRES)
+        result = FeatureSelectionFilterParam(param_set=params,
+                                             original_cols=self.select_cols,
+                                             left_cols=self.left_cols,
+                                             filter_name=consts.IV_VALUE_THRES)
         return result
 
 
@@ -212,10 +212,10 @@ class IVPercentileFilter(FilterMethod):
 
     def to_result(self):
         params = {'percentile_thres': self.percentile_thres}
-        result = FeatureSelectFilterResult(param_set=params,
-                                           original_cols=self.party_cols[0],
-                                           left_cols=self.left_cols,
-                                           filter_name=consts.IV_PERCENTILE)
+        result = FeatureSelectionFilterParam(param_set=params,
+                                             original_cols=self.party_cols[0],
+                                             left_cols=self.left_cols,
+                                             filter_name=consts.IV_PERCENTILE)
         return result
 
 
@@ -246,10 +246,10 @@ class CoeffOfVarValueFilter(FilterMethod):
 
     def to_result(self):
         params = {'value_threshold': self.value_threshold}
-        result = FeatureSelectFilterResult(param_set=params,
-                                           original_cols=self.select_cols,
-                                           left_cols=self.left_cols,
-                                           filter_name=consts.COEFFICIENT_OF_VARIATION_VALUE_THRES)
+        result = FeatureSelectionFilterParam(param_set=params,
+                                             original_cols=self.select_cols,
+                                             left_cols=self.left_cols,
+                                             filter_name=consts.COEFFICIENT_OF_VARIATION_VALUE_THRES)
         return result
 
 
@@ -276,10 +276,10 @@ class OutlierFilter(FilterMethod):
     def to_result(self):
         params = {'percentile': self.percentile,
                   'upper_threshold': self.upper_threshold}
-        result = FeatureSelectFilterResult(param_set=params,
-                                           original_cols=self.select_cols,
-                                           left_cols=self.left_cols,
-                                           filter_name=consts.OUTLIER_COLS)
+        result = FeatureSelectionFilterParam(param_set=params,
+                                             original_cols=self.select_cols,
+                                             left_cols=self.left_cols,
+                                             filter_name=consts.OUTLIER_COLS)
         return result
 
 
@@ -375,6 +375,5 @@ class FeatureSelection(object):
         self.static_obj = static_obj
 
     def to_result(self):
-        result = FeatureSelectResults(results=self.results)
+        result = FeatureSelectionParam(results=self.results)
         return result
-

@@ -34,6 +34,7 @@ LOGGER = log_utils.getLogger()
 
 class BaseLogisticRegression(object):
     def __init__(self, logistic_params: LogisticParam):
+        self.param = logistic_params
         # set params
         LogisticParamChecker.check_param(logistic_params)
         self.alpha = logistic_params.alpha

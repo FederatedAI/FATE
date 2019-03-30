@@ -17,16 +17,17 @@
 #  limitations under the License.
 
 
+import functools
+
 import numpy as np
 
-import functools
-from arch.api import eggroll
 from arch.api import federation
-from arch.api.proto.feature_engineer_result_pb2 import FeatureSelectResults
+from arch.api.model_manager import core as model_manager
+from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.feature_selection import FeatureSelection
-from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureGuest
+from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.param.param import IVSelectionParam
 from federatedml.util import consts
 from federatedml.util.fate_operator import get_features_shape
@@ -51,6 +52,7 @@ class HeteroFeatureSelectionGuest(object):
         self.send_times = 0
         self.binning_model = None
         self.results = []
+        self.header = []
 
     def fit(self, data_instances):
         if self.cols == -1:
@@ -66,14 +68,36 @@ class HeteroFeatureSelectionGuest(object):
                 LOGGER.warning("After filter methods, none of feature left. Please check your filter parameters")
                 break
 
+    def fit_local(self, data_instances):
+        feature_selection_obj = FeatureSelection(self.params)
+        self.left_cols = feature_selection_obj.filter(data_instances)
+        if self.cols == -1:
+            self.cols = feature_selection_obj.select_cols
+
+        self.left_cols = feature_selection_obj.filter(data_instances)
+        self.results = feature_selection_obj.results
+
+    def fit_local_transform(self, data_instances):
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
+        self.fit_local(data_instances)
+        new_data = self.transform(data_instances)
+        new_data.schema['header'] = self.header
+
+        return new_data
+
     def transform(self, data_instances):
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         new_data = self._transfer_data(data_instances)
+        new_data.schema['header'] = self.header
+
         return new_data
 
     def fit_transform(self, data_instances):
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         self.fit(data_instances)
         new_data = self.transform(data_instances)
-
+        new_data.schema['header'] = self.header
         return new_data
 
     def filter_one_method(self, data_instances, method):
@@ -150,6 +174,17 @@ class HeteroFeatureSelectionGuest(object):
             LOGGER.info("Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
 
+    def _reset_header(self):
+        """
+        The cols and left_cols record the index of header. Replace header based on the change
+        between left_cols and cols.
+        """
+        new_header = []
+        for col in self.left_cols:
+            idx = self.cols.index(col)
+            new_header.append(self.header[idx])
+        self.header = new_header
+
     def _transfer_data(self, data_instances):
         if self.left_cols == -1:
             features_shape = get_features_shape(data_instances)
@@ -162,6 +197,7 @@ class HeteroFeatureSelectionGuest(object):
                               left_cols=self.left_cols)
 
         new_data = data_instances.mapValues(f)
+        self._reset_header()
         return new_data
 
     @staticmethod
@@ -179,7 +215,7 @@ class HeteroFeatureSelectionGuest(object):
 
         self.bin_param.cols = self.left_cols
         if self.binning_model is None:
-            self.binning_model = HeteroFeatureGuest(self.bin_param)
+            self.binning_model = HeteroFeatureBinningGuest(self.bin_param)
         else:
             self.binning_model.reset(self.bin_param)
 
@@ -204,52 +240,52 @@ class HeteroFeatureSelectionGuest(object):
         self.send_times += 1
         LOGGER.info("Sent result cols from guest to host, result cols are: {}".format(self.host_left_cols))
 
-    def save_model(self):
-        result_obj = FeatureSelectResults(results=self.results)
-        serialize_str = result_obj.SerializeToString()
-        meta_table = eggroll.parallelize([(1, serialize_str)],
-                                         include_key=True,
-                                         name=self.params.result_table,
-                                         namespace=self.params.result_namespace,
-                                         error_if_exist=False,
-                                         persistent=True
-                                         )
-        LOGGER.info("Model saved, table: {}, namespace: {}".format(self.params.result_table,
-                                                                   self.params.result_namespace))
-        return meta_table
+    def _save_meta(self, name, namespace):
+        unique_param = feature_selection_meta_pb2.UniqueValueParam(**self.params.unique_param.__dict__)
+        iv_param = feature_selection_meta_pb2.IVSelectionParam(**self.params.iv_param.__dict__)
+        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**self.params.coe_param.__dict__)
+        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**self.params.outlier_param.__dict__)
 
-    def load_model(self, model_table, model_namespace):
-        model = eggroll.table(model_table, model_namespace)
-        model_local = model.collect()
-        try:
-            serialize_str = model_local.__next__()[1]
-        except StopIteration:
-            LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-                model_namespace, model_table
-            ))
-            return
-        results = FeatureSelectResults()
-        results.ParseFromString(serialize_str)
-        self.results = list(results.results)
+        meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
+                                                                            local_only=self.bin_param.compress_thres,
+                                                                            select_cols=self.cols,
+                                                                            unique_param=unique_param,
+                                                                            iv_param=iv_param,
+                                                                            coe_param=coe_param,
+                                                                            outlier_param=outlier_param)
+        buffer_type = "HeteroFeatureSelectionGuest.meta"
+
+        model_manager.save_model(buffer_type=buffer_type,
+                                 proto_buffer=meta_protobuf_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return buffer_type
+
+    def save_model(self, name, namespace):
+        meta_buffer_type = self._save_meta(name, namespace)
+
+        result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results)
+        param_buffer_type = "HeteroFeatureSelectionGuest.param"
+
+        model_manager.save_model(buffer_type=param_buffer_type,
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return [(meta_buffer_type, param_buffer_type)]
+
+    def load_model(self, name, namespace):
+        model_param = feature_selection_param_pb2.FeatureSelectionParam()
+        result_obj = model_manager.read_model(buffer_type="HeteroFeatureSelectionGuest.param",
+                                              proto_buffer=model_param,
+                                              name=name,
+                                              namespace=namespace)
+
+        self.results = list(result_obj.results)
         if len(self.results) == 0:
             self.left_cols = -1
         else:
             result_obj = self.results[-1]
             self.left_cols = list(result_obj.left_cols)
-
-    def fit_local(self, data_instances):
-        feature_selection_obj = FeatureSelection(self.params)
-        self.left_cols = feature_selection_obj.filter(data_instances)
-        if self.cols == -1:
-            self.cols = feature_selection_obj.select_cols
-
-        self.left_cols = feature_selection_obj.filter(data_instances)
-        self.results = feature_selection_obj.results
-
-    def fit_local_transform(self, data_instances):
-        self.fit_local(data_instances)
-        new_data = self.transform(data_instances)
-        return new_data
 
     def _filter_host_iv_value(self):
         host_iv_thres_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_iv_threshold)

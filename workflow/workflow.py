@@ -28,11 +28,13 @@ import numpy as np
 
 from arch.api import eggroll
 from arch.api import federation
+from arch.api.model_manager import core as model_manager
+from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
-from federatedml.feature.sampler import Sampler
 from federatedml.feature.data_transform import DataTransform
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
+from federatedml.feature.sampler import Sampler
 from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
@@ -59,6 +61,7 @@ class WorkFlow(object):
         self.mode = None
         self.workflow_param = None
         self.intersection = None
+        self.pipeline = None
 
     def _initialize(self, config_path):
         self._initialize_role_and_mode()
@@ -134,6 +137,7 @@ class WorkFlow(object):
 
         sample_flowid = "train_sample_0"
         train_data = self.sample(train_data, sample_flowid)
+        # TODO: Add model to pipeline
 
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             data_transform_obj = DataTransform(self.config_path)
@@ -243,7 +247,7 @@ class WorkFlow(object):
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
             return data_instance
 
-        if self.workflow_param.need_feature_selection:
+        if self.workflow_param.need_intersect:
             LOGGER.info("Start feature selection")
             feature_select_param = param.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
@@ -263,10 +267,21 @@ class WorkFlow(object):
             need_fit = (feature_select_param.method == 'fit')
             if local_only and need_fit:
                 data_instance = feature_selector.fit_local_transform(data_instance)
-                feature_selector.save_model()
+                save_result = feature_selector.save_model(self.workflow_param.model_table,
+                                                          self.workflow_param.model_namespace)
+                # Save model result in pipeline
+                for meta_buffer_type, param_buffer_type in save_result:
+                    self.pipeline.node_meta.append(meta_buffer_type)
+                    self.pipeline.node_param.apped(param_buffer_type)
+
             elif not local_only and need_fit:
                 data_instance = feature_selector.fit_transform(data_instance)
-                feature_selector.save_model()
+                save_result = feature_selector.save_model(self.workflow_param.model_table,
+                                                          self.workflow_param.model_namespace)
+                # Save model result in pipeline
+                for meta_buffer_type, param_buffer_type in save_result:
+                    self.pipeline.node_meta.append(meta_buffer_type)
+                    self.pipeline.node_param.apped(param_buffer_type)
             else:
                 feature_selector.load_model(feature_select_param.result_table, feature_select_param.result_namespace)
                 data_instance = feature_selector.transform(data_instance)
@@ -430,7 +445,10 @@ class WorkFlow(object):
     def save_model(self):
         LOGGER.debug("save model, model table: {}, model namespace: {}".format(
             self.workflow_param.model_table, self.workflow_param.model_namespace))
-        self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+        save_result = self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+        for meta_buffer_type, param_buffer_type in save_result:
+            self.pipeline.node_meta.append(meta_buffer_type)
+            self.pipeline.node_param.apped(param_buffer_type)
 
     def load_model(self):
         self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
@@ -481,6 +499,31 @@ class WorkFlow(object):
                                          mode=mode)
         return data_instance
 
+    def _init_pipeline(self):
+        pipeline_obj = pipeline_pb2.Pipeline()
+        pipeline_obj.node_meta = []
+        pipeline_obj.node_param = []
+        self.pipeline = pipeline_obj
+
+    def _save_pipeline(self):
+        buffer_type = "Pipeline"
+
+        model_manager.save_model(buffer_type=buffer_type,
+                                 proto_buffer=self.pipeline,
+                                 name=self.workflow_param.model_table,
+                                 namespace=self.workflow_param.model_namespace)
+
+    def _load_pipeline(self):
+        buffer_type = "Pipeline"
+        pipeline_obj = pipeline_pb2.Pipeline()
+        pipeline_obj = model_manager.read_model(buffer_type=buffer_type,
+                                                proto_buffer=pipeline_obj,
+                                                name=self.workflow_param.model_table,
+                                                namespace=self.workflow_param.model_namespace)
+        pipeline_obj.node_meta = list(pipeline_obj.node_meta)
+        pipeline_obj.node_param = list(pipeline_obj.node_param)
+        self.pipeline = pipeline_obj
+
     def _init_argument(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--config', required=True, type=str, help="Specify a config json file path")
@@ -509,6 +552,10 @@ class WorkFlow(object):
         self._init_argument()
 
         if self.workflow_param.method == "train":
+
+            # create a new pipeline
+            self._init_pipeline()
+
             LOGGER.debug("In running function, enter train method")
             train_data_instance = None
             predict_data_instance = None
@@ -526,15 +573,17 @@ class WorkFlow(object):
                     predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                                    self.workflow_param.predict_input_namespace)
 
-                self.feature_selection(train_data_instance)
+                train_data_instance = self.feature_selection(train_data_instance)
+
             self.train(train_data_instance, validation_data=predict_data_instance)
+            self._save_pipeline()
 
         elif self.workflow_param.method == "predict":
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                    self.workflow_param.predict_input_namespace,
-                                                   mode='transform')
+                                                   mode='transfo')
             self.load_model()
-            self.feature_selection(data_instance)
+            data_instance = self.feature_selection(data_instance)
             self.predict(data_instance)
 
         elif self.workflow_param.method == "intersect":
@@ -552,7 +601,7 @@ class WorkFlow(object):
             if self.role != consts.ARBITER:
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                        self.workflow_param.data_input_namespace)
-                self.feature_selection(data_instance)
+                data_instance = self.feature_selection(data_instance)
             self.cross_validation(data_instance)
         # elif self.workflow_param.method == 'test_methods':
         #     print("This is a test method, Start workflow success!")

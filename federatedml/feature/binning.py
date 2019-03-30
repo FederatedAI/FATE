@@ -85,13 +85,13 @@ class IVAttributes(object):
         return dis_str
 
     def reconstruct(self, iv_obj):
-        self.woe_array = iv_obj.woe_array
-        self.iv_array = iv_obj.iv_array
-        self.event_count_array = iv_obj.event_count_array
-        self.non_event_count_array = iv_obj.non_event_count_array
-        self.event_rate_array = iv_obj.event_rate_array
-        self.non_event_rate_array = iv_obj.non_event_rate_array
-        self.split_points = iv_obj.split_points
+        self.woe_array = list(iv_obj.woe_array)
+        self.iv_array = list(iv_obj.iv_array)
+        self.event_count_array = list(iv_obj.event_count_array)
+        self.non_event_count_array = list(iv_obj.non_event_count_array)
+        self.event_rate_array = list(iv_obj.event_rate_array)
+        self.non_event_rate_array = list(iv_obj.non_event_rate_array)
+        self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
 
 class Binning(object):

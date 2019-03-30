@@ -16,9 +16,9 @@
 
 import functools
 
-from arch.api import eggroll
 from arch.api import federation
-from arch.api.proto import feature_engineer_result_pb2
+from arch.api.model_manager import core as model_manager
+from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning import QuantileBinning, IVAttributes
 from federatedml.param.param import FeatureBinningParam
@@ -30,7 +30,7 @@ from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVaria
 LOGGER = log_utils.getLogger()
 
 
-class HeteroFeatureHost(object):
+class HeteroFeatureBinningHost(object):
     def __init__(self, params: FeatureBinningParam):
         self.bin_param = params
         if self.bin_param.method == consts.QUANTILE:
@@ -107,52 +107,108 @@ class HeteroFeatureHost(object):
                           idx=0)
         LOGGER.info("Sent encrypted_bin_sum to guest")
 
-    def save_model(self):
+    # def save_model(self):
+    #     iv_attrs = []
+    #     for idx, iv_attr in enumerate(self.iv_attrs):
+    #         iv_result = iv_attr.result_dict()
+    #         iv_object = feature_engineer_result_pb2.IVResult(**iv_result)
+    #
+    #         LOGGER.info("cols {} result: {}".format(self.cols[idx],
+    #                                                 iv_attr.display_result(
+    #                                                     self.bin_param.display_result
+    #                                                 )))
+    #         iv_attrs.append(iv_object)
+    #
+    #     result_obj = feature_engineer_result_pb2.FeatureBinningResult(iv_result=iv_attrs,
+    #                                                                   cols=self.cols)
+    #
+    #     serialize_str = result_obj.SerializeToString()
+    #     meta_table = eggroll.parallelize([(1, serialize_str)],
+    #                                      include_key=True,
+    #                                      name=self.bin_param.result_table,
+    #                                      namespace=self.bin_param.result_namespace,
+    #                                      error_if_exist=False,
+    #                                      persistent=True
+    #                                      )
+    #     LOGGER.info("Model saved, table: {}, namespace: {}".format(self.bin_param.result_table,
+    #                                                                self.bin_param.result_namespace))
+    #     return meta_table
+    #
+    # def load_model(self, model_table, model_namespace):
+    #     model = eggroll.table(model_table, model_namespace)
+    #     model_local = model.collect()
+    #     try:
+    #         serialize_str = model_local.__next__()[1]
+    #     except StopIteration:
+    #         LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
+    #             model_namespace, model_table
+    #         ))
+    #         return
+    #     results = feature_engineer_result_pb2.FeatureBinningResult()
+    #     results.ParseFromString(serialize_str)
+    #     self.iv_attrs = []
+    #     for iv_dict in list(results.iv_result):
+    #         iv_attr = IVAttributes([], [], [], [], [], [], [])
+    #         iv_attr.reconstruct(iv_dict)
+    #         self.iv_attrs.append(iv_attr)
+    #
+    #     self.cols = list(results.cols)
+
+    def _save_meta(self, name, namespace):
+        meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
+                                                                method=self.bin_param.method,
+                                                                compress_thres=self.bin_param.compress_thres,
+                                                                head_size=self.bin_param.head_size,
+                                                                error=self.bin_param.error,
+                                                                bin_num=self.bin_param.bin_num,
+                                                                cols=self.cols,
+                                                                adjustment_factor=self.bin_param.adjustment_factor,
+                                                                local_only=self.bin_param.local_only)
+        buffer_type = "HeteroFeatureBinningHost.meta"
+
+        model_manager.save_model(buffer_type=buffer_type,
+                                 proto_buffer=meta_protobuf_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return buffer_type
+
+    def save_model(self, name, namespace):
+        meta_buffer_type = self._save_meta(name, namespace)
+
         iv_attrs = []
         for idx, iv_attr in enumerate(self.iv_attrs):
+            LOGGER.debug("{}th iv attr: {}".format(idx, iv_attr.__dict__))
             iv_result = iv_attr.result_dict()
-            iv_object = feature_engineer_result_pb2.IVResult(**iv_result)
+            iv_object = feature_binning_param_pb2.IVParam(**iv_result)
 
-            LOGGER.info("cols {} result: {}".format(self.cols[idx],
-                                                    iv_attr.display_result(
-                                                        self.bin_param.display_result
-                                                    )))
             iv_attrs.append(iv_object)
 
-        result_obj = feature_engineer_result_pb2.FeatureBinningResult(iv_result=iv_attrs,
-                                                                      cols=self.cols)
+        result_obj = feature_binning_param_pb2.FeatureBinningParam(iv_result=iv_attrs,
+                                                                   cols=self.cols)
+        param_buffer_type = "HeteroFeatureBinningHost.param"
 
-        serialize_str = result_obj.SerializeToString()
-        meta_table = eggroll.parallelize([(1, serialize_str)],
-                                         include_key=True,
-                                         name=self.bin_param.result_table,
-                                         namespace=self.bin_param.result_namespace,
-                                         error_if_exist=False,
-                                         persistent=True
-                                         )
-        LOGGER.info("Model saved, table: {}, namespace: {}".format(self.bin_param.result_table,
-                                                                   self.bin_param.result_namespace))
-        return meta_table
+        model_manager.save_model(buffer_type=param_buffer_type,
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
 
-    def load_model(self, model_table, model_namespace):
-        model = eggroll.table(model_table, model_namespace)
-        model_local = model.collect()
-        try:
-            serialize_str = model_local.__next__()[1]
-        except StopIteration:
-            LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-                model_namespace, model_table
-            ))
-            return
-        results = feature_engineer_result_pb2.FeatureBinningResult()
-        results.ParseFromString(serialize_str)
+        return [(meta_buffer_type, param_buffer_type)]
+
+    def load_model(self, name, namespace):
+
+        model_param = feature_binning_param_pb2.FeatureBinningParam()
+        result_obj = model_manager.read_model(buffer_type="HeteroFeatureBinningHost.param",
+                                              proto_buffer=model_param,
+                                              name=name,
+                                              namespace=namespace)
+
         self.iv_attrs = []
-        for iv_dict in list(results.iv_result):
+        for iv_dict in list(result_obj.iv_result):
             iv_attr = IVAttributes([], [], [], [], [], [], [])
             iv_attr.reconstruct(iv_dict)
             self.iv_attrs.append(iv_attr)
 
-        self.cols = list(results.cols)
+        self.cols = list(result_obj.cols)
 
     def _make_iv_obj(self, split_points):
         iv_objs = []

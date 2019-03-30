@@ -23,7 +23,7 @@
 
 from arch.api import eggroll
 from arch.api.utils import log_utils
-from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureGuest
+from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.param import FeatureBinningParam
 from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
@@ -50,7 +50,7 @@ class HeteroBinningGuestWorkflow(WorkFlow):
         binning_param = FeatureBinningParam()
         self.binning_param = ParamExtract.parse_param_from_config(binning_param, runtime_conf_path)
         FeatureBinningParamChecker.check_param(self.binning_param)
-        self.model = HeteroFeatureGuest(self.binning_param)
+        self.model = HeteroFeatureBinningGuest(self.binning_param)
         LOGGER.debug("Guest model started")
 
     def save_binning_result(self):

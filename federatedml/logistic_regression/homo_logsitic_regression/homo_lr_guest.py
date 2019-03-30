@@ -19,11 +19,8 @@ import functools
 import numpy as np
 
 from arch.api import federation
-from arch.api.io import feature
-from arch.api.model_manager import core
-from arch.api.proto.data_transform_pb2 import DataTransform as DataTransformProto
-from arch.api.proto.model_meta_pb2 import ModelMeta
-from arch.api.proto.model_param_pb2 import ModelParam
+from arch.api.model_manager import core as model_manager
+from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
@@ -42,17 +39,7 @@ LOGGER = log_utils.getLogger()
 
 class HomoLRGuest(BaseLogisticRegression):
     def __init__(self, params: LogisticParam):
-        """
-        :param penalty: l1 or l2
-        :param alpha:
-        :param lr:
-        :param eps:
-        :param max_iter:
-        :param optim_method: must be in ['sgd', 'RMSProp' ,'Adam', 'AdaGrad']
-        :param batch_size: only work when otpim_method is mini-batch, represent for mini-batch's size
-        """
         super(HomoLRGuest, self).__init__(params)
-
         self.learning_rate = params.learning_rate
         self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
@@ -64,11 +51,15 @@ class HomoLRGuest(BaseLogisticRegression):
         self.classes_ = [0, 1]
 
         self.evaluator = Evaluation()
+        self.header = []
+        self.penalty = params.penalty
+        self.loss_history = []
+        self.is_converged = False
 
     def fit(self, data_instances):
-        LOGGER.info("parameters: alpha: {}, eps: {}, max_iter: {}"
-                    "batch_size: {}".format(self.alpha,
-                                            self.eps, self.max_iter, self.batch_size))
+
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
         self.__init_parameters()
 
         w = self.__init_model(data_instances)
@@ -103,6 +94,7 @@ class HomoLRGuest(BaseLogisticRegression):
 
             total_loss /= batch_num
             w = self.merge_model()
+            self.loss_history.append(total_loss)
             LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
@@ -141,10 +133,10 @@ class HomoLRGuest(BaseLogisticRegression):
             LOGGER.debug("converge flag is :{}".format(converge_flag))
 
             if converge_flag:
-                # self.save_model(w)
+                self.is_converged = True
                 break
-                # LOGGER.info("trainning finish, final coef: {}, final intercept: {}".format(
-                #     self.coef_, self.intercept_))
+
+        return data_instances
 
     def __init_parameters(self):
 
@@ -192,48 +184,63 @@ class HomoLRGuest(BaseLogisticRegression):
     def set_flowid(self, flowid=0):
         self.transfer_variable.set_flowid(flowid)
 
-    def save_model(self, model_table, model_namespace, job_id=None, model_name=None):
+    def _save_meta(self, name, namespace):
+        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.penalty,
+                                                          eps=self.eps,
+                                                          alpha=self.alpha,
+                                                          optimizer=self.param.optimizer,
+                                                          party_weight=self.party_weight,
+                                                          batch_size=self.batch_size,
+                                                          learning_rate=self.learning_rate,
+                                                          max_iter=self.max_iter,
+                                                          converge_func=self.param.converge_func,
+                                                          re_encrypt_batches=self.param.re_encrypt_batches)
+        buffer_type = "HomoLRGuest.meta"
+
+        model_manager.save_model(buffer_type=buffer_type,
+                                 proto_buffer=meta_protobuf_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return buffer_type
+
+    def save_model(self, name, namespace, job_id=None, model_name=None):
+        meta_buffer_type = self._save_meta(name, namespace)
         # In case arbiter has no header
-        data_header = feature.read_feature_header()[0]
-        data_header_reverse = {}
-        for k in data_header:
-            data_header_reverse[data_header[k]] = k
+        header = self.header
 
-        model_meta = ModelMeta()
-        model_meta.name = "HomoLRGuest"
-        model_meta.fit_intercept = self.fit_intercept
-        model_meta.coef_size = self.coef_.shape[0]
-        model_meta.data_transform = 0
+        weight_dict = {}
+        for idx, header_name in enumerate(header):
+            coef_i = self.coef_[idx]
+            weight_dict[header_name] = coef_i
 
-        core.save_model(buffer_type="model_meta",
-                        proto_buffer=model_meta)
+        param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
+                                                             loss_history=self.loss_history,
+                                                             is_converged=self.is_converged,
+                                                             weight=weight_dict,
+                                                             intercept=self.intercept_,
+                                                             header=header)
 
-        model_param = ModelParam()
-        model_param.intercept = self.intercept_
+        param_buffer_type = "HomoLRGuest.param"
 
-        for i in range(self.coef_.shape[0]):
-            index = data_header_reverse[i]
-            model_param.weight[index] = self.coef_[i]
-        core.save_model(buffer_type="model_param",
-                        proto_buffer=model_param)
+        model_manager.save_model(buffer_type=param_buffer_type,
+                                 proto_buffer=param_protobuf_obj,
+                                 name=name,
+                                 namespace=namespace)
+        return [(meta_buffer_type, param_buffer_type)]
 
-    def load_model(self, model_table, model_namespace):
+    def load_model(self, name, namespace):
 
-        data_header = feature.read_feature_header()[0]
-        data_header_reverse = {}
-        for k in data_header:
-            data_header_reverse[data_header[k]] = k
+        result_obj = lr_model_param_pb2.LRModelParam()
+        result_obj = model_manager.read_model(buffer_type="HomoLRGuest.param",
+                                              proto_buffer=result_obj,
+                                              name=name,
+                                              namespace=namespace)
 
-        feature_shape = len(data_header)
+        self.header = list(result_obj.header)
+        feature_shape = len(self.header)
         self.coef_ = np.zeros(feature_shape)
+        weight_dict = dict(result_obj.weight)
+        self.intercept_ = result_obj.intercept
 
-        model_param = ModelParam()
-        core.read_model(buffer_type="model_param",
-                        proto_buffer=model_param)
-        LOGGER.debug("model_param:{}".format(model_param))
-
-        self.intercept_ = model_param.intercept
-
-        for i in range(self.coef_.shape[0]):
-            index = data_header_reverse[i]
-            self.coef_[i] = model_param.weight[index]
+        for idx, header_name in enumerate(self.header):
+            self.coef_[idx] = weight_dict.get(header_name)

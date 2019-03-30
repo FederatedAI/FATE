@@ -38,3 +38,12 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_me
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data_transform.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto inference_service.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto model_service.proto
+
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-binning-meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-binning-param.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-selection-meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-selection-param.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  lr-model-meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  lr-model-param.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  pipeline.proto
+

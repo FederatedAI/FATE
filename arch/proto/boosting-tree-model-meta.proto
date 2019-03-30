@@ -1,0 +1,42 @@
+syntax = "proto3";
+   
+message ObjectiveMeta {
+    string objective = 1;
+    repeated double param = 2;
+}
+
+message CriterionMeta {
+    string criterion_meta = 1;
+    repeated double criterion_param = 2;
+}
+
+message DecisionTreeModelMeta {
+    CriterionMeta criterion_meta = 1;
+    int32 max_depth = 2;
+    int32 min_sample_split = 3;
+    double min_impurity_split = 4;
+    int32 min_leaf_node = 5;
+}
+
+message QuantileMeta {
+    string quantile_method = 1;
+    int32 bin_num = 2;
+    double bin_gap = 3;
+    int32 bin_sample_num = 4;
+}
+
+message BoostingTreeModelMeta {
+    string module_name = 1;
+	DecisionTreeModelMeta tree_meta = 2;
+    double learning_rate = 3;
+    double num_trees = 4;
+    QuantileMeta quantile_meta = 5;
+    ObjectiveMeta objective = 6;
+    string task_type = 7;
+    int32 tree_dim = 8;
+    bool n_iter_no_change = 9;
+    double tol = 10;
+    int32 num_classes = 11;
+    repeated string classes_ = 12;
+}
+

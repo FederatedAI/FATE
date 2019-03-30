@@ -23,7 +23,7 @@ from arch.api import federation
 from arch.api.io.version_control import read_version, save_version, gen_data_table_info, get_data_table, save_version_info, version_history
 
 
-def save_model(buffer_type, proto_buffer, commit_log="", branch="master"):
+def save_model(buffer_type, proto_buffer, commit_log="", branch="master", name='', namespace=''):
     version_table, data_table_info, scene_key, parent, commit_id = save_version("model_version", branch=branch)
     data_table_info = gen_data_table_info("model_data", scene_key=scene_key, commit_id=commit_id)
     data_table = get_data_table(data_table_info=data_table_info, create_if_missing=True)
@@ -36,7 +36,7 @@ def save_model(buffer_type, proto_buffer, commit_log="", branch="master"):
     return commit_id
 
 
-def read_model(buffer_type, proto_buffer, commit_id=None, tag=None, branch="master"):
+def read_model(buffer_type, proto_buffer, commit_id=None, tag=None, branch="master", name='', namespace=''):
     version_table, data_table_info, scene_key, parent, commit_id = read_version("model_version",
                                                                                 commit_id=commit_id,
                                                                                 tag=tag,

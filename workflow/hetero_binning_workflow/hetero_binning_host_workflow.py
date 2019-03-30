@@ -22,7 +22,7 @@
 ################################################################################
 
 from arch.api.utils import log_utils
-from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureHost
+from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.param import FeatureBinningParam
 from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
@@ -49,7 +49,7 @@ class HeteroBinningHostWorkflow(WorkFlow):
         binning_param = FeatureBinningParam()
         self.binning_param = ParamExtract.parse_param_from_config(binning_param, runtime_conf_path)
         FeatureBinningParamChecker.check_param(self.binning_param)
-        self.model = HeteroFeatureHost(self.binning_param)
+        self.model = HeteroFeatureBinningHost(self.binning_param)
         LOGGER.debug("Host part model started")
 
     def run(self):
