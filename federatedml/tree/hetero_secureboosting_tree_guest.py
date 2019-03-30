@@ -25,7 +25,7 @@
 # HeteroSecureBoostingGuest 
 # =============================================================================
 
-from federatedml.feature import Quantile
+from federatedml.feature.quantile import Quantile
 from federatedml.util import ClassifyLabelChecker
 from federatedml.util import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest

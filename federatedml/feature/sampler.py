@@ -18,6 +18,7 @@ from arch.api import eggroll
 from arch.api import federation
 from sklearn.utils import resample
 from federatedml.util import consts
+from federatedml.util.transfer_variable import SampleTransferVariable
 
 
 class RandomSampler(object):
@@ -226,7 +227,6 @@ class Sampler(object):
         self.flowid = flowid
 
     def sync_sample_ids(self, sample_ids):
-        from federatedml.util import SampleTransferVariable
         transfer_inst = SampleTransferVariable()
         
         federation.remote(obj=sample_ids,
@@ -235,7 +235,6 @@ class Sampler(object):
                           role="host")
 
     def recv_sample_ids(self):
-        from federatedml.util import SampleTransferVariable
         transfer_inst = SampleTransferVariable()
         
         sample_ids = federation.get(name=transfer_inst.sample_ids.name,
