@@ -103,4 +103,3 @@ MINMAXSCALE = 'min_max_scale'
 STANDARDSCALE = 'standard_scale'
 ALL = 'all'
 COL = 'col'
-

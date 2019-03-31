@@ -51,6 +51,7 @@ class DataIOParam(object):
     output_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
 
     """
+
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
@@ -170,6 +171,7 @@ class SampleParam(object):
     fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
     random_state: int, RandomState instance or None, default: None
     """
+
     def __init__(self, mode="random", method="downsample", fractions=None, random_state=None):
         self.mode = mode
         self.method = method
@@ -654,6 +656,7 @@ class FTLValidDataParam(object):
         The indicator indicating whether read data from dtable, must be bool
 
     """
+
     def __init__(self, file_path=None, num_samples=None, is_read_table=False):
         self.file_path = file_path
         self.num_samples = num_samples
@@ -901,6 +904,7 @@ class ScaleParam(object):
             if with_mean is False, u will be 0, and if with_std is False, s will be 1. 
 
     """
+
     def __init__(self, method=None, mode="normal", area="all", feat_upper=None, feat_lower=None, out_upper=None,
                  out_lower=None, with_mean=True, with_std=True):
         self.method = method

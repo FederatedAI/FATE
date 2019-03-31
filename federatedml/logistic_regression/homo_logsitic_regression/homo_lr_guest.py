@@ -220,7 +220,7 @@ class HomoLRGuest(BaseLogisticRegression):
                                                              intercept=self.intercept_,
                                                              header=header)
 
-        param_buffer_type = "HomoLRGuest.param"
+        param_buffer_type = "scaler.param"
 
         model_manager.save_model(buffer_type=param_buffer_type,
                                  proto_buffer=param_protobuf_obj,

@@ -217,7 +217,7 @@ class BoostingTreeParamChecker(object):
                 boost_param.num_trees))
 
         if type(boost_param.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
-                        boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
+                boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
@@ -470,8 +470,6 @@ class WorkFlowParamChecker(object):
                         workflow_param.intersect_data_output_namespace))
 
         DataIOParamChecker.check_param(workflow_param.dataio_param)
-
-
 
         if type(workflow_param.work_mode).__name__ != "int":
             raise ValueError(
@@ -741,6 +739,7 @@ class FTLValidDataParamChecker(object):
         check_boolean(ftl_valid_data_param.is_read_table, model_param_descr + "is_read_table")
         return True
 
+
 class ScaleParamChecker(object):
     @staticmethod
     def check_param(scale_param):
@@ -748,12 +747,12 @@ class ScaleParamChecker(object):
         scale_param.method = check_and_change_lower(scale_param.method,
                                                     [consts.MINMAXSCALE, consts.STANDARDSCALE],
                                                     descr)
-        
+
         descr = "scale param's mode"
         scale_param.mode = check_and_change_lower(scale_param.mode,
                                                   [consts.NORMAL, consts.CAP],
                                                   descr)
-        
+
         descr = "scale param's area"
         scale_param.area = check_and_change_lower(scale_param.area,
                                                   [consts.ALL, consts.COL],
@@ -770,24 +769,25 @@ class ScaleParamChecker(object):
                 raise ValueError(
                     "scale param's feat_lower {} not supported, should be float or int type".format(
                         scale_param.feat_upper))
-        
+
         if scale_param.out_lower is not None:
             if type(scale_param.out_lower).__name__ not in ["float", "int"]:
                 raise ValueError(
                     "scale param's feat_lower {} not supported, should be float or int type".format(
                         scale_param.out_lower))
-                
+
         if scale_param.out_upper is not None:
             if type(scale_param.out_upper).__name__ not in ["float", "int"]:
                 raise ValueError(
                     "scale param's feat_lower {} not supported, should be float or int type".format(
                         scale_param.out_upper))
-                
+
         check_boolean(scale_param.with_mean, "scale_param with_mean")
         check_boolean(scale_param.with_std, "scale_param with_std")
 
         LOGGER.debug("Finish scale parameter check!")
         return True
+
 
 def check_string(param, descr):
     if type(param).__name__ not in ["str"]:
