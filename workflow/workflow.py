@@ -215,6 +215,7 @@ class WorkFlow(object):
 
     def intersect(self, data_instance, intersect_flowid=''):
         if self.workflow_param.need_intersect:
+            header = data_instance.schema.get('header')
             LOGGER.info("need_intersect: true!")
             intersect_param = IntersectParam()
             self.intersect_params = ParamExtract.parse_param_from_config(intersect_param, self.config_path)
@@ -235,6 +236,7 @@ class WorkFlow(object):
             intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
             LOGGER.info("get intersect data_instance!")
             LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
+            intersect_data_instance.schema['header'] = header
             return intersect_data_instance
 
         else:
