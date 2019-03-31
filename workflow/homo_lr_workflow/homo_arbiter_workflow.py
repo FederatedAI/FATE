@@ -50,6 +50,8 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
         self._init_argument()
 
         if self.workflow_param.method == "train":
+            self._init_pipeline()
+
             LOGGER.debug("In running function, enter train method")
             train_data_instance = None
             predict_data_instance = None

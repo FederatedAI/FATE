@@ -282,65 +282,65 @@ class HomoLRArbiter(BaseLogisticRegression):
             if sum(self.curt_re_encrypt_times) == 0:
                 break
 
-    def _save_meta(self, name, namespace):
-        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.param.penalty,
-                                                          eps=self.eps,
-                                                          alpha=self.alpha,
-                                                          optimizer=self.param.optimizer,
-                                                          party_weight=self.param.party_weight,
-                                                          batch_size=self.batch_size,
-                                                          learning_rate=self.learning_rate,
-                                                          max_iter=self.max_iter,
-                                                          converge_func=self.param.converge_func,
-                                                          re_encrypt_batches=self.param.re_encrypt_batches)
-        buffer_type = "HomoLRArbiter.meta"
-
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
-
-    def save_model(self, name, namespace, job_id=None, model_name=None):
-        meta_buffer_type = self._save_meta(name, namespace)
-        # In case arbiter has no header
-
-        # Make a virtual header cause no data_instances are available
-        header = [str(i) for i in range(len(self.coef_))]
-
-        weight_dict = {}
-        for idx, header_name in enumerate(header):
-            coef_i = self.coef_[idx]
-            weight_dict[header_name] = coef_i
-
-        param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
-                                                             loss_history=self.loss_history,
-                                                             is_converged=self.is_converged,
-                                                             weight=weight_dict,
-                                                             intercept=self.intercept_,
-                                                             header=header)
-
-        param_buffer_type = "HomoLRArbiter.param"
-
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=param_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return [(meta_buffer_type, param_buffer_type)]
-
-    def load_model(self, name, namespace):
-
-        result_obj = lr_model_param_pb2.LRModelParam()
-        result_obj = model_manager.read_model(buffer_type="HomoLRArbiter.param",
-                                              proto_buffer=result_obj,
-                                              name=name,
-                                              namespace=namespace)
-
-        self.header = list(result_obj.header)
-        feature_shape = len(self.header)
-        self.coef_ = np.zeros(feature_shape)
-        weight_dict = dict(result_obj.weight)
-        self.intercept_ = result_obj.intercept
-
-        for idx, header_name in enumerate(self.header):
-            self.coef_[idx] = weight_dict.get(header_name)
+    # def _save_meta(self, name, namespace):
+    #     meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.param.penalty,
+    #                                                       eps=self.eps,
+    #                                                       alpha=self.alpha,
+    #                                                       optimizer=self.param.optimizer,
+    #                                                       party_weight=self.param.party_weight,
+    #                                                       batch_size=self.batch_size,
+    #                                                       learning_rate=self.learning_rate,
+    #                                                       max_iter=self.max_iter,
+    #                                                       converge_func=self.param.converge_func,
+    #                                                       re_encrypt_batches=self.param.re_encrypt_batches)
+    #     buffer_type = "HomoLRArbiter.meta"
+    #
+    #     model_manager.save_model(buffer_type=buffer_type,
+    #                              proto_buffer=meta_protobuf_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return buffer_type
+    #
+    # def save_model(self, name, namespace, job_id=None, model_name=None):
+    #     meta_buffer_type = self._save_meta(name, namespace)
+    #     # In case arbiter has no header
+    #
+    #     # Make a virtual header cause no data_instances are available
+    #     header = [str(i) for i in range(len(self.coef_))]
+    #
+    #     weight_dict = {}
+    #     for idx, header_name in enumerate(header):
+    #         coef_i = self.coef_[idx]
+    #         weight_dict[header_name] = coef_i
+    #
+    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
+    #                                                          loss_history=self.loss_history,
+    #                                                          is_converged=self.is_converged,
+    #                                                          weight=weight_dict,
+    #                                                          intercept=self.intercept_,
+    #                                                          header=header)
+    #
+    #     param_buffer_type = "HomoLRArbiter.param"
+    #
+    #     model_manager.save_model(buffer_type=param_buffer_type,
+    #                              proto_buffer=param_protobuf_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return [(meta_buffer_type, param_buffer_type)]
+    #
+    # def load_model(self, name, namespace):
+    #
+    #     result_obj = lr_model_param_pb2.LRModelParam()
+    #     result_obj = model_manager.read_model(buffer_type="HomoLRArbiter.param",
+    #                                           proto_buffer=result_obj,
+    #                                           name=name,
+    #                                           namespace=namespace)
+    #
+    #     self.header = list(result_obj.header)
+    #     feature_shape = len(self.header)
+    #     self.coef_ = np.zeros(feature_shape)
+    #     weight_dict = dict(result_obj.weight)
+    #     self.intercept_ = result_obj.intercept
+    #
+    #     for idx, header_name in enumerate(self.header):
+    #         self.coef_[idx] = weight_dict.get(header_name)

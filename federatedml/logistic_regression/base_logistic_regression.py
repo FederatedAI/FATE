@@ -16,11 +16,10 @@
 
 import numpy as np
 
-from arch.api import eggroll
-from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
+from arch.api.utils import log_utils
+from federatedml.evaluation import Evaluation
 from federatedml.logistic_regression.logistic_regression_modelmeta import LogisticRegressionModelMeta
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
@@ -256,10 +255,10 @@ class BaseLogisticRegression(object):
         param_buffer_type = "{}.param".format(self.class_name)
 
         result_obj = lr_model_param_pb2.LRModelParam()
-        result_obj = model_manager.read_model(buffer_type=param_buffer_type,
-                                              proto_buffer=result_obj,
-                                              name=name,
-                                              namespace=namespace)
+        model_manager.read_model(buffer_type=param_buffer_type,
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
 
         self.header = list(result_obj.header)
         feature_shape = len(self.header)

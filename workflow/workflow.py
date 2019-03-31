@@ -502,9 +502,11 @@ class WorkFlow(object):
         LOGGER.debug("save model, model table: {}, model namespace: {}".format(
             self.workflow_param.model_table, self.workflow_param.model_namespace))
         save_result = self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+        if save_result is None:
+            return
         for meta_buffer_type, param_buffer_type in save_result:
             self.pipeline.node_meta.append(meta_buffer_type)
-            self.pipeline.node_param.apped(param_buffer_type)
+            self.pipeline.node_param.append(param_buffer_type)
 
     def load_model(self):
         self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
@@ -570,8 +572,8 @@ class WorkFlow(object):
 
     def _init_pipeline(self):
         pipeline_obj = pipeline_pb2.Pipeline()
-        pipeline_obj.node_meta = []
-        pipeline_obj.node_param = []
+        # pipeline_obj.node_meta = []
+        # pipeline_obj.node_param = []
         self.pipeline = pipeline_obj
 
     def _save_pipeline(self):
