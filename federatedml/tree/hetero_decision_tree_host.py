@@ -25,18 +25,18 @@
 # HeteroDecisionTreeHost
 # =============================================================================
 
+from arch.api import federation
 from arch.api.utils import log_utils
+from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
+from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
 from federatedml.tree import FeatureHistogram
 from federatedml.util import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
-from federatedml.tree import DecisionTreeModelMeta
 from federatedml.tree import Node
-from federatedml.tree import NodeMeta
-from federatedml.tree import DecisionTreeModelMeta
-from arch.api import federation
 import functools
 
 LOGGER = log_utils.getLogger()
@@ -355,21 +355,61 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         LOGGER.info("predict finish!")
 
-    def get_tree_model(self):
-        LOGGER.info("get tree model")
-        tree_model = DecisionTreeModelMeta()
+    def get_model_meta(self):
+        model_meta = DecisionTreeModelMeta()
+
+        model_meta.max_depth = self.max_depth
+        model_meta.min_sample_split = self.min_sample_split
+        model_meta.min_impurity_split = self.min_impurity_split
+        model_meta.min_leaf_node = self.min_leaf_node
+
+        return model_meta
+
+    def set_model_meta(self, model_meta):
+        self.max_depth = model_meta.max_depth
+        self.min_sample_split = model_meta.min_sample_split
+        self.min_impurity_split = model_meta.min_impurity_split
+        self.min_leaf_node = model_meta.min_leaf_node
+
+    def get_model_param(self):
+        model_param = DecisionTreeModelParam()
         for node in self.tree_:
-            tree_model.tree_.add(id=node.id, sitename=node.sitename, fid=node.fid, bid=node.bid, weight=node.weight, is_leaf=node.is_leaf, left_nodeid=node.left_nodeid, right_nodeid=node.right_nodeid)
-        
-        tree_model.split_maskdict.update(self.split_maskdict)
-        
-        return tree_model
+            model_param.tree_.add(id=node.id,
+                                  sitename=node.sitename,
+                                  fid=node.fid,
+                                  bid=node.bid,
+                                  weight=node.weight,
+                                  is_leaf=node.is_leaf,
+                                  left_nodeid=node.left_nodeid,
+                                  right_nodeid=node.right_nodeid)
 
-    def set_tree_model(self, tree_model):
-        LOGGER.info("set tree model")
+        model_param.split_maskdict.update(self.split_maskdict)
+
+        return model_param
+
+    def set_model_param(self, model_param):
         self.tree_ = []
-        for node_meta in tree_model.tree_:
-            node = Node(id=node_meta.id, sitename=node_meta.sitename, fid=node_meta.fid, bid=node_meta.bid, weight=node_meta.weight, is_leaf=node_meta.is_leaf, left_nodeid=node_meta.left_nodeid, right_nodeid=node_meta.right_nodeid)
-            self.tree_.append(node)
+        for node_param in model_param.tree_:
+            _node = Node(id=node_param.id,
+                         sitename=node_param.sitename,
+                         fid=node_param.fid,
+                         bid=node_param.bid,
+                         weight=node_param.weight,
+                         is_leaf=node_param.is_leaf,
+                         left_nodeid=node_param.left_nodeid,
+                         right_nodeid=node_param.right_nodeid)
 
-        self.split_maskdict = dict(tree_model.split_maskdict)
+            self.tree_.append(_node)
+
+        self.split_maskdict = dict(model_param.split_maskdict)
+
+    def get_model(self):
+        model_meta = self.get_model_meta()
+        model_param = self.get_model_param()
+
+        return model_meta, model_param
+
+    def load_model(self, model_meta=None, model_param=None):
+        LOGGER.info("load tree model")
+        self.set_model_meta(model_meta)
+        self.set_model_param(model_param)

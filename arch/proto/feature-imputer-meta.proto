@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message ImputerMeta{
+    bool is_imputer = 1;
+    string strategy = 2;
+    repeated string missing_value = 3;
+}
+

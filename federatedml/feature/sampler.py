@@ -221,7 +221,16 @@ class Sampler(object):
         self.flowid = None
 
     def sample(self, data_inst, sample_ids=None):
-        return self.sampler.sample(data_inst, sample_ids)
+        ori_schema = data_inst.schema
+        sample_data = self.sampler.sample(data_inst, sample_ids)
+
+        try:
+            if len(sample_data) == 2:
+                sample_data[0].schema = ori_schema
+        except:
+            sample_data.schema = ori_schema
+
+        return sample_data
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid

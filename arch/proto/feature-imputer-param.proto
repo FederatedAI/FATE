@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message ImputerParam{
+    map<string, string> missing_replace_value = 1;
+}
+
