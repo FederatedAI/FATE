@@ -645,7 +645,7 @@ def save_data_io_model(input_format="dense",
                        namespace=model_namespace)
 
     manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_meta,
+                       proto_buffer=model_param,
                        name=model_table,
                        namespace=model_namespace)
 
