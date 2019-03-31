@@ -114,6 +114,8 @@ class EvaluateParam(object):
     """
 
     def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+        if metrics is None:
+            metrics = []
         self.metrics = metrics
         self.classi_type = classi_type
         self.pos_label = pos_label

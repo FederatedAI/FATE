@@ -316,7 +316,7 @@ class WorkFlow(object):
 
             feature_selector.set_flowid(flow_id)
 
-            feature_selector.load_model(feature_select_param.result_table, feature_select_param.result_namespace)
+            feature_selector.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             data_instance = feature_selector.transform(data_instance)
 
             LOGGER.info("Finish feature selection")
@@ -565,6 +565,8 @@ class WorkFlow(object):
             reader = SparseTagReader(self.workflow_param.dataio_param)
 
         LOGGER.debug("mode is {}".format(mode))
+
+        print("In workflow, table: {}, namespace: {}".format(table, namespace))
         data_instance = reader.read_data(table,
                                          namespace,
                                          mode=mode)
@@ -618,6 +620,7 @@ class WorkFlow(object):
         LOGGER.debug("The job id is {}".format(self.job_id))
         federation.init(self.job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")
+        self._init_pipeline()
 
     def run(self):
         self._init_argument()
@@ -625,7 +628,6 @@ class WorkFlow(object):
         if self.workflow_param.method == "train":
 
             # create a new pipeline
-            self._init_pipeline()
 
             LOGGER.debug("In running function, enter train method")
             train_data_instance = None

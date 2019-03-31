@@ -23,7 +23,7 @@ import time
 import traceback
 
 from arch.api import eggroll
-from arch.api.io.feature import save_feature_data
+from arch.api.storage import save_data
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 config_path = home_dir + '/conf'
@@ -60,7 +60,6 @@ def make_config_file(work_mode, job_id, guest_partyid, host_partyid, scene_id, m
 
     with open(config_path + '/host_runtime_conf.json', 'r', encoding='utf-8') as load_f:
         host_config = json.load(load_f)
-
 
     host_config['local']['party_id'] = host_partyid
     host_config['local']['scene_id'] = scene_id
@@ -216,21 +215,25 @@ def load_file(load_file_path):
             sys.exit()
 
         input_data = read_data(input_file_path, head)
-        if data.get("scene_id") and data.get("role") and data.get("my_party_id") and data.get("partner_party_id"):
+        # if data.get("scene_id") and data.get("role") and data.get("my_party_id") and data.get("partner_party_id"):
+        #     eggroll.init(mode=work_mode)
+        #     save_data(input_data,
+        #               scene_id=data["scene_id"],
+        #               my_role=data["role"],
+        #               my_party_id=data["my_party_id"],
+        #               partner_party_id=data["partner_party_id"]
+        #               )
+        # else:
+
+        if True:
             eggroll.init(mode=work_mode)
-            save_feature_data(input_data,
-                              scene_id=data["scene_id"],
-                              my_role=data["role"],
-                              my_party_id=data["my_party_id"],
-                              partner_party_id=data["partner_party_id"]
-                              )
-        else:
             _namespace, _table_name = generate_table_name(input_file_path)
             if namespace is None:
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
+            print("save data, table_name: {}, namespace: {}".format(table_name, namespace))
+            save_data(input_data, table_name, namespace, partition, work_mode)
 
     except ValueError:
         print('json parse error')

@@ -66,7 +66,7 @@ class HeteroBinningHostWorkflow(WorkFlow):
                     pass
                 else:
                     self.model.fit(train_data_instance)
-                self.model.save_model()
+                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             else:
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,

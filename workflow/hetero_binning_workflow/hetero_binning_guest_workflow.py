@@ -55,7 +55,7 @@ class HeteroBinningGuestWorkflow(WorkFlow):
 
     def save_binning_result(self):
 
-        meta_table = self.model.save_model()
+        meta_table = self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
         return meta_table
 
     def run(self):
