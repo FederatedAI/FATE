@@ -19,10 +19,6 @@ from federatedml.tree.node import SplitInfo
 from federatedml.tree.criterion import XgboostCriterion
 from federatedml.tree.splitter import Splitter
 from federatedml.tree.feature_histogram import FeatureHistogram
-from federatedml.tree.tree_modelmeta_pb2 import NodeMeta
-from federatedml.tree.tree_modelmeta_pb2 import ObjectiveParamMeta
-from federatedml.tree.tree_modelmeta_pb2 import DecisionTreeModelMeta
-from federatedml.tree.tree_modelmeta_pb2 import BoostingTreeModelMeta
 from federatedml.tree.decision_tree import DecisionTree
 from federatedml.tree.hetero_decision_tree_guest import HeteroDecisionTreeGuest
 from federatedml.tree.hetero_decision_tree_host import HeteroDecisionTreeHost
@@ -32,5 +28,4 @@ from federatedml.tree.hetero_secureboosting_tree_host import HeteroSecureBoostin
 
 __all__ = ["Node", "SplitInfo", "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost",
            "HeteroDecisionTreeHost", "HeteroDecisionTreeGuest", "Splitter",
-           "FeatureHistogram", "XgboostCriterion", "DecisionTree",
-           "NodeMeta", "ObjectiveParamMeta", "DecisionTreeModelMeta", "BoostingTreeModelMeta"]
+           "FeatureHistogram", "XgboostCriterion", "DecisionTree"]

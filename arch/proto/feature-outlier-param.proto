@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+message OutlierParam{
+    map<string, string> outlier_replace_value = 1;
+}

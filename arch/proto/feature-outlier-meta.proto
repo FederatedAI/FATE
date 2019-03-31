@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message OutlierMeta{
+    bool is_outlier = 1;
+    string strategy = 2;
+    repeated string outlier_value = 3;
+}

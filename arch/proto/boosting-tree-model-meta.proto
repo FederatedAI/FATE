@@ -6,7 +6,7 @@ message ObjectiveMeta {
 }
 
 message CriterionMeta {
-    string criterion_meta = 1;
+    string criterion_method = 1;
     repeated double criterion_param = 2;
 }
 
@@ -26,17 +26,16 @@ message QuantileMeta {
 }
 
 message BoostingTreeModelMeta {
-    string module_name = 1;
-	DecisionTreeModelMeta tree_meta = 2;
-    double learning_rate = 3;
-    double num_trees = 4;
-    QuantileMeta quantile_meta = 5;
-    ObjectiveMeta objective = 6;
-    string task_type = 7;
-    int32 tree_dim = 8;
-    bool n_iter_no_change = 9;
-    double tol = 10;
-    int32 num_classes = 11;
-    repeated string classes_ = 12;
+    DecisionTreeModelMeta tree_meta = 1;
+    double learning_rate = 2;
+    int32 num_trees = 3;
+    QuantileMeta quantile_meta = 4;
+    ObjectiveMeta objective_meta = 5;
+    string task_type = 6;
+    int32 tree_dim = 7;
+    bool n_iter_no_change = 8;
+    double tol = 9;
+    int32 num_classes = 10;
+    repeated string classes_ = 11;
 }
 
