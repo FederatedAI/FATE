@@ -74,7 +74,7 @@
     "EncodeParam": {
         "encode_method": "sha256",
         "salt": "12345",
-        "base64": 1
+        "base64": false
     },
     "PredictParam":{
         "with_proba": true,
