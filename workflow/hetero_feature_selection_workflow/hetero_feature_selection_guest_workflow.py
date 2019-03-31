@@ -60,11 +60,12 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
             if self.feature_param.method == 'fit':
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace)
+                print("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
                 if self.feature_param.local_only:
                     self.model.fit_local(train_data_instance)
                 else:
                     self.model.fit(train_data_instance)
-                self.model.save_model()
+                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
 
             elif self.feature_param.method == 'fit_transform':
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
@@ -73,7 +74,7 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
                     result_table = self.model.fit_local_transform(train_data_instance)
                 else:
                     result_table = self.model.fit_transform(train_data_instance)
-                self.model.save_model()
+                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
                 self.save_predict_result(result_table)
                 LOGGER.info(
                     "Predict result saved, table: {},"
@@ -84,6 +85,7 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,
                                                              mode='transform')
+                print("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
                 self.load_model()
                 result_table = self.model.transform(train_data_instance)
                 self.save_predict_result(result_table)

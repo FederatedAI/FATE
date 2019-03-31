@@ -227,9 +227,7 @@ class BaseLogisticRegression(object):
     def save_model(self, name, namespace, job_id=None, model_name=None):
         meta_buffer_type = self._save_meta(name, namespace)
         # In case arbiter has no header
-
-        # Make a virtual header cause no data_instances are available
-        header = [str(i) for i in range(len(self.coef_))]
+        header = self.header
 
         weight_dict = {}
         for idx, header_name in enumerate(header):
@@ -243,19 +241,20 @@ class BaseLogisticRegression(object):
                                                              intercept=self.intercept_,
                                                              header=header)
 
-        param_buffer_type = "{}.param".format(self.class_name)
+        buffer_type = "{}.param".format(self.class_name)
 
-        model_manager.save_model(buffer_type=param_buffer_type,
+        model_manager.save_model(buffer_type=buffer_type,
                                  proto_buffer=param_protobuf_obj,
                                  name=name,
                                  namespace=namespace)
-        return [(meta_buffer_type, param_buffer_type)]
+        return [(meta_buffer_type, buffer_type)]
 
     def load_model(self, name, namespace):
-        param_buffer_type = "{}.param".format(self.class_name)
 
         result_obj = lr_model_param_pb2.LRModelParam()
-        model_manager.read_model(buffer_type=param_buffer_type,
+        buffer_type = "{}.param".format(self.class_name)
+
+        model_manager.read_model(buffer_type=buffer_type,
                                  proto_buffer=result_obj,
                                  name=name,
                                  namespace=namespace)

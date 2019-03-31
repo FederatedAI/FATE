@@ -13,14 +13,16 @@ from google.protobuf import descriptor_pb2
 _sym_db = _symbol_database.Default()
 
 
+import feature_binning_meta_pb2 as feature__binning__meta__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-selection-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xaa\x03\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x13\n\x0bselect_cols\x18\x03 \x03(\t\x12P\n\x0cunique_param\x18\x04 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam\x12L\n\x08iv_param\x18\x05 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam\x12U\n\tcoe_param\x18\x06 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam\x12Z\n\routlier_param\x18\x07 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam\"\x1f\n\x10UniqueValueParam\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"I\n\x10IVSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\x12\x1c\n\x14percentile_threshold\x18\x02 \x01(\x01\"3\n\x18\x43oeffOfVarSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"H\n\x19OutlierColsSelectionParam\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x16\x42\x14\x46\x65\x61tureSelectionMetab\x06proto3')
-)
+  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\x1a\x1a\x66\x65\x61ture-binning-meta.proto\"\xaa\x03\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x13\n\x0bselect_cols\x18\x03 \x03(\t\x12P\n\x0cunique_param\x18\x04 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam\x12L\n\x08iv_param\x18\x05 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam\x12U\n\tcoe_param\x18\x06 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam\x12Z\n\routlier_param\x18\x07 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam\"\x1f\n\x10UniqueValueParam\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"\x9a\x01\n\x10IVSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\x12\x1c\n\x14percentile_threshold\x18\x02 \x01(\x01\x12O\n\tbin_param\x18\x03 \x01(\x0b\x32<.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningMeta\"3\n\x18\x43oeffOfVarSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"H\n\x19OutlierColsSelectionParam\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x16\x42\x14\x46\x65\x61tureSelectionMetab\x06proto3')
+  ,
+  dependencies=[feature__binning__meta__pb2.DESCRIPTOR,])
 
 
 
@@ -93,8 +95,8 @@ _FEATURESELECTIONMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=75,
-  serialized_end=501,
+  serialized_start=103,
+  serialized_end=529,
 )
 
 
@@ -124,8 +126,8 @@ _UNIQUEVALUEPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=503,
-  serialized_end=534,
+  serialized_start=531,
+  serialized_end=562,
 )
 
 
@@ -150,6 +152,13 @@ _IVSELECTIONPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='bin_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam.bin_param', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -162,8 +171,8 @@ _IVSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=536,
-  serialized_end=609,
+  serialized_start=565,
+  serialized_end=719,
 )
 
 
@@ -193,8 +202,8 @@ _COEFFOFVARSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=611,
-  serialized_end=662,
+  serialized_start=721,
+  serialized_end=772,
 )
 
 
@@ -231,14 +240,15 @@ _OUTLIERCOLSSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=664,
-  serialized_end=736,
+  serialized_start=774,
+  serialized_end=846,
 )
 
 _FEATURESELECTIONMETA.fields_by_name['unique_param'].message_type = _UNIQUEVALUEPARAM
 _FEATURESELECTIONMETA.fields_by_name['iv_param'].message_type = _IVSELECTIONPARAM
 _FEATURESELECTIONMETA.fields_by_name['coe_param'].message_type = _COEFFOFVARSELECTIONPARAM
 _FEATURESELECTIONMETA.fields_by_name['outlier_param'].message_type = _OUTLIERCOLSSELECTIONPARAM
+_IVSELECTIONPARAM.fields_by_name['bin_param'].message_type = feature__binning__meta__pb2._FEATUREBINNINGMETA
 DESCRIPTOR.message_types_by_name['FeatureSelectionMeta'] = _FEATURESELECTIONMETA
 DESCRIPTOR.message_types_by_name['UniqueValueParam'] = _UNIQUEVALUEPARAM
 DESCRIPTOR.message_types_by_name['IVSelectionParam'] = _IVSELECTIONPARAM

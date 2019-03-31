@@ -219,6 +219,7 @@ class IVPercentileFilter(FilterMethod):
         return result
 
 
+
 class CoeffOfVarValueFilter(FilterMethod):
     def __init__(self, param, select_cols, statics_obj=None):
         self.value_threshold = param.value_threshold

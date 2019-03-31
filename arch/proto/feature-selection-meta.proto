@@ -16,6 +16,8 @@
 
 syntax = "proto3";
 
+import "feature-binning-meta.proto";
+
 package com.webank.ai.fate.common.mlmodel.buffer;
 option java_outer_classname = "FeatureSelectionMeta";
 
@@ -37,6 +39,7 @@ message UniqueValueParam {
 message IVSelectionParam{
     double value_threshold = 1;
     double percentile_threshold = 2;
+    FeatureBinningMeta bin_param = 3;
 }
 
 message CoeffOfVarSelectionParam {

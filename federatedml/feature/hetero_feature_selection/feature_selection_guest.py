@@ -24,6 +24,7 @@ import numpy as np
 from arch.api import federation
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
+from arch.api.proto.feature_binning_meta_pb2 import FeatureBinningMeta
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.feature_selection import FeatureSelection
@@ -55,11 +56,9 @@ class HeteroFeatureSelectionGuest(object):
         self.header = []
 
     def fit(self, data_instances):
-        if self.cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            self.cols = [i for i in range(features_shape)]
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
+        self._parse_cols(data_instances)
         self.left_cols = self.cols.copy()
 
         for method in self.filter_method:
@@ -69,6 +68,8 @@ class HeteroFeatureSelectionGuest(object):
                 break
 
     def fit_local(self, data_instances):
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
         feature_selection_obj = FeatureSelection(self.params)
         self.left_cols = feature_selection_obj.filter(data_instances)
         if self.cols == -1:
@@ -78,8 +79,8 @@ class HeteroFeatureSelectionGuest(object):
         self.results = feature_selection_obj.results
 
     def fit_local_transform(self, data_instances):
+        self._parse_cols(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-
         self.fit_local(data_instances)
         new_data = self.transform(data_instances)
         new_data.schema['header'] = self.header
@@ -87,6 +88,7 @@ class HeteroFeatureSelectionGuest(object):
         return new_data
 
     def transform(self, data_instances):
+        self._parse_cols(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         new_data = self._transfer_data(data_instances)
         new_data.schema['header'] = self.header
@@ -242,13 +244,26 @@ class HeteroFeatureSelectionGuest(object):
 
     def _save_meta(self, name, namespace):
         unique_param = feature_selection_meta_pb2.UniqueValueParam(**self.params.unique_param.__dict__)
-        iv_param = feature_selection_meta_pb2.IVSelectionParam(**self.params.iv_param.__dict__)
+
+        iv_dict = self.params.iv_param.__dict__
+        bin_dict = self.params.iv_param.bin_param.__dict__
+        del bin_dict['process_method']
+        del bin_dict['result_table']
+        del bin_dict['result_namespace']
+        del bin_dict['display_result']
+        if bin_dict['cols'] == -1:
+            bin_dict['cols'] = self.cols
+        bin_param = FeatureBinningMeta(**bin_dict)
+        iv_dict["bin_param"] = bin_param
+
+        iv_param = feature_selection_meta_pb2.IVSelectionParam(**iv_dict)
+
         coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**self.params.coe_param.__dict__)
         outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**self.params.outlier_param.__dict__)
 
         meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
-                                                                            local_only=self.bin_param.compress_thres,
-                                                                            select_cols=self.cols,
+                                                                            local_only=self.params.local_only,
+                                                                            select_cols=self.header,
                                                                             unique_param=unique_param,
                                                                             iv_param=iv_param,
                                                                             coe_param=coe_param,
@@ -274,11 +289,11 @@ class HeteroFeatureSelectionGuest(object):
         return [(meta_buffer_type, param_buffer_type)]
 
     def load_model(self, name, namespace):
-        model_param = feature_selection_param_pb2.FeatureSelectionParam()
-        result_obj = model_manager.read_model(buffer_type="HeteroFeatureSelectionGuest.param",
-                                              proto_buffer=model_param,
-                                              name=name,
-                                              namespace=namespace)
+        result_obj = feature_selection_param_pb2.FeatureSelectionParam()
+        model_manager.read_model(buffer_type="HeteroFeatureSelectionGuest.param",
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
 
         self.results = list(result_obj.results)
         if len(self.results) == 0:
@@ -309,6 +324,14 @@ class HeteroFeatureSelectionGuest(object):
             idx = pre_left_cols.index(left_col)
             new_iv_list.append(iv_attrs[idx])
         return new_iv_list
+
+    def _parse_cols(self, data_instances):
+        if self.cols == -1:
+            features_shape = get_features_shape(data_instances)
+            if features_shape is None:
+                raise RuntimeError('Cannot get feature shape, please check input data')
+            self.cols = [i for i in range(features_shape)]
+
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid

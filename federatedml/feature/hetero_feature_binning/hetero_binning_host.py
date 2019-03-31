@@ -156,14 +156,14 @@ class HeteroFeatureBinningHost(object):
 
     def _save_meta(self, name, namespace):
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
-                                                                method=self.bin_param.method,
-                                                                compress_thres=self.bin_param.compress_thres,
-                                                                head_size=self.bin_param.head_size,
-                                                                error=self.bin_param.error,
-                                                                bin_num=self.bin_param.bin_num,
-                                                                cols=self.cols,
-                                                                adjustment_factor=self.bin_param.adjustment_factor,
-                                                                local_only=self.bin_param.local_only)
+            method=self.bin_param.method,
+            compress_thres=self.bin_param.compress_thres,
+            head_size=self.bin_param.head_size,
+            error=self.bin_param.error,
+            bin_num=self.bin_param.bin_num,
+            cols=self.cols,
+            adjustment_factor=self.bin_param.adjustment_factor,
+            local_only=self.bin_param.local_only)
         buffer_type = "HeteroFeatureBinningHost.meta"
 
         model_manager.save_model(buffer_type=buffer_type,
@@ -196,11 +196,11 @@ class HeteroFeatureBinningHost(object):
 
     def load_model(self, name, namespace):
 
-        model_param = feature_binning_param_pb2.FeatureBinningParam()
-        result_obj = model_manager.read_model(buffer_type="HeteroFeatureBinningHost.param",
-                                              proto_buffer=model_param,
-                                              name=name,
-                                              namespace=namespace)
+        result_obj = feature_binning_param_pb2.FeatureBinningParam()
+        model_manager.read_model(buffer_type="HeteroFeatureBinningHost.param",
+                                 proto_buffer=result_obj,
+                                 name=name,
+                                 namespace=namespace)
 
         self.iv_attrs = []
         for iv_dict in list(result_obj.iv_result):

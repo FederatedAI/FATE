@@ -72,6 +72,6 @@
     },
     "OutlierColsSelectionParam": {
         "percentile": 0.9,
-        "upper_threshold": 1000
+        "upper_threshold": 1000.0
     }
 }
