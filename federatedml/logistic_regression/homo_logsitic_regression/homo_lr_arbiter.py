@@ -17,7 +17,7 @@
 import numpy as np
 
 from arch.api import federation
-from arch.api.model_manager import core as model_manager
+from arch.api.model_manager import manager as model_manager
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression

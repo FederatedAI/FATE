@@ -448,7 +448,7 @@ class SparseTagReader(object):
         LOGGER.info("delemitor is {}".format(self.delimitor))
         for key, value in kvs:
             if self.with_label:
-                cols = value.split(delimitor, -1)[1:]
+                cols = value.split(delimitor, -1)[1 : ]
             else:
                 cols = value.split(delimitor, -1)[0:]
 

@@ -17,7 +17,7 @@
 import functools
 
 from arch.api import federation
-from arch.api.model_manager import core as model_manager
+from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning import QuantileBinning, IVAttributes
