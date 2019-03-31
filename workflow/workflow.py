@@ -28,7 +28,7 @@ import numpy as np
 
 from arch.api import eggroll
 from arch.api import federation
-from arch.api.model_manager import core as model_manager
+from arch.api.model_manager import manager as model_manager
 from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest

@@ -302,7 +302,7 @@ class _DTable(object):
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
-        self.scheme = {}
+        self.schema = {}
 
     def __str__(self):
         return "type: {}, namespace: {}, name: {}, partitions: {}".format(self._type, self._namespace, self._name,
