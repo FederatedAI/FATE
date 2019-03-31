@@ -248,6 +248,7 @@ class DenseFeatureReader(object):
                                    self.missing_fill_method,
                                    self.missing_impute,
                                    self.default_value,
+                                   self.header,
                                    "Imputer",
                                    model_table,
                                    model_namespace)
@@ -257,10 +258,13 @@ class DenseFeatureReader(object):
                            self.outlier_replace_method,
                            self.outlier_impute,
                            self.outlier_replace_value,
+                           self.header,
                            "Outlier",
                            model_table,
                            model_namespace)
         model_types.append(("Outlier.meta", "Outlier.param"))
+
+        return model_types
 
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, self.with_label, \
@@ -423,6 +427,8 @@ class SparseFeatureReader(object):
                            model_namespace=model_namespace)
         model_types.append(("Outlier.meta", "Outlier.param"))
 
+        return model_types
+
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, _1, \
         _2, self.label_type, self.output_format, self.header = load_data_io_model("DataIO",
@@ -584,6 +590,8 @@ class SparseTagReader(object):
                            model_table=model_table,
                            model_namespace=model_namespace)
         model_types.append(("Outlier.meta", "Outlier.param"))
+
+        return model_types
 
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, self.with_label, \

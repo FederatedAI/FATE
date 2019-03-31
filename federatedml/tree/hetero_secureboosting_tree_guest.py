@@ -387,7 +387,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_meta.num_classes = self.num_classes
         model_meta.classes_.extend(map(str, self.classes_))
         
-        meta_name = "HeteroBoostingTreeGuest.meta"
+        meta_name = "HeteroSecureBoostingTreeGuest.meta"
           
         return meta_name, model_meta
 
@@ -397,16 +397,16 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.num_trees = model_meta.num_trees
         self.quantile_method = model_meta.quantile_meta.quantile_method
         self.bin_num = model_meta.quantile_meta.bin_num
-        self.bin_gap = model_meta.bin_gap
-        self.bin_sample_num = model_meta.bin_sample_num
+        self.bin_gap = model_meta.quantile_meta.bin_gap
+        self.bin_sample_num = model_meta.quantile_meta.bin_sample_num
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
         self.tree_dim = model_meta.tree_dim
-        self.num_classes = list(model_meta.num_classes)
+        self.num_classes = model_meta.num_classes
         self.n_iter_no_change = model_meta.n_iter_no_change
         self.tol = model_meta.tol
-        self.classes_ = list(model_meta.num_classes_)
+        self.classes_ = list(model_meta.classes_)
 
         self.set_loss(self.objective_param)
 
@@ -417,13 +417,13 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_param.init_score.extend(self.init_score)
         model_param.losses.extend(self.history_loss)
 
-        param_name = "HeteroBoostingTreeGuest.param"
+        param_name = "HeteroSecureBoostingTreeGuest.param"
 
         return param_name, model_param
 
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
-        self.init_score = list(model_param.init_score)
+        self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
 
     def save_model(self, model_table, model_namespace):
@@ -445,15 +445,15 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def load_model(self, model_table, model_namespace):
         LOGGER.info("load model")
         model_meta = BoostingTreeModelMeta()
-        manager.read_model(buffer_type="HeteroBoostingTreeGuest.meta",
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeGuest.meta",
                            proto_buffer=model_meta,
                            name=model_table,
                            namespace=model_namespace)
         self.set_model_meta(model_meta)
 
         model_param = BoostingTreeModelParam()
-        manager.read_model(buffer_type="HeteroBoostingTreeGuest.param",
-                           proto_buffer=model_meta,
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeGuest.param",
+                           proto_buffer=model_param,
                            name=model_table,
                            namespace=model_namespace)
         self.set_model_param(model_param)

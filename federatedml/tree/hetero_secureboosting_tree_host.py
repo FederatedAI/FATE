@@ -164,8 +164,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.num_trees = model_meta.num_trees
         self.quantile_method = model_meta.quantile_meta.quantile_method
         self.bin_num = model_meta.quantile_meta.bin_num
-        self.bin_gap = model_meta.bin_gap
-        self.bin_sample_num = model_meta.bin_sample_num
+        self.bin_gap = model_meta.quantile_meta.bin_gap
+        self.bin_sample_num = model_meta.quantile_meta.bin_sample_num
         self.tree_dim = model_meta.tree_dim
 
     def get_model_param(self):
@@ -199,15 +199,15 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def load_model(self, model_table, model_namespace):
         LOGGER.info("load model")
         model_meta = BoostingTreeModelMeta()
-        manager.read_model(buffer_type="HeteroBoostingTreeGuest.meta",
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.meta",
                            proto_buffer=model_meta,
                            name=model_table,
                            namespace=model_namespace)
         self.set_model_meta(model_meta)
 
         model_param = BoostingTreeModelParam()
-        manager.read_model(buffer_type="HeteroBoostingTreeGuest.param",
-                           proto_buffer=model_meta,
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.param",
+                           proto_buffer=model_param,
                            name=model_table,
                            namespace=model_namespace)
         self.set_model_param(model_param)

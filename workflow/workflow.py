@@ -566,10 +566,25 @@ class WorkFlow(object):
 
         LOGGER.debug("mode is {}".format(mode))
 
-        print("In workflow, table: {}, namespace: {}".format(table, namespace))
+        if mode == "transform":
+            reader.load_model(self.workflow_param.model_table,
+                              self.workflow_param.model_namespace)
+
         data_instance = reader.read_data(table,
                                          namespace,
                                          mode=mode)
+
+        if mode == "fit":
+            save_result = reader.save_model(self.workflow_param.model_table, 
+                                            self.workflow_param.model_namespace)
+
+            for meta_buffer_type, param_buffer_type in save_result:
+                self.pipeline.node_meta.append(meta_buffer_type)
+                self.pipeline.node_param.append(param_buffer_type)
+        
+        print("In workflow, table: {}, namespace: {}".format(table, namespace))
+        data_instance = reader.read_data(table,
+                                         namespace,
         return data_instance
 
     def _init_pipeline(self):
