@@ -27,8 +27,8 @@ class StandardScaler(object):
     def fit(self, data):
         if not self.with_mean and not self.with_std:
             shape = fate_operator.get_features_shape(data)
-            mean = [ 0 for _ in range(shape) ]
-            std = [ 1 for _ in range(shape) ]
+            mean = [0 for _ in range(shape)]
+            std = [1 for _ in range(shape)]
             return data, mean, std
 
         else:

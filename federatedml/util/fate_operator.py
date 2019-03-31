@@ -89,6 +89,7 @@ def get_features_shape(data_instances):
     else:
         return None
 
+
 def get_data_shape(data):
     # LOGGER.debug("In get features shape method, data count: {}".format(
     #     data.count()

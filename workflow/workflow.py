@@ -147,7 +147,7 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                        self.mode == consts.HOMO:
+                self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
@@ -162,7 +162,7 @@ class WorkFlow(object):
                     intersect_flowid = "predict_0"
                     validation_data = self.intersect(validation_data, intersect_flowid)
                     LOGGER.debug("End intersection before predict")
-                    
+
                     validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
 
                 val_pred = self.model.predict(validation_data,
@@ -369,7 +369,7 @@ class WorkFlow(object):
 
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
-                
+
                 test_data, cols_scale_value = self.scale(test_data, cols_scale_value)
                 pred_res = self.model.predict(test_data, self.workflow_param.predict_param)
                 evaluation_results = self.evaluate(pred_res)
@@ -464,18 +464,18 @@ class WorkFlow(object):
             self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
         intersect_result.save_as(self.workflow_param.intersect_data_output_table,
                                  self.workflow_param.intersect_data_output_namespace)
-    
+
     def scale(self, data_instance, fit_config=None):
         scale_params = ScaleParam()
-        self.scale_params = ParamExtract.parse_param_from_config(scale_params, self.config_path) 
+        self.scale_params = ParamExtract.parse_param_from_config(scale_params, self.config_path)
         param_checker.ScaleParamChecker.check_param(self.scale_params)
-        
+
         scale_obj = Scaler(self.scale_params)
         if not fit_config:
             data_instance, fit_config = scale_obj.fit(data_instance)
         else:
             data_instance = scale_obj.transform(data_instance, fit_config)
-        
+
         return data_instance, fit_config
 
     def evaluate(self, eval_data):
