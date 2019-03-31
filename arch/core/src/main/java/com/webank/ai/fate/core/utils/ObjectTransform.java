@@ -31,55 +31,46 @@ import org.apache.logging.log4j.LogManager;
 
 public class ObjectTransform {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static Map<String, Object> bean2Map(Object object){
+
+    public static Map<String, Object> bean2Map(Object object) {
         Map<String, Object> map = null;
-        try{
+        try {
             map = new HashMap<>();
             for (Field field : object.getClass().getDeclaredFields()) {
                 int mod = field.getModifiers();
-                if(Modifier.isStatic(mod) || Modifier.isFinal(mod)){
+                if (Modifier.isStatic(mod) || Modifier.isFinal(mod)) {
                     continue;
                 }
                 String getter = "get" + field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
                 Method method = object.getClass().getMethod(getter);
                 map.put(field.getName(), method.invoke(object));
             }
-        }
-        catch (NoSuchMethodException ex){
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
             LOGGER.error(ex);
-        }
-        catch (IllegalAccessException ex){
-            LOGGER.error(ex);
-        }
-        catch (InvocationTargetException ex){
-            LOGGER.error(ex);
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error(ex);
         }
         return map;
     }
 
-    public static String bean2Json(Object object){
-        if (object == null){
+    public static String bean2Json(Object object) {
+        if (object == null) {
             return "";
         }
-        try{
+        try {
             return new ObjectMapper().writeValueAsString(object);
-        }
-        catch (JsonProcessingException ex){
+        } catch (JsonProcessingException ex) {
             return "";
         }
     }
 
-    public static Object json2Bean(String json, Class objectType){
-        if (StringUtils.isEmpty(json)){
+    public static Object json2Bean(String json, Class objectType) {
+        if (StringUtils.isEmpty(json)) {
             return null;
         }
-        try{
+        try {
             return new ObjectMapper().readValue(json, objectType);
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             return null;
         }
     }

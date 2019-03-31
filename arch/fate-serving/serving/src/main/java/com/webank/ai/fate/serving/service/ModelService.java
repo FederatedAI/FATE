@@ -37,7 +37,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
         PublishResponse.Builder builder = PublishResponse.newBuilder();
         int loadStatus;
         if (Configuration.getProperty("partyId").equals(req.getMyPartyId())){
-            ReturnResult returnResult = new ModelManager().publishLoadModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId(), req.getTag(), req.getBranch());
+            ReturnResult returnResult = ModelManager.publishLoadModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId(), req.getTag(), req.getBranch());
             loadStatus = returnResult.getStatusCode();
             builder.setStatusCode(returnResult.getStatusCode())
                     .setMessage(returnResult.getMessage())
@@ -55,7 +55,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     @Override
     public void publishOnline(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
         PublishResponse.Builder builder = PublishResponse.newBuilder();
-        ReturnResult returnResult = new ModelManager().publishOnlineModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId());
+        ReturnResult returnResult = ModelManager.publishOnlineModel(req.getSceneId(), req.getPartnerPartyId(), req.getMyRole(), req.getCommitId());
         builder.setStatusCode(returnResult.getStatusCode())
                 .setMessage(returnResult.getMessage())
                 .setError(returnResult.getError())

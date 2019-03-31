@@ -17,14 +17,14 @@
 #import ujson
 import json
 import time
-from arch.api.utils import snowflake
+import uuid
 
 
 def get_fate_uuid():
-    return snowflake.get_id()
+    return uuid.uuid1().hex
 
 
-def get_scene_key(scene_id, my_party_id, partner_party_id, my_role):
+def get_scene_key(scene_id, my_role, my_party_id, partner_party_id):
     local = locals()
     return '_'.join([str(local[arg]) for arg in get_scene_key.__code__.co_varnames if arg in local])
 
@@ -34,27 +34,24 @@ def get_commit_id():
     return get_fate_uuid()
 
 
-def string_bytes(string, check=False):
-    if check:
-        return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
-    else:
-        return string.encode(encoding="utf-8")
+def string_to_bytes(string, check=False):
+    return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
 
 
-def bytes_string(byte):
+def bytes_to_string(byte):
     return byte.decode(encoding="utf-8")
 
 
 def json_dumps(src, byte=False):
     if byte:
-        return string_bytes(json.dumps(src))
+        return string_to_bytes(json.dumps(src))
     else:
         return json.dumps(src)
 
 
 def json_loads(src):
     if isinstance(src, bytes):
-        return json.loads(bytes_string(src))
+        return json.loads(bytes_to_string(src))
     else:
         return json.loads(src)
 

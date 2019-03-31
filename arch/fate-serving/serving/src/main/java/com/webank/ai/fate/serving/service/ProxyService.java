@@ -43,7 +43,7 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
                 responseData = new PredictService().federatedPredict(requestData);
                 break;
             case "federatedLoadModel":
-                responseData = new ModelManager().federatedLoadModel(requestData);
+                responseData = ModelManager.federatedLoadModel(requestData);
                 break;
             default:
                 responseData = new ReturnResult();

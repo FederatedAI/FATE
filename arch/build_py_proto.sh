@@ -47,3 +47,10 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  lr-model
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  lr-model-param.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  pipeline.proto
 
+
+
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_param.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data_transform.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto inference_service.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto model_service.proto

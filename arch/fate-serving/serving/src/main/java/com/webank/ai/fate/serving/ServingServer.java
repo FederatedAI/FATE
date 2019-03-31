@@ -16,6 +16,7 @@
 
 package com.webank.ai.fate.serving;
 
+import com.webank.ai.fate.core.network.http.client.HttpClientPool;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.serving.service.ModelService;
@@ -49,6 +50,7 @@ public class ServingServer {
         this.init();
 
         int port = Integer.parseInt(Configuration.getProperty("port"));
+        //TODO: Server custom configuration
         server = ServerBuilder.forPort(port)
                 .addService(new PredictService())
                 .addService(new ModelService())
@@ -82,6 +84,7 @@ public class ServingServer {
         new Configuration(this.confPath).load();
         new ModelManager();
         this.initClientPool();
+        HttpClientPool.initPool();
     }
 
     private void initClientPool(){

@@ -25,7 +25,7 @@ from arch.api.utils import eggroll_serdes, file_utils
 from arch.api.utils.log_utils import getLogger
 from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
 from arch.api.utils import cloudpickle
-from arch.api.utils.core import string_bytes, bytes_string
+from arch.api.utils.core import string_to_bytes, bytes_to_string
 
 
 def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
@@ -54,6 +54,7 @@ class _DTable(object):
         self._name = storage_locator.name
         self._type = storage_basic_pb2.StorageType.Name(storage_locator.type)
         self._partitions = partitions
+        self.scheme = {}
 
     def __str__(self):
         return "type:{} namespace:{} name:{} partitions:{}".format(self._type, self._namespace, self._name,
@@ -192,7 +193,7 @@ class _EggRoll(object):
     @staticmethod
     def __generate_operand(kvs: Iterable, use_serialize=True):
         for k, v in kvs:
-            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k) if use_serialize else bytes_string(k), value=_EggRoll.value_serdes.serialize(v) if use_serialize else v)
+            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k) if use_serialize else bytes_to_string(k), value=_EggRoll.value_serdes.serialize(v) if use_serialize else v)
 
     @staticmethod
     def _deserialize_operand(operand: kv_pb2.Operand, include_key=False, use_serialize=True):
@@ -201,29 +202,33 @@ class _EggRoll(object):
                 return (_EggRoll.value_serdes.deserialize(operand.key), _EggRoll.value_serdes.deserialize(
                     operand.value)) if include_key else _EggRoll.value_serdes.deserialize(operand.value)
             else:
-                return (bytes_string(operand.key), operand.value) if include_key else operand.value
+                return (bytes_to_string(operand.key), operand.value) if include_key else operand.value
         return None
 
     '''
     Storage apis
     '''
 
+    def kv_to_bytes(self, **kwargs):
+        use_serialize = kwargs.get("use_serialize", True)
+        # can not use is None
+        if "k" in kwargs and "v" in kwargs:
+            k, v = kwargs["k"], kwargs["v"]
+            return (self.value_serdes.serialize.dumps(k), self.value_serdes.serialize.dumps(v)) if use_serialize \
+                else (string_to_bytes(k), string_to_bytes(v))
+        elif "k" in kwargs:
+            k = kwargs["k"]
+            return self.value_serdes.serialize.dumps(k) if use_serialize else string_to_bytes(k)
+        elif "v" in kwargs:
+            v = kwargs["v"]
+            return self.value_serdes.serialize.dumps(v) if use_serialize else string_to_bytes(v)
+
     def put(self, _table, k, v, use_serialize=True):
-        if use_serialize:
-            k = self.value_serdes.serialize(k)
-            v = self.value_serdes.serialize(v)
-        else:
-            k = string_bytes(k, check=True)
-            v = string_bytes(v, check=True)
+        k, v = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         self.kv_stub.put(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
 
     def put_if_absent(self, _table, k, v, use_serialize=True):
-        if use_serialize:
-            k = self.value_serdes.serialize(k)
-            v = self.value_serdes.serialize(v)
-        else:
-            k = string_bytes(k, check=True)
-            v = string_bytes(v, check=True)
+        k, v = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         operand = self.kv_stub.putIfAbsent(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
@@ -231,18 +236,12 @@ class _EggRoll(object):
         self.kv_stub.putAll(self.__generate_operand(kvs, use_serialize=use_serialize), metadata=_get_meta(_table))
 
     def delete(self, _table, k, use_serialize=True):
-        if use_serialize:
-            k = self.value_serdes.serialize(k)
-        else:
-            k = string_bytes(k, check=True)
+        k = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         operand = self.kv_stub.delete(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
     def get(self, _table, k, use_serialize=True):
-        if use_serialize:
-            k = self.value_serdes.serialize(k)
-        else:
-            k = string_bytes(k, check=True)
+        k = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         operand = self.kv_stub.get(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 

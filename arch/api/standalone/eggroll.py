@@ -18,7 +18,7 @@ import os
 import pickle as c_pickle
 from arch.api import StoreType
 from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
-from arch.api.utils.core import string_bytes, bytes_string
+from arch.api.utils.core import string_to_bytes, bytes_to_string
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid
@@ -76,10 +76,10 @@ def _evict(_, env):
     env.close()
 
 
-@cached(cache=cache_utils.EvictTTLCache(maxsize=64, ttl=3600, evict=_evict))
+@cached(cache=cache_utils.EvictLRUCache(maxsize=64, evict=_evict))
 def _open_env(path, write=False):
     os.makedirs(path, exist_ok=True)
-    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, lock=write, sync=False, map_size=10_737_418_240)
+    return lmdb.open(path, create=True, max_dbs=1, max_readers=1024, lock=write, sync=True, map_size=10_737_418_240)
 
 
 def _get_db_path(*args):
@@ -302,23 +302,33 @@ class _DTable(object):
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
+        self.scheme = {}
 
     def __str__(self):
         return "type: {}, namespace: {}, name: {}, partitions: {}".format(self._type, self._namespace, self._name,
                                                                           self._partitions)
 
-    def _get_env_for_partition(self, p: int):
-        return _get_env(self._type, self._namespace, self._name, str(p))
+    def _get_env_for_partition(self, p: int, write=False):
+        return _get_env(self._type, self._namespace, self._name, str(p), write=write)
+
+    def kv_to_bytes(self, **kwargs):
+        use_serialize = kwargs.get("use_serialize", True)
+        # can not use is None
+        if "k" in kwargs and "v" in kwargs:
+            k, v = kwargs["k"], kwargs["v"]
+            return (c_pickle.dumps(k), c_pickle.dumps(v)) if use_serialize \
+                else (string_to_bytes(k), string_to_bytes(v))
+        elif "k" in kwargs:
+            k = kwargs["k"]
+            return c_pickle.dumps(k) if use_serialize else string_to_bytes(k)
+        elif "v" in kwargs:
+            v = kwargs["v"]
+            return c_pickle.dumps(v) if use_serialize else string_to_bytes(v)
 
     def put(self, k, v, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-            v_bytes = c_pickle.dumps(v)
-        else:
-            k_bytes = string_bytes(k, check=True)
-            v_bytes = string_bytes(v, check=True)
+        k_bytes, v_bytes = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             return txn.put(k_bytes, v_bytes)
         return False
@@ -331,12 +341,9 @@ class _DTable(object):
         return cnt
 
     def delete(self, k, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if txn.delete(k_bytes):
@@ -344,19 +351,13 @@ class _DTable(object):
             return None
 
     def put_if_absent(self, k, v, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
+        env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             old_value_bytes = txn.get(k_bytes)
             if old_value_bytes is None:
-                if use_serialize:
-                    v_bytes = c_pickle.dumps(v)
-                else:
-                    v_bytes = string_bytes(v, check=True)
+                v_bytes = self.kv_to_bytes(v=v, use_serialize=use_serialize)
                 txn.put(k_bytes, v_bytes)
                 return None
             return c_pickle.loads(old_value_bytes) if use_serialize else old_value_bytes
@@ -365,30 +366,22 @@ class _DTable(object):
         txn_map = {}
         _succ = True
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
+            env = self._get_env_for_partition(p, write=True)
             txn = env.begin(write=True)
             txn_map[p] = env, txn
         for k, v in kv_list:
             try:
-                if use_serialize:
-                    k_bytes = c_pickle.dumps(k)
-                    v_bytes = c_pickle.dumps(v)
-                else:
-                    k_bytes = string_bytes(k, check=True)
-                    v_bytes = string_bytes(v, check=True)
+                k_bytes, v_bytes = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
                 p = _hash_key_to_partition(k_bytes, self._partitions)
                 _succ = _succ and txn_map[p][1].put(k_bytes, v_bytes)
-            except:
+            except Exception as e:
                 _succ = False
                 break
         for p, (env, txn) in txn_map.items():
             txn.commit() if _succ else txn.abort()
 
     def get(self, k, use_serialize=True):
-        if use_serialize:
-            k_bytes = c_pickle.dumps(k)
-        else:
-            k_bytes = string_bytes(k, check=True)
+        k_bytes = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
         with env.begin(write=True) as txn:
@@ -397,12 +390,15 @@ class _DTable(object):
 
     def destroy(self):
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
+            env = self._get_env_for_partition(p, write=True)
             db = env.open_db()
             with env.begin(write=True) as txn:
                 txn.drop(db)
         _table_key = ".".join([self._type, self._namespace, self._name])
         Standalone.get_instance().meta_table.delete(_table_key)
+        _path = _get_db_path(self._type, self._namespace, self._name)
+        import shutil
+        shutil.rmtree(_path)
 
     def collect(self, use_serialize=True):
         iterators = []
@@ -435,7 +431,7 @@ class _DTable(object):
             if use_serialize:
                 yield c_pickle.loads(key), c_pickle.loads(value)
             else:
-                yield bytes_string(key), value
+                yield bytes_to_string(key), value
             if it.next():
                 entry[0], entry[1] = it.item()
                 heapreplace(entries, entry)

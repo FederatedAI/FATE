@@ -27,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ClientPool {
+    //TODO: channel pool
     private static final Logger LOGGER = LogManager.getLogger();
     private static ConcurrentHashMap<String, ManagedChannel> pool = new ConcurrentHashMap();
 

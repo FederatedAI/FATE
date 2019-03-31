@@ -1,0 +1,8 @@
+{
+    "task": "request_offline_feature",
+    "adapter": "test_get_offline_feature",
+    "scene_id": 50000,
+    "my_party_id": 9999,
+    "partner_party_id": 10000,
+    "my_role": "host"
+}

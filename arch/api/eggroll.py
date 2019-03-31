@@ -55,5 +55,6 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=1, names
                                                namespace=namespace,
                                                persistent=persistent)
 
-def get_field(name):
-    return getattr(RuntimeInstance.EGGROLL, name)
+
+def get_job_id():
+    return RuntimeInstance.EGGROLL.job_id

@@ -22,21 +22,19 @@ import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceRequest;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceResponse;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.FederatedMeta;
 import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.serdes.impl.GeneralJsonBytesSerDes;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
+import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;
+import com.webank.ai.fate.serving.adapter.resultprocessing.ResultData;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.mlmodel.model.MLModel;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.serving.utils.FederatedUtils;
 import io.grpc.stub.StreamObserver;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -51,7 +49,7 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
         String myRole = FederatedUtils.getMyRole(requestMeta.getMyRole());
 
         // get model
-        MLModel model = new ModelManager().getModel(requestMeta.getSceneId(), requestMeta.getPartnerPartyId(), myRole);
+        MLModel model = ModelManager.getModel(requestMeta.getSceneId(), requestMeta.getPartnerPartyId(), myRole);
         if (model == null){
             response.setStatusCode(StatusCode.NOMODEL);
             FederatedMeta.Builder federatedMetaBuilder = FederatedUtils.genResponseMetaBuilder(requestMeta, "");
@@ -81,7 +79,8 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
             predictParams.put("sceneId", requestMeta.getSceneId());
             predictParams.put("sid", sid);
             predictParams.put("commitId", (String)model.getModelInfo().get("commitId"));
-            Map<String, Object> result = model.predict(predictInputData, predictParams);
+            Map<String, Object> modelResult = model.predict(predictInputData, predictParams);
+            Map<String, Object> result = this.getProcessedResult(modelResult);
             response.setData(ByteString.copyFrom(ObjectTransform.bean2Json(result).getBytes()));
         });
 
@@ -94,7 +93,8 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
         String myPartyId = Configuration.getProperty("partyId");
         String partnerPartyId = requestData.get("myPartyId").toString();
         String myRole = FederatedUtils.getMyRole(requestData.get("myRole").toString());
-        MLModel model = new ModelManager().getModel(requestData.get("sceneId").toString(), partnerPartyId, myRole, requestData.get("commitId").toString());
+        // federated predict should get model according to commit id
+        MLModel model = ModelManager.getModel(requestData.get("sceneId").toString(), partnerPartyId, myRole, requestData.get("commitId").toString());
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("Can not found model.");
@@ -123,20 +123,38 @@ public class PredictService extends InferenceServiceGrpc.InferenceServiceImplBas
         return returnResult;
     }
 
-    private Map<String, Object> getFeatureData(String sid){
-        Map<String, Object> featureData = new HashMap<>();
+    public Object getClassByName(String classPath){
         try{
-            List<String> lines = Files.readAllLines(Paths.get(System.getProperty("user.dir"), "host_data.csv"));
-            lines.forEach(line->{
-                for(String kv: StringUtils.split(line, ",")){
-                    String[] a = StringUtils.split(kv, ":");
-                    featureData.put(a[0], Float.parseFloat(a[1]));
-                }
-            });
+            Class thisClass = Class.forName(classPath);
+            return thisClass.getConstructor().newInstance();
+        }
+        catch (ClassNotFoundException ex){
+            LOGGER.error("Can not found this class: {}.", classPath);
+        }
+        catch (NoSuchMethodException ex){
+            LOGGER.error("Can not get this class({}) constructor.", classPath);
         }
         catch (Exception ex){
-            LOGGER.error(ex);
+            LOGGER.error("Can not create class({}) instance.", classPath);
         }
-        return featureData;
+        return null;
+    }
+
+    private Map<String, Object> getProcessedResult(Map<String, Object> modelResult){
+        String classPath = ResultData.class.getPackage().getName() + "." + Configuration.getProperty("InferenceResultProcessingAdapter");
+        ResultData resultData = (ResultData) this.getClassByName(classPath);
+        if (resultData == null){
+            return null;
+        }
+        return resultData.getResult(modelResult);
+    }
+
+    private Map<String, Object> getFeatureData(String sid){
+        String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
+        FeatureData featureData = (FeatureData) getClassByName(classPath);
+        if (featureData == null){
+            return null;
+        }
+        return featureData.getData(sid);
     }
 }

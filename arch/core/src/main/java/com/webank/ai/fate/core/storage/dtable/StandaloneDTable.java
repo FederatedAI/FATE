@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.core.storage.dtable;
 
-import com.webank.ai.fate.core.constant.StatusCode;
+import com.webank.ai.fate.core.utils.Configuration;
 import org.fusesource.lmdbjni.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +24,8 @@ import java.nio.file.Paths;
 
 public class StandaloneDTable implements DTable{
     private static final Logger LOGGER = LogManager.getLogger();
-    private String dataDir = Paths.get(System.getProperty("user.dir"), "data").toString();
+    //private String dataDir = Paths.get(System.getProperty("user.dir"), "data").toString();
+    private String dataDir = Configuration.getProperty("standaloneStoragePath");
     private Database db;
 
     @Override
