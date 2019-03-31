@@ -16,7 +16,7 @@
 import os
 import importlib
 from arch.api.utils import format_transform
-from arch.api.io import feature
+from arch.api import storage
 import datetime
 
 
@@ -37,7 +37,7 @@ class GetFeature(object):
     def import_data(request_data, job_config):
         adapter_name = job_config.get("adapter")
         input_data = GetFeature.get_adapter(adapter_name=adapter_name).import_data(request_data)
-        commit_id = feature.save_feature_data(input_data,
+        commit_id = storage.save_feature_data(input_data,
                                               scene_id=job_config.get("scene_id"),
                                               my_party_id=job_config.get("my_party_id"),
                                               partner_party_id=job_config.get("partner_party_id"),

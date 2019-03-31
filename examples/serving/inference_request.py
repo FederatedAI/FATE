@@ -20,6 +20,7 @@ def run():
         et = int(time.time())
         print(et - st)
 
+
 def send(channel):
     stub = inference_service_pb2_grpc.InferenceServiceStub(channel)
     request = inference_service_pb2.InferenceRequest()
@@ -37,11 +38,6 @@ def send(channel):
     request.data = json.dumps(data).encode(encoding="utf-8")
     response = stub.predict(request)
     print(response)
-    #print("%d Client received: %s" % (threading.currentThread().ident, request.msg))
-    """
-    for request in stub.GetListMsg(msg_pb2.MsgRequest(name='world', id=5)):
-        print("%d Client received: %s" % (threading.currentThread().ident, request.msg))
-    """
 
 
 if __name__ == '__main__':

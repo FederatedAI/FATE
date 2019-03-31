@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from arch.api import eggroll
+from arch.api import storage
 
 
 def do_export_file(job_id, _data):
@@ -11,18 +12,11 @@ def do_export_file(job_id, _data):
         namespace = _data.get("namespace")
         delimitor = _data.get("delimitor", ",")
         output_path = _data.get("output_path")
-        scene_id = _data.get("scene_id")
-        role = _data.get("role")
-        my_party_id = _data.get("my_party_id") 
-        partner_party_id = _data.get("partner_party_id")
-        
+
         eggroll.init(job_id, work_mode)
 
         with open(os.path.abspath(output_path), "w") as fout:
-            if scene_id and role and my_party_id and partner_parity_id:
-                data_table = feture.get_feature_data_table(name)
-            else:
-                data_table = eggroll.table(name, namespace)
+            data_table = storage.get_data_table(name=name, namespace=namespace)
                
             print('===== begin to export data =====')
             lines = 0

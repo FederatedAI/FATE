@@ -82,7 +82,7 @@ def download_data(data_func):
     _job_dir = get_job_directory(_job_id)
     os.makedirs(_job_dir, exist_ok=True)
     _download_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/download.py")
-    _upload_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/load_file.py")
+    _upload_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/upload.py")
 
     if data_func == "download":
         _module = _download_module

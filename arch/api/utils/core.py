@@ -24,7 +24,7 @@ def get_fate_uuid():
     return uuid.uuid1().hex
 
 
-def get_scene_key(scene_id, my_party_id, partner_party_id, my_role):
+def get_scene_key(scene_id, my_role, my_party_id, partner_party_id):
     local = locals()
     return '_'.join([str(local[arg]) for arg in get_scene_key.__code__.co_varnames if arg in local])
 
