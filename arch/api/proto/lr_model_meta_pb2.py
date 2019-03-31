@@ -17,9 +17,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='lr-model-meta.proto',
-  package='com.webank.ai.fate.common.mlmodel.buffer',
+  package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x13lr-model-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xd3\x01\n\x0bLRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03\x65ps\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x14\n\x0cparty_weight\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x03\x12\x15\n\rlearning_rate\x18\x07 \x01(\x01\x12\x10\n\x08max_iter\x18\x08 \x01(\x03\x12\x15\n\rconverge_func\x18\t \x01(\t\x12\x1a\n\x12re_encrypt_batches\x18\n \x01(\x03\x42\rB\x0bLRModelMetab\x06proto3')
+  serialized_pb=_b('\n\x13lr-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xd3\x01\n\x0bLRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03\x65ps\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x14\n\x0cparty_weight\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x03\x12\x15\n\rlearning_rate\x18\x07 \x01(\x01\x12\x10\n\x08max_iter\x18\x08 \x01(\x03\x12\x15\n\rconverge_func\x18\t \x01(\t\x12\x1a\n\x12re_encrypt_batches\x18\n \x01(\x03\x42\x12\x42\x10LRModelMetaProtob\x06proto3')
 )
 
 
@@ -27,76 +27,76 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _LRMODELMETA = _descriptor.Descriptor(
   name='LRModelMeta',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='penalty', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.penalty', index=0,
+      name='penalty', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.penalty', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='eps', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.eps', index=1,
+      name='eps', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.eps', index=1,
       number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='alpha', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.alpha', index=2,
+      name='alpha', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.alpha', index=2,
       number=3, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='optimizer', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.optimizer', index=3,
+      name='optimizer', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.optimizer', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='party_weight', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.party_weight', index=4,
+      name='party_weight', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.party_weight', index=4,
       number=5, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='batch_size', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.batch_size', index=5,
+      name='batch_size', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.batch_size', index=5,
       number=6, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='learning_rate', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.learning_rate', index=6,
+      name='learning_rate', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.learning_rate', index=6,
       number=7, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='max_iter', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.max_iter', index=7,
+      name='max_iter', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.max_iter', index=7,
       number=8, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='converge_func', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.converge_func', index=8,
+      name='converge_func', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.converge_func', index=8,
       number=9, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='re_encrypt_batches', full_name='com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta.re_encrypt_batches', index=9,
+      name='re_encrypt_batches', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta.re_encrypt_batches', index=9,
       number=10, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -114,8 +114,8 @@ _LRMODELMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=66,
-  serialized_end=277,
+  serialized_start=64,
+  serialized_end=275,
 )
 
 DESCRIPTOR.message_types_by_name['LRModelMeta'] = _LRMODELMETA
@@ -124,11 +124,11 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 LRModelMeta = _reflection.GeneratedProtocolMessageType('LRModelMeta', (_message.Message,), dict(
   DESCRIPTOR = _LRMODELMETA,
   __module__ = 'lr_model_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.LRModelMeta)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.LRModelMeta)
   ))
 _sym_db.RegisterMessage(LRModelMeta)
 
 
 DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\013LRModelMeta'))
+DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\020LRModelMetaProto'))
 # @@protoc_insertion_point(module_scope)

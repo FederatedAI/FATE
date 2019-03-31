@@ -17,9 +17,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='pipeline.proto',
-  package='com.webank.ai.fate.common.mlmodel.buffer',
+  package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x0epipeline.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"1\n\x08Pipeline\x12\x11\n\tnode_meta\x18\x01 \x03(\t\x12\x12\n\nnode_param\x18\x02 \x03(\tB\nB\x08Pipelineb\x06proto3')
+  serialized_pb=_b('\n\x0epipeline.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"1\n\x08Pipeline\x12\x11\n\tnode_meta\x18\x01 \x03(\t\x12\x12\n\nnode_param\x18\x02 \x03(\tB\x0f\x42\rPipelineProtob\x06proto3')
 )
 
 
@@ -27,20 +27,20 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _PIPELINE = _descriptor.Descriptor(
   name='Pipeline',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.Pipeline',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.Pipeline',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='node_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.Pipeline.node_meta', index=0,
+      name='node_meta', full_name='com.webank.ai.fate.core.mlmodel.buffer.Pipeline.node_meta', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='node_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.Pipeline.node_param', index=1,
+      name='node_param', full_name='com.webank.ai.fate.core.mlmodel.buffer.Pipeline.node_param', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -58,8 +58,8 @@ _PIPELINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=60,
-  serialized_end=109,
+  serialized_start=58,
+  serialized_end=107,
 )
 
 DESCRIPTOR.message_types_by_name['Pipeline'] = _PIPELINE
@@ -68,11 +68,11 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 Pipeline = _reflection.GeneratedProtocolMessageType('Pipeline', (_message.Message,), dict(
   DESCRIPTOR = _PIPELINE,
   __module__ = 'pipeline_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.Pipeline)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.Pipeline)
   ))
 _sym_db.RegisterMessage(Pipeline)
 
 
 DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\010Pipeline'))
+DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\rPipelineProto'))
 # @@protoc_insertion_point(module_scope)
