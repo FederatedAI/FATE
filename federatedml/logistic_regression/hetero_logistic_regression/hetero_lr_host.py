@@ -57,7 +57,7 @@ class HeteroLRHost(BaseLogisticRegression):
 
         Parameters:
         ___________
-        :param data_inst: a table holding instances of raw input of guest side
+        :param data_inst: a table holding instances of raw input of host side
         :return: a table holding instances with transformed features
         """
         return data_inst
