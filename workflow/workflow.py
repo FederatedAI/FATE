@@ -31,10 +31,10 @@ from arch.api import federation
 from arch.api.model_manager import core as model_manager
 from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
-from federatedml.feature.data_transform import DataTransform
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.feature.sampler import Sampler
+from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
@@ -138,7 +138,9 @@ class WorkFlow(object):
 
         sample_flowid = "train_sample_0"
         train_data = self.sample(train_data, sample_flowid)
-        # TODO: Add model to pipeline
+        # TODO: Add model to pipeline ?
+
+        train_data = self.feature_selection_fit(train_data)
 
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
@@ -187,6 +189,8 @@ class WorkFlow(object):
             intersect_flowid = "predict_module_0"
             data_instance = self.intersect(data_instance, intersect_flowid)
             LOGGER.debug("End intersection before predict")
+
+        data_instance = self.feature_selection_transform(data_instance)
 
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
@@ -243,18 +247,17 @@ class WorkFlow(object):
             LOGGER.info("need_intersect: false!")
             return data_instance
 
-    def feature_selection(self, data_instance):
+    def feature_selection_fit(self, data_instance, flow_id='sample_flowid'):
         if self.mode == consts.HOMO:
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
             return data_instance
 
-        if self.workflow_param.need_intersect:
+        if self.workflow_param.need_feature_selection:
             LOGGER.info("Start feature selection")
             feature_select_param = param.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
 
-            LOGGER.info("Start intersection!")
             if self.role == consts.HOST:
                 feature_selector = HeteroFeatureSelectionHost(feature_select_param)
             elif self.role == consts.GUEST:
@@ -264,28 +267,57 @@ class WorkFlow(object):
             else:
                 raise ValueError("Unknown role of workflow")
 
+            feature_selector.set_flowid(flow_id)
+
             local_only = feature_select_param.local_only  # Decide whether do fit_local or fit
-            need_fit = (feature_select_param.method == 'fit')
-            if local_only and need_fit:
+            if local_only:
                 data_instance = feature_selector.fit_local_transform(data_instance)
                 save_result = feature_selector.save_model(self.workflow_param.model_table,
                                                           self.workflow_param.model_namespace)
                 # Save model result in pipeline
                 for meta_buffer_type, param_buffer_type in save_result:
                     self.pipeline.node_meta.append(meta_buffer_type)
-                    self.pipeline.node_param.apped(param_buffer_type)
+                    self.pipeline.node_param.append(param_buffer_type)
 
-            elif not local_only and need_fit:
+            else:
                 data_instance = feature_selector.fit_transform(data_instance)
                 save_result = feature_selector.save_model(self.workflow_param.model_table,
                                                           self.workflow_param.model_namespace)
                 # Save model result in pipeline
                 for meta_buffer_type, param_buffer_type in save_result:
                     self.pipeline.node_meta.append(meta_buffer_type)
-                    self.pipeline.node_param.apped(param_buffer_type)
+                    self.pipeline.node_param.append(param_buffer_type)
+
+            LOGGER.info("Finish feature selection")
+            return data_instance
+        else:
+            LOGGER.info("No need to do feature selection")
+            return data_instance
+
+    def feature_selection_transform(self, data_instance, flow_id='sample_flowid'):
+        if self.mode == consts.HOMO:
+            LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
+            return data_instance
+
+        if self.workflow_param.need_feature_selection:
+            LOGGER.info("Start feature selection")
+            feature_select_param = param.FeatureSelectionParam()
+            feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
+            param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
+
+            if self.role == consts.HOST:
+                feature_selector = HeteroFeatureSelectionHost(feature_select_param)
+            elif self.role == consts.GUEST:
+                feature_selector = HeteroFeatureSelectionGuest(feature_select_param)
+            elif self.role == consts.ARBITER:
+                return data_instance
             else:
-                feature_selector.load_model(feature_select_param.result_table, feature_select_param.result_namespace)
-                data_instance = feature_selector.transform(data_instance)
+                raise ValueError("Unknown role of workflow")
+
+            feature_selector.set_flowid(flow_id)
+
+            feature_selector.load_model(feature_select_param.result_table, feature_select_param.result_namespace)
+            data_instance = feature_selector.transform(data_instance)
 
             LOGGER.info("Finish feature selection")
             return data_instance
@@ -356,6 +388,7 @@ class WorkFlow(object):
             flowid = 0
             cv_results = []
             for train_data, test_data in kfold_data_generator:
+                self._init_pipeline()
                 LOGGER.info("flowid:{}".format(flowid))
                 self._synchronous_data(train_data, flowid, consts.TRAIN_DATA)
                 LOGGER.info("synchronous train data")
@@ -367,10 +400,18 @@ class WorkFlow(object):
                 train_data = self.sample(train_data, sample_flowid)
                 LOGGER.info("End sample before_train")
 
+                feature_selection_flowid = "feature_selection_fit_" + str(flowid)
+                train_data = self.feature_selection_fit(train_data, feature_selection_flowid)
+                LOGGER.info("End feature selection fit_transform")
+
                 train_data, cols_scale_value = self.scale(train_data)
 
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
+
+                feature_selection_flowid = "feature_selection_transform_" + str(flowid)
+                test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
+                LOGGER.info("End feature selection transform")
 
                 test_data, cols_scale_value = self.scale(test_data, cols_scale_value)
                 pred_res = self.model.predict(test_data, self.workflow_param.predict_param)
@@ -386,6 +427,7 @@ class WorkFlow(object):
         elif self.role == consts.HOST:
             LOGGER.info("In hetero cross_validation Host")
             for flowid in range(n_splits):
+                self._init_pipeline()
                 LOGGER.info("flowid:{}".format(flowid))
                 train_data = self._synchronous_data(data_instance, flowid, consts.TRAIN_DATA)
                 LOGGER.info("synchronous train data")
@@ -397,8 +439,17 @@ class WorkFlow(object):
                 train_data = self.sample(train_data, sample_flowid)
                 LOGGER.info("End sample before_train")
 
+                feature_selection_flowid = "feature_selection_fit_" + str(flowid)
+                train_data = self.feature_selection_fit(train_data, feature_selection_flowid)
+                LOGGER.info("End feature selection fit_transform")
+
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
+
+                feature_selection_flowid = "feature_selection_transform_" + str(flowid)
+                test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
+                LOGGER.info("End feature selection transform")
+
                 self.model.predict(test_data)
                 flowid += 1
                 self._initialize_model(self.config_path)
@@ -591,17 +642,14 @@ class WorkFlow(object):
                     predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                                    self.workflow_param.predict_input_namespace)
 
-                train_data_instance = self.feature_selection(train_data_instance)
-
             self.train(train_data_instance, validation_data=predict_data_instance)
             self._save_pipeline()
 
         elif self.workflow_param.method == "predict":
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                    self.workflow_param.predict_input_namespace,
-                                                   mode='transfo')
+                                                   mode='transform')
             self.load_model()
-            data_instance = self.feature_selection(data_instance)
             self.predict(data_instance)
 
         elif self.workflow_param.method == "intersect":
@@ -619,7 +667,6 @@ class WorkFlow(object):
             if self.role != consts.ARBITER:
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                        self.workflow_param.data_input_namespace)
-                data_instance = self.feature_selection(data_instance)
             self.cross_validation(data_instance)
         # elif self.workflow_param.method == 'test_methods':
         #     print("This is a test method, Start workflow success!")

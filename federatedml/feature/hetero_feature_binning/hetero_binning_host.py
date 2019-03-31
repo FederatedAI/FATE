@@ -253,3 +253,6 @@ class HeteroFeatureBinningHost(object):
             if features_shape is None:
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.cols = [i for i in range(features_shape)]
+
+    def set_flowid(self, flowid="samole"):
+        self.flowid = flowid

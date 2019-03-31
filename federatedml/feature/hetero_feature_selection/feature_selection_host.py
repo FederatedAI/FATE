@@ -254,3 +254,6 @@ class HeteroFeatureSelectionHost(object):
         new_feature = np.array(new_feature)
         instance.features = new_feature
         return instance
+
+    def set_flowid(self, flowid="samole"):
+        self.flowid = flowid

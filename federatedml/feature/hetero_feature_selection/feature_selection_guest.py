@@ -309,3 +309,6 @@ class HeteroFeatureSelectionGuest(object):
             idx = pre_left_cols.index(left_col)
             new_iv_list.append(iv_attrs[idx])
         return new_iv_list
+
+    def set_flowid(self, flowid="samole"):
+        self.flowid = flowid

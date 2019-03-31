@@ -278,3 +278,6 @@ class HeteroFeatureBinningGuest(object):
             # ))
             self.binning_obj = QuantileBinning(self.bin_param)
         self.cols = params.cols
+
+    def set_flowid(self, flowid="samole"):
+        self.flowid = flowid
