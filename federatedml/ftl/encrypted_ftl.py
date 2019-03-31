@@ -188,14 +188,13 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
 
             self._compute_components()
 
-            # uB_overlap has shape (len(overlap_indexes), feature_dim)
-            # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
-            # mapping_comp_B has shape (len(overlap_indexes), feature_dim)
+            # enc_uB_overlap has shape (len(overlap_indexes), feature_dim)
+            # enc_uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
             enc_uB_overlap = encrypt_matrix(self.public_key, self.uB_overlap)
             enc_uB_overlap_2 = encrypt_matmul_3(np.expand_dims(self.uB_overlap, axis=2),
                                                 np.expand_dims(enc_uB_overlap, axis=1))
-            # self.mapping_comp_B = - self.uB_overlap / self.feature_dim
 
+            # enc_mapping_comp_B has shape (len(overlap_indexes), feature_dim)
             scale_factor = np.tile((-1 / self.feature_dim), (enc_uB_overlap.shape[0], enc_uB_overlap.shape[1]))
             enc_mapping_comp_B = compute_XY(enc_uB_overlap, scale_factor)
             # enc_mapping_comp_B = enc_uB_overlap * (-1 / self.feature_dim)
