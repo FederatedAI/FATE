@@ -440,7 +440,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                            name=model_table,
                            namespace=model_namespace)
 
-        return meta_name, param_name
+        return [(meta_name, param_name)]
 
     def load_model(self, model_table, model_namespace):
         LOGGER.info("load model")
