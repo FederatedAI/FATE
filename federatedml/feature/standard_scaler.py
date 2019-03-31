@@ -2,9 +2,10 @@ import functools
 from collections import Iterable
 
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.util import fate_operator
 
 
-class StandardScale(object):
+class StandardScaler(object):
     def __init__(self, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -25,7 +26,10 @@ class StandardScale(object):
 
     def fit(self, data):
         if not self.with_mean and not self.with_std:
-            return data, 0, 1
+            shape = fate_operator.get_features_shape(data)
+            mean = [ 0 for _ in range(shape) ]
+            std = [ 1 for _ in range(shape) ]
+            return data, mean, std
 
         else:
             summary_obj = MultivariateStatisticalSummary(data, -1)

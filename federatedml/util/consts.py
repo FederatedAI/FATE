@@ -99,5 +99,8 @@ ORIGIN = 'origin'
 # min_max_scaler
 NORMAL = 'normal'
 CAP = 'cap'
-MINMAXSCALE = 'MinMaxScale'
-STANDARDSCALE = 'StandardScale'
+MINMAXSCALE = 'min_max_scale'
+STANDARDSCALE = 'standard_scale'
+ALL = 'all'
+COL = 'col'
+

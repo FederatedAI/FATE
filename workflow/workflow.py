@@ -40,6 +40,7 @@ from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
 from federatedml.param import param
 from federatedml.param.param import SampleParam
+from federatedml.param.param import ScaleParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
 from federatedml.util import ParamExtract, DenseFeatureReader, SparseFeatureReader
 from federatedml.util import WorkFlowParamChecker
@@ -140,8 +141,7 @@ class WorkFlow(object):
         # TODO: Add model to pipeline
 
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
-            data_transform_obj = DataTransform(self.config_path)
-            train_data, cols_transform_value = data_transform_obj.fit_transform(train_data)
+            train_data, cols_scale_value = self.scale(train_data)
 
         self.model.fit(train_data)
         self.save_model()
@@ -162,9 +162,8 @@ class WorkFlow(object):
                     intersect_flowid = "predict_0"
                     validation_data = self.intersect(validation_data, intersect_flowid)
                     LOGGER.debug("End intersection before predict")
-
-                    validation_data, cols_transform_value = data_transform_obj.fit_transform(validation_data,
-                                                                                             cols_transform_value)
+                    
+                    validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
 
                 val_pred = self.model.predict(validation_data,
                                               self.workflow_param.predict_param)
@@ -366,8 +365,12 @@ class WorkFlow(object):
                 train_data = self.sample(train_data, sample_flowid)
                 LOGGER.info("End sample before_train")
 
+                train_data, cols_scale_value = self.scale(train_data)
+
                 self.model.set_flowid(flowid)
                 self.model.fit(train_data)
+                
+                test_data, cols_scale_value = self.scale(test_data, cols_scale_value)
                 pred_res = self.model.predict(test_data, self.workflow_param.predict_param)
                 evaluation_results = self.evaluate(pred_res)
                 cv_results.append(evaluation_results)
@@ -461,6 +464,19 @@ class WorkFlow(object):
             self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
         intersect_result.save_as(self.workflow_param.intersect_data_output_table,
                                  self.workflow_param.intersect_data_output_namespace)
+    
+    def scale(self, data_instance, fit_config=None):
+        scale_params = ScaleParam()
+        self.scale_params = ParamExtract.parse_param_from_config(scale_params, self.config_path) 
+        param_checker.ScaleParamChecker.check_param(self.scale_params)
+        
+        scale_obj = Scaler(self.scale_params)
+        if not fit_config:
+            data_instance, fit_config = scale_obj.fit(data_instance)
+        else:
+            data_instance = scale_obj.transform(data_instance, fit_config)
+        
+        return data_instance, fit_config
 
     def evaluate(self, eval_data):
         if eval_data is None:
