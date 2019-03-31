@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "LRModelParam";
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "LRModelParamProto";
 
 message LRModelParam {
     int64 iters = 1;

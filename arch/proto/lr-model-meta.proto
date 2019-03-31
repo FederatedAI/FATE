@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "LRModelMeta";
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "LRModelMetaProto";
 
 message LRModelMeta {
     string penalty = 1;

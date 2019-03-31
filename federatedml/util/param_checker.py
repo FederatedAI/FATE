@@ -743,10 +743,11 @@ class FTLValidDataParamChecker(object):
 class ScaleParamChecker(object):
     @staticmethod
     def check_param(scale_param):
-        descr = "scale param's method"
-        scale_param.method = check_and_change_lower(scale_param.method,
-                                                    [consts.MINMAXSCALE, consts.STANDARDSCALE],
-                                                    descr)
+        if scale_param.method is not None:
+            descr = "scale param's method"
+            scale_param.method = check_and_change_lower(scale_param.method,
+                                                        [consts.MINMAXSCALE, consts.STANDARDSCALE],
+                                                        descr)
 
         descr = "scale param's mode"
         scale_param.mode = check_and_change_lower(scale_param.mode,

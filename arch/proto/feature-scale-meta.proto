@@ -17,10 +17,23 @@
 syntax = "proto3";
 
 package com.webank.ai.fate.core.mlmodel.buffer;
-option java_outer_classname = "PipelineProto";
+option java_outer_classname = "ScaleMetaProto";
 
+message ScaleMeta{
+    bool is_scale = 1;
+    string strategy = 2;
+    map<string, MinMaxScaleMeta> minmax_scale_meta = 3;
+    StandardScaleMeta standard_scale_meta = 4;
+}
 
-message Pipeline {
-    repeated string node_meta = 1;
-    repeated string node_param = 2;
+message MinMaxScaleMeta{
+    double feat_upper = 5;
+    double feat_lower = 6;
+    double out_upper = 7;
+    double out_lower = 8;
+}
+
+message StandardScaleMeta{
+    double with_mean = 9;
+    double with_std = 10;
 }
