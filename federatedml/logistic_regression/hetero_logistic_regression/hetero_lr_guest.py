@@ -75,7 +75,7 @@ class HeteroLRGuest(BaseLogisticRegression):
         """
         update local model that transforms features of raw input
 
-        This 'update_local_model' function servers as a handler on updating local model that transforms features of raw
+        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
         input into more representative features. We typically adopt neural networks as the local model, which is
         typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
         refer to 'hetero_dnn_logistic_regression' folder.
