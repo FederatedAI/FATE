@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 
+import copy
 import functools
 
 import numpy as np
@@ -54,6 +55,7 @@ class HeteroFeatureSelectionGuest(object):
         self.binning_model = None
         self.results = []
         self.header = []
+        self.flowid = ''
 
     def fit(self, data_instances):
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -105,7 +107,7 @@ class HeteroFeatureSelectionGuest(object):
     def filter_one_method(self, data_instances, method):
 
         if method == consts.IV_VALUE_THRES:
-            self._calculates_iv_attrs(data_instances)
+            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_value')
             iv_param = self.params.iv_param
             iv_filter = feature_selection.IVValueSelectFilter(iv_param, self.left_cols, self.guest_iv_attrs)
             new_left_cols = iv_filter.filter()
@@ -122,7 +124,7 @@ class HeteroFeatureSelectionGuest(object):
             LOGGER.info("Finish iv value threshold filter. Current left cols are: {}".format(self.left_cols))
 
         if method == consts.IV_PERCENTILE:
-            self._calculates_iv_attrs(data_instances)
+            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_percentile')
             iv_param = self.params.iv_param
             iv_filter = feature_selection.IVPercentileFilter(iv_param)
             iv_filter.add_attrs(self.guest_iv_attrs, self.left_cols)
@@ -211,15 +213,17 @@ class HeteroFeatureSelectionGuest(object):
         instance.features = new_feature
         return instance
 
-    def _calculates_iv_attrs(self, data_instances):
+    def _calculates_iv_attrs(self, data_instances, flowid_postfix=''):
         if self.local_only and self.guest_iv_attrs is not None:
             return
 
+        bin_flow_id = self.flowid + flowid_postfix
         self.bin_param.cols = self.left_cols
         if self.binning_model is None:
             self.binning_model = HeteroFeatureBinningGuest(self.bin_param)
+            self.binning_model.set_flowid(bin_flow_id)
         else:
-            self.binning_model.reset(self.bin_param)
+            self.binning_model.reset(self.bin_param, flowid=bin_flow_id)
 
         if self.local_only:
             if self.guest_iv_attrs is None:
@@ -229,6 +233,7 @@ class HeteroFeatureSelectionGuest(object):
             self.guest_iv_attrs = iv_attrs.get('local')
             self.host_iv_attrs = iv_attrs.get('remote')
             self.host_left_cols = [i for i in range(len(self.host_iv_attrs))]
+            LOGGER.debug("Host left cols: {}".format(self.host_left_cols))
         LOGGER.info("Finish federated binning with host.")
 
     def _send_host_result_cols(self):
@@ -243,23 +248,28 @@ class HeteroFeatureSelectionGuest(object):
         LOGGER.info("Sent result cols from guest to host, result cols are: {}".format(self.host_left_cols))
 
     def _save_meta(self, name, namespace):
-        unique_param = feature_selection_meta_pb2.UniqueValueParam(**self.params.unique_param.__dict__)
+        unique_param_dict = copy.deepcopy(self.params.unique_param.__dict__)
 
-        iv_dict = self.params.iv_param.__dict__
-        bin_dict = self.params.iv_param.bin_param.__dict__
+        unique_param = feature_selection_meta_pb2.UniqueValueParam(**unique_param_dict)
+
+        iv_dict = copy.deepcopy(self.params.iv_param.__dict__)
+        bin_dict = copy.deepcopy(self.params.iv_param.bin_param.__dict__)
         del bin_dict['process_method']
         del bin_dict['result_table']
         del bin_dict['result_namespace']
         del bin_dict['display_result']
         if bin_dict['cols'] == -1:
             bin_dict['cols'] = self.cols
-        bin_param = FeatureBinningMeta(**bin_dict)
+        # print(bin_dict)
+        bin_param = FeatureBinningMeta()
         iv_dict["bin_param"] = bin_param
 
         iv_param = feature_selection_meta_pb2.IVSelectionParam(**iv_dict)
+        coe_param_dict = copy.deepcopy(self.params.coe_param.__dict__)
+        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**coe_param_dict)
+        outlier_param_dict = copy.deepcopy(self.params.outlier_param.__dict__)
 
-        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**self.params.coe_param.__dict__)
-        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**self.params.outlier_param.__dict__)
+        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**outlier_param_dict)
 
         meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
                                                                             local_only=self.params.local_only,
@@ -332,6 +342,6 @@ class HeteroFeatureSelectionGuest(object):
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.cols = [i for i in range(features_shape)]
 
-
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
+        self.transfer_variable.set_flowid(self.flowid)

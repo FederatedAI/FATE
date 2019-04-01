@@ -39,7 +39,7 @@
         "n_split": 5,
         "need_intersect": true,
         "need_feature_selection": false,
-        "need_scale": false,
+        "need_scale": false
         },
 
     "EncryptParam": {

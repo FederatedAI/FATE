@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 
 import numpy as np
@@ -24,7 +25,6 @@ from arch.api import federation
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from arch.api.proto.feature_binning_meta_pb2 import FeatureBinningMeta
-
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.feature_selection import FeatureSelection
@@ -54,6 +54,7 @@ class HeteroFeatureSelectionHost(object):
         self.binning_obj = None
         self.results = []
         self.header = []
+        self.flowid = ''
 
     def fit(self, data_instances):
         self._parse_cols(data_instances)
@@ -105,13 +106,13 @@ class HeteroFeatureSelectionHost(object):
     def filter_one_method(self, data_instances, method):
 
         if method == consts.IV_VALUE_THRES:
-            self._calculates_iv_attrs(data_instances)
+            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_value')
             self._send_iv_threshold()
             self._received_result_cols(method=consts.IV_VALUE_THRES)
             LOGGER.info("Finish iv value threshold filter. Current left cols are: {}".format(self.left_cols))
 
         if method == consts.IV_PERCENTILE:
-            self._calculates_iv_attrs(data_instances)
+            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_percentile')
             self._received_result_cols(method=consts.IV_PERCENTILE)
             LOGGER.info("Finish iv percentile filter. Current left cols are: {}".format(self.left_cols))
 
@@ -141,12 +142,15 @@ class HeteroFeatureSelectionHost(object):
             LOGGER.info("Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
 
-    def _calculates_iv_attrs(self, data_instances):
+    def _calculates_iv_attrs(self, data_instances, flowid_postfix=''):
         self.bin_param.cols = self.left_cols
+        bin_flow_id = self.flowid + flowid_postfix
+
         if self.binning_obj is None:
             self.binning_obj = HeteroFeatureBinningHost(self.bin_param)
+            self.binning_obj.set_flowid(bin_flow_id)
         else:
-            self.binning_obj.reset(self.bin_param)
+            self.binning_obj.reset(self.bin_param, bin_flow_id)
         self.binning_obj.fit(data_instances)
         LOGGER.info("Finish federated binning with guest.")
 
@@ -181,24 +185,29 @@ class HeteroFeatureSelectionHost(object):
         LOGGER.info("Sent iv threshold to guest")
 
     def _save_meta(self, name, namespace):
-        unique_param = feature_selection_meta_pb2.UniqueValueParam(**self.params.unique_param.__dict__)
+        unique_param_dict = copy.deepcopy(self.params.unique_param.__dict__)
 
-        iv_dict = self.params.iv_param.__dict__
-        bin_dict = self.params.iv_param.bin_param.__dict__
+        unique_param = feature_selection_meta_pb2.UniqueValueParam(**unique_param_dict)
+
+        iv_dict = copy.deepcopy(self.params.iv_param.__dict__)
+        bin_dict = copy.deepcopy(self.params.iv_param.bin_param.__dict__)
         del bin_dict['process_method']
         del bin_dict['result_table']
         del bin_dict['result_namespace']
         del bin_dict['display_result']
         if bin_dict['cols'] == -1:
             bin_dict['cols'] = self.cols
-        print(bin_dict)
-        bin_param = FeatureBinningMeta(**bin_dict)
+        # print(bin_dict)
+        bin_param = FeatureBinningMeta()
         iv_dict["bin_param"] = bin_param
 
         iv_param = feature_selection_meta_pb2.IVSelectionParam(**iv_dict)
-        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**self.params.coe_param.__dict__)
-        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**self.params.outlier_param.__dict__)
-        print(self.filter_method, self.params.local_only, self.cols, unique_param, iv_param, coe_param, outlier_param,outlier_param)
+        coe_param_dict = copy.deepcopy(self.params.coe_param.__dict__)
+        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**coe_param_dict)
+        outlier_param_dict = copy.deepcopy(self.params.outlier_param.__dict__)
+
+        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**outlier_param_dict)
+        # print(self.filter_method, self.params.local_only, self.cols, unique_param, iv_param, coe_param, outlier_param,outlier_param)
 
         meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
                                                                             local_only=self.params.local_only,
@@ -261,9 +270,7 @@ class HeteroFeatureSelectionHost(object):
         between left_cols and cols.
         """
         new_header = []
-        print("self.cols: {}".format(self.cols))
-        print("self.left_cols: {}".format(self.left_cols))
-        print("self.header: {}".format(self.header))
+
         for col in self.left_cols:
             idx = self.cols.index(col)
             new_header.append(self.header[idx])
@@ -285,6 +292,6 @@ class HeteroFeatureSelectionHost(object):
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.cols = [i for i in range(features_shape)]
 
-
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
+        self.transfer_variable.set_flowid(self.flowid)

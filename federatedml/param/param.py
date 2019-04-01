@@ -21,7 +21,7 @@
 #
 ################################################################################
 from federatedml.util import consts
-
+import copy
 
 class DataIOParam(object):
     """
@@ -870,10 +870,10 @@ class FeatureSelectionParam(object):
 
         self.local_only = local_only
         self.unique_param = unique_param
-        self.iv_param = iv_param
-        self.coe_param = coe_param
-        self.outlier_param = outlier_param
-        self.bin_param = bin_param
+        self.iv_param = copy.deepcopy(iv_param)
+        self.coe_param = copy.deepcopy(coe_param)
+        self.outlier_param = copy.deepcopy(outlier_param)
+        self.bin_param = copy.deepcopy(bin_param)
         self.result_table = result_table
         self.result_namespace = result_namespace
 

@@ -38,7 +38,7 @@ from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
-from federatedml.param import param
+from federatedml.param import param as param_generator
 from federatedml.param.param import SampleParam
 from federatedml.param.param import ScaleParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
@@ -87,6 +87,8 @@ class WorkFlow(object):
         """
 
     def _synchronous_data(self, data_instance, flowid, data_application=None):
+        header = data_instance.schema.get('header')
+
         if data_application is None:
             LOGGER.warning("not data_application!")
             return
@@ -117,6 +119,7 @@ class WorkFlow(object):
 
             LOGGER.info("get {} from guest".format(data_application))
             join_data_insts = data_sid.join(data_instance, lambda s, d: d)
+            join_data_insts.schema['header'] = header
             return join_data_insts
 
     def _initialize_workflow_param(self, config_path):
@@ -218,6 +221,9 @@ class WorkFlow(object):
         return predict_result
 
     def intersect(self, data_instance, intersect_flowid=''):
+        if data_instance is None:
+            return data_instance
+
         if self.workflow_param.need_intersect:
             header = data_instance.schema.get('header')
             LOGGER.info("need_intersect: true!")
@@ -254,7 +260,7 @@ class WorkFlow(object):
 
         if self.workflow_param.need_feature_selection:
             LOGGER.info("Start feature selection")
-            feature_select_param = param.FeatureSelectionParam()
+            feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
 
@@ -301,7 +307,7 @@ class WorkFlow(object):
 
         if self.workflow_param.need_feature_selection:
             LOGGER.info("Start feature selection")
-            feature_select_param = param.FeatureSelectionParam()
+            feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
 

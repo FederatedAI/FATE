@@ -45,6 +45,7 @@ class HeteroFeatureBinningHost(object):
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.has_synchronized = False
         self.iv_attrs = None
+        self.flowid = ''
 
     def fit(self, data_instances):
         """
@@ -60,7 +61,7 @@ class HeteroFeatureBinningHost(object):
         split_points = self.binning_obj.binning(data_instances, cols=self.cols)
         self._make_iv_obj(split_points)
         # LOGGER.debug("host split_points are: {}".format(split_points))
-
+        LOGGER.debug("Before transform, self cols: {}".format(self.cols))
         data_bin_table = self.binning_obj.transform(data_instances, split_points, self.cols)
 
         encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
@@ -236,7 +237,7 @@ class HeteroFeatureBinningHost(object):
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
         return encrypted_bin_sum
 
-    def reset(self, params):
+    def reset(self, params, flowid):
         self.bin_param = params
         if self.bin_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.bin_param)
@@ -246,6 +247,8 @@ class HeteroFeatureBinningHost(object):
             # ))
             self.binning_obj = QuantileBinning(self.bin_param)
         self.cols = params.cols
+        # self.flowid += flowid_postfix
+        self.set_flowid(flowid)
 
     def _parse_cols(self, data_instances):
         if self.cols == -1:
@@ -256,3 +259,4 @@ class HeteroFeatureBinningHost(object):
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
+        self.transfer_variable.set_flowid(self.flowid)
