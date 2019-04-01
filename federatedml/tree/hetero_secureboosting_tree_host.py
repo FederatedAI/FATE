@@ -99,6 +99,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
     def fit(self, data_inst):
         LOGGER.info("begin to train secureboosting guest model")
+        data_inst = self.data_alignment(data_inst)
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
@@ -132,6 +133,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
     def predict(self, data_inst, predict_param=None):
         LOGGER.info("start predict")
+        data_inst = self.data_alignment(data_inst)
         rounds = len(self.trees_) // self.tree_dim
         for i in range(rounds):
             # n_tree = self.trees_[i]

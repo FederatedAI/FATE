@@ -140,8 +140,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_label(self):
         LOGGER.info("check label")
         if self.task_type == consts.CLASSIFICATION:
-            LOGGER.debug("y is {}".format(self.y))
-            LOGGER.debug("y is {}".format(list(self.y.collect())))
             self.num_classes, self.classes_ = ClassifyLabelChecker.validate_y(self.y)
             if self.num_classes > 2:
                 self.classify_target = "multinomial"
@@ -269,6 +267,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def fit(self, data_inst):
         LOGGER.info("begin to train secureboosting guest model")
+        data_inst = self.data_alignment(data_inst)
         self.convert_feature_to_bin(data_inst)
         self.set_y()
         self.update_f_value()
@@ -316,7 +315,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def predict_f_value(self, data_inst):
         LOGGER.info("predict tree f value, there are {} trees".format(len(self.trees_)))
         tree_dim = self.tree_dim
-        LOGGER.debug("predict f value: init_score is {}".format(self.init_score))
         init_score = self.init_score
         self.F = data_inst.mapValues(lambda v: init_score)
         rounds = len(self.trees_) // self.tree_dim
@@ -332,6 +330,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def predict(self, data_inst, predict_param):
         LOGGER.info("start predict")
+        data_inst = self.data_alignment(data_inst)
         self.predict_f_value(data_inst)
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
