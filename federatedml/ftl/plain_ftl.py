@@ -48,6 +48,7 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.localModel = local_model
         self.feature_dim = local_model.get_encode_dim()
         self.alpha = model_param.alpha
+        self.gamma = model_param.gamma
         self.is_trace = is_trace
         self.logger = LOGGER
 
