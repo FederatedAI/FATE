@@ -31,7 +31,6 @@ from federatedml.util.data_io import SparseFeatureReader
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
-from federatedml.util.statistics import Statistics
 from federatedml.util.transfer_variable import BaseTransferVariable
 from federatedml.util.transfer_variable import RawIntersectTransferVariable
 from federatedml.util.transfer_variable import HeteroDecisionTreeTransferVariable
@@ -58,7 +57,6 @@ __all__ = ['consts',
            "RsaIntersectTransferVariable",
            "HomoLRTransferVariable",
            "SecureAddExampleTransferVariable",
-           "Statistics",
            "EncodeParamChecker",
            "IntersectParamChecker",
            "LogisticParamChecker",
