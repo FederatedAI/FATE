@@ -19,7 +19,7 @@ import random
 import unittest
 
 from arch.api import eggroll
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler
 from federatedml.util import consts

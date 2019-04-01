@@ -51,7 +51,7 @@ class TestHomoLRGuest(unittest.TestCase):
 
         model_table = "test_lr_table"
         model_namespace = "test_model_namesapce"
-        self.model.save_model(model_table=model_table, model_namespace=model_namespace)
+        self.model.save_model(model_table, model_namespace)
 
         self.model.n_iter_ = n_iter_
         self.model.coef_ = coef_
