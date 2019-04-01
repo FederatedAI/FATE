@@ -1,8 +1,7 @@
 {
     "local": {
         "role": "guest",
-        "party_id": _guest_party_id,
-        "scene_id": _scene_id
+        "party_id": _guest_party_id
     },
 
     "role": {
@@ -14,18 +13,20 @@
         ]
     },
     "DataIOParam": {
-        "input_format": "sparse",
-        "delimitor": "\t",
+        "input_format": "dense",
+        "delimitor": ",",
         "with_label": true,
         "label_idx": 0,
         "label_type": "int",
-        "output_format": "sparse"
+        "output_format": "sparse",
+        "missing_fill": true,
+        "outlier_replace": true
     },
     "WorkFlowParam": {
         "method": "_workflow_method",
         "train_input_table": "_train_table_name",
         "train_input_namespace": "example_data_namespace",
-        "model_table": "boostingtree_model_guest__jobid",
+        "model_table": "boostingtree_model_guest",
         "model_namespace": "boostingtree_model_namespace",
         "predict_input_table": "_predict_table_name",
         "predict_input_namespace": "example_data_namespace",
@@ -37,7 +38,8 @@
         "data_input_namespace": "example_data_namespace",
         "n_splits": 5,
         "work_mode": _work_mode,
-        "need_sample": true
+        "need_sample": true,
+        "need_feature_selection": false
     },
     "EncryptParam": {
         "method": "paillier",
@@ -54,9 +56,9 @@
         "params": [1.5]
     },
     "SampleParam": { 
-        "mode": "stratified",
+        "mode": "random",
         "method": "downsample",
-        "fractions": [[0, 0.1], [1, 0.3]]
+        "fractions": 0.5
     },
     "DecisionTreeParam": {
         "criterion_method": "xgboost",
@@ -72,7 +74,7 @@
     "BoostingTreeParam": {
         "task_type": _task_type,
         "learning_rate": 0.1,
-        "num_trees": 5,
+        "num_trees": 2,
         "subsample_feature_rate": 1,
         "n_iter_no_change": false,
         "tol": 0.0001,

@@ -22,6 +22,5 @@ work_mode=0
 jobid="secureboosting_example_standalone_"$curtime
 guest_partyid=10000
 host_partyid=9999
-scene_id=50000
 
-bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $scene_id
+bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid

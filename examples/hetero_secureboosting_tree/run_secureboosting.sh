@@ -20,9 +20,8 @@ work_mode=$1
 jobid=$2
 guest_partyid=$3
 host_partyid=$4
-scene_id=$5
 if [[ $work_mode -eq 1 ]]; then
-    role=$6
+    role=$5
 fi
 
 cur_dir=$(pwd)
@@ -34,11 +33,9 @@ load_data_conf=$conf_dir/load_file.json
 guest_runtime_conf=$conf_dir/guest_runtime_conf.json
 host_runtime_conf=$conf_dir/host_runtime_conf.json
 
-#data_set=tag
-data_set=svmlight
 #data_set=vehicle_scale
 #data_set=student-mat
-#data_set=breast
+data_set=breast
 #data_set=default_credit
 #data_set=give_credit
 train_data_host=$data_dir/${data_set}_a.csv
@@ -51,11 +48,12 @@ cv_data_guest=$data_dir/${data_set}_b.csv
 echo "data dir is : "$data_dir
 mode=cross_validation
 #mode=train
+#mode=predict
 task_type="\"classification\""
 #task_type="\"regression\""
 eval_type="\"binary\""
 #eval_type="\"multi\""
-#eval_type="\"evaluation\""
+#eval_type="\"regression\""
 objective="\"cross_entropy\""
 #objective="\"lse\""
 eval_method="\"auc\""
@@ -81,10 +79,6 @@ load_file() {
 	sed -i "s|_input_path|${input_path}|g" $conf_path 
 	sed -i "s/_table_name/${data_table}/g" $conf_path 
     sed -i "s/_work_mode/${work_mode}/g" $conf_path
-    sed -i "s/_scene_id/${scene_id}/g" ${conf_path}
-    sed -i "s/_role/${role}/g" ${conf_path}
-    sed -i "s/_my_party_id/${my_party_id}/g" ${conf_path}
-    sed -i "s/_partner_party_id/${partner_party_id}/g" ${conf_path}
     
     python $load_file_program -c $conf_path
 }
@@ -113,7 +107,6 @@ train() {
     sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -i "s/_scene_id/$scene_id/g" $cur_runtime_conf
     
     if [ $role = 'guest' ]; then
         sed -i "s/_task_type/$task_type/g" $cur_runtime_conf
@@ -154,7 +147,6 @@ predict() {
     sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -i "s/_scene_id/$scene_id/g" $cur_runtime_conf
 
     if [ $role = 'guest' ]; then
         sed -i "s/_task_type/$task_type/g" $cur_runtime_conf
@@ -196,7 +188,6 @@ cross_validation() {
     sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -i "s/_scene_id/$scene_id/g" $cur_runtime_conf
 
     if [ $role = 'guest' ]; then
         sed -i "s/_task_type/$task_type/g" $cur_runtime_conf
