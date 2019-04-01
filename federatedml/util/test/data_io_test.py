@@ -26,8 +26,7 @@ from federatedml.util import SparseTagReader
 from federatedml.param import DataIOParam
 from arch.api import eggroll
 from arch.api import federation
-from arch.api.io.feature import save_feature_data
-from arch.api.io.feature import get_feature_data_table
+from arch.api import storage
 from federatedml.util import consts
 
 
@@ -36,11 +35,11 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.table = "dataio_dense_table_test"
         self.namespace = "dataio_test"
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
-        save_data(data1, self.table, 50001, "guest", 10000, 9999)        
+        save_data(data1, self.table, self.namespace)        
 
         self.table2 = "dataio_dense_table_test2"
         data2 = [("a", '-1,,NA,NULL,null,2')]
-        save_data(data2, self.table2, 50001, "guest", 10000, 9999)        
+        save_data(data2, self.table2, self.namespace)        
 
     def test_dense_output_format(self):
         dataio_param = DataIOParam()
@@ -123,7 +122,7 @@ class TestSparseFeatureReader(unittest.TestCase):
              
             self.data.append((i, " ".join(row)))
 
-        save_data(self.data, self.table, 50001, "guest", 10000, 9999)        
+        save_data(self.data, self.table, self.namespace)        
 
     
     def test_sparse_output_format(self):
@@ -204,7 +203,7 @@ class TestSparseTagReader(unittest.TestCase):
 
             self.data.append((i, ' '.join(row)))
         
-        save_data(self.data, self.table, 50001, "guest", 10000, 9999)        
+        save_data(self.data, self.table, self.namespace)        
 
     def test_sparse_output_format(self):
         dataio_param = DataIOParam()
@@ -259,20 +258,8 @@ class TestSparseTagReader(unittest.TestCase):
             self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
 
 
-def data_generate(input_data):
-    for k, v in input_data:
-        yield k, v
-
-
-def save_data(input_data, table_name, scene_id, role, my_party_id, partner_party_id):
-    data_gen = data_generate(input_data)
-    save_feature_data(data_gen,
-                      scene_id=scene_id,
-                      my_role=role,
-                      my_party_id=my_party_id,
-                      partner_party_id=partner_party_id,
-                      commit_id=table_name
-                      )
+def save_data(input_data, table_name, namespace):
+    storage.save_data(input_data, table_name, namespace)
    
 
 if __name__ == '__main__':
@@ -280,8 +267,7 @@ if __name__ == '__main__':
     federation.init("test_dataio", 
                     {"local": {
                        "role": "guest",
-                       "party_id": 10000,
-                       "scene_id": 50001,
+                       "party_id": 10000
                     },
                      "role": {
                        "host": [
