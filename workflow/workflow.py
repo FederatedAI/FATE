@@ -33,6 +33,7 @@ from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
+from workflow import status_tracer_decorator
 from federatedml.feature.sampler import Sampler
 from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
@@ -585,7 +586,6 @@ class WorkFlow(object):
             reader.load_model(self.workflow_param.model_table,
                               self.workflow_param.model_namespace)
 
-        print("In workflow, table: {}, namespace: {}".format(table, namespace))
         data_instance = reader.read_data(table,
                                          namespace,
                                          mode=mode)
@@ -650,6 +650,7 @@ class WorkFlow(object):
         LOGGER.debug("Finish eggroll and federation init")
         self._init_pipeline()
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 

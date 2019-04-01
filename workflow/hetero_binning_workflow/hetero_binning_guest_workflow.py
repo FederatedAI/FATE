@@ -29,6 +29,8 @@ from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
 from workflow.workflow import WorkFlow
+from workflow import status_tracer_decorator
+
 
 LOGGER = log_utils.getLogger()
 
@@ -58,6 +60,7 @@ class HeteroBinningGuestWorkflow(WorkFlow):
         meta_table = self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
         return meta_table
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 

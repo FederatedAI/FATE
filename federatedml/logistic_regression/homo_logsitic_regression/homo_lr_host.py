@@ -228,6 +228,10 @@ class HomoLRHost(BaseLogisticRegression):
         else:
             LOGGER.info("in predict, has synchronize encryption information")
 
+        from federatedml.util.fate_operator import get_features_shape
+        feature_shape = get_features_shape(data_instances)
+        LOGGER.debug("Shape of coef_ : {}, feature shape: {}".format(len(self.coef_), feature_shape))
+
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
 
         if self.use_encrypt:
@@ -278,6 +282,8 @@ class HomoLRHost(BaseLogisticRegression):
         final_model = federation.get(name=self.transfer_variable.final_model.name,
                                      tag=final_model_id,
                                      idx=0)
+        LOGGER.info("Received arbiter's model")
+        LOGGER.debug("final_model: {}".format(final_model))
         self.set_coef_(final_model)
 
     def save_model(self, model_table, model_namespace, job_id=None, model_name=None):

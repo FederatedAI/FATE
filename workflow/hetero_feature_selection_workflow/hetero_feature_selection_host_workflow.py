@@ -28,6 +28,7 @@ from federatedml.util import FeatureSelectionParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
 from workflow.workflow import WorkFlow
+from workflow import status_tracer_decorator
 
 LOGGER = log_utils.getLogger()
 
@@ -52,6 +53,7 @@ class HeteroFeatureSelectHostWorkflow(WorkFlow):
         self.model = HeteroFeatureSelectionHost(self.feature_param)
         LOGGER.debug("Guest model started")
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 

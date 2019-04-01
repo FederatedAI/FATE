@@ -22,12 +22,10 @@
 ################################################################################
 
 import functools
+
 import numpy as np
-from arch.api.utils import log_utils
-from federatedml.feature.instance import Instance
-from federatedml.feature.sparse_vector import SparseVector
-from federatedml.util import consts
-from federatedml.util.param_checker import DataIOParamChecker
+
+from arch.api import storage
 from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
@@ -35,7 +33,11 @@ from arch.api.proto.feature_imputer_meta_pb2 import ImputerMeta
 from arch.api.proto.feature_imputer_param_pb2 import ImputerParam
 from arch.api.proto.feature_outlier_meta_pb2 import OutlierMeta
 from arch.api.proto.feature_outlier_param_pb2 import OutlierParam
-from arch.api import storage
+from arch.api.utils import log_utils
+from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.util import consts
+from federatedml.util.param_checker import DataIOParamChecker
 
 LOGGER = log_utils.getLogger()
 
@@ -75,7 +77,7 @@ class DenseFeatureReader(object):
 
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
-        LOGGER.debug("input data init is {}".format(list(input_data.collect())))
+        # LOGGER.debug("input data init is {}".format(list(input_data.collect())))
         LOGGER.info("start to read dense data and change data to instance")
         input_data_features = None
         input_data_labels = None
@@ -105,7 +107,7 @@ class DenseFeatureReader(object):
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
 
         self.generate_header(input_data_features, table_name, namespace)
-        LOGGER.debug("input data is {}".format(list(input_data_features.collect())))
+        # LOGGER.debug("input data is {}".format(list(input_data_features.collect())))
 
         data_instance = self.gen_data_instance(input_data_features, input_data_labels)
 
@@ -454,7 +456,7 @@ class SparseTagReader(object):
         LOGGER.info("delemitor is {}".format(self.delimitor))
         for key, value in kvs:
             if self.with_label:
-                cols = value.split(delimitor, -1)[1 : ]
+                cols = value.split(delimitor, -1)[1:]
             else:
                 cols = value.split(delimitor, -1)[0:]
 
@@ -606,11 +608,6 @@ def get_one_line(data_instance):
 def set_schema(data_instance, header):
     LOGGER.info("data_instance's schema is {}".format(data_instance.schema))
     data_instance.schema = {"header": header}
-
-
-def save_data_header(header):
-    feature.save_feature_header(header["features"], header["label"])
-    LOGGER.debug("feature header is : {}".format(feature.read_feature_header()))
 
 
 def save_data_io_model(input_format="dense",
@@ -822,4 +819,3 @@ def load_outlier_model(header=None,
             outlier_replace_value = None
 
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
-

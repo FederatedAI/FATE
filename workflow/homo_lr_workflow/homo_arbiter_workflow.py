@@ -14,12 +14,13 @@
 #  limitations under the License.
 #
 
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.homo_logsitic_regression import HomoLRArbiter
 from federatedml.param import LogisticParam
 from federatedml.util import ParamExtract
 from federatedml.util import consts
+from workflow import status_tracer_decorator
 from workflow.homo_lr_workflow.homo_base_workflow import HomoBaseWorkFlow
-from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -46,6 +47,7 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
         LOGGER.info("No need to evaluate")
         pass
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 

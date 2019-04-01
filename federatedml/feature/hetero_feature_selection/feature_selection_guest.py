@@ -260,7 +260,6 @@ class HeteroFeatureSelectionGuest(object):
         del bin_dict['display_result']
         if bin_dict['cols'] == -1:
             bin_dict['cols'] = self.cols
-        # print(bin_dict)
         bin_param = FeatureBinningMeta()
         iv_dict["bin_param"] = bin_param
 

@@ -124,6 +124,7 @@ class HomoLRArbiter(BaseLogisticRegression):
             if converge_flag:
                 self.is_converged = True
                 break
+        self._set_header()
 
     def predict(self, data=None, predict_param=None):
         # synchronize encryption information
@@ -344,3 +345,6 @@ class HomoLRArbiter(BaseLogisticRegression):
     #
     #     for idx, header_name in enumerate(self.header):
     #         self.coef_[idx] = weight_dict.get(header_name)
+
+    def _set_header(self):
+        self.header = ['head_' + str(x) for x in range(len(self.coef_))]

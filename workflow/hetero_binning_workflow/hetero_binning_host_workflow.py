@@ -27,6 +27,7 @@ from federatedml.param import FeatureBinningParam
 from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
+from workflow import status_tracer_decorator
 from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
@@ -52,6 +53,7 @@ class HeteroBinningHostWorkflow(WorkFlow):
         self.model = HeteroFeatureBinningHost(self.binning_param)
         LOGGER.debug("Host part model started")
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
         LOGGER.debug("Host workflow inited")
@@ -82,7 +84,6 @@ class HeteroBinningHostWorkflow(WorkFlow):
             raise TypeError("method %s is not support yet" % (self.workflow_param.method))
 
         LOGGER.info("Task end")
-
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from federatedml.util import ParamExtract
 from federatedml.util.param_checker import FTLDataParamChecker, LocalModelParamChecker, FTLModelParamChecker, \
     FTLValidDataParamChecker
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from workflow import status_tracer_decorator
 from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
@@ -64,6 +65,7 @@ class FTLWorkFlow(WorkFlow):
     def gen_validation_data_instance(self, table, namespace):
         pass
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
         if self.workflow_param.method == "train":

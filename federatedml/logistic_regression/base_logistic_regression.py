@@ -253,6 +253,7 @@ class BaseLogisticRegression(object):
 
         result_obj = lr_model_param_pb2.LRModelParam()
         buffer_type = "{}.param".format(self.class_name)
+        LOGGER.debug("buffer_type is : {}".format(buffer_type))
 
         model_manager.read_model(buffer_type=buffer_type,
                                  proto_buffer=result_obj,

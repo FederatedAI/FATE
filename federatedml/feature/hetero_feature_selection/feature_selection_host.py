@@ -197,7 +197,6 @@ class HeteroFeatureSelectionHost(object):
         del bin_dict['display_result']
         if bin_dict['cols'] == -1:
             bin_dict['cols'] = self.cols
-        # print(bin_dict)
         bin_param = FeatureBinningMeta()
         iv_dict["bin_param"] = bin_param
 
@@ -207,7 +206,6 @@ class HeteroFeatureSelectionHost(object):
         outlier_param_dict = copy.deepcopy(self.params.outlier_param.__dict__)
 
         outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**outlier_param_dict)
-        # print(self.filter_method, self.params.local_only, self.cols, unique_param, iv_param, coe_param, outlier_param,outlier_param)
 
         meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
                                                                             local_only=self.params.local_only,

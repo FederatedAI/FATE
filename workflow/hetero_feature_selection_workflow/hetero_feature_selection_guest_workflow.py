@@ -27,6 +27,7 @@ from federatedml.param import FeatureSelectionParam
 from federatedml.util import FeatureSelectionParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
+from workflow import status_tracer_decorator
 from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
@@ -52,6 +53,7 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
         self.model = HeteroFeatureSelectionGuest(self.feature_param)
         LOGGER.debug("Guest model started")
 
+    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 
@@ -60,7 +62,7 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
             if self.feature_param.method == 'fit':
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace)
-                print("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
+                LOGGER.debug("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
                 if self.feature_param.local_only:
                     self.model.fit_local(train_data_instance)
                 else:
@@ -85,7 +87,7 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,
                                                              mode='transform')
-                print("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
+                LOGGER.debug("In guest workflow, after data io, schema: {}".format(train_data_instance.schema))
                 self.load_model()
                 result_table = self.model.transform(train_data_instance)
                 self.save_predict_result(result_table)
