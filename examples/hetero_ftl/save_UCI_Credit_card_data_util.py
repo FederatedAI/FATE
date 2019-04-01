@@ -59,7 +59,7 @@ def convert_and_save_source_data_to_eggroll_table(config_data):
     # save data meta to a json file
     print("overlap_indexes[0]", overlap_indexes[0], type(overlap_indexes[0]))
     print("overlap_indexes[0]", overlap_indexes[-1], type(overlap_indexes[-1]))
-    output = {}
+    output = dict()
     output["guest_table_namespace"] = namespace
     output["guest_table_name"] = guest_table_name
     output["guest_table_count"] = guest_table_count
