@@ -63,6 +63,7 @@ class HeteroLRGuest(BaseLogisticRegression):
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr_guest fit")
+        self.header = data_instances.schema.get("header")
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,

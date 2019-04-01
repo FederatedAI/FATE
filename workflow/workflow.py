@@ -149,7 +149,7 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                        self.mode == consts.HOMO:
+                self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
@@ -521,15 +521,24 @@ class WorkFlow(object):
                                  self.workflow_param.intersect_data_output_namespace)
 
     def scale(self, data_instance, fit_config=None):
-        scale_params = ScaleParam()
-        self.scale_params = ParamExtract.parse_param_from_config(scale_params, self.config_path)
-        param_checker.ScaleParamChecker.check_param(self.scale_params)
+        if self.workflow_param.need_scale:
+            scale_params = ScaleParam()
+            self.scale_params = ParamExtract.parse_param_from_config(scale_params, self.config_path)
+            param_checker.ScaleParamChecker.check_param(self.scale_params)
 
-        scale_obj = Scaler(self.scale_params)
-        if not fit_config:
-            data_instance, fit_config = scale_obj.fit(data_instance)
+            scale_obj = Scaler(self.scale_params)
+            if not fit_config:
+                data_instance, fit_config = scale_obj.fit(data_instance)
+                save_results = scale_obj.save_model(name=self.workflow_param.model_table,
+                                                    namespace=self.workflow_param.model_namespace)
+                if save_results:
+                    for meta_buffer_type, param_buffer_type in save_results:
+                        self.pipeline.node_meta.append(meta_buffer_type)
+                        self.pipeline.node_param.append(param_buffer_type)
+            else:
+                data_instance = scale_obj.transform(data_instance, fit_config)
         else:
-            data_instance = scale_obj.transform(data_instance, fit_config)
+            LOGGER.debug("workflow param need_scale is False")
 
         return data_instance, fit_config
 
@@ -576,13 +585,13 @@ class WorkFlow(object):
                                          mode=mode)
 
         if mode == "fit":
-            save_result = reader.save_model(self.workflow_param.model_table, 
+            save_result = reader.save_model(self.workflow_param.model_table,
                                             self.workflow_param.model_namespace)
 
             for meta_buffer_type, param_buffer_type in save_result:
                 self.pipeline.node_meta.append(meta_buffer_type)
                 self.pipeline.node_param.append(param_buffer_type)
-        
+
         return data_instance
 
     def _init_pipeline(self):

@@ -143,11 +143,11 @@ class SampleParamChecker(object):
         sample_param.mode = check_and_change_lower(sample_param.mode,
                                                    ["random", "stratified"],
                                                    descr)
-        
+
         sample_param.method = check_and_change_lower(sample_param.method,
                                                      ["upsample", "downsample"],
                                                      descr)
-    
+
         return True
 
 
@@ -771,30 +771,42 @@ class ScaleParamChecker(object):
         scale_param.area = check_and_change_lower(scale_param.area,
                                                   [consts.ALL, consts.COL],
                                                   descr)
+        if scale_param.area == consts.ALL:
+            if scale_param.feat_lower is not None:
+                if type(scale_param.feat_lower).__name__ not in ["float", "int"]:
+                    raise ValueError(
+                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                            scale_param.feat_lower))
 
-        if scale_param.feat_lower is not None:
-            if type(scale_param.feat_lower).__name__ not in ["float", "int"]:
-                raise ValueError(
-                    "scale param's feat_lower {} not supported, should be float or int type".format(
-                        scale_param.feat_lower))
+            if scale_param.feat_upper is not None:
+                if type(scale_param.feat_upper).__name__ not in ["float", "int"]:
+                    raise ValueError(
+                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                            scale_param.feat_upper))
 
-        if scale_param.feat_upper is not None:
-            if type(scale_param.feat_upper).__name__ not in ["float", "int"]:
-                raise ValueError(
-                    "scale param's feat_lower {} not supported, should be float or int type".format(
-                        scale_param.feat_upper))
+            if scale_param.out_lower is not None:
+                if type(scale_param.out_lower).__name__ not in ["float", "int"]:
+                    raise ValueError(
+                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                            scale_param.out_lower))
 
-        if scale_param.out_lower is not None:
-            if type(scale_param.out_lower).__name__ not in ["float", "int"]:
-                raise ValueError(
-                    "scale param's feat_lower {} not supported, should be float or int type".format(
-                        scale_param.out_lower))
+            if scale_param.out_upper is not None:
+                if type(scale_param.out_upper).__name__ not in ["float", "int"]:
+                    raise ValueError(
+                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                            scale_param.out_upper))
+        elif scale_param.area == consts.COL:
+            descr = "scale param's feat_lower"
+            check_defined_type(scale_param.feat_lower, descr, ['list'])
 
-        if scale_param.out_upper is not None:
-            if type(scale_param.out_upper).__name__ not in ["float", "int"]:
-                raise ValueError(
-                    "scale param's feat_lower {} not supported, should be float or int type".format(
-                        scale_param.out_upper))
+            descr = "scale param's feat_upper"
+            check_defined_type(scale_param.feat_upper, descr, ['list'])
+
+            descr = "scale param's out_lower"
+            check_defined_type(scale_param.out_lower, descr, ['list'])
+
+            descr = "scale param's out_upper"
+            check_defined_type(scale_param.out_upper, descr, ['list'])
 
         check_boolean(scale_param.with_mean, "scale_param with_mean")
         check_boolean(scale_param.with_std, "scale_param with_std")

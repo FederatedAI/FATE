@@ -38,7 +38,8 @@
         "work_mode": _work_mode,
         "n_split": 5,
         "need_intersect": true,
-        "need_feature_selection": false
+        "need_feature_selection": false,
+        "need_scale": false,
         },
 
     "EncryptParam": {
@@ -80,8 +81,8 @@
         "with_proba": true,
         "threshold": 0.5
     },
-    "DataTransformParam":{
-        "method": "MinMaxScale",
+    "ScaleParam":{
+        "method": "min_max_scale",
         "mode": "normal",
         "area": "all",
         "feat_upper": null,

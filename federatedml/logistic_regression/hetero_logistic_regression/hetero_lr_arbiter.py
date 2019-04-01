@@ -46,6 +46,11 @@ class HeteroLRArbiter(BaseLogisticRegression):
         pass
 
     def fit(self, data_instance=None):
+        if data_instance:
+            self.header = data_instance.schema.get('header')
+        else:
+            self.header = []
+
         # Generate encrypt keys
         self.encrypt_operator.generate_key(self.key_length)
         public_key = self.encrypt_operator.get_public_key()
