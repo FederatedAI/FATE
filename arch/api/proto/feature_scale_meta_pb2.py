@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-scale-meta.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x18\x66\x65\x61ture-scale-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xdb\x02\n\tScaleMeta\x12\x10\n\x08is_scale\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x61\n\x11minmax_scale_meta\x18\x03 \x03(\x0b\x32\x46.com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.MinmaxScaleMetaEntry\x12V\n\x13standard_scale_meta\x18\x04 \x01(\x0b\x32\x39.com.webank.ai.fate.core.mlmodel.buffer.StandardScaleMeta\x1ao\n\x14MinmaxScaleMetaEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x46\n\x05value\x18\x02 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta:\x02\x38\x01\"_\n\x0fMinMaxScaleMeta\x12\x12\n\nfeat_upper\x18\x05 \x01(\x01\x12\x12\n\nfeat_lower\x18\x06 \x01(\x01\x12\x11\n\tout_upper\x18\x07 \x01(\x01\x12\x11\n\tout_lower\x18\x08 \x01(\x01\"8\n\x11StandardScaleMeta\x12\x11\n\twith_mean\x18\t \x01(\x01\x12\x10\n\x08with_std\x18\n \x01(\x01\x42\x10\x42\x0eScaleMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x18\x66\x65\x61ture-scale-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xdb\x02\n\tScaleMeta\x12\x10\n\x08is_scale\x18\x01 \x01(\x08\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12\x61\n\x11minmax_scale_meta\x18\x03 \x03(\x0b\x32\x46.com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.MinmaxScaleMetaEntry\x12V\n\x13standard_scale_meta\x18\x04 \x01(\x0b\x32\x39.com.webank.ai.fate.core.mlmodel.buffer.StandardScaleMeta\x1ao\n\x14MinmaxScaleMetaEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x46\n\x05value\x18\x02 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta:\x02\x38\x01\"_\n\x0fMinMaxScaleMeta\x12\x12\n\nfeat_upper\x18\x05 \x01(\t\x12\x12\n\nfeat_lower\x18\x06 \x01(\t\x12\x11\n\tout_upper\x18\x07 \x01(\t\x12\x11\n\tout_lower\x18\x08 \x01(\t\"8\n\x11StandardScaleMeta\x12\x11\n\twith_mean\x18\t \x01(\x08\x12\x10\n\x08with_std\x18\n \x01(\x08\x42\x10\x42\x0eScaleMetaProtob\x06proto3')
 )
 
 
@@ -38,14 +38,14 @@ _SCALEMETA_MINMAXSCALEMETAENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.MinmaxScaleMetaEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -75,28 +75,28 @@ _SCALEMETA = _descriptor.Descriptor(
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='strategy', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.strategy', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='minmax_scale_meta', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.minmax_scale_meta', index=2,
       number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='standard_scale_meta', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleMeta.standard_scale_meta', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -123,32 +123,32 @@ _MINMAXSCALEMETA = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='feat_upper', full_name='com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta.feat_upper', index=0,
-      number=5, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='feat_lower', full_name='com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta.feat_lower', index=1,
-      number=6, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='out_upper', full_name='com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta.out_upper', index=2,
-      number=7, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='out_lower', full_name='com.webank.ai.fate.core.mlmodel.buffer.MinMaxScaleMeta.out_lower', index=3,
-      number=8, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -175,18 +175,18 @@ _STANDARDSCALEMETA = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='with_mean', full_name='com.webank.ai.fate.core.mlmodel.buffer.StandardScaleMeta.with_mean', index=0,
-      number=9, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=9, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='with_std', full_name='com.webank.ai.fate.core.mlmodel.buffer.StandardScaleMeta.with_std', index=1,
-      number=10, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      number=10, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
