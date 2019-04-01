@@ -37,7 +37,7 @@ class DataIOParamChecker(object):
         descr = "dataio param's"
 
         dataio_param.input_format = check_and_change_lower(dataio_param.input_format,
-                                                           ["dense", "sparse"],
+                                                           ["dense", "sparse", "tag"],
                                                            descr)
 
         dataio_param.output_format = check_and_change_lower(dataio_param.output_format,
@@ -133,6 +133,24 @@ class EncryptParamChecker(object):
         return True
 
 
+class SampleParamChecker(object):
+    @staticmethod
+    def check_param(sample_param):
+        if type(sample_param).__name__ != "SampleParam":
+            raise ValueError("sample param {} not supported, should be SampleParam object".format(sample_param))
+
+        descr = "sample param"
+        sample_param.mode = check_and_change_lower(sample_param.mode,
+                                                   ["random", "stratified"],
+                                                   descr)
+        
+        sample_param.method = check_and_change_lower(sample_param.method,
+                                                     ["upsample", "downsample"],
+                                                     descr)
+    
+        return True
+
+
 class DecisionTreeParamChecker(object):
     @staticmethod
     def check_param(tree_param):
@@ -141,11 +159,6 @@ class DecisionTreeParamChecker(object):
                 "decision tree param {} not supported, should be DecisionTreeParam object".format(tree_param))
 
         descr = "decision tree param"
-
-        if tree_param.criterion_method not in ["xgboost"]:
-            raise ValueError(
-                "decision tree param's criterion_method {} not supported, now just supported xgboost".format(
-                    tree_param.criterion_method))
 
         tree_param.criterion_method = check_and_change_lower(tree_param.criterion_method,
                                                              ["xgboost"],

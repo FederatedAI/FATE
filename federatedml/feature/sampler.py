@@ -19,6 +19,7 @@ from arch.api import federation
 from sklearn.utils import resample
 from federatedml.util import consts
 from federatedml.util.transfer_variable import SampleTransferVariable
+from federatedml.util.param_checker import SampleParamChecker
 
 
 class RandomSampler(object):
@@ -205,6 +206,7 @@ class StratifiedSampler(object):
 
 class Sampler(object):
     def __init__(self, sample_param):
+        SampleParamChecker.check_param(sample_param)
         if sample_param.mode == "random":
             self.sampler = RandomSampler(sample_param.fractions,
                                          sample_param.random_state,

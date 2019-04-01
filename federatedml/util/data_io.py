@@ -63,7 +63,7 @@ class DenseFeatureReader(object):
         self.header = None
 
     def generate_header(self, input_data_feature, table_name, namespace):
-        self.header = storage.get_data_table_meta("header", table_name, namespace)
+        self.header = storage.get_data_table_meta("header", table_name + ".meta", namespace)
 
         if not self.header:
             feature = get_one_line(input_data_feature)[1]
@@ -239,7 +239,7 @@ class DenseFeatureReader(object):
                            self.label_type,
                            self.output_format,
                            self.header,
-                           "DataIO",
+                           "DenseFeatureReader",
                            model_table,
                            model_namespace)
         model_types.append(("Outlier.meta", "Outlier.param"))
@@ -268,7 +268,7 @@ class DenseFeatureReader(object):
 
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, self.with_label, \
-        self.label_idx, self.label_type, self.output_format, self.header = load_data_io_model("DataIO",
+        self.label_idx, self.label_type, self.output_format, self.header = load_data_io_model("DenseFeatureReader",
                                                                                               model_table,
                                                                                               model_namespace)
 
@@ -410,7 +410,7 @@ class SparseFeatureReader(object):
                            label_type=self.label_type,
                            output_format=self.output_format,
                            header=self.header,
-                           model_name="DataIO",
+                           model_name="SparseFeatureReader",
                            model_table=model_table,
                            model_namespace=model_namespace)
         model_types.append(("Outlier.meta", "Outlier.param"))
@@ -431,7 +431,7 @@ class SparseFeatureReader(object):
 
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, _1, \
-        _2, self.label_type, self.output_format, self.header = load_data_io_model("DataIO",
+        _2, self.label_type, self.output_format, self.header = load_data_io_model("SparseFeatureReader",
                                                                                   model_table,
                                                                                   model_namespace)
 
@@ -566,18 +566,17 @@ class SparseTagReader(object):
     def save_model(self, model_table, model_namespace):
         model_types = []
 
-        save_data_io_model("dense",
-                           self.delimitor,
-                           self.data_type,
-                           self.with_label,
-                           self.label_idx,
-                           self.label_type,
-                           self.output_format,
-                           self.header,
-                           "DataIO",
-                           model_table,
-                           model_namespace)
-        model_types.append(("Outlier.meta", "Outlier.param"))
+        save_data_io_model(input_format="tag",
+                           delimitor=self.delimitor,
+                           data_type=self.data_type,
+                           with_label=self.with_label,
+                           label_type=self.label_type,
+                           output_format=self.output_format,
+                           header=self.header,
+                           model_name="SparseTagReader",
+                           model_table=model_table,
+                           model_namespace=model_namespace)
+        model_types.append(("SparseTagReader.meta", "SparseTagReader.param"))
 
         save_missing_imputer_model(missing_fill=False,
                                    model_name="Imputer",
@@ -595,7 +594,7 @@ class SparseTagReader(object):
 
     def load_model(self, model_table, model_namespace):
         self.delimitor, self.data_type, self.with_label, \
-        _, self.label_type, self.output_format, self.header = load_data_io_model("DataIO",
+        _, self.label_type, self.output_format, self.header = load_data_io_model("SparseTagReader",
                                                                                  model_table,
                                                                                  model_namespace)
 
@@ -662,7 +661,7 @@ def load_data_io_model(model_name="DataIO",
                        namespace=model_namespace)
 
     manager.read_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_meta,
+                       proto_buffer=model_param,
                        name=model_table,
                        namespace=model_namespace)
 
@@ -709,7 +708,7 @@ def save_missing_imputer_model(missing_fill=False,
                        namespace=model_namespace)
 
     manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_meta,
+                       proto_buffer=model_param,
                        name=model_table,
                        namespace=model_namespace)
 
@@ -781,7 +780,7 @@ def save_outlier_model(outlier_replace=False,
                        namespace=model_namespace)
 
     manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_meta,
+                       proto_buffer=model_param,
                        name=model_table,
                        namespace=model_namespace)
 
