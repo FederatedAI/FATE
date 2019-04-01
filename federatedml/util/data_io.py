@@ -75,7 +75,6 @@ class DenseFeatureReader(object):
 
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
-        LOGGER.debug("input data init is {}".format(list(input_data.collect())))
         LOGGER.info("start to read dense data and change data to instance")
         input_data_features = None
         input_data_labels = None
@@ -105,7 +104,6 @@ class DenseFeatureReader(object):
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
 
         self.generate_header(input_data_features, table_name, namespace)
-        LOGGER.debug("input data is {}".format(list(input_data_features.collect())))
 
         data_instance = self.gen_data_instance(input_data_features, input_data_labels)
 
@@ -458,7 +456,6 @@ class SparseTagReader(object):
             else:
                 cols = value.split(delimitor, -1)[0:]
 
-            LOGGER.debug("tags is {}, value is {}".format(cols, value))
             tags_set |= set(cols)
 
         LOGGER.info("tags set is {}".format(tags_set))
@@ -606,11 +603,6 @@ def get_one_line(data_instance):
 def set_schema(data_instance, header):
     LOGGER.info("data_instance's schema is {}".format(data_instance.schema))
     data_instance.schema = {"header": header}
-
-
-def save_data_header(header):
-    feature.save_feature_header(header["features"], header["label"])
-    LOGGER.debug("feature header is : {}".format(feature.read_feature_header()))
 
 
 def save_data_io_model(input_format="dense",
