@@ -658,12 +658,6 @@ class FeatureSelectionParamChecker(object):
         check_string(feature_param.result_namespace, descr)
         check_boolean(feature_param.local_only, descr)
         UniqueValueParamChecker.check_param(feature_param.unique_param)
-        print("In Feature Selection Param Checker")
-        bin_cols = feature_param.bin_param.cols
-        print("type of bin_cols: {}, bin_cols: {}".format(type(bin_cols).__name__, bin_cols))
-        bin_param = feature_param.bin_param
-        print("type of bin_param: {}, bin_param: {}".format(type(bin_param).__name__, bin_param))
-
         IVSelectionParamChecker.check_param(feature_param.iv_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)

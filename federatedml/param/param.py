@@ -284,12 +284,12 @@ class WorkFlowParam(object):
         self.data_input_namespace = data_input_namespace
         self.intersect_data_output_table = intersect_data_output_table
         self.intersect_data_output_namespace = intersect_data_output_namespace
-        self.dataio_param = dataio_param
+        self.dataio_param = copy.deepcopy(dataio_param)
         self.do_cross_validation = do_cross_validation
         self.n_splits = n_splits
         self.work_mode = work_mode
-        self.predict_param = predict_param
-        self.evaluate_param = evaluate_param
+        self.predict_param = copy.deepcopy(predict_param)
+        self.evaluate_param = copy.deepcopy(evaluate_param)
         self.need_intersect = need_intersect
         self.need_sample = need_sample
         self.need_feature_selection = need_feature_selection
@@ -370,7 +370,7 @@ class IntersectParam(object):
         self.is_get_intersect_ids = is_get_intersect_ids
         self.join_role = join_role
         self.with_encode = with_encode
-        self.encode_params = encode_params
+        self.encode_params = copy.deepcopy(encode_params)
 
 
 class LogisticParam(object):
@@ -433,10 +433,10 @@ class LogisticParam(object):
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.learning_rate = learning_rate
-        self.init_param = init_param
+        self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.converge_func = converge_func
-        self.encrypt_param = encrypt_param
+        self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.model_path = model_path
         self.table_name = table_name
@@ -523,15 +523,15 @@ class BoostingTreeParam(object):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
                  bin_num=32, bin_gap=1e-3, bin_sample_num=10000):
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
-        self.objective_param = objective_param
+        self.objective_param = copy.deepcopy(objective_param)
         self.learning_rate = learning_rate
         self.num_trees = num_trees
         self.subsample_feature_rate = subsample_feature_rate
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-        self.encrypt_param = encrypt_param
+        self.encrypt_param = copy.deepcopy(encrypt_param)
         self.quantile_method = quantile_method
         self.bin_num = bin_num
         self.bin_gap = bin_gap
@@ -778,7 +778,7 @@ class IVSelectionParam(object):
     def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
         self.value_threshold = value_threshold
         self.percentile_threshold = percentile_threshold
-        self.bin_param = bin_param
+        self.bin_param = copy.deepcopy(bin_param)
 
 
 class CoeffOfVarSelectionParam(object):
@@ -869,7 +869,7 @@ class FeatureSelectionParam(object):
             self.filter_method = filter_method
 
         self.local_only = local_only
-        self.unique_param = unique_param
+        self.unique_param = copy.deepcopy(unique_param)
         self.iv_param = copy.deepcopy(iv_param)
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
