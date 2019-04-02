@@ -167,3 +167,50 @@ class Scaler(object):
         else:
             LOGGER.debug("can not save {} model".format(self.scale_param.method))
             return None
+    
+    def load_model(self, name, namespace, header):
+        self.header = header
+        param_buffer_type = "{}.param".format(self.class_name)
+        param_obj = feature_scale_param_pb2.ScaleParam()
+        model_manager.read_model(buffer_type=param_buffer_type,
+                                 proto_buffer=param_obj,
+                                 name=name,
+                                 namespace=namespace)
+
+        if self.scale_param.method == consts.MINMAXSCALE:
+            cols_scale_value = []
+            param_dict = param_obj.minmax_scale_param
+        
+            for idx, header_name in enumerate(self.header):
+                if header_name in param_dict:
+                    feat_upper = param_dict[header_name].feat_upper
+                    feat_lower = param_dict[header_name].feat_lower
+                    out_upper = param_dict[header_name].out_upper
+                    out_lower = param_dict[header_name].out_lower
+                    cols_scale_value.append((feat_lower,
+                                             feat_upper,
+                                             out_lower,
+                                             out_upper))
+                else:
+                    raise ValueError("Can not find the header name {} in model.".format(header_name))
+            
+            model_scale_value_results = [ cols_scale_value ]
+
+        elif self.scale_param.method == consts.STANDARDSCALE:
+            mean = []
+            std = []
+            param_dict = param_obj.standard_scale_param
+            for idx, header_name in enumerate(self.header):
+                if header_name in param_dict:
+                    mean.append(param_dict[header_name].mean)
+                    std.append(param_dict[header_name].std)
+                else:
+                    raise ValueError("Can not find the header name {} in model.".format(header_name))
+
+            model_scale_value_results = [ mean, std ]
+        
+        else:
+            raise ValueError("Unknown scale method:{}".format(self.scale_param.method))
+
+        
+        return model_scale_value_results

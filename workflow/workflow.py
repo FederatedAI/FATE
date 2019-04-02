@@ -197,6 +197,8 @@ class WorkFlow(object):
 
         data_instance = self.feature_selection_transform(data_instance)
 
+        data_instance, fit_config = self.scale(data_instance)     
+
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
 
@@ -541,6 +543,11 @@ class WorkFlow(object):
             param_checker.ScaleParamChecker.check_param(self.scale_params)
 
             scale_obj = Scaler(self.scale_params)
+            if self.workflow_param.method == "predict":
+                fit_config = scale_obj.load_model(name=self.workflow_param.model_table,
+                                                  namespace=self.workflow_param.model_namespace,
+                                                  header=data_instance.schema.get("header"))
+                
             if not fit_config:
                 data_instance, fit_config = scale_obj.fit(data_instance)
                 save_results = scale_obj.save_model(name=self.workflow_param.model_table,
