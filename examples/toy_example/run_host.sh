@@ -16,12 +16,6 @@
 #  limitations under the License.
 #
 
-cd $(dirname "$0") 
-curtime=$(date +%Y%m%d%H%M%S)
-work_mode=1
-role=$1
+config_path=$1
 jobid=$2
-guest_partyid=$3
-host_partyid=$4
-
-bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $role
+python ../../workflow/toy_example_workflow/secure_add_host_workflow.py -c $config_path -j $jobid

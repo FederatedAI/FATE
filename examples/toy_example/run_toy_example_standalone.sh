@@ -18,10 +18,9 @@
 
 cd $(dirname "$0") 
 curtime=$(date +%Y%m%d%H%M%S)
-work_mode=1
-role=$1
-jobid=$2
-guest_partyid=$3
-host_partyid=$4
+work_mode=0
+jobid="toy_example_"$curtime
+guest_partyid=10000
+host_partyid=9999
 
-bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $role
+bash run_toy_example.sh $work_mode $jobid $guest_partyid $host_partyid
