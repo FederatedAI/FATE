@@ -313,6 +313,19 @@ public class TestRollKvServiceClient {
     }
 
     @Test
+    public void testDestroyAll() {
+        StoreInfo storeInfo = StoreInfo.builder()
+                .type(Stores.LMDB.name())
+                .nameSpace("ce46817e-13bf-11e9-8d62-4a00003fc630")
+                .tableName("*")
+                .build();
+
+        rollKvServiceClient.destroyAll(storeInfo);
+
+        LOGGER.info("done destroyAll");
+    }
+
+    @Test
     public void testCount() {
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())

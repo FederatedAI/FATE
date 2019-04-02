@@ -43,6 +43,20 @@ class HeteroLRArbiter(BaseLogisticRegression):
         self.key_length = logistic_params.encrypt_param.key_length
 
     def perform_subtasks(self, **training_info):
+        """
+        performs any tasks that the arbiter is responsible for.
+
+        This 'perform_subtasks' function servers as a handler on conducting any task that the arbiter is responsible
+        for. For example, for the 'perform_subtasks' function of 'HeteroDNNLRArbiter' class located in
+        'hetero_dnn_lr_arbiter.py', it performs some works related to updating/training local neural networks of guest
+        or host.
+
+        For this particular class (i.e., 'HeteroLRArbiter') that serves as a base arbiter class for neural-networks-based
+        hetero-logistic-regression model, the 'perform_subtasks' function will do nothing. In other words, no subtask is
+        performed by this arbiter.
+
+        :param training_info: a dictionary holding training information
+        """
         pass
 
     def fit(self, data_instance=None):

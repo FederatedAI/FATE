@@ -49,7 +49,7 @@ class DNNLRGuestWorkFlow(WorkFlow):
         self.mode = consts.HETERO
 
     def train(self, train_data_instance, validation_data=None):
-        LOGGER.debug("@ enter guest workflow train function")
+        LOGGER.debug("@ enter dnn lr guest workflow train function")
         init = tf.global_variables_initializer()
         sess = tf.Session()
         self.local_model.set_session(sess)
@@ -58,12 +58,12 @@ class DNNLRGuestWorkFlow(WorkFlow):
         sess.close()
 
     def load_model(self):
-        LOGGER.debug("@ enter host workflow load model")
+        LOGGER.debug("@ enter dnn lr guest workflow load model")
         tf.reset_default_graph()
         self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
 
     def predict(self, data_instance):
-        LOGGER.debug("@ enter guest workflow predict function")
+        LOGGER.debug("@ enter dnn lr guest workflow predict function")
         init = tf.global_variables_initializer()
         sess = tf.Session()
         self.local_model.set_session(sess)

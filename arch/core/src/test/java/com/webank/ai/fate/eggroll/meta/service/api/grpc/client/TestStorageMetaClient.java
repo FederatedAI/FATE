@@ -99,6 +99,15 @@ public class TestStorageMetaClient {
     }
 
     @Test
+    public void testGetTables() {
+        String namespace = "ce46817e-13bf-11e9-8d62-4a00003fc630";
+        String tableName = "*x*";
+
+        List<Dtable> result = storageMetaClient.getTables(namespace, tableName);
+        LOGGER.info("result: count: {}, value: {}", result.size(), result);
+    }
+
+    @Test
     public void testGetNodeByNodeId() {
         Node result = storageMetaClient.getNodeByNodeId(4L);
         LOGGER.info(result);

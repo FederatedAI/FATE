@@ -32,6 +32,12 @@ getpid() {
     fi
 }
 
+mklogsdir() {
+    if [[ ! -d "logs" ]]; then
+        mkdir logs
+    fi
+}
+
 status() {
     getpid
     if [[ -n ${pid} ]]; then
@@ -47,6 +53,7 @@ status() {
 start() {
     getpid
     if [[ $? -eq 0 ]]; then
+        mklogsdir
         java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -p 7778 -d /data/projects/fate/data-dir >> logs/console.log 2>>logs/error.log &
         if [[ $? -eq 0 ]]; then
             getpid

@@ -72,7 +72,7 @@ We have also provided example management scripts to run these services. Users ca
 
 ```
 mkdir -p ${path-to-example-dir-tree}/python
-git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEAD) arch/api federatedml workflow examples
+git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEAD) arch/api arch/processor federatedml workflow examples
 cd ${path-to-example-dir-tree}/python
 tar -xf python.tar
 ```

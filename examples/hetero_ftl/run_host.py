@@ -48,7 +48,7 @@ class TestFTLHost(FTLHostWorkFlow):
         if data_model_param.is_read_table:
             return eggroll.table(table_name, namespace)
         else:
-            data_model_param_dict = {}
+            data_model_param_dict = dict()
             data_model_param_dict["file_path"] = data_model_param.file_path
             data_model_param_dict["num_samples"] = data_model_param.num_samples
             data_model_param_dict["overlap_ratio"] = data_model_param.overlap_ratio
@@ -64,7 +64,7 @@ class TestFTLHost(FTLHostWorkFlow):
         if valid_data_model_param.is_read_table:
             return eggroll.table(table_name, namespace)
         else:
-            data_model_param_dict = {}
+            data_model_param_dict = dict()
             data_model_param_dict["file_path"] = valid_data_model_param.file_path
             data_model_param_dict["num_samples"] = valid_data_model_param.num_samples
             data_model_param_dict["overlap_ratio"] = data_model_param.overlap_ratio

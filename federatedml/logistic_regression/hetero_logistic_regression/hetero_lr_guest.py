@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
@@ -50,9 +51,46 @@ class HeteroLRGuest(BaseLogisticRegression):
         return aggregate_forward_res
 
     def transform(self, data_inst):
+        """
+        transform features of instances held by 'data_inst' table into more representative features
+
+        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
+        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
+        transform features. Particularly, we would adopt neural network models such as autoencoder or CNN to perform
+        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
+        folder.
+
+        For this particular class (i.e., 'HeteroLRGuest') that serves as a base guest class for neural-networks-based
+        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
+        passed to it. In other words, no feature transformation performed on the raw input of guest.
+
+        Parameters:
+        ___________
+        :param data_inst: a table holding instances of raw input of guest side
+        :return: a table holding instances with transformed features
+        """
         return data_inst
 
-    def update_local_model(self, fore_gradient, batch_data_inst, coef, **training_info):
+    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
+        """
+        update local model that transforms features of raw input
+
+        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
+        input into more representative features. We typically adopt neural networks as the local model, which is
+        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
+        refer to 'hetero_dnn_logistic_regression' folder.
+
+        For this particular class (i.e., 'HeteroLRGuest') that serves as a base guest class for neural-networks-based
+        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
+        performed on the local model since there is no one.
+
+        Parameters:
+        ___________
+        :param fore_gradient: a table holding fore gradient
+        :param data_inst: a table holding instances of raw input of guest side
+        :param coef: coefficients of logistic regression model
+        :param training_info: a dictionary holding training information
+        """
         pass
 
     @staticmethod
@@ -126,7 +164,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # Get mini-batch train data
                 batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
 
-                # batch_data_inst goes through feature extractor e.g. autoencoder or CNN
+                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data_inst)
 
                 # guest/host forward
@@ -152,7 +190,6 @@ class HeteroLRGuest(BaseLogisticRegression):
                                   role=consts.HOST,
                                   idx=0)
 
-                # TODO pass decrypted fore_gradient to feature extractor for local model update
                 LOGGER.info("Remote fore_gradient to Host")
                 # compute guest gradient and loss
                 guest_gradient, loss = self.gradient_operator.compute_gradient_and_loss(batch_feat_inst,
@@ -186,6 +223,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 LOGGER.info("update_model")
                 self.update_model(optim_guest_gradient)
 
+                # update local model that transforms features of raw input 'batch_data_inst'
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 

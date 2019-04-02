@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 /**
@@ -62,6 +63,7 @@ public class ProcessorManager {
     private final Object availableProcessorsLock;
     private final Path statusPath;
     private int maxProcessorCount;
+    private AtomicInteger lastScheduledProcessor;
 
     private static final int START_PORT_NOT_INCLUDED = 50000;
     private static final String statusFileLocation = "/tmp/FATE/node-manager/processor-manager";
@@ -74,6 +76,7 @@ public class ProcessorManager {
         lastPort = START_PORT_NOT_INCLUDED;
         availableProcessorsLock = new Object();
 
+        lastScheduledProcessor = new AtomicInteger(0);
         statusPath = Paths.get(statusFileLocation);
     }
 
@@ -136,8 +139,8 @@ public class ProcessorManager {
                 }
             }
         } else {
-            int target = randomUtils.nextInt(0, maxProcessorCount);
-            resultPort = availableProcessorMirror.get(target);
+            int target = lastScheduledProcessor.getAndIncrement();
+            resultPort = availableProcessorMirror.get(target % maxProcessorCount);
         }
 
         return resultPort;
@@ -243,7 +246,7 @@ public class ProcessorManager {
             int userDefinedMaxProcessorCount = Integer.valueOf(
                     serverConf.getProperties().getProperty("max.processors.count", "1"));
 
-            maxProcessorCount = Math.min(userDefinedMaxProcessorCount, PROCESSOR_COUNT > 1 ? PROCESSOR_COUNT - 1 : 1);
+            maxProcessorCount = Math.min(userDefinedMaxProcessorCount, PROCESSOR_COUNT);
             if (maxProcessorCount < 1) {
                 maxProcessorCount = 1;
             }
