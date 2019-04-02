@@ -51,6 +51,16 @@ class DataIOParamChecker(object):
         if type(dataio_param.missing_fill).__name__ != 'bool':
             raise ValueError("dataio param's missing_fill {} not supported".format(dataio_param.missing_fill))
 
+        if dataio_param.missing_fill_method is not None:
+            dataio_param.missing_fill_method = check_and_change_lower(dataio_param.missing_fill_method,
+                                                                      ['min', 'max', 'mean', 'designated'],
+                                                                      descr)
+
+        if dataio_param.outlier_replace_method is not None:
+            dataio_param.outlier_replace_method = check_and_change_lower(dataio_param.outlier_replace_method,
+                                                                         ['min', 'max', 'mean', 'designated'],
+                                                                         descr)
+
         if type(dataio_param.with_label).__name__ != 'bool':
             raise ValueError("dataio param's with_label {} not supported".format(dataio_param.with_label))
 

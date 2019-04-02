@@ -119,6 +119,40 @@
             		"tasklist": ["intersect"]
             	}
             }
-	    }
+	    },
+		"HeteroFeatureBinning":
+		{
+			"module_path": "workflow/hetero_binning_workflow",
+			"role":
+			{
+				"guest":
+				{
+					"program": "hetero_binning_guest_workflow.py",
+					"tasklist": ["binning"]
+				},
+				"host":
+				{
+					"program": "hetero_binning_host_workflow.py",
+					"tasklist": ["binning"]
+				}
+			}
+		},
+		"HeteroFeatureSelection":
+		{
+			"module_path": "workflow/hetero_feature_selection_workflow",
+			"role":
+			{
+				"guest":
+				{
+					"program": "hetero_feature_selection_guest_workflow.py",
+					"tasklist": ["feature_select"]
+				},
+				"host":
+				{
+					"program": "hetero_feature_selection_host_workflow.py",
+					"tasklist": ["binning"]
+				}
+			}
+		}
 	}
 }

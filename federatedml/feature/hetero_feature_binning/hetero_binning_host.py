@@ -108,53 +108,6 @@ class HeteroFeatureBinningHost(object):
                           idx=0)
         LOGGER.info("Sent encrypted_bin_sum to guest")
 
-    # def save_model(self):
-    #     iv_attrs = []
-    #     for idx, iv_attr in enumerate(self.iv_attrs):
-    #         iv_result = iv_attr.result_dict()
-    #         iv_object = feature_engineer_result_pb2.IVResult(**iv_result)
-    #
-    #         LOGGER.info("cols {} result: {}".format(self.cols[idx],
-    #                                                 iv_attr.display_result(
-    #                                                     self.bin_param.display_result
-    #                                                 )))
-    #         iv_attrs.append(iv_object)
-    #
-    #     result_obj = feature_engineer_result_pb2.FeatureBinningResult(iv_result=iv_attrs,
-    #                                                                   cols=self.cols)
-    #
-    #     serialize_str = result_obj.SerializeToString()
-    #     meta_table = eggroll.parallelize([(1, serialize_str)],
-    #                                      include_key=True,
-    #                                      name=self.bin_param.result_table,
-    #                                      namespace=self.bin_param.result_namespace,
-    #                                      error_if_exist=False,
-    #                                      persistent=True
-    #                                      )
-    #     LOGGER.info("Model saved, table: {}, namespace: {}".format(self.bin_param.result_table,
-    #                                                                self.bin_param.result_namespace))
-    #     return meta_table
-    #
-    # def load_model(self, model_table, model_namespace):
-    #     model = eggroll.table(model_table, model_namespace)
-    #     model_local = model.collect()
-    #     try:
-    #         serialize_str = model_local.__next__()[1]
-    #     except StopIteration:
-    #         LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-    #             model_namespace, model_table
-    #         ))
-    #         return
-    #     results = feature_engineer_result_pb2.FeatureBinningResult()
-    #     results.ParseFromString(serialize_str)
-    #     self.iv_attrs = []
-    #     for iv_dict in list(results.iv_result):
-    #         iv_attr = IVAttributes([], [], [], [], [], [], [])
-    #         iv_attr.reconstruct(iv_dict)
-    #         self.iv_attrs.append(iv_attr)
-    #
-    #     self.cols = list(results.cols)
-
     def _save_meta(self, name, namespace):
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
             method=self.bin_param.method,
@@ -178,7 +131,7 @@ class HeteroFeatureBinningHost(object):
 
         iv_attrs = []
         for idx, iv_attr in enumerate(self.iv_attrs):
-            LOGGER.debug("{}th iv attr: {}".format(idx, iv_attr.__dict__))
+            # LOGGER.debug("{}th iv attr: {}".format(idx, iv_attr.__dict__))
             iv_result = iv_attr.result_dict()
             iv_object = feature_binning_param_pb2.IVParam(**iv_result)
 

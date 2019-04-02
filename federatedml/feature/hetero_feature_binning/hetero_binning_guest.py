@@ -90,7 +90,7 @@ class HeteroFeatureBinningGuest(object):
         result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
         host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
         self.host_iv_attrs = host_iv_attrs
-        LOGGER.debug("Lenght of host iv attrs: {}".format(len(self.host_iv_attrs)))
+        # LOGGER.debug("Lenght of host iv attrs: {}".format(len(self.host_iv_attrs)))
         # for idx, col in enumerate(self.cols):
         #     LOGGER.info("The local iv of {}th feature is {}".format(col, local_iv[idx].iv))
 
@@ -233,7 +233,7 @@ class HeteroFeatureBinningGuest(object):
     def __synchronize_encryption(self):
         pub_key = self.encryptor.get_public_key()
         pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
-        LOGGER.debug("pubkey_id is : {}".format(pubkey_id))
+        # LOGGER.debug("pubkey_id is : {}".format(pubkey_id))
         federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
                           tag=pubkey_id, role=consts.HOST, idx=0)
         LOGGER.info("send pubkey to host")

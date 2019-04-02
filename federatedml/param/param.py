@@ -29,7 +29,7 @@ class DataIOParam(object):
 
     Parameters
     ----------
-    input_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
+    input_format : str, accepted 'dense','sparse' 'tag' only in this version. default: 'dense'
 
     delimitor : str, the delimitor of data input, default: ','
 
@@ -38,8 +38,20 @@ class DataIOParam(object):
 
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
-    default_value : object, accepted all python supported value type, will raise error if
-                   type not consist with data_type, default: 0
+    default_value : None or list,  element of list can be any type, which values should be regard as missing value,
+                    default: None
+
+    missing_fill_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
+
+    missing_impute: None or list, auto generated
+
+    outlier_replace: bool, need to replace outlier value or not, accepted only True/False, default: True
+
+    outlier_replace_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
+   
+    outlier_impute: None or list,  element of list can be any type, which values should be regard as missing value, default: None
+
+    outlier_replace_value: None or list, auto generated
 
     with_label : bool, True if input data consist of label, False otherwise. default: 'false'
 

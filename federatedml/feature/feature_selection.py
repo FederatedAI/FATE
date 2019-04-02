@@ -31,7 +31,21 @@ LOGGER = log_utils.getLogger()
 
 
 class FilterMethod(object):
-    def filter(self, data_instances): pass
+    def filter(self, data_instances):
+        """
+        Filter data_instances for the specified columns
+
+        Parameters
+        ----------
+        data_instances : DTable,
+            Input data
+
+        Returns
+        -------
+        A list of index of columns left.
+
+        """
+        pass
 
 
 # class FilterResult(object):
@@ -108,9 +122,20 @@ class UniqueValueFilter(FilterMethod):
 
 class IVValueSelectFilter(FilterMethod):
     """
+    Drop the columns if their iv is smaller than a threshold
+
+    Parameters
+    ----------
+    param : IVSelectionParam object,
+            Parameters that user set.
+
+    cols : int or list of int
+            Specify which column(s) need to apply binning. -1 means do binning for all columns.
+
+    iv_attrs : list of IVAttributes object, default: None
+            If provided, the filter method will omit binning method and used the given IVAttributes instead.
 
     """
-
     def __init__(self, param, select_cols, iv_attrs=None):
         self.value_threshold = param.value_threshold
         self.select_cols = select_cols
@@ -147,6 +172,17 @@ class IVValueSelectFilter(FilterMethod):
 
 
 class IVPercentileFilter(FilterMethod):
+    """
+    Drop the columns if their iv is smaller than a threshold of percentile.
+
+    Parameters
+    ----------
+    param : IVSelectionParam object,
+            Parameters that user set.
+
+    cols : int or list of int
+            Specify which column(s) need to apply binning. -1 means do binning for all columns.
+    """
     def __init__(self, iv_param, cols=None):
         self.iv_param = iv_param
         self.percentile_thres = iv_param.percentile_threshold
@@ -169,6 +205,15 @@ class IVPercentileFilter(FilterMethod):
         self.all_iv_attrs.append(iv_attrs)
 
     def filter_multiple_parties(self, data_instances=None):
+        """
+        Used in federated iv filtering. This function will put iv of both guest and host party together, and judge
+        which columns satisfy the parameters setting. For example, if percentile has been set as 0.8, and there are
+        20 features in guest and 20 in host. This filter gonna sort these 40 features' iv and pick
+        floor((20 + 20) * 0.8) = 32nd highest iv as value threshold and then put into IV value filter.
+
+        Therefore, the number of left columns maybe larger than floor(total_iv * percentile) if multiple columns of
+        iv are same.
+        """
         if len(self.all_iv_attrs) == 0 and data_instances is None:
             raise RuntimeError("In iv value filter, iv_attrs and data_instances cannot be None simultaneously")
 
