@@ -1,9 +1,12 @@
 {
     "DataIOParam": {
+        "input_format": "dense",
+        "missing_fill": true,
+        "outlier_replace": false,
         "with_label": true,
         "label_idx": 0,
         "label_type": "int",
-        "output_format": "sparse"
+        "output_format": "dense"
     },
     "WorkFlowParam": {
         "method": "cross_validation",
@@ -53,23 +56,35 @@
         "batch_size": 320,
         "learning_rate": 0.01
     },
+    "SampleParam": {
+        "mode": "random",
+        "method": "downsample",
+        "fractions": 0.9
+    },
+    "ObjectiveParam": {   
+        "objective": "cross_entropy",
+        "params": [1.5]
+    },
     "DecisionTreeParam": {
         "criterion_method": "xgboost",
-        "criterion_params": [0.3],
+        "criterion_params": [0.1],
         "max_depth": 5,
         "min_sample_split": 2,
-        "min_impurity_split": 1e-3,
-        "n_iter_no_change": true,
-        "tol": 0.0001 
+        "min_leaf_node": 1,
+        "min_impurity_split": 0.001,
+        "max_split_nodes": 1024
     },
     "BoostingTreeParam": {
-        "loss_type": "cross_entropy",
-        "learning_rate": 0.15,
-        "num_trees": 10,
-        "subsample_feature_rate": 0.8,
-        "n_iter_no_change": true,
+        "task_type": "classification",
+        "learning_rate": 0.1,
+        "num_trees": 2,
+        "subsample_feature_rate": 1,
+        "n_iter_no_change": false,
         "tol": 0.0001,
-        "metrics": ["auc", "precision", "recall"]
+        "quantile_method": "bin_by_sample_data",
+        "bin_num": 50,
+        "bin_gap": 0.000001,
+        "bin_sample_num": 150000
     },
     "IntersectParam": {
         "intersect_method": "rsa",
