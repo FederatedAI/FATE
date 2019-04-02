@@ -854,12 +854,10 @@ class FeatureSelectionParam(object):
             Filter those columns whose iv is smaller than threshold.
 
         iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
-            need to be provided. Pick floor(ratio * feature_num) features with higher iv.
+            need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
+            the threshold are same, all those columns will be keep.
 
         coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
-
-        coefficient_of_variation_percentile: Pick floor(ratio * feature_num) features with higher coefficient of
-                                variation (which means filter the rest)
 
         outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
 

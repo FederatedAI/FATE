@@ -213,6 +213,19 @@ class IVPercentileFilter(FilterMethod):
 
         Therefore, the number of left columns maybe larger than floor(total_iv * percentile) if multiple columns of
         iv are same.
+
+        Besides, if only iv attrs of one party has been provided. This function also works as normal filter.
+
+        Parameters
+        ----------
+        data_instances : DTable,
+            Input data
+
+        Returns
+        -------
+        left_cols : List,
+            Contains the left cols of both parties. E.g. [[0,2,3,4], [2,3,5,6]]. The first element in list represent
+            for left columns of guest and the second one represent for host.
         """
         if len(self.all_iv_attrs) == 0 and data_instances is None:
             raise RuntimeError("In iv value filter, iv_attrs and data_instances cannot be None simultaneously")
@@ -248,11 +261,11 @@ class IVPercentileFilter(FilterMethod):
         thres_idx = int(math.floor(self.percentile_thres * len(all_ivs)))
         if thres_idx == len(all_ivs):
             thres_idx -= 1
-        LOGGER.debug("In feature_selection, all ivs are: {}".format(all_ivs))
-        LOGGER.debug("In feature_selection, thres idx is: {}".format(thres_idx))
+        # LOGGER.debug("In feature_selection, all ivs are: {}".format(all_ivs))
+        # LOGGER.debug("In feature_selection, thres idx is: {}".format(thres_idx))
 
         thres_iv = all_ivs[thres_idx]
-        LOGGER.debug("In _get_real_iv_thres, thres_iv is :{}".format(thres_iv))
+        # LOGGER.debug("In _get_real_iv_thres, thres_iv is :{}".format(thres_iv))
         return thres_iv
 
     def to_result(self):
