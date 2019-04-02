@@ -44,10 +44,8 @@ public class RandomUtils {
     }
 
     public int nextInt(int lowerBoundInclusive, int higherBoundInclusive) {
-        Preconditions.checkArgument(lowerBoundInclusive <= higherBoundInclusive, "lower bound must be less than or equal to higher bound");
-        if (lowerBoundInclusive == higherBoundInclusive) {
-            return lowerBoundInclusive;
-        }
+        Preconditions.checkArgument(lowerBoundInclusive < higherBoundInclusive, "lower bound must be less than or equal to higher bound");
+
         return lowerBoundInclusive + RANDOM.nextInt(higherBoundInclusive - lowerBoundInclusive);
     }
 
@@ -60,10 +58,8 @@ public class RandomUtils {
     }
 
     public long nextLong(long lowerBoundInclusive, long higherBoundInclusive) {
-        Preconditions.checkArgument(lowerBoundInclusive <= higherBoundInclusive, "lower bound must be less than or equal to higher bound");
-        if (lowerBoundInclusive == higherBoundInclusive) {
-            return lowerBoundInclusive;
-        }
+        Preconditions.checkArgument(lowerBoundInclusive < higherBoundInclusive, "lower bound must be less than or equal to higher bound");
+
         return (long) nextDouble((double) lowerBoundInclusive, (double) higherBoundInclusive);
     }
 
@@ -76,10 +72,8 @@ public class RandomUtils {
     }
 
     public double nextDouble(double lowerBoundInclusive, double higherBoundInclusive) {
-        Preconditions.checkArgument(lowerBoundInclusive <= higherBoundInclusive, "lower bound must be less than or equal to higher bound");
-        if (lowerBoundInclusive == higherBoundInclusive) {
-            return lowerBoundInclusive;
-        }
+        Preconditions.checkArgument(lowerBoundInclusive < higherBoundInclusive, "lower bound must be less than or equal to higher bound");
+
         return lowerBoundInclusive + (higherBoundInclusive - lowerBoundInclusive) * RANDOM.nextDouble();
     }
 
@@ -92,10 +86,8 @@ public class RandomUtils {
     }
 
     public float nextFloat(float lowerBoundInclusive, float higherBoundInclusive) {
-        Preconditions.checkArgument(lowerBoundInclusive <= higherBoundInclusive, "lower bound must be less than or equal to higher bound");
-        if (lowerBoundInclusive == higherBoundInclusive) {
-            return lowerBoundInclusive;
-        }
+        Preconditions.checkArgument(lowerBoundInclusive < higherBoundInclusive, "lower bound must be less than or equal to higher bound");
+
         return lowerBoundInclusive + (higherBoundInclusive - lowerBoundInclusive) * RANDOM.nextFloat();
     }
 

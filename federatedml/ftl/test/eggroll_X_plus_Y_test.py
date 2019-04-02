@@ -14,13 +14,11 @@
 #  limitations under the License.
 #
 
-import unittest
-
 import numpy as np
-
-from arch.api.eggroll import init
+import unittest
 from federatedml.ftl.eggroll_computation.helper import compute_X_plus_Y
 from federatedml.ftl.test.util import assert_matrix
+from arch.api.eggroll import init
 
 
 class TestSum(unittest.TestCase):
@@ -53,3 +51,4 @@ class TestSum(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
+

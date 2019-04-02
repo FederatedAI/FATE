@@ -24,18 +24,13 @@
 # =============================================================================
 # Boostring Tree
 # =============================================================================
-import numpy as np
-from federatedml.util import BoostingTreeParamChecker
-from federatedml.util import consts
-from federatedml.feature.sparse_vector import SparseVector
 
 
 class BoostingTree(object):
     def __init__(self, boostingtree_param):
-        BoostingTreeParamChecker.check_param(boostingtree_param)  
         self.tree_param = boostingtree_param.tree_param
         self.task_type = boostingtree_param.task_type
-        self.objective_param = boostingtree_param.objective_param
+        self.loss_type = boostingtree_param.loss_type
         self.learning_rate = boostingtree_param.learning_rate
         self.num_trees = boostingtree_param.num_trees
         self.subsample_feature_rate = boostingtree_param.subsample_feature_rate
@@ -46,32 +41,6 @@ class BoostingTree(object):
         self.bin_num = boostingtree_param.bin_num
         self.bin_gap = boostingtree_param.bin_gap
         self.bin_sample_num = boostingtree_param.bin_sample_num
-
-    @staticmethod
-    def data_format_transform(row):
-        if type(row.features).__name__ != consts.SPARSE_VECTOR:
-            feature_shape = row.features.shape[0]
-            indices = []
-            data = []
-
-            for i in range(feature_shape):
-                if np.abs(row.features[i]) < consts.FLOAT_ZERO:
-                    continue
-
-                indices.append(i)
-                data.append(row.features[i])
-
-            row.features = SparseVector(indices, data, feature_shape)
-
-        return row
-
-    def data_alignment(self, data_inst):
-        if data_inst is None:
-            return data_inst
-
-        new_data_inst = data_inst.mapValues(lambda row: BoostingTree.data_format_transform(row))
-
-        return new_data_inst
 
     def fit(self, data_inst):
         pass

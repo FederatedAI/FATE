@@ -16,47 +16,57 @@
 
 package com.webank.ai.fate.eggroll;
 
-import com.webank.ai.fate.core.factory.DefaultGrpcServerFactory;
-import com.webank.ai.fate.core.server.DefaultServerConf;
-import com.webank.ai.fate.eggroll.egg.api.grpc.server.NodeServiceImpl;
-import com.webank.ai.fate.eggroll.egg.node.manager.ProcessorManager;
+import com.webank.ai.fate.eggroll.egg.api.grpc.server.DummyProcessorServiceImpl;
+import com.webank.ai.fate.eggroll.storage.service.manager.LMDBStoreManager;
+import com.webank.ai.fate.eggroll.storage.service.server.LMDBServicer;
+import com.webank.ai.fate.eggroll.storage.service.server.ObjectStoreServicer;
 import io.grpc.Server;
-import org.apache.commons.cli.CommandLine;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import static com.webank.ai.fate.core.server.BaseFateServer.parseArgs;
+import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptors;
+import org.apache.commons.cli.*;
 
 
 public class Egg {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static void main(String[] args) throws Exception {
-        String confFilePath = null;
-        CommandLine cmd = parseArgs(args);
+        Options options = new Options();
+        Option serverPortOption = Option.builder("s")
+                .longOpt("server-port")
+                .argName("port")
+                .numberOfArgs(1)
+                .required()
+                .desc("port for the service")
+                .build();
 
-        if (cmd == null) {
-            return;
-        }
+        Option dataDirOption = Option.builder("d")
+                .longOpt("data-dir")
+                .argName("path")
+                .numberOfArgs(1)
+                .desc("directory to store data")
+                .build();
 
-        confFilePath = cmd.getOptionValue("c");
+        Option helpOption = Option.builder("h")
+                .longOpt("help")
+                .desc("print this message")
+                .build();
 
-        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext-egg.xml");
+        options.addOption(serverPortOption)
+                .addOption(dataDirOption)
+                .addOption(helpOption);
 
-        DefaultGrpcServerFactory serverFactory = context.getBean(DefaultGrpcServerFactory.class);
-        DefaultServerConf serverConf = (DefaultServerConf) serverFactory.parseConfFile(confFilePath);
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
 
-        NodeServiceImpl nodeService = context.getBean(NodeServiceImpl.class);
+        int serverPort = Integer.valueOf(cmd.getOptionValue("s"));
+        String dataDir = cmd.getOptionValue("d");
 
-        ProcessorManager processorManager = context.getBean(ProcessorManager.class);
-        processorManager.getAllPossible();
+        DummyProcessorServiceImpl processorService = new DummyProcessorServiceImpl();
+        LMDBServicer objectStoreServicer = new LMDBServicer(new LMDBStoreManager(dataDir));
 
-        serverConf
-                .addService(nodeService);
+        Server server = ServerBuilder.forPort(serverPort)
+                .addService(ServerInterceptors.intercept(processorService, new ObjectStoreServicer.KvStoreInterceptor()))
+                .addService(ServerInterceptors.intercept(objectStoreServicer, new LMDBServicer.KvStoreInterceptor()))
+                .maxInboundMessageSize(32 * 1024 * 1024).build();
 
-        Server server = serverFactory.createServer(serverConf);
 
         server.start();
         server.awaitTermination();

@@ -209,18 +209,8 @@ APIs are interfaces exposed by the whole running architecture. Algorithm enginee
     "federation": {
       "host": "localhost",  # ip address of federation module
       "port": 9394          # port of federation module
-    },
-	"manager": {             
-		"host": "localhost", # ip address of task_manager
-		"grpc.port": 9360,   # grpc port of task_manager
-		"http.port": 9380    # http port of task_manager
-	},
-	"proxy": {
-		"host": "localhost", # ip address of proxy module
-		"port": 9370         # port address of proxy module
-	}
-  },
-	"party_id": 9999        # local party id
+    }
+  }
 }
 ```
 

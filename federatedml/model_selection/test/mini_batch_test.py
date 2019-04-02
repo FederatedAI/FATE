@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 
 from arch.api import eggroll
-from federatedml.feature.instance import Instance
+from federatedml.feature import Instance
 from federatedml.model_selection import MiniBatch
 from federatedml.model_selection import indices
 

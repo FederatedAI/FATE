@@ -15,7 +15,6 @@
 #
 
 import numpy as np
-
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
@@ -24,14 +23,12 @@ from federatedml.optim.convergence import DiffConverge
 from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.util import HeteroLRTransferVariable
 from federatedml.util import consts
-# from federatedml.util import LogisticParamChecker
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroLRArbiter(BaseLogisticRegression):
     def __init__(self, logistic_params):
-        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRArbiter, self).__init__(logistic_params)
         self.converge_func = DiffConverge(logistic_params.eps)
 
@@ -42,29 +39,7 @@ class HeteroLRArbiter(BaseLogisticRegression):
         self.optimizer = Optimizer(logistic_params.learning_rate, logistic_params.optimizer)
         self.key_length = logistic_params.encrypt_param.key_length
 
-    def perform_subtasks(self, **training_info):
-        """
-        performs any tasks that the arbiter is responsible for.
-
-        This 'perform_subtasks' function servers as a handler on conducting any task that the arbiter is responsible
-        for. For example, for the 'perform_subtasks' function of 'HeteroDNNLRArbiter' class located in
-        'hetero_dnn_lr_arbiter.py', it performs some works related to updating/training local neural networks of guest
-        or host.
-
-        For this particular class (i.e., 'HeteroLRArbiter') that serves as a base arbiter class for neural-networks-based
-        hetero-logistic-regression model, the 'perform_subtasks' function will do nothing. In other words, no subtask is
-        performed by this arbiter.
-
-        :param training_info: a dictionary holding training information
-        """
-        pass
-
     def fit(self, data_instance=None):
-        if data_instance:
-            self.header = data_instance.schema.get('header')
-        else:
-            self.header = []
-
         # Generate encrypt keys
         self.encrypt_operator.generate_key(self.key_length)
         public_key = self.encrypt_operator.get_public_key()
@@ -143,9 +118,6 @@ class HeteroLRArbiter(BaseLogisticRegression):
                                   role=consts.GUEST,
                                   idx=0)
                 LOGGER.info("Remote guest_optim_gradient to Guest")
-
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.perform_subtasks(**training_info)
 
                 loss = federation.get(name=self.transfer_variable.loss.name,
                                       tag=self.transfer_variable.generate_transferid(

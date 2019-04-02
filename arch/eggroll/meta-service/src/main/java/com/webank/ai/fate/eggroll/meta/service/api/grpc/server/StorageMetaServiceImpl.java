@@ -230,59 +230,6 @@ public class StorageMetaServiceImpl extends StorageMetaServiceGrpc.StorageMetaSe
     }
 
     @Override
-    public void getTables(BasicMeta.CallRequest request, StreamObserver<BasicMeta.CallResponse> responseObserver) {
-        LOGGER.info("getTable: {}", toStringUtils.toOneLineString(request));
-
-        dtableGrpcCrudService.processCrudRequest(request, responseObserver, new CrudServerProcessor<List<Dtable>>() {
-            @Override
-            public List<Dtable> process(Object record) throws CrudException {
-                GenericDaoService genericDaoService = dtableGrpcCrudService.getGenericDaoService();
-                Dtable result = null;
-
-                if (record == null) {
-                    throw new CrudException(100, "input parameter cannot be null");
-                }
-
-                Dtable dtable = (Dtable) record;
-
-                DtableExample example = new DtableExample();
-                DtableExample.Criteria criteria = example.createCriteria().andStatusEqualTo(DtableStatus.NORMAL.name());
-
-                String namespace = dtable.getNamespace();
-                if (StringUtils.isNotBlank(namespace)) {
-                    criteria.andNamespaceEqualTo(namespace);
-                }
-
-                String tableName = dtable.getTableName();
-                if (StringUtils.isNotBlank(tableName)) {
-                    String tableNameMatch = StringUtils.replace(tableName, "*", "%");
-                    criteria.andTableNameLikeInsensitive(tableNameMatch);
-                }
-
-                String tableType = dtable.getTableType();
-                if (StringUtils.isNotBlank(tableType)) {
-                    criteria.andTableTypeEqualTo(tableType);
-                }
-
-                List callResult = genericDaoService.selectByExample(example);
-                List<Dtable> selectResult = (List<Dtable>) callResult;
-
-                return selectResult;
-            }
-
-            @Override
-            public boolean isValid(List<Dtable> result) {
-                return result != null;
-            }
-
-            @Override
-            public Object pickResult(Object originalRecord, Object callResult) {
-                return callResult;
-            }
-        });
-    }
-
-    @Override
     public void getFragmentsByTableId(BasicMeta.CallRequest request, StreamObserver<BasicMeta.CallResponse> responseObserver) {
         LOGGER.info("getFragmentsByTableId: {}", toStringUtils.toOneLineString(request));
 
@@ -368,45 +315,6 @@ public class StorageMetaServiceImpl extends StorageMetaServiceGrpc.StorageMetaSe
             @Override
             public boolean isValid(List<Node> result) {
                 return result != null;
-            }
-
-            @Override
-            public Object pickResult(Object originalRecord, Object callResult) {
-                return callResult;
-            }
-        });
-    }
-
-    @Override
-    public void getEggNodeManagerByIp(BasicMeta.CallRequest request, StreamObserver<BasicMeta.CallResponse> responseObserver) {
-        LOGGER.info("getComputingNodeManagerByIp. request: {}", toStringUtils.toOneLineString(request));
-
-        nodeGrpcCrudService.processCrudRequest(request, responseObserver, new CrudServerProcessor<Node>() {
-            @Override
-            public Node process(Object record) throws CrudException {
-                GenericDaoService nodeDaoService = nodeGrpcCrudService.getGenericDaoService();
-
-                Node result = null;
-                String ip = (String) record;
-
-                NodeExample nodeExample = new NodeExample();
-                nodeExample.createCriteria()
-                        .andTypeEqualTo(NodeType.EGG.name())
-                        .andStatusEqualTo(NodeStatus.HEALTHY.name())
-                        .andIpEqualTo(ip);
-
-                List<Node> results = nodeDaoService.selectByExampleWithRowbounds(nodeExample, CrudUtils.ROWBOUNDS_ZERO_TO_ONE);
-
-                if (!results.isEmpty()) {
-                    result = results.get(0);
-                }
-
-                return result;
-            }
-
-            @Override
-            public boolean isValid(Node result) {
-                return true;
             }
 
             @Override

@@ -72,7 +72,7 @@ We have also provided example management scripts to run these services. Users ca
 
 ```
 mkdir -p ${path-to-example-dir-tree}/python
-git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEAD) arch/api arch/processor federatedml workflow examples
+git archive -o ${path-to-example-dir-tree}/python/python.tar $(git rev-parse HEAD) arch/api federatedml workflow examples
 cd ${path-to-example-dir-tree}/python
 tar -xf python.tar
 ```
@@ -90,10 +90,7 @@ Users can find a detailed configuration document in
 #enter virtual env fisrt
 (venv) $ pip install -r requirements.txt
 (venv) $ export PYTHONPATH=${path-to-example-dir-tree}/python
-# run processor
 (venv) $ python ${path-to-example-dir-tree}/python/processor/processor.py 2>&1 > ${path-to-example-dir-tree}/python/processor.out &
-# run task_manager
-(venv) $ python ${path-to-example-dir-tree}/python/task_manager/manager.py 2>&1 > ${path-to-example-dir-tree}/python/manager.out &
 ```
 
 
@@ -143,7 +140,6 @@ deploy-dir
 |    |  |- api/
 |    |  |- conf/
 |    |  |- processor/
-|    |  |- task_manager/
 |    |
 |    |- federatedml/
 |    |- examples/

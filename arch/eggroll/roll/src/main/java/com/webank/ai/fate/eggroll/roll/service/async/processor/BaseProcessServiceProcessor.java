@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.eggroll.roll.service.async.processor;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.EggProcessServiceClient;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -28,11 +28,11 @@ import java.util.concurrent.Callable;
 public abstract class BaseProcessServiceProcessor<R, E> implements Callable<E> {
     protected EggProcessServiceClient eggProcessServiceClient;
     protected R request;
-    protected BasicMeta.Endpoint processorEndpoint;
+    protected Node node;
 
-    public BaseProcessServiceProcessor(EggProcessServiceClient eggProcessServiceClient, R request, BasicMeta.Endpoint processorEndpoint) {
+    public BaseProcessServiceProcessor(EggProcessServiceClient eggProcessServiceClient, R request, Node node) {
         this.eggProcessServiceClient = eggProcessServiceClient;
         this.request = request;
-        this.processorEndpoint = processorEndpoint;
+        this.node = node;
     }
 }

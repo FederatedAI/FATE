@@ -63,12 +63,12 @@
             <property name="immutable" value="false"/>
         </javaModelGenerator>
         <!-- generated mapping package and location -->
-        <!--        <sqlMapGenerator targetPackage="com.webank.ai.fdn.eggroll.data_util.dao.generated.mapper" targetProject="${target.project}/src/main/java">
+        <!--        <sqlMapGenerator targetPackage="com.webank.ai.fdn.eggroll.common.dao.generated.mapper" targetProject="${target.project}/src/main/java">
                     <property name="enableSubPackages" value="true"/>
                     <property name="trimStrings" value="true" />
                 </sqlMapGenerator>-->
         <!-- generated DAO package and locations -->
-        <!--        <javaClientGenerator type="XMLMAPPER" targetPackage="com.webank.ai.fdn.eggroll.data_util.dao.generated.mapper" targetProject="${target.project}/src/main/java">
+        <!--        <javaClientGenerator type="XMLMAPPER" targetPackage="com.webank.ai.fdn.eggroll.common.dao.generated.mapper" targetProject="${target.project}/src/main/java">
                     <property name="enableSubPackages" value="true"/>
                     <property name="trimStrings" value="true" />
                 </javaClientGenerator>-->

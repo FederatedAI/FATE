@@ -1,41 +1,38 @@
-# Federated Logistic Regression
+### Federated Logistic Regression
 
-Logistic Regression(LR) is a widely used statistic model for classification problems. FATE provided two kinds of federated LR: Homogeneous LR (HomoLR) and Heterogeneous LR (HeteroLR). 
+Logistic Regression(LR) is a widely used statistic model for classification problems. FATE has provided two kinds of federated
+LR which are Homogeneous LR(HomoLR) and Heterogeneous LR(HeteroLR). 
 
-We simplified the federation process into three parties. Party A represents Guest， party B represents Host while party C, which also known as "Arbiter", is a third party that holds a private key for each party and work as a coordinator. 
+We simplified the federation process into three parties.
+Party A represent to Guest which holds the label in Hetero mode. Party B represent to Host. Party C, which also known as "Arbiter",
+ is a third party that holds the private key for each party and work as a coordinator. 
  
-## 1. Homogeneous LR 
+As the name suggested, in HomoLR, the feature spaces in guest and hosts are identity. An optional encryption mode for gradient
+are provided for host parties. By doing this, the plainted model is not available for this host any more. 
 
-As the name suggested, in HomoLR, the feature spaces of guest and hosts are identical. An optional encryption mode for computing gradients is provided for host parties. By doing this, the plain model is not available for this host any more. 
+On the other hands, in Hetero mode, parties should have enough amount of same
+sample ids. The combination of each sub-model form a completed model. 
+
+The following two figures can shown the principle of Federated LR.
 
 <div style="text-align:center", align=center>
 <img src="./images/HomoLR.png" alt="samples" width="500" height="250" /><br/>
 Figure 1： Federated HomoLR Principle</div> 
 
-The HomoLR process is shown in Figure 1. Models of Party A and Party B have the same structure.
-In each iteration, each party trains its model on its own data. After that, all parties upload their encrypted (or plain, depends on your configuration) gradients to arbiter. The arbiter aggregates these gradients to form a federated gradient that will then be distributed to all parties for updating their local models. Similar to traditional LR, the training process will stop when the federated model converges or the whole training process reaches a predefined max-iteration threshold. More details is available in this [paper](https://dl.acm.org/citation.cfm?id=3133982)
-
-## 2. Heterogeneous LR 
-
-The HeteroLR carries out the federated learning in a different way. As shown in Figure 2, A sample alignment process is conducted before training. This sample alignment process is to identify overlapping samples stored in databases of the two involved parties. The federated model is built based on those overlapping samples. The whole sample alignment process will **not** leak confidential information (e.g., sample ids) on the two parties since it is conducted in an encrypted way. Check out [paper](https://arxiv.org/abs/1711.10677) for more details. 
+The HomoLR process can be shown as above figure, Party A and Party B has same structure of model.
+In each iteration, each party train model among their own data. After that, they upload their
+encrypted(or not, depends on your configuration) gradient to arbiter. The arbiter will aggregate these gradients to form
+a federated gradient with which the parties can update their model. Just like the traditional LR, the fitting stop when 
+model converge or reach the max iterations. More details is available in this [paper](https://dl.acm.org/citation.cfm?id=3133982)
 
  <div style="text-align:center", align=center>
-<img src="./images/HeteroLR.png" alt="samples" width="500" height="300" /><br/>
-Figure 2： Federated HeteroLR Principle
-</div>
+<img src="./images/HeteroLR.png" alt="samples" width="500" height="250" /><br/>
+Figure 2： Federated HeteroLR Principle</div>
 
-In the training process, party A and party B compute out the elements needed for final gradients. Arbiter aggregate them and compute
+The HeteroLR federated parties in a different way. As the figure shown, An intersect process are required before training 
+the model. The process is to find out the intersect part among their database. The model are built base on this intersect part.
+The intersect process will **not** leakage the sample ids between the parties since the are process in encrypted way. Check out
+the paper for more details. 
+
+In the fitting process, party A and party B compute out the elements needed for final gradients. Arbiter aggregate them and compute
 out the gradient and then transfer back to each party. Check out the [paper](https://arxiv.org/abs/1711.10677) for more details.
-
-## 3. Heterogeneous LR with Neural Network
-
-The heteroLR algorithm described in section 2 requires the input data to be given in tabular form. This requirement limits the application of the heteroLR algorithm. To address this issue to some extent, we extend the original heteroLR by adding neural networks in the loop. 
-
-<div style="text-align:center", align=center>
-<img src="./images/HeteroLR-NN.png" alt="architecture" width="550" height="350" />
-<br/>
-Figure 3: Federated HeteroLR with Neural Network Principle </div>
-
-As shown in Figure 3, neural networks are added between the raw input data and the LR model serving as feature extractors that extract representative features from raw input data of various types. Neural networks can be CNN for processing images, RNN for processing text, autoencoder for processing general numerical vectors and many others. Currently we only support autoencoder in this algorithm. We will add other models in the near future.
-
-

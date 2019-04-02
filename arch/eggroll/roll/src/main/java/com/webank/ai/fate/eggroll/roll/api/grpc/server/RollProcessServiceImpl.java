@@ -18,7 +18,6 @@ package com.webank.ai.fate.eggroll.roll.api.grpc.server;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.processor.ProcessServiceGrpc;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.Kv;
@@ -42,7 +41,6 @@ import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.EggProcessServiceClient;
 import com.webank.ai.fate.eggroll.roll.factory.RollGrpcObserverFactory;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
-import com.webank.ai.fate.eggroll.roll.helper.NodeHelper;
 import com.webank.ai.fate.eggroll.roll.service.async.processor.*;
 import com.webank.ai.fate.eggroll.roll.service.handler.ProcessServiceResultHandler;
 import com.webank.ai.fate.eggroll.roll.util.RollServerUtils;
@@ -89,8 +87,6 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
     private EggProcessServiceClient eggProcessServiceClient;
     @Autowired
     private RollServerUtils rollServerUtils;
-    @Autowired
-    private NodeHelper nodeHelper;
 
     @PostConstruct
     public void init() {
@@ -174,6 +170,17 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
                         rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
     }
 
+    private Map<Long, Node> getStorageNodeIdToNodes(Long nodeId) {
+        Map<Long, Node> result = Maps.newHashMap();
+        List<Node> nodes = storageMetaClient.getStorageNodesByTableId(nodeId);
+
+        for (Node node : nodes) {
+            result.put(node.getNodeId(), node);
+        }
+
+        return result;
+    }
+
     private Map<String, List<Node>> getEggTargetToNodes() {
         Map<String, List<Node>> result = Maps.newConcurrentMap();
 
@@ -249,7 +256,7 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
             final List<I> results = Collections.synchronizedList(Lists.newArrayList());
 
             Long tableId = dtable.getTableId();
-            Map<Long, Node> storageNodeIdToNode = nodeHelper.getNodeIdToStorageNodesOfTable(tableId);
+            Map<Long, Node> storageNodeIdToNode = getStorageNodeIdToNodes(tableId);
             Map<String, List<Node>> eggTargetToNodes = getEggTargetToNodes();
 
             final List<Fragment> fragments = storageMetaClient.getFragmentsByTableId(tableId);
@@ -269,21 +276,18 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
                         storeInfoWithFragment, fragmentNodeId, storageNode, target);
 
                 // get egg nodes whose ip is the same as storage
-
-                /*List<Node> eggPossibleNodes = eggTargetToNodes.get(target);
+                List<Node> eggPossibleNodes = eggTargetToNodes.get(target);
                 if (eggPossibleNodes == null || eggPossibleNodes.isEmpty()) {
                     throw new ProcessorStateException("no valid egg for storeInfo: " + storeInfoWithFragment);
                 }
 
+                // todo: scheduler: should become a module later
                 int i = 0;
                 if (eggPossibleNodes.size() > 1) {
                     i = randomUtils.nextInt(0, eggPossibleNodes.size());
                 }
 
-                Node selectedEggNode = eggPossibleNodes.get(i);*/
-
-                // todo: scheduler: should become a module later
-                BasicMeta.Endpoint selectedEggProcessor = nodeHelper.getProcessorEndpoint(target);
+                Node selectedEggNode = eggPossibleNodes.get(i);
 
                 // fill the fragment into the parameter
                 R dispatchRequest = buildDispatchRequest(request, fragment);
@@ -291,12 +295,12 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
                 // create processor
                 BaseProcessServiceProcessor<R, I> processor
                         = rollModelFactory.createBaseProcessServiceProcessor(
-                        processServiceProcessorClass, eggProcessServiceClient, dispatchRequest, selectedEggProcessor);
+                        processServiceProcessorClass, eggProcessServiceClient, dispatchRequest, selectedEggNode);
 
                 ListenableFuture<I> resultFuture = asyncThreadPool.submitListenable(processor);
                 resultFuture.addCallback(rollModelFactory
                         .createDefaultRollProcessListenableCallback(
-                                results, subTaskThrowables, finishLatch, selectedEggProcessor.getIp(), selectedEggProcessor.getPort()));
+                                results, subTaskThrowables, finishLatch, selectedEggNode.getIp(), selectedEggNode.getPort()));
                 resultFutures.add(resultFuture);
             }
 

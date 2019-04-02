@@ -7,17 +7,6 @@
 		"federation": {
 			"host": "localhost",
 			"port": 9394
-		},
-		"manager": {
-			"host": "localhost",
-			"grpc.port": 9360,
-			"http.port": 9380,
-			"work_mode": 0
-		},
-		"proxy": {
-			"host": "localhost",
-			"port": 9370
 		}
-	},
-	"party_id": 9999
+	}
 }

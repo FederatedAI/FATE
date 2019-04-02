@@ -20,19 +20,16 @@ import random
 from arch.api.federation import remote, get
 from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
-from federatedml.statistic.intersect import RawIntersect
-from federatedml.statistic.intersect import RsaIntersect
+from federatedml.statistic.intersect import Intersect
 from federatedml.util import consts
-# from federatedml.util import IntersectParamChecker
+from federatedml.util.transfer_variable import RawIntersectTransferVariable
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class RsaIntersectionGuest(RsaIntersect):
+class RsaIntersectionGuest(Intersect):
     def __init__(self, intersect_params):
-        super().__init__(intersect_params)
-
         self.send_intersect_id_flag = intersect_params.is_send_intersect_ids
         self.random_bit = intersect_params.random_bit
 
@@ -115,16 +112,12 @@ class RsaIntersectionGuest(RsaIntersect):
         table_guest_ids_process_final_sid = table_sid_guest_ids_process_final.map(
             lambda k, v: (v, k))
 
-        # intersect table(hash(guest_ids_process/r), sid)
-        table_encrypt_intersect_ids = table_guest_ids_process_final_sid.join(table_host_ids_process, lambda sid, h: sid)
-
-        # intersect table(hash(guest_ids_process/r), 1)
-        table_send_intersect_ids = table_encrypt_intersect_ids.mapValues(lambda v: 1)
+        table_intersect_ids = table_guest_ids_process_final_sid.join(table_host_ids_process, lambda sid, h: sid)
         LOGGER.info("Finish intersect_ids computing")
 
         # send intersect id
         if self.send_intersect_id_flag:
-            remote(table_send_intersect_ids,
+            remote(table_intersect_ids,
                    name=self.transfer_variable.intersect_ids.name,
                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
                    role=consts.HOST,
@@ -132,26 +125,30 @@ class RsaIntersectionGuest(RsaIntersect):
             LOGGER.info("Remote intersect ids to Host!")
         else:
             LOGGER.info("Not send intersect ids to Host!")
-
-        # intersect table(sid, "intersect_id")
-        intersect_ids = table_encrypt_intersect_ids.map(lambda k, v: (v, "intersect_id"))
-        return intersect_ids
+        return table_intersect_ids
 
 
-class RawIntersectionGuest(RawIntersect):
+class RawIntersectionGuest(Intersect):
     def __init__(self, intersect_params):
-        super().__init__(intersect_params)
-        self.role = consts.GUEST
-        self.join_role = intersect_params.join_role
+        self.send_intersect_id_flag = intersect_params.is_send_intersect_ids
+        self.transfer_variable = RawIntersectTransferVariable()
 
     def run(self, data_instances):
         LOGGER.info("Start raw intersection")
+        intersect_host_ids = get(name=self.transfer_variable.intersect_host_ids.name,
+                                 tag=self.transfer_variable.generate_transferid(
+                                     self.transfer_variable.intersect_host_ids),
+                                 idx=0)
 
-        if self.join_role == consts.HOST:
-            intersect_ids = self.intersect_send_id(data_instances)
-        elif self.join_role == consts.GUEST:
-            intersect_ids = self.intersect_join_id(data_instances)
-        else:
-            raise ValueError("Unknown intersect join role, please check the configure of guest")
+        LOGGER.info("Get intersect_host_ids from Host")
+        intersect_ids = intersect_host_ids.join(data_instances, lambda i, d: 1)
+        LOGGER.info("Finish intersect_ids computing")
 
+        if self.send_intersect_id_flag:
+            remote(intersect_ids,
+                   name=self.transfer_variable.intersect_ids.name,
+                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
+                   role=consts.HOST,
+                   idx=0)
+            LOGGER.info("Remote intersect ids to Host")
         return intersect_ids

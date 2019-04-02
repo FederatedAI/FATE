@@ -122,22 +122,20 @@ public class TypeConversionUtils {
     public BasicMeta.Endpoint toEndpoint(Node node) {
         BasicMeta.Endpoint result = null;
 
-        if (node != null) {
-            synchronized (endpointBuilderLock) {
-                endpointBuilder.clear();
-                String hostname = node.getHost();
-                if (StringUtils.isNotBlank(hostname)) {
-                    endpointBuilder.setHostname(hostname);
-                }
-
-                String ip = node.getIp();
-                if (StringUtils.isNotBlank(ip)) {
-                    endpointBuilder.setIp(ip);
-                }
-                result = endpointBuilder
-                        .setPort(node.getPort())
-                        .build();
+        synchronized (endpointBuilderLock) {
+            endpointBuilder.clear();
+            String hostname = node.getHost();
+            if (StringUtils.isNotBlank(hostname)) {
+                endpointBuilder.setHostname(hostname);
             }
+
+            String ip = node.getIp();
+            if (StringUtils.isNotBlank(ip)) {
+                endpointBuilder.setIp(ip);
+            }
+            result = endpointBuilder
+                    .setPort(node.getPort())
+                    .build();
         }
 
         return result;

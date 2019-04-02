@@ -15,14 +15,11 @@
 #
 
 import numpy as np
+
 from federatedml.optim import activation
 
 
 class SigmoidBinaryCrossEntropyLoss(object):
-    @staticmethod
-    def initialize(y):
-        return y.mapValues(lambda x: np.zeros(1)), np.zeros(1)
-
     @staticmethod
     def predict(value):
         return activation.sigmoid(value)
@@ -48,10 +45,6 @@ class SigmoidBinaryCrossEntropyLoss(object):
 
 
 class SoftmaxCrossEntropyLoss(object):
-    @staticmethod
-    def initialize(y, dims=1):
-        return y.mapValues(lambda x: np.zeros(dims)), np.zeros(dims)
-
     @staticmethod
     def predict(values):
         return activation.softmax(values)

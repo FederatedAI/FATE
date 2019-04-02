@@ -54,7 +54,3 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=1, names
     return RuntimeInstance.EGGROLL.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
                                                persistent=persistent)
-
-
-def cleanup(name, namespace, persistent=False):
-    return RuntimeInstance.EGGROLL.cleanup(name=name, namespace=namespace, persistent=persistent)
