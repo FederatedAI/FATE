@@ -36,7 +36,7 @@ public class TestFile implements FeatureData{
             lines.forEach(line->{
                 for(String kv: StringUtils.split(line, ",")){
                     String[] a = StringUtils.split(kv, ":");
-                    data.put(a[0], Float.parseFloat(a[1]));
+                    data.put(a[0], a[1]);
                 }
             });
         }

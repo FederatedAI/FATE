@@ -16,38 +16,46 @@ public class PipelineTask {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public int initModel(Map<String, byte[]> modelProtoMap) {
+        LOGGER.info("start init Pipeline");
         try {
-            PipelineProto.Pipeline pipeLineProto = PipelineProto.Pipeline.parseFrom(modelProtoMap.get("PipeLine"));
+            String pipelineProtoName = "Pipeline";
+            PipelineProto.Pipeline pipeLineProto = PipelineProto.Pipeline.parseFrom(modelProtoMap.get(pipelineProtoName));
+            LOGGER.info("Finish get Pipeline proto");
             List<String> pipeLineMeta = pipeLineProto.getNodeMetaList();
             List<String> pipeLineParam = pipeLineProto.getNodeParamList();
 
             for (int i = 0; i < pipeLineMeta.size(); i++) {
+                String className = pipeLineMeta.get(i).split("\\.")[0];
+                LOGGER.info("Start get className:{}", className);
                 try {
-                    String className = pipeLineMeta.get(i).split(".")[0];
                     Class modelClass = Class.forName(this.modelPackage + "." + className);
                     BaseModel mlNode = (BaseModel) modelClass.getConstructor().newInstance();
-
                     byte[] protoMeta = modelProtoMap.get(pipeLineMeta.get(i));
                     byte[] protoParam = modelProtoMap.get(pipeLineParam.get(i));
                     mlNode.initModel(protoMeta, protoParam);
 
                     pipeLineNode.add(mlNode);
+                    LOGGER.info(" Add class {} to pipeline task list", className);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    LOGGER.warn("Can not instance {} class", className);
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
-
+        catch (Exception ex) {
+            ex.printStackTrace();
+            LOGGER.info("Pipeline init catch error:{}",ex);
+        }
+        LOGGER.info("Finish init Pipeline");
         return StatusCode.OK;
     }
 
     public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
+        LOGGER.info("Start Pipeline predict");
         for (int i = 0; i < this.pipeLineNode.size(); i++) {
+            LOGGER.info("finish mlNone:{}", i);
             inputData = this.pipeLineNode.get(i).predict(inputData, predictParams);
         }
-
+        LOGGER.info("Finish Pipeline predict");
         return inputData;
     }
 }
