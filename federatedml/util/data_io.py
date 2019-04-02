@@ -128,8 +128,6 @@ class DenseFeatureReader(object):
                 if self.missing_impute is None:
                     self.missing_impute = imputer_processor.get_imputer_value_list()
             else:
-                LOGGER.debug("type method is {}".format(type(self.missing_fill_method).__name__))
-                LOGGER.debug("transform value is {}".format(self.default_value))
                 input_data_features = imputer_processor.transform(input_data_features,
                                                                   replace_method=self.missing_fill_method,
                                                                   transform_value=self.default_value)
@@ -229,6 +227,10 @@ class DenseFeatureReader(object):
     def save_model(self, model_table, model_namespace):
         model_types = []
 
+        if model_table is None or model_namespace is None:
+            LOGGER.info("data io model-meta can't save, it will not reuse in transform stage")
+            return []
+
         save_data_io_model("dense",
                            self.delimitor,
                            self.data_type,
@@ -265,6 +267,10 @@ class DenseFeatureReader(object):
         return model_types
 
     def load_model(self, model_table, model_namespace):
+        if model_table is None or model_namespace is None:
+            LOGGER.info("data io model-meta can't reuse, model table name or namespace is null")
+            return
+        
         self.delimitor, self.data_type, self.with_label, \
         self.label_idx, self.label_type, self.output_format, self.header = load_data_io_model("DenseFeatureReader",
                                                                                               model_table,
