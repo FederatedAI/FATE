@@ -25,6 +25,10 @@ message Endpoint {
     string hostname = 3;    // host name
 }
 
+message Endpoints {
+    repeated Endpoint endpoints = 1;
+}
+
 // general container for serialized data
 message Data {
     bool isNull = 1;            // whether the data is actually 'null' (e.g. null in Java, None in python, NULL in c/c++

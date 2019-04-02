@@ -41,4 +41,6 @@ public interface BaseDaoService<M, E, P> {
     public List<M> selectByExampleWithRowbounds(E example, RowBounds rowBounds);
 
     public M selectByPrimaryKey(P primaryKey);
+
+    public Integer updateByPrimaryKeySelective(Object record);
 }

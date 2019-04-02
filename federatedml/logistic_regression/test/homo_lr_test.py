@@ -20,7 +20,7 @@ import unittest
 
 import numpy as np
 
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 from federatedml.optim import Initializer
 from federatedml.optim import L2Updater
 from federatedml.optim import Optimizer

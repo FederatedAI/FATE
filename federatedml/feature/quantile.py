@@ -184,33 +184,53 @@ class Quantile(object):
     @staticmethod
     def gen_bin_by_data_block(data, bin_num=DEFAULT_BIN_NUM, bin_gap=DEFAULT_BIN_GAP, valid_features=None):
         bin_split_points = []
+        sparse_data = False
         if type(data[0].features).__name__ == "ndarray":
             feature_num = data[0].features.shape[0]
         else:
             feature_num = data[0].features.get_shape()
+            sparse_data = True
 
         data_num = len(data)
-        sparse_data = False
+
+        all_features = [[] for idx in range(feature_num)]
+        if sparse_data:
+            zero_count = [data_num for idx in range(feature_num)]
+
+        for _data in data:
+            features = _data.features
+
+            if sparse_data:
+                for fid, val in features.get_all_data():
+                    if valid_features is not None and fid not in valid_features:
+                        continue
+
+                    all_features[fid].append(val)
+                    zero_count[fid] -= 1
+            else:
+                for fid in range(feature_num):
+                    if valid_features is not None and fid not in valid_features:
+                        continue
+
+                    all_features[fid].append(features[fid])
 
         for fid in range(feature_num):
-            if valid_features is not None and not valid_features[fid]:
+            if valid_features is not None and fid not in valid_features:
                 bin_split_points.append(np.asarray([]))
                 continue
 
-            if type(data[0].features).__name__ == 'ndarray':
-                feature_values = [row.features[fid] for row in data]
-            else:
-                feature_values = list(filter(lambda _feature: _feature != 0,
-                                             [row.features.get_data(fid, 0) for row in data]))
-                zeros = data_num - len(feature_values)
-                sparse_data = True
+            feature_values = all_features[fid]
 
             if sparse_data is False:
                 distinct_values = np.unique(feature_values)
             else:
-                feature_values.append(0)
+                if zero_count[fid] > 0:
+                    feature_values.append(0)
+
                 distinct_values = np.unique(feature_values)
-                feature_values.pop()
+
+                if zero_count[fid] > 0:
+                    feature_values.pop()
 
             distincts = []
             distinct_count = 1
@@ -227,8 +247,8 @@ class Quantile(object):
                 bin_split_points.append(np.asarray(distincts))
                 continue
 
-            if sparse_data and zeros > 0:
-                if zeros == data_num:
+            if sparse_data and zero_count[fid] > 0:
+                if zero_count[fid] == data_num:
                     bin_split_points.append(np.asarray([0]))
                     continue
 
@@ -239,13 +259,13 @@ class Quantile(object):
                 percentiles = []
                 if feature_values[0] > 0.0:
                     for pos in positions:
-                        if pos <= zeros:
+                        if pos <= zero_count[fid]:
                             percentiles.append(0)
                         else:
-                            percentiles.append(feature_values[pos - zeros - 1])
+                            percentiles.append(feature_values[pos - zero_count[fid] - 1])
                 elif feature_values[-1] < 0.0:
                     for pos in positions:
-                        if pos < data_num - zeros:
+                        if pos < data_num - zero_count[fid]:
                             percentiles.append(feature_values[pos])
                         else:
                             percentiles.append(0)
@@ -258,10 +278,10 @@ class Quantile(object):
                     for pos in positions:
                         if pos < negative:
                             percentiles.append(feature_values[pos])
-                        elif pos < negative + zeros:
+                        elif pos < negative + zero_count[fid]:
                             percentiles.append(0)
                         else:
-                            percentiles.append(feature_values[pos - zeros - negative])
+                            percentiles.append(feature_values[pos - zero_count[fid] - negative])
                     percentiles = np.asarray(percentiles)
 
             else:

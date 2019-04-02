@@ -64,6 +64,7 @@ public class PacketQueuePipe extends BasePipe {
     @Override
     public Proxy.Packet read(long timeout, TimeUnit unit) {
         Proxy.Packet result = null;
+        if (isDrained()) return result;
         try {
             result = queue.poll(timeout, unit);
         } catch (InterruptedException e) {
@@ -93,5 +94,9 @@ public class PacketQueuePipe extends BasePipe {
     @Override
     public synchronized void close() {
         super.close();
+    }
+
+    public int getQueueSize() {
+        return queue.size();
     }
 }

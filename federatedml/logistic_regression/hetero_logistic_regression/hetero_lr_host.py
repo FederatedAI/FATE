@@ -15,18 +15,21 @@
 #
 
 import numpy as np
+
 from arch.api import federation
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.util import consts
+# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
-from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroLRHost(BaseLogisticRegression):
     def __init__(self, logistic_params):
+        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRHost, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.batch_num = None
@@ -38,8 +41,52 @@ class HeteroLRHost(BaseLogisticRegression):
         host_forward = wx.mapValues(lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v))))
         return host_forward
 
+    def transform(self, data_inst):
+        """
+        transform features of instances held by 'data_inst' table into more representative features
+
+        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
+        host. It returns a table that holds instances with transformed features. In theory, we can use any model to
+        transform features. Particularly, we would adopt neural network models such as autoencoder or CNN to perform
+        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
+        folder.
+
+        For this particular class (i.e., 'HeteroLRHost') that serves as a base host class for neural-networks-based
+        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
+        passed to it. In other words, no feature transformation performed on the raw input of guest.
+
+        Parameters:
+        ___________
+        :param data_inst: a table holding instances of raw input of host side
+        :return: a table holding instances with transformed features
+        """
+        return data_inst
+
+    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
+        """
+        update local model that transforms features of raw input
+
+        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
+        input into more representative features. We typically adopt neural networks as the local model, which is
+        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
+        refer to 'hetero_dnn_logistic_regression' folder.
+
+        For this particular class (i.e., 'HeteroLRHost') that serves as a base host class for neural-networks-based
+        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
+        performed on the local model since there is no one.
+
+        Parameters:
+        ___________
+        :param fore_gradient: a table holding fore gradient
+        :param data_inst: a table holding instances of raw input of guest side
+        :param coef: coefficients of logistic regression model
+        :param training_info: a dictionary holding training information
+        """
+        pass
+
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr host")
+        self.header = data_instances.schema.get("header")
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                     tag=self.transfer_variable.generate_transferid(
                                         self.transfer_variable.paillier_pubkey),
@@ -87,8 +134,11 @@ class HeteroLRHost(BaseLogisticRegression):
                 # Get mini-batch train data
                 batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
 
+                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
+                batch_feat_inst = self.transform(batch_data_inst)
+
                 # compute forward
-                host_forward = self.compute_forward(batch_data_inst, self.coef_, self.intercept_)
+                host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
                 federation.remote(host_forward,
                                   name=self.transfer_variable.host_forward_dict.name,
                                   tag=self.transfer_variable.generate_transferid(
@@ -107,7 +157,7 @@ class HeteroLRHost(BaseLogisticRegression):
                 LOGGER.info("Get fore_gradient from guest")
                 if self.gradient_operator is None:
                     self.gradient_operator = HeteroLogisticGradient(self.encrypt_operator)
-                host_gradient = self.gradient_operator.compute_gradient(data_instances, fore_gradient,
+                host_gradient = self.gradient_operator.compute_gradient(batch_feat_inst, fore_gradient,
                                                                         fit_intercept=False)
                 # regulation if necessary
                 if self.updater is not None:
@@ -143,6 +193,10 @@ class HeteroLRHost(BaseLogisticRegression):
                 LOGGER.info("update_model")
                 self.update_model(optim_host_gradient)
 
+                # update local model that transforms features of raw input 'batch_data_inst'
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
+
                 # is converge
                 is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                             tag=self.transfer_variable.generate_transferid(
@@ -163,7 +217,10 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def predict(self, data_instances, predict_param=None):
         LOGGER.info("Start predict ...")
-        prob_host = self.compute_wx(data_instances, self.coef_, self.intercept_)
+
+        data_features = self.transform(data_instances)
+
+        prob_host = self.compute_wx(data_features, self.coef_, self.intercept_)
         federation.remote(prob_host,
                           name=self.transfer_variable.host_prob.name,
                           tag=self.transfer_variable.generate_transferid(

@@ -25,15 +25,18 @@
 # HeteroDecisionTreeHost
 # =============================================================================
 
+from arch.api import federation
 from arch.api.utils import log_utils
+from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
+from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
 from federatedml.tree import FeatureHistogram
 from federatedml.util import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
-from federatedml.tree import DecisionTreeModelMeta
-from arch.api import federation
+from federatedml.tree import Node
 import functools
 
 LOGGER = log_utils.getLogger()
@@ -60,6 +63,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.encrypted_grad_and_hess = None
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
         self.tree_node_queue = None
+        self.cur_split_nodes = None
         self.split_maskdict = {}
         self.tree_ = None
 
@@ -123,35 +127,38 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                   self.transfer_inst.tree_node_queue, dep),
                                               idx=0)
 
-    def get_histograms(self, node_positions, node_map={}):
+    def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
-        self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
+        # self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
         histograms = FeatureHistogram.calculate_histogram(
             self.data_bin_with_position, self.grad_and_hess,
             self.bin_split_points, self.bin_sparse_points,
             self.valid_features, node_map)
+        LOGGER.info("begin to accumulate histograms")
         acc_histograms = FeatureHistogram.accumulate_histogram(histograms)
         LOGGER.info("acc histogram shape is {}".format(len(acc_histograms)))
         return acc_histograms
 
-    def sync_encrypted_splitinfo_host(self, encrypted_splitinfo_host, dep=-1):
-        LOGGER.info("send encrypted splitinfo of depth {}".format(dep))
+    def sync_encrypted_splitinfo_host(self, encrypted_splitinfo_host, dep=-1, batch=-1):
+        LOGGER.info("send encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         federation.remote(obj=encrypted_splitinfo_host,
                           name=self.transfer_inst.encrypted_splitinfo_host.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.encrypted_splitinfo_host, dep),
+                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.encrypted_splitinfo_host, dep,
+                                                                     batch),
                           role=consts.GUEST,
                           idx=0)
 
-    def sync_federated_best_splitinfo_host(self, dep=-1):
-        LOGGER.info("get federated best splitinfo of depth {}".format(dep))
+    def sync_federated_best_splitinfo_host(self, dep=-1, batch=-1):
+        LOGGER.info("get federated best splitinfo of depth {}, batch {}".format(dep, batch))
         federated_best_splitinfo_host = federation.get(name=self.transfer_inst.federated_best_splitinfo_host.name,
                                                        tag=self.transfer_inst.generate_transferid(
-                                                           self.transfer_inst.federated_best_splitinfo_host, dep),
+                                                           self.transfer_inst.federated_best_splitinfo_host, dep,
+                                                           batch),
                                                        idx=0)
         return federated_best_splitinfo_host
 
-    def sync_final_splitinfo_host(self, splitinfo_host, federated_best_splitinfo_host, dep=-1):
-        LOGGER.info("send host final splitinfo of depth {}".format(dep))
+    def sync_final_splitinfo_host(self, splitinfo_host, federated_best_splitinfo_host, dep=-1, batch=-1):
+        LOGGER.info("send host final splitinfo of depth {}, batch {}".format(dep, batch))
         final_splitinfos = []
         for i in range(len(splitinfo_host)):
             best_idx, best_gain = federated_best_splitinfo_host[i]
@@ -160,7 +167,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                 splitinfo = splitinfo_host[i][best_idx]
                 splitinfo.best_fid = self.encode("feature_idx", splitinfo.best_fid)
                 assert splitinfo.best_fid is not None
-                splitinfo.best_bid = self.encode("feature_val", splitinfo.best_bid, self.tree_node_queue[i].id)
+                splitinfo.best_bid = self.encode("feature_val", splitinfo.best_bid, self.cur_split_nodes[i].id)
                 splitinfo.gain = best_gain
             else:
                 splitinfo = SplitInfo(sitename=consts.HOST, best_fid=-1, best_bid=-1, gain=best_gain)
@@ -169,7 +176,8 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         federation.remote(obj=final_splitinfos,
                           name=self.transfer_inst.final_splitinfo_host.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.final_splitinfo_host, dep),
+                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.final_splitinfo_host, dep,
+                                                                     batch),
                           role=consts.GUEST,
                           idx=0)
 
@@ -295,19 +303,27 @@ class HeteroDecisionTreeHost(DecisionTree):
                 break
 
             node_positions = self.sync_node_positions(dep)
-            node_map = {}
-            node_num = 0
-            for tree_node in self.tree_node_queue:
-                node_map[tree_node.id] = node_num
-                node_num += 1
+            self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
 
-            acc_histograms = self.get_histograms(node_positions, node_map=node_map)
+            batch = 0
+            for i in range(0, len(self.tree_node_queue), self.max_split_nodes):
+                self.cur_split_nodes = self.tree_node_queue[i: i + self.max_split_nodes]
+                node_map = {}
+                node_num = 0
+                for tree_node in self.cur_split_nodes:
+                    node_map[tree_node.id] = node_num
+                    node_num += 1
 
-            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(acc_histograms,
-                                                                                     self.valid_features)
-            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep)
-            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep)
-            self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep)
+                acc_histograms = self.get_histograms(node_map=node_map)
+
+                splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(acc_histograms,
+                                                                                         self.valid_features,
+                                                                                         self.data_bin._partitions)
+                self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
+                federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
+                self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
+
+                batch += 1
 
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.find_dispatch(dispatch_node_host, dep)
@@ -339,14 +355,61 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         LOGGER.info("predict finish!")
 
-    def get_tree_model(self):
-        LOGGER.info("get tree model")
-        tree_model = DecisionTreeModelMeta()
-        tree_model.tree_ = self.tree_
-        tree_model.split_maskdict = self.split_maskdict
-        return tree_model
+    def get_model_meta(self):
+        model_meta = DecisionTreeModelMeta()
 
-    def set_tree_model(self, tree_model):
-        LOGGER.info("set tree model")
-        self.tree_ = tree_model.tree_
-        self.split_maskdict = tree_model.split_maskdict
+        model_meta.max_depth = self.max_depth
+        model_meta.min_sample_split = self.min_sample_split
+        model_meta.min_impurity_split = self.min_impurity_split
+        model_meta.min_leaf_node = self.min_leaf_node
+
+        return model_meta
+
+    def set_model_meta(self, model_meta):
+        self.max_depth = model_meta.max_depth
+        self.min_sample_split = model_meta.min_sample_split
+        self.min_impurity_split = model_meta.min_impurity_split
+        self.min_leaf_node = model_meta.min_leaf_node
+
+    def get_model_param(self):
+        model_param = DecisionTreeModelParam()
+        for node in self.tree_:
+            model_param.tree_.add(id=node.id,
+                                  sitename=node.sitename,
+                                  fid=node.fid,
+                                  bid=node.bid,
+                                  weight=node.weight,
+                                  is_leaf=node.is_leaf,
+                                  left_nodeid=node.left_nodeid,
+                                  right_nodeid=node.right_nodeid)
+
+        model_param.split_maskdict.update(self.split_maskdict)
+
+        return model_param
+
+    def set_model_param(self, model_param):
+        self.tree_ = []
+        for node_param in model_param.tree_:
+            _node = Node(id=node_param.id,
+                         sitename=node_param.sitename,
+                         fid=node_param.fid,
+                         bid=node_param.bid,
+                         weight=node_param.weight,
+                         is_leaf=node_param.is_leaf,
+                         left_nodeid=node_param.left_nodeid,
+                         right_nodeid=node_param.right_nodeid)
+
+            self.tree_.append(_node)
+
+        self.split_maskdict = dict(model_param.split_maskdict)
+
+    def get_model(self):
+        model_meta = self.get_model_meta()
+        model_param = self.get_model_param()
+
+        return model_meta, model_param
+
+    def load_model(self, model_meta=None, model_param=None):
+        LOGGER.info("load tree model")
+        self.set_model_meta(model_meta)
+        self.set_model_param(model_param)

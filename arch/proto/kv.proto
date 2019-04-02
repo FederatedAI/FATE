@@ -60,5 +60,6 @@ service KVService {
     rpc get (Operand) returns (Operand);                            // get an entry from table
     rpc iterate (Range) returns (stream Operand);                   // iterate through a table. Response entries are ordered
     rpc destroy (Empty) returns (Empty);                            // destroy a table
+    rpc destroyAll (Empty) returns (Empty);                         // destroy multiple tables
     rpc count (Empty) returns (Count);                              // count record amount of a table
 }

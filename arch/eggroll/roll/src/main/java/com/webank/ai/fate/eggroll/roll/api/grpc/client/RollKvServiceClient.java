@@ -260,6 +260,24 @@ public class RollKvServiceClient {
         template.calleeStreamingRpc(ModelConstants.EMPTY);
     }
 
+    public void destroyAll(StoreInfo storeInfo) {
+        GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Empty, Kv.Empty> context
+                = rollKvCallModelFactory.createEmptyToEmptyContext();
+
+        context.setLatchInitCount(1)
+                .setEndpoint(rollEndpoint)
+                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
+                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::destroyAll)
+                .setCallerStreamObserverClassAndArguments(StorageKvDestroyResponseObserver.class)
+                .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo));
+
+        GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Empty, Kv.Empty> template
+                = rollKvCallModelFactory.createEmptyToEmptyTemplate();
+        template.setGrpcAsyncClientContext(context);
+
+        template.calleeStreamingRpc(ModelConstants.EMPTY);
+    }
+
     public Kv.Count count(StoreInfo storeInfo) {
         DelayedResult<Kv.Count> delayedResult = new SingleDelayedResult<>();
         GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Empty, Kv.Count> context

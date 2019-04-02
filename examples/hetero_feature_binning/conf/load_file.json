@@ -1,0 +1,12 @@
+{
+  "file": "_input_path",
+  "head": 1,
+  "partition": 10,
+  "table_name": "TO SET",
+  "namespace": "example",
+  "work_mode": "TO SET",
+  "scene_id": "TO SET",
+  "role": "TO SET",
+  "my_party_id": "TO SET",
+  "partner_party_id": "TO SET"
+}

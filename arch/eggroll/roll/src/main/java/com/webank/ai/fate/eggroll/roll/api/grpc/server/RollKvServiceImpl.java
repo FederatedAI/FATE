@@ -44,6 +44,7 @@ import com.webank.ai.fate.eggroll.roll.factory.DispatchPolicyFactory;
 import com.webank.ai.fate.eggroll.roll.factory.DispatcherFactory;
 import com.webank.ai.fate.eggroll.roll.factory.RollGrpcObserverFactory;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
+import com.webank.ai.fate.eggroll.roll.helper.NodeHelper;
 import com.webank.ai.fate.eggroll.roll.service.async.storage.CountProcessor;
 import com.webank.ai.fate.eggroll.roll.service.async.storage.IterateProcessor;
 import com.webank.ai.fate.eggroll.roll.service.model.DispatchResult;
@@ -97,6 +98,8 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     private RollModelFactory rollModelFactory;
     @Autowired
     private RollServerUtils rollServerUtils;
+    @Autowired
+    private NodeHelper nodeHelper;
 
     @PostConstruct
     public void init() {
@@ -278,15 +281,15 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
             Dtable dtable = storageMetaClient.getTable(storeInfo.getNameSpace(), storeInfo.getTableName());
 
+            List<Node> healthyNodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
+            Map<Long, Node> nodeIdToNode = Maps.newHashMap();
+
+            for (Node node : healthyNodes) {
+                nodeIdToNode.put(node.getNodeId(), node);
+            }
+
             if (dtable != null && DtableStatus.NORMAL.name().equals(dtable.getStatus())) {
                 List<Fragment> fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
-
-                List<Node> healthyNodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
-                Map<Long, Node> nodeIdToNode = Maps.newHashMap();
-
-                for (Node node : healthyNodes) {
-                    nodeIdToNode.put(node.getNodeId(), node);
-                }
 
                 // destroy all fragments in all nodes
                 for (Fragment fragment : fragments) {
@@ -306,6 +309,56 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
                     throw new CrudException(103, "Failed to destroy table: " + storeInfo);
                 }
             }
+
+            responseObserver.onNext(ModelConstants.EMPTY);
+            responseObserver.onCompleted();
+        });
+    }
+
+    // todo: eliminate duplicate codes
+    @Override
+    public void destroyAll(Kv.Empty request, StreamObserver<Kv.Empty> responseObserver) {
+        LOGGER.info("Kv.destroyAll request received");
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+
+            List<Dtable> dtables = storageMetaClient.getTables(storeInfo);
+            List<Dtable> destroyedDtables = Lists.newArrayListWithExpectedSize(dtables.size());
+
+            for (Dtable dtable : dtables) {
+                if (dtable != null && DtableStatus.NORMAL.name().equals(dtable.getStatus())) {
+                    Map<Long, Node> nodeIdToNode = nodeHelper.getNodeIdToStorageNodesOfTable(dtable.getTableId());
+
+                    List<Fragment> fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
+
+                    StoreInfo storeInfoWithExactTableName = StoreInfo.fromDtable(dtable);
+
+                    // destroy all fragments in all nodes
+                    for (Fragment fragment : fragments) {
+                        fragment.setStatus(FragmentStatus.DELETED.name());
+                        storageMetaClient.updateFragment(fragment);
+
+                        Node node = nodeIdToNode.get(fragment.getNodeId());
+                        StoreInfo storeInfoWithExactTableNameAndFragment = StoreInfo.copy(storeInfoWithExactTableName);
+                        storeInfoWithExactTableNameAndFragment.setFragment(fragment.getFragmentOrder());
+                        storageServiceClient.destroy(request, storeInfoWithExactTableNameAndFragment, node);
+                    }
+
+                    // update metadata
+                    dtable.setStatus(DtableStatus.DELETED.name());
+                    dtable.setTableName(dtable.getTableName() + StringConstants.DASH + System.currentTimeMillis());
+                    Dtable result = storageMetaClient.updateTable(dtable);
+
+                    if (result == null) {
+                        throw new CrudException(103, "Failed to destroy table: " + storeInfo);
+                    } else {
+                        destroyedDtables.add(dtable);
+                    }
+                }
+            }
+
+            LOGGER.info("Kv.destroyAll result: {}", destroyedDtables);
 
             responseObserver.onNext(ModelConstants.EMPTY);
             responseObserver.onCompleted();

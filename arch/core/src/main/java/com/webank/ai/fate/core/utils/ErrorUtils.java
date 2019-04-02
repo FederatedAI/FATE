@@ -35,7 +35,7 @@ public class ErrorUtils {
         } else {
             result = Status.INTERNAL
                     .withCause(throwable)
-                    .withDescription(runtimeUtils.getMyIpAndPort() + ": " + ExceptionUtils.getStackTrace(throwable))
+                    .withDescription(runtimeUtils.getMySiteLocalIpAndPort() + ": " + ExceptionUtils.getStackTrace(throwable))
                     .asRuntimeException();
         }
 
