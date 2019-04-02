@@ -24,4 +24,4 @@ jobid=$2
 guest_partyid=$3
 host_partyid=$4
 
-bash run_secureboosting.sh $work_mode $jobid $guest_partyid $host_partyid $role
+bash run_toy_example.sh $work_mode $jobid $guest_partyid $host_partyid $role
