@@ -14,8 +14,15 @@ def generate_random_3_dim_matrix(r, c, z):
 
 
 def share(X):
-    n, d = X.shape
-    X0 = generate_random_matrix(n, d)
+    num_dim = len(X.shape)
+    if num_dim == 2:
+        n, d = X.shape
+        X0 = generate_random_matrix(n, d)
+    elif num_dim == 3:
+        n, d, k = X.shape
+        X0 = generate_random_3_dim_matrix(n, d, k)
+    else:
+        raise TypeError("does not support {0} num of dim".format(num_dim))
     X1 = X - X0
     return X0, X1
 
