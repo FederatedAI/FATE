@@ -739,6 +739,10 @@ def load_missing_imputer_model(header=None,
             missing_fill_value = [missing_fill_value.get(head) for head in header]
         else:
             missing_fill_value = None
+    else:
+        missing_replace_method = None
+        missing_value = None
+        missing_fill_value = None
 
     return missing_fill, missing_replace_method, missing_value, missing_fill_value
 
@@ -812,6 +816,10 @@ def load_outlier_model(header=None,
             outlier_replace_value = [outlier_replace_value.get(head) for head in header]
         else:
             outlier_replace_value = None
-
+    else:
+        outlier_replace_method = None
+        outlier_value = None
+        outlier_replace_value = None
+    
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
 
