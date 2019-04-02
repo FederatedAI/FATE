@@ -14,16 +14,15 @@
 #  limitations under the License.
 #
 
-import unittest
-
 import numpy as np
-
-from arch.api.eggroll import init
-from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, generate_table_namespace_n_name
+import unittest
+from federatedml.ftl.common.data_util import overlapping_samples_converter, generate_table_namespace_n_name
 from federatedml.ftl.test.util import assert_matrix
+from arch.api.eggroll import init
 
 
 def fetch_overlap_data(data_dict, overlap_indexes, nonoverlap_indexes):
+
     overlap_data = []
     nonoverlap_data = []
     for i in overlap_indexes:
@@ -39,6 +38,7 @@ def fetch_overlap_data(data_dict, overlap_indexes, nonoverlap_indexes):
 class TestCommonDataUtil(unittest.TestCase):
 
     def test_generate_table_namespace_n_name(self):
+
         infile = "UCI_Credit_Card.csv"
         ns, name = generate_table_namespace_n_name(infile)
 
@@ -55,6 +55,7 @@ class TestCommonDataUtil(unittest.TestCase):
         assert name == name0 == name1 == name2
 
     def test_convert_overlapping_samples_and_labels_1(self):
+
         host_sample_indexes = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14])
         guest_sample_indexes = np.array([8, 9, 10, 11, 12])
         before_overlap_indexes = np.array([8, 9, 10])
@@ -63,6 +64,7 @@ class TestCommonDataUtil(unittest.TestCase):
         self.__test(host_sample_indexes, guest_sample_indexes, before_overlap_indexes, before_host_nonoverlap_indexes)
 
     def test_convert_overlapping_samples_and_labels_2(self):
+
         host_sample_indexes = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
         guest_sample_indexes = np.array([0, 1, 2, 3, 4, 9, 10, 11, 12])
         before_overlap_indexes = np.array([0, 1, 2, 3, 4])
@@ -72,6 +74,7 @@ class TestCommonDataUtil(unittest.TestCase):
 
     @staticmethod
     def __test(host_sample_indexes, guest_sample_indexes, before_overlap_indexes, before_host_nonoverlap_indexes):
+
         host_x_dict = {}
         host_label_dict = {}
         np.random.seed(100)

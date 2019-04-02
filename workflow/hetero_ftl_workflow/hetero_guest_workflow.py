@@ -15,14 +15,13 @@
 #
 
 import sys
-
 import tensorflow as tf
-
-from arch.api.utils import log_utils
+from federatedml.ftl.encrypted_ftl import EncryptedFTLGuestModel
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel
+from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroEncryptFTLGuest, HeteroPlainFTLGuest
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.hetero_ftl.hetero_ftl_guest import GuestFactory
 from workflow.hetero_ftl_workflow.hetero_workflow import FTLWorkFlow
-
+from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
@@ -33,7 +32,14 @@ class FTLGuestWorkFlow(FTLWorkFlow):
 
     def _do_initialize_model(self, ftl_model_param, ftl_local_model_param, ftl_data_model_param):
         self.ftl_local_model = self._create_local_model(ftl_local_model_param, ftl_data_model_param)
-        self.model = GuestFactory.create(ftl_model_param, self._get_transfer_variable(), self.ftl_local_model)
+        if ftl_model_param.is_encrypt:
+            LOGGER.debug("@ create encrypt ftl_guest")
+            guest_model = EncryptedFTLGuestModel(local_model=self.ftl_local_model, model_param=ftl_model_param)
+            self.model = HeteroEncryptFTLGuest(guest_model, ftl_model_param, self._get_transfer_variable())
+        else:
+            LOGGER.debug("@ create plain ftl_guest")
+            guest_model = PlainFTLGuestModel(local_model=self.ftl_local_model, model_param=ftl_model_param)
+            self.model = HeteroPlainFTLGuest(guest_model, ftl_model_param, self._get_transfer_variable())
 
     def _create_local_model(self, ftl_local_model_param, ftl_data_model_param):
         autoencoder = Autoencoder("local_ftl_guest_model_01")
@@ -51,7 +57,6 @@ class FTLGuestWorkFlow(FTLWorkFlow):
             self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             self.model.predict(train_data_instance)
             if validation_data is not None:
-                LOGGER.debug("@ validation")
                 self.model.predict(validation_data)
 
     def predict(self, data_instance):

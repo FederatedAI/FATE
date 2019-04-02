@@ -18,4 +18,4 @@
 
 config_path=$1
 jobid=$2
-python ../../workflow/hetero_secureboosting_tree_workflow/hetero_secureboosting_tree_host_workflow.py -c $config_path -j $jobid
+python ../../workflow/hetero_secureboosting_tree_workflow/hetero_secureboosting_tree_host_worflow.py -c $config_path -j $jobid

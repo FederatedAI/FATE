@@ -24,19 +24,16 @@
 # =============================================================================
 # DecisionTree Base Class
 # =============================================================================
-from federatedml.util import DecisionTreeParamChecker
 
 
 class DecisionTree(object):
     def __init__(self, tree_param):
-        DecisionTreeParamChecker.check_param(tree_param)  
         self.criterion_method = tree_param.criterion_method
         self.criterion_params = tree_param.criterion_params
         self.max_depth = tree_param.max_depth
         self.min_sample_split = tree_param.min_sample_split
         self.min_impurity_split = tree_param.min_impurity_split
         self.min_leaf_node = tree_param.min_leaf_node
-        self.max_split_nodes = tree_param.max_split_nodes
         self.n_iter_no_change = tree_param.n_iter_no_change
         self.tol = tree_param.tol
 

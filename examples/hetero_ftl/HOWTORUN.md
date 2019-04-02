@@ -10,7 +10,7 @@ You can turn on the encryption version by setting the <b style="color:red">is_en
 
 #### Standalone vs Cluster
 
-You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and/or arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy) for more details.
+You can run FTL algorithm on two different work modes: *standalone* mode and *cluster* mode. On standalone mode, host, guest and arbiter are running in one machine while on cluster mode they are running in multiple machines. Running algorithm on cluster mode requires some configuration. Please refer to [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy) for more details.
 
 You can turn on the cluster mode by setting the <b style="color:red">work_mode</b> parameter to 1. Otherwise set it to 0 (default). You can find this parameter in **guest_runtime_conf.json**, **host_runtime_conf.json**  and  **arbiter_runtime_conf.json** located in **examples/hetero_ftl/conf** folder.
 
@@ -18,23 +18,14 @@ We will first elaborate how to run FTL algorithm on standalone mode. Running alg
 
 ### 1. Run Plain Version
 
-In plain version, You start running host and guest through following steps:
+In plain version, only a host and a guest are involved. You start the two through following steps:
 1. Open two terminals (or two sessions).
-2. In each of the two terminal, go to **examples/hetero_ftl/** under the root folder of the FATE project.
-3. Switch the algorithm to plain version. 
-    * Set <b style="color:red">is_encrypt</b> of **FTLModelParam** to false in both **guest_runtime_conf.json** file and **host_runtime_conf.json** file. These two configuration files are located in **conf/** folder. When <b style="color:red">is_encrypt</b> is switched to false, <b style="color:red">enc_ftl</b> will not take effect.
- 
-    Following picture shows an example of parameters in **FTLModelParam** section.
-    
-    <div style="text-align:center", align=center>
-    <img src="./images/plain_ftl_config.png" />
-    </div>
-
-4. Start host by
+2. In each of the two terminal, go to **examples/hetero_ftl/** under the root folder of the FATE project
+3. Start host by
 
     > python run_host.py 123
 
-5. Start guest by
+4. Start guest by
 
     > python run_guest.py 123
 
@@ -43,26 +34,27 @@ In plain version, You start running host and guest through following steps:
 
 Or, 
 
-You can simply run **run_ftl_dct_standalone.sh**, which will run host and guest together in the background.
+You can simply run **run_ftl_plain_standalone.sh**, which will run host and guest together in the background.
 
-   > sh run_ftl_dct_standalone.sh 123
+   > sh run_ftl_plain_standalone.sh 123
 
 ### 2. Run Encryption Version
+
+In encryption version we have a arbiter in addition to the host and guest. The arbiter is responsible for decrypting messages passed from either host or guest.
 
 You can follow similar steps as described in "Run plain Version" section
 
 1. Open three terminals (or three sessions)
 2. In each of the three terminal, go to **examples/hetero_ftl/** under the root folder of the FATE project.
-3. Switch the algorithm to encrypted version. This version is default. 
-    * Set <b style="color:red">is_encrypt</b> of **FTLModelParam** to true in both **guest_runtime_conf.json** file and **host_runtime_conf.json** file. These two configuration files are located in **conf/** folder.
-    * Set <b style="color:red">enc_ftl</b> of **FTLModelParam** to <b style="color:red">dct_enc_ftl</b> in both **guest_runtime_conf.json** file and **host_runtime_conf.json** file.
-        * <b style="color:red">dct_enc_ftl</b> represents decentralized verison of the encrypted FTL algorithm (no arbiter in the loop).
-      
+3. Switch the algorithm to encryption version. That is, setting <b style="color:red">is_encrypt</b> of **FTLModelParam** to true in both **guest_runtime_conf.json** file and **host_runtime_conf.json** file. These two configuration files are located in **conf/** folder.
+
     Following picture shows an example of parameters in **FTLModelParam** section.
     
-    <div style="text-align:center", align=center>
-    <img src="./images/encrypted_ftl_config.png" />
-    </div>
+    <img src="./images/is_encrypt_param.png" />
+
+4. Start arbiter by
+
+    > python run_arbiter.py 124
 
 4. Start host by
 
@@ -76,22 +68,27 @@ Again the job id should be the same for host, guest and arbiter.
 
 Or, 
 
-You can simply run **run_ftl_dct_standalone.sh**, which will run host and guest together in the background.
+You can simply run **run_ftl_enc_standalone.sh**, which will run host, guest and arbiter together in the background.
 
-> sh run_ftl_dct_standalone.sh 124
+> sh run_ftl_enc_standalone.sh 124
 
 ### 3. Check log files
 
-You can check logs for the progress or result of a specific job. (almost) All the logs are located in **logs/** folder under the root folder of the FATE project. Logs related to a specific job say 124 are located in **logs/124/** folder. Normally, you only need to check two logs:
+You can check logs for the progress or result of a specific job. (almost) All the logs are located in **logs/** folder under the root folder of the FATE project. Logs related to a specific job say 124 are located in **logs/124/** folder. Normally, you only need to check three logs:
 
-Normally, you only need to check logs for host and guest since arbiter is not in the loop:
+For plain version, you only need to check logs for host and guest since arbiter is not in the loop:
 
 * **hetero_ftl_guest.log**, records log information for guest side of running the FTL algorithm. 
   * In plain version, guest knows the loss for each iteration. Therefore, you can check the change of loss in this log file.
 * **hetero_ftl_host.log**, records log information for host side of running the FTL algorithm. 
   * In our FTL algorithm, it is the host that always triggers predicting process. Therefore, you can check the evaluation result on training or predicting in this log file.
 
-If you run the FTL algorithm by using **sh run_ftl_dct_standalone.sh {job_id}** or **sh run_ftl_ct_standalone.sh {job_id}**, two or three logs would be generated under **examples/hetero_ftl/** folder:
+For encryption version, in addition to above two logs, you may also want to check log for arbiter:
+
+* **hetero_ftl_arbiter.log**, records log information for arbiter side of running the FTL algorithm. 
+  * In encryption version of FTL algorithm, only arbiter knows the loss for each iteration. Therefore, you can check the change of loss in this log file. 
+
+If you run the FTL algorithm by using **sh run_ftl_plain_standalone.sh {job_id}** or **sh run_ftl_enc_standalone.sh {job_id}**, two or three logs would be generated under **examples/hetero_ftl/** folder:
 
 * *host.log* records standard output and standard error from host side.
 * *guest.log* records standard output and standard error from guest side.
@@ -121,7 +118,6 @@ For running FTL algorithm, we only need to know four sections of parameters.
     * *alpha*: weight parameter for the training loss.
     * *max_iter*: maximum iteration for running the algorithm
     * *is_encrypt*: if true, we would use encryption version of FTL algorithm. if false, we would use plain version of FTL algorithm。
-    * *enc_ftl*: short name for a specific algorithm. e.g., <b style="color:red">dct_enc_ftl</b> represents decentralized verison of the encrypted FTL algorithm (no arbiter in the loop). When <b style="color:red">is_encrypt</b> is set to false, *enc_ftl* will not take effect.
     
      > Host, guest and/or arbiter must have the same value for *max_iter* parameter in a particular job. 
      
@@ -129,8 +125,7 @@ For running FTL algorithm, we only need to know four sections of parameters.
      
 Following two sections of parameters only exist in configuration files of host and guest since arbiter is not responsible for training a model and predicting results, and thus it does not require these parameters.
       
-3. **LocalModelParam** specifies parameters for building local model such as Autoencoder.
-    * *input_dim:*: the dimension of the original input samples
+3. **FTLLocalModelParam** specifies parameters for building local model such as Autoencoder.
     * *encode_dim:*: the dimension of the encoded (or hidden) representation.
     * *learning_rate*: learning rate for the local model.
      
