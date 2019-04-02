@@ -142,9 +142,9 @@ class WorkFlow(object):
 
         sample_flowid = "train_sample_0"
         train_data = self.sample(train_data, sample_flowid)
-        # TODO: Add model to pipeline ?
 
         train_data = self.feature_selection_fit(train_data)
+        validation_data = self.feature_selection_transform(validation_data)
 
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
@@ -259,6 +259,9 @@ class WorkFlow(object):
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
             return data_instance
 
+        if data_instance is None:
+            return data_instance
+
         if self.workflow_param.need_feature_selection:
             LOGGER.info("Start feature selection")
             feature_select_param = param_generator.FeatureSelectionParam()
@@ -304,6 +307,9 @@ class WorkFlow(object):
     def feature_selection_transform(self, data_instance, flow_id='sample_flowid'):
         if self.mode == consts.HOMO:
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
+            return data_instance
+
+        if data_instance is None:
             return data_instance
 
         if self.workflow_param.need_feature_selection:
