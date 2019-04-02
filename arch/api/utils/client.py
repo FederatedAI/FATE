@@ -16,7 +16,7 @@ server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 WORKFLOW_FUNC = ["workflow"]
 DATA_FUNC = ["download", "upload"]
 OTHER_FUNC = ["delete"]
-PUBLISH_FUNC = ["loadmodel"]
+MODEL_FUNC = ["load", "online", "version"]
 LOCAL_PROCESS_FUNC = ["import_id", "request_offline_feature"]
 
 
@@ -46,14 +46,14 @@ def call_fun(func, data, config_path, input_args):
     print(LOCAL_URL)
 
     if func in WORKFLOW_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "job"]), json=data)
+        response = requests.post("/".join([LOCAL_URL, "job", "new"]), json=data)
     elif func in OTHER_FUNC:
         response = requests.delete("/".join([LOCAL_URL, "job", data.get("job_id") or input_args.job_id]))
     elif func in DATA_FUNC:
         print ("enter here", config_path)
         response = requests.post("/".join([LOCAL_URL, "data", func]), json={"config_path": config_path})
-    elif func in PUBLISH_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "v1/publish", func]), json={"config_path": config_path})
+    elif func in MODEL_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "model", func]), json={"config_path": config_path})
     elif func in LOCAL_PROCESS_FUNC:
         response = eval(func)(LOCAL_URL, data)
 
@@ -104,10 +104,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', required=False, type=str, help="config json path")
     parser.add_argument('-f', '--function', type=str,
-                        choices=WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + LOCAL_PROCESS_FUNC + PUBLISH_FUNC,
+                        choices=WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + LOCAL_PROCESS_FUNC + MODEL_FUNC,
                         required=True,
                         help="function to call")
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
+    parser.add_argument('-np', '--namespace', required=False, type=str, help="namespace")
     try:
         args = parser.parse_args()
         data = {}

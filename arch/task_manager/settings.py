@@ -43,7 +43,7 @@ PARTY_ID = server_conf.get('party_id')
 
 DATABASE = {
     'engine': 'mysql',
-    'name': 'task_manager_%d' % PARTY_ID,
+    'name': 'task_manager',
     'user': 'root',
     'passwd': 'root1234',
     'host': '127.0.0.1',

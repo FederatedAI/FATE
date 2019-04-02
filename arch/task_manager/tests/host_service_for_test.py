@@ -16,7 +16,6 @@
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from arch.api.utils.core import string_to_bytes
-import traceback
 from bottle import post, run, request
 import json
 import random
@@ -33,7 +32,7 @@ token = None
 scheme = 'https'
 bucket = 'jarvistest-1256844776'
 
-send_done_url = 'http://127.0.0.1:9380/v1/data/importOfflineFeature'
+send_done_url = 'http://127.0.0.1:9380/data/importOfflineFeature'
 
 job_queue = Queue()
 tags = ['tag%d' % n for n in range(50)]

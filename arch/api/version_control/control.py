@@ -70,6 +70,7 @@ def save_version(name, namespace, version_log='', tag=None, branch=None):
         return False
     finally:
         delete_commit_tmp(commid_id=name, data_table_namespace=namespace)
+        version_history(data_table_namespace=namespace)
 
 
 def save_version_info(commit_id, data_table_namespace, version_log, tag, branch):
@@ -91,15 +92,8 @@ def save_version_info(commit_id, data_table_namespace, version_log, tag, branch)
     version_table.put(branch, commit_id, use_serialize=False)
 
 
-def version_history(namespace=None, data_type=None, scene_id=None, my_role=None, my_party_id=None,
-                    partner_party_id=None, commit_id=None, tag=None, branch="master", limit=10):
-    if not namespace:
-        if data_type:
-            namespace = get_scene_namespace(data_type=data_type, scene_id=scene_id, my_role=my_role,
-                                            my_party_id=my_party_id, partner_party_id=partner_party_id)
-        else:
-            return None, None
-    version_table = get_version_table(data_table_namespace=namespace)
+def version_history(data_table_namespace, commit_id=None, branch="master", limit=10):
+    version_table = get_version_table(data_table_namespace=data_table_namespace)
     historys = list()
     if commit_id:
         # Get this commit information
@@ -109,9 +103,8 @@ def version_history(namespace=None, data_type=None, scene_id=None, my_role=None,
         if branch_current_commit:
             commit_id = branch_current_commit
             for i in range(limit):
-                info = get_version_info(version_table=version_table, commit_id=commit_id)
-                if info:
-                    commit_info = json_loads(info)
+                commit_info = get_version_info(version_table=version_table, commit_id=commit_id)
+                if commit_info:
                     historys.append(commit_info)
                     commit_id = commit_info["parent"]
                 else:
