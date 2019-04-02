@@ -60,7 +60,7 @@
         }
       }
     },
-    "HeteroSecureBoostringTree": {
+    "HeteroSecureBoostingTree": {
       "module_path": "federatedml/workflow/hetero_secureboosting_tree_workflow",
       "role": {
         "guest": {
