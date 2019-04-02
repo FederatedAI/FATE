@@ -136,6 +136,23 @@
 					"tasklist": ["binning"]
 				}
 			}
-		}
+		},
+        "ToyExample":
+        {
+            "module_path": "workflow/toy_example_workflow",
+			"role":
+			{
+				"guest":
+				{
+					"program": "secure_add_guest_workflow.py",
+					"tasklist": ["secure_add"]
+				},
+				"host":
+				{
+					"program": "secure_add_host_workflow.py",
+					"tasklist": ["secure_add"]
+				}
+			}
+        }
 	}
 }
