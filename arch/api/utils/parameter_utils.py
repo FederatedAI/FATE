@@ -43,7 +43,7 @@ class ParameterOverride(object):
             if _method not in _role_setting['tasklist']:
                 continue
             _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
-            partyid_list = submit_dict["role"][role]
+            partyid_list = submit_dict["role"][role]   # [10000]
             for idx in range(len(partyid_list)):
                 runtime_json = default_runtime_dict.copy()
                 runtime_json['WorkFlowParam']['method'] = _method
@@ -62,16 +62,23 @@ class ParameterOverride(object):
 
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
+
                     for param_class in role_dict:
                         if param_class not in runtime_json:
                             runtime_json[param_class] = {}
                         for attr, valuelist in role_dict[param_class].items():
-                            if len(valuelist) <= idx:
-                                continue
-                            runtime_json[param_class][attr] = valuelist[idx]
-                runtime_json['local'] = {
+                            if isinstance(valuelist, list):
+                                if len(valuelist) <= idx:
+                                    continue
+                                else:
+                                    runtime_json[param_class][attr] = valuelist[idx]
+                            else:
+                                runtime_json[param_class][attr] = valuelist
+                runtime_json['local'] = submit_dict.get('local', {})
+                my_local = {
                     "role": role, "party_id": partyid_list[idx]
                 }
+                runtime_json['local'].update(my_local)
                 runtime_json['CodePath'] = _code_path
                 runtime_json['module'] = _module
                 output_path = os.path.join(out_prefix, _method, _module, str(role),
