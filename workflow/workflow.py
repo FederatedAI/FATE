@@ -163,6 +163,7 @@ class WorkFlow(object):
             train_eval = self.evaluate(predict_result)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
+                self.model.set_flowid("1")
                 if self.mode == consts.HETERO:
                     LOGGER.debug("Star intersection before predict")
                     intersect_flowid = "predict_0"
