@@ -21,7 +21,8 @@ import numpy as np
 
 from arch.api.eggroll import parallelize, table
 from federatedml.ftl.eggroll_computation.util import distribute_compute_vAvg_XY, distribute_compute_hSum_XY, \
-    distribute_encrypt, distribute_decrypt, distribute_compute_XY, distribute_compute_X_plus_Y
+    distribute_encrypt, distribute_decrypt_matrix, distribute_compute_XY, distribute_compute_X_plus_Y, \
+    distribute_decrypt_scalar, distribute_decrypt_array
 
 
 def prepare_table(matrix, batch_size=1, max_partition=20):
@@ -132,9 +133,11 @@ def decrypt_matrix(private_key, matrix):
     _shape = matrix.shape
     if len(_shape) == 3:
         matrix = _convert_3d_to_2d_matrix(matrix)
+    elif len(_shape) == 1:
+        matrix = np.expand_dims(matrix, axis=1)
 
-    X = prepare_table(matrix, 1)
-    val = distribute_decrypt(private_key, X)
+    X = prepare_table(matrix, batch_size=1)
+    val = distribute_decrypt_matrix(private_key, X)
 
     result = []
     last_index = len(val) - 1
@@ -154,6 +157,8 @@ def decrypt_matrix(private_key, matrix):
 
     if len(_shape) == 3:
         result = result.reshape(_shape)
+    elif len(_shape) == 1:
+        result = np.squeeze(result, axis=1)
 
     destroy_table(X)
     return result

@@ -114,7 +114,10 @@ def decrypt_matrix(private_key: PaillierPrivateKey, A):
                 row.append([private_key.decrypt(A[i, j, k]) for k in range(len(A[i][j]))])
             else:
                 row.append(private_key.decrypt(A[i, j]))
-
         decrypt_A.append(row)
-    return np.array(decrypt_A, dtype=np.float64)
+
+    result = np.array(decrypt_A, dtype=np.float64)
+    if len(A.shape) == 1:
+        result = np.squeeze(result, axis=0)
+    return result
 

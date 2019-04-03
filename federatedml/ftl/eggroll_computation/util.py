@@ -16,7 +16,7 @@
 
 import numpy as np
 
-from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
+from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix, decrypt_scalar, decrypt_array
 
 
 def distribute_compute_XY(X, Y):
@@ -97,7 +97,37 @@ def distribute_encrypt(public_key, X):
     return val
 
 
-def distribute_decrypt(private_key, X):
+def distribute_decrypt_scalar(private_key, X):
+    """
+    decrypt X
+    :param X: DTable
+    :return: a dictionary
+    """
+
+    X2 = X.mapValues(lambda x: decrypt_scalar(private_key, x))
+    val = X2.collect()
+    val = dict(val)
+
+    X2.destroy()
+    return val
+
+
+def distribute_decrypt_array(private_key, X):
+    """
+    decrypt X
+    :param X: DTable
+    :return: a dictionary
+    """
+
+    X2 = X.mapValues(lambda x: decrypt_array(private_key, x))
+    val = X2.collect()
+    val = dict(val)
+
+    X2.destroy()
+    return val
+
+
+def distribute_decrypt_matrix(private_key, X):
     """
     decrypt X
     :param X: DTable

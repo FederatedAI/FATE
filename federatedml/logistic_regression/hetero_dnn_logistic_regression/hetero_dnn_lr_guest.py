@@ -16,7 +16,7 @@
 
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import load_model_parameters, save_model_parameters
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import LocalModelProxy
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import LocalModelProxy, AutoLocalModelGradientUpdateProxy
 from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRGuest
 
 LOGGER = log_utils.getLogger()
@@ -28,7 +28,11 @@ class HeteroDNNLRGuest(HeteroLRGuest):
         self.data_shape = local_model.get_encode_dim()
         self.index_tracking_list = []
         self.local_model = local_model
-        self.local_model_proxy = LocalModelProxy(local_model)
+        self.local_model_proxy = AutoLocalModelGradientUpdateProxy()
+        self.local_model_proxy.set_model(local_model)
+
+    def set_local_model_update_proxy(self, local_model_proxy: LocalModelProxy):
+        self.local_model_proxy = local_model_proxy
 
     def transform(self, instance_table):
         """
