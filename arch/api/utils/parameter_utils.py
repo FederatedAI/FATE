@@ -70,7 +70,7 @@ class ParameterOverride(object):
                                 if len(valuelist) <= idx:
                                     continue
                                 else:
-                                    runtime_json[param_class][attr] = [valuelist[idx]]
+                                    runtime_json[param_class][attr] = valuelist[idx]
                             else:
                                 runtime_json[param_class][attr] = valuelist
                 runtime_json['local'] = submit_dict.get('local', {})
