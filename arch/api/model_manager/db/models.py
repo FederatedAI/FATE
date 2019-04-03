@@ -48,10 +48,6 @@ class MachineLearningModelInfo(DataBaseModel):
 
     class Meta:
         db_table = "machine_learning_model_info"
-    # DTable
-    # scene_key: sceneId_myPartyId_partnerPartyId_myRole
-    # version info, nameSpace: mlmodel_version, name: scene_key, k: commitId, v: {commitLog:xx, timestamp: xx, parentId: xx, tableName: xx, tabkeNameSpace: xx}
-    # model data, nameSpace: scene_key_"model_data", name:  commitId, k: model_meta/model_param/data_transform, v: bytes
 
 
 class FeatureDataInfo(DataBaseModel):
@@ -70,9 +66,3 @@ class FeatureDataInfo(DataBaseModel):
 
     class Meta:
         db_table = "feature_data_info"
-    # DTable
-    # scene_key: sceneId_myPartyId_partnerPartyId_myRole
-    # version info, nameSpace: feature_data_version, name: scene_key, k: commitId, v: {commitLog:xx, timestamp: xx, parentId: xx, tableName: xx, tabkeNameSpace: xx}
-    # feature data, nameSpace: scene_key_"feature_data", name:  commitId, k: sid, v: string
-    # feature meta, nameSpace: scene_key_"feature_meta", name:  commitId, k: feature_name, v: feature_index
-    # feature header, nameSpace: scene_key_"feature_header", name:  commitId, k: features/labels, v: object

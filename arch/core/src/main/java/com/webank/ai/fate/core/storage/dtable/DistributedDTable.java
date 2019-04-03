@@ -29,6 +29,9 @@ import com.webank.ai.fate.core.utils.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DistributedDTable implements DTable{
     private static final Logger LOGGER = LogManager.getLogger();
     private ManagedChannel channel;
@@ -36,8 +39,7 @@ public class DistributedDTable implements DTable{
     private String nameSpace;
     private int partition;
 
-    @Override
-    public void init(String name, String nameSpace, int partition) {
+    public DistributedDTable(String name, String nameSpace, int partition){
         this.channel = ClientPool.getChannel(Configuration.getProperty("roll"));
         this.name = name;
         this.nameSpace = nameSpace;
@@ -75,6 +77,12 @@ public class DistributedDTable implements DTable{
         requestOperand.setKey(ByteString.copyFrom(key.getBytes()));
         requestOperand.setValue(ByteString.copyFrom(value));
         MetadataUtils.attachHeaders(kvServiceBlockingStub, this.genHeader()).put(requestOperand.build());
+    }
+
+    @Override
+    public Map<String, byte[]> collect(){
+        Map<String, byte[]> result = new HashMap<>();
+        return result;
     }
 
     private Metadata genHeader(){

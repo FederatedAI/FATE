@@ -14,8 +14,36 @@
 #  limitations under the License.
 #
 # -*- coding: utf-8 -*-
+from arch.api.utils import file_utils
+from arch.api.utils.log_utils import LoggerFactory
+LoggerFactory.setDirectory()
+logger = LoggerFactory.getLogger("task_manager")
 
-# default settings
+'''
+Constants
+'''
+
+API_VERSION = "v1"
+ROLE = 'manager'
+SERVERS = 'servers'
+MAX_CONCURRENT_JOB_RUN = 5
+
+_ONE_DAY_IN_SECONDS = 60 * 60 * 24
+HEADERS = {
+    'Content-Type': 'application/json',
+}
+
+
+server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+IP = server_conf.get(SERVERS).get(ROLE).get('host')
+GRPC_PORT = server_conf.get(SERVERS).get(ROLE).get('grpc.port')
+HTTP_PORT = server_conf.get(SERVERS).get(ROLE).get('http.port')
+LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT)
+PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
+PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
+WORK_MODE = server_conf.get(SERVERS).get(ROLE).get('work_mode')
+PARTY_ID = server_conf.get("party_id")
+ALL_PARTY_IDS = server_conf.get('all_party_ids')
 
 DATABASE = {
     'engine': 'mysql',

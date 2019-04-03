@@ -103,7 +103,7 @@ if __name__ == "__main__":
                     input_file_path = data['file']
                 except:
                     traceback.print_exc()
-
+                
                 try:
                    read_head = data['head']
                    if read_head == 0:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                        head = True
                 except:
                     print("'head' in .json should be 0 or 1, set head to 1")
-
+                
                 try:
                     partition = data['partition']
                     if partition <= 0 or partition > MAX_PARTITION_NUM:
@@ -121,8 +121,8 @@ if __name__ == "__main__":
                 except:
                     print("set partition to 1")
                     partition = 1
-
-
+                
+            
                 try:
                     table_name = data['table_name']
                 except:

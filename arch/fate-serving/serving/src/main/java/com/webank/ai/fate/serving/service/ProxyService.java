@@ -40,10 +40,7 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
 
         switch (req.getHeader().getCommand().getName()) {
             case "federatedPredict":
-                responseData = new PredictService().federatedPredict(requestData);
-                break;
-            case "federatedLoadModel":
-                responseData = ModelManager.federatedLoadModel(requestData);
+                responseData = new InferenceService().federatedPredict(requestData);
                 break;
             default:
                 responseData = new ReturnResult();
@@ -65,8 +62,8 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
                         .setName("myPartyName")
                         .build());
         metaDataBuilder.setDst(
-                topicBuilder.setPartyId((String) requestData.get("myPartyId"))
-                        .setRole((String) requestData.get("myRole"))
+                topicBuilder.setPartyId(requestData.get("partyId").toString())
+                        .setRole("guest")
                         .setName("partnerPartyName")
                         .build());
         packetBuilder.setHeader(metaDataBuilder.build());

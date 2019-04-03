@@ -16,8 +16,10 @@
 
 package com.webank.ai.fate.core.storage.dtable;
 
+import java.util.Map;
+
 public interface DTable {
-    void init(String name, String nameSpace, int partition);
     byte[] get(String key);
     void put(String key, byte[] value);
+    Map<String, byte[]> collect();
 }

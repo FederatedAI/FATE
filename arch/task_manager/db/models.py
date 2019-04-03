@@ -16,8 +16,10 @@
 from arch.api.utils import log_utils
 from playhouse.pool import PooledMySQLDatabase
 from arch.task_manager.settings import DATABASE
-from peewee import Model, CharField, IntegerField, BigIntegerField, DateTimeField, TextField
+from peewee import Model, CharField, IntegerField, BigIntegerField, DateTimeField, TextField, CompositeKey
 import datetime
+import sys
+import inspect
 
 LOGGER = log_utils.getLogger()
 
@@ -37,6 +39,15 @@ def close_db(db):
         LOGGER.exception(e)
 
 
+def init_tables():
+    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    table_objs = []
+    for name, obj in members:
+        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+            table_objs.append(obj)
+    DB.create_tables(table_objs)
+
+
 class DataBaseModel(Model):
     class Meta:
         database = DB
@@ -50,17 +61,17 @@ class DataBaseModel(Model):
         super(DataBaseModel, self).save(*args, **kwargs)
 
 
-class Job(DataBaseModel):
-    job_id = CharField(max_length=50, primary_key=True)
+class JobInfo(DataBaseModel):
+    job_id = CharField(max_length=50)
     name = CharField(max_length=100, null=True, default='')
     task = CharField(max_length=50, index=True)
     module = CharField(max_length=50, null=True, index=True)
     scene_id = IntegerField(null=True, index=True)
+    my_role = CharField(max_length=10, null=True, default='', index=True)
     my_party_id = IntegerField(null=True, index=True)
     partner_party_id = IntegerField(null=True, index=True)
-    my_role = CharField(max_length=10, null=True, index=True)
     config = TextField(null=True)
-    status = CharField(max_length=50, null=True, default='ready')  # ready/running/success/failed/partial/deleted
+    status = CharField(max_length=50, null=True, default='ready')  # ready/waiting/running/success/failed/partial/deleted
     set_status = CharField(max_length=50, null=True)  # ready/running/success/failed/partial/deleted
     progress = IntegerField(null=True, default=0)
     current_step = CharField(max_length=100, null=True, index=True)
@@ -71,4 +82,20 @@ class Job(DataBaseModel):
     elapsed = BigIntegerField(null=True)
 
     class Meta:
-        db_table = "job"
+        db_table = "job_info"
+        primary_key = CompositeKey('job_id', 'my_role')
+
+
+class JobQueue(DataBaseModel):
+    job_id = CharField(max_length=50)
+    my_role = CharField(max_length=10, null=True, default='', index=True)
+    status = CharField(max_length=50, null=True, default='ready')  # ready/running/success/failed/partial/deleted
+    config = TextField(null=True)
+    create_date = DateTimeField(index=True)
+    update_date = DateTimeField(index=True)
+
+    class Meta:
+        db_table = "job_queue"
+        primary_key = CompositeKey('job_id', 'my_role')
+
+init_tables()

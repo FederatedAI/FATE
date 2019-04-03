@@ -20,12 +20,11 @@ import com.webank.ai.fate.api.serving.InferenceServiceProto.FederatedMeta;
 import com.webank.ai.fate.core.utils.Configuration;
 
 public class FederatedUtils {
-    public static FederatedMeta.Builder genResponseMetaBuilder(FederatedMeta requestMeta, String commitId){
+    public static FederatedMeta.Builder genResponseMetaBuilder(FederatedMeta requestMeta){
         FederatedMeta.Builder responseMetaBuilder = FederatedMeta.newBuilder();
         responseMetaBuilder.setSceneId(requestMeta.getSceneId());
-        responseMetaBuilder.setMyPartyId(Configuration.getProperty("partyId"));
+        responseMetaBuilder.setMyPartyId(Configuration.getPropertyInt("partyId"));
         responseMetaBuilder.setPartnerPartyId(requestMeta.getMyPartyId());
-        responseMetaBuilder.setCommitId(commitId);
         responseMetaBuilder.setMyRole(getMyRole(requestMeta.getMyRole()));
         return responseMetaBuilder;
     }

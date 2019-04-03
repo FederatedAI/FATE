@@ -16,65 +16,75 @@
 
 package com.webank.ai.fate.serving.manger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
-import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
-import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.mlmodel.model.MLModel;
-import com.webank.ai.fate.core.network.grpc.client.ClientPool;
+import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.utils.Configuration;
-import com.webank.ai.fate.serving.utils.FederatedUtils;
-import io.grpc.ManagedChannel;
+import com.webank.ai.fate.serving.federatedml.PipelineTask;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ModelManager {
-    private static ModelPool sceneModel;
+    private static ModelPool namespaceModel;
     private static ModelCache modelCache;
+    private static ConcurrentHashMap<String, ModelInfo> partnerModelIndex;
     private static final Logger LOGGER = LogManager.getLogger();
     public ModelManager(){
-        sceneModel = new ModelPool();
+        namespaceModel = new ModelPool();
         modelCache = new ModelCache();
+        partnerModelIndex = new ConcurrentHashMap<>();
     }
 
-    public static MLModel getModel(String sceneId, String partnerPartyId, String myRole){
-        return sceneModel.get(ModelUtils.getOnlineModelKey(sceneId, partnerPartyId, myRole));
+    public static PipelineTask getModel(String name, String namespace){
+        return modelCache.get(ModelUtils.genModelKey(name, namespace));
     }
 
-    public static MLModel getModel(String sceneId, String partnerPartyId, String myRole, String commitId){
-        return modelCache.get(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId));
-    }
-
-    private static int pushModelIntoPool(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws Exception{
-        MLModel mlModel = ModelUtils.loadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
-        if (mlModel == null){
-            return StatusCode.NOMODEL;
+    public static PipelineTask getModelAcPartner(int partnerPartyId, String partnerModelName, String partnerModelNamespace){
+        ModelInfo modelInfo = partnerModelIndex.get(ModelUtils.genPartnerModelIndexKey(partnerPartyId, partnerModelName, partnerModelNamespace));
+        LOGGER.info(ModelUtils.genPartnerModelIndexKey(partnerPartyId, partnerModelName, partnerModelNamespace));
+        if (modelInfo == null){
+            return null;
         }
-        modelCache.put(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId), mlModel);
-        return StatusCode.OK;
+        return modelCache.get(ModelUtils.genModelKey(modelInfo.getName(), modelInfo.getNamespace()));
     }
 
-    public static ReturnResult publishLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch){
+    private static PipelineTask pushModelIntoPool(String name, String namespace) throws Exception{
+        PipelineTask model = ModelUtils.loadModel(name, namespace);
+        if (model == null){
+            return null;
+        }
+        modelCache.put(ModelUtils.genModelKey(name, namespace), model);
+        LOGGER.info(modelCache.getSize());
+        return model;
+    }
+
+    public static ReturnResult publishLoadModel(Map<Integer, ModelServiceProto.ModelInfo> models){
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
-        returnResult.setData("commitId", commitId);
         try{
-            int localLoadStatus = pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch);
-            if (localLoadStatus != StatusCode.OK){
-                returnResult.setStatusCode(localLoadStatus);
+            int partyId = Configuration.getPropertyInt("partyId");
+            ModelServiceProto.ModelInfo myModelInfo = models.get(partyId);
+            if (myModelInfo == null){
+                returnResult.setStatusCode(StatusCode.NOMODEL);
                 return returnResult;
             }
-            Map<String, Object> federatedLoadModelResult = requestFederatedLoadModel(sceneId, partnerPartyId, myRole, commitId, tag, branch);
-            if ((int)federatedLoadModelResult.get("statusCode") != StatusCode.OK){
-                returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
+            String myModelName = myModelInfo.getName();
+            String myModelNamespace = myModelInfo.getNamespace();
+            PipelineTask model = pushModelIntoPool(myModelName, myModelNamespace);
+            if (model == null){
+                returnResult.setStatusCode(StatusCode.RUNTIMEERROR);
                 return returnResult;
             }
+            models.forEach((p, m)->{
+                if (p != partyId){
+                    LOGGER.info(ModelUtils.genPartnerModelIndexKey(p, m.getName(), m.getNamespace()));
+                    partnerModelIndex.put(ModelUtils.genPartnerModelIndexKey(p, m.getName(), m.getNamespace()), new ModelInfo(myModelName, myModelNamespace));
+                }
+            });
         }
         catch (IOException ex){
             LOGGER.error(ex);
@@ -93,14 +103,11 @@ public class ModelManager {
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
         try{
-            String sceneId = String.valueOf(requestData.get("sceneId"));
-            String partnerPartyId = String.valueOf(requestData.get("myPartyId"));
-            String myRole = FederatedUtils.getMyRole(String.valueOf(requestData.get("myRole")));
-            String commitId = String.valueOf(requestData.get("commitId"));
-            String branch = String.valueOf(requestData.get("branch"));
-            String tag = String.valueOf(requestData.get("tag"));
-            returnResult.setData("commitId", commitId);
-            returnResult.setStatusCode(pushModelIntoPool(sceneId, partnerPartyId, myRole, commitId, tag, branch));
+            String name = String.valueOf(requestData.get("modelName"));
+            String namespace = String.valueOf(requestData.get("modelNamespace"));
+            returnResult.setData("name", name);
+            returnResult.setData("namespace", namespace);
+            //returnResult.setStatusCode(pushModelIntoPool(name, namespace));
         }
         catch (Exception ex){
             returnResult.setStatusCode(StatusCode.UNKNOWNERROR);
@@ -109,16 +116,22 @@ public class ModelManager {
         return returnResult;
     }
 
-    public static ReturnResult publishOnlineModel(String sceneId, String partnerPartyId, String myRole, String commitId){
+    public static ReturnResult publishOnlineModel(Map<Integer, ModelServiceProto.ModelInfo> models){
         ReturnResult returnResult = new ReturnResult();
-        MLModel model = modelCache.get(ModelUtils.genModelKey(sceneId, partnerPartyId, myRole, commitId));
+        ModelServiceProto.ModelInfo myModelInfo = models.get(Configuration.getPropertyInt("partyId"));
+        if (myModelInfo == null){
+            returnResult.setStatusCode(StatusCode.NOMODEL);
+            returnResult.setMessage("No model for me.");
+            return returnResult;
+        }
+        PipelineTask model = modelCache.get(ModelUtils.genModelKey(myModelInfo.getName(), myModelInfo.getNamespace()));
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("Can not found model by these information.");
             return returnResult;
         }
         try{
-            sceneModel.put(ModelUtils.getOnlineModelKey(sceneId, partnerPartyId, myRole), model);
+            namespaceModel.put(myModelInfo.getNamespace(), model);
             returnResult.setStatusCode(StatusCode.OK);
         }
         catch (Exception ex){
@@ -126,42 +139,5 @@ public class ModelManager {
             returnResult.setMessage(ex.getMessage());
         }
         return returnResult;
-    }
-
-    private static Map<String, Object> requestFederatedLoadModel(String sceneId, String partnerPartyId, String myRole, String commitId, String tag, String branch) throws IOException {
-        Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
-        Map<String, String> requestData = new HashMap<>();
-        requestData.put("sceneId", sceneId);
-        requestData.put("myPartyId", Configuration.getProperty("partyId"));
-        requestData.put("partnerPartyId", partnerPartyId);
-        requestData.put("myRole", "guest");
-        requestData.put("commitId", commitId);
-        requestData.put("tag", tag);
-        requestData.put("branch", branch);
-        ObjectMapper objectMapper = new ObjectMapper();
-        packetBuilder.setBody(Proxy.Data.newBuilder()
-                .setValue(ByteString.copyFrom(objectMapper.writeValueAsString(requestData).getBytes()))
-                .build());
-
-        Proxy.Metadata.Builder metaDataBuilder = Proxy.Metadata.newBuilder();
-        Proxy.Topic.Builder topicBuilder = Proxy.Topic.newBuilder();
-
-        metaDataBuilder.setSrc(
-                topicBuilder.setPartyId(Configuration.getProperty("partyId"))
-                        .setRole(myRole)
-                        .setName("myPartyName")
-                        .build());
-        metaDataBuilder.setDst(
-                topicBuilder.setPartyId(partnerPartyId)
-                        .setRole("host")
-                        .setName("partnerPartyName")
-                        .build());
-        metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedLoadModel").build());
-        packetBuilder.setHeader(metaDataBuilder.build());
-
-        ManagedChannel channel1 = ClientPool.getChannel(Configuration.getProperty("proxy"));
-        DataTransferServiceGrpc.DataTransferServiceBlockingStub stub1 = DataTransferServiceGrpc.newBlockingStub(channel1);
-        Proxy.Packet packet = stub1.unaryCall(packetBuilder.build());
-        return objectMapper.readValue(packet.getBody().getValue().toStringUtf8(), HashMap.class);
     }
 }

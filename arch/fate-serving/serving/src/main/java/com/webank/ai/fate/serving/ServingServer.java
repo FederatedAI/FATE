@@ -20,7 +20,7 @@ import com.webank.ai.fate.core.network.http.client.HttpClientPool;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.serving.service.ModelService;
-import com.webank.ai.fate.serving.service.PredictService;
+import com.webank.ai.fate.serving.service.InferenceService;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.service.ProxyService;
 import io.grpc.Server;
@@ -52,7 +52,7 @@ public class ServingServer {
         int port = Integer.parseInt(Configuration.getProperty("port"));
         //TODO: Server custom configuration
         server = ServerBuilder.forPort(port)
-                .addService(new PredictService())
+                .addService(new InferenceService())
                 .addService(new ModelService())
                 .addService(new ProxyService())
                 .build();

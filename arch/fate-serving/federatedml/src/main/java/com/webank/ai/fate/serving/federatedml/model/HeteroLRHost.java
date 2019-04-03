@@ -1,20 +1,19 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
-import com.webank.ai.fate.serving.federatedml.transform.DataTransform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class HeteroLRHost extends HeteroLR {
     private static final Logger LOGGER = LogManager.getLogger();
+
     @Override
-    public HashMap<String, Object> predict(HashMap<String, Object> inputData, HashMap<String, Object> predictParams) {
-        DataTransform dataTransform = new DataTransform();
-        HashMap<String, Object> newInputData = dataTransform.fit(inputData, this.dataTransformServer);
+    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
 
         HashMap<String, Object> result = new HashMap<>();
-        float score = forward(newInputData);
+        double score = forward(inputData);
         result.put("score", score);
 
         return result;

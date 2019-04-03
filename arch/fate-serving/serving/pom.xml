@@ -14,12 +14,12 @@
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-core</artifactId>
-            <version>0.1</version>
+            <version>${fate.version}</version>
         </dependency>
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-serving-federatedml</artifactId>
-            <version>0.1</version>
+            <version>${fate.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>

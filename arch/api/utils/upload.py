@@ -42,7 +42,6 @@ def list_to_str(input_list):
 def read_data(input_file='', head=True):
     split_file_name = input_file.split('.')
     if CSV in split_file_name:
-        print("file type is csv")
         with open(input_file) as csv_file:
             csv_reader = csv.reader(csv_file)
             if head is True:
@@ -51,7 +50,6 @@ def read_data(input_file='', head=True):
             for row in csv_reader:
                 yield (row[0], list_to_str(row[1:]))
     else:
-        print("file type is not known, read it as txt")
         with open(input_file, 'r') as fin:
             if head is True:
                 head = fin.readline()

@@ -54,7 +54,7 @@ class _DTable(object):
         self._name = storage_locator.name
         self._type = storage_basic_pb2.StorageType.Name(storage_locator.type)
         self._partitions = partitions
-        self.scheme = {}
+        self.schema = {}
 
     def __str__(self):
         return "type:{} namespace:{} name:{} partitions:{}".format(self._type, self._namespace, self._name,

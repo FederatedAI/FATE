@@ -16,7 +16,6 @@
 
 package com.webank.ai.fate.serving.manger;
 
-import com.webank.ai.fate.core.mlmodel.model.MLModel;
 import com.webank.ai.fate.core.storage.kv.BaseKVPool;
 
 import java.util.ArrayList;
@@ -25,18 +24,20 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ModelPool extends BaseKVPool<String, MLModel> {
+public class ModelPool extends BaseKVPool<String, PipelineTask> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<String, MLModel> pool = new HashMap<>();
+    private static final Map<String, PipelineTask> pool = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
 
     @Override
-    public void put(String key, MLModel value){
+    public void put(String key, PipelineTask value){
         this.writeLock.lock();
         try {
             pool.put(key, value);
@@ -50,7 +51,7 @@ public class ModelPool extends BaseKVPool<String, MLModel> {
     }
 
     @Override
-    public void putIfAbsent(String key, MLModel value){
+    public void putIfAbsent(String key, PipelineTask value){
         this.writeLock.lock();
         try {
             pool.putIfAbsent(key, value);
@@ -64,7 +65,7 @@ public class ModelPool extends BaseKVPool<String, MLModel> {
     }
 
     @Override
-    public void putAll(Map<String, MLModel> kv){
+    public void putAll(Map<String, PipelineTask> kv){
         this.writeLock.lock();
         try {
             pool.putAll(kv);
@@ -78,11 +79,11 @@ public class ModelPool extends BaseKVPool<String, MLModel> {
     }
 
     @Override
-    public MLModel get(String key){
+    public PipelineTask get(String key){
         this.readLock.lock();
-        MLModel mlModel = pool.get(key);
+        PipelineTask pipelineTask = pool.get(key);
         this.readLock.unlock();
-        return mlModel;
+        return pipelineTask;
     }
 
     public ArrayList<String> keys(){

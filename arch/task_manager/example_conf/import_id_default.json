@@ -1,0 +1,5 @@
+{
+    "task": "import_id",
+    "work_mode": 0,
+    "input_file_path": "../../../examples/data/breast_a.csv"
+}

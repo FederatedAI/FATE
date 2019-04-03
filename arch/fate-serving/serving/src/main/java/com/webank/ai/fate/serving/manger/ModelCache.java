@@ -19,8 +19,8 @@ package com.webank.ai.fate.serving.manger;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.webank.ai.fate.core.mlmodel.model.MLModel;
 import com.webank.ai.fate.core.utils.Configuration;
+import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,22 +29,22 @@ import java.util.concurrent.TimeUnit;
 
 public class ModelCache {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static LoadingCache<String, MLModel> modelCache = null;
+    private static LoadingCache<String, PipelineTask> modelCache = null;
 
     public ModelCache(){
         modelCache = CacheBuilder.newBuilder()
                 .expireAfterAccess(Configuration.getPropertyInt("modelCacheAccessTTL"), TimeUnit.HOURS)
                 .maximumSize(Configuration.getPropertyInt("modelCacheMaxSize"))
-                .build(new CacheLoader<String, MLModel>() {
+                .build(new CacheLoader<String, PipelineTask>() {
                     @Override
-                    public MLModel load(String modelKey) throws Exception {
+                    public PipelineTask load(String modelKey) throws Exception {
                         String[] modelKeyFields = ModelUtils.splitModelKey(modelKey);
-                        return ModelUtils.loadModel(modelKeyFields[0], modelKeyFields[1], modelKeyFields[2], modelKeyFields[3], "", "");
+                        return ModelUtils.loadModel(modelKeyFields[0], modelKeyFields[1]);
                     }
                 });
     }
 
-    public MLModel get(String modelKey){
+    public PipelineTask get(String modelKey){
         try {
             return modelCache.get(modelKey);
         }catch (ExecutionException ex){
@@ -53,7 +53,11 @@ public class ModelCache {
         }
     }
 
-    public void put(String modelKey, MLModel model){
+    public void put(String modelKey, PipelineTask model){
         modelCache.put(modelKey, model);
+    }
+
+    public long getSize(){
+        return modelCache.size();
     }
 }
