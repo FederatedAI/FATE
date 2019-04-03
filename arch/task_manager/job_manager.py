@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from arch.task_manager.db.models import DB, JobInfo, JobQueue
+from arch.task_manager.settings import logger
 import datetime
 import json
 

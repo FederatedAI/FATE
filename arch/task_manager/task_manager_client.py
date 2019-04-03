@@ -85,18 +85,18 @@ def import_id(local_url, config):
             if file_end:
                 # file end
                 request_data["total"] = total
-                response = requests.post("/".join([local_url, "v1/data/importId"]), json=request_data)
+                response = requests.post("/".join([local_url, "data/importId"]), json=request_data)
                 break
             else:
                 request_data["total"] = 0
-                response = requests.post("/".join([local_url, "v1/data/importId"]), json=request_data)
+                response = requests.post("/".join([local_url, "data/importId"]), json=request_data)
             range_start = range_end + 1
             del id_tmp[:]
     return response
 
 
 def request_offline_feature(local_url, config):
-    response = requests.post("/".join([local_url, "v1/data/requestOfflineFeature"]), json=config)
+    response = requests.post("/".join([local_url, "data/requestOfflineFeature"]), json=config)
     print(response)
     return response
 

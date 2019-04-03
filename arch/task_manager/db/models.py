@@ -16,7 +16,7 @@
 from arch.api.utils import log_utils
 from playhouse.pool import PooledMySQLDatabase
 from arch.task_manager.settings import DATABASE
-from peewee import Model, CharField, IntegerField, BigIntegerField, DateTimeField, TextField
+from peewee import Model, CharField, IntegerField, BigIntegerField, DateTimeField, TextField, CompositeKey
 import datetime
 import sys
 import inspect
@@ -62,14 +62,14 @@ class DataBaseModel(Model):
 
 
 class JobInfo(DataBaseModel):
-    job_id = CharField(max_length=50, primary_key=True)
+    job_id = CharField(max_length=50)
     name = CharField(max_length=100, null=True, default='')
     task = CharField(max_length=50, index=True)
     module = CharField(max_length=50, null=True, index=True)
     scene_id = IntegerField(null=True, index=True)
+    my_role = CharField(max_length=10, null=True, default='', index=True)
     my_party_id = IntegerField(null=True, index=True)
     partner_party_id = IntegerField(null=True, index=True)
-    my_role = CharField(max_length=10, null=True, index=True)
     config = TextField(null=True)
     status = CharField(max_length=50, null=True, default='ready')  # ready/waiting/running/success/failed/partial/deleted
     set_status = CharField(max_length=50, null=True)  # ready/running/success/failed/partial/deleted
@@ -83,10 +83,12 @@ class JobInfo(DataBaseModel):
 
     class Meta:
         db_table = "job_info"
+        primary_key = CompositeKey('job_id', 'my_role')
 
 
 class JobQueue(DataBaseModel):
-    job_id = CharField(max_length=50, primary_key=True)
+    job_id = CharField(max_length=50)
+    my_role = CharField(max_length=10, null=True, default='', index=True)
     status = CharField(max_length=50, null=True, default='ready')  # ready/running/success/failed/partial/deleted
     config = TextField(null=True)
     create_date = DateTimeField(index=True)
@@ -94,5 +96,6 @@ class JobQueue(DataBaseModel):
 
     class Meta:
         db_table = "job_queue"
+        primary_key = CompositeKey('job_id', 'my_role')
 
 init_tables()

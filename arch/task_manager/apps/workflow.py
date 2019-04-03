@@ -17,6 +17,7 @@ from flask import Flask, request
 import os
 from arch.task_manager.utils.job_utils import get_json_result, get_job_directory
 from arch.task_manager.job_manager import save_job_info, update_job_queue, update_job_info
+from arch.task_manager.settings import logger
 import subprocess
 from arch.api.utils import file_utils
 import json
@@ -55,7 +56,7 @@ def start_workflow(job_id, module, role):
              "-c", os.path.abspath(conf_file_path)
              ]
     print(" ".join(progs))
-    manager.logger.info('Starting progs: {}'.format(" ".join(progs)))
+    logger.info('Starting progs: {}'.format(" ".join(progs)))
 
     p = subprocess.Popen(progs,
                          stdout=std_log,
@@ -74,6 +75,7 @@ def start_workflow(job_id, module, role):
     with open(conf_file_path) as fr:
         config = json.load(fr)
     job_data.update(config)
+    job_data["my_role"] = config.get("local", {}).get("role")
     save_job_info(job_id=job_id, **job_data)
     update_job_queue(job_id=job_id, update_data={"status": "ready"})
     return get_json_result(msg="success, pid is %s" % p.pid)
@@ -94,7 +96,7 @@ def stop_workflow(job_id):
                         try:
                             if len(pid) == 0:
                                 continue
-                            manager.logger.debug("terminating process pid:{} {}".format(pid, pid_file))
+                            logger.debug("terminating process pid:{} {}".format(pid, pid_file))
                             p = psutil.Process(int(pid))
                             for child in p.children(recursive=True):
                                 child.kill()
@@ -102,7 +104,7 @@ def stop_workflow(job_id):
                         except NoSuchProcess:
                             continue
             except Exception as e:
-                manager.logger.exception("error")
+                logger.exception("error")
                 continue
         update_job_info(job_id=job_id, update_data={"status": "failed", "set_status": "failed"})
     return get_json_result()

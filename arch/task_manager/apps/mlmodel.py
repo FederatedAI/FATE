@@ -23,7 +23,7 @@ from arch.task_manager.utils.grpc_utils import get_proxy_data_channel, wrap_grpc
 from arch.task_manager.utils.job_utils import get_json_result
 from arch.api.version_control.control import version_history
 from arch.api import eggroll
-from arch.task_manager.settings import WORK_MODE
+from arch.task_manager.settings import WORK_MODE, logger
 import json
 manager = Flask(__name__)
 
@@ -38,17 +38,17 @@ def load_model():
         _method = 'POST'
         _url = '/model/load/do'
         _packet = wrap_grpc_packet(config, _method, _url, _party_id, _job_id)
-        manager.logger.info(
+        logger.info(
             'Starting load model job_id:{} party_id:{} method:{} url:{}'.format(_job_id, _party_id,_method, _url))
         try:
             _return = stub.unaryCall(_packet)
-            manager.logger.info("Grpc unary response: {}".format(_return))
+            logger.info("Grpc unary response: {}".format(_return))
         except grpc.RpcError as e:
             msg = 'job_id:{} party_id:{} method:{} url:{} Failed to start load model'.format(_job_id,
                                                                                              _party_id,
                                                                                              _method,
                                                                                              _url)
-            manager.logger.exception(msg)
+            logger.exception(msg)
             return get_json_result(-101, 'UnaryCall submit to remote manager failed')
 
 
@@ -60,7 +60,7 @@ def do_load_model():
         publish_model.load_model(config_data=request_data)
         return get_json_result()
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(status=1, msg="load model error: %s" % e)
 
 
@@ -72,7 +72,7 @@ def publish_model_online():
         publish_model.publish_online(config_data=config)
         return get_json_result()
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(status=1, msg="publish model error: %s" % e)
 
 
@@ -86,5 +86,5 @@ def query_model_version_history():
         history = version_history(data_table_namespace=config.get("namespace"))
         return get_json_result(msg=json.dumps(history))
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(status=1, msg="load model error: %s" % e)

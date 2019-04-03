@@ -20,6 +20,7 @@ from arch.api.utils import file_utils
 from arch.task_manager.adapter.offline_feature.get_feature import GetFeature
 from arch.task_manager.job_manager import save_job_info, query_job_info, update_job_info
 from arch.task_manager.utils.job_utils import generate_job_id, get_job_directory
+from arch.task_manager.settings import logger
 from flask import Flask, request
 import datetime
 import os
@@ -34,7 +35,7 @@ manager = Flask(__name__)
 def download_data(data_func):
     _data = request.json
     _job_id = generate_job_id()
-    manager.logger.info('generated job_id {}, body {}'.format(_job_id, _data))
+    logger.info('generated job_id {}, body {}'.format(_job_id, _data))
     _job_dir = get_job_directory(_job_id)
     os.makedirs(_job_dir, exist_ok=True)
     _download_module = os.path.join(file_utils.get_project_base_directory(), "arch/api/utils/download.py")
@@ -58,7 +59,7 @@ def download_data(data_func):
                      "-c", os.path.abspath(_data.get("config_path"))
                      ]
 
-        manager.logger.info('Starting progs: {}'.format(progs))
+        logger.info('Starting progs: {}'.format(progs))
 
         std_log = open(os.path.join(_job_dir, 'std.log'), 'w')
         task_pid_path = os.path.join(_job_dir, 'pids')
@@ -82,7 +83,8 @@ def download_data(data_func):
             f.flush()
 
         return get_json_result(0, "success, job_id {}".format(_job_id))
-    except:
+    except Exception as e:
+        print(e)
         return get_json_result(-104, "failed, job_id {}".format(_job_id))
 
 
@@ -118,7 +120,7 @@ def import_id():
                 return get_json_result(2, "The actual amount of data is not equal to total.")
         return get_json_result()
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(1, "import error.")
 
 
@@ -139,7 +141,7 @@ def request_offline_feature():
         else:
             return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(status=1, msg="request offline feature error: %s" % e)
 
 
@@ -161,5 +163,5 @@ def import_offline_feature():
         else:
             return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))
     except Exception as e:
-        manager.logger.exception(e)
+        logger.exception(e)
         return get_json_result(status=1, msg="request offline feature error: %s" % e)
