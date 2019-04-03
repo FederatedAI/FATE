@@ -3,6 +3,5 @@
   "head": 1,
   "partition": 10,
   "table_name": "_table_name",
-  "namespace": "example_data_namespace",
-  "work_mode": _work_mode
+  "namespace": "example_data_namespace"
 }

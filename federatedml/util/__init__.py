@@ -24,12 +24,13 @@ from federatedml.util.param_checker import IntersectParamChecker
 from federatedml.util.param_checker import LogisticParamChecker
 from federatedml.util.param_checker import WorkFlowParamChecker
 from federatedml.util.param_checker import DecisionTreeParamChecker
-from federatedml.util.param_checker import BoostingTreeParamChecker, FeatureBinningParamChecker
+from federatedml.util.param_checker import FeatureBinningParamChecker, FeatureSelectionParamChecker
+from federatedml.util.param_checker import BoostingTreeParamChecker
 from federatedml.util.data_io import DenseFeatureReader
 from federatedml.util.data_io import SparseFeatureReader
+from federatedml.util.data_io import SparseTagReader
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
-from federatedml.util.statistics import Statistics
 from federatedml.util.transfer_variable import BaseTransferVariable
 from federatedml.util.transfer_variable import RawIntersectTransferVariable
 from federatedml.util.transfer_variable import HeteroDecisionTreeTransferVariable
@@ -45,6 +46,7 @@ __all__ = ['consts',
            "ParamExtract",
            "DenseFeatureReader",
            "SparseFeatureReader",
+           "SparseTagReader",
            "ClassifyLabelChecker",
            "RegressionLabelChecker",
            "BaseTransferVariable",
@@ -55,7 +57,6 @@ __all__ = ['consts',
            "RsaIntersectTransferVariable",
            "HomoLRTransferVariable",
            "SecureAddExampleTransferVariable",
-           "Statistics",
            "EncodeParamChecker",
            "IntersectParamChecker",
            "LogisticParamChecker",
@@ -63,4 +64,5 @@ __all__ = ['consts',
            "DataIOParamChecker",
            "DecisionTreeParamChecker",
            "BoostingTreeParamChecker",
-           'FeatureBinningParamChecker']
+           'FeatureBinningParamChecker',
+           'FeatureSelectionParamChecker']

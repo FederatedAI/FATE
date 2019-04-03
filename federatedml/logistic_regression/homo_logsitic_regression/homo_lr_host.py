@@ -15,12 +15,11 @@
 #
 
 import functools
-from arch.api.utils import log_utils
 
 import numpy as np
-from arch.api import federation
 
-from federatedml.evaluation import Evaluation
+from arch.api import federation
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import Initializer
@@ -99,7 +98,7 @@ class HomoLRHost(BaseLogisticRegression):
                     if self.updater is not None:
                         loss_norm = self.updater.loss_norm(self.coef_)
                         total_loss += loss + loss_norm
-                    # LOGGER.debug("iter: {}, grad: {}, loss: {}".format(iter_num, grad, loss))
+                        # LOGGER.debug("iter: {}, grad: {}, loss: {}".format(iter_num, grad, loss))
                 else:
                     grad, _ = grad_loss.reduce(self.aggregator.aggregate_grad)
                     grad = np.array(grad)
@@ -229,6 +228,10 @@ class HomoLRHost(BaseLogisticRegression):
         else:
             LOGGER.info("in predict, has synchronize encryption information")
 
+        from federatedml.util.fate_operator import get_features_shape
+        feature_shape = get_features_shape(data_instances)
+        LOGGER.debug("Shape of coef_ : {}, feature shape: {}".format(len(self.coef_), feature_shape))
+
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
 
         if self.use_encrypt:
@@ -279,4 +282,14 @@ class HomoLRHost(BaseLogisticRegression):
         final_model = federation.get(name=self.transfer_variable.final_model.name,
                                      tag=final_model_id,
                                      idx=0)
+        LOGGER.info("Received arbiter's model")
+        LOGGER.debug("final_model: {}".format(final_model))
         self.set_coef_(final_model)
+
+    def save_model(self, model_table, model_namespace, job_id=None, model_name=None):
+        # No need to save model in host
+        pass
+
+    def load_model(self, model_table, model_namespace):
+        # No need to load model in host
+        pass

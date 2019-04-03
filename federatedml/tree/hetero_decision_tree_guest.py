@@ -30,15 +30,17 @@ from arch.api.utils import log_utils
 import functools
 from arch.api import eggroll
 from arch.api import federation
+from arch.api.proto.boosting_tree_model_meta_pb2 import CriterionMeta
+from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
+from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 import random
-import numpy as np
 from federatedml.util import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import Node
-from federatedml.tree import DecisionTreeModelMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -530,14 +532,65 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("predict finish!")
         return predict_data
 
-    def get_tree_model(self):
-        LOGGER.info("get tree model")
-        tree_model = DecisionTreeModelMeta()
-        tree_model.tree_ = self.tree_
-        tree_model.split_maskdict = self.split_maskdict
-        return tree_model
+    def get_model_meta(self):
+        model_meta = DecisionTreeModelMeta()
+        model_meta.criterion_meta.CopyFrom(CriterionMeta(criterion_method=self.criterion_method,
+                                                         criterion_param=self.criterion_params))
 
-    def set_tree_model(self, tree_model):
-        LOGGER.info("set tree model")
-        self.tree_ = tree_model.tree_
-        self.split_maskdict = tree_model.split_maskdict
+        model_meta.max_depth = self.max_depth
+        model_meta.min_sample_split = self.min_sample_split
+        model_meta.min_impurity_split = self.min_impurity_split
+        model_meta.min_leaf_node = self.min_leaf_node
+
+        return model_meta
+
+    def set_model_meta(self, model_meta):
+        self.max_depth = model_meta.max_depth
+        self.min_sample_split = model_meta.min_sample_split
+        self.min_impurity_split = model_meta.min_impurity_split
+        self.min_leaf_node = model_meta.min_leaf_node
+        self.criterion_method = model_meta.criterion_meta.criterion_method
+        self.criterion_params = list(model_meta.criterion_meta.criterion_param)
+
+    def get_model_param(self):
+        model_param = DecisionTreeModelParam()
+        for node in self.tree_:
+            model_param.tree_.add(id=node.id,
+                                  sitename=node.sitename,
+                                  fid=node.fid,
+                                  bid=node.bid,
+                                  weight=node.weight,
+                                  is_leaf=node.is_leaf,
+                                  left_nodeid=node.left_nodeid,
+                                  right_nodeid=node.right_nodeid)
+
+        model_param.split_maskdict.update(self.split_maskdict)
+
+        return model_param
+
+    def set_model_param(self, model_param):
+        self.tree_ = []
+        for node_param in model_param.tree_:
+            _node = Node(id=node_param.id,
+                         sitename=node_param.sitename,
+                         fid=node_param.fid,
+                         bid=node_param.bid,
+                         weight=node_param.weight,
+                         is_leaf=node_param.is_leaf,
+                         left_nodeid=node_param.left_nodeid,
+                         right_nodeid=node_param.right_nodeid)
+
+            self.tree_.append(_node)
+
+        self.split_maskdict = dict(model_param.split_maskdict)
+
+    def get_model(self):
+        model_meta = self.get_model_meta()
+        model_param = self.get_model_param()
+
+        return model_meta, model_param
+
+    def load_model(self, model_meta=None, model_param=None):
+        LOGGER.info("load tree model")
+        self.set_model_meta(model_meta)
+        self.set_model_param(model_param)

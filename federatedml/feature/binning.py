@@ -39,9 +39,10 @@ class IVAttributes(object):
         self.event_rate_array = event_rate_array
         self.non_event_rate_array = non_event_rate_array
         if split_points is None:
-            self.split_points = 'Split points is not available'
+            self.split_points = []
         else:
             self.split_points = []
+            # Remove those repeated split points
             for s_p in split_points:
                 if s_p not in self.split_points:
                     self.split_points.append(s_p)
@@ -83,15 +84,118 @@ class IVAttributes(object):
             dis_str += "{} is {};\n".format(d_s, save_dict.get(d_s))
         return dis_str
 
+    def reconstruct(self, iv_obj):
+        self.woe_array = list(iv_obj.woe_array)
+        self.iv_array = list(iv_obj.iv_array)
+        self.event_count_array = list(iv_obj.event_count_array)
+        self.non_event_count_array = list(iv_obj.non_event_count_array)
+        self.event_rate_array = list(iv_obj.event_rate_array)
+        self.non_event_rate_array = list(iv_obj.non_event_rate_array)
+        self.split_points = list(iv_obj.split_points)
+        self.iv = iv_obj.iv
 
 class Binning(object):
-    def binning(self, data_table, col_name):
+    def __init__(self, params):
+        self.params = params
+        self.bin_num = params.bin_num
+
+    def binning(self, data_instances, cols):
         raise NotImplementedError("Should not call this class directly")
+
+    def transform(self, data_instances, split_points=None, cols=-1):
+        """
+        Apply the binning method
+
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
+
+        split_points : list.
+            Each row represent for the split points for a feature. The element in each row represent for
+            the corresponding split point.
+            e.g.
+            split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            [1, 2, 3, 4, ...],           # The second feature
+                            ...]                         # Other features
+
+        cols : int or list of int
+            Specify which column(s) need to apply binning. -1 means do binning for all columns.
+
+        Returns
+        -------
+        data_bin_table : DTable.
+            The element in each row represent for the corresponding bin number this feature belongs to.
+            e.g. for each row, it could be:
+            (1, 5, 2, 6, 0, ...)    # Each number represent for the bin number it belongs to. The order is the
+                                # same as the order of cols.
+
+
+        """
+        if cols == -1:
+            features_shape = get_features_shape(data_instances)
+            if features_shape is None:
+                raise RuntimeError('Cannot get feature shape, please check input data')
+            cols = [i for i in range(features_shape)]
+
+        if isinstance(cols, int):
+            cols = [cols]
+
+        assert len(split_points) == len(cols)
+
+        if split_points is None:
+            split_points = self.binning(data_instances, cols)
+
+        f = functools.partial(self.bin_data,
+                              split_points=split_points,
+                              cols=cols)
+        data_bin_table = data_instances.mapValues(f)
+        return data_bin_table
+
+    def cal_local_iv(self, data_instances, cols, split_points=None, label_table=None):
+        if cols == -1:
+            features_shape = get_features_shape(data_instances)
+            if features_shape is None:
+                raise RuntimeError('Cannot get feature shape, please check input data')
+            cols = [i for i in range(features_shape)]
+
+        if split_points is None:
+            split_points = self.binning(data_instances, cols=cols)
+
+        data_bin_table = self.transform(data_instances, split_points, cols)
+        if label_table is None:
+            label_table = data_instances.mapValues(lambda x: x.label)
+        event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
+        data_bin_with_label = data_bin_table.join(event_count_table, lambda x, y: (x, y))
+        f = functools.partial(self.add_label_in_partition,
+                              total_bin=self.bin_num,
+                              cols=cols)
+        result_sum = data_bin_with_label.mapPartitions(f)
+        result_counts = result_sum.reduce(self.aggregate_partition_label)
+        iv_attrs = self.cal_iv_woe(result_counts, self.params.adjustment_factor,
+                                   split_points=split_points)
+        return iv_attrs
+
+    @staticmethod
+    def bin_data(instance, split_points, cols):
+        result_bin_nums = []
+        for col_index, col in enumerate(cols):
+            col_split_points = split_points[col_index]
+
+            value = instance.features[col]
+            col_bin_num = len(col_split_points)
+            for bin_num, split_point in enumerate(col_split_points):
+                if value < split_point:
+                    col_bin_num = bin_num
+                    break
+            result_bin_nums.append(col_bin_num)
+        result_bin_nums = tuple(result_bin_nums)
+        return result_bin_nums
 
     @staticmethod
     def woe_1d(data_event_count, adjustment_factor, split_points):
         """
-        Given evnent and non-event count in one column, calculate its woe value.
+        Given event and non-event count in one column, calculate its woe value.
 
         Parameters
         ----------
@@ -114,9 +218,9 @@ class Binning(object):
         for event_sum, non_event_sum in data_event_count:
             event_total += event_sum
             non_event_total += non_event_sum
-        LOGGER.debug("In woe_1d func, data_event_count is {}, event_total: {}, non_event_total: {}".format(
-            data_event_count, event_total, non_event_total
-        ))
+        # LOGGER.debug("In woe_1d func, data_event_count is {}, event_total: {}, non_event_total: {}".format(
+        #     data_event_count, event_total, non_event_total
+        # ))
         if event_total == 0:
             raise ValueError("NO event label in target data")
         if non_event_total == 0:
@@ -299,8 +403,8 @@ class QuantileBinning(Binning):
     """
 
     def __init__(self, params):
-        self.params = params
-        self.bin_num = params.bin_num
+        super(QuantileBinning, self).__init__(params)
+        self.summary_list = None
 
     def binning(self, data_instances, cols):
         """
@@ -329,11 +433,15 @@ class QuantileBinning(Binning):
         # calculate the split points
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
 
-        f = functools.partial(self.approxiQuantile,
-                              cols=cols,
-                              params=self.params)
-        summary_list = data_instances.mapPartitions(f)
-        summary_list = summary_list.reduce(self.merge_summary_list)
+        if self.summary_list is None:
+            f = functools.partial(self.approxiQuantile,
+                                  cols=cols,
+                                  params=self.params)
+            summary_list = data_instances.mapPartitions(f)
+            summary_list = summary_list.reduce(self.merge_summary_list)
+            self.summary_list = summary_list
+        else:
+            summary_list = self.summary_list
         split_points = []
         for percen_rate in percentile_rate:
             feature_dimension_points = [s_l.query(percen_rate) for s_l in summary_list]
@@ -341,68 +449,6 @@ class QuantileBinning(Binning):
         split_points = np.array(split_points)
         split_points = split_points.transpose()
         return split_points
-
-    def transform(self, data_instances, split_points, cols):
-        """
-        Apply the binning method
-
-        Parameters
-        ----------
-        data_instances : DTable
-            The input data
-
-        split_points : list.
-            Each row represent for the split points for a feature. The element in each row represent for
-            the corresponding split point.
-            e.g.
-            split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            [1, 2, 3, 4, ...],           # The second feature
-                            ...]                         # Other features
-
-        cols : int or list of int
-            Specify which column(s) need to apply binning. -1 means do binning for all columns.
-
-        Returns
-        -------
-        data_bin_table : DTable.
-            The element in each row represent for the corresponding bin number this feature belongs to.
-            e.g. for each row, it could be:
-            (1, 5, 2, 6, 0, ...)    # Each number represent for the bin number it belongs to. The order is the
-                                # same as the order of cols.
-
-
-        """
-        if cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            cols = [i for i in range(features_shape)]
-
-        if isinstance(cols, int):
-            cols = [cols]
-
-        assert len(split_points) == len(cols)
-
-        f = functools.partial(self.bin_data,
-                              split_points=split_points,
-                              cols=cols)
-        data_bin_table = data_instances.mapValues(f)
-        return data_bin_table
-
-    @staticmethod
-    def bin_data(instance, split_points, cols):
-        result_bin_nums = []
-        for col_index, col in enumerate(cols):
-            col_split_points = split_points[col_index]
-            value = instance.features[col]
-            col_bin_num = len(col_split_points)
-            for bin_num, split_point in enumerate(col_split_points):
-                if value < split_point:
-                    col_bin_num = bin_num
-                    break
-            result_bin_nums.append(col_bin_num)
-        result_bin_nums = tuple(result_bin_nums)
-        return result_bin_nums
 
     @staticmethod
     def approxiQuantile(data_instances, cols, params):
@@ -449,3 +495,29 @@ class QuantileBinning(Binning):
             summary1.merge(s_list2[idx])
             new_list.append(summary1)
         return new_list
+
+    def query_quantile_point(self, data_instances, cols, query_points):
+        if self.summary_list is None:
+            f = functools.partial(self.approxiQuantile,
+                                  cols=cols,
+                                  params=self.params)
+            summary_list = data_instances.mapPartitions(f)
+            summary_list = summary_list.reduce(self.merge_summary_list)
+            self.summary_list = summary_list
+        else:
+            summary_list = self.summary_list
+
+        if isinstance(query_points, (int, float)):
+            query_points = [query_points] * len(cols)
+
+        if len(cols) != len(query_points) or len(summary_list) != len(query_points):
+            raise AssertionError("number of quantile points are not equal to number of select_cols")
+
+        result = []
+        for idx, query_point in enumerate(query_points):
+            summary = summary_list[idx]
+            result.append(summary.query(query_point))
+
+        return result
+
+

@@ -568,6 +568,20 @@
       ]
     }
   },
+  "HeteroFeatureSelectionTransferVariable": {
+    "result_left_cols": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_iv_threshold": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    }
+  },
   "SecureAddExampleTransferVariable": {
     "guest_share": {
       "src": "guest",
@@ -587,5 +601,13 @@
 	    "guest"
 	  ]
 	}
+  },
+  "SampleTransferVariable": {
+    "sample_ids": {
+      "src": "guest",
+      "dst": [
+          "host"
+      ]
+    }
   }
 }

@@ -22,7 +22,7 @@ import csv
 import sys
 import time
 from arch.api import eggroll
-
+from arch.api.storage import save_data
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
@@ -98,12 +98,12 @@ if __name__ == "__main__":
             namespace = None
             with open(args.config, 'r') as f:
                 data = json.load(f)
-                
+
                 try:
                     input_file_path = data['file']
                 except:
                     traceback.print_exc()
-                
+
                 try:
                    read_head = data['head']
                    if read_head == 0:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                        head = True
                 except:
                     print("'head' in .json should be 0 or 1, set head to 1")
-                
+
                 try:
                     partition = data['partition']
                     if partition <= 0 or partition > MAX_PARTITION_NUM:
@@ -121,8 +121,8 @@ if __name__ == "__main__":
                 except:
                     print("set partition to 1")
                     partition = 1
-                
-            
+
+
                 try:
                     table_name = data['table_name']
                 except:
@@ -141,14 +141,14 @@ if __name__ == "__main__":
                 print("%s is not exist, please check the configure" % (input_file_path))
                 sys.exit()
 
-
             input_data = read_data(input_file_path, head)
             _namespace, _table_name = generate_table_name(input_file_path)
             if namespace is None:
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
+            eggroll.init(mode=work_mode)
+            save_data(input_data, name=table_name, namespace=namespace, partition=partition)
 
         except ValueError:
             print('json parse error')

@@ -19,7 +19,7 @@ from collections import Iterable
 
 import numpy as np
 
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 
 
 def _one_dimension_dot(X, w):
@@ -86,5 +86,26 @@ def get_features_shape(data_instances):
 
     if one_feature is not None:
         return one_feature[1].features.shape[0]
+    else:
+        return None
+
+
+def get_data_shape(data):
+    # LOGGER.debug("In get features shape method, data count: {}".format(
+    #     data.count()
+    # ))
+    if not isinstance(data, types.GeneratorType):
+        features = data.collect()
+    else:
+        features = data
+
+    try:
+        one_feature = features.__next__()
+    except StopIteration:
+        # LOGGER.warning("Data instances is Empty")
+        one_feature = None
+
+    if one_feature is not None:
+        return len(list(one_feature[1]))
     else:
         return None

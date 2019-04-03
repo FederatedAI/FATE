@@ -86,6 +86,7 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr host")
+        self.header = data_instances.schema.get("header")
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                     tag=self.transfer_variable.generate_transferid(
                                         self.transfer_variable.paillier_pubkey),

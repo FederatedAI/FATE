@@ -21,7 +21,7 @@
 #
 ################################################################################
 from federatedml.util import consts
-
+import copy
 
 class DataIOParam(object):
     """
@@ -29,7 +29,7 @@ class DataIOParam(object):
 
     Parameters
     ----------
-    input_format : str, accepted 'dense','sparse' only in this version. default: 'dense'
+    input_format : str, accepted 'dense','sparse' 'tag' only in this version. default: 'dense'
 
     delimitor : str, the delimitor of data input, default: ','
 
@@ -38,8 +38,20 @@ class DataIOParam(object):
 
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
-    default_value : object, accepted all python supported value type, will raise error if
-                   type not consist with data_type, default: 0
+    default_value : None or list,  element of list can be any type, which values should be regard as missing value,
+                    default: None
+
+    missing_fill_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
+
+    missing_impute: None or list, auto generated
+
+    outlier_replace: bool, need to replace outlier value or not, accepted only True/False, default: True
+
+    outlier_replace_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
+   
+    outlier_impute: None or list,  element of list can be any type, which values should be regard as missing value, default: None
+
+    outlier_replace_value: None or list, auto generated
 
     with_label : bool, True if input data consist of label, False otherwise. default: 'false'
 
@@ -53,13 +65,22 @@ class DataIOParam(object):
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
-                 missing_fill=True, default_value=0, with_label=False, label_idx=0,
+                 missing_fill=True, default_value=0, missing_fill_method=None,
+                 missing_impute=None, outlier_replace=True, outlier_replace_method=None,
+                 outlier_impute=None, outlier_replace_value=0,
+                 with_label=False, label_idx=0,
                  label_type='int', output_format='dense'):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
         self.missing_fill = missing_fill
         self.default_value = default_value
+        self.missing_fill_method = missing_fill_method
+        self.missing_impute = missing_impute
+        self.outlier_replace = outlier_replace
+        self.outlier_replace_method = outlier_replace_method
+        self.outlier_impute = outlier_impute
+        self.outlier_replace_value = outlier_replace_value
         self.with_label = with_label
         self.label_idx = label_idx
         self.label_type = label_type
@@ -104,7 +125,9 @@ class EvaluateParam(object):
     thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
     """
 
-    def __init__(self, metrics=None, classi_type="binary", pos_label=None, thresholds=None):
+    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+        if metrics is None:
+            metrics = []
         self.metrics = metrics
         self.classi_type = classi_type
         self.pos_label = pos_label
@@ -149,6 +172,25 @@ class PredictParam(object):
     def __init__(self, with_proba=True, threshold=0.5):
         self.with_proba = with_proba
         self.threshold = threshold
+
+
+class SampleParam(object):
+    """
+    Define the sample method
+
+    Parameters
+    ----------
+    mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
+    fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
+    random_state: int, RandomState instance or None, default: None
+    """
+
+    def __init__(self, mode="random", method="downsample", fractions=None, random_state=None):
+        self.mode = mode
+        self.method = method
+        self.fractions = fractions
+        self.random_state = random_state
 
 
 class WorkFlowParam(object):
@@ -222,6 +264,12 @@ class WorkFlowParam(object):
     need_intersect: bool, default: True
         Whether this task need to do intersect. No need to specify in Homo task.
 
+    need_sample: bool, default: False
+        Whether this task need to do feature selection or not.
+
+    need_feature_selection: bool, default: False
+        Whether this task need to do feature selection or not.
+
     """
 
     def __init__(self, method='train', train_input_table=None, train_input_namespace=None, model_table=None,
@@ -231,7 +279,7 @@ class WorkFlowParam(object):
                  data_input_table=None, data_input_namespace=None, intersect_data_output_table=None,
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
-                 n_splits=5, need_intersect=True):
+                 n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False, need_scale=False):
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -248,13 +296,16 @@ class WorkFlowParam(object):
         self.data_input_namespace = data_input_namespace
         self.intersect_data_output_table = intersect_data_output_table
         self.intersect_data_output_namespace = intersect_data_output_namespace
-        self.dataio_param = dataio_param
+        self.dataio_param = copy.deepcopy(dataio_param)
         self.do_cross_validation = do_cross_validation
         self.n_splits = n_splits
         self.work_mode = work_mode
-        self.predict_param = predict_param
-        self.evaluate_param = evaluate_param
+        self.predict_param = copy.deepcopy(predict_param)
+        self.evaluate_param = copy.deepcopy(evaluate_param)
         self.need_intersect = need_intersect
+        self.need_sample = need_sample
+        self.need_feature_selection = need_feature_selection
+        self.need_scale = need_scale
 
 
 class InitParam(object):
@@ -331,7 +382,7 @@ class IntersectParam(object):
         self.is_get_intersect_ids = is_get_intersect_ids
         self.join_role = join_role
         self.with_encode = with_encode
-        self.encode_params = encode_params
+        self.encode_params = copy.deepcopy(encode_params)
 
 
 class LogisticParam(object):
@@ -394,10 +445,10 @@ class LogisticParam(object):
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.learning_rate = learning_rate
-        self.init_param = init_param
+        self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.converge_func = converge_func
-        self.encrypt_param = encrypt_param
+        self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.model_path = model_path
         self.table_name = table_name
@@ -484,15 +535,15 @@ class BoostingTreeParam(object):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
                  bin_num=32, bin_gap=1e-3, bin_sample_num=10000):
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
-        self.objective_param = objective_param
+        self.objective_param = copy.deepcopy(objective_param)
         self.learning_rate = learning_rate
         self.num_trees = num_trees
         self.subsample_feature_rate = subsample_feature_rate
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-        self.encrypt_param = encrypt_param
+        self.encrypt_param = copy.deepcopy(encrypt_param)
         self.quantile_method = quantile_method
         self.bin_num = bin_num
         self.bin_gap = bin_gap
@@ -620,6 +671,7 @@ class FTLValidDataParam(object):
         The indicator indicating whether read data from dtable, must be bool
 
     """
+
     def __init__(self, file_path=None, num_samples=None, is_read_table=False):
         self.file_path = file_path
         self.num_samples = num_samples
@@ -632,6 +684,9 @@ class FeatureBinningParam(object):
 
     Parameters
     ----------
+    process_method : str, 'fit' or 'transform', default: "fit"
+        Specify what process to do.
+
     method : str, 'quantile', default: 'quantile'
         Binning method.
 
@@ -675,7 +730,8 @@ class FeatureBinningParam(object):
 
     """
 
-    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+    def __init__(self, process_method='fit',
+                 method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
@@ -683,6 +739,7 @@ class FeatureBinningParam(object):
                  result_table='binning_table',
                  result_namespace='binning_namespace',
                  display_result='simple'):
+        self.process_method = process_method
         self.method = method
         self.compress_thres = compress_thres
         self.head_size = head_size
@@ -699,46 +756,177 @@ class FeatureBinningParam(object):
         self.display_result = display_result
 
 
-class FeatureSelectionParam(object):
+class UniqueValueParam(object):
     """
-    Define the feature binning method
+    Use the difference between max-value and min-value to judge.
 
     Parameters
     ----------
-    select_cols: list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns
+    eps: float, default: 1e-5
+        The column(s) will be filtered if its difference is smaller than eps.
+    """
 
-    filter_method: list, default: ["unique_value", "iv", "coefficient_of_variation"]
-        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
-
-        abnormal_col: filter the columns if the number of values that are same exceeds a given ratio.
-            e.g. There are 100 values in a feature column and abnormal ratio is set as 0.95. If 95 out of 100 number
-            of values is 1, then, this columns will be filtered.
-
-        iv_abs: Use information value to filter columns. If this method is set, a float threshold need to be provided.
-            Filter those columns whose iv is smaller than threshold.
-
-        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
-            need to be provided. Pick floor(ratio * feature_num) features with higher iv.
+    def __init__(self, eps=1e-5):
+        self.eps = eps
 
 
-    abnormal_col_ratio: float, default: 1.0
-        Required when abonormal_col method is set.
+class IVSelectionParam(object):
+    """
+    Use information values to select features.
 
-    iv_thres: float, default: 1.0
+    Parameters
+    ----------
+    value_threshold: float, default: 1.0
+        Used if iv_value_thres method is used in feature selection.
 
-    iv_ratio_thres: float, default: 1.0
+    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
+        Percentile threshold for iv_percentile method
+
+    bin_param : FeatureBinningParam
+        Use to calculate iv.
 
     """
 
-    def __init__(self, select_cols=-1, filter_method=None, abnormal_col_ratio=1.0, iv_abs_thres=1.0,
-                 iv_ratio_thres=1.0):
+    def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
+        self.value_threshold = value_threshold
+        self.percentile_threshold = percentile_threshold
+        self.bin_param = copy.deepcopy(bin_param)
+
+
+class CoeffOfVarSelectionParam(object):
+    """
+    Use coefficient of variation to select features. When judging, the absolute value will be used.
+
+    Parameters
+    ----------
+    value_threshold: float, default: 1.0
+        Used if coefficient_of_variation_value_thres method is used in feature selection.
+
+    """
+
+    def __init__(self, value_threshold=1.0):
+        self.value_threshold = value_threshold
+
+
+class OutlierColsSelectionParam(object):
+    """
+    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.
+
+    Parameters
+    ----------
+    percentile: float, [0., 1.] default: 1.0
+        The percentile points to compare.
+
+    upper_threshold: float, default: 1.0
+        Percentile threshold for coefficient_of_variation_percentile method
+
+    """
+
+    def __init__(self, percentile=1.0, upper_threshold=1.0):
+        self.percentile = percentile
+        self.upper_threshold = upper_threshold
+
+
+class FeatureSelectionParam(object):
+    """
+    Define the feature selection parameters.
+
+    Parameters
+    ----------
+    method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
+        Decide what process to do.
+
+    select_cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    filter_method: list, default: ["unique_value", "iv_value_thres", "iv_percentile",
+                "coefficient_of_variation_value_thres", "outlier_cols"]
+
+        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
+        Please be notified that, if a percentile method is used after some certain filter method,
+        the percentile represent for the ratio of rest features.
+        e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
+        top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
+
+        unique_value: filter the columns if all values in this feature is the same
+
+        iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+            Filter those columns whose iv is smaller than threshold.
+
+        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+            need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
+            the threshold are same, all those columns will be keep.
+
+        coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
+
+        outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+
+
+    """
+
+    def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
+                 unique_param=UniqueValueParam(),
+                 iv_param=IVSelectionParam(), coe_param=CoeffOfVarSelectionParam(),
+                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
+                 result_table='binning_table',
+                 result_namespace='binning_namespace',
+                 ):
+        self.method = method
         self.select_cols = select_cols
         if filter_method is None:
-            self.filter_method = ["abnormal_col", "iv"]
+            self.filter_method = [consts.UNIQUE_VALUE]
         else:
             self.filter_method = filter_method
 
-        self.abnormal_col_ratio = abnormal_col_ratio
-        self.iv_abs_thres = iv_abs_thres
-        self.iv_ratio_thres = iv_ratio_thres
+        self.local_only = local_only
+        self.unique_param = copy.deepcopy(unique_param)
+        self.iv_param = copy.deepcopy(iv_param)
+        self.coe_param = copy.deepcopy(coe_param)
+        self.outlier_param = copy.deepcopy(outlier_param)
+        self.bin_param = copy.deepcopy(bin_param)
+        self.result_table = result_table
+        self.result_namespace = result_namespace
+
+
+class ScaleParam(object):
+    """
+    Define the feature scale parameters.
+
+    Parameters
+    ----------
+        method : str, now it support "MinMaxScale" and "StandardScale", and will support other scale method soon. 
+                 Default None, which will do nothing for scale
+
+        mode: str, for method is "MinMaxScale" and for "StandardScale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture. 
+              for mode is "MinMaxScale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and 
+              feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
+
+        area: str, for method is "MinMaxScale" and for "StandardScale" it is useless. It supports "all" and "col". For "all", 
+            feat_upper/feat_lower will act on all data column, so it will just be a value, and for "col", it just acts 
+            on one column they corresponding to, so feat_lower/feat_upper will be a list, which size will equal to the number of columns
+
+        feat_upper: int or float, used for "MinMaxScale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, used for "MinMaxScale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None. 
+        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None. 
+        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        
+
+        with_mean: bool, used for "StandardScale". Default False.
+        with_std: bool, used for "StandardScale". Default False.
+            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the stanard deviation of the column.
+            if with_mean is False, u will be 0, and if with_std is False, s will be 1. 
+
+    """
+
+    def __init__(self, method=None, mode="normal", area="all", feat_upper=None, feat_lower=None, out_upper=None,
+                 out_lower=None, with_mean=True, with_std=True):
+        self.method = method
+        self.mode = mode
+        self.area = area
+        self.feat_upper = feat_upper
+        self.feat_lower = feat_lower
+        self.out_upper = out_upper
+        self.out_lower = out_lower
+
+        self.with_mean = with_mean
+        self.with_std = with_std

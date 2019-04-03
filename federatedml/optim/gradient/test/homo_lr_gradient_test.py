@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.secureprotol import PaillierEncrypt
 

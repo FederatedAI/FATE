@@ -113,7 +113,7 @@ class TestQuantileBinningSpeed(unittest.TestCase):
         bin_num = 10
         bin_percent = [int(i * (100.0 / bin_num)) for i in range(1, bin_num)]
 
-        bin_param = BinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size, error=error,
+        bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size, error=error,
                                  bin_num=bin_num)
         quan_bin = QuantileBinning(bin_param)
         t0 = time.time()
