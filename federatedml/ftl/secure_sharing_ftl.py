@@ -23,7 +23,7 @@ from federatedml.ftl.secret_sharing_ops import share, local_compute_alpha_beta_s
 LOGGER = log_utils.getLogger()
 
 
-def create_mul_op_beaver_triple(As, Bs, Cs, *, is_party_a):
+def create_mul_op_beaver_triple_map(As, Bs, Cs, *, is_party_a):
     print("As, Bs, Cs", As.shape, Bs.shape, Cs.shape)
     beaver_triple_share_map = dict()
     beaver_triple_share_map["is_party_a"] = is_party_a
@@ -33,7 +33,41 @@ def create_mul_op_beaver_triple(As, Bs, Cs, *, is_party_a):
     return beaver_triple_share_map
 
 
-class SecureSharingFTLGuestModel(object):
+class SecureSharingParty(object):
+    def retrieve_beaver_triple(self, global_index, op_id) -> dict:
+        pass
+
+
+class MulAlphaBetaComputer(object):
+    """
+    tracking and computing shares for beaver triple, alpha and beta for a secure sharing party
+    for each mul operation at each step.
+    """
+    def __init__(self, secure_sharing_party: SecureSharingParty):
+        self.mul_op_beaver_triple_share_map = dict()
+        self.mul_op_alpha_beta_map = dict()
+        self.secure_sharing_party = secure_sharing_party
+
+    def compute_shares_for_alpha_beta_for_mul_op(self, global_index, op_id, component_x, component_y):
+        self.mul_op_beaver_triple_share_map[op_id] = self.secure_sharing_party.retrieve_beaver_triple(global_index,
+                                                                                                      op_id)
+        self.mul_op_beaver_triple_share_map[op_id]["Xs"] = component_x
+        self.mul_op_beaver_triple_share_map[op_id]["Ys"] = component_y
+        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map[op_id])
+        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
+        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
+        return alpha_s, beta_s
+
+    def get_shares_for_mul_op_alpha_beta(self, op_id):
+        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
+        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        return alpha_s, beta_s
+
+    def get_shares_for_mul_op_beaver_triple(self, op_id):
+        return self.mul_op_beaver_triple_share_map[op_id]
+
+
+class SecureSharingFTLGuestModel(SecureSharingParty):
 
     def __init__(self, local_model, model_param, is_trace=False):
         self.localModel = local_model
@@ -42,11 +76,8 @@ class SecureSharingFTLGuestModel(object):
         self.gamma = model_param.gamma
         self.is_trace = is_trace
 
+        self.alpha_beta_computer = MulAlphaBetaComputer(self)
         self.party_guest_bt_map = None
-        self.mul_op_beaver_triple_share_map = None
-        self.mul_op_alpha_beta_map = dict()
-        # self.alpha_s = None
-        # self.beta_s = None
 
         self.logger = LOGGER
 
@@ -97,26 +128,18 @@ class SecureSharingFTLGuestModel(object):
             self.logger.debug("y_overlap_phi shape" + str(self.y_overlap_phi.shape))
             self.logger.debug("mapping_comp_A shape" + str(self.mapping_comp_A.shape))
 
-    # def _reset_alpha_beta_share(self):
-    #     self.alpha_s = None
-    #     self.beta_s = None
-
-    def _prepare_beaver_triple(self, global_index, op_id):
-        # get beaver triple for operation:op_id at iteration:global_index
-        A0 = self.party_guest_bt_map[global_index][op_id]["A0"]
-        B0 = self.party_guest_bt_map[global_index][op_id]["B0"]
-        C0 = self.party_guest_bt_map[global_index][op_id]["C0"]
-        self.mul_op_beaver_triple_share_map = create_mul_op_beaver_triple(A0, B0, C0, is_party_a=True)
+        # y_overlap_2_phi has shape (len(overlap_indexes), feature_dim)
+        self.y_overlap_2_phi = 0.25 * self.y_overlap_2 * self.phi
+        self.half_y_overlap = 0.5 * self.y_overlap
 
     def send_components(self):
-
         self._compute_components()
         y_overlap_phi_mapping_comp = self.y_overlap_phi + self.gamma * self.mapping_comp_A
         self.y_overlap_2_phi_2_g, y_overlap_2_phi_2_h = share(self.y_overlap_2_phi_2)
         self.y_overlap_phi_mapping_comp_g, y_overlap_phi_mapping_comp_h = share(y_overlap_phi_mapping_comp)
-
-        # y_overlap_2_phi_2_h and omega_h to host
-        return [y_overlap_2_phi_2_h, y_overlap_phi_mapping_comp_h]
+        self.y_overlap_2_phi_g, y_overlap_2_phi_h = share(self.y_overlap_2_phi)
+        self.half_y_overlap_g, half_y_overlap_h = share(self.half_y_overlap)
+        return [y_overlap_2_phi_2_h, y_overlap_phi_mapping_comp_h, y_overlap_2_phi_h, half_y_overlap_h]
 
     def receive_components(self, components):
         # receive uB_overlap_g, uB_overlap_2_g and mapping_comp_B_g from guest
@@ -124,24 +147,70 @@ class SecureSharingFTLGuestModel(object):
         self.uB_overlap_2_g = components[1]
         self.mapping_comp_B_g = components[2]
 
+    def retrieve_beaver_triple(self, global_index, op_id):
+        # get beaver triple for operation:op_id at iteration:global_index
+        A0 = self.party_guest_bt_map[global_index][op_id]["A0"]
+        B0 = self.party_guest_bt_map[global_index][op_id]["B0"]
+        C0 = self.party_guest_bt_map[global_index][op_id]["C0"]
+        # self.mul_op_beaver_triple_share_map[op_id] = create_mul_op_beaver_triple_map(A0, B0, C0, is_party_a=True)
+        return create_mul_op_beaver_triple_map(A0, B0, C0, is_party_a=True)
+
+    #
+    #
+    # computing components and gradients for guest
+    #
+    #
+    # def compute_shares_for_alpha_beta_for_overlap_y_2_phi_uB_2(self, global_index, op_id=None):
+    #     op_id = "mul_op_3"
+    #     component_x = np.expand_dims(self.y_overlap_2_phi_g, axis=1)
+    #     component_y = self.uB_overlap_2_g
+    #     return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+    #                                                                              component_x, component_y)
+    #
+    # def compute_share_for_overlap_overlap_y_2_phi_uB_2(self, alpha_t, beta_t):
+    #     op_id = "mul_op_3"
+    #     alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
+    #     overlap_y_2_phi_uB_2 = compute_matmul_share(alpha_s, alpha_t, beta_s, beta_t,
+    #                                                   self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+    #                                                       op_id))
+    #     # overlap_y_2_phi_uB_2 has shape(len(overlap_indexes), feature_dim)
+    #     self.overlap_y_2_phi_uB_2 = np.squeeze(overlap_y_2_phi_uB_2, axis=1)
+    #     return self.overlap_y_2_phi_uB_2
+    #
+    # def compute_shares_for_alpha_beta_for_overlap_y_uB(self, global_index, op_id=None):
+    #     op_id = "mul_op_4"
+    #     component_x = np.tile(self.half_y_overlap_g, (1, self.uB_overlap_g.shape[-1]))
+    #     component_y = self.uB_overlap_g
+    #     return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+    #                                                                              component_x, component_y)
+    #
+    # def compute_share_for_overlap_overlap_y_uB(self, alpha_t, beta_t):
+    #     op_id = "mul_op_4"
+    #     alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
+    #     self.overlap_sum_y_uB = compute_sum_of_multiply_share(alpha_s, alpha_t, beta_s, beta_t,
+    #                                                           self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+    #                                                               op_id))
+    #     return self.overlap_sum_y_uB
+
+    #
+    #
+    # computing components and gradients for host
+    #
+    #
     def compute_shares_for_alpha_beta_for_overlap_uB_y_2_phi_2(self, global_index, op_id=None):
         op_id = "mul_op_0"
-        self._prepare_beaver_triple(global_index, op_id)
-        self.mul_op_beaver_triple_share_map["Xs"] = np.expand_dims(self.uB_overlap_g, axis=1)
-        self.mul_op_beaver_triple_share_map["Ys"] = self.y_overlap_2_phi_2_g
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = np.expand_dims(self.uB_overlap_g, axis=1)
+        component_y = self.y_overlap_2_phi_2_g
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_overlap_uB_y_2_phi_2(self, alpha_t, beta_t):
         op_id = "mul_op_0"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         overlap_uB_y_2_phi_2_g = compute_matmul_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map)
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id))
         self.overlap_uB_y_2_phi_2_g = np.squeeze(overlap_uB_y_2_phi_2_g, axis=1)
-        # self._reset_alpha_beta_share()
         return self.overlap_uB_y_2_phi_2_g
 
     def compute_share_for_overlap_federated_layer_grad(self):
@@ -151,7 +220,6 @@ class SecureSharingFTLGuestModel(object):
 
     def compute_shares_for_alpha_beta_for_grad_W(self, overlap_grads_W_g, global_index, op_id=None):
         op_id = "mul_op_1"
-        self._prepare_beaver_triple(global_index, op_id)
         overlap_federated_layer_grad_g = np.expand_dims(self.overlap_federated_layer_grad_g, axis=1)
 
         # TODO: probably do not need to do this. The numpy's broadcasting will do this implicitly
@@ -159,126 +227,36 @@ class SecureSharingFTLGuestModel(object):
         #     overlap_grads_W_g.shape[0], overlap_grads_W_g.shape[1], overlap_grads_W_g.shape[2]))
 
         print("*** overlap_federated_layer_grad_g shape", overlap_federated_layer_grad_g.shape)
-        self.mul_op_beaver_triple_share_map["Xs"] = overlap_federated_layer_grad_g
-        self.mul_op_beaver_triple_share_map["Ys"] = overlap_grads_W_g
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = overlap_federated_layer_grad_g
+        component_y = overlap_grads_W_g
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_grad_W(self, alpha_t, beta_t):
         op_id = "mul_op_1"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         self.grad_W_g = compute_sum_of_multiply_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map, axis=0)
-        # self._reset_alpha_beta_share()
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id), axis=0)
         return self.grad_W_g
 
     def compute_shares_for_alpha_beta_for_grad_b(self, overlap_grads_b_g, global_index, op_id=None):
         op_id = "mul_op_2"
-        self._prepare_beaver_triple(global_index, op_id)
-        self.mul_op_beaver_triple_share_map["Xs"] = self.overlap_federated_layer_grad_g
-        self.mul_op_beaver_triple_share_map["Ys"] = overlap_grads_b_g
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = self.overlap_federated_layer_grad_g
+        component_y = overlap_grads_b_g
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_grad_b(self, alpha_t, beta_t):
         op_id = "mul_op_2"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         self.grad_b_g = compute_sum_of_multiply_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map, axis=0)
-        # self._reset_alpha_beta_share()
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id), axis=0)
         return self.grad_b_g
 
-    # def _update_gradients(self):
-    #
-    #     # y_overlap_2 have shape (len(overlap_indexes), 1),
-    #     # phi has shape (1, feature_dim),
-    #     # y_overlap_2_phi has shape (len(overlap_indexes), 1, feature_dim)
-    #     y_overlap_2_phi = np.expand_dims(self.y_overlap_2 * self.phi, axis=1)
-    #
-    #     # uB_2_overlap has shape (len(overlap_indexes), feature_dim, feature_dim)
-    #     enc_y_overlap_2_phi_uB_overlap_2 = encrypt_matmul_3(y_overlap_2_phi, self.enc_uB_overlap_2)
-    #     enc_loss_grads_const_part1 = np.sum(0.25 * np.squeeze(enc_y_overlap_2_phi_uB_overlap_2, axis=1), axis=0)
-    #
-    #     if self.is_trace:
-    #         self.logger.debug("enc_y_overlap_2_phi_uB_overlap_2 shape" + str(enc_y_overlap_2_phi_uB_overlap_2.shape))
-    #         self.logger.debug("enc_loss_grads_const_part1 shape" + str(enc_loss_grads_const_part1.shape))
-    #
-    #     y_overlap = np.tile(self.y_overlap, (1, self.enc_uB_overlap.shape[-1]))
-    #     enc_loss_grads_const_part2 = compute_sum_XY(y_overlap * 0.5, self.enc_uB_overlap)
-    #
-    #     enc_const = enc_loss_grads_const_part1 - enc_loss_grads_const_part2
-    #     enc_const_overlap = np.tile(enc_const, (len(self.overlap_indexes), 1))
-    #     enc_const_nonoverlap = np.tile(enc_const, (len(self.non_overlap_indexes), 1))
-    #     y_non_overlap = np.tile(self.y[self.non_overlap_indexes], (1, self.enc_uB_overlap.shape[-1]))
-    #
-    #     if self.is_trace:
-    #         self.logger.debug("enc_const shape:" + str(enc_const.shape))
-    #         self.logger.debug("enc_const_overlap shape" + str(enc_const_overlap.shape))
-    #         self.logger.debug("enc_const_nonoverlap shape" + str(enc_const_nonoverlap.shape))
-    #         self.logger.debug("y_non_overlap shape" + str(y_non_overlap.shape))
-    #
-    #     enc_grad_A_nonoverlap = compute_XY(self.alpha * y_non_overlap / len(self.y), enc_const_nonoverlap)
-    #     enc_grad_A_overlap = compute_XY_plus_Z(self.alpha * y_overlap / len(self.y), enc_const_overlap,
-    #                                            self.enc_mapping_comp_B)
-    #
-    #     if self.is_trace:
-    #         self.logger.debug("enc_grad_A_nonoverlap shape" + str(enc_grad_A_nonoverlap.shape))
-    #         self.logger.debug("enc_grad_A_overlap shape" + str(enc_grad_A_overlap.shape))
-    #
-    #     enc_loss_grad_A = [[0 for _ in range(self.enc_uB_overlap.shape[1])] for _ in range(len(self.y))]
-    #     # TODO: need more efficient way to do following task
-    #     for i, j in enumerate(self.non_overlap_indexes):
-    #         enc_loss_grad_A[j] = enc_grad_A_nonoverlap[i]
-    #     for i, j in enumerate(self.overlap_indexes):
-    #         enc_loss_grad_A[j] = enc_grad_A_overlap[i]
-    #
-    #     enc_loss_grad_A = np.array(enc_loss_grad_A)
-    #
-    #     if self.is_trace:
-    #         self.logger.debug("enc_loss_grad_A shape" + str(enc_loss_grad_A.shape))
-    #         self.logger.debug("enc_loss_grad_A" + str(enc_loss_grad_A))
-    #
-    #     self.loss_grads = enc_loss_grad_A
-    #     self.enc_grads_W, self.enc_grads_b = self.localModel.compute_encrypted_params_grads(
-    #         self.X, enc_loss_grad_A)
-    #
-    # def send_gradients(self):
-    #     return [self.enc_grads_W, self.enc_grads_b]
-    #
-    # def receive_gradients(self, gradients):
-    #     self.localModel.apply_gradients(gradients)
-    #
-    # def send_loss(self):
-    #     return self.loss
-    #
-    # def receive_loss(self, loss):
-    #     self.loss = loss
-    #
-    # def _update_loss(self):
-    #     uA_overlap_prime = - self.uA_overlap / self.feature_dim
-    #     enc_loss_overlap = np.sum(compute_sum_XY(uA_overlap_prime, self.enc_uB_overlap))
-    #     enc_loss_y = self.__compute_encrypt_loss_y(self.enc_uB_overlap, self.enc_uB_overlap_2, self.y_overlap, self.phi)
-    #     self.loss = self.alpha * enc_loss_y + enc_loss_overlap
-    #
-    # def __compute_encrypt_loss_y(self, enc_uB_overlap, enc_uB_overlap_2, y_overlap, phi):
-    #     enc_uB_phi = encrypt_matmul_2_ob(enc_uB_overlap, phi.transpose())
-    #     enc_uB_2 = np.sum(enc_uB_overlap_2, axis=0)
-    #     enc_phi_uB_2_Phi = encrypt_matmul_2_ob(encrypt_matmul_2_ob(phi, enc_uB_2), phi.transpose())
-    #     enc_loss_y = (-0.5 * compute_sum_XY(y_overlap, enc_uB_phi)[0] + 1.0 / 8 * np.sum(enc_phi_uB_2_Phi)) + len(
-    #         y_overlap) * np.log(2)
-    #     return enc_loss_y
-    #
-    # def get_loss_grads(self):
-    #     return self.loss_grads
 
-
-class SecureSharingFTLHostModel(object):
+class SecureSharingFTLHostModel(SecureSharingParty):
 
     def __init__(self, local_model, model_param, is_trace=False):
         self.localModel = local_model
@@ -287,8 +265,10 @@ class SecureSharingFTLHostModel(object):
         self.is_trace = is_trace
 
         self.party_host_bt_map = None
-        self.mul_op_beaver_triple_share_map = None
-        self.mul_op_alpha_beta_map = dict()
+        # self.mul_op_beaver_triple_share_map = dict()
+        # self.mul_op_alpha_beta_map = dict()
+        self.alpha_beta_computer = MulAlphaBetaComputer(self)
+
         self.uB_overlap_h = None
         self.uB_overlap_2_h = None
         self.mapping_comp_B_h = None
@@ -319,17 +299,6 @@ class SecureSharingFTLHostModel(object):
             self.logger.debug("uB_overlap_2 shape" + str(self.uB_overlap_2.shape))
             self.logger.debug("mapping_comp_B shape" + str(self.mapping_comp_B.shape))
 
-    # def _reset_alpha_beta_share(self):
-    #     self.alpha_s = None
-    #     self.beta_s = None
-
-    def _prepare_beaver_triple(self, global_index, op_id):
-        # get beaver triple for operation:op_id at iteration:global_index
-        A1 = self.party_host_bt_map[global_index][op_id]["A1"]
-        B1 = self.party_host_bt_map[global_index][op_id]["B1"]
-        C1 = self.party_host_bt_map[global_index][op_id]["C1"]
-        self.mul_op_beaver_triple_share_map = create_mul_op_beaver_triple(A1, B1, C1, is_party_a=False)
-
     def send_components(self):
         self._compute_components()
         uB_overlap_g, self.uB_overlap_h = share(self.uB_overlap)
@@ -343,25 +312,30 @@ class SecureSharingFTLHostModel(object):
         # receive y_overlap_2_phi_2_h, y_overlap_phi_mapping_comp_h from host
         self.y_overlap_2_phi_2_h = components[0]
         self.y_overlap_phi_mapping_comp_h = components[1]
+        self.y_overlap_2_phi_h = components[2]
+        self.half_y_overlap_h = components[3]
+
+    def retrieve_beaver_triple(self, global_index, op_id):
+        # get beaver triple for operation:op_id at iteration:global_index
+        A1 = self.party_host_bt_map[global_index][op_id]["A1"]
+        B1 = self.party_host_bt_map[global_index][op_id]["B1"]
+        C1 = self.party_host_bt_map[global_index][op_id]["C1"]
+        return create_mul_op_beaver_triple_map(A1, B1, C1, is_party_a=False)
 
     def compute_shares_for_alpha_beta_for_overlap_uB_y_2_phi_2(self, global_index, op_id=None):
         op_id = "mul_op_0"
-        self._prepare_beaver_triple(global_index, op_id)
-        self.mul_op_beaver_triple_share_map["Xs"] = np.expand_dims(self.uB_overlap_h, axis=1)
-        self.mul_op_beaver_triple_share_map["Ys"] = self.y_overlap_2_phi_2_h
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = np.expand_dims(self.uB_overlap_h, axis=1)
+        component_y = self.y_overlap_2_phi_2_h
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_overlap_uB_y_2_phi_2(self, alpha_t, beta_t):
         op_id = "mul_op_0"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         overlap_uB_y_2_phi_2_h = compute_matmul_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map)
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id))
         self.overlap_uB_y_2_phi_2_h = np.squeeze(overlap_uB_y_2_phi_2_h, axis=1)
-        # self._reset_alpha_beta_share()
         return self.overlap_uB_y_2_phi_2_h
 
     def compute_share_for_overlap_federated_layer_grad(self):
@@ -377,49 +351,38 @@ class SecureSharingFTLHostModel(object):
 
     def compute_shares_for_alpha_beta_for_grad_W(self, global_index, op_id=None):
         op_id = "mul_op_1"
-        self._prepare_beaver_triple(global_index, op_id)
         overlap_federated_layer_grad_h = np.expand_dims(self.overlap_federated_layer_grad_h, axis=1)
-
         # TODO: probably do not need to do this. The numpy's broadcasting will do this implicitly
         # overlap_federated_layer_grad_h = np.broadcast_to(overlap_federated_layer_grad_h, (
         # self.overlap_grads_W_h.shape[0], self.overlap_grads_W_h.shape[1], self.overlap_grads_W_h.shape[2]))
-
         print("*** overlap_federated_layer_grad_h shape", overlap_federated_layer_grad_h.shape)
 
-        self.mul_op_beaver_triple_share_map["Xs"] = overlap_federated_layer_grad_h
-        self.mul_op_beaver_triple_share_map["Ys"] = self.overlap_grads_W_h
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = overlap_federated_layer_grad_h
+        component_y = self.overlap_grads_W_h
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_grad_W(self, alpha_t, beta_t):
         op_id = "mul_op_1"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
-        print("* alpha_s, beta_s", alpha_s.shape, beta_s.shape)
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         self.grad_W_h = compute_sum_of_multiply_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map, axis=0)
-        # self._reset_alpha_beta_share()
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id), axis=0)
         return self.grad_W_h
 
     def compute_shares_for_alpha_beta_for_grad_b(self, global_index, op_id=None):
         op_id = "mul_op_2"
-        self._prepare_beaver_triple(global_index, op_id)
-        self.mul_op_beaver_triple_share_map["Xs"] = self.overlap_federated_layer_grad_h
-        self.mul_op_beaver_triple_share_map["Ys"] = self.overlap_grads_b_h
-        alpha_s, beta_s = local_compute_alpha_beta_share(self.mul_op_beaver_triple_share_map)
-        self.mul_op_alpha_beta_map[op_id + "/alpha_s"] = alpha_s
-        self.mul_op_alpha_beta_map[op_id + "/beta_s"] = beta_s
-        return alpha_s, beta_s
+        component_x = self.overlap_federated_layer_grad_h
+        component_y = self.overlap_grads_b_h
+        return self.alpha_beta_computer.compute_shares_for_alpha_beta_for_mul_op(global_index, op_id,
+                                                                                 component_x, component_y)
 
     def compute_share_for_grad_b(self, alpha_t, beta_t):
         op_id = "mul_op_2"
-        alpha_s = self.mul_op_alpha_beta_map[op_id + "/alpha_s"]
-        beta_s = self.mul_op_alpha_beta_map[op_id + "/beta_s"]
+        alpha_s, beta_s = self.alpha_beta_computer.get_shares_for_mul_op_alpha_beta(op_id)
         self.grad_b_h = compute_sum_of_multiply_share(alpha_s, alpha_t, beta_s, beta_t,
-                                                      self.mul_op_beaver_triple_share_map, axis=0)
-        # self._reset_alpha_beta_share()
+                                                      self.alpha_beta_computer.get_shares_for_mul_op_beaver_triple(
+                                                          op_id), axis=0)
         return self.grad_b_h
 
     def receive_gradients(self, gradients):
