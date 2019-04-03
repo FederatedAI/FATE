@@ -32,7 +32,7 @@ SERVERS = "servers"
 ROLE = "manager"
 IP = server_conf.get(SERVERS).get(ROLE).get("host")
 HTTP_PORT = server_conf.get(SERVERS).get(ROLE).get("http.port")
-LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT) + "/v1/job/jobStatus"
+LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT) + "/job/jobStatus"
 job_id = None
 
 
