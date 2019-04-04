@@ -15,8 +15,7 @@
 #
 from flask import Flask, request
 import os
-from arch.task_manager.utils.job_utils import get_json_result, get_job_directory
-from arch.task_manager.job_manager import save_job_info, update_job_queue, update_job_info
+from arch.task_manager.job_manager import save_job_info, update_job_queue, update_job_info, pop_from_job_queue, get_json_result, get_job_directory
 from arch.task_manager.settings import logger
 import subprocess
 from arch.api.utils import file_utils
@@ -55,7 +54,6 @@ def start_workflow(job_id, module, role):
              "-j", job_id,
              "-c", os.path.abspath(conf_file_path)
              ]
-    print(" ".join(progs))
     logger.info('Starting progs: {}'.format(" ".join(progs)))
 
     p = subprocess.Popen(progs,
@@ -107,4 +105,5 @@ def stop_workflow(job_id):
                 logger.exception("error")
                 continue
         update_job_info(job_id=job_id, update_data={"status": "failed", "set_status": "failed"})
+        pop_from_job_queue(job_id=job_id)
     return get_json_result()

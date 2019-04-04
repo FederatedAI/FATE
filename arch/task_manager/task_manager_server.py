@@ -4,23 +4,20 @@ from arch.api.proto import proxy_pb2_grpc
 from arch.api.utils import file_utils
 from arch.api.utils.parameter_utils import ParameterOverride
 from arch.task_manager.job_manager import update_job_info, push_into_job_queue, pop_from_job_queue, \
-    get_job_from_queue, running_job_amount, update_job_queue
-from arch.task_manager.utils.job_utils import generate_job_id, get_job_directory
+    get_job_from_queue, running_job_amount, update_job_queue, generate_job_id, get_job_directory, get_json_result
 from arch.task_manager.utils import cron
 from flask import Flask, request
 import grpc, time, sys
 from concurrent import futures
 import os
 import glob
-from arch.task_manager.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, ALL_PARTY_IDS, logger
+from arch.task_manager.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, logger
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from arch.task_manager.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel, UnaryServicer
-from arch.task_manager.utils.job_utils import get_json_result
 from arch.task_manager.apps.data_access import manager as data_access_manager
 from arch.task_manager.apps.mlmodel import manager as model_manager
 from arch.task_manager.apps.workflow import manager as workflow_manager
-from arch.task_manager.apps.server_status import manager as server_manager
 
 '''
 Initialize the manager
@@ -35,12 +32,12 @@ Url Configs
 
 class JobCron(cron.Cron):
     def run_do(self):
+        logger.info("{} job are running.".format(running_job_amount()))
         if running_job_amount() < MAX_CONCURRENT_JOB_RUN:
             wait_jobs = get_job_from_queue(status="waiting", limit=1)
             if wait_jobs:
                 update_job_queue(job_id=wait_jobs[0].get("job_id"), update_data={"status": "ready"})
                 self.run_job(wait_jobs[0].get("job_id"), json.loads(wait_jobs[0].get("config")))
-        self.send_grpc_heartbeat()
 
     def run_job(self, job_id, config):
         default_runtime_dict = file_utils.load_json_conf('workflow/conf/default_runtime_conf.json')
@@ -72,19 +69,6 @@ class JobCron(cron.Cron):
                                                                                                        _url)
                 logger.exception(msg)
                 return get_json_result(-101, 'UnaryCall submit to remote manager failed')
-
-    def send_grpc_heartbeat(self):
-        job_id = generate_job_id()
-        for _party_id in ALL_PARTY_IDS:
-            _packet = wrap_grpc_packet({}, "POST", "/server/federated/heartbeat", _party_id, job_id)
-            channel, stub = get_proxy_data_channel()
-            try:
-                _return = stub.unaryCall(_packet)
-                logger.info("Grpc unary response: {}".format(_return))
-                logger.info("send heartbeat to {}".format(_party_id))
-            except grpc.RpcError as e:
-                msg = "Send heartbeat to {} failed.".format(_party_id)
-                logger.info(msg)
 
 
 @manager.route('/new', methods=['POST'])
@@ -127,6 +111,7 @@ def stop_job(job_id):
 def update_job(job_id):
     request_data = request.json
     update_job_info(job_id=job_id, update_data={"status": request_data.get("status")})
+    update_job_queue(job_id=job_id, update_data={"status": request_data.get("status")})
     if request_data.get("status") in ["failed", "deleted"]:
         stop_job(job_id=job_id)
     if request_data.get("status") in ["failed", "deleted", "success"]:
@@ -136,7 +121,7 @@ def update_job(job_id):
 
 if __name__ == '__main__':
     manager.url_map.strict_slashes = False
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=5),
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
 
@@ -148,10 +133,9 @@ if __name__ == '__main__':
         '/data': data_access_manager,
         '/model': model_manager,
         '/workflow': workflow_manager,
-        '/server': server_manager,
         '/job': manager
     })
-    run_simple(hostname=IP, port=HTTP_PORT, application=app)
+    run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
 
     try:
         while True:

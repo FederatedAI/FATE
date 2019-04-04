@@ -14,13 +14,12 @@
 #  limitations under the License.
 #
 from arch.api.utils import file_utils
-from arch.task_manager.utils.job_utils import generate_job_id
 from flask import Flask, request
 import grpc
 from arch.task_manager.settings import server_conf
 from arch.task_manager.utils import publish_model
 from arch.task_manager.utils.grpc_utils import get_proxy_data_channel, wrap_grpc_packet
-from arch.task_manager.utils.job_utils import get_json_result
+from arch.task_manager.job_manager import get_json_result, generate_job_id
 from arch.api.version_control.control import version_history
 from arch.api import eggroll
 from arch.task_manager.settings import WORK_MODE, logger
