@@ -28,6 +28,8 @@ import numpy as np
 from functools import partial
 from operator import is_not
 import hashlib
+import fnmatch
+import shutil
 
 
 class Standalone:
@@ -47,6 +49,7 @@ class Standalone:
         partition = self.meta_table.get(_table_key)
         return _DTable(__type, namespace, name, partition)
 
+
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
                     error_if_exist=False,
@@ -59,6 +62,25 @@ class Standalone:
         __table = self.table(name, namespace, partition, persistent=persistent)
         __table.put_all(_iter)
         return __table
+
+
+    def cleanup(self, name, namespace, persistent):
+        if not namespace or not name:
+            raise ValueError("neither name nor namespace can be blank")
+
+        _type = StoreType.LMDB.value if persistent else StoreType.IN_MEMORY.value
+        _base_dir = os.sep.join([Standalone.get_instance().data_dir, _type])
+        if not os.path.isdir(_base_dir):
+            raise EnvironmentError("illegal datadir set for eggroll")
+
+        _namespace_dir = os.sep.join([_base_dir, namespace])
+        if not os.path.isdir(_namespace_dir):
+            raise EnvironmentError("namespace does not exist")
+
+        _tables_to_delete = fnmatch.filter(os.listdir(_namespace_dir), name)
+        for table in _tables_to_delete:
+            shutil.rmtree(os.sep.join([_namespace_dir, table]))
+
 
     @staticmethod
     def get_instance():
