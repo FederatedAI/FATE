@@ -16,7 +16,7 @@
 		},
 		"proxy": {
 			"host": "localhost",
-			"port": 9001
+			"port": 9370
 		},
 		"servings": [
 			"127.0.0.1:8000",
