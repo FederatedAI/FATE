@@ -1,0 +1,17 @@
+{
+    "task": "publish_model",
+    "partyId": 10000,
+    "servings": [
+        "127.0.0.1:8001"
+    ],
+    "models": {
+        "9999": {
+            "name": "hetero_lr_guest_model_hetero_logistic_regression_example_standalone_20190322185246",
+            "namespace": "hetero_lr"
+        },
+        "10000": {
+            "name": "hetero_lr_host_model_hetero_logistic_regression_example_standalone_20190322185246",
+            "namespace": "hetero_lr"
+        }
+    }
+}

@@ -31,6 +31,8 @@ class KFold(BaseCrossValidator):
         self.n_splits = n_splits
 
     def split(self, data_inst, shuffle=True):
+        header = data_inst.schema.get('header')
+
         data_sids_iter, data_size = collect_index(data_inst)
 
         data_sids = []
@@ -57,4 +59,6 @@ class KFold(BaseCrossValidator):
                                              include_key=True,
                                              partition=data_inst._partitions)
             test_data = data_inst.join(test_table, lambda x, y: x)
+            train_data.schema['header'] = header
+            test_data.schema['header'] = header
             yield train_data, test_data

@@ -28,16 +28,19 @@
 from arch.api.utils import log_utils
 
 import functools
+from arch.api import eggroll
 from arch.api import federation
+from arch.api.proto.boosting_tree_model_meta_pb2 import CriterionMeta
+from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
+from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 import random
-import numpy as np
 from federatedml.util import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import Node
-from federatedml.tree import DecisionTreeModelMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -58,9 +61,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.infos = None
         self.valid_features = None
         self.encrypter = None
-        self.node_positions = None
         self.best_splitinfo_guest = None
         self.tree_node_queue = None
+        self.cur_split_nodes = None
         self.tree_ = []
         self.tree_node_num = 0
         self.split_maskdict = {}
@@ -172,75 +175,94 @@ class HeteroDecisionTreeGuest(DecisionTree):
                           role=consts.HOST,
                           idx=0)
 
-    def sync_encrypted_splitinfo_host(self, dep=-1):
-        LOGGER.info("get encrypted splitinfo of depth {}".format(dep))
+    def sync_encrypted_splitinfo_host(self, dep=-1, batch=-1):
+        LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         encrypted_splitinfo_host = federation.get(name=self.transfer_inst.encrypted_splitinfo_host.name,
                                                   tag=self.transfer_inst.generate_transferid(
-                                                      self.transfer_inst.encrypted_splitinfo_host, dep),
+                                                      self.transfer_inst.encrypted_splitinfo_host, dep, batch),
                                                   idx=0)
         return encrypted_splitinfo_host
 
-    def sync_federated_best_splitinfo_host(self, federated_best_splitinfo_host, dep=-1):
-        LOGGER.info("send federated best splitinfo of depth {}".format(dep))
+    def sync_federated_best_splitinfo_host(self, federated_best_splitinfo_host, dep=-1, batch=-1):
+        LOGGER.info("send federated best splitinfo of depth {}, batch {}".format(dep, batch))
         federation.remote(obj=federated_best_splitinfo_host,
                           name=self.transfer_inst.federated_best_splitinfo_host.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.federated_best_splitinfo_host,
-                                                                     dep),
+                                                                     dep,
+                                                                     batch),
                           role=consts.HOST,
                           idx=0)
 
-    def federated_find_split(self, dep=-1):
-        LOGGER.info("federated find split of depth {}".format(dep))
-        encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep)
-        best_splitinfo_host = []
+    def find_host_split(self, value):
+        cur_split_node, encrypted_splitinfo_host = value
+        sum_grad = cur_split_node.sum_grad
+        sum_hess = cur_split_node.sum_hess
+        best_gain = self.min_impurity_split - consts.FLOAT_ZERO
+        best_idx = -1
+
         for i in range(len(encrypted_splitinfo_host)):
-            sum_grad = self.tree_node_queue[i].sum_grad
-            sum_hess = self.tree_node_queue[i].sum_hess
-            best_gain = self.min_impurity_split - consts.FLOAT_ZERO
-            best_idx = -1
-            for j in range(len(encrypted_splitinfo_host[i])):
-                sum_grad_l, sum_hess_l = encrypted_splitinfo_host[i][j]
-                sum_grad_l = self.decrypt(sum_grad_l)
-                sum_hess_l = self.decrypt(sum_hess_l)
-                sum_grad_r = sum_grad - sum_grad_l
-                sum_hess_r = sum_hess - sum_hess_l
-                gain = self.splitter.split_gain(sum_grad, sum_hess, sum_grad_l,
-                                                sum_hess_l, sum_grad_r, sum_hess_r)
+            sum_grad_l, sum_hess_l = encrypted_splitinfo_host[i]
+            sum_grad_l = self.decrypt(sum_grad_l)
+            sum_hess_l = self.decrypt(sum_hess_l)
+            sum_grad_r = sum_grad - sum_grad_l
+            sum_hess_r = sum_hess - sum_hess_l
+            gain = self.splitter.split_gain(sum_grad, sum_hess, sum_grad_l,
+                                            sum_hess_l, sum_grad_r, sum_hess_r)
 
-                if gain > self.min_impurity_split and gain > best_gain:
-                    best_gain = gain
-                    best_idx = j
+            if gain > self.min_impurity_split and gain > best_gain:
+                best_gain = gain
+                best_idx = i
 
-            best_gain = self.encrypt(best_gain)
+        best_gain = self.encrypt(best_gain)
+        return best_idx, best_gain
 
-            best_splitinfo_host.append([best_idx, best_gain])
+    def federated_find_split(self, dep=-1, batch=-1):
+        LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
+        encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch)
 
-        self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep)
+        LOGGER.info("begin to find split")
+        encrypted_splitinfo_host_table = eggroll.parallelize(
+            zip(self.cur_split_nodes, encrypted_splitinfo_host), include_key=False, partition=self.data_bin._partitions)
 
-    def sync_final_split_host(self, dep=-1):
-        LOGGER.info("get host final splitinfo of depth {}".format(dep))
+        splitinfos = encrypted_splitinfo_host_table.mapValues(lambda value: self.find_host_split(value)).collect()
+        best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
+
+        LOGGER.info("end to find split")
+        self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch)
+
+    def sync_final_split_host(self, dep=-1, batch=-1):
+        LOGGER.info("get host final splitinfo of depth {}, batch {}".format(dep, batch))
         final_splitinfo_host = federation.get(name=self.transfer_inst.final_splitinfo_host.name,
                                               tag=self.transfer_inst.generate_transferid(
-                                                  self.transfer_inst.final_splitinfo_host, dep),
+                                                  self.transfer_inst.final_splitinfo_host, dep, batch),
                                               idx=0)
 
         return final_splitinfo_host
 
+    def find_best_split_guest_and_host(self, splitinfo_guest_host):
+        splitinfo_guest, splitinfo_host = splitinfo_guest_host
+        best_splitinfo = None
+        gain_host = self.decrypt(splitinfo_host.gain)
+        if splitinfo_guest.gain >= gain_host - consts.FLOAT_ZERO:
+            best_splitinfo = splitinfo_guest
+        else:
+            best_splitinfo = splitinfo_host
+            best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad)
+            best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess)
+            best_splitinfo.gain = gain_host
+
+        return best_splitinfo
+
     def merge_splitinfo(self, splitinfo_guest, splitinfo_host):
         LOGGER.info("merge splitinfo")
-        splitinfos = []
-        for i in range(len(splitinfo_guest)):
-            splitinfo = None
-            gain_host = self.decrypt(splitinfo_host[i].gain)
-            if splitinfo_guest[i].gain >= gain_host - consts.FLOAT_ZERO:
-                splitinfo = splitinfo_guest[i]
-            else:
-                splitinfo = splitinfo_host[i]
-                splitinfo.sum_grad = self.decrypt(splitinfo.sum_grad)
-                splitinfo.sum_hess = self.decrypt(splitinfo.sum_hess)
-                splitinfo.gain = gain_host
-            splitinfos.append(splitinfo)
-        return splitinfos
+        splitinfo_guest_host_table = eggroll.parallelize(zip(splitinfo_guest, splitinfo_host),
+                                                         include_key=False,
+                                                         partition=self.data_bin._partitions)
+        best_splitinfo_table = splitinfo_guest_host_table.mapValues(lambda value:
+                                                                    self.find_best_split_guest_and_host(value))
+        best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
+
+        return best_splitinfos
 
     def update_tree_node_queue(self, splitinfos, max_depth_reach):
         LOGGER.info("update tree node, splitlist length is {}, tree node queue size is".format(
@@ -336,7 +358,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         tree_node_num = self.tree_node_num
         LOGGER.info("rmask edispatch node result of depth {}".format(dep))
         dispatch_node_mask = dispatch_guest_result.mapValues(
-            lambda state_nodeid: (state_nodeid[0], random.randint(0, tree_node_num - 1)) if len(
+            lambda state_nodeid: (state_nodeid[0], random.randint(0, tree_node_num)) if len(
                 state_nodeid) == 2 else state_nodeid)
         self.sync_dispatch_node_host(dispatch_node_mask, dep)
         dispatch_node_host_result = self.sync_dispatch_node_host_result(dep)
@@ -348,6 +370,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def sync_tree(self):
         LOGGER.info("sync tree to host")
+
         federation.remote(obj=self.tree_,
                           name=self.transfer_inst.tree.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree),
@@ -378,32 +401,43 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         for dep in range(self.max_depth):
             LOGGER.info("start to fit depth {}, tree node queue size is {}".format(dep, len(self.tree_node_queue)))
+
             self.sync_tree_node_queue(self.tree_node_queue, dep)
             if len(self.tree_node_queue) == 0:
                 break
 
             self.sync_node_positions(dep)
 
-            node_map = {}
-            node_num = 0
-            for tree_node in self.tree_node_queue:
-                node_map[tree_node.id] = node_num
-                node_num += 1
-
             self.data_bin_with_node_dispatch = self.data_bin.join(self.node_dispatch,
                                                                   lambda data_inst, dispatch_info: (
                                                                       data_inst, dispatch_info))
 
-            acc_histograms = self.get_histograms(node_map=node_map)
-            self.best_splitinfo_guest = self.splitter.find_split(acc_histograms, self.valid_features)
+            batch = 0
+            splitinfos = []
+            for i in range(0, len(self.tree_node_queue), self.max_split_nodes):
+                self.cur_split_nodes = self.tree_node_queue[i: i + self.max_split_nodes]
 
-            self.federated_find_split(dep)
+                node_map = {}
+                node_num = 0
+                for tree_node in self.cur_split_nodes:
+                    node_map[tree_node.id] = node_num
+                    node_num += 1
 
-            final_splitinfo_host = self.sync_final_split_host(dep)
+                acc_histograms = self.get_histograms(node_map=node_map)
 
-            splitinfos = self.merge_splitinfo(self.best_splitinfo_guest, final_splitinfo_host)
+                self.best_splitinfo_guest = self.splitter.find_split(acc_histograms, self.valid_features,
+                                                                     self.data_bin._partitions)
+                self.federated_find_split(dep, batch)
+                final_splitinfo_host = self.sync_final_split_host(dep, batch)
+
+                cur_splitinfos = self.merge_splitinfo(self.best_splitinfo_guest, final_splitinfo_host)
+                splitinfos.extend(cur_splitinfos)
+
+                batch += 1
+
             max_depth_reach = True if dep + 1 == self.max_depth else False
             self.update_tree_node_queue(splitinfos, max_depth_reach)
+
             self.redispatch_node(dep)
 
         self.sync_tree()
@@ -486,10 +520,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.sync_predict_data(predict_data_mask, site_host_send_times)
 
             predict_data_host = self.sync_data_predicted_by_host(site_host_send_times)
-            predict_data = predict_data.join(predict_data_host, \
-                                             lambda unleaf_state1_nodeid1, unleaf_state2_nodeid2: \
-                                                 unleaf_state1_nodeid1 if unleaf_state1_nodeid1[
-                                                                              0] == 0 else unleaf_state2_nodeid2)
+            predict_data = predict_data.join(predict_data_host,
+                                             lambda unleaf_state1_nodeid1, unleaf_state2_nodeid2:
+                                             unleaf_state1_nodeid1 if unleaf_state1_nodeid1[
+                                                                          0] == 0 else unleaf_state2_nodeid2)
 
             site_host_send_times += 1
 
@@ -498,14 +532,65 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("predict finish!")
         return predict_data
 
-    def get_tree_model(self):
-        LOGGER.info("get tree model")
-        tree_model = DecisionTreeModelMeta()
-        tree_model.tree_ = self.tree_
-        tree_model.split_maskdict = self.split_maskdict
-        return tree_model
+    def get_model_meta(self):
+        model_meta = DecisionTreeModelMeta()
+        model_meta.criterion_meta.CopyFrom(CriterionMeta(criterion_method=self.criterion_method,
+                                                         criterion_param=self.criterion_params))
 
-    def set_tree_model(self, tree_model):
-        LOGGER.info("set tree model")
-        self.tree_ = tree_model.tree_
-        self.split_maskdict = tree_model.split_maskdict
+        model_meta.max_depth = self.max_depth
+        model_meta.min_sample_split = self.min_sample_split
+        model_meta.min_impurity_split = self.min_impurity_split
+        model_meta.min_leaf_node = self.min_leaf_node
+
+        return model_meta
+
+    def set_model_meta(self, model_meta):
+        self.max_depth = model_meta.max_depth
+        self.min_sample_split = model_meta.min_sample_split
+        self.min_impurity_split = model_meta.min_impurity_split
+        self.min_leaf_node = model_meta.min_leaf_node
+        self.criterion_method = model_meta.criterion_meta.criterion_method
+        self.criterion_params = list(model_meta.criterion_meta.criterion_param)
+
+    def get_model_param(self):
+        model_param = DecisionTreeModelParam()
+        for node in self.tree_:
+            model_param.tree_.add(id=node.id,
+                                  sitename=node.sitename,
+                                  fid=node.fid,
+                                  bid=node.bid,
+                                  weight=node.weight,
+                                  is_leaf=node.is_leaf,
+                                  left_nodeid=node.left_nodeid,
+                                  right_nodeid=node.right_nodeid)
+
+        model_param.split_maskdict.update(self.split_maskdict)
+
+        return model_param
+
+    def set_model_param(self, model_param):
+        self.tree_ = []
+        for node_param in model_param.tree_:
+            _node = Node(id=node_param.id,
+                         sitename=node_param.sitename,
+                         fid=node_param.fid,
+                         bid=node_param.bid,
+                         weight=node_param.weight,
+                         is_leaf=node_param.is_leaf,
+                         left_nodeid=node_param.left_nodeid,
+                         right_nodeid=node_param.right_nodeid)
+
+            self.tree_.append(_node)
+
+        self.split_maskdict = dict(model_param.split_maskdict)
+
+    def get_model(self):
+        model_meta = self.get_model_meta()
+        model_param = self.get_model_param()
+
+        return model_meta, model_param
+
+    def load_model(self, model_meta=None, model_param=None):
+        LOGGER.info("load tree model")
+        self.set_model_meta(model_meta)
+        self.set_model_param(model_param)

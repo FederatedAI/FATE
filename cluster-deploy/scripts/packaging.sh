@@ -17,8 +17,8 @@
 #
 
 version=0.1
-base_dir=
-output_dir=
+base_dir=../../
+output_dir=./output
 
 cwd=`pwd`
 

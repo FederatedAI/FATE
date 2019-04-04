@@ -55,6 +55,8 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=1, names
                                                namespace=namespace,
                                                persistent=persistent)
 
-
 def cleanup(name, namespace, persistent=False):
     return RuntimeInstance.EGGROLL.cleanup(name=name, namespace=namespace, persistent=persistent)
+
+def get_job_id():
+    return RuntimeInstance.EGGROLL.job_id

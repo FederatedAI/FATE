@@ -1,0 +1,39 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "ScaleMetaProto";
+
+message ScaleMeta{
+    bool is_scale = 1;
+    string strategy = 2;
+    map<string, MinMaxScaleMeta> minmax_scale_meta = 3;
+    StandardScaleMeta standard_scale_meta = 4;
+}
+
+message MinMaxScaleMeta{
+    string feat_upper = 5;
+    string feat_lower = 6;
+    string out_upper = 7;
+    string out_lower = 8;
+}
+
+message StandardScaleMeta{
+    bool with_mean = 9;
+    bool with_std = 10;
+}

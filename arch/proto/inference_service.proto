@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.api.serving;
+option java_outer_classname = "InferenceServiceProto";
+import "model_service.proto";
+
+message FederatedMeta{
+    int32 sceneId = 1;
+    int32 myPartyId = 2;
+    int32 partnerPartyId = 3;
+    string myRole = 4;
+}
+
+message InferenceRequest{
+    FederatedMeta meta = 1;
+    com.webank.ai.fate.api.mlmodel.manager.ModelInfo model = 2;
+    bytes data = 3;
+}
+
+message InferenceResponse{
+    FederatedMeta meta = 1;
+    int32 statusCode = 2;
+    string message = 3;
+    string error = 4;
+    bytes data = 5;
+}
+
+service InferenceService{
+    rpc predict(InferenceRequest) returns (InferenceResponse);
+}

@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from arch.api import eggroll
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import PaillierEncrypt
 

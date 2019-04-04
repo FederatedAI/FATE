@@ -65,14 +65,13 @@ class FeatureHistogram(object):
 
     @staticmethod
     def aggregate_histogram(batch_histogram1, batch_histogram2, node_map=None):
-        histograms = copy.deepcopy(batch_histogram1)
-        for i in range(len(histograms)):
-            for j in range(len(histograms[i])):
-                for k in range(len(histograms[i][j])):
-                    for r in range(len(histograms[i][j][k])):
-                        histograms[i][j][k][r] += batch_histogram2[i][j][k][r]
+        for i in range(len(batch_histogram1)):
+            for j in range(len(batch_histogram1[i])):
+                for k in range(len(batch_histogram1[i][j])):
+                    for r in range(len(batch_histogram1[i][j][k])):
+                        batch_histogram1[i][j][k][r] += batch_histogram2[i][j][k][r]
 
-        return histograms
+        return batch_histogram1
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
@@ -88,7 +87,7 @@ class FeatureHistogram(object):
         for _, value in kv_iterator:
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
-            if unleaf_state == 0:
+            if unleaf_state == 0 or nodeid not in node_map:
                 continue
             g, h = value[1]
             data_bins.append(data_bin)
@@ -106,15 +105,19 @@ class FeatureHistogram(object):
         zero_opt_node_sum = [[0 for i in range(3)]
                              for j in range(node_num)]
 
-        feature_histogram_template = []
-        for fid in range(bin_split_points.shape[0]):
-            if valid_features is not None and valid_features[fid] is False:
-                feature_histogram_template.append([])
-                continue
-            else:
-                feature_histogram_template.append([[0 for i in range(3)]
-                                                   for j in range(bin_split_points[fid].shape[0] + 1)])
-        node_histograms = [copy.deepcopy(feature_histogram_template) for i in range(node_num)]
+        node_histograms = []
+        for k in range(node_num):
+            feature_histogram_template = []
+            for fid in range(bin_split_points.shape[0]):
+                if valid_features is not None and valid_features[fid] is False:
+                    feature_histogram_template.append([])
+                    continue
+                else:
+                    feature_histogram_template.append([[0 for i in range(3)]
+                                                       for j in range(bin_split_points[fid].shape[0] + 1)])
+
+            node_histograms.append(feature_histogram_template)
+
         assert len(feature_histogram_template) == bin_split_points.shape[0]
 
         for rid in range(data_record):

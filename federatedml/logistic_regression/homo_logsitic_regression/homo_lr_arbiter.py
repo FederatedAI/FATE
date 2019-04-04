@@ -14,9 +14,12 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
+import numpy as np
 
 from arch.api import federation
+from arch.api.model_manager import manager as model_manager
+from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import DiffConverge
 from federatedml.optim import activation
@@ -51,6 +54,9 @@ class HomoLRArbiter(BaseLogisticRegression):
         self.host_encrypter = []
         self.party_weights = []  # The first one is guest weight, host weights for otherwise
         self.has_sychronized_encryption = False
+        self.loss_history = []
+        self.is_converged = False
+        self.header = []
 
     def fit(self, data=None):
 
@@ -73,6 +79,7 @@ class HomoLRArbiter(BaseLogisticRegression):
                                                         iter_num=iter_num,
                                                         party_weights=self.party_weights,
                                                         host_use_encryption=self.host_use_encryption)
+            self.loss_history.append(total_loss)
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
@@ -115,7 +122,9 @@ class HomoLRArbiter(BaseLogisticRegression):
             self.set_coef_(final_model)
             self.n_iter_ = iter_num
             if converge_flag:
+                self.is_converged = True
                 break
+        self._set_header()
 
     def predict(self, data=None, predict_param=None):
         # synchronize encryption information
@@ -273,3 +282,69 @@ class HomoLRArbiter(BaseLogisticRegression):
 
             if sum(self.curt_re_encrypt_times) == 0:
                 break
+
+    # def _save_meta(self, name, namespace):
+    #     meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.param.penalty,
+    #                                                       eps=self.eps,
+    #                                                       alpha=self.alpha,
+    #                                                       optimizer=self.param.optimizer,
+    #                                                       party_weight=self.param.party_weight,
+    #                                                       batch_size=self.batch_size,
+    #                                                       learning_rate=self.learning_rate,
+    #                                                       max_iter=self.max_iter,
+    #                                                       converge_func=self.param.converge_func,
+    #                                                       re_encrypt_batches=self.param.re_encrypt_batches)
+    #     buffer_type = "HomoLRArbiter.meta"
+    #
+    #     model_manager.save_model(buffer_type=buffer_type,
+    #                              proto_buffer=meta_protobuf_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return buffer_type
+    #
+    # def save_model(self, name, namespace, job_id=None, model_name=None):
+    #     meta_buffer_type = self._save_meta(name, namespace)
+    #     # In case arbiter has no header
+    #
+    #     # Make a virtual header cause no data_instances are available
+    #     header = [str(i) for i in range(len(self.coef_))]
+    #
+    #     weight_dict = {}
+    #     for idx, header_name in enumerate(header):
+    #         coef_i = self.coef_[idx]
+    #         weight_dict[header_name] = coef_i
+    #
+    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
+    #                                                          loss_history=self.loss_history,
+    #                                                          is_converged=self.is_converged,
+    #                                                          weight=weight_dict,
+    #                                                          intercept=self.intercept_,
+    #                                                          header=header)
+    #
+    #     param_buffer_type = "HomoLRArbiter.param"
+    #
+    #     model_manager.save_model(buffer_type=param_buffer_type,
+    #                              proto_buffer=param_protobuf_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return [(meta_buffer_type, param_buffer_type)]
+    #
+    # def load_model(self, name, namespace):
+    #
+    #     result_obj = lr_model_param_pb2.LRModelParam()
+    #     result_obj = model_manager.read_model(buffer_type="HomoLRArbiter.param",
+    #                                           proto_buffer=result_obj,
+    #                                           name=name,
+    #                                           namespace=namespace)
+    #
+    #     self.header = list(result_obj.header)
+    #     feature_shape = len(self.header)
+    #     self.coef_ = np.zeros(feature_shape)
+    #     weight_dict = dict(result_obj.weight)
+    #     self.intercept_ = result_obj.intercept
+    #
+    #     for idx, header_name in enumerate(self.header):
+    #         self.coef_[idx] = weight_dict.get(header_name)
+
+    def _set_header(self):
+        self.header = ['head_' + str(x) for x in range(len(self.coef_))]
