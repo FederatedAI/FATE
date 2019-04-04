@@ -49,7 +49,7 @@ empty = kv_pb2.Empty()
 class _DTable(object):
 
     def __init__(self, storage_locator, partitions=1):
-        self.__client = _EggRoll.get_instance()
+        # self.__client = _EggRoll.get_instance()
         self._namespace = storage_locator.namespace
         self._name = storage_locator.name
         self._type = storage_basic_pb2.StorageType.Name(storage_locator.type)
@@ -67,67 +67,67 @@ class _DTable(object):
     def save_as(self, name, namespace, partition=None, use_serialize=True):
         if partition is None:
             partition = self._partitions
-        dup = self.__client.table(name, namespace, partition=partition)
+        dup = _EggRoll.get_instance().table(name, namespace, partition=partition)
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
     def put(self, k, v, use_serialize=True):
-        self.__client.put(self, k, v, use_serialize=use_serialize)
+        _EggRoll.get_instance().put(self, k, v, use_serialize=use_serialize)
 
     def put_all(self, kv_list: Iterable, use_serialize=True):
-        return self.__client.put_all(self, kv_list, use_serialize=use_serialize)
+        return _EggRoll.get_instance().put_all(self, kv_list, use_serialize=use_serialize)
 
     def get(self, k, use_serialize=True):
-        return self.__client.get(self, k, use_serialize=use_serialize)
+        return _EggRoll.get_instance().get(self, k, use_serialize=use_serialize)
 
     def collect(self, use_serialize=True):
         return _EggRollIterator(self, use_serialize=use_serialize)
 
     def delete(self, k, use_serialize=True):
-        return self.__client.delete(self, k, use_serialize=use_serialize)
+        return _EggRoll.get_instance().delete(self, k, use_serialize=use_serialize)
 
     def destroy(self):
-        self.__client.destroy(self)
+        _EggRoll.get_instance().destroy(self)
 
     def count(self):
-        return self.__client.count(self)
+        return _EggRoll.get_instance().count(self)
 
     def put_if_absent(self, k, v, use_serialize=True):
-        return self.__client.put_if_absent(self, k, v, use_serialize=use_serialize)
+        return _EggRoll.get_instance().put_if_absent(self, k, v, use_serialize=use_serialize)
 
     '''
     Computing apis
     '''
 
     def map(self, func):
-        _intermediate_result = self.__client.map(self, func)
+        _intermediate_result = _EggRoll.get_instance().map(self, func)
         return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
                                             partition=_intermediate_result._partitions)
 
     def mapValues(self, func):
-        return self.__client.map_values(self, func)
+        return _EggRoll.get_instance().map_values(self, func)
 
     def mapPartitions(self, func):
-        return self.__client.map_partitions(self, func)
+        return _EggRoll.get_instance().map_partitions(self, func)
 
     def reduce(self, func):
-        return self.__client.reduce(self, func)
+        return _EggRoll.get_instance().reduce(self, func)
 
     def join(self, other, func):
         if other._partitions != self._partitions:
             if other.count() > self.count():
-                return self.save_as(str(uuid.uuid1()), self.__client.job_id, partition=other._partitions).join(other,
+                return self.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=other._partitions).join(other,
                                                                                                                func)
             else:
-                return self.join(other.save_as(str(uuid.uuid1()), self.__client.job_id, partition=self._partitions),
+                return self.join(other.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=self._partitions),
                                  func)
-        return self.__client.join(self, other, func)
+        return _EggRoll.get_instance().join(self, other, func)
 
     def glom(self):
-        return self.__client.glom(self)
+        return _EggRoll.get_instance().glom(self)
 
     def sample(self, fraction, seed=None):
-        return self.__client.sample(self, fraction, seed)
+        return _EggRoll.get_instance().sample(self, fraction, seed)
 
 
 class _EggRoll(object):
@@ -180,9 +180,9 @@ class _EggRoll(object):
         if namespace is None or name is None:
             raise ValueError("neither name nor namespace can be None")
 
-        type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
+        _type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
 
-        storage_locator = storage_basic_pb2.StorageLocator(type=type, namespace=namespace, name=name)
+        storage_locator = storage_basic_pb2.StorageLocator(type=_type, namespace=namespace, name=name)
         _table = _DTable(storage_locator=storage_locator)
 
         self.destroy_all(_table)
