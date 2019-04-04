@@ -43,7 +43,6 @@ PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 WORK_MODE = server_conf.get(SERVERS).get(ROLE).get('work_mode')
 PARTY_ID = server_conf.get("party_id")
-ALL_PARTY_IDS = server_conf.get('all_party_ids')
 
 DATABASE = {
     'engine': 'mysql',

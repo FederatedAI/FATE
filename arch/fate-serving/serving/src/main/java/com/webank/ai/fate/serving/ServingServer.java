@@ -43,10 +43,6 @@ public class ServingServer {
     }
 
     private void start() throws IOException {
-        if (StringUtils.isEmpty(this.confPath)){
-            // just a test
-            this.confPath = String.format("%s/serving.properties", this.getClass().getResource("/").getPath());
-        }
         this.init();
 
         int port = Integer.parseInt(Configuration.getProperty("port"));
