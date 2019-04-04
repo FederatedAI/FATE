@@ -23,7 +23,7 @@ host_partyid=$4
 arbiter_partyid=$5
 scene_id=$6
 if [[ $work_mode -eq 1 ]]; then
-    role=$6
+    role=$7
 fi
 
 cur_dir=$(pwd)

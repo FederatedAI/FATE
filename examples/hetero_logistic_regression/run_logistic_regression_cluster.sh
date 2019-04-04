@@ -24,5 +24,6 @@ jobid=$2
 guest_partyid=$3
 host_partyid=$4
 arbiter_partyid=$5
+scene_id=50000
 
-bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid $role
+bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid $scene_id $role
