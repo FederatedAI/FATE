@@ -36,7 +36,7 @@ class SecureAddHost(object):
         return first, y - first
 
     def secure(self):
-        y_shares = self.y.mapValues(lambda  y: self.share(y))
+        y_shares = self.y.mapValues(self.share)
         self.y1 = y_shares.mapValues(lambda shares: shares[0])
         self.y2 = y_shares.mapValues(lambda shares: shares[1])
 

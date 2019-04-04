@@ -63,7 +63,7 @@ class DenseFeatureReader(object):
         self.header = None
 
     def generate_header(self, input_data_feature, table_name, namespace):
-        self.header = storage.get_data_table_meta("header", table_name + ".meta", namespace)
+        self.header = storage.get_data_table_meta("header", table_name, namespace)
 
         if not self.header:
             feature = get_one_line(input_data_feature)[1]
