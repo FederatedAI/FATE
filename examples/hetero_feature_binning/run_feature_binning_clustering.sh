@@ -15,9 +15,11 @@
 #  limitations under the License.
 #
 
-jobid=binning_$(date +%Y%m%d%H%M%S)
 cur_dir=$(pwd)
-mode='fit'
-#mode='transform'
 
-nohup python ${cur_dir}/run_binning.py 0 ${jobid} 9999 10000 50001 ${mode} &
+role=${1}
+guest_id=${2}
+host_id=${3}
+jobid=${4}
+
+nohup python ${cur_dir}/run_feature_selection.py 1 ${jobid} ${role} ${guest_id} ${host_id} > nohup.${role} 2>&1 &
