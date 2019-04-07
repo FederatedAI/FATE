@@ -18,6 +18,8 @@ import tensorflow as tf
 from arch.api.utils import log_utils
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.logistic_regression.hetero_dnn_logistic_regression import HeteroDNNLRGuest
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import \
+    SemiEncryptedLocalModelUpdateProxy
 from federatedml.param import LogisticParam
 from federatedml.param.param import LocalModelParam
 from federatedml.util import ParamExtract
@@ -37,6 +39,7 @@ class DNNLRGuestWorkFlow(WorkFlow):
         self.local_model = self._create_local_model(local_model_param)
         self.model = HeteroDNNLRGuest(self.local_model, self.logistic_param)
         self.model.set_data_shape(local_model_param.encode_dim)
+        self.model.set_local_model_update_proxy(SemiEncryptedLocalModelUpdateProxy())
 
     def _create_local_model(self, local_model_param):
         autoencoder = Autoencoder("local_guest_model_01")

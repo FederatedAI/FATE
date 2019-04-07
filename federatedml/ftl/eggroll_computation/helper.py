@@ -20,9 +20,8 @@ import uuid
 import numpy as np
 
 from arch.api.eggroll import parallelize, table
-from federatedml.ftl.eggroll_computation.util import distribute_compute_vAvg_XY, distribute_compute_hSum_XY, \
-    distribute_encrypt, distribute_decrypt_matrix, distribute_compute_XY, distribute_compute_X_plus_Y, \
-    distribute_decrypt_scalar, distribute_decrypt_array
+from federatedml.ftl.eggroll_computation.util import eggroll_compute_vAvg_XY, eggroll_compute_hSum_XY, \
+    eggroll_encrypt, eggroll_decrypt, eggroll_compute_XY, eggroll_compute_X_plus_Y
 
 
 def prepare_table(matrix, batch_size=1, max_partition=20):
@@ -44,35 +43,35 @@ def create_empty_table(table_name, namespace, partition=1):
     return table(name=table_name, namespace=namespace, partition=partition)
 
 
-def compute_sum_XY(X, Y):
+def distribute_compute_sum_XY(X, Y):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
-    res = distribute_compute_vAvg_XY(XT, YT, 1)
+    res = eggroll_compute_vAvg_XY(XT, YT, 1)
 
     destroy_table(XT)
     destroy_table(YT)
     return res
 
 
-def compute_avg_XY(X, Y):
+def distribute_compute_avg_XY(X, Y):
     length = len(X)
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
-    res = distribute_compute_vAvg_XY(XT, YT, length)
+    res = eggroll_compute_vAvg_XY(XT, YT, length)
 
     destroy_table(XT)
     destroy_table(YT)
     return res
 
 
-def compute_XY(X, Y):
+def distribute_compute_XY(X, Y):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
 
-    val = distribute_compute_XY(XT, YT)
+    val = eggroll_compute_XY(XT, YT)
 
     result = []
     for i in range(len(val)):
@@ -84,7 +83,7 @@ def compute_XY(X, Y):
     return res
 
 
-def compute_XY_plus_Z(X, Y, Z):
+def distribute_compute_XY_plus_Z(X, Y, Z):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
@@ -105,12 +104,12 @@ def compute_XY_plus_Z(X, Y, Z):
     return res
 
 
-def compute_X_plus_Y(X, Y):
+def distribute_compute_X_plus_Y(X, Y):
     batch = 1
     XT = prepare_table(X, batch)
     YT = prepare_table(Y, batch)
 
-    val = distribute_compute_X_plus_Y(XT, YT)
+    val = eggroll_compute_X_plus_Y(XT, YT)
 
     result = []
     for i in range(len(val)):
@@ -129,7 +128,7 @@ def _convert_3d_to_2d_matrix(matrix):
     return matrix
 
 
-def decrypt_matrix(private_key, matrix):
+def distribute_decrypt_matrix(private_key, matrix):
     _shape = matrix.shape
     if len(_shape) == 3:
         matrix = _convert_3d_to_2d_matrix(matrix)
@@ -137,7 +136,7 @@ def decrypt_matrix(private_key, matrix):
         matrix = np.expand_dims(matrix, axis=1)
 
     X = prepare_table(matrix, batch_size=1)
-    val = distribute_decrypt_matrix(private_key, X)
+    val = eggroll_decrypt(private_key, X)
 
     result = []
     last_index = len(val) - 1
@@ -164,13 +163,15 @@ def decrypt_matrix(private_key, matrix):
     return result
 
 
-def encrypt_matrix(public_key, matrix):
+def distribute_encrypt_matrix(public_key, matrix):
     _shape = matrix.shape
     if len(_shape) == 3:
         matrix = _convert_3d_to_2d_matrix(matrix)
+    elif len(_shape) == 1:
+        matrix = np.expand_dims(matrix, axis=1)
 
     X = prepare_table(matrix, 1)
-    val = distribute_encrypt(public_key, X)
+    val = eggroll_encrypt(public_key, X)
 
     result = []
     last_index = len(val) - 1
@@ -190,6 +191,8 @@ def encrypt_matrix(public_key, matrix):
 
     if len(_shape) == 3:
         result = result.reshape(_shape)
+    elif len(_shape) == 1:
+        result = np.squeeze(result, axis=1)
 
     destroy_table(X)
     return result
@@ -227,7 +230,7 @@ def encrypt_matrix(public_key, matrix):
 #     return np.array(res)
 
 
-def encrypt_matmul_3(X, Y, partition=20):
+def distribute_encrypt_matmul_3(X, Y, partition=20):
     assert X.shape[0] == Y.shape[0]
 
     XT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
@@ -248,7 +251,7 @@ def encrypt_matmul_3(X, Y, partition=20):
     XT.put_all(XT_generator)
     YT.put_all(YT_generator)
 
-    dictionary = distribute_compute_hSum_XY(XT, YT)
+    dictionary = eggroll_compute_hSum_XY(XT, YT)
 
     res = [[[0 for _ in range(Y.shape[-1])] for _ in range(X.shape[1])] for _ in range(X.shape[0])]
     for i in range(X.shape[0]):
@@ -268,7 +271,7 @@ def encrypt_matmul_3(X, Y, partition=20):
     return result
 
 
-def encrypt_matmul_2_ob(X, Y, partition=20):
+def distribute_encrypt_matmul_2_ob(X, Y, partition=20):
     # batch = 1
     # XT = prepare_table(X, batch, 1)
     # YT = prepare_table(Y, batch, 2)
@@ -283,7 +286,7 @@ def encrypt_matmul_2_ob(X, Y, partition=20):
             XT.put(key, X[m])
             YT.put(key, Y[:, k])
 
-    dictionary = distribute_compute_hSum_XY(XT, YT)
+    dictionary = eggroll_compute_hSum_XY(XT, YT)
 
     res = [[0 for _ in range(Y.shape[1])] for _ in range(len(X))]
     for m in range(len(X)):
@@ -300,7 +303,7 @@ def encrypt_matmul_2_ob(X, Y, partition=20):
     return result
 
 
-def encrypt_matmul_3_ob(X, Y, partition=20):
+def distribute_encrypt_matmul_3_ob(X, Y, partition=20):
     assert X.shape[0] == Y.shape[0]
 
     XT = create_empty_table(str(uuid.uuid1()), str(uuid.uuid1()), partition=partition)
@@ -313,7 +316,7 @@ def encrypt_matmul_3_ob(X, Y, partition=20):
                 XT.put(key, X[i, m, :])
                 YT.put(key, Y[i, :, k])
 
-    dictionary = distribute_compute_hSum_XY(XT, YT)
+    dictionary = eggroll_compute_hSum_XY(XT, YT)
 
     res = [[[0 for _ in range(Y.shape[-1])] for _ in range(X.shape[1])] for _ in range(X.shape[0])]
     for i in range(X.shape[0]):

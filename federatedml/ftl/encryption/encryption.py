@@ -50,9 +50,12 @@ def encrypt_matrix(public_key: PaillierPublicKey, A):
                 row.append([public_key.encrypt(float(A[i, j, k])) for k in range(len(A[i][j]))])
             else:
                 row.append(public_key.encrypt(float(A[i, j])))
-
         encrypt_A.append(row)
-    return np.array(encrypt_A)
+
+    result = np.array(encrypt_A)
+    if len(A.shape) == 1:
+        result = np.squeeze(result, axis=0)
+    return result
 
 
 def encrypt_matmul(public_key: PaillierPublicKey, A, encrypted_B):
@@ -103,6 +106,12 @@ def decrypt_array(private_key: PaillierPrivateKey, X):
 
 
 def decrypt_matrix(private_key: PaillierPrivateKey, A):
+    """
+    decrypt matrix with dim 1, 2 or 3
+    :param private_key:
+    :param A:
+    :return:
+    """
     if len(A.shape) == 1:
         A = np.expand_dims(A, axis=0)
 

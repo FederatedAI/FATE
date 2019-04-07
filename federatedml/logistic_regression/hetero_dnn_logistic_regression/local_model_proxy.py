@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from arch.api import eggroll
@@ -9,10 +11,8 @@ from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
-import time
 
-
-class LocalModelProxy(object):
+class BaseLocalModelProxy(object):
 
     def __init__(self):
         self.transfer_variable = HeteroDNNLRTransferVariable()
@@ -76,10 +76,10 @@ class LocalModelProxy(object):
         pass
 
 
-class AutoLocalModelGradientUpdateProxy(LocalModelProxy):
+class PlainLocalModelGradientUpdateProxy(BaseLocalModelProxy):
 
     def __init__(self):
-        super(AutoLocalModelGradientUpdateProxy).__init__()
+        super(PlainLocalModelGradientUpdateProxy).__init__()
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """
@@ -133,7 +133,7 @@ class AutoLocalModelGradientUpdateProxy(LocalModelProxy):
         start = time.time()
         dec_back_grad = self._decrypt_gradients(enc_back_grad, is_host, n_iter, batch_index)
         end = time.time()
-        LOGGER.debug("@ decryption time:" + str(end - start))
+        LOGGER.debug("@ decryption time (including communication):" + str(end - start))
 
         self.model.backpropogate(feats, None, dec_back_grad)
 
@@ -163,10 +163,10 @@ class AutoLocalModelGradientUpdateProxy(LocalModelProxy):
         return cleared_dec_grads
 
 
-class SemiAutoLocalModelUpdateProxy(LocalModelProxy):
+class SemiEncryptedLocalModelUpdateProxy(BaseLocalModelProxy):
 
     def __init__(self):
-        super(SemiAutoLocalModelUpdateProxy).__init__()
+        super(SemiEncryptedLocalModelUpdateProxy).__init__()
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """
@@ -224,7 +224,6 @@ class SemiAutoLocalModelUpdateProxy(LocalModelProxy):
         dec_back_grad = self._decrypt_gradients([enc_grads_W, enc_grads_b], is_host, n_iter, batch_index)
         end = time.time()
         LOGGER.debug("@ decryption time:" + str(end - start))
-
         self.model.apply_gradients(dec_back_grad)
 
     def _decrypt_gradients(self, enc_grads, is_host, n_iter, batch_index):
