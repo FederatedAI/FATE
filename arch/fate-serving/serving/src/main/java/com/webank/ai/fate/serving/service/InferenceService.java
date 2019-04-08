@@ -91,7 +91,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
             predictParams.put("sid", sid);
             predictParams.put("modelName", myModelName);
             predictParams.put("modelNamespace", myModelNamespace);
-            predictParams.put("partyId", Configuration.getPropertyInt("partyId"));
+            predictParams.put("partyId", Configuration.getPropertyInt("party.id"));
             predictParams.put("partnerPartyId", requestMeta.getPartnerPartyId());
             Map<String, Object> modelResult = model.predict(predictInputData, predictParams);
             Map<String, Object> result = this.getProcessedResult(modelResult);

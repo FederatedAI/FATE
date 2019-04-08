@@ -11,9 +11,9 @@ def run(model_id):
         stub = model_service_pb2_grpc.ModelServiceStub(channel)
         request = model_service_pb2.PublishRequest()
         request.myPartyId = 10000
-        request.models[9999].name = "hetero_lr_host_model_hetero_logistic_regression_example_standalone_20190322185246"
+        request.models[9999].name = "hetero_lr_host_model"
         request.models[9999].namespace = "hetero_lr"
-        request.models[10000].name = "hetero_lr_guest_model_hetero_logistic_regression_example_standalone_20190322185246"
+        request.models[10000].name = "hetero_lr_guest_model"
         request.models[10000].namespace = "hetero_lr"
         response = stub.publishLoad(request)
         print(response)
@@ -24,9 +24,9 @@ def run(model_id):
         stub = model_service_pb2_grpc.ModelServiceStub(channel)
         request = model_service_pb2.PublishRequest()
         request.myPartyId = 9999
-        request.models[9999].name = "hetero_lr_host_model_hetero_logistic_regression_example_standalone_20190322185246"
+        request.models[9999].name = "hetero_lr_host_model"
         request.models[9999].namespace = "hetero_lr"
-        request.models[10000].name = "hetero_lr_guest_model_hetero_logistic_regression_example_standalone_20190322185246"
+        request.models[10000].name = "hetero_lr_guest_model"
         request.models[10000].namespace = "hetero_lr"
         response = stub.publishLoad(request)
         print(response)

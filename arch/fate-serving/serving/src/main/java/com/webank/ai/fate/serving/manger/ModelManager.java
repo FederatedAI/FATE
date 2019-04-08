@@ -66,7 +66,7 @@ public class ModelManager {
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
         try{
-            int partyId = Configuration.getPropertyInt("partyId");
+            int partyId = Configuration.getPropertyInt("party.id");
             ModelServiceProto.ModelInfo myModelInfo = models.get(partyId);
             if (myModelInfo == null){
                 returnResult.setStatusCode(StatusCode.NOMODEL);
@@ -118,7 +118,7 @@ public class ModelManager {
 
     public static ReturnResult publishOnlineModel(Map<Integer, ModelServiceProto.ModelInfo> models){
         ReturnResult returnResult = new ReturnResult();
-        ModelServiceProto.ModelInfo myModelInfo = models.get(Configuration.getPropertyInt("partyId"));
+        ModelServiceProto.ModelInfo myModelInfo = models.get(Configuration.getPropertyInt("party.id"));
         if (myModelInfo == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("No model for me.");

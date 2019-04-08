@@ -28,7 +28,7 @@ def send(channel):
     request.meta.partnerPartyId = 9999
     request.meta.myRole = 'guest'
 
-    request.model.name = "hetero_lr_guest_model_hetero_logistic_regression_example_standalone_20190322185246"
+    request.model.name = "hetero_lr_guest_model"
     request.model.namespace = "hetero_lr"
 
     data = {}

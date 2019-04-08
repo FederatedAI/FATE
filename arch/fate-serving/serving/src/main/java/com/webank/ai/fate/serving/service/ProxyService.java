@@ -57,7 +57,7 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
         Proxy.Topic.Builder topicBuilder = Proxy.Topic.newBuilder();
 
         metaDataBuilder.setSrc(
-                topicBuilder.setPartyId(Configuration.getProperty("partyId"))
+                topicBuilder.setPartyId(Configuration.getProperty("party.id"))
                         .setRole("host")
                         .setName("myPartyName")
                         .build());
