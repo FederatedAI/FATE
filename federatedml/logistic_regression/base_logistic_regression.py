@@ -268,3 +268,11 @@ class BaseLogisticRegression(object):
 
         for idx, header_name in enumerate(self.header):
             self.coef_[idx] = weight_dict.get(header_name)
+
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)

@@ -109,3 +109,10 @@ def get_data_shape(data):
         return len(list(one_feature[1]))
     else:
         return None
+
+
+def is_empty_feature(data_instances):
+    shape_of_feature = get_features_shape(data_instances)
+    if shape_of_feature is None or shape_of_feature == 0:
+        return True
+    return False

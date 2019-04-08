@@ -57,6 +57,7 @@ class HomoLRGuest(BaseLogisticRegression):
         self.is_converged = False
 
     def fit(self, data_instances):
+        self._abnormal_detection(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
