@@ -25,7 +25,7 @@
     "WorkFlowParam": {
         "method": "binning",
         "train_input_table": "TO SET",
-        "train_input_namespace": "example",
+        "train_input_namespace": "example_data_namespace",
         "work_mode": "TO SET",
         "model_table": "feature_binning_guest_table",
         "model_namespace": "example_data_namespace"

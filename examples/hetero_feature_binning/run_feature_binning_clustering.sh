@@ -22,4 +22,4 @@ guest_id=${2}
 host_id=${3}
 jobid=${4}
 
-nohup python ${cur_dir}/run_feature_selection.py 1 ${jobid} ${role} ${guest_id} ${host_id} > nohup.${role} 2>&1 &
+nohup python ${cur_dir}/run_binning.py 1 ${jobid} ${role} ${guest_id} ${host_id} > nohup.${role} 2>&1 &
