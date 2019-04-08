@@ -28,12 +28,12 @@ public abstract class BaseModel {
 
         metaDataBuilder.setSrc(
                 topicBuilder.setPartyId(requestData.get("partyId").toString()).
-                        setRole("guest")
+                        setRole("serving")
                         .setName("partyName")
                         .build());
         metaDataBuilder.setDst(
                 topicBuilder.setPartyId(requestData.get("partnerPartyId").toString())
-                        .setRole("host")
+                        .setRole("serving")
                         .setName("partnerPartyName")
                         .build());
         metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedPredict").build());

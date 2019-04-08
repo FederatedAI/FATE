@@ -36,7 +36,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver){
         PublishResponse.Builder builder = PublishResponse.newBuilder();
         int loadStatus;
-        if (Configuration.getPropertyInt("partyId").equals(req.getMyPartyId())){
+        if (Configuration.getPropertyInt("party.id").equals(req.getMyPartyId())){
             ReturnResult returnResult = ModelManager.publishLoadModel(req.getModelsMap());
             loadStatus = returnResult.getStatusCode();
             builder.setStatusCode(returnResult.getStatusCode())

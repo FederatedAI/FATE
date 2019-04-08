@@ -23,7 +23,7 @@ public class FederatedUtils {
     public static FederatedMeta.Builder genResponseMetaBuilder(FederatedMeta requestMeta){
         FederatedMeta.Builder responseMetaBuilder = FederatedMeta.newBuilder();
         responseMetaBuilder.setSceneId(requestMeta.getSceneId());
-        responseMetaBuilder.setMyPartyId(Configuration.getPropertyInt("partyId"));
+        responseMetaBuilder.setMyPartyId(Configuration.getPropertyInt("party.id"));
         responseMetaBuilder.setPartnerPartyId(requestMeta.getMyPartyId());
         responseMetaBuilder.setMyRole(getMyRole(requestMeta.getMyRole()));
         return responseMetaBuilder;
