@@ -244,8 +244,15 @@ InferenceResultProcessingAdapter|some processing can be done after the model res
 
 ## 2.8. Task-Manager
 Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc.
-### 2.8.1. configuration
-Use arch/conf/server_conf.json
+### 2.8.1. settings.py
+Item         | Meaning                                                    | Example / Value
+-------------|------------------------------------------------------------|------------------------
+IP           |ip to bind                                                  | e.g. 127.0.0.1 
+HTTP_PORT    |http port to listen on                                      | e.g. 6380
+GRPC_PORT    |grpc port to listen on                                      | e.g. 6360
+PARTY_ID     |party id of FL participant                                  | e.g. 10000
+WORK_MODE    |working mode of serving, 0 for standalone and 1 for cluster | e.g. 1
+DATABASE     |database settings                                           | 
 
 
 ## 2.8. API
@@ -262,21 +269,20 @@ APIs are interfaces exposed by the whole running architecture. Algorithm enginee
       "host": "localhost",  # ip address of federation module
       "port": 9394          # port of federation module
     },
-	"manager": {             
-		"host": "localhost", # ip address of task_manager
-		"grpc.port": 9360,   # grpc port of task_manager
-		"http.port": 9380    # http port of task_manager
-	},
-	"proxy": {
-		"host": "localhost", # ip address of proxy module
-		"port": 9370         # port address of proxy module
-	},
+    "manager": {             
+      "host": "localhost", # ip address of task_manager
+      "grpc.port": 9360,   # grpc port of task_manager
+      "http.port": 9380    # http port of task_manager
+    },
+    "proxy": {
+       "host": "localhost", # ip address of proxy module
+       "port": 9370         # port address of proxy module
+    },
     "servings": [
-        "127.0.0.1:8000",
-        "127.0.0.1:8001"
+        "172.153.16.1:8000",
+        "172.153.16.2:8000"
     ]
-  },
-	"party_id": 9999        # local party id
+  }
 }
 ```
 
