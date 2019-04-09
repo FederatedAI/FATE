@@ -129,6 +129,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
             returnResult.putAllData(result);
         }
         catch (Exception ex){
+            LOGGER.error(ex.getStackTrace());
             returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
             returnResult.setMessage(ex.getMessage());
         }

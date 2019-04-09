@@ -17,7 +17,7 @@ import json
 from arch.api import eggroll
 from arch.api.utils import file_utils
 from arch.task_manager.adapter.offline_feature.get_feature import GetFeature
-from arch.task_manager.job_manager import save_job_info, query_job_info, update_job_info, generate_job_id, get_job_directory, get_json_result
+from arch.task_manager.job_manager import save_job_info, query_job_by_id, update_job_by_id, generate_job_id, get_job_directory, get_json_result
 from arch.task_manager.settings import logger
 from flask import Flask, request
 import datetime
@@ -108,6 +108,7 @@ def import_id():
                 id_library_info.put(data_id, json.dumps({"salt": request_data.request("salt"), "saltMethod": request_data.request("saltMethod")}))
                 old_data_id = id_library_info.request("use_data_id")
                 id_library_info.put("use_data_id", data_id)
+                logger.info("import id success, dtable name is {}, namespace is {}", data_id, table_name_space)
 
                 # TODO: destroy DTable, should be use a lock
                 old_data_table = eggroll.table(old_data_id, table_name_space, partition=50, create_if_missing=True, error_if_exist=False)
@@ -115,7 +116,7 @@ def import_id():
                 id_library_info.delete(old_data_id)
             else:
                 data_table.destroy()
-                return get_json_result(2, "The actual amount of data is not equal to total.")
+                return get_json_result(2, "the actual amount of data is not equal to total.")
         return get_json_result()
     except Exception as e:
         logger.exception(e)
@@ -151,12 +152,12 @@ def import_offline_feature():
         if not request_data.get("jobId"):
             return get_json_result(status=2, msg="no job id")
         job_id = request_data.get("jobId")
-        job_data = query_job_info(job_id=job_id)
+        job_data = query_job_by_id(job_id=job_id)
         if not job_data:
             return get_json_result(status=3, msg="can not found this job id: %s" % request_data.get("jobId", ""))
         response = GetFeature.import_data(request_data, json.loads(job_data[0]["config"]))
         if response.get("status", 1) == 0:
-            update_job_info(job_id=job_id, update_data={"status": "success", "end_date": datetime.datetime.now()})
+            update_job_by_id(job_id=job_id, update_data={"status": "success", "end_date": datetime.datetime.now()})
             return get_json_result()
         else:
             return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))

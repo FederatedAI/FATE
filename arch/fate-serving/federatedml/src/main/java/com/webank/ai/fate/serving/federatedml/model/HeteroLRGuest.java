@@ -27,6 +27,7 @@ public class HeteroLRGuest extends HeteroLR {
             score += hostScore;
         }
         catch (Exception ex){
+            LOGGER.error(ex.getStackTrace());
             ex.printStackTrace();
             LOGGER.error(ex);
         }

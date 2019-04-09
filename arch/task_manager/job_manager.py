@@ -63,12 +63,12 @@ def save_job_info(job_id, **kwargs):
     job_info.save(force_insert=True)
 
 
-def query_job_info(job_id):
+def query_job_by_id(job_id):
     jobs = JobInfo.select().where(JobInfo.job_id == job_id)
     return [job.to_json() for job in jobs]
 
 
-def update_job_info(job_id, update_data):
+def update_job_by_id(job_id, update_data):
     sql = JobInfo.update(**update_data).where(JobInfo.job_id == job_id)
     return sql.execute() > 0
 

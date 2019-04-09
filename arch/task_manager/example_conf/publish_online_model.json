@@ -1,0 +1,16 @@
+{
+    "task": "publish_model",
+    "partyId": 10000,
+    "servings": [
+    ],
+    "models": {
+        "9999": {
+            "name": "hetero_lr_host_model",
+            "namespace": "hetero_lr"
+        },
+        "10000": {
+            "name": "hetero_lr_guest_model",
+            "namespace": "hetero_lr"
+        }
+    }
+}

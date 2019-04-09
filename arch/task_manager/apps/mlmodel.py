@@ -22,7 +22,7 @@ from arch.task_manager.utils.grpc_utils import get_proxy_data_channel, wrap_grpc
 from arch.task_manager.job_manager import get_json_result, generate_job_id
 from arch.api.version_control.control import version_history
 from arch.api import eggroll
-from arch.task_manager.settings import WORK_MODE, logger
+from arch.task_manager.settings import WORK_MODE, logger, SERVINGS
 import json
 manager = Flask(__name__)
 
@@ -49,6 +49,7 @@ def load_model():
                                                                                              _url)
             logger.exception(msg)
             return get_json_result(-101, 'UnaryCall submit to remote manager failed')
+    return get_json_result()
 
 
 @manager.route('/load/do', methods=['POST'])
@@ -68,6 +69,9 @@ def publish_model_online():
     request_data = request.json
     try:
         config = file_utils.load_json_conf(request_data.get("config_path"))
+        if not config.get('servings'):
+            # get my party all servings
+            config['servings'] = SERVINGS
         publish_model.publish_online(config_data=config)
         return get_json_result()
     except Exception as e:
@@ -80,7 +84,6 @@ def query_model_version_history():
     request_data = request.json
     try:
         config = file_utils.load_json_conf(request_data.get("config_path"))
-        print(config)
         eggroll.init(mode=WORK_MODE)
         history = version_history(data_table_namespace=config.get("namespace"))
         return get_json_result(msg=json.dumps(history))

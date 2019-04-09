@@ -3,7 +3,7 @@ import json
 from arch.api.proto import proxy_pb2_grpc
 from arch.api.utils import file_utils
 from arch.api.utils.parameter_utils import ParameterOverride
-from arch.task_manager.job_manager import update_job_info, push_into_job_queue, pop_from_job_queue, \
+from arch.task_manager.job_manager import update_job_by_id, push_into_job_queue, pop_from_job_queue, \
     get_job_from_queue, running_job_amount, update_job_queue, generate_job_id, get_job_directory, get_json_result
 from arch.task_manager.utils import cron
 from flask import Flask, request
@@ -110,7 +110,7 @@ def stop_job(job_id):
 @manager.route('/jobStatus/<job_id>', methods=['POST'])
 def update_job(job_id):
     request_data = request.json
-    update_job_info(job_id=job_id, update_data={"status": request_data.get("status")})
+    update_job_by_id(job_id=job_id, update_data={"status": request_data.get("status")})
     update_job_queue(job_id=job_id, update_data={"status": request_data.get("status")})
     if request_data.get("status") in ["failed", "deleted"]:
         stop_job(job_id=job_id)

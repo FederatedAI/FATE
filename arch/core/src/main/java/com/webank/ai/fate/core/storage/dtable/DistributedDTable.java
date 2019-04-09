@@ -28,8 +28,8 @@ import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class DistributedDTable implements DTable{
@@ -82,6 +82,13 @@ public class DistributedDTable implements DTable{
     @Override
     public Map<String, byte[]> collect(){
         Map<String, byte[]> result = new HashMap<>();
+        Kv.Range.Builder rangeOrBuilder = Kv.Range.newBuilder();
+        KVServiceGrpc.KVServiceBlockingStub kvServiceBlockingStub = KVServiceGrpc.newBlockingStub(this.channel);
+        Iterator<Kv.Operand> item = MetadataUtils.attachHeaders(kvServiceBlockingStub, this.genHeader()).iterate(rangeOrBuilder.build());
+        while (item.hasNext()){
+            Kv.Operand tmp = item.next();
+            result.put(tmp.getKey().toStringUtf8(), tmp.getValue().toByteArray());
+        }
         return result;
     }
 

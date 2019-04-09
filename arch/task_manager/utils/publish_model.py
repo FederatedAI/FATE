@@ -16,6 +16,7 @@
 import grpc
 from arch.api.proto import model_service_pb2
 from arch.api.proto import model_service_pb2_grpc
+from arch.task_manager.settings import logger
 
 
 def load_model(config_data):
@@ -27,8 +28,8 @@ def load_model(config_data):
             for party_id, model in config_data.get("models").items():
                 request.models[int(party_id)].name = model["name"]
                 request.models[int(party_id)].namespace = model["namespace"]
-                response = stub.publishLoad(request)
-                print(response)
+            response = stub.publishLoad(request)
+            logger.info("party_id: {}, serving server: {}, load status: {}".format(request.myPartyId, serving, response.statusCode))
 
 
 def publish_online(config_data):

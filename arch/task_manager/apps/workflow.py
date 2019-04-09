@@ -15,7 +15,7 @@
 #
 from flask import Flask, request
 import os
-from arch.task_manager.job_manager import save_job_info, update_job_queue, update_job_info, pop_from_job_queue, get_json_result, get_job_directory
+from arch.task_manager.job_manager import save_job_info, update_job_queue, update_job_by_id, pop_from_job_queue, get_json_result, get_job_directory
 from arch.task_manager.settings import logger
 import subprocess
 from arch.api.utils import file_utils
@@ -104,6 +104,6 @@ def stop_workflow(job_id):
             except Exception as e:
                 logger.exception("error")
                 continue
-        update_job_info(job_id=job_id, update_data={"status": "failed", "set_status": "failed"})
+        update_job_by_id(job_id=job_id, update_data={"status": "failed", "set_status": "failed"})
         pop_from_job_queue(job_id=job_id)
     return get_json_result()

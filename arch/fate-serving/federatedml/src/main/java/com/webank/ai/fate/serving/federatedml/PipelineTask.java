@@ -50,10 +50,11 @@ public class PipelineTask {
     }
 
     public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
-        LOGGER.info("Start Pipeline predict");
+        LOGGER.info("Start Pipeline predict use {} model node.", this.pipeLineNode.size());
         for (int i = 0; i < this.pipeLineNode.size(); i++) {
-            LOGGER.info("finish mlNone:{}", i);
+            LOGGER.info(this.pipeLineNode.get(i).getClass().getName());
             inputData = this.pipeLineNode.get(i).predict(inputData, predictParams);
+            LOGGER.info("finish mlNone:{}", i);
         }
         LOGGER.info("Finish Pipeline predict");
         return inputData;

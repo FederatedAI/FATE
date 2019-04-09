@@ -3,11 +3,11 @@
     "party_ids": [9999, 10000],
     "models": {
         "9999": {
-            "name": "hetero_lr_guest_model_hetero_logistic_regression_example_standalone_20190322185246",
+            "name": "hetero_lr_host_model",
             "namespace": "hetero_lr"
         },
         "10000": {
-            "name": "hetero_lr_host_model_hetero_logistic_regression_example_standalone_20190322185246",
+            "name": "hetero_lr_guest_model",
             "namespace": "hetero_lr"
         }
     }
