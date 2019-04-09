@@ -39,7 +39,8 @@ LOGGER = log_utils.getLogger()
 
 class HeteroFTLHost(HeteroFTLParty):
 
-    def __init__(self, host: PlainFTLHostModel, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
+    def __init__(self, host: PlainFTLHostModel, model_param: FTLModelParam,
+                 transfer_variable: HeteroFTLTransferVariable):
         super(HeteroFTLHost, self).__init__()
         self.host_model = host
         self.model_param = model_param
@@ -59,10 +60,12 @@ class HeteroFTLHost(HeteroFTLParty):
                         idx=-1)
 
         guest_sample_indexes = self._do_get(name=self.transfer_variable.guest_sample_indexes.name,
-                                            tag=self.transfer_variable.generate_transferid(self.transfer_variable.guest_sample_indexes),
+                                            tag=self.transfer_variable.generate_transferid(
+                                                self.transfer_variable.guest_sample_indexes),
                                             idx=-1)[0]
 
-        host_features, overlap_indexes, _ = overlapping_samples_converter(host_features_dict, host_sample_indexes,
+        host_features, overlap_indexes, _ = overlapping_samples_converter(host_features_dict,
+                                                                          host_sample_indexes,
                                                                           guest_sample_indexes)
         return host_features, overlap_indexes
 

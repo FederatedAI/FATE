@@ -120,9 +120,11 @@ class PlainFTLGuestModel(PartyModelInterface):
         # uB_overlap_2 has shape (len(overlap_indexes), feature_dim, feature_dim)
         # loss_grads_const_part1 has shape (len(overlap_indexes), feature_dim)
         loss_grads_const_part1 = 0.25 * np.squeeze(np.matmul(y_overlap_2_phi, self.uB_overlap_2), axis=1)
+        self.overlap_y_2_phi_uB_2 = loss_grads_const_part1
 
         # loss_grads_const_part2 has shape (len(overlap_indexes), feature_dim)
-        loss_grads_const_part2 = self.y_overlap * self.uB_overlap
+        loss_grads_const_part2 = 0.5 * self.y_overlap * self.uB_overlap
+        self.overlap_y_uB = loss_grads_const_part2
 
         if self.is_trace:
             self.logger.debug("loss_grads_const_part1 shape" + str(loss_grads_const_part1.shape))
@@ -130,11 +132,11 @@ class PlainFTLGuestModel(PartyModelInterface):
             self.logger.debug("y_overlap shape" + str(self.y_overlap.shape))
             self.logger.debug("uB_overlap shape" + str(self.uB_overlap.shape))
 
-        const = np.sum(loss_grads_const_part1, axis=0) - 0.5 * np.sum(loss_grads_const_part2, axis=0)
+        self.const = np.sum(loss_grads_const_part1, axis=0) - np.sum(loss_grads_const_part2, axis=0)
         # grad_A_nonoverlap has shape (len(non_overlap_indexes), feature_dim)
         # grad_A_overlap has shape (len(overlap_indexes), feature_dim)
-        grad_A_nonoverlap = self.alpha * const * self.y[self.non_overlap_indexes] / len(self.y)
-        grad_A_overlap = self.alpha * const * self.y_overlap / len(self.y) + self.mapping_comp_B
+        grad_A_nonoverlap = self.alpha * self.const * self.y[self.non_overlap_indexes] / len(self.y)
+        grad_A_overlap = self.alpha * self.const * self.y_overlap / len(self.y) + self.mapping_comp_B
 
         loss_grad_A = np.zeros((len(self.y), self.uB_overlap.shape[1]))
         loss_grad_A[self.non_overlap_indexes, :] = grad_A_nonoverlap
@@ -152,11 +154,19 @@ class PlainFTLGuestModel(PartyModelInterface):
         uA_overlap = - self.uA_overlap / self.feature_dim
         loss_overlap = np.sum(uA_overlap * self.uB_overlap)
         loss_y = self.__compute_loss_y(self.uB_overlap, self.y_overlap, self.phi)
+
+        print("loss_overlap", loss_overlap)
+        print("alpha", self.alpha)
         self.loss = self.alpha * loss_y + loss_overlap
 
     def __compute_loss_y(self, uB_overlap, y_overlap, phi):
         # uB_phi has shape (len(overlap_indexes), 1)
         uB_phi = np.matmul(uB_overlap, phi.transpose())
+
+        print("y_overlap * uB_phi", y_overlap * uB_phi)
+        print("uB_phi * uB_phi", uB_phi * uB_phi)
+        print("len(y_overlap) * np.log(2)", len(y_overlap) * np.log(2))
+
         loss_y = (-0.5 * np.sum(y_overlap * uB_phi) + 1.0 / 8 * np.sum(uB_phi * uB_phi)) + len(y_overlap) * np.log(2)
         return loss_y
 

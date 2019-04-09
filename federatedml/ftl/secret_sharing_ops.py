@@ -47,6 +47,10 @@ def compute_add_share(share_0, share_1):
     return share_0 + share_1
 
 
+def compute_minus_share(share_0, share_1):
+    return share_0 - share_1
+
+
 def compute_matmul_share(alpha_0, alpha_1, beta_0, beta_1, share_map):
     alpha = reconstruct(alpha_0, alpha_1)
     beta = reconstruct(beta_0, beta_1)

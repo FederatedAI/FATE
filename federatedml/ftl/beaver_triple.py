@@ -14,6 +14,25 @@ def generate_random_3_dim_matrix(r, c, z):
 
 
 def get_matrix_shapes(val, global_iter_index, num_batch):
+
+    if val["is_constant"]:
+        if val["num_dim"] == 2:
+            k = val["left_0"]
+            ll = val["left_1"]
+            p = val["right_0"]
+            q = val["right_1"]
+            return k, ll, p, q
+        elif val["num_dim"] == 3:
+            j = val["left_0"]
+            k = val["left_1"]
+            ll = val["left_2"]
+            o = val["right_0"]
+            p = val["right_1"]
+            q = val["right_2"]
+            return j, k, ll, o, p, q
+        else:
+            raise TypeError("currently does not support {} num of dimensions".format(val["num_dim"]))
+
     if (global_iter_index + 1) % num_batch == 0:
         # if last batch
         if val["num_dim"] == 2:
@@ -51,10 +70,30 @@ def get_matrix_shapes(val, global_iter_index, num_batch):
             raise TypeError("currently does not support {} num of dimensions".format(val["num_dim"]))
 
 
-def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_id, mul_type, batch_axis=0):
+def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_id, mul_type, is_constant=False,
+                             batch_axis=0):
     assert len(X_shape) == len(Y_shape)
-
     num_dim = len(X_shape)
+
+    mul_ops[op_id] = dict()
+    if is_constant:
+        mul_ops[op_id]["is_constant"] = is_constant
+        mul_ops[op_id]["num_dim"] = num_dim
+        mul_ops[op_id]["mul_type"] = mul_type
+        mul_ops[op_id]["left_0"] = X_shape[0]
+        mul_ops[op_id]["left_1"] = X_shape[1]
+        mul_ops[op_id]["right_0"] = Y_shape[0]
+        mul_ops[op_id]["right_1"] = Y_shape[1]
+        mul_ops[op_id]["last_left_0"] = X_shape[0]
+        mul_ops[op_id]["last_left_1"] = X_shape[1]
+        mul_ops[op_id]["last_right_0"] = Y_shape[0]
+        mul_ops[op_id]["last_right_1"] = Y_shape[1]
+        if num_dim == 3:
+            mul_ops[op_id]["left_2"] = X_shape[2]
+            mul_ops[op_id]["last_left_2"] = X_shape[2]
+            mul_ops[op_id]["right_2"] = Y_shape[2]
+            mul_ops[op_id]["last_right_2"] = Y_shape[2]
+        return 1
 
     residual = X_shape[0] % batch_size
     if residual == 0:
@@ -72,6 +111,8 @@ def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_
 
         # if residual is not 0, the last batch has 'residual' number of samples
         last_batch_size = residual
+
+    print("num_batch", num_batch)
 
     mul_ops[op_id] = dict()
     if mul_type == "matmul":
