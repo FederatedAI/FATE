@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -13,25 +14,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.task_manager.db.models import Job, DB
-import datetime
 
+jobid=feature_selection_$(date +%Y%m%d%H%M%S)
+cur_dir=$(pwd)
 
-def save_job(job_id, **kwargs):
-    DB.create_tables([Job])
-    job = Job()
-    job.job_id = job_id
-    job.create_date = datetime.datetime.now()
-    for k, v in kwargs.items():
-        setattr(job, k, v)
-    job.save(force_insert=True)
-
-
-def query_job(job_id):
-    jobs = Job.select().where(Job.job_id==job_id)
-    return [job.to_json() for job in jobs]
-
-
-def update_job(job_id, update_data):
-    query = Job.update(**update_data).where(Job.job_id==job_id)
-    return query.execute()
+nohup python ${cur_dir}/run_binning.py 0 ${jobid} guest 9999 10000 > nohup.guest 2>&1 &
+nohup python ${cur_dir}/run_binning.py 0 ${jobid} host 9999 10000 > nohup.host 2>&1 &

@@ -13,13 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.task_manager.utils.job_utils import get_json_result
 import json
 from arch.api import eggroll
 from arch.api.utils import file_utils
 from arch.task_manager.adapter.offline_feature.get_feature import GetFeature
-from arch.task_manager.job_manager import save_job_info, query_job_info, update_job_info
-from arch.task_manager.utils.job_utils import generate_job_id, get_job_directory
+from arch.task_manager.job_manager import save_job_info, query_job_info, update_job_info, generate_job_id, get_job_directory, get_json_result
 from arch.task_manager.settings import logger
 from flask import Flask, request
 import datetime

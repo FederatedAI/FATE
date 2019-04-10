@@ -33,17 +33,12 @@ HEADERS = {
     'Content-Type': 'application/json',
 }
 
-
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-IP = server_conf.get(SERVERS).get(ROLE).get('host')
-GRPC_PORT = server_conf.get(SERVERS).get(ROLE).get('grpc.port')
-HTTP_PORT = server_conf.get(SERVERS).get(ROLE).get('http.port')
+IP = '127.0.0.1'
+GRPC_PORT = 9360
+HTTP_PORT = 9380
+PARTY_ID = 10000
+WORK_MODE = 0
 LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT)
-PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
-PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
-WORK_MODE = server_conf.get(SERVERS).get(ROLE).get('work_mode')
-PARTY_ID = server_conf.get("party_id")
-ALL_PARTY_IDS = server_conf.get('all_party_ids')
 
 DATABASE = {
     'engine': 'mysql',
@@ -55,3 +50,7 @@ DATABASE = {
     'max_connections': 100,
     'stale_timeout': 30,
 }
+
+server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
+PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')

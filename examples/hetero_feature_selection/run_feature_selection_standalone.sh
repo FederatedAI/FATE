@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -13,14 +14,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask
-from arch.task_manager.utils.job_utils import get_json_result
-from arch.task_manager.settings import logger
 
-manager = Flask(__name__)
+jobid=feature_selection_$(date +%Y%m%d%H%M%S)
+cur_dir=$(pwd)
 
-
-@manager.route('/federated/heartbeat', methods=['POST'])
-def federated_heartbeat():
-    return get_json_result()
-
+nohup python ${cur_dir}/run_feature_selection.py 0 ${jobid} guest 9999 10000 > nohup.guest 2>&1 &
+nohup python ${cur_dir}/run_feature_selection.py 0 ${jobid} host 9999 10000 > nohup.host 2>&1 &

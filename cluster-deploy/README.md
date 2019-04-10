@@ -166,6 +166,15 @@ deploy-dir
 |    |- lib/
 |    |- fate-storage-service-0.1.jar
 |    |- fate-storage-service.jar -> fate-storage-service-0.1.jar
+|
+|--- serving-server
+|    |- conf/
+|    |  |- log4j2.properties
+|    |  |- serving-server.properties
+|    |
+|    |- lib/
+|    |- fate-serving-server-0.1.jar
+|    |- fate-serving-server.jar -> fate-serving-server-0.1.jar
 
 ```
 

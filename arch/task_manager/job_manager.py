@@ -13,10 +13,45 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api.utils import file_utils
+import os
+from flask import jsonify
 from arch.task_manager.db.models import DB, JobInfo, JobQueue
-from arch.task_manager.settings import logger
+from arch.task_manager.settings import logger, PARTY_ID
 import datetime
 import json
+import threading
+
+
+class IdCounter:
+    _lock = threading.RLock()
+
+    def __init__(self, initial_value=0):
+        self._value = initial_value
+
+    def incr(self, delta=1):
+        '''
+        Increment the counter with locking
+        '''
+        with IdCounter._lock:
+            self._value += delta
+            return self._value
+
+
+id_counter = IdCounter()
+
+
+def generate_job_id():
+    return '_'.join([datetime.datetime.now().strftime("%Y%m%d_%H%M%S"), str(PARTY_ID), str(id_counter.incr())])
+
+
+def get_job_directory(job_id=None):
+    _paths = ['jobs', job_id] if job_id else ['jobs']
+    return os.path.join(file_utils.get_project_base_directory(), *_paths)
+
+
+def get_json_result(status=0, msg='success'):
+    return jsonify({"status": status, "msg": msg})
 
 
 def save_job_info(job_id, **kwargs):

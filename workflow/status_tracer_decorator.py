@@ -68,11 +68,6 @@ def status_trace(func):
             LOGGER.info("job status is failed")
             LOGGER.info("{}".format(traceback.format_exc()))
             call_back("failed")
-        finally:
-            try:
-                eggroll.cleanup(name="*", namespace=job_id, persistent=False)
-            except:
-                LOGGER.info("cleanup is failed")
 
         return res
 
