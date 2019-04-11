@@ -45,12 +45,12 @@ class RsaIntersectionGuest(RsaIntersect):
         return hashlib.sha256(bytes(str(value), encoding='utf-8')).hexdigest()
 
     def run(self, data_instances):
-        LOGGER.info("Start ras intersection")
+        LOGGER.info("Start rsa intersection")
         public_key = get(name=self.transfer_variable.rsa_pubkey.name,
                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
                          idx=0)
 
-        LOGGER.info("Get RAS public_key:{} from Host".format(public_key))
+        LOGGER.info("Get RSA public_key:{} from Host".format(public_key))
         self.e = public_key["e"]
         self.n = public_key["n"]
 
