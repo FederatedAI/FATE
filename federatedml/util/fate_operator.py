@@ -20,6 +20,7 @@ from collections import Iterable
 import numpy as np
 
 from federatedml.feature.instance import Instance
+import numba
 
 
 def _one_dimension_dot(X, w):
@@ -30,7 +31,7 @@ def _one_dimension_dot(X, w):
         res += w[i] * X[i]
     return res
 
-
+# @numba.jit
 def dot(value, w):
     if isinstance(value, Instance):
         X = value.features
@@ -83,6 +84,10 @@ def get_features_shape(data_instances):
     except StopIteration:
         # LOGGER.warning("Data instances is Empty")
         one_feature = None
+
+    instance = one_feature[1]
+    if instance is None:
+        return None
 
     if one_feature is not None:
         return one_feature[1].features.shape[0]

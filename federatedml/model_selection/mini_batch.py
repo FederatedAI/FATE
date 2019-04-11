@@ -14,12 +14,13 @@
 #  limitations under the License.
 #
 
+import time
+
 from arch.api import eggroll
-
+from arch.api.utils import log_utils
 from federatedml.model_selection import indices
-# from arch.api.utils import log_utils
 
-# LOGGER = log_utils.getLogger()
+LOGGER = log_utils.getLogger()
 
 
 class MiniBatch:
@@ -28,6 +29,7 @@ class MiniBatch:
         self.batch_nums = 0
         self.data_inst = data_inst
         self.batch_size = batch_size
+        self.all_batch_data = None
         if self.data_inst is not None and batch_size is not None:
             self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
             # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
@@ -37,16 +39,8 @@ class MiniBatch:
         if data_inst is not None or (batch_size is not None and batch_size != self.batch_size):
             self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
             self.batch_size = batch_size
-        if data_inst is None:
-            data_inst = self.data_inst
 
-        batch_data_sids = self.batch_data_sids
-        # for bid in range(len(batch_data_sids)):
-        # yield data_inst
-        for index_data in batch_data_sids:
-            # LOGGER.debug('in generator, index_data is {}'.format(index_data))
-            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_inst._partitions)
-            batch_data = index_table.join(data_inst, lambda x, y: y)
+        for batch_data in self.all_batch_data:
             yield batch_data
 
     def mini_batch_index_generator(self, data_inst=None, batch_size=320):
@@ -82,4 +76,17 @@ class MiniBatch:
 
         self.batch_nums = len(batch_data_sids)
 
+        all_batch_data = []
+        for index_data in batch_data_sids:
+            # LOGGER.debug('in generator, index_data is {}'.format(index_data))
+            t0 = time.time()
+            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_insts._partitions)
+            t1 = time.time()
+            batch_data = index_table.join(data_insts, lambda x, y: y)
+            t2 = time.time()
+            LOGGER.debug('[compute] parallelize index table time: {}'.format(t1 - t0))
+            LOGGER.debug('[compute] join time: {}'.format(t2 - t1))
+            # yield batch_data
+            all_batch_data.append(batch_data)
+        self.all_batch_data = all_batch_data
         return batch_data_sids

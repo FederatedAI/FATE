@@ -28,7 +28,7 @@ from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
-from federatedml.util import fate_operator
+from federatedml.util import fate_operator, abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -269,10 +269,40 @@ class BaseLogisticRegression(object):
         for idx, header_name in enumerate(self.header):
             self.coef_[idx] = weight_dict.get(header_name)
 
-
     def _abnormal_detection(self, data_instances):
         """
         Make sure input data_instances is valid.
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+
+    def show_meta(self):
+        meta_dict = {
+            'penalty': self.param.penalty,
+            'eps': self.eps,
+            'alpha': self.alpha,
+            'optimizer': self.param.optimizer,
+            'party_weight': self.param.party_weight,
+            'batch_size': self.batch_size,
+            'learning_rate': self.learning_rate,
+            'max_iter': self.max_iter,
+            'converge_func': self.param.converge_func,
+            're_encrypt_batches': self.param.re_encrypt_batches
+        }
+
+        LOGGER.info("Showing meta information:")
+        for k, v in meta_dict.items():
+            LOGGER.info("{} is {}".format(k, v))
+
+    def show_model(self):
+        model_dict = {
+            'iters': self.n_iter_,
+            'loss_history': self.loss_history,
+            'is_converged': self.is_converged,
+            'weight': self.coef_,
+            'intercept': self.intercept_,
+            'header': self.header
+        }
+        LOGGER.info("Showing model information:")
+        for k, v in model_dict.items():
+            LOGGER.info("{} is {}".format(k, v))

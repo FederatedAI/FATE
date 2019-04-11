@@ -17,47 +17,41 @@
 #  limitations under the License.
 
 
-import copy
 import functools
-
-import numpy as np
+import time
 
 from arch.api import federation
-from arch.api.model_manager import manager as model_manager
-from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
-from arch.api.proto.feature_binning_meta_pb2 import FeatureBinningMeta
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.feature_selection import FeatureSelection
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
+from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
 from federatedml.param.param import IVSelectionParam
 from federatedml.util import consts
 from federatedml.util.fate_operator import get_features_shape
-from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroFeatureSelectionGuest(object):
+class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
     def __init__(self, params):
-        self.params = params
-        self.cols = params.select_cols
+        super(HeteroFeatureSelectionGuest, self).__init__(params)
         self.left_cols = None
         self.host_left_cols = None
-        self.filter_method = params.filter_method
         self.local_only = params.local_only
         self.guest_iv_attrs = None
         self.host_iv_attrs = None
         self.bin_param = self.params.bin_param
         self.static_obj = None
-        self.transfer_variable = HeteroFeatureSelectionTransferVariable()
         self.send_times = 0
         self.binning_model = None
         self.results = []
-        self.header = []
         self.flowid = ''
+        self.communication_time = 0
 
     def fit(self, data_instances):
+        start_time = time.time()
+
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
         self._parse_cols(data_instances)
@@ -68,6 +62,11 @@ class HeteroFeatureSelectionGuest(object):
             if len(self.left_cols) == 0:
                 LOGGER.warning("After filter methods, none of feature left. Please check your filter parameters")
                 break
+
+        end_time = time.time()
+        total_time = end_time - start_time
+        compute_time = total_time - self.communication_time
+        LOGGER.debug("[federation] Total traning time: {}, compute_time: {}".format(total_time, compute_time))
 
     def fit_local(self, data_instances):
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -107,6 +106,7 @@ class HeteroFeatureSelectionGuest(object):
     def filter_one_method(self, data_instances, method):
 
         if method == consts.IV_VALUE_THRES:
+            start_time = time.time()
             self._calculates_iv_attrs(data_instances, flowid_postfix='iv_value')
             iv_param = self.params.iv_param
             iv_filter = feature_selection.IVValueSelectFilter(iv_param, self.left_cols, self.guest_iv_attrs)
@@ -123,7 +123,13 @@ class HeteroFeatureSelectionGuest(object):
                 self._filter_host_iv_value()
             LOGGER.info("Finish iv value threshold filter. Current left cols are: {}".format(self.left_cols))
 
+            end_time = time.time()
+            LOGGER.debug(
+                "[Compute] Total iv value threshold filter time: {}".format(end_time - start_time))
+
         if method == consts.IV_PERCENTILE:
+            start_time = time.time()
+
             self._calculates_iv_attrs(data_instances, flowid_postfix='iv_percentile')
             iv_param = self.params.iv_param
             iv_filter = feature_selection.IVPercentileFilter(iv_param)
@@ -149,8 +155,13 @@ class HeteroFeatureSelectionGuest(object):
                 self.host_left_cols = new_host_left_cols
                 self._send_host_result_cols()
             LOGGER.info("Finish iv percentile filter. Current left cols are: {}".format(self.left_cols))
+            end_time = time.time()
+            LOGGER.debug(
+                "[Compute] Total iv percentile filter time: {}".format(end_time - start_time))
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
+            start_time = time.time()
+
             coe_param = self.params.coe_param
             coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_cols, self.static_obj)
             self.left_cols = coe_filter.filter(data_instances)
@@ -159,8 +170,13 @@ class HeteroFeatureSelectionGuest(object):
 
             LOGGER.info("Finish coeffiecient_of_variation value threshold filter. Current left cols are: {}".format(
                 self.left_cols))
+            end_time = time.time()
+            LOGGER.debug(
+                "[Compute] Total coeffiecient_of_variation filter time: {}".format(end_time - start_time))
 
         if method == consts.UNIQUE_VALUE:
+            start_time = time.time()
+
             unique_param = self.params.unique_param
             unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_cols, self.static_obj)
             self.left_cols = unique_filter.filter(data_instances)
@@ -169,25 +185,33 @@ class HeteroFeatureSelectionGuest(object):
 
             LOGGER.info("Finish unique value filter. Current left cols are: {}".format(
                 self.left_cols))
+            end_time = time.time()
+            LOGGER.debug(
+                "[Compute] Total unique value filter time: {}".format(end_time - start_time))
 
         if method == consts.OUTLIER_COLS:
+            start_time = time.time()
+
             outlier_param = self.params.outlier_param
             outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_cols)
             self.left_cols = outlier_filter.filter(data_instances)
             self.results.append(outlier_filter.to_result())
             LOGGER.info("Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
+            end_time = time.time()
+            LOGGER.debug(
+                "[Compute] Total outlier cols filter time: {}".format(end_time - start_time))
 
-    def _reset_header(self):
-        """
-        The cols and left_cols record the index of header. Replace header based on the change
-        between left_cols and cols.
-        """
-        new_header = []
-        for col in self.left_cols:
-            idx = self.cols.index(col)
-            new_header.append(self.header[idx])
-        self.header = new_header
+    # def _reset_header(self):
+    #     """
+    #     The cols and left_cols record the index of header. Replace header based on the change
+    #     between left_cols and cols.
+    #     """
+    #     new_header = []
+    #     for col in self.left_cols:
+    #         idx = self.cols.index(col)
+    #         new_header.append(self.header[idx])
+    #     self.header = new_header
 
     def _transfer_data(self, data_instances):
         if self.left_cols == -1:
@@ -204,14 +228,14 @@ class HeteroFeatureSelectionGuest(object):
         self._reset_header()
         return new_data
 
-    @staticmethod
-    def select_cols(instance, left_cols):
-        new_feature = []
-        for col in left_cols:
-            new_feature.append(instance.features[col])
-        new_feature = np.array(new_feature)
-        instance.features = new_feature
-        return instance
+    # @staticmethod
+    # def select_cols(instance, left_cols):
+    #     new_feature = []
+    #     for col in left_cols:
+    #         new_feature.append(instance.features[col])
+    #     new_feature = np.array(new_feature)
+    #     instance.features = new_feature
+    #     return instance
 
     def _calculates_iv_attrs(self, data_instances, flowid_postfix=''):
         if self.local_only and self.guest_iv_attrs is not None:
@@ -247,69 +271,69 @@ class HeteroFeatureSelectionGuest(object):
         self.send_times += 1
         LOGGER.info("Sent result cols from guest to host, result cols are: {}".format(self.host_left_cols))
 
-    def _save_meta(self, name, namespace):
-        unique_param_dict = copy.deepcopy(self.params.unique_param.__dict__)
-
-        unique_param = feature_selection_meta_pb2.UniqueValueParam(**unique_param_dict)
-
-        iv_dict = copy.deepcopy(self.params.iv_param.__dict__)
-        bin_dict = copy.deepcopy(self.params.iv_param.bin_param.__dict__)
-        del bin_dict['process_method']
-        del bin_dict['result_table']
-        del bin_dict['result_namespace']
-        del bin_dict['display_result']
-        if bin_dict['cols'] == -1:
-            bin_dict['cols'] = self.cols
-        bin_param = FeatureBinningMeta()
-        iv_dict["bin_param"] = bin_param
-
-        iv_param = feature_selection_meta_pb2.IVSelectionParam(**iv_dict)
-        coe_param_dict = copy.deepcopy(self.params.coe_param.__dict__)
-        coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**coe_param_dict)
-        outlier_param_dict = copy.deepcopy(self.params.outlier_param.__dict__)
-
-        outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**outlier_param_dict)
-
-        meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
-                                                                            local_only=self.params.local_only,
-                                                                            select_cols=self.header,
-                                                                            unique_param=unique_param,
-                                                                            iv_param=iv_param,
-                                                                            coe_param=coe_param,
-                                                                            outlier_param=outlier_param)
-        buffer_type = "HeteroFeatureSelectionGuest.meta"
-
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
-
-    def save_model(self, name, namespace):
-        meta_buffer_type = self._save_meta(name, namespace)
-
-        result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results)
-        param_buffer_type = "HeteroFeatureSelectionGuest.param"
-
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return [(meta_buffer_type, param_buffer_type)]
-
-    def load_model(self, name, namespace):
-        result_obj = feature_selection_param_pb2.FeatureSelectionParam()
-        model_manager.read_model(buffer_type="HeteroFeatureSelectionGuest.param",
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
-
-        self.results = list(result_obj.results)
-        if len(self.results) == 0:
-            self.left_cols = -1
-        else:
-            result_obj = self.results[-1]
-            self.left_cols = list(result_obj.left_cols)
+    # def _save_meta(self, name, namespace):
+    #     unique_param_dict = copy.deepcopy(self.params.unique_param.__dict__)
+    #
+    #     unique_param = feature_selection_meta_pb2.UniqueValueParam(**unique_param_dict)
+    #
+    #     iv_dict = copy.deepcopy(self.params.iv_param.__dict__)
+    #     bin_dict = copy.deepcopy(self.params.iv_param.bin_param.__dict__)
+    #     del bin_dict['process_method']
+    #     del bin_dict['result_table']
+    #     del bin_dict['result_namespace']
+    #     del bin_dict['display_result']
+    #     if bin_dict['cols'] == -1:
+    #         bin_dict['cols'] = self.cols
+    #     bin_param = FeatureBinningMeta()
+    #     iv_dict["bin_param"] = bin_param
+    #
+    #     iv_param = feature_selection_meta_pb2.IVSelectionParam(**iv_dict)
+    #     coe_param_dict = copy.deepcopy(self.params.coe_param.__dict__)
+    #     coe_param = feature_selection_meta_pb2.CoeffOfVarSelectionParam(**coe_param_dict)
+    #     outlier_param_dict = copy.deepcopy(self.params.outlier_param.__dict__)
+    #
+    #     outlier_param = feature_selection_meta_pb2.OutlierColsSelectionParam(**outlier_param_dict)
+    #
+    #     meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
+    #                                                                         local_only=self.params.local_only,
+    #                                                                         select_cols=self.header,
+    #                                                                         unique_param=unique_param,
+    #                                                                         iv_param=iv_param,
+    #                                                                         coe_param=coe_param,
+    #                                                                         outlier_param=outlier_param)
+    #     buffer_type = "HeteroFeatureSelectionGuest.meta"
+    #
+    #     model_manager.save_model(buffer_type=buffer_type,
+    #                              proto_buffer=meta_protobuf_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return buffer_type
+    #
+    # def save_model(self, name, namespace):
+    #     meta_buffer_type = self._save_meta(name, namespace)
+    #
+    #     result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results)
+    #     param_buffer_type = "HeteroFeatureSelectionGuest.param"
+    #
+    #     model_manager.save_model(buffer_type=param_buffer_type,
+    #                              proto_buffer=result_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #     return [(meta_buffer_type, param_buffer_type)]
+    #
+    # def load_model(self, name, namespace):
+    #     result_obj = feature_selection_param_pb2.FeatureSelectionParam()
+    #     model_manager.read_model(buffer_type="HeteroFeatureSelectionGuest.param",
+    #                              proto_buffer=result_obj,
+    #                              name=name,
+    #                              namespace=namespace)
+    #
+    #     self.results = list(result_obj.results)
+    #     if len(self.results) == 0:
+    #         self.left_cols = -1
+    #     else:
+    #         result_obj = self.results[-1]
+    #         self.left_cols = list(result_obj.left_cols)
 
     def _filter_host_iv_value(self):
         host_iv_thres_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_iv_threshold)
@@ -341,6 +365,6 @@ class HeteroFeatureSelectionGuest(object):
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.cols = [i for i in range(features_shape)]
 
-    def set_flowid(self, flowid="samole"):
-        self.flowid = flowid
-        self.transfer_variable.set_flowid(self.flowid)
+            # def set_flowid(self, flowid="samole"):
+            #     self.flowid = flowid
+            #     self.transfer_variable.set_flowid(self.flowid)

@@ -387,7 +387,8 @@ class WorkFlow(object):
             for eval_name, eva_result_list in format_cv_result.items():
                 mean_value = np.around(np.mean(eva_result_list), 4)
                 std_value = np.around(np.std(eva_result_list), 4)
-                LOGGER.info("evaluate name: {}, mean: {}, std: {}".format(eval_name, mean_value, std_value))
+                LOGGER.info("{}，evaluate name: {}, mean: {}, std: {}".format(self.role,
+                                                                             eval_name, mean_value, std_value))
 
     def hetero_cross_validation(self, data_instance):
         LOGGER.debug("Enter train function")
@@ -619,6 +620,7 @@ class WorkFlow(object):
         # pipeline_obj.node_meta = []
         # pipeline_obj.node_param = []
         self.pipeline = pipeline_obj
+        LOGGER.debug("finish init pipeline")
 
     def _save_pipeline(self):
         buffer_type = "Pipeline"

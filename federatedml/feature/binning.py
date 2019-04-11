@@ -170,8 +170,15 @@ class Binning(object):
         f = functools.partial(self.add_label_in_partition,
                               total_bin=self.bin_num,
                               cols=cols)
+
+        tmp_table = data_bin_with_label.collect()
+        LOGGER.debug("data_bin_with_label: {}".format(list(tmp_table)))
         result_sum = data_bin_with_label.mapPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
+
+        tmp_table = result_counts.collect()
+        LOGGER.debug("result_counts: {}".format(list(tmp_table)))
+
         iv_attrs = self.cal_iv_woe(result_counts, self.params.adjustment_factor,
                                    split_points=split_points)
         return iv_attrs

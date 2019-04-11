@@ -21,7 +21,7 @@ import os
 import subprocess
 import sys
 
-from load_file_functions import load_file
+# from load_file_functions import load_file
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 config_path = home_dir + '/conf'
@@ -39,6 +39,8 @@ mode = 'fit'
 
 
 def make_config_file(work_mode, job_id, role, guest_partyid, host_partyid):
+    work_mode = int(work_mode)
+
     with open(config_path + '/{}_runtime_conf.json'.format(role), 'r', encoding='utf-8') as load_f:
         role_config = json.load(load_f)
 
@@ -80,6 +82,17 @@ def make_config_file(work_mode, job_id, role, guest_partyid, host_partyid):
         json.dump(load_config, json_file, ensure_ascii=False)
 
     return role_config_path, load_file_path
+
+
+def load_file(load_file_path):
+    load_process = subprocess.Popen(["python",
+                                     load_file_program,
+                                     "-c",
+                                     load_file_path,
+                                     ])
+    # load_process.communicate()
+    returncode = load_process.wait()
+    print("Load file return code : {}".format(returncode))
 
 
 if __name__ == '__main__':

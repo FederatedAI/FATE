@@ -33,6 +33,7 @@ from federatedml.optim.gradient import LogisticGradient
 from federatedml.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
+import time
 
 LOGGER = log_utils.getLogger()
 
@@ -55,8 +56,10 @@ class HomoLRGuest(BaseLogisticRegression):
         self.penalty = params.penalty
         self.loss_history = []
         self.is_converged = False
+        self.communication_time = 0
 
     def fit(self, data_instances):
+        start_time = time.time()
         self._abnormal_detection(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -66,20 +69,40 @@ class HomoLRGuest(BaseLogisticRegression):
         w = self.__init_model(data_instances)
 
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
+
         for iter_num in range(self.max_iter):
             # mini-batch
             # LOGGER.debug("Enter iter_num: {}".format(iter_num))
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
             total_loss = 0
             batch_num = 0
+
+            iter_compute_gradient_time = 0
+            iter_reduce_loss_time = 0
+            start_batch = time.time()
+
+            all_prepare_batch_time = 0
+            start_batch_data = time.time()
             for batch_data in batch_data_generator:
+                end_batch_data = time.time()
+                all_prepare_batch_time += (end_batch_data - start_batch_data)
                 f = functools.partial(self.gradient_operator.compute,
                                       coef=self.coef_,
                                       intercept=self.intercept_,
                                       fit_intercept=self.fit_intercept)
+                compute_time = time.time()
                 grad_loss = batch_data.mapPartitions(f)
+                end_compute_time = time.time()
+                iter_compute_gradient_time += (end_compute_time - compute_time)
+                # LOGGER.debug("[compute] compute_gradient time: {}".format(end_compute_time - compute_time))
                 n = grad_loss.count()
+                compute_time = time.time()
+
                 grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
+                end_compute_time = time.time()
+                iter_reduce_loss_time += (end_compute_time - compute_time)
+                # LOGGER.debug("[compute] reduce grad and loss time: {}".format(end_compute_time - compute_time))
+
                 grad /= n
                 loss /= n
 
@@ -92,6 +115,14 @@ class HomoLRGuest(BaseLogisticRegression):
 
                 self.update_model(delta_grad)
                 batch_num += 1
+                start_batch_data = time.time()
+
+            end_batch = time.time()
+            LOGGER.debug("[compute] compute_gradient time: {}".format(iter_compute_gradient_time))
+            LOGGER.debug("[compute] reduce_loss time: {}".format(iter_reduce_loss_time))
+            LOGGER.debug("[compute] all mini-batch time: {}".format(end_batch - start_batch))
+            LOGGER.debug("[compute] all prepare batch data time: {}".format(all_prepare_batch_time))
+            LOGGER.debug("[compute] total batch nums are : {}".format(batch_num))
 
             total_loss /= batch_num
             w = self.merge_model()
@@ -100,26 +131,40 @@ class HomoLRGuest(BaseLogisticRegression):
             # send model
             model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
                                                                            iter_num)
+            trans_time = time.time()
             federation.remote(w,
                               name=self.transfer_variable.guest_model.name,
                               tag=model_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            end_trans_time = time.time()
+            self.communication_time += (end_trans_time - trans_time)
+            LOGGER.debug("[federation] Send model weight time: {}".format(end_trans_time - trans_time))
+
             # send loss
+
             loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
+            trans_time = time.time()
             federation.remote(total_loss,
                               name=self.transfer_variable.guest_loss.name,
                               tag=loss_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            end_trans_time = time.time()
+            self.communication_time += (end_trans_time - trans_time)
+            LOGGER.debug("[federation] Send loss time: {}".format(end_trans_time - trans_time))
 
             # recv model
             model_transfer_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.final_model, iter_num)
-
+            trans_time = time.time()
             w = federation.get(name=self.transfer_variable.final_model.name,
                                tag=model_transfer_id,
                                idx=0)
+            end_trans_time = time.time()
+            self.communication_time += (end_trans_time - trans_time)
+            LOGGER.debug("[federation] Get merged model time: {}".format(end_trans_time - trans_time))
+
             w = np.array(w)
             # LOGGER.debug("Received final model: {}".format(w))
             self.set_coef_(w)
@@ -127,9 +172,14 @@ class HomoLRGuest(BaseLogisticRegression):
             # recv converge flag
             converge_flag_id = self.transfer_variable.generate_transferid(self.transfer_variable.converge_flag,
                                                                           iter_num)
+            trans_time = time.time()
             converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
                                            tag=converge_flag_id,
                                            idx=0)
+            end_trans_time = time.time()
+            self.communication_time += (end_trans_time - trans_time)
+            LOGGER.debug("[federation] Get converge flag time: {}".format(end_trans_time - trans_time))
+
             self.n_iter_ = iter_num
             LOGGER.debug("converge flag is :{}".format(converge_flag))
 
@@ -137,18 +187,30 @@ class HomoLRGuest(BaseLogisticRegression):
                 self.is_converged = True
                 break
 
+        end_time = time.time()
+        total_time = end_time - start_time
+        compute_time = total_time - self.communication_time
+        LOGGER.debug("[federation] Total traning time: {}, compute_time: {}".format(total_time, compute_time))
+
+        self.show_meta()
+        self.show_model()
         return data_instances
 
     def __init_parameters(self):
-
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
         )
+        t0 = time.time()
         federation.remote(self.party_weight,
                           name=self.transfer_variable.guest_party_weight.name,
                           tag=party_weight_id,
                           role=consts.ARBITER,
                           idx=0)
+        trans_time = time.time() - t0
+
+        LOGGER.debug("[federation] Send party weight time: {}".format(trans_time))
+        self.communication_time += trans_time
+
         # LOGGER.debug("party weight sent")
         LOGGER.info("Finish initialize parameters")
 

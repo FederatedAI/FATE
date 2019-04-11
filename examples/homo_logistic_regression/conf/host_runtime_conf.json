@@ -2,8 +2,7 @@
 
     "local": {
         "role": "host",
-        "party_id": _host_party_id,
-        "scene_id": _scene_id
+        "party_id": _host_party_id
     },
 
     "role": {
