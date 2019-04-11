@@ -101,6 +101,8 @@ class HeteroLRGuest(BaseLogisticRegression):
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr_guest fit")
+        self._abnormal_detection(data_instances)
+
         self.header = data_instances.schema.get("header")
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
