@@ -248,9 +248,9 @@ class IVPercentileFilter(FilterMethod):
             left_cols.append(party_left_cols)
             LOGGER.debug("left_cols: {}".format(left_cols))
 
-        left_cols = self._keep_one_feature(self.party_cols[0], left_cols[0])
+        self.left_cols = self._keep_one_feature(self.party_cols[0], left_cols[0])
 
-        self.left_cols = left_cols  # Record guest party only
+        # self.left_cols = left_cols  # Record guest party only
         return left_cols
 
     def _get_real_iv_thres(self):

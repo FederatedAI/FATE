@@ -24,6 +24,7 @@ from federatedml.feature.binning import QuantileBinning
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
 from federatedml.util.fate_operator import get_features_shape
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -137,3 +138,10 @@ class BaseHeteroFeatureBinning(object):
             if features_shape is None:
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.cols = [i for i in range(features_shape)]
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)

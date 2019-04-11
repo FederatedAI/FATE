@@ -42,6 +42,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
         the specific metric value for specific columns.
         """
+        self._abnormal_detection(data_instances)
         start_time = time.time()
         self._parse_cols(data_instances)
 
@@ -105,6 +106,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         return iv_result
 
     def transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
         self._parse_cols(data_instances)
@@ -148,6 +151,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         return encryptor.encrypt(x), encryptor.encrypt(1 - x)
 
     def transform_local(self, data_instances, reformated=False):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         if not reformated:  # Reformat the label type
@@ -257,6 +262,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         return encrypted_bin_sum
 
     def fit_local(self, data_instances, label_table=None):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         iv_attrs = self.binning_obj.cal_local_iv(data_instances, self.cols, label_table=label_table)

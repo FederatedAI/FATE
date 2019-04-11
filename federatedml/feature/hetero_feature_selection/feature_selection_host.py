@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import time
+
 from arch.api import federation
 from arch.api.proto import feature_selection_param_pb2
 from arch.api.utils import log_utils
@@ -49,6 +50,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.flowid = ''
 
     def fit(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         start_time = time.time()
         self._parse_cols(data_instances)
         self.left_cols = self.cols.copy()
@@ -63,8 +66,9 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         total_time = end_time - start_time
         LOGGER.debug("[federation] Total traning time: {}".format(total_time))
 
-
     def transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -73,6 +77,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         return new_data
 
     def fit_transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -82,6 +88,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         return new_data
 
     def fit_local(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         feature_selection_obj = FeatureSelection(self.params)
@@ -93,6 +101,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.results = feature_selection_obj.results
 
     def fit_local_transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]

@@ -41,6 +41,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
         the specific metric value for specific columns.
         """
+        self._abnormal_detection(data_instances)
+
         start_time = time.time()
 
         self._parse_cols(data_instances)
@@ -87,6 +89,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         LOGGER.info("Sent encrypted_bin_sum to guest")
 
     def transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
 
         # 1. Synchronize encryption information

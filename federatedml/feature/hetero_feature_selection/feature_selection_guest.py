@@ -51,7 +51,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
     def fit(self, data_instances):
         start_time = time.time()
-
+        self._abnormal_detection(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
         self._parse_cols(data_instances)
@@ -69,6 +69,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         LOGGER.debug("[federation] Total traning time: {}, compute_time: {}".format(total_time, compute_time))
 
     def fit_local(self, data_instances):
+        self._abnormal_detection(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
         feature_selection_obj = FeatureSelection(self.params)
@@ -80,6 +81,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         self.results = feature_selection_obj.results
 
     def fit_local_transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         self.fit_local(data_instances)
@@ -89,6 +92,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         return new_data
 
     def transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self._parse_cols(data_instances)
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         new_data = self._transfer_data(data_instances)
@@ -97,6 +102,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         return new_data
 
     def fit_transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
         self.fit(data_instances)
         new_data = self.transform(data_instances)

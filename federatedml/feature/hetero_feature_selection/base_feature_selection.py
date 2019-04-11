@@ -17,13 +17,14 @@
 #  limitations under the License.
 
 import copy
+import functools
 
 import numpy as np
-import functools
 
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from arch.api.proto.feature_binning_meta_pb2 import FeatureBinningMeta
+from federatedml.util import abnormal_detection
 from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
 
 
@@ -132,6 +133,13 @@ class BaseHeteroFeatureSelection(object):
         new_data = data_instances.mapValues(f)
         self._reset_header()
         return new_data
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
