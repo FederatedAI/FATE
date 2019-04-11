@@ -33,11 +33,15 @@ Url Configs
 class JobCron(cron.Cron):
     def run_do(self):
         logger.info("{} job are running.".format(running_job_amount()))
-        if running_job_amount() < MAX_CONCURRENT_JOB_RUN:
-            wait_jobs = get_job_from_queue(status="waiting", limit=1)
-            if wait_jobs:
-                update_job_queue(job_id=wait_jobs[0].get("job_id"), update_data={"status": "ready"})
-                self.run_job(wait_jobs[0].get("job_id"), json.loads(wait_jobs[0].get("config")))
+        try:
+            if running_job_amount() < MAX_CONCURRENT_JOB_RUN:
+                wait_jobs = get_job_from_queue(status="waiting", limit=1)
+                if wait_jobs:
+                    update_job_queue(job_id=wait_jobs[0].get("job_id"), update_data={"status": "ready"})
+                    self.run_job(wait_jobs[0].get("job_id"), json.loads(wait_jobs[0].get("config")))
+            logger.info("check waiting jobs done.")
+        except Exception as e:
+            logger.exception(e)
 
     def run_job(self, job_id, config):
         default_runtime_dict = file_utils.load_json_conf('workflow/conf/default_runtime_conf.json')
@@ -47,6 +51,7 @@ class JobCron(cron.Cron):
         ParameterOverride.override_parameter(default_runtime_dict, setting_conf, config, _job_dir)
         logger.info('job_id {} parameters overrode {}'.format(config, _job_dir))
         channel, stub = get_proxy_data_channel()
+        run_job_success = True
         for runtime_conf_path in glob.glob(os.path.join(_job_dir, '**', 'runtime_conf.json'), recursive=True):
             runtime_conf = file_utils.load_json_conf(os.path.abspath(runtime_conf_path))
             _role = runtime_conf['local']['role']
@@ -62,13 +67,21 @@ class JobCron(cron.Cron):
             try:
                 _return = stub.unaryCall(_packet)
                 logger.info("Grpc unary response: {}".format(_return))
+                logger.info("{} done".format(runtime_conf_path))
             except grpc.RpcError as e:
                 msg = 'job_id:{} party_id:{} role:{} method:{} url:{} Failed to start workflow'.format(job_id,
                                                                                                        _party_id,
                                                                                                        _role, _method,
                                                                                                        _url)
                 logger.exception(msg)
-                return get_json_result(-101, 'UnaryCall submit to remote manager failed')
+                run_job_success = False
+            except Exception as e:
+                logger.exception(e)
+                run_job_success = False
+        channel.close()
+        if not run_job_success:
+            pop_from_job_queue(job_id=job_id)
+        logger.info("run job done")
 
 
 @manager.route('/new', methods=['POST'])
@@ -86,25 +99,29 @@ def submit_job():
 @manager.route('/<job_id>', methods=['DELETE'])
 def stop_job(job_id):
     _job_dir = get_job_directory(job_id)
-    for runtime_conf_path in glob.glob(os.path.join(_job_dir, '**', 'runtime_conf.json'), recursive=True):
-        runtime_conf = file_utils.load_json_conf(os.path.abspath(runtime_conf_path))
-        _role = runtime_conf['local']['role']
-        _party_id = runtime_conf['local']['party_id']
-        _url = '/workflow/{}'.format(job_id)
-        _method = 'DELETE'
-        _packet = wrap_grpc_packet({}, _method, _url, _party_id, job_id)
-        channel, stub = get_proxy_data_channel()
-        try:
-            _return = stub.unaryCall(_packet)
-            logger.info("Grpc unary response: {}".format(_return))
-        except grpc.RpcError as e:
-            msg = 'job_id:{} party_id:{} role:{} method:{} url:{} Failed to start workflow'.format(job_id,
-                                                                                                   _party_id,
-                                                                                                   _role, _method,
-                                                                                                   _url)
-            logger.exception(msg)
-            return get_json_result(-101, 'UnaryCall stop to remote manager failed')
-    return get_json_result()
+    try:
+        for runtime_conf_path in glob.glob(os.path.join(_job_dir, '**', 'runtime_conf.json'), recursive=True):
+            runtime_conf = file_utils.load_json_conf(os.path.abspath(runtime_conf_path))
+            _role = runtime_conf['local']['role']
+            _party_id = runtime_conf['local']['party_id']
+            _url = '/workflow/{}'.format(job_id)
+            _method = 'DELETE'
+            _packet = wrap_grpc_packet({}, _method, _url, _party_id, job_id)
+            channel, stub = get_proxy_data_channel()
+            try:
+                _return = stub.unaryCall(_packet)
+                logger.info("Grpc unary response: {}".format(_return))
+            except grpc.RpcError as e:
+                msg = 'job_id:{} party_id:{} role:{} method:{} url:{} Failed to start workflow'.format(job_id,
+                                                                                                       _party_id,
+                                                                                                       _role, _method,
+                                                                                                       _url)
+                logger.exception(msg)
+                return get_json_result(-101, 'UnaryCall stop to remote manager failed')
+        return get_json_result()
+    except Exception as e:
+        logger.exception(e)
+        return get_json_result(-102, str(e))
 
 
 @manager.route('/jobStatus/<job_id>', methods=['POST'])
@@ -128,7 +145,7 @@ if __name__ == '__main__':
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryServicer(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
     server.start()
-    JobCron(interval=10*1000).start()
+    JobCron(interval=5*1000).start()
     app = DispatcherMiddleware(manager,{
         '/data': data_access_manager,
         '/model': model_manager,
