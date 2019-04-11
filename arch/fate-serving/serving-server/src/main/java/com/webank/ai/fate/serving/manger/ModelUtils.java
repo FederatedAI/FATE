@@ -20,19 +20,22 @@ import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.Arrays;
 import java.util.Map;
 
 public class ModelUtils {
+    private static final Logger LOGGER = LogManager.getLogger();
     public static Map<String, byte[]> readModel(String name, String namespace){
+        LOGGER.info("read model, name: {} namespace: {}", name, namespace);
         DTable dataTable = DTableFactory.getDTable(name, namespace, 1);
         return dataTable.collect();
     }
 
     public static PipelineTask loadModel(String name, String namespace){
         Map<String, byte[]> modelBytes = readModel(name, namespace);
-        if (modelBytes == null){
+        if (modelBytes == null || modelBytes.size() == 0){
             return null;
         }
         PipelineTask pipelineTask = new PipelineTask();

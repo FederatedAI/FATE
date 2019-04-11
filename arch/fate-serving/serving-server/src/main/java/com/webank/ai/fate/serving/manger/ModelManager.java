@@ -58,7 +58,7 @@ public class ModelManager {
             return null;
         }
         modelCache.put(ModelUtils.genModelKey(name, namespace), model);
-        LOGGER.info(modelCache.getSize());
+        LOGGER.info("Load model(name: {}, namespace: {}) success, model cache size is {}", name, namespace, modelCache.getSize());
         return model;
     }
 
@@ -81,8 +81,8 @@ public class ModelManager {
             }
             models.forEach((p, m)->{
                 if (p != partyId){
-                    LOGGER.info(ModelUtils.genPartnerModelIndexKey(p, m.getName(), m.getNamespace()));
                     partnerModelIndex.put(ModelUtils.genPartnerModelIndexKey(p, m.getName(), m.getNamespace()), new ModelInfo(myModelName, myModelNamespace));
+                    LOGGER.info("Load partner model(name: {}, namespace: {}) success, partner model index size is {}", m.getName(), m.getNamespace(), partnerModelIndex.size());
                 }
             });
         }
@@ -132,6 +132,7 @@ public class ModelManager {
         }
         try{
             namespaceModel.put(myModelInfo.getNamespace(), model);
+            LOGGER.info("Enable model(name: {}, namespace: {}) success", myModelInfo.getName(), myModelInfo.getNamespace());
             returnResult.setStatusCode(StatusCode.OK);
         }
         catch (Exception ex){

@@ -9,16 +9,16 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_guest_train_hetero_logistic_regression_example_standalone_20190402223834"],
-                "train_input_namespace": ["example_data_namespace"],
+                "train_input_table": ["breast_guest_train_hetero_logistic_regression_example_task_manager_test"],
+                "train_input_namespace": ["task_manager_test"],
                 "model_table": ["hetero_lr_guest_model"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_guest_predict_hetero_logistic_regression_example_standalone_20190402223834"],
-                "predict_input_namespace": ["example_data_namespace"],
-                "predict_output_table": ["hetero_lr_guest_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
-                "predict_output_namespace": ["hetero_lr"],
-                "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_standalone_20190402211541"],
-                "evaluation_output_namespace": ["hetero_lr"],
+                "predict_input_table": ["breast_guest_train_hetero_logistic_regression_example_task_manager_test"],
+                "predict_input_namespace": ["task_manager_test"],
+                "predict_output_table": ["breast_guest_predict_out_hetero_logistic_regression_example_task_manager_test"],
+                "predict_output_namespace": ["task_manager_test"],
+                "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_task_manager_test"],
+                "evaluation_output_namespace": ["task_manager_test"],
                 "data_input_table": ["breast_guest_cross_validation_hetero_logistic_regression_example_standalone_20190402211859"],
                 "data_input_namespace": ["example_data_namespace"]
             },
@@ -31,18 +31,18 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_host_train_hetero_logistic_regression_example_standalone_20190402223834"],
-                "train_input_namespace": ["example_data_namespace"],
+                "train_input_table": ["breast_host_train_hetero_logistic_regression_example_task_manager_test"],
+                "train_input_namespace": ["task_manager_test"],
                 "data_input_table": ["breast_host_predict_hetero_logistic_regression_example_standalone_20190402223834"],
                 "data_input_namespace": ["example_data_namespace"],
                 "model_table": ["hetero_lr_host_model"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_host_predict_hetero_logistic_regression_example_standalone_20190402211541"],
-                "predict_input_namespace": ["example_data_namespace"],
-                "predict_output_table": ["hetero_lr_host_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
-                "predict_output_namespace": ["hetero_lr"],
-                "evaluation_output_table": ["some_evaluate_output_table_name_hetero_logistic_regression_example_standalone_20190402211541"],
-                "evaluation_output_namespace": ["hetero_lr"]
+                "predict_input_table": ["breast_host_train_hetero_logistic_regression_example_task_manager_test"],
+                "predict_input_namespace": ["task_manager_test"],
+                "predict_output_table": ["breast_host_predict_out_hetero_logistic_regression_example_task_manager_test"],
+                "predict_output_namespace": ["task_manager_test"],
+                "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_task_manager_test"],
+                "evaluation_output_namespace": ["task_manager_test"]
             },
              "DataIOParam":{
                 "with_label": [false],
@@ -100,7 +100,7 @@
             "optimizer": "rmsprop",
             "eps": 1e-5,
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 1,
             "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15

@@ -33,7 +33,7 @@ HEADERS = {
     'Content-Type': 'application/json',
 }
 
-IP = '127.0.0.1'
+IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
 PARTY_ID = 10000
@@ -54,3 +54,4 @@ DATABASE = {
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
+SERVINGS = server_conf.get(SERVERS).get('servings')

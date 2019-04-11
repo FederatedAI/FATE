@@ -8,10 +8,13 @@ import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import io.grpc.ManagedChannel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
 public abstract class BaseModel {
+    private static final Logger LOGGER = LogManager.getLogger();
     public abstract int initModel(byte[] protoMeta, byte[] protoParam);
 
     // public abstract HashMap<String, Object> predict(HashMap<String, Object> inputData);
@@ -42,7 +45,6 @@ public abstract class BaseModel {
         ManagedChannel channel1 = ClientPool.getChannel(Configuration.getProperty("proxy"));
         DataTransferServiceGrpc.DataTransferServiceBlockingStub stub1 = DataTransferServiceGrpc.newBlockingStub(channel1);
         Proxy.Packet packet = stub1.unaryCall(packetBuilder.build());
-
         ReturnResult result = (ReturnResult) ObjectTransform.json2Bean(packet.getBody().getValue().toStringUtf8(), ReturnResult.class);
         return result.getData();
     }
