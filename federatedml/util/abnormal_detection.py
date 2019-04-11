@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.util import fate_operator
+from federatedml.statistic import data_overview
 
 
 def empty_table_detection(data_instances):
@@ -26,6 +26,6 @@ def empty_table_detection(data_instances):
 
 
 def empty_feature_detection(data_instances):
-    is_empty_feature = fate_operator.is_empty_feature(data_instances)
+    is_empty_feature = data_overview.is_empty_feature(data_instances)
     if is_empty_feature:
         raise ValueError("Number of features of DTable is 0.")

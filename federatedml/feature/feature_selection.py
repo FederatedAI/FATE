@@ -26,7 +26,7 @@ from federatedml.feature.binning import QuantileBinning
 from federatedml.param.param import FeatureSelectionParam, IVSelectionParam, FeatureBinningParam, UniqueValueParam
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 

@@ -23,7 +23,7 @@ from federatedml.feature.binning import IVAttributes
 from federatedml.feature.binning import QuantileBinning
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()

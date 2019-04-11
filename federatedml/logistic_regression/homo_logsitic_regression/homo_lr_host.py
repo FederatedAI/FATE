@@ -275,7 +275,7 @@ class HomoLRHost(BaseLogisticRegression):
         else:
             LOGGER.info("in predict, has synchronize encryption information")
 
-        from federatedml.util.fate_operator import get_features_shape
+        from federatedml.statistic.data_overview import get_features_shape
         feature_shape = get_features_shape(data_instances)
         LOGGER.debug("Shape of coef_ : {}, feature shape: {}".format(len(self.coef_), feature_shape))
 

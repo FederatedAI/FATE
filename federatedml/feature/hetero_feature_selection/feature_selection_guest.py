@@ -28,7 +28,7 @@ from federatedml.feature.hetero_feature_binning.hetero_binning_guest import Hete
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
 from federatedml.param.param import IVSelectionParam
 from federatedml.util import consts
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 

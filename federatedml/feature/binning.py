@@ -24,7 +24,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.feature.quantile_summaries import QuantileSummaries
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 
