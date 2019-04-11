@@ -249,7 +249,7 @@ class WorkFlow(object):
 
             intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
             LOGGER.info("get intersect data_instance!")
-            LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
+            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
             intersect_data_instance.schema['header'] = header
             return intersect_data_instance
 
