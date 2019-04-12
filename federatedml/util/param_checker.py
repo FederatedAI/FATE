@@ -21,9 +21,9 @@
 #
 ################################################################################
 from arch.api.utils import log_utils
+from federatedml.param import param
 from federatedml.util import consts
 from federatedml.util.param_extract import ParamExtract
-from federatedml.param import param
 
 LOGGER = log_utils.getLogger()
 
@@ -240,7 +240,7 @@ class BoostingTreeParamChecker(object):
                 boost_param.num_trees))
 
         if type(boost_param.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
-                boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
+                        boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
@@ -663,6 +663,9 @@ class FeatureSelectionParamChecker(object):
                                               "coefficient_of_variation_value_thres",
                                               "outlier_cols"])
             feature_param.filter_method[idx] = method
+        if "iv_value_thres" in feature_param.filter_method and "iv_percentile" in feature_param.filter_method:
+            raise ValueError("Two iv methods should not exist at the same time.")
+
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
         check_string(feature_param.result_table, descr)
         check_string(feature_param.result_namespace, descr)

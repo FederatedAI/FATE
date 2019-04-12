@@ -85,6 +85,8 @@ class HomoLRGuest(BaseLogisticRegression):
             start_batch_data = time.time()
             for batch_data in batch_data_generator:
                 end_batch_data = time.time()
+                n = batch_data.count()
+
                 all_prepare_batch_time += (end_batch_data - start_batch_data)
                 f = functools.partial(self.gradient_operator.compute,
                                       coef=self.coef_,
@@ -95,9 +97,8 @@ class HomoLRGuest(BaseLogisticRegression):
                 end_compute_time = time.time()
                 iter_compute_gradient_time += (end_compute_time - compute_time)
                 # LOGGER.debug("[compute] compute_gradient time: {}".format(end_compute_time - compute_time))
-                n = grad_loss.count()
+                # n = grad_loss.count()
                 compute_time = time.time()
-
                 grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
                 end_compute_time = time.time()
                 iter_reduce_loss_time += (end_compute_time - compute_time)

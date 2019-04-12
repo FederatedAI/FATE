@@ -94,7 +94,8 @@ class HomoLRHost(BaseLogisticRegression):
                 end_compute_time = time.time()
                 LOGGER.debug("[compute] compute_gradient time: {}".format(end_compute_time - compute_time))
 
-                n = grad_loss.count()
+                # n = grad_loss.count()
+                n = batch_data.count()
                 if not self.use_encrypt:
                     grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
                     grad = np.array(grad)
