@@ -29,6 +29,8 @@ import numpy as np
 from functools import partial
 from operator import is_not
 import hashlib
+import fnmatch
+import shutil
 
 
 class Standalone:
@@ -48,18 +50,38 @@ class Standalone:
         partition = self.meta_table.get(_table_key)
         return _DTable(__type, namespace, name, partition)
 
+
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
                     error_if_exist=False,
-                    persistent=False):
+                    persistent=False, chunk_size=100000):
         _iter = data if include_key else enumerate(data)
         if name is None:
             name = str(uuid.uuid1())
         if namespace is None:
             namespace = self.job_id
         __table = self.table(name, namespace, partition, persistent=persistent)
-        __table.put_all(_iter)
+        __table.put_all(_iter, chunk_size=chunk_size)
         return __table
+
+
+    def cleanup(self, name, namespace, persistent):
+        if not namespace or not name:
+            raise ValueError("neither name nor namespace can be blank")
+
+        _type = StoreType.LMDB.value if persistent else StoreType.IN_MEMORY.value
+        _base_dir = os.sep.join([Standalone.get_instance().data_dir, _type])
+        if not os.path.isdir(_base_dir):
+            raise EnvironmentError("illegal datadir set for eggroll")
+
+        _namespace_dir = os.sep.join([_base_dir, namespace])
+        if not os.path.isdir(_namespace_dir):
+            raise EnvironmentError("namespace does not exist")
+
+        _tables_to_delete = fnmatch.filter(os.listdir(_namespace_dir), name)
+        for table in _tables_to_delete:
+            shutil.rmtree(os.sep.join([_namespace_dir, table]))
+
 
     @staticmethod
     def get_instance():
@@ -362,7 +384,7 @@ class _DTable(object):
                 return None
             return c_pickle.loads(old_value_bytes) if use_serialize else old_value_bytes
 
-    def put_all(self, kv_list: Iterable, use_serialize=True):
+    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         txn_map = {}
         _succ = True
         for p in range(self._partitions):

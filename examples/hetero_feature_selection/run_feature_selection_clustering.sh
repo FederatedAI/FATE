@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,14 +15,11 @@
 #  limitations under the License.
 #
 
-cd $(dirname "$0")
-curtime=$(date +%Y%m%d%H%M%S)
-work_mode=1
-role=$1
-jobid=$2
-guest_partyid=$3
-host_partyid=$4
-arbiter_partyid=$5
-scene_id=50000
+cur_dir=$(pwd)
 
-bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid $scene_id $role
+role=${1}
+guest_id=${2}
+host_id=${3}
+jobid=${4}
+
+nohup python ${cur_dir}/run_feature_selection.py 1 ${jobid} ${role} ${guest_id} ${host_id} > nohup.${role} 2>&1 &

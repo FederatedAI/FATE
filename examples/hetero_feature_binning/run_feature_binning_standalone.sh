@@ -17,7 +17,6 @@
 
 jobid=feature_selection_$(date +%Y%m%d%H%M%S)
 cur_dir=$(pwd)
-mode='fit'
-#mode='transform'
 
-nohup python ${cur_dir}/run_binning.py 0 ${jobid} 9999 10000 result_${jobid} result_${jobid} 50002 ${mode} &
+nohup python ${cur_dir}/run_binning.py 0 ${jobid} guest 9999 10000 > nohup.guest 2>&1 &
+nohup python ${cur_dir}/run_binning.py 0 ${jobid} host 9999 10000 > nohup.host 2>&1 &

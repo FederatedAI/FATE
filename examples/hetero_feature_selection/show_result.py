@@ -20,13 +20,14 @@ import sys
 
 from arch.api import eggroll
 
-eggroll.init("any_one", eggroll.WorkMode.STANDALONE)
 
-from arch.api.proto.feature_engineer_result_pb2 import FeatureSelectResults
+# from arch.api.proto.feature_engineer_result_pb2 import FeatureSelectResults
 
 
 def show_result(table, namespace, rows=10):
     result = eggroll.table(table, namespace)
+    print('data count: {}'.format(result.count()))
+
     if result.count() > 10:
         result_data = result.collect()
         n = 0
@@ -36,14 +37,14 @@ def show_result(table, namespace, rows=10):
             n += 1
 
 
-def show_model(table, namespace):
-    model = eggroll.table(table, namespace)
-    model_local = model.collect()
-    serialize_str = model_local.__next__()[1]
-    results = FeatureSelectResults()
-    results.ParseFromString(serialize_str)
-    for r in results.results:
-        print(r)
+# def show_model(table, namespace):
+#     model = eggroll.table(table, namespace)
+#     model_local = model.collect()
+#     serialize_str = model_local.__next__()[1]
+#     results = FeatureSelectResults()
+#     results.ParseFromString(serialize_str)
+#     for r in results.results:
+#         print(r)
 
 
 if __name__ == '__main__':
@@ -51,7 +52,9 @@ if __name__ == '__main__':
     namespace = sys.argv[2]
     rows = int(sys.argv[3])
     show_item = sys.argv[4]
+    mode = int(sys.argv[5])
+    eggroll.init("any_one", mode)
+
     if show_item == 'predict_data':
         show_result(table, namespace, rows)
-    elif show_item == 'show_model':
-        show_model(table, namespace)
+
