@@ -197,7 +197,7 @@ class WorkFlow(object):
 
         data_instance = self.feature_selection_transform(data_instance)
 
-        data_instance, fit_config = self.scale(data_instance)     
+        data_instance, fit_config = self.scale(data_instance)
 
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
@@ -532,10 +532,13 @@ class WorkFlow(object):
         predict_result.save_as(self.workflow_param.predict_output_table, self.workflow_param.predict_output_namespace)
 
     def save_intersect_result(self, intersect_result):
-        LOGGER.info("Save intersect results to name:{}, namespace:{}".format(
-            self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
-        intersect_result.save_as(self.workflow_param.intersect_data_output_table,
-                                 self.workflow_param.intersect_data_output_namespace)
+        if intersect_result:
+            LOGGER.info("Save intersect results to name:{}, namespace:{}".format(
+                self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
+            intersect_result.save_as(self.workflow_param.intersect_data_output_table,
+                                     self.workflow_param.intersect_data_output_namespace)
+        else:
+            LOGGER.info("Not intersect_result, do not save it!")
 
     def scale(self, data_instance, fit_config=None):
         if self.workflow_param.need_scale:
@@ -548,7 +551,7 @@ class WorkFlow(object):
                 fit_config = scale_obj.load_model(name=self.workflow_param.model_table,
                                                   namespace=self.workflow_param.model_namespace,
                                                   header=data_instance.schema.get("header"))
-                
+
             if not fit_config:
                 data_instance, fit_config = scale_obj.fit(data_instance)
                 save_results = scale_obj.save_model(name=self.workflow_param.model_table,
