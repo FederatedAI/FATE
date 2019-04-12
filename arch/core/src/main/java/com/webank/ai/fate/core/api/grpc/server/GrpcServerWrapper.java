@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 @Component
 @Scope("prototype")
 public class GrpcServerWrapper {
@@ -31,7 +33,20 @@ public class GrpcServerWrapper {
     @Autowired
     private ErrorUtils errorUtils;
 
+    private volatile boolean inited = false;
+
+    @PostConstruct
+    private void init() {
+        if (errorUtils == null) {
+            errorUtils = new ErrorUtils();
+        }
+        inited = true;
+    }
+
     public void wrapGrpcServerRunnable(StreamObserver responseObserver, GrpcServerRunnable target) {
+        if (!inited) {
+            init();
+        }
         try {
             target.run();
         } catch (Throwable t) {
