@@ -54,14 +54,14 @@ class Standalone:
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
                     error_if_exist=False,
-                    persistent=False):
+                    persistent=False, chunk_size=100000):
         _iter = data if include_key else enumerate(data)
         if name is None:
             name = str(uuid.uuid1())
         if namespace is None:
             namespace = self.job_id
         __table = self.table(name, namespace, partition, persistent=persistent)
-        __table.put_all(_iter)
+        __table.put_all(_iter, chunk_size=chunk_size)
         return __table
 
 
@@ -384,7 +384,7 @@ class _DTable(object):
                 return None
             return c_pickle.loads(old_value_bytes) if use_serialize else old_value_bytes
 
-    def put_all(self, kv_list: Iterable, use_serialize=True):
+    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         txn_map = {}
         _succ = True
         for p in range(self._partitions):

@@ -122,6 +122,8 @@ public class TestRollKvServiceClient {
 
     @Test
     public void testPutAll() {
+
+
         OperandBroker operandBroker = new OperandBroker();
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
         Kv.Operand operand1 = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
@@ -141,6 +143,36 @@ public class TestRollKvServiceClient {
         operandBroker.put(operand3);
         operandBroker.put(operand4);
         operandBroker.put(operand5);
+
+        operandBroker.setFinished();
+        rollKvServiceClient.putAll(operandBroker, storeInfo);
+    }
+
+    @Test
+    public void testPutAllToSameDb() {
+        OperandBroker operandBroker = new OperandBroker();
+        Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
+
+        StoreInfo storeInfo = StoreInfo.builder()
+                .type(Stores.LMDB.name())
+                .nameSpace(namespace)
+                .tableName(name)
+                .build();
+
+        Kv.Operand operand = null;
+        for (int i = 0; i < 1000; ++i) {
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operandBroker.put(operand);
+        }
+
+        operandBroker.setFinished();
+        rollKvServiceClient.putAll(operandBroker, storeInfo);
+
+        operandBroker = new OperandBroker();
+        for (int i = 1001; i < 2000; ++i) {
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operandBroker.put(operand);
+        }
 
         operandBroker.setFinished();
         rollKvServiceClient.putAll(operandBroker, storeInfo);

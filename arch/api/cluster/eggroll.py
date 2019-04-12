@@ -26,6 +26,7 @@ from arch.api.utils.log_utils import getLogger
 from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
 from arch.api.utils import cloudpickle
 from arch.api.utils.core import string_to_bytes, bytes_to_string
+from arch.api.utils.iter_utils import split_every
 
 
 def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
@@ -74,8 +75,8 @@ class _DTable(object):
     def put(self, k, v, use_serialize=True):
         _EggRoll.get_instance().put(self, k, v, use_serialize=use_serialize)
 
-    def put_all(self, kv_list: Iterable, use_serialize=True):
-        return _EggRoll.get_instance().put_all(self, kv_list, use_serialize=use_serialize)
+    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+        return _EggRoll.get_instance().put_all(self, kv_list, use_serialize=use_serialize, chunk_size=chunk_size)
 
     def get(self, k, use_serialize=True):
         return _EggRoll.get_instance().get(self, k, use_serialize=use_serialize)
@@ -161,7 +162,7 @@ class _EggRoll(object):
 
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
-                    error_if_exist=False, persistent=False):
+                    error_if_exist=False, persistent=False, chunk_size=100000):
         if namespace is None:
             namespace = _EggRoll.get_instance().job_id
         if name is None:
@@ -172,7 +173,7 @@ class _EggRoll(object):
         create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=partition)
         _table = self._create_table(create_table_info)
         _iter = data if include_key else enumerate(data)
-        _table.put_all(_iter)
+        _table.put_all(_iter, chunk_size=chunk_size)
         LOGGER.debug("created table: %s", _table)
         return _table
 
@@ -246,8 +247,13 @@ class _EggRoll(object):
         operand = self.kv_stub.putIfAbsent(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
-    def put_all(self, _table, kvs: Iterable, use_serialize=True):
-        self.kv_stub.putAll(self.__generate_operand(kvs, use_serialize=use_serialize), metadata=_get_meta(_table))
+    def put_all(self, _table, kvs: Iterable, use_serialize=True, chunk_size=100000, skip_chunk=0):
+        skipped_chunk = 0
+        for chunked_iter in split_every(kvs, chunk_size=chunk_size):
+            if skipped_chunk < skip_chunk:
+                skipped_chunk += 1
+            else:
+                self.kv_stub.putAll(self.__generate_operand(chunked_iter, use_serialize=use_serialize), metadata=_get_meta(_table))
 
     def delete(self, _table, k, use_serialize=True):
         k = self.kv_to_bytes(k=k, use_serialize=use_serialize)

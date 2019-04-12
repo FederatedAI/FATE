@@ -22,10 +22,19 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 @Component
 public class ErrorUtils {
     @Autowired
     private RuntimeUtils runtimeUtils;
+
+    @PostConstruct
+    private void init() {
+        if (runtimeUtils == null) {
+            runtimeUtils = new RuntimeUtils();
+        }
+    }
 
     public StatusRuntimeException toGrpcRuntimeException(Throwable throwable) {
         StatusRuntimeException result = null;

@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class OperandBroker {
     private BlockingQueue<Kv.Operand> operandQueue;
 
-    private boolean isFinished;
+    private @GuardedBy("this") volatile boolean isFinished;
     private Object latchLock;
     private CountDownLatch readyLatch;
 
@@ -118,11 +119,15 @@ public class OperandBroker {
     }
 
     public boolean isFinished() {
-        return isFinished;
+        synchronized (this) {
+            return isFinished;
+        }
     }
 
     public OperandBroker setFinished() {
-        isFinished = true;
+        synchronized (this) {
+            isFinished = true;
+        }
         this.readyLatch.countDown();
         return this;
     }
@@ -136,6 +141,8 @@ public class OperandBroker {
     }
 
     public boolean isClosable() {
-        return !isReady() && isFinished;
+        synchronized (this) {
+            return !isReady() && isFinished;
+        }
     }
 }
