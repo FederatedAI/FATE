@@ -17,8 +17,9 @@ import json
 from arch.api import eggroll
 from arch.api.utils import file_utils
 from arch.task_manager.adapter.offline_feature.get_feature import GetFeature
-from arch.task_manager.job_manager import save_job_info, query_job_by_id, update_job_by_id, generate_job_id, get_job_directory, get_json_result
-from arch.task_manager.settings import logger
+from arch.task_manager.job_manager import save_job_info, query_job_by_id, generate_job_id, get_job_directory
+from arch.task_manager.utils.api_utils import get_json_result
+from arch.task_manager.settings import logger, PARTY_ID
 from flask import Flask, request
 import datetime
 import os
@@ -27,6 +28,12 @@ import uuid
 from arch.task_manager.settings import WORK_MODE
 
 manager = Flask(__name__)
+
+
+@manager.errorhandler(500)
+def internal_server_error(e):
+    logger.exception(e)
+    return get_json_result(100, str(e))
 
 
 @manager.route('/<data_func>', methods=['post'])
@@ -135,7 +142,7 @@ def request_offline_feature():
             job_data["begin_date"] = datetime.datetime.now()
             job_data["status"] = "running"
             job_data["config"] = json.dumps(request_data)
-            save_job_info(job_id=job_id, **job_data)
+            save_job_info(job_id=job_id, my_role="host", my_party_id=PARTY_ID, **job_data)
             return get_json_result()
         else:
             return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))
@@ -152,12 +159,15 @@ def import_offline_feature():
         if not request_data.get("jobId"):
             return get_json_result(status=2, msg="no job id")
         job_id = request_data.get("jobId")
-        job_data = query_job_by_id(job_id=job_id)
-        if not job_data:
+        jobs = query_job_by_id(job_id=job_id)
+        if not jobs:
             return get_json_result(status=3, msg="can not found this job id: %s" % request_data.get("jobId", ""))
-        response = GetFeature.import_data(request_data, json.loads(job_data[0]["config"]))
+        response = GetFeature.import_data(request_data, json.loads(jobs[0].config))
         if response.get("status", 1) == 0:
-            update_job_by_id(job_id=job_id, update_data={"status": "success", "end_date": datetime.datetime.now()})
+            save_job_info(job_id=job_id,
+                          my_role='host',
+                          my_party_id=PARTY_ID,
+                          **{"status": "success", "end_date": datetime.datetime.now()})
             return get_json_result()
         else:
             return get_json_result(status=1, msg="request offline feature error: %s" % response.get("msg", ""))

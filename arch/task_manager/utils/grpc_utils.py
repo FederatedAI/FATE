@@ -39,8 +39,10 @@ def wrap_grpc_packet(_json_body, _method, _url, _dst_party_id=None, job_id=None)
     _data = proxy_pb2.Data(key=_url, value=bytes(json.dumps(_json_body), 'utf-8'))
     return proxy_pb2.Packet(header=_meta, body=_data)
 
+
 def get_url(_suffix):
     return "{}{}".format(LOCAL_URL, _suffix)
+
 
 class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
 

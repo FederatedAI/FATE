@@ -38,7 +38,7 @@ GRPC_PORT = 9360
 HTTP_PORT = 9380
 PARTY_ID = 10000
 WORK_MODE = 0
-LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT)
+LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'engine': 'mysql',
