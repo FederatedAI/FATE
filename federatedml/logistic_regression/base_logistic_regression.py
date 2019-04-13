@@ -112,27 +112,6 @@ class BaseLogisticRegression(object):
             w = np.append(w, self.intercept_)
         return w
 
-    def get_features_shape(self, data_instances):
-        # LOGGER.debug("In get features shape method, data_instances count: {}".format(
-        #     data_instances.count()
-        # ))
-
-        data_shape = self.get_data_shape()
-        if data_shape is not None:
-            return data_shape
-
-        features = data_instances.collect()
-        try:
-            one_feature = features.__next__()
-        except StopIteration:
-            LOGGER.warning("Data instances is Empty")
-            one_feature = None
-
-        if one_feature is not None:
-            return one_feature[1].features.shape[0]
-        else:
-            return None
-
     def set_coef_(self, w):
         if self.fit_intercept:
             self.coef_ = w[: -1]

@@ -20,8 +20,8 @@ from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
+from federatedml.statistic import data_overview
 from federatedml.util import consts
-# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -60,7 +60,7 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_num = batch_info["batch_num"]
 
         LOGGER.info("Start initialize model.")
-        model_shape = self.get_features_shape(data_instances)
+        model_shape = data_overview.get_features_shape(data_instances)
 
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
