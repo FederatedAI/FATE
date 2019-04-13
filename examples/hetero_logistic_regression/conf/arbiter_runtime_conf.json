@@ -59,11 +59,11 @@
     "LogisticParam": {
         "penalty": "L2",
         "optimizer": "rmsprop",
-        "eps": 1e-5,
+        "eps": 1e-4,
         "alpha": 0.01,
         "max_iter": 10,
         "converge_func": "diff",
-        "batch_size": 320,
+        "batch_size": 3200,
         "learning_rate": 0.15
     },
     "IntersectParam": {

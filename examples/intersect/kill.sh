@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,12 +15,4 @@
 #  limitations under the License.
 #
 
-cd $(dirname "$0")
-curtime=$(date +%Y%m%d%H%M%S)
-work_mode=0
-jobid="hetero_logistic_regression_example_standalone_"$curtime
-guest_partyid=10000
-host_partyid=9999
-arbiter_partyid=10000
-
-bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid
+ps -ef | grep intersect | grep -v grep | cut -c 9-15 | xargs kill -s 9
