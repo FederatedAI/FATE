@@ -110,7 +110,7 @@
     },
     "FeatureSelectionParam": {
         "method": "fit",
-        "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
+        "filter_method": ["unique_value", "iv_value_thres",
                 "coefficient_of_variation_value_thres", "outlier_cols"],
         "select_cols": -1,
         "local_only": false,
