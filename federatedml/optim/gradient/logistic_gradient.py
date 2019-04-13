@@ -30,9 +30,9 @@ LOGGER = log_utils.getLogger()
 class LogisticGradient(Gradient):
     def compute_loss(self, X, Y, coef, intercept):
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
-        avg_loss = tot_loss / Y.shape[0]
+        # avg_loss = tot_loss / Y.shape[0]
         # avg_loss = LogLoss.compute(X, Y, coef)
-        return avg_loss
+        return tot_loss
 
     def compute(self, values, coef, intercept, fit_intercept):
 
@@ -52,7 +52,8 @@ class LogisticGradient(Gradient):
         grad_batch = d * X
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        grad = sum(grad_batch) / batch_size
+        # grad = sum(grad_batch) / batch_size
+        grad = sum(grad_batch)
         loss = self.compute_loss(X, Y, coef, intercept)
         return grad, loss
 
@@ -75,7 +76,8 @@ class TaylorLogisticGradient(Gradient):
         grad_batch = grad_batch.transpose()
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        grad = sum(grad_batch) / batch_size
+        # grad = sum(grad_batch) / batch_size
+        grad = sum(grad_batch)
         return grad, None
 
 

@@ -18,6 +18,7 @@
 #
 
 import math
+import random
 
 from arch.api.proto.feature_selection_param_pb2 import FeatureSelectionFilterParam, FeatureSelectionParam
 from arch.api.utils import log_utils
@@ -25,7 +26,7 @@ from federatedml.feature.binning import QuantileBinning
 from federatedml.param.param import FeatureSelectionParam, IVSelectionParam, FeatureBinningParam, UniqueValueParam
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 
@@ -47,33 +48,26 @@ class FilterMethod(object):
         """
         pass
 
+    def _keep_one_feature(self, original_cols, left_cols):
+        """
+        Make sure at least one feature can be left after filtering.
 
-# class FilterResult(object):
-#     """
-#     A class that use to saved information of each filter
-#
-#     Parameters
-#     ----------
-#     param_set : dict,
-#         Record the setting for the filters
-#
-#     original_cols : list
-#         The columns when get into the filter
-#
-#     left_cols : list
-#         The columns that output from the filter
-#
-#     index_system : dict, default: {} (optional)
-#         Some index (if exist) used in filter, such as the specific threshold. The difference between index
-#         and param_set is that, here records the median result instead of original settings.
-#     """
-#     def __init__(self, param_set, original_cols, left_cols, index_system=None):
-#         self.param_set = param_set
-#         self.original_cols = original_cols
-#         self.left_cols = left_cols
-#         if index_system is None:
-#             index_system = {}
-#         self.index_system = index_system
+        Parameters
+        ----------
+        original_cols : list,
+            Column index that before filtering
+
+        left_cols : list,
+            Column index that after filtering.
+
+        Returns
+        -------
+        A list of index of columns left.
+        """
+        if len(left_cols) >= 1:
+            return left_cols
+        left_col = random.choice(original_cols)
+        return [left_col]
 
 
 class UniqueValueFilter(FilterMethod):
@@ -108,6 +102,8 @@ class UniqueValueFilter(FilterMethod):
         for idx, col in enumerate(self.select_cols):
             if math.fabs(max_values[idx] - min_values[idx]) >= self.eps:
                 left_cols.append(col)
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -159,6 +155,8 @@ class IVValueSelectFilter(FilterMethod):
             iv = ivs[idx]
             if iv >= self.value_threshold:
                 left_cols.append(col)
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -250,7 +248,9 @@ class IVPercentileFilter(FilterMethod):
             left_cols.append(party_left_cols)
             LOGGER.debug("left_cols: {}".format(left_cols))
 
-        self.left_cols = left_cols[0]  # Record guest party only
+        self.left_cols = self._keep_one_feature(self.party_cols[0], left_cols[0])
+
+        # self.left_cols = left_cols  # Record guest party only
         return left_cols
 
     def _get_real_iv_thres(self):
@@ -299,6 +299,8 @@ class CoeffOfVarValueFilter(FilterMethod):
 
             if coeff_of_var >= self.value_threshold:
                 left_cols.append(self.select_cols[idx])
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -328,6 +330,8 @@ class OutlierFilter(FilterMethod):
         for idx, q_r in enumerate(query_result):
             if q_r < self.upper_threshold:
                 left_cols.append(self.select_cols[idx])
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 

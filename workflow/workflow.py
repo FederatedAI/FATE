@@ -33,7 +33,6 @@ from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
-from workflow import status_tracer_decorator
 from federatedml.feature.sampler import Sampler
 from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
@@ -50,6 +49,7 @@ from federatedml.util import param_checker
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.param_checker import AllChecker
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from workflow import status_tracer_decorator
 
 LOGGER = log_utils.getLogger()
 
@@ -153,7 +153,7 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                self.mode == consts.HOMO:
+                        self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
@@ -197,7 +197,7 @@ class WorkFlow(object):
 
         data_instance = self.feature_selection_transform(data_instance)
 
-        data_instance, fit_config = self.scale(data_instance)     
+        data_instance, fit_config = self.scale(data_instance)
 
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
@@ -249,7 +249,7 @@ class WorkFlow(object):
 
             intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
             LOGGER.info("get intersect data_instance!")
-            LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
+            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
             intersect_data_instance.schema['header'] = header
             return intersect_data_instance
 
@@ -369,6 +369,7 @@ class WorkFlow(object):
         else:
             cv_results = {}
 
+        LOGGER.debug("cv_result: {}".format(cv_results))
         if self.role == consts.GUEST or (self.role == consts.HOST and self.mode == consts.HOMO):
             format_cv_result = {}
             for eval_result in cv_results:
@@ -387,7 +388,8 @@ class WorkFlow(object):
             for eval_name, eva_result_list in format_cv_result.items():
                 mean_value = np.around(np.mean(eva_result_list), 4)
                 std_value = np.around(np.std(eva_result_list), 4)
-                LOGGER.info("evaluate name: {}, mean: {}, std: {}".format(eval_name, mean_value, std_value))
+                LOGGER.info("{}，evaluate name: {}, mean: {}, std: {}".format(self.role,
+                                                                             eval_name, mean_value, std_value))
 
     def hetero_cross_validation(self, data_instance):
         LOGGER.debug("Enter train function")
@@ -507,7 +509,6 @@ class WorkFlow(object):
             # self.save_model()
             predict_result = self.model.predict(test_data, self.workflow_param.predict_param)
             flowid += 1
-
             eval_result = self.evaluate(predict_result)
             cv_result.append(eval_result)
             self._initialize_model(self.config_path)
@@ -531,10 +532,13 @@ class WorkFlow(object):
         predict_result.save_as(self.workflow_param.predict_output_table, self.workflow_param.predict_output_namespace)
 
     def save_intersect_result(self, intersect_result):
-        LOGGER.info("Save intersect results to name:{}, namespace:{}".format(
-            self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
-        intersect_result.save_as(self.workflow_param.intersect_data_output_table,
-                                 self.workflow_param.intersect_data_output_namespace)
+        if intersect_result:
+            LOGGER.info("Save intersect results to name:{}, namespace:{}".format(
+                self.workflow_param.intersect_data_output_table, self.workflow_param.intersect_data_output_namespace))
+            intersect_result.save_as(self.workflow_param.intersect_data_output_table,
+                                     self.workflow_param.intersect_data_output_namespace)
+        else:
+            LOGGER.info("Not intersect_result, do not save it!")
 
     def scale(self, data_instance, fit_config=None):
         if self.workflow_param.need_scale:
@@ -547,7 +551,7 @@ class WorkFlow(object):
                 fit_config = scale_obj.load_model(name=self.workflow_param.model_table,
                                                   namespace=self.workflow_param.model_namespace,
                                                   header=data_instance.schema.get("header"))
-                
+
             if not fit_config:
                 data_instance, fit_config = scale_obj.fit(data_instance)
                 save_results = scale_obj.save_model(name=self.workflow_param.model_table,
@@ -572,7 +576,9 @@ class WorkFlow(object):
         labels = []
         pred_prob = []
         pred_labels = []
+        data_num = 0
         for data in eval_data_local:
+            data_num += 1
             labels.append(data[1][0])
             pred_prob.append(data[1][1])
             pred_labels.append(data[1][2])
@@ -619,6 +625,7 @@ class WorkFlow(object):
         # pipeline_obj.node_meta = []
         # pipeline_obj.node_param = []
         self.pipeline = pipeline_obj
+        LOGGER.debug("finish init pipeline")
 
     def _save_pipeline(self):
         buffer_type = "Pipeline"

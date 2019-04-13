@@ -20,8 +20,8 @@ from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
+from federatedml.statistic import data_overview
 from federatedml.util import consts
-# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -40,49 +40,6 @@ class HeteroLRHost(BaseLogisticRegression):
         encrypt_operator = self.encrypt_operator
         host_forward = wx.mapValues(lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v))))
         return host_forward
-
-    def transform(self, data_inst):
-        """
-        transform features of instances held by 'data_inst' table into more representative features
-
-        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
-        host. It returns a table that holds instances with transformed features. In theory, we can use any model to
-        transform features. Particularly, we would adopt neural network models such as autoencoder or CNN to perform
-        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
-        folder.
-
-        For this particular class (i.e., 'HeteroLRHost') that serves as a base host class for neural-networks-based
-        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
-        passed to it. In other words, no feature transformation performed on the raw input of guest.
-
-        Parameters:
-        ___________
-        :param data_inst: a table holding instances of raw input of host side
-        :return: a table holding instances with transformed features
-        """
-        return data_inst
-
-    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
-        """
-        update local model that transforms features of raw input
-
-        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
-        input into more representative features. We typically adopt neural networks as the local model, which is
-        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
-        refer to 'hetero_dnn_logistic_regression' folder.
-
-        For this particular class (i.e., 'HeteroLRHost') that serves as a base host class for neural-networks-based
-        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
-        performed on the local model since there is no one.
-
-        Parameters:
-        ___________
-        :param fore_gradient: a table holding fore gradient
-        :param data_inst: a table holding instances of raw input of guest side
-        :param coef: coefficients of logistic regression model
-        :param training_info: a dictionary holding training information
-        """
-        pass
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr host")
@@ -103,7 +60,7 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_num = batch_info["batch_num"]
 
         LOGGER.info("Start initialize model.")
-        model_shape = self.get_features_shape(data_instances)
+        model_shape = data_overview.get_features_shape(data_instances)
 
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
@@ -113,12 +70,14 @@ class HeteroLRHost(BaseLogisticRegression):
 
         self.coef_ = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-        is_stopped = False
         self.n_iter_ = 0
+        index_data_inst_map = {}
+
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
             batch_index = 0
             while batch_index < self.batch_num:
+                LOGGER.info("batch:{}".format(batch_index))
                 # set batch_data
                 if len(self.batch_index_list) < self.batch_num:
                     batch_data_index = federation.get(name=self.transfer_variable.batch_data_index.name,
@@ -127,13 +86,25 @@ class HeteroLRHost(BaseLogisticRegression):
                                                           batch_index),
                                                       idx=0)
                     LOGGER.info("Get batch_index from Guest")
+
+                    batch_size = batch_data_index.count()
+                    if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
+                        raise ValueError(
+                            "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
+                                batch_size))
+
                     self.batch_index_list.append(batch_data_index)
                 else:
                     batch_data_index = self.batch_index_list[batch_index]
 
                 # Get mini-batch train data
-                batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+                if len(index_data_inst_map) < self.batch_num:
+                    batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+                    index_data_inst_map[batch_index] = batch_data_inst
+                else:
+                    batch_data_inst = index_data_inst_map[batch_index]
 
+                LOGGER.info("batch_data_inst size:{}".format(batch_data_inst.count()))
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data_inst)
 
@@ -198,19 +169,20 @@ class HeteroLRHost(BaseLogisticRegression):
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
                 # is converge
-                is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                            tag=self.transfer_variable.generate_transferid(
-                                                self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                            idx=0)
-                LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
                 batch_index += 1
-                if is_stopped:
-                    LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
-                    break
+                # if is_stopped:
+                #    break
+
+            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
+                                        tag=self.transfer_variable.generate_transferid(
+                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
+                                        idx=0)
+            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
             self.n_iter_ += 1
             if is_stopped:
+                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
                 break
 
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
