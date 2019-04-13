@@ -262,7 +262,7 @@ public class IterateProcessor implements Callable<OperandBroker> {
         synchronized (eggRangesLock) {
              range = eggRanges.get(fragmentOrder);
         }
-        OperandBroker result = storageServiceClient.iterateStreaming(range, storeInfoWithFragment, fragmentToNode);
+        OperandBroker result = storageServiceClient.iterate(range, storeInfoWithFragment, fragmentToNode);
 
         try {
             boolean awaitResult = false;
