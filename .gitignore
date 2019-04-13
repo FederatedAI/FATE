@@ -5,3 +5,10 @@
 .pyc
 __pycache__
 
+/arch/core/target/
+/arch/driver/federation/target/
+/arch/eggroll/egg/target/
+/arch/eggroll/meta-service/target/
+/arch/eggroll/roll/target/
+/arch/eggroll/storage-service/target/
+/arch/networking/proxy/target/

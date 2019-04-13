@@ -23,5 +23,6 @@ jobid="logistic_regression_example_standalone_"$curtime
 guest_partyid=10000
 host_partyid=9999
 arbiter_partyid=10001
+scene_id=50000
 
-bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid
+bash run_logistic_regression.sh $work_mode $jobid $guest_partyid $host_partyid $arbiter_partyid $scene_id

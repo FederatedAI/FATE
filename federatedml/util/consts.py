@@ -20,6 +20,8 @@ GUEST = 'guest'
 
 BINARY = 'binary'
 MULTY = 'multi'
+CLASSIFICATION = "classification"
+REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
@@ -43,6 +45,13 @@ LIFT = "lift"
 PRECISION = "precision"
 RECALL = "recall"
 ACCURACY = "accuracy"
+EXPLAINED_VARIANCE = "explained_variance"
+MEAN_ABSOLUTE_ERROR = "mean_absolute_error"
+MEAN_SQUARED_ERROR = "mean_squared_error"
+MEAN_SQUARED_LOG_ERROR = "mean_squared_log_error"
+MEDIAN_ABSOLUTE_ERROR = "median_absolute_error"
+R2_SCORE = "r2_score"
+ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
 
 # workflow
 TRAIN_DATA = "train_data"
@@ -55,5 +64,42 @@ ONES = 'ones'
 ZEROS = 'zeros'
 CONST = 'const'
 
+# decision tree
+MAX_SPLIT_NODES = 2 ** 16
+
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
+
+# Feature engineering
+G_BIN_NUM = 10
+DEFAULT_COMPRESS_THRESHOLD = 10000
+DEFAULT_HEAD_SIZE = 10000
+DEFAULT_RELATIVE_ERROR = 0.001
+
+QUANTILE = 'quantile'
+
+# Feature selection methods
+UNIQUE_VALUE = 'unique_value'
+IV_VALUE_THRES = 'iv_value_thres'
+IV_PERCENTILE = 'iv_percentile'
+COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
+COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
+OUTLIER_COLS = 'outlier_cols'
+
+# imputer
+MIN = 'min'
+MAX = 'max'
+MEAN = 'mean'
+DESIGNATED = 'designated'
+STR = 'str'
+FLOAT = 'float'
+INT = 'int'
+ORIGIN = 'origin'
+
+# min_max_scaler
+NORMAL = 'normal'
+CAP = 'cap'
+MINMAXSCALE = 'min_max_scale'
+STANDARDSCALE = 'standard_scale'
+ALL = 'all'
+COL = 'col'

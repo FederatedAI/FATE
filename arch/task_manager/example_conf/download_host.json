@@ -1,0 +1,6 @@
+{
+  "output_path": "./download_host_file.txt",
+  "name": "breast_host_train_hetero_logistic_regression_example_task_manager_test",
+  "namespace": "task_manager_test",
+  "work_mode": 0
+}

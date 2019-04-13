@@ -24,6 +24,7 @@ import com.webank.ai.fate.core.io.KeyValueStore;
 import com.webank.ai.fate.core.io.StoreInfo;
 import com.webank.ai.fate.core.model.Bytes;
 import com.webank.ai.fate.core.utils.AbstractIterator;
+import com.webank.ai.fate.core.utils.ErrorUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -50,9 +51,12 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
     private Env<byte[]> env;
     private Dbi<byte[]> dbi;
 
+    private ErrorUtils errorUtils;
+
 
     public LMDBStore(StoreInfo info) {
         this.storeInfo = info;
+        this.errorUtils = new ErrorUtils();
     }
 
     @Override
@@ -100,9 +104,8 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
 
     @Override
     public StreamObserver<KeyValue<Bytes, byte[]>> putAll() {
+        Txn<byte[]> txn = env.txnWrite();
         return new StreamObserver<KeyValue<Bytes, byte[]>>() {
-            final Txn<byte[]> txn = env.txnWrite();
-
             @Override
             public void onNext(KeyValue<Bytes, byte[]> entry) {
                 Objects.requireNonNull(entry.key, "key cannot be null");
@@ -117,13 +120,18 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
             public void onError(Throwable throwable) {
                 txn.abort();
                 txn.close();
-                LOGGER.error(throwable);
+                LOGGER.error(errorUtils.toGrpcRuntimeException(throwable));
+                LOGGER.info("[STORAGESERVICE][PUTALL] error");
             }
 
             @Override
             public void onCompleted() {
-                txn.commit();
-                txn.close();
+                synchronized (this) {
+                    txn.commit();
+                    txn.close();
+                }
+                //env.sync(true);
+                LOGGER.info("[STORAGESERVICE][STORE][PUTALL] completed. store info: {}");
             }
         };
     }
@@ -207,7 +215,7 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
             try {
                 Files.createDirectories(dbPath);
                 dbDir = dbPath.toFile();
-                env = Env.create(ByteArrayProxy.PROXY_BA).setMaxDbs(1).setMaxReaders(256).setMapSize(1_073_741_824).open(dbDir, EnvFlags.MDB_NOTLS, EnvFlags.MDB_NOSYNC);
+                env = Env.create(new ByteArrayProxy()).setMaxDbs(1).setMaxReaders(256).setMapSize(1_073_741_824).open(dbDir, EnvFlags.MDB_NOTLS, EnvFlags.MDB_NOSYNC, EnvFlags.MDB_NOLOCK);
                 dbi = env.openDbi((String) null, DbiFlags.MDB_CREATE);
             } catch (final DBException e) {
                 throw new ProcessorStateException("Error opening store " + storeInfo + " at location " + dbDir.toString(), e);

@@ -21,6 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.optim.gradient.base_gradient import Gradient
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -137,8 +138,15 @@ class HeteroLogisticGradient(object):
     def compute_gradient(self, data_instance, fore_gradient, fit_intercept):
         feat_join_grad = data_instance.join(fore_gradient, lambda d, g: (d.features, g))
         f = functools.partial(self.__compute_gradient, fit_intercept=fit_intercept)
+
         gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
         gradient = gradient_partition[:-1] / gradient_partition[-1]
+
+        for i in range(len(gradient)):
+            if not isinstance(gradient[i], PaillierEncryptedNumber):
+                gradient[i] = self.encrypt_operator.encrypt(gradient[i])
+
+
         return gradient
 
     def compute_gradient_and_loss(self, data_instance, fore_gradient, encrypted_wx, en_sum_wx_square, fit_intercept):

@@ -39,7 +39,7 @@ class LoggerFactory(object):
             for className, (logger, handler) in LoggerFactory.loggerDict.items():
                 logger.removeHandler(handler)
                 handler.close()
-                _hanlder = LoggerFactory.__get_hanlder(className)
+                _hanlder = LoggerFactory.get_hanlder(className)
                 logger.addHandler(_hanlder)
                 LoggerFactory.loggerDict[className] = logger, _hanlder
 
@@ -55,7 +55,22 @@ class LoggerFactory(object):
             return logger
 
     @staticmethod
-    def __get_hanlder(className):
+    def get_hanlder(className):
+        if not LoggerFactory.LOG_DIR:
+            return logging.StreamHandler()
+        formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
+        log_file = os.path.join(LoggerFactory.LOG_DIR, "{}.log".format(className))
+        handler = TimedRotatingFileHandler(log_file,
+                                           when='H',
+                                           interval=4,
+                                           backupCount=7,
+                                           delay=True)
+
+        handler.setFormatter(formatter)
+        return handler
+
+    @staticmethod
+    def get_hanlder(className):
         if not LoggerFactory.LOG_DIR:
             return logging.StreamHandler()
         formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
@@ -74,7 +89,7 @@ class LoggerFactory(object):
         with LoggerFactory.lock:
             logger = logging.getLogger(className)
             logger.setLevel(LoggerFactory.LEVEL)
-            handler = LoggerFactory.__get_hanlder(className)
+            handler = LoggerFactory.get_hanlder(className)
             logger.addHandler(handler)
 
             LoggerFactory.loggerDict[className] = logger, handler

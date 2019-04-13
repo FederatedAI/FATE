@@ -22,7 +22,7 @@ import csv
 import sys
 import time
 from arch.api import eggroll
-
+from arch.api.storage import save_data
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
@@ -82,11 +82,11 @@ def data_to_eggroll_table(data, namespace, table_name,partition=1, work_mode=0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', required=False, type=str, help="指定一个配置文件路径(json格式)")
+    parser.add_argument('-c', '--config', required=False, type=str, help="you should provide a path of configure file with json format")
     try:
         args = parser.parse_args()
         if not args.config:
-            print("找不到配置文件")
+            print("Can not find the parameter -c")
             sys.exit()
 
         data = {}
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             namespace = None
             with open(args.config, 'r') as f:
                 data = json.load(f)
-                
+
                 try:
                     input_file_path = data['file']
                 except:
@@ -141,20 +141,20 @@ if __name__ == "__main__":
                 print("%s is not exist, please check the configure" % (input_file_path))
                 sys.exit()
 
-
             input_data = read_data(input_file_path, head)
             _namespace, _table_name = generate_table_name(input_file_path)
             if namespace is None:
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
+            eggroll.init(mode=work_mode)
+            save_data(input_data, name=table_name, namespace=namespace, partition=partition)
 
         except ValueError:
-            print('json解析错误')
+            print('json parse error')
             exit(-102)
         except IOError:
-            print('文件读取错误')
+            print('read file error')
             exit(-103)
     except:
         traceback.print_exc()

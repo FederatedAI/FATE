@@ -92,7 +92,8 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
 
     @Override
     public void complete() {
-        LOGGER.info("[FEDERATION][PUSHPROCESSOR] completing send stream for task: {}", toStringUtils.toOneLineString(transferMeta));
+        LOGGER.info("[FEDERATION][PUSHPROCESSOR] completing send stream for task: {}, transferBroker remaining: {}",
+                toStringUtils.toOneLineString(transferMeta), transferBroker.getQueueSize());
         // transferBroker.setFinished();
         super.complete();
     }

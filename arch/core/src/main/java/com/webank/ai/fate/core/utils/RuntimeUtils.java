@@ -16,35 +16,68 @@
 
 package com.webank.ai.fate.core.utils;
 
+import com.webank.ai.fate.core.server.DefaultServerConf;
 import com.webank.ai.fate.core.server.ServerConf;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.net.*;
+import java.util.Collections;
+import java.util.Enumeration;
 
 @Component
 public class RuntimeUtils {
-    private static String myIpAndPort = null;
     @Autowired
     private ServerConf serverConf;
 
-    public String getMyIpAndPort() {
-        if (myIpAndPort == null) {
-            String ip = serverConf.getIp();
-            if (StringUtils.isBlank(ip) || "127.0.0.1".equals(ip)) {
-                InetAddress inetAddress = null;
-                try {
-                    inetAddress = InetAddress.getLocalHost();
-                    ip = inetAddress.getHostAddress();
-                } catch (UnknownHostException e) {
-                    ip = "unknown";
+    private static String myIpAndPort = null;
+    private static String siteLocalAddress = null;
+
+    @PostConstruct
+    private void init() {
+        if (serverConf == null) {
+            serverConf = new DefaultServerConf();
+        }
+    }
+
+    public String getMySiteLocalAddress() {
+        if (siteLocalAddress == null) {
+            Enumeration<NetworkInterface> networkInterfaces = null;
+            try {
+                networkInterfaces = NetworkInterface.getNetworkInterfaces();
+
+                for (NetworkInterface ni : Collections.list(networkInterfaces)) {
+                    Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
+                    for (InetAddress ia : Collections.list(inetAddresses)) {
+                        if (ia.isSiteLocalAddress()) {
+                            siteLocalAddress = StringUtils.substringAfterLast(ia.toString(), "/");
+                        }
+                    }
                 }
+            } catch (SocketException e) {
+                siteLocalAddress = "127.0.0.1";
             }
-            myIpAndPort = ip + ":" + serverConf.getPort();
+        }
+
+        return siteLocalAddress;
+    }
+
+    public String getMySiteLocalIpAndPort() {
+        if (myIpAndPort == null) {
+            myIpAndPort = getMySiteLocalAddress() + ":" + serverConf.getPort();
         }
 
         return myIpAndPort;
+    }
+
+    public boolean isPortAvailable(int port) {
+        try (ServerSocket ignored = new ServerSocket(port)) {
+            return true;
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 }

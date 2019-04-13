@@ -58,7 +58,7 @@ public class TestRollKvServiceClient {
     private ServerConf serverConf;
 
 
-    private String name = "api_create_name_10";
+    private String name = "api_create_name";
     private String namespace = "api_create_namespace";
     private String jobid1 = "jobid1";
     private String federationTable = "__federation__";
@@ -122,6 +122,8 @@ public class TestRollKvServiceClient {
 
     @Test
     public void testPutAll() {
+
+
         OperandBroker operandBroker = new OperandBroker();
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
         Kv.Operand operand1 = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
@@ -147,6 +149,36 @@ public class TestRollKvServiceClient {
     }
 
     @Test
+    public void testPutAllToSameDb() {
+        OperandBroker operandBroker = new OperandBroker();
+        Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
+
+        StoreInfo storeInfo = StoreInfo.builder()
+                .type(Stores.LMDB.name())
+                .nameSpace(namespace)
+                .tableName(name)
+                .build();
+
+        Kv.Operand operand = null;
+        for (int i = 0; i < 1000; ++i) {
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operandBroker.put(operand);
+        }
+
+        operandBroker.setFinished();
+        rollKvServiceClient.putAll(operandBroker, storeInfo);
+
+        operandBroker = new OperandBroker();
+        for (int i = 1001; i < 2000; ++i) {
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operandBroker.put(operand);
+        }
+
+        operandBroker.setFinished();
+        rollKvServiceClient.putAll(operandBroker, storeInfo);
+    }
+
+    @Test
     public void testPutAllMany() {
         OperandBroker operandBroker = new OperandBroker();
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
@@ -158,7 +190,7 @@ public class TestRollKvServiceClient {
                 .build();
 
         Kv.Operand operand = null;
-        for (int i = 0; i < 150000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
             operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }
@@ -171,7 +203,7 @@ public class TestRollKvServiceClient {
     public void testDelete() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time2")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
@@ -188,7 +220,7 @@ public class TestRollKvServiceClient {
     public void testGet() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time2")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
@@ -310,6 +342,19 @@ public class TestRollKvServiceClient {
         rollKvServiceClient.destroy(storeInfo);
 
         LOGGER.info("done destroy");
+    }
+
+    @Test
+    public void testDestroyAll() {
+        StoreInfo storeInfo = StoreInfo.builder()
+                .type(Stores.LMDB.name())
+                .nameSpace("ce46817e-13bf-11e9-8d62-4a00003fc630")
+                .tableName("*")
+                .build();
+
+        rollKvServiceClient.destroyAll(storeInfo);
+
+        LOGGER.info("done destroyAll");
     }
 
     @Test

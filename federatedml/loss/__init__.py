@@ -16,5 +16,18 @@
 
 from federatedml.loss.cross_entropy import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss.cross_entropy import SoftmaxCrossEntropyLoss
+from federatedml.loss.regression_loss import LeastSquaredErrorLoss
+from federatedml.loss.regression_loss import LeastAbsoluteErrorLoss
+from federatedml.loss.regression_loss import HuberLoss
+from federatedml.loss.regression_loss import FairLoss
+from federatedml.loss.regression_loss import LogCoshLoss
+from federatedml.loss.regression_loss import TweedieLoss
 
-__all__ = ["SigmoidBinaryCrossEntropyLoss", "SoftmaxCrossEntropyLoss"]
+__all__ = ["SigmoidBinaryCrossEntropyLoss",
+           "SoftmaxCrossEntropyLoss",
+           "LeastSquaredEroorLoss",
+           "LeastAbsoluteErrorLoss",
+           "HuberLoss",
+           "FairLoss",
+           "LogCoshLoss",
+           "TweedieLoss"]

@@ -14,8 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.param.param import LogisticParam, InitParam, DecisionTreeParam, DataIOParam, WorkFlowParam, \
+from federatedml.param.param import LogisticParam, InitParam, DecisionTreeParam, ObjectiveParam, DataIOParam, \
+    WorkFlowParam, FeatureBinningParam, FeatureSelectionParam, \
     EncryptParam, BoostingTreeParam, IntersectParam, EvaluateParam, PredictParam
 
-__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam",
-           "WorkFlowParam", "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam"]
+__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam", "ObjectiveParam",
+           "WorkFlowParam", "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam']

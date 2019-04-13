@@ -1,0 +1,12 @@
+syntax = "proto3";
+   
+message DataIOMeta {
+   string input_format = 1;
+   string delimitor = 2;
+   string data_type = 3;
+   bool with_label = 4;
+   int32 label_idx = 5;
+   string label_type = 6;
+   string output_format = 7;
+}
+

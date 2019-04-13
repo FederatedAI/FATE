@@ -74,8 +74,8 @@ public class RollModelFactory {
     public <R, E> BaseProcessServiceProcessor<R, E> createBaseProcessServiceProcessor(Class<? extends BaseProcessServiceProcessor<R, E>> concreteProcessServiceProcessorClass,
                                                                                       EggProcessServiceClient eggProcessServiceClient,
                                                                                       R requestInstance,
-                                                                                      Node targetNode) {
-        return applicationContext.getBean(concreteProcessServiceProcessorClass, eggProcessServiceClient, requestInstance, targetNode);
+                                                                                      BasicMeta.Endpoint processorEndpoint) {
+        return applicationContext.getBean(concreteProcessServiceProcessorClass, eggProcessServiceClient, requestInstance, processorEndpoint);
     }
 
     public ProcessServiceStorageLocatorResultHandler createProcessServiceStorageLocatorResultHandler() {

@@ -31,6 +31,7 @@ import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
+import com.webank.ai.fate.eggroll.roll.helper.NodeHelper;
 import com.webank.ai.fate.eggroll.roll.service.async.storage.PutAllProcessor;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.strategy.DispatchPolicy;
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeoutException;
 public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestStreamObserver<Kv.Operand, Kv.Empty> {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Object fragmentOrderToOperandBrokerLock = new Object();
+
     @Autowired
     private ThreadPoolTaskExecutor asyncThreadPool;
     @Autowired
@@ -69,6 +71,9 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     private RollModelFactory rollModelFactory;
     @Autowired
     private RollServerUtils rollServerUtils;
+    @Autowired
+    private NodeHelper nodeHelper;
+
     private Map<Long, Node> nodeIdToNodes;
     private Map<Integer, Node> fragmentOrderToNodes;
     private Map<Integer, OperandBroker> fragmentOrderToOperandBroker;
@@ -84,8 +89,7 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     public RollKvPutAllServerRequestStreamObserver(StreamObserver<Kv.Empty> callerNotifier, StoreInfo storeInfo) {
         super(callerNotifier);
         this.storeInfo = storeInfo;
-        this.fragmentOrderToNodes = Maps.newConcurrentMap();
-        this.nodeIdToNodes = Maps.newConcurrentMap();
+
         this.fragmentOrderToOperandBroker = Maps.newConcurrentMap();
 
         this.resultContainer = Collections.synchronizedList(Lists.newLinkedList());
@@ -99,15 +103,12 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     public void init() {
         storageMetaClient.init(rollServerUtils.getMetaServiceEndpoint());
         Dtable dtable = storageMetaClient.getTable(storeInfo);
-        List<Node> nodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
-        for (Node node : nodes) {
-            nodeIdToNodes.put(node.getNodeId(), node);
-        }
 
-        List<Fragment> fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
-        for (Fragment fragment : fragments) {
-            fragmentOrderToNodes.put(fragment.getFragmentOrder(), nodeIdToNodes.get(fragment.getNodeId()));
-        }
+        long tableId = dtable.getTableId();
+
+        nodeIdToNodes = nodeHelper.getNodeIdToStorageNodesOfTable(tableId);
+        List<Fragment> fragments = nodeHelper.getFragmentListOfTable(tableId);
+        fragmentOrderToNodes = nodeHelper.getFragmentOrderToStorageNodesOfTable(tableId);
 
         tableFragmentCount = fragments.size();
         eggPutAllFinishLatch = new CountDownLatch(fragments.size());

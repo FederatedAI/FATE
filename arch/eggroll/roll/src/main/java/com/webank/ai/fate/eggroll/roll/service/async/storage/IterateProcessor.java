@@ -28,6 +28,7 @@ import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.StorageServiceClient;
+import com.webank.ai.fate.eggroll.roll.helper.NodeHelper;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.util.RollServerUtils;
 import org.apache.logging.log4j.LogManager;
@@ -37,10 +38,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.concurrent.GuardedBy;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,26 +47,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @Scope("prototype")
 public class IterateProcessor implements Callable<OperandBroker> {
-    @Autowired
-    private StorageServiceClient storageServiceClient;
     private static final long DEFAULT_MIN_CHUNK_SIZE = 4 << 20;
     private static final long DEFAULT_MAX_CHUNK_SIZE = 32 << 20;
     private static final Logger LOGGER = LogManager.getLogger();
+
     private final OperandBroker result;
     private final Kv.Range range;
     private final StoreInfo storeInfo;
+
+    @Autowired
+    private StorageServiceClient storageServiceClient;
     @Autowired
     private StorageMetaClient storageMetaClient;
     @Autowired
     private RollServerUtils rollServerUtils;
+    @Autowired
+    private NodeHelper nodeHelper;
+
+    private final Object eggBrokersLock;
+    private final Object isEggFinishedLock;
+    private final Object eggRangesLock;
+
     private int[] loserTree;
-    private ArrayList<OperandBroker> eggBrokers;
-    private ArrayList<Boolean> isEggFinished;
+    private @GuardedBy("eggBrokersLock") ArrayList<OperandBroker> eggBrokers;
+    private @GuardedBy("isEggFinishedLock") ArrayList<Boolean> isEggFinished;
+    private @GuardedBy("eggRangesLock") ArrayList<Kv.Range> eggRanges;
     private AtomicInteger eggFinishedCount;
     private List<Fragment> fragments;
     private Map<Long, Node> nodeIdToNodes;
     private ArrayList<StoreInfo> storeInfosWithFragments;
-    private ArrayList<Kv.Range> eggRanges;
     private int totalFragments;
     private Dtable dtable;
     private long curChunkSize;
@@ -78,7 +86,6 @@ public class IterateProcessor implements Callable<OperandBroker> {
         this.storeInfo = storeInfo;
         this.result = operandBroker;
 
-        this.nodeIdToNodes = Maps.newConcurrentMap();
         this.eggFinishedCount = new AtomicInteger(0);
 
         this.curChunkSize = 0;
@@ -86,6 +93,10 @@ public class IterateProcessor implements Callable<OperandBroker> {
         if (minChunkSize < 0) {
            minChunkSize = Long.MAX_VALUE;
         }
+
+        this.eggBrokersLock = new Object();
+        this.isEggFinishedLock = new Object();
+        this.eggRangesLock = new Object();
     }
 
     @PostConstruct
@@ -96,12 +107,12 @@ public class IterateProcessor implements Callable<OperandBroker> {
     @Override
     public OperandBroker call() throws Exception {
         dtable = storageMetaClient.getTable(storeInfo);
-        List<Node> nodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
-        for (Node node : nodes) {
-            nodeIdToNodes.put(node.getNodeId(), node);
-        }
 
-        fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
+        long tableId = dtable.getTableId();
+
+        nodeIdToNodes = nodeHelper.getNodeIdToStorageNodesOfTable(tableId);
+
+        fragments = nodeHelper.getFragmentListOfTable(tableId);
         totalFragments = fragments.size();
 
         if (minChunkSize == 0) {
@@ -112,9 +123,17 @@ public class IterateProcessor implements Callable<OperandBroker> {
         LOGGER.info("[ROLL][ITERATOR][PROCESSOR] final minChunkSize: {}", minChunkSize);
 
         storeInfosWithFragments = Lists.newArrayListWithCapacity(totalFragments);
-        isEggFinished = Lists.newArrayListWithCapacity(totalFragments);
-        eggBrokers = Lists.newArrayListWithCapacity(totalFragments);
-        eggRanges = Lists.newArrayListWithCapacity(totalFragments);
+        synchronized (isEggFinishedLock) {
+            isEggFinished = Lists.newArrayListWithCapacity(totalFragments);
+        }
+
+        synchronized (eggBrokersLock) {
+            eggBrokers = Lists.newArrayListWithCapacity(totalFragments);
+        }
+
+        synchronized (eggRangesLock) {
+            eggRanges = Lists.newArrayListWithCapacity(totalFragments);
+        }
 
         // construct and init loser tree
         loserTree = new int[totalFragments];
@@ -122,10 +141,19 @@ public class IterateProcessor implements Callable<OperandBroker> {
 
         // data preparation
         for (int i = 0; i < totalFragments; ++i) {
-            isEggFinished.add(false);
+            synchronized (isEggFinishedLock) {
+                isEggFinished.add(false);
+            }
+
             storeInfosWithFragments.add(null);
-            eggBrokers.add(null);
-            eggRanges.add(range);
+
+            synchronized (eggBrokersLock) {
+                eggBrokers.add(null);
+            }
+
+            synchronized (eggRangesLock) {
+                eggRanges.add(range);
+            }
 
             refillBroker(i);
         }
@@ -149,8 +177,9 @@ public class IterateProcessor implements Callable<OperandBroker> {
 
         while (curChunkSize < minChunkSize && eggFinishedCount.get() < totalFragments) {
             curSortedIndex = loserTree[0];
-            curSortedBroker = eggBrokers.get(curSortedIndex);
-
+            synchronized (eggBrokersLock) {
+                curSortedBroker = eggBrokers.get(curSortedIndex);
+            }
             while (!curSortedBroker.isReady()) {
                 curSortedBroker.awaitLatch(1, TimeUnit.SECONDS);
                 LOGGER.info("[ROLL][KV][ITERATE] waiting to get. size: {}, storeInfo: {}", curSortedBroker.getQueueSize(), storeInfo);
@@ -186,8 +215,10 @@ public class IterateProcessor implements Callable<OperandBroker> {
 
             // if closable after get, then update range info
             if (curSortedBroker.isClosable()) {
-                Kv.Range lastRange = eggRanges.get(curSortedIndex);
-                eggRanges.set(curSortedIndex, lastRange.toBuilder().setStart(curSortedOperand.getKey()).build());
+                synchronized (eggRangesLock) {
+                    Kv.Range lastRange = eggRanges.get(curSortedIndex);
+                    eggRanges.set(curSortedIndex, lastRange.toBuilder().setStart(curSortedOperand.getKey()).build());
+                }
             }
             adjust(curSortedIndex);
         }
@@ -198,8 +229,10 @@ public class IterateProcessor implements Callable<OperandBroker> {
     }
 
     private OperandBroker refillBroker(int fragmentOrder) {
-        if (isEggFinished.get(fragmentOrder)) {
-            return null;
+        synchronized (isEggFinishedLock) {
+            if (isEggFinished.get(fragmentOrder)) {
+                return null;
+            }
         }
         Preconditions.checkArgument(fragmentOrder >= 0 && fragmentOrder < totalFragments,
                 "fragmentOrder must >= 0 and < totalFragments");
@@ -225,8 +258,10 @@ public class IterateProcessor implements Callable<OperandBroker> {
         if (fragmentToNode == null) {
             throw new IllegalStateException("fragmentToNode is null. should not get here. fragment: " + storeInfoWithFragment);
         }
-
-        Kv.Range range = eggRanges.get(fragmentOrder);
+        Kv.Range range = null;
+        synchronized (eggRangesLock) {
+             range = eggRanges.get(fragmentOrder);
+        }
         OperandBroker result = storageServiceClient.iterateStreaming(range, storeInfoWithFragment, fragmentToNode);
 
         try {
@@ -234,7 +269,7 @@ public class IterateProcessor implements Callable<OperandBroker> {
             while (!awaitResult) {
                 LOGGER.info("[ROLL][KV][ITERATE][PROCESSOR] waiting latch for: {}", storeInfoWithFragment);
 
-                awaitResult = result.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, TimeUnit.SECONDS);
+                awaitResult = result.awaitLatch(3, TimeUnit.SECONDS);
 
                 if (result.isReady() || result.isClosable()) {
                     LOGGER.info("[ROLL][KV][ITERATE][PROCESSOR] broker: {}, closable: {}, ready: {}",
@@ -249,15 +284,19 @@ public class IterateProcessor implements Callable<OperandBroker> {
         LOGGER.info("[ROLL][KV][ITERATE][PROCESSOR] data arrived. size: {}, fragment order: {}, node address: {}:{}, range start: {}, range end: {}",
                 result.getQueueSize(), fragmentOrder, fragmentToNode.getIp(), fragmentToNode.getPort(), range.getStart().toStringUtf8(), range.getEnd().toStringUtf8());
         if (result.isClosable()) {
-            isEggFinished.set(fragmentOrder, true);
+            synchronized (isEggFinishedLock) {
+                isEggFinished.set(fragmentOrder, true);
+            }
             eggFinishedCount.incrementAndGet();
             result = null;
         }
 
-        OperandBroker oldBroker = eggBrokers.set(fragmentOrder, result);
-        if (oldBroker != null && !oldBroker.isClosable()) {
-            LOGGER.warn("[ROLL][KV][ITERATE] removing old broker which is not closable yet. tableId: {}, fragmentOrder: {}, nodeId: {}, node address: {}:{}",
-                    dtable.getTableId(), fragmentOrder, fragmentToNode.getNodeId(), fragmentToNode.getIp(), fragmentToNode.getPort());
+        synchronized (eggBrokersLock) {
+            OperandBroker oldBroker = eggBrokers.set(fragmentOrder, result);
+            if (oldBroker != null && !oldBroker.isClosable()) {
+                LOGGER.warn("[ROLL][KV][ITERATE] removing old broker which is not closable yet. tableId: {}, fragmentOrder: {}, nodeId: {}, node address: {}:{}",
+                        dtable.getTableId(), fragmentOrder, fragmentToNode.getNodeId(), fragmentToNode.getIp(), fragmentToNode.getPort());
+            }
         }
 
         return result;
@@ -307,7 +346,12 @@ public class IterateProcessor implements Callable<OperandBroker> {
         }
 
         while (result == null) {
-            OperandBroker curBroker = eggBrokers.get(index);
+            OperandBroker curBroker = null;
+
+            synchronized (eggBrokersLock) {
+                curBroker = eggBrokers.get(index);
+            }
+
             if (curBroker == null || curBroker.isClosable()) {
                 curBroker = refillBroker(index);
                 if (curBroker == null) {

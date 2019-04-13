@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-modules=(federation meta-service roll proxy python storage-service)
+modules=(federation meta-service egg roll proxy storage-service)
 
 cwd=`pwd`
 
@@ -29,7 +29,7 @@ all() {
         echo "[INFO] processing: ${module}"
         echo "--------------"
         cd ${module}
-        sh service.sh $2
+        bash service.sh $2
         cd ${cwd}
         echo "=================="
     done
@@ -47,11 +47,11 @@ current() {
         echo "----------------"
         cd ${module}
         echo ""
-        `sh service.sh status >> /dev/null`
+        `bash service.sh status >> /dev/null`
 	state=$?
         if [[ ${state} -eq 1 ]]; then
             echo "[INFO] processing ${module} ${action}"
-            sh service.sh ${action}
+            bash service.sh ${action}
         else
             echo "[INFO] ${module} not running"
         fi
@@ -72,7 +72,7 @@ multiple() {
         echo "[INFO] processing: ${module} ${action}"
         echo "=================="
         cd ${module}
-        sh service.sh ${action}
+        bash service.sh ${action}
         cd -
         echo "--------------"
     done
