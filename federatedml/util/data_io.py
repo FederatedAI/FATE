@@ -28,6 +28,8 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import consts
 from federatedml.util.param_checker import DataIOParamChecker
+from federatedml.util import abnormal_detection
+from federatedml.statistic import data_overview
 from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
@@ -76,6 +78,9 @@ class DenseFeatureReader(object):
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read dense data and change data to instance")
+        
+        abnormal_detection.empty_table_detection(input_data)
+        
         input_data_features = None
         input_data_labels = None
 
@@ -83,13 +88,17 @@ class DenseFeatureReader(object):
             if type(self.label_idx).__name__ != "int":
                 raise ValueError("label index should be integer")
 
+            data_shape = data_overview.get_data_shape(input_data)
+            if not data_shape or self.label_idx >= data_shape:
+                raise ValueError("input data's value is empty, it does not contain a label")
+
             input_data_features = input_data.mapValues(
-                lambda value: value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
+                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
                                                                                  self.label_idx + 1:])
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
         else:
-            input_data_features = input_data.mapValues(lambda value: value.split(self.delimitor, -1))
+            input_data_features = input_data.mapValues(lambda value: [] if not value else value.split(self.delimitor, -1))
 
         if mode == "fit":
             data_instance = self.fit(input_data_features, input_data_labels, table_name, namespace)
@@ -97,6 +106,7 @@ class DenseFeatureReader(object):
             data_instance = self.transform(input_data_features, input_data_labels)
 
         set_schema(data_instance, self.header)
+
         return data_instance
 
     def fit(self, input_data_features, input_data_labels, table_name, namespace):
@@ -318,6 +328,11 @@ class SparseFeatureReader(object):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read sparse data and change data to instance")
 
+        abnormal_detection.empty_table_detection(input_data)
+        
+        if not data_overview.get_data_shape(input_data):
+            raise ValueError("input data's value is empty, it does not contain a label")
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -474,6 +489,8 @@ class SparseTagReader(object):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read sparse data and change data to instance")
 
+        abnormal_detection.empty_table_detection(input_data)
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
