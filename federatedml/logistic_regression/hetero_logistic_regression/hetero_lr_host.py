@@ -86,8 +86,6 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_lr host")
-        self._abnormal_detection(data_instances)
-
         self.header = data_instances.schema.get("header")
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                     tag=self.transfer_variable.generate_transferid(
@@ -117,10 +115,13 @@ class HeteroLRHost(BaseLogisticRegression):
 
         is_stopped = False
         self.n_iter_ = 0
+        index_data_inst_map = {}
+
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
             batch_index = 0
             while batch_index < self.batch_num:
+                LOGGER.info("batch:{}".format(batch_index))
                 # set batch_data
                 if len(self.batch_index_list) < self.batch_num:
                     batch_data_index = federation.get(name=self.transfer_variable.batch_data_index.name,
@@ -129,13 +130,25 @@ class HeteroLRHost(BaseLogisticRegression):
                                                           batch_index),
                                                       idx=0)
                     LOGGER.info("Get batch_index from Guest")
+
+                    batch_size = batch_data_index.count()
+                    if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
+                        raise ValueError(
+                            "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
+                                batch_size))
+
                     self.batch_index_list.append(batch_data_index)
                 else:
                     batch_data_index = self.batch_index_list[batch_index]
 
                 # Get mini-batch train data
-                batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+                if len(index_data_inst_map) < self.batch_num:
+                    batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+                    index_data_inst_map[batch_index] = batch_data_inst
+                else:
+                    batch_data_inst = index_data_inst_map[batch_index]
 
+                LOGGER.info("batch_data_inst size:{}".format(batch_data_inst.count()))
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data_inst)
 
@@ -200,19 +213,20 @@ class HeteroLRHost(BaseLogisticRegression):
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
                 # is converge
-                is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                            tag=self.transfer_variable.generate_transferid(
-                                                self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                            idx=0)
-                LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
                 batch_index += 1
-                if is_stopped:
-                    LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
-                    break
+                # if is_stopped:
+                #    break
+
+            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
+                                        tag=self.transfer_variable.generate_transferid(
+                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
+                                        idx=0)
+            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
             self.n_iter_ += 1
             if is_stopped:
+                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
                 break
 
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))

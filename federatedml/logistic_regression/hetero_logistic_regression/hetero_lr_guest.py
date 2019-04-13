@@ -115,8 +115,13 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         LOGGER.info("Generate mini-batch from input data")
         mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)
-        batch_info = {"batch_size": self.batch_size, "batch_num": mini_batch_obj.batch_nums}
-        LOGGER.info("batch_info:" + str(batch_info))
+        batch_num = mini_batch_obj.batch_nums
+        if self.batch_size == -1:
+            LOGGER.info("batch size is -1, set it to the number of data in data_instances")
+            self.batch_size = data_instances.count()
+
+        batch_info = {"batch_size": self.batch_size, "batch_num": batch_num}
+        LOGGER.info("batch_info:{}".format(batch_info))
         federation.remote(batch_info,
                           name=self.transfer_variable.batch_info.name,
                           tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
@@ -143,10 +148,13 @@ class HeteroLRGuest(BaseLogisticRegression):
         is_stopped = False
         is_send_all_batch_index = False
         self.n_iter_ = 0
+        index_data_inst_map = {}
+
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = mini_batch_obj.mini_batch_index_generator(data_inst=data_instances,
-                                                                             batch_size=self.batch_size)
+            # each iter will get the same batach_data_generator
+            batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
+
             batch_index = 0
             for batch_data_index in batch_data_generator:
                 LOGGER.info("batch:{}".format(batch_index))
@@ -164,7 +172,11 @@ class HeteroLRGuest(BaseLogisticRegression):
                         is_send_all_batch_index = True
 
                 # Get mini-batch train data
-                batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
+                if len(index_data_inst_map) < batch_num:
+                    batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
+                    index_data_inst_map[batch_index] = batch_data_inst
+                else:
+                    batch_data_inst = index_data_inst_map[batch_index]
 
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data_inst)
@@ -249,19 +261,19 @@ class HeteroLRGuest(BaseLogisticRegression):
                 LOGGER.info("Remote loss to arbiter")
 
                 # is converge of loss in arbiter
-                is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                            tag=self.transfer_variable.generate_transferid(
-                                                self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                            idx=0)
-                LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
                 batch_index += 1
-                if is_stopped:
-                    LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
-                    break
+
+            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
+                                        tag=self.transfer_variable.generate_transferid(
+                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
+                                        idx=0)
+            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
             self.n_iter_ += 1
             if is_stopped:
+                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
                 break
+
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param):
