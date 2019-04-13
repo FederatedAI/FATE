@@ -21,9 +21,9 @@
 #
 ################################################################################
 from arch.api.utils import log_utils
+from federatedml.param import param
 from federatedml.util import consts
 from federatedml.util.param_extract import ParamExtract
-from federatedml.param import param
 
 LOGGER = log_utils.getLogger()
 
@@ -240,7 +240,7 @@ class BoostingTreeParamChecker(object):
                 boost_param.num_trees))
 
         if type(boost_param.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
-                boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
+                        boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
@@ -571,7 +571,10 @@ class LogisticParamChecker(object):
             raise ValueError(
                 "logistic_param's batch_size {} not supported, should be int type".format(logistic_param.batch_size))
         if logistic_param.batch_size != -1:
-            check_positive_integer(logistic_param.batch_size, descr)
+            if type(logistic_param.batch_size).__name__ not in ["int", "long"] \
+                    or logistic_param.batch_size < consts.MIN_BATCH_SIZE:
+                raise ValueError(descr + " {} not supported, should be larger than 10 or "
+                                         "-1 represent for all data".format(logistic_param.batch_size))
 
         if type(logistic_param.learning_rate).__name__ != "float":
             raise ValueError(

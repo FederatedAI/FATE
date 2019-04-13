@@ -30,7 +30,6 @@ from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.param.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
-import time
 
 LOGGER = log_utils.getLogger()
 
@@ -67,10 +66,8 @@ class HomoLRHost(BaseLogisticRegression):
         # self.evaluator = Evaluation(classi_type=consts.BINARY)
         self.classes_ = [0, 1]
         self.has_sychronized_encryption = False
-        self.communication_time = 0
 
     def fit(self, data_instances):
-        start_time = time.time()
         self._abnormal_detection(data_instances)
         self.__init_parameters(data_instances)
 
@@ -88,11 +85,8 @@ class HomoLRHost(BaseLogisticRegression):
                                       coef=self.coef_,
                                       intercept=self.intercept_,
                                       fit_intercept=self.fit_intercept)
-                compute_time = time.time()
 
                 grad_loss = batch_data.mapPartitions(f)
-                end_compute_time = time.time()
-                LOGGER.debug("[compute] compute_gradient time: {}".format(end_compute_time - compute_time))
 
                 n = grad_loss.count()
                 if not self.use_encrypt:
@@ -120,70 +114,50 @@ class HomoLRHost(BaseLogisticRegression):
                     to_encrypt_model_id = self.transfer_variable.generate_transferid(
                         self.transfer_variable.to_encrypt_model, iter_num, batch_num
                     )
-                    trans_time = time.time()
 
                     federation.remote(w,
                                       name=self.transfer_variable.to_encrypt_model.name,
                                       tag=to_encrypt_model_id,
                                       role=consts.ARBITER,
                                       idx=0)
-                    end_trans_time = time.time()
-                    self.communication_time += (end_trans_time - trans_time)
-                    LOGGER.debug("[federation] Send re-encrypt data time: {}".format(end_trans_time - trans_time))
 
                     re_encrypted_model_id = self.transfer_variable.generate_transferid(
                         self.transfer_variable.re_encrypted_model, iter_num, batch_num
                     )
                     LOGGER.debug("re_encrypted_model_id: {}".format(re_encrypted_model_id))
-                    trans_time = time.time()
                     w = federation.get(name=self.transfer_variable.re_encrypted_model.name,
                                        tag=re_encrypted_model_id,
                                        idx=0)
-                    end_trans_time = time.time()
-                    self.communication_time += (end_trans_time - trans_time)
-                    LOGGER.debug("[federation] Get re-encrypt data time: {}".format(end_trans_time - trans_time))
 
                     w = np.array(w)
                     self.set_coef_(w)
 
             model_transfer_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.host_model, iter_num)
-            trans_time = time.time()
             federation.remote(w,
                               name=self.transfer_variable.host_model.name,
                               tag=model_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
-            end_trans_time = time.time()
-            self.communication_time += (end_trans_time - trans_time)
-            LOGGER.debug("[federation] Send host_model time: {}".format(end_trans_time - trans_time))
 
             if not self.use_encrypt:
                 loss_transfer_id = self.transfer_variable.generate_transferid(
                     self.transfer_variable.host_loss, iter_num)
-                trans_time = time.time()
 
                 federation.remote(total_loss,
                                   name=self.transfer_variable.host_loss.name,
                                   tag=loss_transfer_id,
                                   role=consts.ARBITER,
                                   idx=0)
-                end_trans_time = time.time()
-                self.communication_time += (end_trans_time - trans_time)
-                LOGGER.debug("[federation] Send loss time: {}".format(end_trans_time - trans_time))
 
             LOGGER.debug("model and loss sent")
 
             final_model_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.final_model, iter_num)
 
-            trans_time = time.time()
             w = federation.get(name=self.transfer_variable.final_model.name,
                                tag=final_model_id,
                                idx=0)
-            end_trans_time = time.time()
-            self.communication_time += (end_trans_time - trans_time)
-            LOGGER.debug("[federation] Get final_model time: {}".format(end_trans_time - trans_time))
 
             w = np.array(w)
             # LOGGER.debug("Recevide model from arbiter, model: {}".format(w))
@@ -191,14 +165,10 @@ class HomoLRHost(BaseLogisticRegression):
 
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag, iter_num)
-            trans_time = time.time()
 
             converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
                                            tag=converge_flag_id,
                                            idx=0)
-            end_trans_time = time.time()
-            self.communication_time += (end_trans_time - trans_time)
-            LOGGER.debug("[federation] Get converge_flag time: {}".format(end_trans_time - trans_time))
 
             self.n_iter_ = iter_num
             LOGGER.debug("converge_flag: {}".format(converge_flag))
@@ -206,27 +176,17 @@ class HomoLRHost(BaseLogisticRegression):
                 break
                 # self.save_model()
 
-        end_time = time.time()
-        total_time = end_time - start_time
-        compute_time = total_time - self.communication_time
-        LOGGER.debug("[federation] Total traning time: {}, compute_time: {}".format(total_time, compute_time))
-
-
     def __init_parameters(self, data_instances):
 
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.host_party_weight
         )
         # LOGGER.debug("party_weight_id: {}".format(party_weight_id))
-        trans_time = time.time()
         federation.remote(self.party_weight,
                           name=self.transfer_variable.host_party_weight.name,
                           tag=party_weight_id,
                           role=consts.ARBITER,
                           idx=0)
-        end_trans_time = time.time()
-        self.communication_time += (end_trans_time - trans_time)
-        LOGGER.debug("[federation] Send party weight time: {}".format(end_trans_time - trans_time))
 
         self.__synchronize_encryption()
 

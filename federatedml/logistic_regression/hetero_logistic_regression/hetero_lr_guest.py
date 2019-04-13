@@ -145,8 +145,7 @@ class HeteroLRGuest(BaseLogisticRegression):
         self.n_iter_ = 0
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = mini_batch_obj.mini_batch_index_generator(data_inst=data_instances,
-                                                                             batch_size=self.batch_size)
+            batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
             batch_index = 0
             for batch_data_index in batch_data_generator:
                 LOGGER.info("batch:{}".format(batch_index))

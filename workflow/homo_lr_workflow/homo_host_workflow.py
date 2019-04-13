@@ -37,6 +37,7 @@ class HostWorkFlow(HomoBaseWorkFlow):
 
     def evaluate(self, eval_data):
         eval_data_local = eval_data.collect()
+        LOGGER.debug("eval_data_count: {}, eval_data_collect_length: {}".format(eval_data.count(), len(eval_data_local)))
         labels = []
         # pred_prob = []
         pred_labels = []
