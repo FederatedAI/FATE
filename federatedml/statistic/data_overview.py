@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import types
+from federatedml.util import consts
 
 
 def get_features_shape(data_instances):
@@ -39,7 +40,10 @@ def get_features_shape(data_instances):
         return None
 
     if one_feature is not None:
-        return one_feature[1].features.shape[0]
+        if type(one_feature[1].features).__name__ == consts.SPARSE_VECTOR:
+            return one_feature[1].features.get_shape()
+        else:
+            return one_feature[1].features.shape[0]
     else:
         return None
 

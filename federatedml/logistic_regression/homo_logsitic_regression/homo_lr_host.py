@@ -88,7 +88,8 @@ class HomoLRHost(BaseLogisticRegression):
 
                 grad_loss = batch_data.mapPartitions(f)
 
-                n = grad_loss.count()
+                # n = grad_loss.count()
+                n = batch_data.count()
                 if not self.use_encrypt:
                     grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
                     grad = np.array(grad)

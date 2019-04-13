@@ -73,13 +73,13 @@ class HomoLRGuest(BaseLogisticRegression):
             batch_num = 0
 
             for batch_data in batch_data_generator:
+                n = batch_data.count()
+
                 f = functools.partial(self.gradient_operator.compute,
                                       coef=self.coef_,
                                       intercept=self.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
-
-                n = grad_loss.count()
 
                 grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
 
