@@ -31,6 +31,7 @@ from federatedml.optim.gradient import LogisticGradient
 from federatedml.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -161,7 +162,7 @@ class HomoLRGuest(BaseLogisticRegression):
         LOGGER.info("Finish initialize parameters")
 
     def __init_model(self, data_instances):
-        model_shape = self.get_features_shape(data_instances)
+        model_shape = data_overview.get_features_shape(data_instances)
 
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 

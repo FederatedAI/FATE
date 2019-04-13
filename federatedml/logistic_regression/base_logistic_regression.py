@@ -81,44 +81,6 @@ class BaseLogisticRegression(object):
     def get_data_shape(self):
         return self.data_shape
 
-    # def load_model(self, model_table, model_namespace):
-    #
-    #     LOGGER.debug("loading model, table: {}, namespace: {}".format(
-    #         model_table, model_namespace))
-    #     model = eggroll.table(model_table, model_namespace)
-    #     model_local = model.collect()
-    #     try:
-    #         model_meta = model_local.__next__()[1]
-    #     except StopIteration:
-    #         LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-    #             model_namespace, model_table
-    #         ))
-    #         return
-    #
-    #     for meta_name, meta_value in model_meta.items():
-    #         if not hasattr(self, meta_name):
-    #             LOGGER.warning("Cannot find meta info {} in this model".format(meta_name))
-    #             continue
-    #         setattr(self, meta_name, meta_value)
-    #
-    # def save_model(self, model_table, model_namespace):
-    #     meta_information = self.model_meta.__dict__
-    #     save_dict = {}
-    #     for meta_info in meta_information:
-    #         if not hasattr(self, meta_info):
-    #             LOGGER.warning("Cannot find meta info {} in this model".format(meta_info))
-    #             continue
-    #         save_dict[meta_info] = getattr(self, meta_info)
-    #     LOGGER.debug("in save: {}".format(save_dict))
-    #     meta_table = eggroll.parallelize([(1, save_dict)],
-    #                                      include_key=True,
-    #                                      name=model_table,
-    #                                      namespace=model_namespace,
-    #                                      error_if_exist=False,
-    #                                      persistent=True
-    #                                      )
-    #     return meta_table
-
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
 

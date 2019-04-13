@@ -28,6 +28,7 @@ from federatedml.optim import activation
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.param.param import LogisticParam
+from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
 
@@ -269,7 +270,7 @@ class HomoLRHost(BaseLogisticRegression):
         return predict_result_table
 
     def __init_model(self, data_instances):
-        model_shape = self.get_features_shape(data_instances)
+        model_shape = data_overview.get_features_shape(data_instances)
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         w = self.encrypt_operator.encrypt_list(w)
