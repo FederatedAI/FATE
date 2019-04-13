@@ -130,7 +130,6 @@ class DenseFeatureReader(object):
         if self.missing_fill:
             from federatedml.feature.imputer import Imputer
             imputer_processor = Imputer(self.missing_impute)
-            LOGGER.info("missing_replace_method is {}".format(self.missing_fill_method))
             if mode == "fit":
                 input_data_features, self.default_value = imputer_processor.fit(input_data_features,
                                                                                 replace_method=self.missing_fill_method,
@@ -160,7 +159,6 @@ class DenseFeatureReader(object):
                 if self.outlier_impute is None:
                     self.outlier_impute = imputer_processor.get_imputer_value_list()
             else:
-                LOGGER.info("replace method is {}".format(self.outlier_replace_method))
                 input_data_features = imputer_processor.transform(input_data_features,
                                                                   replace_method=self.outlier_replace_method,
                                                                   transform_value=self.outlier_replace_value)
@@ -470,7 +468,6 @@ class SparseTagReader(object):
 
     def agg_tag(self, kvs, delimitor=' '):
         tags_set = set()
-        LOGGER.info("delemitor is {}".format(self.delimitor))
         for key, value in kvs:
             if self.with_label:
                 cols = value.split(delimitor, -1)[1 : ]
@@ -479,7 +476,6 @@ class SparseTagReader(object):
 
             tags_set |= set(cols)
 
-        LOGGER.info("tags set is {}".format(tags_set))
         return tags_set
 
     def generate_header(self, tags):
@@ -506,9 +502,6 @@ class SparseTagReader(object):
         for _, _tags_set in tags_set_list:
             tags_set |= _tags_set
         tags = list(tags_set)
-
-        if len(tags) == 0:
-            raise ValueError("no tags in input data, please check!")
 
         tags = sorted(tags)
         tags_dict = dict(zip(tags, range(len(tags))))
@@ -624,7 +617,6 @@ def get_one_line(data_instance):
 
 
 def set_schema(data_instance, header):
-    LOGGER.info("data_instance's schema is {}".format(data_instance.schema))
     data_instance.schema = {"header": header}
 
 
