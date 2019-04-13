@@ -15,9 +15,12 @@
 #
 from arch.api.utils import file_utils
 import os
+import uuid
 from flask import jsonify
-from arch.task_manager.db.models import DB, JobInfo, JobQueue
-from arch.task_manager.settings import logger, PARTY_ID
+from arch.task_manager.db.models import JobInfo, JobQueue
+from arch.task_manager.settings import logger, PARTY_ID, WORK_MODE
+import errno
+from arch.api import eggroll
 import datetime
 import json
 import threading
@@ -54,23 +57,38 @@ def get_json_result(status=0, msg='success'):
     return jsonify({"status": status, "msg": msg})
 
 
-def save_job_info(job_id, **kwargs):
-    job_info = JobInfo()
+def save_job_info(job_id, my_role, my_party_id, **kwargs):
+    jobs = JobInfo.select().where(JobInfo.job_id == job_id, JobInfo.my_role == my_role, JobInfo.my_party_id == my_party_id)
+    is_insert = True
+    if jobs:
+        job_info = jobs[0]
+        is_insert = False
+    else:
+        job_info = JobInfo()
     job_info.job_id = job_id
+    job_info.my_role = my_role
+    job_info.my_party_id = my_party_id
     job_info.create_date = datetime.datetime.now()
     for k, v in kwargs.items():
         setattr(job_info, k, v)
-    job_info.save(force_insert=True)
+    if is_insert:
+        job_info.save(force_insert=True)
+    else:
+        job_info.save()
+    return job_info
+
+
+def set_job_failed(job_id, my_role, my_party_id):
+    sql = JobInfo.update(status='failed').where(JobInfo.job_id == job_id,
+                                                JobInfo.my_role == my_role,
+                                                JobInfo.my_party_id == my_party_id,
+                                                JobInfo.status != 'success')
+    return sql.execute() > 0
 
 
 def query_job_by_id(job_id):
     jobs = JobInfo.select().where(JobInfo.job_id == job_id)
-    return [job.to_json() for job in jobs]
-
-
-def update_job_by_id(job_id, update_data):
-    sql = JobInfo.update(**update_data).where(JobInfo.job_id == job_id)
-    return sql.execute() > 0
+    return jobs
 
 
 def push_into_job_queue(job_id, config):
@@ -84,12 +102,28 @@ def push_into_job_queue(job_id, config):
 
 def get_job_from_queue(status, limit=1):
     wait_jobs = JobQueue.select().where(JobQueue.status == status).order_by(JobQueue.create_date.asc()).limit(limit)
-    return [job.to_json() for job in wait_jobs]
+    return wait_jobs
 
 
-def update_job_queue(job_id, update_data):
-    sql = JobQueue.update(**update_data).where(JobQueue.job_id == job_id)
-    return sql.execute() > 0
+def update_job_queue(job_id, my_role, my_party_id, **kwargs):
+    jobs = JobQueue.select().where(JobQueue.job_id == job_id, JobQueue.my_role == my_role, JobQueue.my_party_id == my_party_id)
+    is_insert = True
+    if jobs:
+        job_queue = jobs[0]
+        is_insert = False
+    else:
+        job_queue = JobQueue()
+        job_queue.create_date = datetime.datetime.now()
+    job_queue.job_id = job_id
+    job_queue.my_role = my_role
+    job_queue.my_party_id = my_party_id
+    for k, v in kwargs.items():
+        setattr(job_queue, k, v)
+    if is_insert:
+        job_queue.save(force_insert=True)
+    else:
+        job_queue.save()
+    return job_queue
 
 
 def pop_from_job_queue(job_id):
@@ -107,3 +141,37 @@ def job_queue_size():
 def running_job_amount():
     return JobQueue.select().where(JobQueue.status == "running").count()
 
+
+def is_job_initiator(initiator, my_party_id=PARTY_ID):
+    return int(initiator) == int(my_party_id)
+
+
+def clean_job(job_id):
+    eggroll.init(job_id=job_id, mode=WORK_MODE)
+    eggroll.cleanup('*', namespace=job_id, persistent=False)
+
+
+def gen_status_id():
+    return uuid.uuid1().hex
+
+
+def check_job_process(pid):
+    if pid < 0:
+        return False
+    if pid == 0:
+        raise ValueError('invalid PID 0')
+    try:
+        os.kill(pid, 0)
+    except OSError as err:
+        if err.errno == errno.ESRCH:
+            # ESRCH == No such process
+            return False
+        elif err.errno == errno.EPERM:
+            # EPERM clearly means there's a process to deny access to
+            return True
+        else:
+            # According to "man 2 kill" possible error values are
+            # (EINVAL, EPERM, ESRCH)
+            raise
+    else:
+        return True

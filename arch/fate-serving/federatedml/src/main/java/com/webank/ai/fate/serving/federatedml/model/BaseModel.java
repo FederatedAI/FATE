@@ -40,6 +40,7 @@ public abstract class BaseModel {
                         .setName("partnerPartyName")
                         .build());
         metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedPredict").build());
+        metaDataBuilder.setConf(Proxy.Conf.newBuilder().setOverallTimeout(60*1000));
         packetBuilder.setHeader(metaDataBuilder.build());
 
         ManagedChannel channel1 = ClientPool.getChannel(Configuration.getProperty("proxy"));
