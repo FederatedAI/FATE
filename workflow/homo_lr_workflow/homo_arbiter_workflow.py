@@ -47,7 +47,7 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
         LOGGER.info("No need to evaluate")
         pass
 
-    # @status_tracer_decorator.status_trace
+    @status_tracer_decorator.status_trace
     def run(self):
         LOGGER.debug("Enter arbiter run")
         self._init_argument()

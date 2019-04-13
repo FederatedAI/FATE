@@ -80,7 +80,7 @@ class TestHomoLRGradient(unittest.TestCase):
         # add jit in dot only: 7.616
         pass
 
-    @numba.jit
+    # @numba.jit
     def _test_compute(self, X, Y, coef, intercept, fit_intercept):
         batch_size = len(X)
         if batch_size == 0:
