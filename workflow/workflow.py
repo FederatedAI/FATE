@@ -33,7 +33,6 @@ from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
-from workflow import status_tracer_decorator
 from federatedml.feature.sampler import Sampler
 from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
@@ -50,6 +49,7 @@ from federatedml.util import param_checker
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.param_checker import AllChecker
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from workflow import status_tracer_decorator
 
 LOGGER = log_utils.getLogger()
 
@@ -153,7 +153,7 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                self.mode == consts.HOMO:
+                        self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
@@ -369,6 +369,7 @@ class WorkFlow(object):
         else:
             cv_results = {}
 
+        LOGGER.debug("cv_result: {}".format(cv_results))
         if self.role == consts.GUEST or (self.role == consts.HOST and self.mode == consts.HOMO):
             format_cv_result = {}
             for eval_result in cv_results:
@@ -508,7 +509,6 @@ class WorkFlow(object):
             # self.save_model()
             predict_result = self.model.predict(test_data, self.workflow_param.predict_param)
             flowid += 1
-
             eval_result = self.evaluate(predict_result)
             cv_result.append(eval_result)
             self._initialize_model(self.config_path)
@@ -576,7 +576,9 @@ class WorkFlow(object):
         labels = []
         pred_prob = []
         pred_labels = []
+        data_num = 0
         for data in eval_data_local:
+            data_num += 1
             labels.append(data[1][0])
             pred_prob.append(data[1][1])
             pred_labels.append(data[1][2])

@@ -571,7 +571,10 @@ class LogisticParamChecker(object):
             raise ValueError(
                 "logistic_param's batch_size {} not supported, should be int type".format(logistic_param.batch_size))
         if logistic_param.batch_size != -1:
-            check_positive_integer(logistic_param.batch_size, descr)
+            if type(logistic_param.batch_size).__name__ not in ["int", "long"] \
+                    or logistic_param.batch_size < consts.MIN_BATCH_SIZE:
+                raise ValueError(descr + " {} not supported, should be larger than 10 or "
+                                         "-1 represent for all data".format(logistic_param.batch_size))
 
         if type(logistic_param.learning_rate).__name__ != "float":
             raise ValueError(
