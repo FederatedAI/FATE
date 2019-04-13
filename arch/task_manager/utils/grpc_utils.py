@@ -19,7 +19,7 @@ from arch.api.proto import proxy_pb2, proxy_pb2_grpc
 from arch.api.proto import basic_meta_pb2
 import grpc
 from arch.task_manager.settings import ROLE, IP, GRPC_PORT, LOCAL_URL, PROXY_HOST, PROXY_PORT, \
-    PARTY_ID, HEADERS
+    PARTY_ID, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
 
 
 def get_proxy_data_channel():
@@ -28,13 +28,13 @@ def get_proxy_data_channel():
     return channel, stub
 
 
-def wrap_grpc_packet(_json_body, _method, _url, _dst_party_id=None, job_id=None):
+def wrap_grpc_packet(_json_body, _method, _url, _dst_party_id=None, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(PARTY_ID), role=ROLE, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=ROLE, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
     _command = proxy_pb2.Command(name=ROLE)
-    _conf = proxy_pb2.Conf(overallTimeout=60*1000)
+    _conf = proxy_pb2.Conf(overallTimeout=overall_timeout)
     _meta = proxy_pb2.Metadata(src=_src, dst=_dst, task=_task, command=_command, operator=_method, conf=_conf)
     _data = proxy_pb2.Data(key=_url, value=bytes(json.dumps(_json_body), 'utf-8'))
     return proxy_pb2.Packet(header=_meta, body=_data)

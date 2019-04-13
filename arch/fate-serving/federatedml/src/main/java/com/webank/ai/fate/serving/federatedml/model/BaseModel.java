@@ -8,9 +8,13 @@ import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import io.grpc.ManagedChannel;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class BaseModel {
@@ -20,7 +24,19 @@ public abstract class BaseModel {
     // public abstract HashMap<String, Object> predict(HashMap<String, Object> inputData);
     public abstract Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams);
 
-    protected Map<String, Object> getFederatedPredict(Map<String, Object> requestData) {
+    protected Map<String, Object> getFederatedPredict(Map<String, Object> predictParams) {
+        Map<String, Object> requestData = new HashMap<>();
+        requestData.put("sid", predictParams.get("sid"));
+        requestData.put("partnerPartyId", predictParams.get("partyId"));
+        requestData.put("partnerRole", predictParams.get("role"));
+        requestData.put("partnerModelName", predictParams.get("modelName"));
+        requestData.put("partnerModelNamespace", predictParams.get("modelNamespace"));
+        requestData.put("allParty", predictParams.get("allParty"));
+        //TODO:
+        Map<String, List<Integer>> allParty = (Map<String, List<Integer>>)predictParams.get("allParty");
+        requestData.put("role", "host");
+        requestData.put("partyId", allParty.get("host").get(0));
+
         Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
         packetBuilder.setBody(Proxy.Data.newBuilder()
                 .setValue(ByteString.copyFrom(ObjectTransform.bean2Json(requestData).getBytes()))
@@ -30,14 +46,14 @@ public abstract class BaseModel {
         Proxy.Topic.Builder topicBuilder = Proxy.Topic.newBuilder();
 
         metaDataBuilder.setSrc(
-                topicBuilder.setPartyId(requestData.get("partyId").toString()).
+                topicBuilder.setPartyId(requestData.get("partnerPartyId").toString()).
                         setRole("serving")
-                        .setName("partyName")
+                        .setName("partnerPartyName")
                         .build());
         metaDataBuilder.setDst(
-                topicBuilder.setPartyId(requestData.get("partnerPartyId").toString())
+                topicBuilder.setPartyId(requestData.get("partyId").toString())
                         .setRole("serving")
-                        .setName("partnerPartyName")
+                        .setName("partyName")
                         .build());
         metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedPredict").build());
         metaDataBuilder.setConf(Proxy.Conf.newBuilder().setOverallTimeout(60*1000));

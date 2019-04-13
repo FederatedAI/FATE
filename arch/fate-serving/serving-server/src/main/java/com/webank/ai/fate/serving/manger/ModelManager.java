@@ -16,16 +16,15 @@
 
 package com.webank.ai.fate.serving.manger;
 
-import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ModelManager {
@@ -39,100 +38,67 @@ public class ModelManager {
         partnerModelIndex = new ConcurrentHashMap<>();
     }
 
-    public static PipelineTask getModel(String name, String namespace){
-        return modelCache.get(ModelUtils.genModelKey(name, namespace));
-    }
-
-    public static PipelineTask getModelAcPartner(int partnerPartyId, String partnerModelName, String partnerModelNamespace){
-        ModelInfo modelInfo = partnerModelIndex.get(ModelUtils.genPartnerModelIndexKey(partnerPartyId, partnerModelName, partnerModelNamespace));
-        LOGGER.info(ModelUtils.genPartnerModelIndexKey(partnerPartyId, partnerModelName, partnerModelNamespace));
-        if (modelInfo == null){
-            return null;
-        }
-        return modelCache.get(ModelUtils.genModelKey(modelInfo.getName(), modelInfo.getNamespace()));
-    }
-
-    private static PipelineTask pushModelIntoPool(String name, String namespace) throws Exception{
-        PipelineTask model = ModelUtils.loadModel(name, namespace);
-        if (model == null){
-            return null;
-        }
-        modelCache.put(ModelUtils.genModelKey(name, namespace), model);
-        LOGGER.info("Load model(name: {}, namespace: {}) success, model cache size is {}", name, namespace, modelCache.getSize());
-        return model;
-    }
-
-    public static ReturnResult publishLoadModel(Map<Integer, ModelServiceProto.ModelInfo> models){
+    public static ReturnResult publishLoadModel(String role, int partyId, Map<String, List<Integer>> allParty, Map<String, Map<Integer, ModelInfo>> allPartyModel){
         ReturnResult returnResult = new ReturnResult();
         returnResult.setStatusCode(StatusCode.OK);
         try{
-            int partyId = Configuration.getPropertyInt("party.id");
-            ModelServiceProto.ModelInfo myModelInfo = models.get(partyId);
-            if (myModelInfo == null){
+            ModelInfo modelInfo;
+            if (allPartyModel.containsKey(role) && allPartyModel.get(role).containsKey(partyId)){
+                modelInfo = allPartyModel.get(role).get(partyId);
+            }else{
+                modelInfo = null;
+            }
+            if (modelInfo == null){
                 returnResult.setStatusCode(StatusCode.NOMODEL);
                 return returnResult;
             }
-            String myModelName = myModelInfo.getName();
-            String myModelNamespace = myModelInfo.getNamespace();
-            PipelineTask model = pushModelIntoPool(myModelName, myModelNamespace);
+            PipelineTask model = pushModelIntoPool(role, partyId, allParty, modelInfo.getName(), modelInfo.getNamespace());
             if (model == null){
                 returnResult.setStatusCode(StatusCode.RUNTIMEERROR);
                 return returnResult;
             }
-            models.forEach((p, m)->{
-                if (p != partyId){
-                    partnerModelIndex.put(ModelUtils.genPartnerModelIndexKey(p, m.getName(), m.getNamespace()), new ModelInfo(myModelName, myModelNamespace));
-                    LOGGER.info("Load partner model(name: {}, namespace: {}) success, partner model index size is {}", m.getName(), m.getNamespace(), partnerModelIndex.size());
-                }
+            allPartyModel.forEach((roleName, roleModelInfo)->{
+                roleModelInfo.forEach((p, m)->{
+                    if (p != partyId){
+                        partnerModelIndex.put(ModelUtils.genModelKey(roleName, p, allParty, m.getName(), m.getNamespace()), modelInfo);
+                        LOGGER.info("Create model index for partner({}, {})", roleName, p);
+                    }
+                });
             });
+            return returnResult;
         }
         catch (IOException ex){
             LOGGER.error(ex);
             returnResult.setStatusCode(StatusCode.IOERROR);
-            returnResult.setError(ex.getMessage());
+            returnResult.setError(Optional.ofNullable(ex.getMessage()).orElse(""));
         }
         catch (Exception ex){
             LOGGER.error(ex);
+            ex.printStackTrace();
             returnResult.setStatusCode(StatusCode.UNKNOWNERROR);
-            returnResult.setError(ex.getMessage());
+            returnResult.setError(Optional.ofNullable(ex.getMessage()).orElse(""));
         }
         return returnResult;
     }
 
-    public static ReturnResult federatedLoadModel(Map<String, Object> requestData){
-        ReturnResult returnResult = new ReturnResult();
-        returnResult.setStatusCode(StatusCode.OK);
-        try{
-            String name = String.valueOf(requestData.get("modelName"));
-            String namespace = String.valueOf(requestData.get("modelNamespace"));
-            returnResult.setData("name", name);
-            returnResult.setData("namespace", namespace);
-            //returnResult.setStatusCode(pushModelIntoPool(name, namespace));
-        }
-        catch (Exception ex){
-            returnResult.setStatusCode(StatusCode.UNKNOWNERROR);
-            returnResult.setMessage(ex.getMessage());
-        }
-        return returnResult;
-    }
 
-    public static ReturnResult publishOnlineModel(Map<Integer, ModelServiceProto.ModelInfo> models){
+    public static ReturnResult publishOnlineModel(String role, int partyId, Map<String, List<Integer>> allParty, Map<String, Map<Integer, ModelInfo>> allPartyModel){
         ReturnResult returnResult = new ReturnResult();
-        ModelServiceProto.ModelInfo myModelInfo = models.get(Configuration.getPropertyInt("party.id"));
-        if (myModelInfo == null){
+        ModelInfo modelInfo = allPartyModel.get(role).get(partyId);
+        if (modelInfo == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("No model for me.");
             return returnResult;
         }
-        PipelineTask model = modelCache.get(ModelUtils.genModelKey(myModelInfo.getName(), myModelInfo.getNamespace()));
+        PipelineTask model = modelCache.get(ModelUtils.genModelKey(role, partyId, allParty, modelInfo.getName(), modelInfo.getNamespace()));
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);
             returnResult.setMessage("Can not found model by these information.");
             return returnResult;
         }
         try{
-            namespaceModel.put(myModelInfo.getNamespace(), model);
-            LOGGER.info("Enable model(name: {}, namespace: {}) success", myModelInfo.getName(), myModelInfo.getNamespace());
+            namespaceModel.put(modelInfo.getNamespace(), model);
+            LOGGER.info("Enable model {} for namespace {} success", modelInfo.getName(), modelInfo.getNamespace());
             returnResult.setStatusCode(StatusCode.OK);
         }
         catch (Exception ex){
@@ -140,5 +106,27 @@ public class ModelManager {
             returnResult.setMessage(ex.getMessage());
         }
         return returnResult;
+    }
+
+    public static PipelineTask getModel(String role, int partyId, Map<String, List<Integer>> allParty, String name, String namespace){
+        return modelCache.get(ModelUtils.genModelKey(role, partyId, allParty, name, namespace));
+    }
+
+    public static PipelineTask getModelByPartner(String role, int partyId, String partnerRole, int partnerPartyId, Map<String, List<Integer>> allParty, String partnerModelName, String partnerModelNamespace){
+        ModelInfo modelInfo = partnerModelIndex.get(ModelUtils.genModelKey(partnerRole, partnerPartyId, allParty, partnerModelName, partnerModelNamespace));
+        if (modelInfo == null){
+            return null;
+        }
+        return modelCache.get(ModelUtils.genModelKey(role, partyId, allParty, modelInfo.getName(), modelInfo.getNamespace()));
+    }
+
+    private static PipelineTask pushModelIntoPool(String role, int partyId, Map<String, List<Integer>> allParty, String name, String namespace) throws Exception{
+        PipelineTask model = ModelUtils.loadModel(name, namespace);
+        if (model == null){
+            return null;
+        }
+        modelCache.put(ModelUtils.genModelKey(role, partyId, allParty, name, namespace), model);
+        LOGGER.info("Load model(name: {}, namespace: {}) success, model cache size is {}", name, namespace, modelCache.getSize());
+        return model;
     }
 }

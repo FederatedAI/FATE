@@ -1,6 +1,14 @@
 {
   "output_path": "./download_guest_file.txt",
-  "name": "breast_guest_train_hetero_logistic_regression_example_task_manager_test",
-  "namespace": "task_manager_test",
-  "work_mode": 0
+  "scene_id": 50000,
+  "local": {
+    "party_id": 9999,
+    "role": "guest"
+  },
+  "role": {
+    "guest": [9999],
+    "host": [10000],
+    "arbiter": [10000]
+  },
+  "data_type": "train_input"
 }

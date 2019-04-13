@@ -17,17 +17,30 @@
 package com.webank.ai.fate.core.utils;
 
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.Arrays;
+import java.util.*;
 
 public class SceneUtils {
     private static final String sceneKeySeparator = "_";
 
-    public static String genSceneKey(String sceneId, String myRole, String myPartyId, String partnerPartyId){
-        return StringUtils.join(Arrays.asList(sceneId, myRole, myPartyId, partnerPartyId), sceneKeySeparator);
+    public static String joinAllParty(Map<String, List<Integer>> allParty){
+        if(allParty == null){
+            return "all";
+        }else{
+            Object[] roleName = allParty.keySet().toArray();
+            Arrays.sort(roleName);
+            System.out.print(roleName);
+            List<String> allPartyTmp = new ArrayList<>();
+            for(int i=0;i<roleName.length;i++){
+                Object[] partys = (new ArrayList<>(new HashSet<>(allParty.get(roleName[i])))).toArray();
+                Arrays.sort(partys);
+                System.out.print(partys);
+                allPartyTmp.add(StringUtils.join(partys, "|"));
+            }
+            return StringUtils.join(allPartyTmp, "-");
+        }
     }
 
-    public static String genSceneKey(int sceneId, String myRole, int myPartyId, int partnerPartyId){
-        return StringUtils.join(Arrays.asList(sceneId, myRole, myPartyId, partnerPartyId), sceneKeySeparator);
+    public static String genSceneKey(int sceneId, String role, int partyId, Map<String, List<Integer>> allParty){
+        return StringUtils.join(Arrays.asList(sceneId, role, partyId, joinAllParty(allParty)), sceneKeySeparator);
     }
 }

@@ -139,15 +139,6 @@ def load_file(load_file_path):
             sys.exit()
 
         input_data = read_data(input_file_path, head)
-        # if data.get("scene_id") and data.get("role") and data.get("my_party_id") and data.get("partner_party_id"):
-        #     eggroll.init(mode=work_mode)
-        #     save_feature_data(input_data,
-        #                       scene_id=data["scene_id"],
-        #                       my_role=data["role"],
-        #                       my_party_id=data["my_party_id"],
-        #                       partner_party_id=data["partner_party_id"]
-        #                       )
-        # else:
         if True:
             eggroll.init(mode=work_mode)
             _namespace, _table_name = generate_table_name(input_file_path)

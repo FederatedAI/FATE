@@ -16,7 +16,6 @@
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from arch.api.utils.core import string_to_bytes
-import traceback
 from bottle import post, run, request
 import json
 import random
@@ -24,16 +23,7 @@ import uuid
 import threading
 from queue import Queue
 import requests
-import time
 
-secret_id = 'AKIDMaYQadgAbvcIROyA3jCHzbz9XwkMxERd'
-secret_key = 'HKAaoolKi8HCwRXhiV8W9bv3B9xayGrw'
-region = 'ap-shanghai'
-token = None
-scheme = 'https'
-bucket = 'jarvistest-1256844776'
-
-send_done_url = 'http://127.0.0.1:9380/v1/data/importOfflineFeature'
 
 job_queue = Queue()
 tags = ['tag%d' % n for n in range(50)]
@@ -48,19 +38,7 @@ def gen_one_feature(id=None):
 @post('/requestOfflineFeature')
 def request_offline_feature():
     job_id = request.json.get('jobId')
-    config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key, Token=token, Scheme=scheme)
-    client = CosS3Client(config)
-    file_name = 'test_feature_%s.csv' % (job_id)
-    for li in range(100):
-        response = client.put_object(
-            Bucket=bucket,
-            Body=string_to_bytes(gen_one_feature()),
-            Key=file_name,
-            StorageClass='STANDARD',
-            EnableMD5=True
-        )
-    print(response)
-    job_queue.put((job_id, file_name))
+    job_queue.put(job_id)
     return json.dumps({"status": 0, "msg": "success"})
 
 
@@ -72,16 +50,30 @@ def request_offline_feature():
     return response
 
 
-def send_done():
-    job_id, file_name = job_queue.get()
-    print(job_id, file_name)
-    time.sleep(5)
-    print('send finish signal')
-    response = requests.post(send_done_url, json={'jobId': job_id, 'sourcePath': file_name})
-    print(response.json())
+def send_offline_feature():
+    while True:
+        job_id = job_queue.get()
+        print("get job {}".format(job_id))
+        config = CosConfig(Region=settings.region, SecretId=settings.secret_id, SecretKey=settings.secret_key, Token=settings.token, Scheme=settings.scheme)
+        client = CosS3Client(config)
+        file_name = 'test_feature_%s.csv' % (job_id)
+        print("start upload to cos")
+        for li in range(100):
+            response = client.put_object(
+                Bucket=settings.bucket,
+                Body=string_to_bytes(gen_one_feature()),
+                Key=file_name,
+                StorageClass='STANDARD'
+            )
+        print(response)
+        print("upload to cos success")
+        print('start to send finish signal')
+        response = requests.post(settings.send_done_url, json={'jobId': job_id, 'sourcePath': file_name})
+        print('success send finish signal')
+        print(response.json())
 
 
 if __name__ == '__main__':
-    th = threading.Thread(target=send_done)
+    th = threading.Thread(target=send_offline_feature)
     th.start()
     run(host='127.0.0.1', port=1234, debug=True)

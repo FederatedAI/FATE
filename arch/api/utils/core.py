@@ -24,17 +24,12 @@ def get_fate_uuid():
     return uuid.uuid1().hex
 
 
-def get_scene_key(scene_id, my_role, my_party_id, partner_party_id):
-    local = locals()
-    return '_'.join([str(local[arg]) for arg in get_scene_key.__code__.co_varnames if arg in local])
-
-
 def get_commit_id():
     # the model may be larger, SHA1 is not used
     return get_fate_uuid()
 
 
-def string_to_bytes(string, check=False):
+def string_to_bytes(string):
     return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
 
 

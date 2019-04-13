@@ -21,7 +21,7 @@ from arch.task_manager.job_manager import generate_job_id
 from arch.task_manager.utils.api_utils import get_json_result, federated_api
 from arch.api.version_control.control import version_history
 from arch.api import eggroll
-from arch.task_manager.settings import WORK_MODE, logger, SERVINGS
+from arch.task_manager.settings import WORK_MODE, logger, SERVINGS, PARTY_ID
 import json
 manager = Flask(__name__)
 
@@ -29,20 +29,23 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     logger.exception(e)
-    return get_json_result(100, str(e))
+    return get_json_result(status=100, msg=str(e))
 
 
 @manager.route('/load', methods=['POST'])
 def load_model():
-    config = file_utils.load_json_conf(request.json.get("config_path"))
+    request_config = request.json
     _job_id = generate_job_id()
-    for _party_id in config.get("party_ids"):
+    all_party = set()
+    for _party_ids in request_config.get('role').values():
+        all_party.update(set(_party_ids))
+    for _party_id in all_party:
         st, msg = federated_api(job_id=_job_id,
                                 method='POST',
                                 url='/model/load/do',
                                 party_id=_party_id,
-                                data=config)
-    return get_json_result()
+                                json_body=request_config)
+    return get_json_result(job_id=_job_id)
 
 
 @manager.route('/load/do', methods=['POST'])
@@ -55,12 +58,11 @@ def do_load_model():
 
 @manager.route('/online', methods=['POST'])
 def publish_model_online():
-    request_data = request.json
-    config = file_utils.load_json_conf(request_data.get("config_path"))
-    if not config.get('servings'):
+    request_config = request.json
+    if not request_config.get('servings'):
         # get my party all servings
-        config['servings'] = SERVINGS
-    publish_model.publish_online(config_data=config)
+        request_config['servings'] = SERVINGS
+    publish_model.publish_online(config_data=request_config)
     return get_json_result()
 
 

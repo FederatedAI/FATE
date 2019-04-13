@@ -16,8 +16,9 @@
 import os
 import importlib
 from arch.api.utils import format_transform
+from arch.api.utils import dtable_utils
 from arch.api import storage
-import datetime
+from arch.task_manager.settings import logger
 
 
 class GetFeature(object):
@@ -29,22 +30,24 @@ class GetFeature(object):
         return getattr(m, format_transform.underline_to_pascal(adapter_name))
 
     @staticmethod
-    def request(job_id, request_data):
-        adapter_name = request_data.get("adapter")
-        return GetFeature.get_adapter(adapter_name=adapter_name).request(job_id)
+    def request(job_id, request_config):
+        adapter_name = request_config.get("adapter")
+        response = GetFeature.get_adapter(adapter_name=adapter_name).request(job_id)
+        logger.info("request offline feature")
+        logger.info(response)
+        return response
 
     @staticmethod
-    def import_data(request_data, job_config):
+    def import_data(job_config):
         adapter_name = job_config.get("adapter")
-        input_data = GetFeature.get_adapter(adapter_name=adapter_name).import_data(request_data)
-        commit_id = storage.save_feature_data(input_data,
-                                              scene_id=job_config.get("scene_id"),
-                                              my_party_id=job_config.get("my_party_id"),
-                                              partner_party_id=job_config.get("partner_party_id"),
-                                              my_role=job_config.get("partner_party_id"),
-                                              commit_log="get feature data at %s" % datetime.datetime.now()
-                                              )
-        if commit_id:
-            return {"status": 0}
+        input_data = GetFeature.get_adapter(adapter_name=adapter_name).import_data(job_config)
+        table_name, table_namespace = dtable_utils.get_table_info(config=job_config, create=True)
+        if table_name and table_namespace:
+            try:
+                storage.save_data(input_data, name=table_name, namespace=table_namespace, partition=50)
+                logger.info("import data successfully, table name {}, namespace {}".format(table_name, table_namespace))
+                return {"status": 0, "msg": "table name {}, namespace {}".format(table_name, table_namespace)}
+            except Exception as e:
+                return dict(status=102, msg="save data error: {}".format(str(e)))
         else:
-            return {"status": 1}
+            return dict(status=101, msg="can not get table name and table namespace")

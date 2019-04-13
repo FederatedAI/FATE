@@ -19,33 +19,27 @@ from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from arch.api.utils.core import bytes_to_string
 from arch.api.utils.format_transform import list_feature_to_fate_str
-import sys
-import traceback
-REQUEST_OFFLINE_URL = "http://127.0.0.1:1234/requestOfflineFeature"
+import importlib
+import os
 
-secret_id = 'AKIDMaYQadgAbvcIROyA3jCHzbz9XwkMxERd'
-secret_key = 'HKAaoolKi8HCwRXhiV8W9bv3B9xayGrw'
-region = 'ap-shanghai'
-token = None
-scheme = 'https'
-bucket = 'jarvistest-1256844776'
+package = os.path.dirname(__file__).replace(os.environ["PYTHONPATH"], "").lstrip("/").replace("/", ".")
+settings = importlib.import_module("%s.%s" % (package, '{}_settings'.format(__name__.split('.')[-1])))
 
 
-class TestGetOfflineFeature(object):
+class CosSwapOfflineFeature(object):
     @staticmethod
     def request(job_id):
         request_data = {"jobId": job_id}
-        response = requests.post(REQUEST_OFFLINE_URL, json=request_data)
-        print(response.text)
+        response = requests.post(settings.REQUEST_OFFLINE_URL, json=request_data)
         return json.loads(response.text)
 
     @staticmethod
     def import_data(request_data):
-        config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key, Token=token, Scheme=scheme)
+        config = CosConfig(Region=settings.region, SecretId=settings.secret_id, SecretKey=settings.secret_key, Token=settings.token, Scheme=settings.scheme)
         client = CosS3Client(config)
         file_name = request_data.get('sourcePath')
         response = client.get_object(
-            Bucket=bucket,
+            Bucket=settings.bucket,
             Key=file_name
         )
         fp = response['Body'].get_raw_stream()
