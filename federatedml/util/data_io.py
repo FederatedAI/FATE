@@ -68,8 +68,8 @@ class DenseFeatureReader(object):
         self.header = storage.get_data_table_meta("header", table_name, namespace)
 
         if not self.header:
-            feature = get_one_line(input_data_feature)[1]
-            self.header = ["fid" + str(i) for i in range(len(feature))]
+            feature_shape = data_overview.get_data_shape(input_data_feature)
+            self.header = ["fid" + str(i) for i in range(feature_shape)]
         else:
             if self.with_label:
                 self.header = self.header.split(self.delimitor, -1)[: self.label_idx] + \
@@ -610,10 +610,6 @@ class SparseTagReader(object):
         _, self.label_type, self.output_format, self.header = load_data_io_model("SparseTagReader",
                                                                                  model_table,
                                                                                  model_namespace)
-
-
-def get_one_line(data_instance):
-    return data_instance.collect().__next__()
 
 
 def set_schema(data_instance, header):
