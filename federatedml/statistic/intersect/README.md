@@ -17,7 +17,7 @@ While party A and party b transmit their processed id information to the other p
 it will not leak any raw ids. Z<sub>A</sub> can be safely because of the privacy key of party A. 
 Each Y<sub>B</sub> includes different random value which binds to each value in X<sub>B</sub> and will be safely as well.
 
-Using this module, we can get the intersection ids between twe parties in security and efficiently.  
+Using this module, we can get the intersection ids between two parties in security and efficiently.  
 
 ### Quick Start
 You can refer to *example/intersect/README.md* to quickly start running intersection in standalone mode and cluster mode. 
