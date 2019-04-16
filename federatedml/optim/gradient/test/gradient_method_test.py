@@ -36,7 +36,7 @@ import os
 import time
 import unittest
 
-import numba
+# import numba
 import numpy as np
 import pandas as pd
 
@@ -87,14 +87,9 @@ class TestHomoLRGradient(unittest.TestCase):
             return None, None
 
         one_d_y = Y.reshape([-1, ])
-        # d = compute_d(X, coef, intercept, one_d_y)
-        a = fate_operator.dot(X, coef)
-        b = a + intercept
-        c = np.array(b).transpose()
-        d = 0.5 + one_d_y * -1
-        d = 0.25 * c + d
-        # d = (0.25 * np.array(fate_operator.dot(X, coef) + intercept).transpose() + 0.5 * one_d_y * -1)
-        grad_batch = d * X
+
+        d = (0.25 * np.array(fate_operator.dot(X, coef) + intercept).transpose() + 0.5 * one_d_y * -1)
+        grad_batch = X.transpose() * d
 
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
         avg_loss = tot_loss / Y.shape[0]
@@ -106,13 +101,6 @@ class TestHomoLRGradient(unittest.TestCase):
         return 0
 
 
-# @numba.jit(nopython=True)
-# @numba.vectorize
-# def compute_d(X, d):
-#     a = fate_operator.dot(X, coef)
-#     grad_batch = d * X
-#
-#     return grad_batch
 
 
 if __name__ == '__main__':
