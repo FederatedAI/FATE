@@ -59,6 +59,11 @@ class MiniBatch:
 
     def __mini_batch_data_seperator(self, data_insts, batch_size):
         data_sids_iter, data_size = indices.collect_index(data_insts)
+
+        if batch_size > data_size:
+            batch_size = data_size
+            self.batch_size = batch_size
+
         batch_nums = (data_size + batch_size - 1) // batch_size
 
         batch_data_sids = []
