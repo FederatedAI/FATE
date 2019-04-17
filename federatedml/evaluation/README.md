@@ -1,4 +1,4 @@
-###Evaluation
+### Evaluation
 This module provide some evaluation method for classification and regression. It contains:
 1. AUC: Compute AUC for binary classification.
 2. KS: Compute Kolmogorov-Smirnov for binary classification.
