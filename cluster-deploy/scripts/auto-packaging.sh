@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1
+version=0.2
 cwd=`pwd`
 
 cd ../../
@@ -61,23 +61,4 @@ rm -rf python.tar
 cd ./arch
 cp -r $base_dir/* ./
 
-cd $output_dir
-sed -i "18s/service.port=.*/service.port=9394/g" ./federation/conf/federation.properties
-sed -i "s/meta.service.port=.*/meta.service.port=8590/g" ./federation/conf/federation.properties
-sed -i "s#/jdbc.driver.classname.*#jdbc.driver.classname=com.mysql.cj.jdbc.Driver#g" ./meta-service/conf/jdbc.properties
-sed -i "s/target.project=.*/target.project=meta-service/g" ./meta-service/conf/jdbc.properties
-sed -i "s/port=.*/port=9370/g" ./proxy/conf/proxy.properties
-sed -i "s#route.table=.*#route.table=$dir/proxy/conf/route_table.json#g" ./proxy/conf/proxy.properties
-sed -i "5s/:.*/: 8011,/g" ./python/arch/conf/server_conf.json
-sed -i "9s/:.*/: 9394,/g" ./python/arch/conf/server_conf.json
-sed -i "7s/:.*/: 9370/g" ./proxy/conf/route_table.json
-sed -i "12s/default/fate/g" ./proxy/conf/route_table.json
-sed -i "15s/:.*/: 9394/g" ./proxy/conf/route_table.json
-sed -i "s/service.port=.*/service.port=8011/g" ./roll/conf/roll.properties
-sed -i "s/meta.service.port=.*/meta.service.port=8590/g" ./roll/conf/roll.properties
-sed -i "s/service.port=.*/service.port=7888/g" ./egg/conf/egg.properties
-sed -i "s#processor.venv=.*#processor.venv=$dir/venv#g" ./egg/conf/egg.properties
-sed -i "s#processor.path=.*#processor.path=$dir/python/arch/processor/processor.py#g" ./egg/conf/egg.properties
-sed -i "s#python.path=.*#python.path=$dir/python#g" ./egg/conf/egg.properties
-sed -i "s#data.dir=.*#data.dir=$dir/data-dir#g" ./egg/conf/egg.properties
 cd $cwd
