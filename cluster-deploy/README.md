@@ -36,11 +36,11 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 ```
 Meta-Service==============
-					    ||
-Egg1===================Federation=====Proxy=====Firewall=====Other Parties or Exchange
-		     ||			||
+`                        ||
+Egg1============         ||=====Federation=====Proxy=====Firewall=====Other Parties or Exchange
+`             ||         ||
 Eggk======== Roll ========
-		     ||
+`             ||
 Eggn==========
 
 			              Example deployment in one party
