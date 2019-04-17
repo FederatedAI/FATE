@@ -4,7 +4,7 @@
     "role": {
         "guest": [10000],
         "host": [9999],
-        "arbiter": [9999]
+        "arbiter": [10001]
     },
     "role_parameters": {
         "guest": {
@@ -133,7 +133,7 @@
         },
         "FeatureSelectionParam": {
             "method": "fit",
-            "filter_method": ["unique_value", "iv_value_thres",
+            "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
                     "coefficient_of_variation_value_thres", "outlier_cols"],
             "select_cols": -1,
             "local_only": false,
