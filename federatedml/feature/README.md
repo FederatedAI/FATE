@@ -26,6 +26,16 @@ Note: iv_value_thres and iv_percentile should not exist at the same times
 
 More feature selection methods will be provided. Please make a discussion in issues if you have any needs.
 
+# Sample
+
+Fate v0.2 supports sample method. 
+Sample module supports two sample mode, they are Random sample mode and StratifiedSampler sample mode.
+* in random mode, "downsample" and "upsample" method is provided, users 
+can set the sample parameter "fractions", which is the sample ratio of data.
+* in stratified mode, "downsample" and "upsample" method is also provided, 
+users can set the sample parameter "fractions" two, but it should be a list of tuples of (label_i, ratio),
+which means that the sample ratios of different labels of data set.
+
 # Feature scale
 Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 
 1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
