@@ -270,6 +270,21 @@ class IVPercentileFilter(FilterMethod):
 
 
 class CoeffOfVarValueFilter(FilterMethod):
+    """
+    Drop the columns if their coefficient of varaiance is smaller than a threshold.
+
+    Parameters
+    ----------
+    param : CoeffOfVarSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, param, select_cols, statics_obj=None):
         self.value_threshold = param.value_threshold
         self.select_cols = select_cols
@@ -304,6 +319,21 @@ class CoeffOfVarValueFilter(FilterMethod):
 
 
 class OutlierFilter(FilterMethod):
+    """
+    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.
+
+    Parameters
+    ----------
+    param : OutlierColsSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, params, select_cols):
         self.percentile = params.percentile
         self.upper_threshold = params.upper_threshold
