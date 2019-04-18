@@ -35,3 +35,24 @@ encrypt gradient and hessian before sending them to passive parties.
 
 By following the SecureBoost framework, multiple parties can jointly build tree ensembled model without leaking privacy 
 in federated learning. If you want to learn more about the algorithm details, you can read the paper attached above.
+
+#### Optimization in Parallel Learning
+SecureBoost use data parallel learning algorithm to build the decision trees in every party.  
+The procedure of the data parallel algorithm in each party is:  
+* Every party use mapPartitions API interface to generate feature-histograms of each partition of data.
+* Use reduce API interface to merge global histograms from all local feature-histograms
+* Find the best splits from merged global histograms by federated learning, then perform splits.
+
+#### Applications
+SecureBoost supports the following applications.  
+* binary classification, the objective function is sigmoid cross-entropy  
+* multi classfication, the objective function is softmax cross-entropy
+* regression, objective function now support is least-squared-error-loss、least-absolutely-error-loss、huber-loss、
+tweedie-loss、fair-loss、 log-cosh-loss
+
+#### Other features
+* Column sub-sample
+* Allow use max_split_nodes setting tt avoid memory limit exceed, by finding splits of at most number of 
+max_split_nodes nodes instead of using all nodes of each level of the tree.
+
+
