@@ -23,6 +23,20 @@
 
 
 class Instance(object):
+    """
+    Instance object use in all algorithm module
+
+    Parameters
+    ----------
+    inst_id : int, the id of the instance, reserved fields in this version
+
+    weight: float, the weight of the instance
+
+    shape : int, the real feature shape of original data
+
+    label: None of float, data label
+
+    """
     def __init__(self, inst_id=None, weight=1.0, features=None, label=None):
         self.inst_id = inst_id
         self.weight = weight
