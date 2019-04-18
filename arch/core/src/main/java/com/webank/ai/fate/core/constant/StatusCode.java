@@ -32,4 +32,5 @@ public class StatusCode {
     public static final int NOFILE = -2;
     public static final int NETWORKERROR = -3;
     public static final int IOERROR = -4;
+    public static final int RUNTIMEERROR = -5;
 }

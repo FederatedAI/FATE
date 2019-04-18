@@ -4,7 +4,7 @@
     "role": {
         "guest": [10000],
         "host": [9999],
-        "arbiter": [10001]
+        "arbiter": [9999]
     },
     "role_parameters": {
         "guest": {
@@ -48,8 +48,8 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
+            "method": "cross_validation",
             "work_mode": 0,
-            "do_cross_validation": true,
             "need_sample": true,
             "need_feature_selection": false,
             "n_splits": 5

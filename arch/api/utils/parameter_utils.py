@@ -43,7 +43,7 @@ class ParameterOverride(object):
             if _method not in _role_setting['tasklist']:
                 continue
             _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
-            partyid_list = submit_dict["role"][role]   # [10000]
+            partyid_list = submit_dict["role"][role]
             for idx in range(len(partyid_list)):
                 runtime_json = default_runtime_dict.copy()
                 runtime_json['WorkFlowParam']['method'] = _method
@@ -62,7 +62,6 @@ class ParameterOverride(object):
 
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
-
                     for param_class in role_dict:
                         if param_class not in runtime_json:
                             runtime_json[param_class] = {}

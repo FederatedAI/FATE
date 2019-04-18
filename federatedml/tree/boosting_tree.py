@@ -26,6 +26,7 @@
 # =============================================================================
 import numpy as np
 from federatedml.util import BoostingTreeParamChecker
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.feature.sparse_vector import SparseVector
 
@@ -66,8 +67,8 @@ class BoostingTree(object):
         return row
 
     def data_alignment(self, data_inst):
-        if data_inst is None:
-            return data_inst
+        abnormal_detection.empty_table_detection(data_inst)
+        abnormal_detection.empty_feature_detection(data_inst)
 
         new_data_inst = data_inst.mapValues(lambda row: BoostingTree.data_format_transform(row))
 

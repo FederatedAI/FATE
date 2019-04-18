@@ -36,7 +36,7 @@ class SecureAddGuest(object):
         return first, x - first
 
     def secure(self):
-        x_shares = self.x.mapValues(lambda  x: self.share(x))
+        x_shares = self.x.mapValues(self.share)
         self.x1 = x_shares.mapValues(lambda shares: shares[0])
         self.x2 = x_shares.mapValues(lambda shares: shares[1])
 

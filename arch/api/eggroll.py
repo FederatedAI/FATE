@@ -50,11 +50,14 @@ def table(name, namespace, partition=1, persistent=True, create_if_missing=True,
 
 
 def parallelize(data: Iterable, include_key=False, name=None, partition=1, namespace=None, persistent=False,
-                create_if_missing=True, error_if_exist=False):
+                create_if_missing=True, error_if_exist=False, chunk_size=100000):
     return RuntimeInstance.EGGROLL.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
-                                               persistent=persistent)
-
+                                               persistent=persistent,
+                                               chunk_size=chunk_size)
 
 def cleanup(name, namespace, persistent=False):
     return RuntimeInstance.EGGROLL.cleanup(name=name, namespace=namespace, persistent=persistent)
+
+def get_job_id():
+    return RuntimeInstance.EGGROLL.job_id

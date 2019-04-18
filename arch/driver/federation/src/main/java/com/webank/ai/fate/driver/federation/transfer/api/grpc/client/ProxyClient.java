@@ -50,7 +50,7 @@ public class ProxyClient {
     private GrpcStreamingClientTemplate<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> pushTemplate;
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public void initPush(TransferBroker request, BasicMeta.Endpoint endpoint) {
+    public synchronized void initPush(TransferBroker request, BasicMeta.Endpoint endpoint) {
         GrpcAsyncClientContext<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> asyncClientContext
                 = transferServiceFactory.createPushClientGrpcAsyncClientContext();
 
@@ -74,7 +74,7 @@ public class ProxyClient {
         pushTemplate.processCallerStreamingRpc();
     }
 
-    public void completePush() {
+    public synchronized void completePush() {
         // LOGGER.info("[PUSH][CLIENT] completing push");
         if (pushTemplate == null) {
             throw new IllegalStateException("pushTemplate has not been initialized yet");

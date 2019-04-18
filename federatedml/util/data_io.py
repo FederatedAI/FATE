@@ -28,6 +28,8 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import consts
 from federatedml.util.param_checker import DataIOParamChecker
+from federatedml.util import abnormal_detection
+from federatedml.statistic import data_overview
 from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
@@ -63,11 +65,11 @@ class DenseFeatureReader(object):
         self.header = None
 
     def generate_header(self, input_data_feature, table_name, namespace):
-        self.header = storage.get_data_table_meta("header", table_name + ".meta", namespace)
+        self.header = storage.get_data_table_meta("header", table_name, namespace)
 
         if not self.header:
-            feature = get_one_line(input_data_feature)[1]
-            self.header = ["fid" + str(i) for i in range(len(feature))]
+            feature_shape = data_overview.get_data_shape(input_data_feature)
+            self.header = ["fid" + str(i) for i in range(feature_shape)]
         else:
             if self.with_label:
                 self.header = self.header.split(self.delimitor, -1)[: self.label_idx] + \
@@ -76,6 +78,9 @@ class DenseFeatureReader(object):
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read dense data and change data to instance")
+        
+        abnormal_detection.empty_table_detection(input_data)
+        
         input_data_features = None
         input_data_labels = None
 
@@ -83,13 +88,17 @@ class DenseFeatureReader(object):
             if type(self.label_idx).__name__ != "int":
                 raise ValueError("label index should be integer")
 
+            data_shape = data_overview.get_data_shape(input_data)
+            if not data_shape or self.label_idx >= data_shape:
+                raise ValueError("input data's value is empty, it does not contain a label")
+
             input_data_features = input_data.mapValues(
-                lambda value: value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
+                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
                                                                                  self.label_idx + 1:])
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
         else:
-            input_data_features = input_data.mapValues(lambda value: value.split(self.delimitor, -1))
+            input_data_features = input_data.mapValues(lambda value: [] if not value else value.split(self.delimitor, -1))
 
         if mode == "fit":
             data_instance = self.fit(input_data_features, input_data_labels, table_name, namespace)
@@ -97,6 +106,7 @@ class DenseFeatureReader(object):
             data_instance = self.transform(input_data_features, input_data_labels)
 
         set_schema(data_instance, self.header)
+
         return data_instance
 
     def fit(self, input_data_features, input_data_labels, table_name, namespace):
@@ -120,7 +130,6 @@ class DenseFeatureReader(object):
         if self.missing_fill:
             from federatedml.feature.imputer import Imputer
             imputer_processor = Imputer(self.missing_impute)
-            LOGGER.info("missing_replace_method is {}".format(self.missing_fill_method))
             if mode == "fit":
                 input_data_features, self.default_value = imputer_processor.fit(input_data_features,
                                                                                 replace_method=self.missing_fill_method,
@@ -150,7 +159,6 @@ class DenseFeatureReader(object):
                 if self.outlier_impute is None:
                     self.outlier_impute = imputer_processor.get_imputer_value_list()
             else:
-                LOGGER.info("replace method is {}".format(self.outlier_replace_method))
                 input_data_features = imputer_processor.transform(input_data_features,
                                                                   replace_method=self.outlier_replace_method,
                                                                   transform_value=self.outlier_replace_value)
@@ -318,6 +326,11 @@ class SparseFeatureReader(object):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read sparse data and change data to instance")
 
+        abnormal_detection.empty_table_detection(input_data)
+        
+        if not data_overview.get_data_shape(input_data):
+            raise ValueError("input data's value is empty, it does not contain a label")
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -455,7 +468,6 @@ class SparseTagReader(object):
 
     def agg_tag(self, kvs, delimitor=' '):
         tags_set = set()
-        LOGGER.info("delemitor is {}".format(self.delimitor))
         for key, value in kvs:
             if self.with_label:
                 cols = value.split(delimitor, -1)[1 : ]
@@ -464,7 +476,6 @@ class SparseTagReader(object):
 
             tags_set |= set(cols)
 
-        LOGGER.info("tags set is {}".format(tags_set))
         return tags_set
 
     def generate_header(self, tags):
@@ -474,6 +485,8 @@ class SparseTagReader(object):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read sparse data and change data to instance")
 
+        abnormal_detection.empty_table_detection(input_data)
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -489,9 +502,6 @@ class SparseTagReader(object):
         for _, _tags_set in tags_set_list:
             tags_set |= _tags_set
         tags = list(tags_set)
-
-        if len(tags) == 0:
-            raise ValueError("no tags in input data, please check!")
 
         tags = sorted(tags)
         tags_dict = dict(zip(tags, range(len(tags))))
@@ -602,12 +612,7 @@ class SparseTagReader(object):
                                                                                  model_namespace)
 
 
-def get_one_line(data_instance):
-    return data_instance.collect().__next__()
-
-
 def set_schema(data_instance, header):
-    LOGGER.info("data_instance's schema is {}".format(data_instance.schema))
     data_instance.schema = {"header": header}
 
 

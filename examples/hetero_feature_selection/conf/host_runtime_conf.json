@@ -2,9 +2,7 @@
 
     "local": {
         "role": "host",
-        "party_id": "TO SET",
-        "scene_id": "TO SET"
-
+        "party_id": "TO SET"
     },
 
     "role": {
@@ -25,12 +23,12 @@
     "WorkFlowParam": {
         "method": "feature_select",
         "train_input_table": "TO SET",
-        "train_input_namespace": "example",
+        "train_input_namespace": "example_data_namespace",
         "work_mode": "TO SET",
         "model_table": "feature_selection_host_model_table",
-        "model_namespace": "feature_selection_namespace",
+        "model_namespace": "example_data_namespace",
         "predict_output_table": "feature_select_host_out_table",
-        "predict_output_namespace": "feature_select_namespace"
+        "predict_output_namespace": "example_data_namespace"
         },
 
     "EncryptParam": {
@@ -52,12 +50,12 @@
     },
     "FeatureSelectionParam": {
         "method": "fit",
-        "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
+        "filter_method": ["unique_value", "iv_value_thres",
                 "coefficient_of_variation_value_thres", "outlier_cols"],
         "select_cols": -1,
         "local_only": false,
         "result_table": "feature_selection_host_model_table",
-        "result_namespace": "feature_select_namespace"
+        "result_namespace": "example_data_namespace"
     },
     "UniqueValueParam": {
         "eps": 1e-5

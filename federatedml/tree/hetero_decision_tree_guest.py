@@ -224,7 +224,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         encrypted_splitinfo_host_table = eggroll.parallelize(
             zip(self.cur_split_nodes, encrypted_splitinfo_host), include_key=False, partition=self.data_bin._partitions)
 
-        splitinfos = encrypted_splitinfo_host_table.mapValues(lambda value: self.find_host_split(value)).collect()
+        splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
         best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
 
         LOGGER.info("end to find split")
@@ -258,8 +258,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         splitinfo_guest_host_table = eggroll.parallelize(zip(splitinfo_guest, splitinfo_host),
                                                          include_key=False,
                                                          partition=self.data_bin._partitions)
-        best_splitinfo_table = splitinfo_guest_host_table.mapValues(lambda value:
-                                                                    self.find_best_split_guest_and_host(value))
+        best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
         best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
 
         return best_splitinfos

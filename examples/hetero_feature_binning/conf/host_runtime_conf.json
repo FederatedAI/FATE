@@ -2,8 +2,7 @@
 
     "local": {
         "role": "host",
-        "party_id": "TO SET",
-        "scene_id": "TO SET"
+        "party_id": "TO SET"
     },
 
     "role": {
@@ -26,10 +25,10 @@
     "WorkFlowParam": {
         "method": "binning",
         "train_input_table": "TO SET",
-        "train_input_namespace": "example",
+        "train_input_namespace": "example_data_namespace",
         "work_mode": "TO SET",
         "model_table": "feature_binning_host_table",
-        "model_namespace": "feature_binning_namespace"
+        "model_namespace": "example_data_namespace"
         },
 
     "EncryptParam": {
@@ -48,7 +47,7 @@
         "cols": -1,
         "local_only": false,
         "result_table": "feature_binning_host_table",
-        "result_namespace": "feature_binning_namespace",
+        "result_namespace": "example_data_namespace",
         "display_result": ["iv"]
     }
 }

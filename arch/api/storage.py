@@ -16,8 +16,8 @@
 from typing import Iterable
 from arch.api.utils.core import json_dumps, json_loads
 from arch.api.version_control import control
-import datetime
 from arch.api import eggroll
+import datetime
 
 
 def save_data(kv_data: Iterable, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, version_log=None):

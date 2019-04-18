@@ -18,12 +18,18 @@ package com.webank.ai.fate.driver.federation.transfer.communication.action;
 
 import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.client.ProxyClient;
 import com.webank.ai.fate.driver.federation.transfer.manager.TransferMetaHelper;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Component
@@ -33,24 +39,35 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
     protected TransferMetaHelper transferMetaHelper;
     @Autowired
     private ProxyClient proxyClient;
+    @Autowired
+    private ToStringUtils toStringUtils;
+
     private Federation.TransferMeta transferMeta;
     private Federation.TransferStatus currentTransferStatus;
 
     private TransferBroker transferBroker;
     private BasicMeta.Endpoint target;
+    private AtomicInteger pushCount;
+    private AtomicBoolean isProxyClientInited;
+    private int reinitCount;
+
+    private static final int DEFAULT_REINIT_INTERVAL = 100000;
+    private final int reinitInterval;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public SendConsumeAction(TransferBroker transferBroker, BasicMeta.Endpoint target) {
         this.transferBroker = transferBroker;
         this.target = target;
         this.transferMeta = transferBroker.getTransferMeta();
+        this.pushCount = new AtomicInteger(0);
+        this.isProxyClientInited = new AtomicBoolean(false);
+        this.reinitInterval = DEFAULT_REINIT_INTERVAL;
     }
 
     @Override
     public void onInit() {
         transferMetaHelper.onInit(transferMeta);
         currentTransferStatus = Federation.TransferStatus.INITIALIZING;
-
-        proxyClient.initPush(transferBroker, target);
     }
 
     @Override
@@ -59,12 +76,33 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
             transferMetaHelper.onProcess(transferMeta);
             currentTransferStatus = Federation.TransferStatus.PROCESSING;
         }
+
+        if (!isProxyClientInited.getAndSet(true)) {
+            proxyClient.initPush(transferBroker, target);
+            LOGGER.info("[FEDERATION] transferMeta: {}, reinitCount: {}", toStringUtils.toOneLineString(transferMeta), ++reinitCount);
+        }
+
         proxyClient.doPush();
+
+        if (pushCount.incrementAndGet() % reinitInterval == 0) {
+            if (!isProxyClientInited.getAndSet(false)) {
+                throw new IllegalStateException("exception in reinit: should be true when hitting reinitInterval. current value: " + pushCount.get());
+            }
+            proxyClient.completePush();
+        }
     }
 
     @Override
     public void onComplete() {
-        proxyClient.completePush();
+        if (isProxyClientInited.get()) {
+            boolean cleanupResult = isProxyClientInited.compareAndSet(true, false);
+            if (!cleanupResult) {
+                throw new IllegalStateException("exception in cleanup: fail in onComplete");
+            }
+            proxyClient.completePush();
+        }
+
+        LOGGER.info("[FEDERATION] transferMeta: {}, final reinitCount: {}", toStringUtils.toOneLineString(transferMeta), reinitCount);
         if (!transferBroker.hasError()) {
             transferMetaHelper.onComplete(transferMeta);
             currentTransferStatus = Federation.TransferStatus.COMPLETE;

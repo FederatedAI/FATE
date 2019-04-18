@@ -14,8 +14,31 @@
 #  limitations under the License.
 #
 # -*- coding: utf-8 -*-
+from arch.api.utils import file_utils
+from arch.api.utils.log_utils import LoggerFactory
+LoggerFactory.setDirectory()
+logger = LoggerFactory.getLogger("task_manager")
 
-# default settings
+'''
+Constants
+'''
+
+API_VERSION = "v1"
+ROLE = 'manager'
+SERVERS = 'servers'
+MAX_CONCURRENT_JOB_RUN = 5
+
+_ONE_DAY_IN_SECONDS = 60 * 60 * 24
+HEADERS = {
+    'Content-Type': 'application/json',
+}
+
+IP = '0.0.0.0'
+GRPC_PORT = 9360
+HTTP_PORT = 9380
+PARTY_ID = 10000
+WORK_MODE = 0
+LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'engine': 'mysql',
@@ -27,3 +50,8 @@ DATABASE = {
     'max_connections': 100,
     'stale_timeout': 30,
 }
+
+server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
+PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
+SERVINGS = server_conf.get(SERVERS).get('servings')

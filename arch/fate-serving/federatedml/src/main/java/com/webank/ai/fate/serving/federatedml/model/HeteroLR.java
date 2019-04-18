@@ -1,32 +1,38 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
-import com.webank.ai.fate.core.mlmodel.model.MachineLearningModel;
-import com.webank.ai.fate.core.mlmodel.buffer.ProtoModelBuffer;
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.mlmodel.buffer.DataTransformServerProto.DataTransformServer;
+import com.webank.ai.fate.core.mlmodel.buffer.LRModelParamProto.LRModelParam;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public abstract class HeteroLR extends MachineLearningModel<ProtoModelBuffer, HashMap<String, Object>, HashMap<String, Object>> {
-    protected Map<String, Float> weight;
-    protected float intercept = 0;
-    DataTransformServer dataTransformServer;
+public abstract class HeteroLR extends BaseModel {
+    private Map<String, Double> weight;
+    private Double intercept;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public int initModel(ProtoModelBuffer modelBuffer) {
-        this.weight = modelBuffer.getParam().getWeightMap();
-        this.intercept = modelBuffer.getParam().getIntercept();
-        this.dataTransformServer = modelBuffer.getDataTransformServer();
+    public int initModel(byte[] protoMeta, byte[] protoParam) {
+        LOGGER.info("start init HeteroLR class");
+        try {
+            LRModelParam lrModelParam = LRModelParam.parseFrom(protoParam);
 
+            this.weight = lrModelParam.getWeightMap();
+            this.intercept = lrModelParam.getIntercept();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return StatusCode.ILLEGALDATA;
+        }
+        LOGGER.info("Finish init HeteroLR class");
         return StatusCode.OK;
     }
 
-    protected float forward(HashMap<String, Object> inputData) {
-        float score = 0;
+    double forward(Map<String, Object> inputData) {
+        double score = 0;
         for (String key : inputData.keySet()) {
             if (this.weight.containsKey(key)) {
-                score += Float.valueOf(inputData.get(key).toString()) * this.weight.get(key);
+                score += (double) inputData.get(key) * this.weight.get(key);
             }
         }
         score += this.intercept;
@@ -35,5 +41,5 @@ public abstract class HeteroLR extends MachineLearningModel<ProtoModelBuffer, Ha
     }
 
     @Override
-    public abstract HashMap<String, Object> predict(HashMap<String, Object> inputData, HashMap<String, Object> predictParams);
+    public abstract Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams);
 }

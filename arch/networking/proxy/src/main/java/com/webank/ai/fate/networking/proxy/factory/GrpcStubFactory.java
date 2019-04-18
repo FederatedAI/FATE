@@ -180,7 +180,7 @@ public class GrpcStubFactory {
                 .forAddress(target, endpoint.getPort())
                 .executor((Executor) applicationContext.getBean("grpcClientExecutor"))
                 .keepAliveTime(6, TimeUnit.MINUTES)
-                .keepAliveTimeout(24, TimeUnit.HOURS)
+                .keepAliveTimeout(1, TimeUnit.HOURS)
                 .keepAliveWithoutCalls(true)
                 .idleTimeout(1, TimeUnit.HOURS)
                 .perRpcBufferLimit(16 << 20)

@@ -342,7 +342,6 @@ bash auto-deploy.sh
 ```
 
 
-
 ## 5.     Configuration Check
 
 After the execution, you can check whether the configuration of the corresponding module is accurate on each target server. Users can find a detailed configuration document in [cluster-deploy/doc](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc) .
