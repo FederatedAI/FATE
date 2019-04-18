@@ -52,7 +52,7 @@ tweedie-loss、fair-loss、 log-cosh-loss
 
 #### Other features
 * Column sub-sample
-* Allow use max_split_nodes setting tt avoid memory limit exceed, by finding splits of at most number of 
+* Allow use max_split_nodes setting to avoid memory limit exceed, by finding splits of at most number of 
 max_split_nodes nodes instead of using all nodes of each level of the tree.
 
 
