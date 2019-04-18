@@ -9,10 +9,10 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_guest_cross_validation_logistic_regression_example_standalone_20190402203829"],
-                "train_input_namespace": ["example_data_namespace"],
-                "data_input_table": ["breast_guest_cross_validation_logistic_regression_example_standalone_20190402203829"],
-                "data_input_namespace": ["example_data_namespace"]
+                "train_input_table": ["breast_homo_guest_201904171524"],
+                "train_input_namespace": ["homo_lr"],
+                "data_input_table": ["breast_homo_guest_201904171524"],
+                "data_input_namespace": ["homo_lr"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -23,10 +23,10 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_guest_cross_validation_logistic_regression_example_standalone_20190402203829"],
-                "train_input_namespace": ["example_data_namespace"],
-                "data_input_table": ["breast_guest_cross_validation_logistic_regression_example_standalone_20190402203829"],
-                "data_input_namespace": ["example_data_namespace"]
+                "train_input_table": ["breast_homo_host_201904171524"],
+                "train_input_namespace": ["homo_lr"],
+                "data_input_table": ["breast_homo_host_201904171524"],
+                "data_input_namespace": ["homo_lr"]
             },
              "DataIOParam":{
                 "with_label": [true],
@@ -98,7 +98,7 @@
         },
         "FeatureSelectionParam": {
             "method": "fit",
-            "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
+            "filter_method": ["unique_value", "iv_value_thres",
                     "coefficient_of_variation_value_thres", "outlier_cols"],
             "select_cols": -1,
             "local_only": false,

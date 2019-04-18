@@ -164,7 +164,6 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.receive_times += 1
         LOGGER.info("Received left columns from guest")
         new_left = []
-        LOGGER.debug("Received left: {}, Original left: {}".format(left_cols, self.left_cols))
         for col in left_cols:
             new_left.append(self.left_cols[col])
 

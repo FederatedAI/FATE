@@ -150,7 +150,6 @@ class IVValueSelectFilter(FilterMethod):
 
         ivs = [x.iv for x in self.iv_attrs]
         left_cols = []
-        LOGGER.debug("In IV value filter, ivs:{}, threshold: {}".format(ivs, self.value_threshold))
         for idx, col in enumerate(self.select_cols):
             iv = ivs[idx]
             if iv >= self.value_threshold:
@@ -235,13 +234,9 @@ class IVPercentileFilter(FilterMethod):
 
         thres_iv = self._get_real_iv_thres()
         new_iv_param = IVSelectionParam(value_threshold=thres_iv)
-        LOGGER.debug("thres_iv is {}".format(thres_iv))
         left_cols = []
-        LOGGER.debug(
-            "In filter multiple parties, all_iv_attrs:{}, all cols: {}".format(self.all_iv_attrs, self.party_cols))
+
         for idx, iv_attrs in enumerate(self.all_iv_attrs):
-            tmp_ivs = [x.iv for x in iv_attrs]
-            LOGGER.debug("tmp_ivs: {}".format(tmp_ivs))
             cols = self.party_cols[idx]
             tmp_iv_thres_obj = IVValueSelectFilter(new_iv_param, select_cols=cols, iv_attrs=iv_attrs)
             party_left_cols = tmp_iv_thres_obj.filter()
@@ -261,11 +256,8 @@ class IVPercentileFilter(FilterMethod):
         thres_idx = int(math.floor(self.percentile_thres * len(all_ivs)))
         if thres_idx == len(all_ivs):
             thres_idx -= 1
-        # LOGGER.debug("In feature_selection, all ivs are: {}".format(all_ivs))
-        # LOGGER.debug("In feature_selection, thres idx is: {}".format(thres_idx))
 
         thres_iv = all_ivs[thres_idx]
-        # LOGGER.debug("In _get_real_iv_thres, thres_iv is :{}".format(thres_iv))
         return thres_iv
 
     def to_result(self):
@@ -294,8 +286,6 @@ class CoeffOfVarValueFilter(FilterMethod):
         for idx, s_v in enumerate(std_var):
             mean = mean_value[idx]
             coeff_of_var = math.fabs(s_v / mean)
-
-            LOGGER.debug("coeff_of_var is : {}".format(coeff_of_var))
 
             if coeff_of_var >= self.value_threshold:
                 left_cols.append(self.select_cols[idx])
