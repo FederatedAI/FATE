@@ -25,3 +25,8 @@ In this version, we provides several filter methods for feature selection.
 Note: iv_value_thres and iv_percentile should not exist at the same times
 
 More feature selection methods will be provided. Please make a discussion in issues if you have any needs.
+
+# Feature scale
+Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 
+1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
+2. standard scale: standardize features by removing the mean and scaling to unit variance
