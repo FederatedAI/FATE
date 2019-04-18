@@ -15,8 +15,11 @@
 #  limitations under the License.
 #
 
-jobid=feature_selection_$(date +%Y%m%d%H%M%S)
+jobid=feature_binning_$(date +%Y%m%d%H%M%S)
 cur_dir=$(pwd)
 
 nohup python ${cur_dir}/run_binning.py 0 ${jobid} guest 9999 10000 > nohup.guest 2>&1 &
 nohup python ${cur_dir}/run_binning.py 0 ${jobid} host 9999 10000 > nohup.host 2>&1 &
+
+log_path=${cur_dir}/../../logs/${jobid}
+echo "Please check log in " ${log_path}

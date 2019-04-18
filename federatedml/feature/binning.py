@@ -24,7 +24,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.feature.quantile_summaries import QuantileSummaries
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 
@@ -170,8 +170,10 @@ class Binning(object):
         f = functools.partial(self.add_label_in_partition,
                               total_bin=self.bin_num,
                               cols=cols)
+
         result_sum = data_bin_with_label.mapPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
+
         iv_attrs = self.cal_iv_woe(result_counts, self.params.adjustment_factor,
                                    split_points=split_points)
         return iv_attrs

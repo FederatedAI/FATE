@@ -65,7 +65,6 @@ class FTLWorkFlow(WorkFlow):
     def gen_validation_data_instance(self, table, namespace):
         pass
 
-    @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
         if self.workflow_param.method == "train":

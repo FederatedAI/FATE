@@ -3,6 +3,7 @@ import numpy as np
 
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.statistic import data_overview
 
 from arch.api.utils import log_utils
 
@@ -273,7 +274,7 @@ class Imputer(object):
             transform_data = data.mapValues(f)
 
             LOGGER.debug("finish replace missing value with replace value {}".format(replace_value))
-            shape = fate_operator.get_data_shape(data)
+            shape = data_overview.get_data_shape(data)
             replace_value = [replace_value for _ in range(shape)]
 
             return transform_data, replace_value

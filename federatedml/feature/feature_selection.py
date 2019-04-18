@@ -18,6 +18,7 @@
 #
 
 import math
+import random
 
 from arch.api.proto.feature_selection_param_pb2 import FeatureSelectionFilterParam, FeatureSelectionParam
 from arch.api.utils import log_utils
@@ -25,7 +26,7 @@ from federatedml.feature.binning import QuantileBinning
 from federatedml.param.param import FeatureSelectionParam, IVSelectionParam, FeatureBinningParam, UniqueValueParam
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 
 LOGGER = log_utils.getLogger()
 
@@ -47,33 +48,26 @@ class FilterMethod(object):
         """
         pass
 
+    def _keep_one_feature(self, original_cols, left_cols):
+        """
+        Make sure at least one feature can be left after filtering.
 
-# class FilterResult(object):
-#     """
-#     A class that use to saved information of each filter
-#
-#     Parameters
-#     ----------
-#     param_set : dict,
-#         Record the setting for the filters
-#
-#     original_cols : list
-#         The columns when get into the filter
-#
-#     left_cols : list
-#         The columns that output from the filter
-#
-#     index_system : dict, default: {} (optional)
-#         Some index (if exist) used in filter, such as the specific threshold. The difference between index
-#         and param_set is that, here records the median result instead of original settings.
-#     """
-#     def __init__(self, param_set, original_cols, left_cols, index_system=None):
-#         self.param_set = param_set
-#         self.original_cols = original_cols
-#         self.left_cols = left_cols
-#         if index_system is None:
-#             index_system = {}
-#         self.index_system = index_system
+        Parameters
+        ----------
+        original_cols : list,
+            Column index that before filtering
+
+        left_cols : list,
+            Column index that after filtering.
+
+        Returns
+        -------
+        A list of index of columns left.
+        """
+        if len(left_cols) >= 1:
+            return left_cols
+        left_col = random.choice(original_cols)
+        return [left_col]
 
 
 class UniqueValueFilter(FilterMethod):
@@ -108,6 +102,8 @@ class UniqueValueFilter(FilterMethod):
         for idx, col in enumerate(self.select_cols):
             if math.fabs(max_values[idx] - min_values[idx]) >= self.eps:
                 left_cols.append(col)
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -154,11 +150,12 @@ class IVValueSelectFilter(FilterMethod):
 
         ivs = [x.iv for x in self.iv_attrs]
         left_cols = []
-        LOGGER.debug("In IV value filter, ivs:{}, threshold: {}".format(ivs, self.value_threshold))
         for idx, col in enumerate(self.select_cols):
             iv = ivs[idx]
             if iv >= self.value_threshold:
                 left_cols.append(col)
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -237,20 +234,18 @@ class IVPercentileFilter(FilterMethod):
 
         thres_iv = self._get_real_iv_thres()
         new_iv_param = IVSelectionParam(value_threshold=thres_iv)
-        LOGGER.debug("thres_iv is {}".format(thres_iv))
         left_cols = []
-        LOGGER.debug(
-            "In filter multiple parties, all_iv_attrs:{}, all cols: {}".format(self.all_iv_attrs, self.party_cols))
+
         for idx, iv_attrs in enumerate(self.all_iv_attrs):
-            tmp_ivs = [x.iv for x in iv_attrs]
-            LOGGER.debug("tmp_ivs: {}".format(tmp_ivs))
             cols = self.party_cols[idx]
             tmp_iv_thres_obj = IVValueSelectFilter(new_iv_param, select_cols=cols, iv_attrs=iv_attrs)
             party_left_cols = tmp_iv_thres_obj.filter()
             left_cols.append(party_left_cols)
             LOGGER.debug("left_cols: {}".format(left_cols))
 
-        self.left_cols = left_cols[0]  # Record guest party only
+        self.left_cols = self._keep_one_feature(self.party_cols[0], left_cols[0])
+
+        # self.left_cols = left_cols  # Record guest party only
         return left_cols
 
     def _get_real_iv_thres(self):
@@ -261,11 +256,8 @@ class IVPercentileFilter(FilterMethod):
         thres_idx = int(math.floor(self.percentile_thres * len(all_ivs)))
         if thres_idx == len(all_ivs):
             thres_idx -= 1
-        # LOGGER.debug("In feature_selection, all ivs are: {}".format(all_ivs))
-        # LOGGER.debug("In feature_selection, thres idx is: {}".format(thres_idx))
 
         thres_iv = all_ivs[thres_idx]
-        # LOGGER.debug("In _get_real_iv_thres, thres_iv is :{}".format(thres_iv))
         return thres_iv
 
     def to_result(self):
@@ -278,6 +270,21 @@ class IVPercentileFilter(FilterMethod):
 
 
 class CoeffOfVarValueFilter(FilterMethod):
+    """
+    Drop the columns if their coefficient of varaiance is smaller than a threshold.
+
+    Parameters
+    ----------
+    param : CoeffOfVarSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, param, select_cols, statics_obj=None):
         self.value_threshold = param.value_threshold
         self.select_cols = select_cols
@@ -295,10 +302,10 @@ class CoeffOfVarValueFilter(FilterMethod):
             mean = mean_value[idx]
             coeff_of_var = math.fabs(s_v / mean)
 
-            LOGGER.debug("coeff_of_var is : {}".format(coeff_of_var))
-
             if coeff_of_var >= self.value_threshold:
                 left_cols.append(self.select_cols[idx])
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 
@@ -312,6 +319,21 @@ class CoeffOfVarValueFilter(FilterMethod):
 
 
 class OutlierFilter(FilterMethod):
+    """
+    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.
+
+    Parameters
+    ----------
+    param : OutlierColsSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, params, select_cols):
         self.percentile = params.percentile
         self.upper_threshold = params.upper_threshold
@@ -328,6 +350,8 @@ class OutlierFilter(FilterMethod):
         for idx, q_r in enumerate(query_result):
             if q_r < self.upper_threshold:
                 left_cols.append(self.select_cols[idx])
+
+        left_cols = self._keep_one_feature(self.select_cols, left_cols)
         self.left_cols = left_cols
         return left_cols
 

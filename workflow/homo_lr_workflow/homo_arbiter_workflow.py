@@ -49,10 +49,11 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
 
     @status_tracer_decorator.status_trace
     def run(self):
+        LOGGER.debug("Enter arbiter run")
         self._init_argument()
 
         if self.workflow_param.method == "train":
-            self._init_pipeline()
+            # self._init_pipeline()
 
             LOGGER.debug("In running function, enter train method")
             train_data_instance = None

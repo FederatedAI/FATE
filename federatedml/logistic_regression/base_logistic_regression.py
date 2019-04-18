@@ -28,7 +28,7 @@ from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
-from federatedml.util import fate_operator
+from federatedml.util import fate_operator, abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -81,44 +81,6 @@ class BaseLogisticRegression(object):
     def get_data_shape(self):
         return self.data_shape
 
-    # def load_model(self, model_table, model_namespace):
-    #
-    #     LOGGER.debug("loading model, table: {}, namespace: {}".format(
-    #         model_table, model_namespace))
-    #     model = eggroll.table(model_table, model_namespace)
-    #     model_local = model.collect()
-    #     try:
-    #         model_meta = model_local.__next__()[1]
-    #     except StopIteration:
-    #         LOGGER.warning("Cannot load model from name_space: {}, model_table: {}".format(
-    #             model_namespace, model_table
-    #         ))
-    #         return
-    #
-    #     for meta_name, meta_value in model_meta.items():
-    #         if not hasattr(self, meta_name):
-    #             LOGGER.warning("Cannot find meta info {} in this model".format(meta_name))
-    #             continue
-    #         setattr(self, meta_name, meta_value)
-    #
-    # def save_model(self, model_table, model_namespace):
-    #     meta_information = self.model_meta.__dict__
-    #     save_dict = {}
-    #     for meta_info in meta_information:
-    #         if not hasattr(self, meta_info):
-    #             LOGGER.warning("Cannot find meta info {} in this model".format(meta_info))
-    #             continue
-    #         save_dict[meta_info] = getattr(self, meta_info)
-    #     LOGGER.debug("in save: {}".format(save_dict))
-    #     meta_table = eggroll.parallelize([(1, save_dict)],
-    #                                      include_key=True,
-    #                                      name=model_table,
-    #                                      namespace=model_namespace,
-    #                                      error_if_exist=False,
-    #                                      persistent=True
-    #                                      )
-    #     return meta_table
-
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
 
@@ -149,27 +111,6 @@ class BaseLogisticRegression(object):
         if self.fit_intercept:
             w = np.append(w, self.intercept_)
         return w
-
-    def get_features_shape(self, data_instances):
-        # LOGGER.debug("In get features shape method, data_instances count: {}".format(
-        #     data_instances.count()
-        # ))
-
-        data_shape = self.get_data_shape()
-        if data_shape is not None:
-            return data_shape
-
-        features = data_instances.collect()
-        try:
-            one_feature = features.__next__()
-        except StopIteration:
-            LOGGER.warning("Data instances is Empty")
-            one_feature = None
-
-        if one_feature is not None:
-            return one_feature[1].features.shape[0]
-        else:
-            return None
 
     def set_coef_(self, w):
         if self.fit_intercept:
@@ -253,7 +194,6 @@ class BaseLogisticRegression(object):
 
         result_obj = lr_model_param_pb2.LRModelParam()
         buffer_type = "{}.param".format(self.class_name)
-        LOGGER.debug("buffer_type is : {}".format(buffer_type))
 
         model_manager.read_model(buffer_type=buffer_type,
                                  proto_buffer=result_obj,
@@ -268,3 +208,84 @@ class BaseLogisticRegression(object):
 
         for idx, header_name in enumerate(self.header):
             self.coef_[idx] = weight_dict.get(header_name)
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+
+    def show_meta(self):
+        meta_dict = {
+            'penalty': self.param.penalty,
+            'eps': self.eps,
+            'alpha': self.alpha,
+            'optimizer': self.param.optimizer,
+            'party_weight': self.param.party_weight,
+            'batch_size': self.batch_size,
+            'learning_rate': self.learning_rate,
+            'max_iter': self.max_iter,
+            'converge_func': self.param.converge_func,
+            're_encrypt_batches': self.param.re_encrypt_batches
+        }
+
+        LOGGER.info("Showing meta information:")
+        for k, v in meta_dict.items():
+            LOGGER.info("{} is {}".format(k, v))
+
+    def show_model(self):
+        model_dict = {
+            'iters': self.n_iter_,
+            'loss_history': self.loss_history,
+            'is_converged': self.is_converged,
+            'weight': self.coef_,
+            'intercept': self.intercept_,
+            'header': self.header
+        }
+        LOGGER.info("Showing model information:")
+        for k, v in model_dict.items():
+            LOGGER.info("{} is {}".format(k, v))
+
+    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
+        """
+        update local model that transforms features of raw input
+
+        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
+        input into more representative features. We typically adopt neural networks as the local model, which is
+        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
+        refer to 'hetero_dnn_logistic_regression' folder.
+
+        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
+        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
+        performed on the local model since there is no one.
+
+        Parameters:
+        ___________
+        :param fore_gradient: a table holding fore gradient
+        :param data_inst: a table holding instances of raw input of guest side
+        :param coef: coefficients of logistic regression model
+        :param training_info: a dictionary holding training information
+        """
+        pass
+
+    def transform(self, data_inst):
+        """
+        transform features of instances held by 'data_inst' table into more representative features
+
+        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
+        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
+        transform features. Particularly, we would adopt neural network models such as auto-encoder or CNN to perform
+        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
+        folder.
+
+        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
+        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
+        passed to it. In other words, no feature transformation performed on the raw input of guest.
+
+        Parameters:
+        ___________
+        :param data_inst: a table holding instances of raw input of guest side
+        :return: a table holding instances with transformed features
+        """
+        return data_inst

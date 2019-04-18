@@ -2,7 +2,8 @@ import functools
 import numpy as np
 from collections import Iterable
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.util import fate_operator
+# from federatedml.util import fate_operator
+from federatedml.statistic import data_overview
 
 
 class MinMaxScaler(object):
@@ -57,14 +58,14 @@ class MinMaxScaler(object):
             if isinstance(max_value, Iterable):
                 max_value_list = max_value
             else:
-                shape = fate_operator.get_features_shape(data)
+                shape = data_overview.get_features_shape(data)
                 max_value_list = [max_value for _ in range(shape)]
 
             if isinstance(min_value, Iterable):
                 min_value_list = min_value
             else:
                 if not shape:
-                    shape = fate_operator.get_features_shape(data)
+                    shape = data_overview.get_features_shape(data)
 
                 min_value_list = [min_value for _ in range(shape)]
 

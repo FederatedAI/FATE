@@ -420,7 +420,7 @@ class LogisticParam(object):
     converge_func : str, 'diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge.
+            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
     re_encrypt_batches : int, default: 2
         Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
@@ -839,7 +839,9 @@ class FeatureSelectionParam(object):
     select_cols: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
 
-    filter_method: list, default: ["unique_value", "iv_value_thres", "iv_percentile",
+    filter_method: list, ["unique_value", "iv_value_thres", "iv_percentile",
+                "coefficient_of_variation_value_thres", "outlier_cols"],
+                 default: ["unique_value", "iv_value_thres",
                 "coefficient_of_variation_value_thres", "outlier_cols"]
 
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
@@ -861,6 +863,7 @@ class FeatureSelectionParam(object):
 
         outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
 
+        Note: iv_value_thres and iv_percentile should not exist at the same times
 
     """
 

@@ -19,7 +19,7 @@ import math
 import sys
 
 from arch.api.utils import log_utils
-from federatedml.util.fate_operator import get_features_shape
+from federatedml.statistic.data_overview import get_features_shape
 from federatedml.feature.binning import QuantileBinning
 from federatedml.param.param import FeatureBinningParam
 

@@ -21,9 +21,8 @@ jobid=$2
 guest_partyid=$3
 host_partyid=$4
 arbiter_partyid=$5
-scene_id=$6
 if [[ $work_mode -eq 1 ]]; then
-    role=$7
+    role=$6
 fi
 
 cur_dir=$(pwd)
@@ -96,7 +95,6 @@ train() {
     sed -ie "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -ie "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
     sed -ie "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -ie "s/_scene_id/$scene_id/g" $cur_runtime_conf
 
     log_file=${log_dir}/${jobid}
     echo "Please check log file in "${log_file}
@@ -137,7 +135,6 @@ predict() {
     sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -i "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
     sed -i "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -i "s/_scene_id/$scene_id/g" $cur_runtime_conf
 
     log_file=${log_dir}/${jobid}
     echo "Please check log file in "${log_file}
@@ -177,7 +174,6 @@ cross_validation() {
     sed -ie "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
     sed -ie "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
     sed -ie "s/_jobid/$jobid/g" $cur_runtime_conf
-    sed -ie "s/_scene_id/$scene_id/g" $cur_runtime_conf
 
     log_file=${log_dir}/${jobid}
     echo "Please check log file in "${log_file}
