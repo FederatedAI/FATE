@@ -150,7 +150,6 @@ class IVValueSelectFilter(FilterMethod):
 
         ivs = [x.iv for x in self.iv_attrs]
         left_cols = []
-        LOGGER.debug("In IV value filter, ivs:{}, threshold: {}".format(ivs, self.value_threshold))
         for idx, col in enumerate(self.select_cols):
             iv = ivs[idx]
             if iv >= self.value_threshold:
@@ -235,13 +234,9 @@ class IVPercentileFilter(FilterMethod):
 
         thres_iv = self._get_real_iv_thres()
         new_iv_param = IVSelectionParam(value_threshold=thres_iv)
-        LOGGER.debug("thres_iv is {}".format(thres_iv))
         left_cols = []
-        LOGGER.debug(
-            "In filter multiple parties, all_iv_attrs:{}, all cols: {}".format(self.all_iv_attrs, self.party_cols))
+
         for idx, iv_attrs in enumerate(self.all_iv_attrs):
-            tmp_ivs = [x.iv for x in iv_attrs]
-            LOGGER.debug("tmp_ivs: {}".format(tmp_ivs))
             cols = self.party_cols[idx]
             tmp_iv_thres_obj = IVValueSelectFilter(new_iv_param, select_cols=cols, iv_attrs=iv_attrs)
             party_left_cols = tmp_iv_thres_obj.filter()
@@ -261,11 +256,8 @@ class IVPercentileFilter(FilterMethod):
         thres_idx = int(math.floor(self.percentile_thres * len(all_ivs)))
         if thres_idx == len(all_ivs):
             thres_idx -= 1
-        # LOGGER.debug("In feature_selection, all ivs are: {}".format(all_ivs))
-        # LOGGER.debug("In feature_selection, thres idx is: {}".format(thres_idx))
 
         thres_iv = all_ivs[thres_idx]
-        # LOGGER.debug("In _get_real_iv_thres, thres_iv is :{}".format(thres_iv))
         return thres_iv
 
     def to_result(self):
@@ -278,6 +270,21 @@ class IVPercentileFilter(FilterMethod):
 
 
 class CoeffOfVarValueFilter(FilterMethod):
+    """
+    Drop the columns if their coefficient of varaiance is smaller than a threshold.
+
+    Parameters
+    ----------
+    param : CoeffOfVarSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, param, select_cols, statics_obj=None):
         self.value_threshold = param.value_threshold
         self.select_cols = select_cols
@@ -294,8 +301,6 @@ class CoeffOfVarValueFilter(FilterMethod):
         for idx, s_v in enumerate(std_var):
             mean = mean_value[idx]
             coeff_of_var = math.fabs(s_v / mean)
-
-            LOGGER.debug("coeff_of_var is : {}".format(coeff_of_var))
 
             if coeff_of_var >= self.value_threshold:
                 left_cols.append(self.select_cols[idx])
@@ -314,6 +319,21 @@ class CoeffOfVarValueFilter(FilterMethod):
 
 
 class OutlierFilter(FilterMethod):
+    """
+    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.
+
+    Parameters
+    ----------
+    param : OutlierColsSelectionParam object,
+            Parameters that user set.
+
+    select_cols : int or list of int
+            Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
+
+    statics_obj : MultivariateStatisticalSummary object, default: None
+            If those static information has been compute. This can be use as parameter so that no need to
+            compute again.
+    """
     def __init__(self, params, select_cols):
         self.percentile = params.percentile
         self.upper_threshold = params.upper_threshold

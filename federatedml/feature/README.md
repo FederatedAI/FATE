@@ -36,3 +36,7 @@ can set the sample parameter "fractions", which is the sample ratio of data.
 users can set the sample parameter "fractions" two, but it should be a list of tuples of (label_i, ratio),
 which means that the sample ratios of different labels of data set.
 
+# Feature scale
+Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 
+1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
+2. standard scale: standardize features by removing the mean and scaling to unit variance

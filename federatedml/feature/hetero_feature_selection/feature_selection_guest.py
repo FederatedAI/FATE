@@ -128,10 +128,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             iv_filter = feature_selection.IVPercentileFilter(iv_param)
             iv_filter.add_attrs(self.guest_iv_attrs, self.left_cols)
             if not self.local_only:
-                # self.host_left_cols = [x for x in range(len(self.host_iv_attrs))]
                 iv_filter.add_attrs(self.host_iv_attrs, self.host_left_cols)
             left_cols = iv_filter.filter_multiple_parties()
-            # LOGGER.debug("In iv percentile function, left cols are: {}".format(left_cols))
             new_left_cols = left_cols[0]
             self.results.append(iv_filter.to_result())
 
@@ -184,7 +182,6 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 raise RuntimeError('Cannot get feature shape, please check input data')
             self.left_cols = [i for i in range(features_shape)]
 
-        # LOGGER.debug("self.left_cols: {}".format(self.left_cols))
         f = functools.partial(self.select_cols,
                               left_cols=self.left_cols)
 

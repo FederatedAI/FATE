@@ -1,0 +1,9 @@
+{
+  "file": "/data/projects/fate/python/examples/data/breast_homo_guest.csv",
+  "head": 1,
+  "partition": 10,
+  "table_name": "breast_homo_guest_201904171524",
+  "namespace": "homo_lr",
+  "party_id": 9999,
+  "work_mode": 1
+}
