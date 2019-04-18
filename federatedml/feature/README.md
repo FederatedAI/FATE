@@ -25,3 +25,14 @@ In this version, we provides several filter methods for feature selection.
 Note: iv_value_thres and iv_percentile should not exist at the same times
 
 More feature selection methods will be provided. Please make a discussion in issues if you have any needs.
+
+# Sample
+
+Fate v0.2 supports sample method. 
+Sample module supports two sample mode, they are Random sample mode and StratifiedSampler sample mode.
+* in random mode, "downsample" and "upsample" method is provided, users 
+can set the sample parameter "fractions", which is the sample ratio of data.
+* in stratified mode, "downsample" and "upsample" method is also provided, 
+users can set the sample parameter "fractions" two, but it should be a list of tuples of (label_i, ratio),
+which means that the sample ratios of different labels of data set.
+
