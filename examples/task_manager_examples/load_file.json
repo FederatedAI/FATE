@@ -4,6 +4,9 @@
   "partition": 10,
   "table_name": "breast_homo_guest_201904171524",
   "namespace": "homo_lr",
-  "party_id": 9999,
+  "local": {
+    "party_id": 9999,
+    "role": "guest"
+  },
   "work_mode": 1
 }

@@ -2,16 +2,20 @@
     "task": "cross_validation",
     "module": "HomoLR",
     "role": {
-        "guest": [10000],
-        "host": [9999],
+        "guest": [9999],
+        "host": [10000],
         "arbiter": [9999]
     },
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_guest_201904171524"],
+                "train_input_table": ["breast_homo_guest_20190418"],
                 "train_input_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_guest_201904171524"],
+                "predict_input_table": ["breast_homo_test_20190418"],
+                "predict_input_namespace": ["homo_lr"],
+                "model_table": ["homo_lr_guest_model"],
+                "model_namespace": ["homo_lr"],
+                "data_input_table": ["breast_homo_guest_20190418"],
                 "data_input_namespace": ["homo_lr"]
             },
             "DataIOParam":{
@@ -23,9 +27,13 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_host_201904171524"],
+                "train_input_table": ["breast_homo_host_20190418"],
                 "train_input_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_host_201904171524"],
+                "predict_input_table": ["breast_homo_test_20190418"],
+                "predict_input_namespace": ["homo_lr"],
+                "model_table": ["homo_lr_host_model"],
+                "model_namespace": ["homo_lr"],
+                "data_input_table": ["breast_homo_host_20190418"],
                 "data_input_namespace": ["homo_lr"]
             },
              "DataIOParam":{
@@ -38,6 +46,8 @@
                 "train_input_table": [""],
                 "train_input_namespace": ["example_data_namespace"],
                 "data_input_table": [""],
+                "model_table": ["homo_lr_host_model"],
+                "model_namespace": ["homo_lr"],
                 "data_input_namespace": ["example_data_namespace"]
             },
              "DataIOParam":{

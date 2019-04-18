@@ -58,3 +58,11 @@ You are able to download data from DTable and save as a file. The call statement
 > python task_manager_client.py -f download -n '50000_guest_9999_9999&10000_train_input' -t '0b9e5612603911e9a888acde48001122' -o train_input_table -p 9999
 
 where -n is namespace, -t is table name, -o is downloaded file name and -p is the party id.
+
+### Delete Task
+
+You can delete a task by:
+
+> python task_manager_client.py -f delete -j 20190417_162654_10000_1
+
+where -j means the jobid of a task
