@@ -23,20 +23,79 @@ from federatedml.util.param_checker import SampleParamChecker
 
 
 class RandomSampler(object):
+    """
+    Random Sampling Method
+
+    Parameters
+    ----------
+    fraction : None or float,  sampling ratio, default: 0.1
+
+    random_state: int, RandomState instance or None, optional, default: None
+
+    method: str, supported "upsample", "downsample" only in this version, default: "downsample"
+
+    """
     def __init__(self, fraction=0.1, random_state=None, method="downsample"):
         self.fraction = fraction
         self.random_state = random_state
         self.method = method
 
     def sample(self, data_inst, sample_ids=None):
+        """
+        Interface to call random sample method
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        sample_ids : None or list
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+
+        Returns
+        -------
+        new_data_inst: DTable
+            the output sample data, sample format with input
+
+        sample_ids: list, return only if sample_ids is None
+
+
+        """
+
         if sample_ids is None:
-            sample_data_inst, sample_ids = self.__sample(data_inst)
-            return sample_data_inst, sample_ids
+            new_data_inst, sample_ids = self.__sample(data_inst)
+            return new_data_inst, sample_ids
         else:
             new_data_inst = self.__sample(data_inst, sample_ids)
             return new_data_inst
 
     def __sample(self, data_inst, sample_ids=None):
+        """
+        Random sample method, a line's occur probability is decide by fraction
+            support down sample and up sample
+                if use down sample: should give a float ratio between [0, 1]
+                otherwise: should give a float ratio larger than 1.0
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        sample_ids : None or list
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+
+        Returns
+        -------
+        new_data_inst: DTable
+            the output sample data, sample format with input
+
+        sample_ids: list, return only if sample_ids is None
+
+
+        """
+
         return_sample_ids = False
         if self.method == "downsample":
             if sample_ids is None:
@@ -97,6 +156,19 @@ class RandomSampler(object):
 
 
 class StratifiedSampler(object):
+    """
+    Stratified Sampling Method
+
+    Parameters
+    ----------
+    fractions : None or list of (category, sample ratio) tuple,
+        sampling ratios of each category, default: None
+
+    random_state: int, RandomState instance or None, optional, default: None
+
+    method: str, supported "upsample", "downsample" only in this version, default: "downsample"
+
+    """
     def __init__(self, fractions=None, random_state=None, method="downsample"):
         self.fractions = fractions
         self.label_mapping = None
@@ -107,14 +179,64 @@ class StratifiedSampler(object):
         self.method = method
 
     def sample(self, data_inst, sample_ids=None):
+        """
+        Interface to call stratified sample method
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        sample_ids : None or list
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+
+        Returns
+        -------
+        new_data_inst: DTable
+            the output sample data, same format with input
+
+        sample_ids: list, return only if sample_ids is None
+
+
+        """
+
         if sample_ids is None:
-            sample_data_inst, sample_ids = self.__sample(data_inst)
-            return sample_data_inst, sample_ids
+            new_data_inst, sample_ids = self.__sample(data_inst)
+            return new_data_inst, sample_ids
         else:
             new_data_inst = self.__sample(data_inst, sample_ids)
             return new_data_inst
 
     def __sample(self, data_inst, sample_ids=None):
+        """
+        Stratified sample method, a line's occur probability is decide by fractions
+            Input should be DTable, every line should be an instance object with label
+            To use this method, a list of ratio should be give, and the list length
+                equals to the number of distinct labels
+            support down sample and up sample
+                if use down sample: should give a list of float ratio between [0, 1]
+                otherwise: should give a list of float ratio larger than 1.0
+
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        sample_ids : None or list
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+
+        Returns
+        -------
+        new_data_inst: DTable
+            the output sample data, sample format with input
+
+        sample_ids: list, return only if sample_ids is None
+
+
+        """
         return_sample_ids = False
         if self.method == "downsample":
             if sample_ids is None:
@@ -205,6 +327,15 @@ class StratifiedSampler(object):
 
 
 class Sampler(object):
+    """
+    Sampling Object
+
+    Parameters
+    ----------
+    sample_param : object, self-define sample parameters,
+        define in federatedml.param.param
+
+    """
     def __init__(self, sample_param):
         SampleParamChecker.check_param(sample_param)
         if sample_param.mode == "random":
@@ -223,6 +354,25 @@ class Sampler(object):
         self.flowid = None
 
     def sample(self, data_inst, sample_ids=None):
+        """
+        Entry to use sample method
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        sample_ids : None or list
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+
+        Returns
+        -------
+        sample_data: DTable
+            the output sample data, same format with input
+
+
+        """
         ori_schema = data_inst.schema
         sample_data = self.sampler.sample(data_inst, sample_ids)
 
@@ -255,6 +405,32 @@ class Sampler(object):
         return sample_ids
 
     def run(self, data_inst, task_type, task_role):
+        """
+        Sample running entry
+
+        Parameters
+        ----------
+        data_inst : DTable
+            The input data
+
+        task_type : "homo" or "hetero"
+            if task_type is "homo", it will sample standalone
+            if task_type is "heterl": then sampling will be done in one side, after that
+                the side sync the sample ids to another side to generated the same sample result
+
+        task_role: "guest" or "host":
+            only consider this parameter when task_type is "hetero"
+            if task_role is "guest", it will firstly sample ids, and sync it to "host"
+                to generate data instances with sample ids
+            if task_role is "host": it will firstly get the sample ids result of "guest",
+                then generate sample data by the receiving ids
+
+        Returns
+        -------
+        sample_data_inst: DTable
+            the output sample data, same format with input
+
+        """
         if task_type not in [consts.HOMO, consts.HETERO]:
             raise ValueError("{} task type not support yet".format(task_type))
         

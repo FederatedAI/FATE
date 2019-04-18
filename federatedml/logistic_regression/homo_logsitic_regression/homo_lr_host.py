@@ -64,7 +64,6 @@ class HomoLRHost(BaseLogisticRegression):
         self.transfer_variable = HomoLRTransferVariable()
         self.initializer = Initializer()
         self.mini_batch_obj = None
-        # self.evaluator = Evaluation(classi_type=consts.BINARY)
         self.classes_ = [0, 1]
         self.has_sychronized_encryption = False
 
@@ -89,25 +88,20 @@ class HomoLRHost(BaseLogisticRegression):
 
                 grad_loss = batch_data.mapPartitions(f)
 
-                # n = grad_loss.count()
                 n = batch_data.count()
                 if not self.use_encrypt:
                     grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
                     grad = np.array(grad)
                     grad /= n
                     loss /= n
-                    # gradient_regular, loss_regular = self.updater.compute(w)
                     if self.updater is not None:
                         loss_norm = self.updater.loss_norm(self.coef_)
                         total_loss += loss + loss_norm
-                        # LOGGER.debug("iter: {}, grad: {}, loss: {}".format(iter_num, grad, loss))
                 else:
                     grad, _ = grad_loss.reduce(self.aggregator.aggregate_grad)
                     grad = np.array(grad)
                     grad /= n
-                    # gradient_regular = self.updater.gradient_norm(w)
-                # grad += gradient_regular
-                # grad = np.array(grad)
+
                 self.update_model(grad)
                 w = self.merge_model()
 
@@ -162,7 +156,6 @@ class HomoLRHost(BaseLogisticRegression):
                                idx=0)
 
             w = np.array(w)
-            # LOGGER.debug("Recevide model from arbiter, model: {}".format(w))
             self.set_coef_(w)
 
             converge_flag_id = self.transfer_variable.generate_transferid(
@@ -183,7 +176,6 @@ class HomoLRHost(BaseLogisticRegression):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.host_party_weight
         )
-        # LOGGER.debug("party_weight_id: {}".format(party_weight_id))
         federation.remote(self.party_weight,
                           name=self.transfer_variable.host_party_weight.name,
                           tag=party_weight_id,
@@ -245,14 +237,12 @@ class HomoLRHost(BaseLogisticRegression):
 
         if self.use_encrypt:
             encrypted_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
-            # LOGGER.debug("predict_wd_id: {}".format(encrypted_wx_id))
             federation.remote(wx,
                               name=self.transfer_variable.predict_wx.name,
                               tag=encrypted_wx_id,
                               role=consts.ARBITER,
                               idx=0)
             predict_result_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_result)
-            # LOGGER.debug("predict_result_id: {}".format(predict_result_id))
             predict_result = federation.get(name=self.transfer_variable.predict_result.name,
                                             tag=predict_result_id,
                                             idx=0)
@@ -276,14 +266,12 @@ class HomoLRHost(BaseLogisticRegression):
         w = self.encrypt_operator.encrypt_list(w)
         w = np.array(w)
 
-        # LOGGER.debug("self use encryption: {}, w: {}, type of w: {}".format(self.use_encrypt, w, type(w)))
         if self.fit_intercept:
             self.coef_ = w[:-1]
             self.intercept_ = w[-1]
         else:
             self.coef_ = w
             self.intercept_ = 0
-        # LOGGER.debug("Type of coef: {}".format(type(self.coef_)))
         return w
 
     def __load_arbiter_model(self):

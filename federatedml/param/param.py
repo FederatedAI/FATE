@@ -420,7 +420,7 @@ class LogisticParam(object):
     converge_func : str, 'diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge.
+            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
     re_encrypt_batches : int, default: 2
         Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause

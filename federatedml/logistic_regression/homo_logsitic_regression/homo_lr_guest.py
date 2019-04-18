@@ -68,7 +68,6 @@ class HomoLRGuest(BaseLogisticRegression):
 
         for iter_num in range(self.max_iter):
             # mini-batch
-            # LOGGER.debug("Enter iter_num: {}".format(iter_num))
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
             total_loss = 0
             batch_num = 0
@@ -90,9 +89,7 @@ class HomoLRGuest(BaseLogisticRegression):
                 if self.updater is not None:
                     loss_norm = self.updater.loss_norm(self.coef_)
                     total_loss += (loss + loss_norm)
-                # LOGGER.debug("before update: {}".format(grad))
                 delta_grad = self.optimizer.apply_gradients(grad)
-                # LOGGER.debug("after apply: {}".format(delta_grad))
 
                 self.update_model(delta_grad)
                 batch_num += 1
@@ -127,7 +124,6 @@ class HomoLRGuest(BaseLogisticRegression):
                                idx=0)
 
             w = np.array(w)
-            # LOGGER.debug("Received final model: {}".format(w))
             self.set_coef_(w)
 
             # recv converge flag

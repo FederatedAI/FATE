@@ -38,4 +38,14 @@ Figure 3: Federated HeteroLR with Neural Network Principle </div>
 
 As shown in Figure 3, neural networks are added between the raw input data and the LR model serving as feature extractors that extract representative features from raw input data of various types. Neural networks can be CNN for processing images, RNN for processing text, autoencoder for processing general numerical vectors and many others. Currently we only support autoencoder in this algorithm. We will add other models in the near future.
 
+## Features
 
+Both Homo-LR and Hetero-LR supports the following features:
+
+1. L1 and L2 regularization. (Encrypted Homo-LR do not support L1)
+2. Weighted training
+3. mini-batch mechanism
+4. Four optimized function: 'sgd', 'rmsprop', 'adam' and 'adagrad'
+5. Two converge function.
+    a)	diff： Use difference of loss between two iterations to judge whether converge.
+    b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
