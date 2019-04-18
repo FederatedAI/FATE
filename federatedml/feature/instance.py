@@ -32,7 +32,7 @@ class Instance(object):
 
     weight: float, the weight of the instance
 
-    shape : int, the real feature shape of original data
+    feature : object, ndarray or SparseVector Object in this version
 
     label: None of float, data label
 
