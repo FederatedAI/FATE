@@ -1,3 +1,6 @@
+#!/usr/bin/env python    
+# -*- coding: utf-8 -*- 
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -13,5 +16,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+################################################################################
+#
+#
+################################################################################
+
+# =============================================================================
+# DecisionTree Base Class
+# =============================================================================
 
 
+class DecisionTreeModelMeta(object):
+    def __init__(self):
+        self.tree_ = None
+        self.split_maskdict = None

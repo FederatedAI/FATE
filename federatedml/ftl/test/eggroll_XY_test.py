@@ -14,43 +14,24 @@
 #  limitations under the License.
 #
 
-import unittest
-
 import numpy as np
-
-from arch.api.eggroll import init
+import unittest
 from federatedml.ftl.eggroll_computation.helper import compute_avg_XY, compute_sum_XY, compute_XY, compute_XY_plus_Z
 from federatedml.ftl.test.util import assert_matrix, assert_array
+from arch.api.eggroll import init
 
 
 class TestSum(unittest.TestCase):
 
-    def test_distributed_calculate_XY_1(self):
-        print("--- test_distributed_calculate_XY_1 ---")
-        # X has shape (4, 3)
+    def test_distributed_calculate_XY(self):
+        print("--- test_distributed_calculate_XY ---")
         X = np.array([[1., 2., 3.],
-                      [4., 5., 6.],
-                      [7., 8., 9.],
-                      [10, 11, 12]])
+                        [4., 5., 6.],
+                        [7., 8., 9.]])
 
-        # Y has shape (4, 1)
-        Y = np.array([[2], [1], [-1], [1]])
+        Y = np.array([[1], [-1], [1]])
 
         actual_XY = X * Y
-        print(actual_XY, actual_XY.shape)
-        XY = compute_XY(X, Y)
-        assert_matrix(actual_XY, XY)
-
-    def test_distributed_calculate_XY_2(self):
-        print("--- test_distributed_calculate_XY_2 ---")
-        # X has shape (4, 3, 3)
-        X = np.random.rand(4, 3, 3)
-
-        # Y has shape (4, 1, 1)
-        Y = np.random.rand(4, 1, 1)
-
-        actual_XY = X * Y
-        print(actual_XY, actual_XY.shape)
         XY = compute_XY(X, Y)
         assert_matrix(actual_XY, XY)
 
@@ -58,8 +39,8 @@ class TestSum(unittest.TestCase):
         print("--- test_distributed_calculate_avg_XY_1 ---")
 
         X = np.array([[1., 2., 3.],
-                      [4., 5., 6.],
-                      [7., 8., 9.]])
+                        [4., 5., 6.],
+                        [7., 8., 9.]])
 
         Y = np.array([[1], [-1], [1]])
 
@@ -76,8 +57,8 @@ class TestSum(unittest.TestCase):
         Y = np.array([[1], [-1], [1]])
         Y = np.tile(Y, (1, X.shape[-1]))
 
-        actual1 = np.sum(Y * X, axis=0) / len(Y)
-        actual2 = np.sum(X * Y, axis=0) / len(Y)
+        actual1 = np.sum(Y * X, axis=0)/len(Y)
+        actual2 = np.sum(X * Y, axis=0)/len(Y)
         predict1 = compute_avg_XY(X, Y)
         predict2 = compute_avg_XY(Y, X)
         assert_array(actual1, predict1)
@@ -87,8 +68,8 @@ class TestSum(unittest.TestCase):
         print("--- test_distributed_calculate_sum_XY ---")
 
         X = np.array([[1., 2., 3.],
-                      [4., 5., 6.],
-                      [7., 8., 9.]])
+                        [4., 5., 6.],
+                        [7., 8., 9.]])
 
         Y = np.array([[1], [-1], [1]])
 
@@ -100,8 +81,8 @@ class TestSum(unittest.TestCase):
         print("--- test_distributed_compute_XY_plus_Z ---")
 
         X = np.array([[1., 2., 3.],
-                      [4., 5., 6.],
-                      [7., 8., 9.]])
+                        [4., 5., 6.],
+                        [7., 8., 9.]])
 
         Y = np.array([[1], [-1], [1]])
 
@@ -117,3 +98,10 @@ class TestSum(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
+
+
+
+
+
+
+

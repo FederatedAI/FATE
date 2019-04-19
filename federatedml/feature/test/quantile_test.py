@@ -18,9 +18,9 @@ import unittest
 import numpy as np
 
 from arch.api import eggroll
-from federatedml.feature.instance import Instance
-from federatedml.feature.quantile import Quantile
-from federatedml.feature.sparse_vector import SparseVector
+from federatedml.feature import Instance
+from federatedml.feature import Quantile
+from federatedml.feature import SparseVector
 
 
 class TestInstance(unittest.TestCase):

@@ -16,7 +16,6 @@
 
 package com.webank.ai.fate.eggroll.roll.api.grpc.client;
 
-import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.processor.ProcessServiceGrpc;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.Kv;
@@ -28,6 +27,7 @@ import com.webank.ai.fate.core.constant.RuntimeConstants;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.core.utils.TypeConversionUtils;
+import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorReduceResponseStreamObserver;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorUnaryProcessToStorageLocatorResponseObserver;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
@@ -49,22 +49,22 @@ public class EggProcessServiceClient {
     @Autowired
     private RollModelFactory rollModelFactory;
 
-    public StorageBasic.StorageLocator map(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::map);
+    public StorageBasic.StorageLocator map(Processor.UnaryProcess request, Node node) {
+        return unaryProcessToStorageLocatorUnaryCall(request, node, ProcessServiceGrpc.ProcessServiceStub::map);
     }
 
-    public StorageBasic.StorageLocator mapValues(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::mapValues);
+    public StorageBasic.StorageLocator mapValues(Processor.UnaryProcess request, Node node) {
+        return unaryProcessToStorageLocatorUnaryCall(request, node, ProcessServiceGrpc.ProcessServiceStub::mapValues);
     }
 
-    public StorageBasic.StorageLocator join(Processor.BinaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+    public StorageBasic.StorageLocator join(Processor.BinaryProcess request, Node node) {
         GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> context
                 = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorContext();
 
         DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
 
         context.setLatchInitCount(1)
-                .setEndpoint(processorEndpoint)
+                .setEndpoint(typeConversionUtils.toEndpoint(node))
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(ProcessServiceGrpc.ProcessServiceStub::join)
                 .setCallerStreamObserverClassAndArguments(EggProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);
@@ -84,13 +84,13 @@ public class EggProcessServiceClient {
         return result;
     }
 
-    public OperandBroker reduce(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+    public OperandBroker reduce(Processor.UnaryProcess request, Node node) {
         OperandBroker result = rollModelFactory.createOperandBroker();
         GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.UnaryProcess, Kv.Operand> context
                 = rollProcessorServiceCallModelFactory.createUnaryProcessToOperandContext();
 
         context.setLatchInitCount(1)
-                .setEndpoint(processorEndpoint)
+                .setEndpoint(typeConversionUtils.toEndpoint(node))
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(ProcessServiceGrpc.ProcessServiceStub::reduce)
                 .setCallerStreamObserverClassAndArguments(EggProcessorReduceResponseStreamObserver.class, result);
@@ -104,21 +104,21 @@ public class EggProcessServiceClient {
         return result;
     }
 
-    public StorageBasic.StorageLocator mapPartitions(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::mapPartitions);
+    public StorageBasic.StorageLocator mapPartitions(Processor.UnaryProcess request, Node node) {
+        return unaryProcessToStorageLocatorUnaryCall(request, node, ProcessServiceGrpc.ProcessServiceStub::mapPartitions);
     }
 
-    public StorageBasic.StorageLocator glom(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::glom);
+    public StorageBasic.StorageLocator glom(Processor.UnaryProcess request, Node node) {
+        return unaryProcessToStorageLocatorUnaryCall(request, node, ProcessServiceGrpc.ProcessServiceStub::glom);
     }
 
-    public StorageBasic.StorageLocator sample(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::sample);
+    public StorageBasic.StorageLocator sample(Processor.UnaryProcess request, Node node) {
+        return unaryProcessToStorageLocatorUnaryCall(request, node, ProcessServiceGrpc.ProcessServiceStub::sample);
     }
 
     private StorageBasic.StorageLocator
     unaryProcessToStorageLocatorUnaryCall(Processor.UnaryProcess request,
-                                          BasicMeta.Endpoint processorEndpoint,
+                                          Node node,
                                           GrpcCalleeStreamingStubMethodInvoker<
                                                   ProcessServiceGrpc.ProcessServiceStub,
                                                   Processor.UnaryProcess,
@@ -129,7 +129,7 @@ public class EggProcessServiceClient {
         DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
 
         context.setLatchInitCount(1)
-                .setEndpoint(processorEndpoint)
+                .setEndpoint(typeConversionUtils.toEndpoint(node))
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(calleeStreamingStubMethodInvoker)
                 .setCallerStreamObserverClassAndArguments(EggProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);

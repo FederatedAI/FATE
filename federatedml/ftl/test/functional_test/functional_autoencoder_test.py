@@ -15,13 +15,12 @@
 #
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import tensorflow as tf
 from sklearn.utils import shuffle
-
-from federatedml.ftl.autoencoder import Autoencoder
+import numpy as np
+import pandas as pd
 from federatedml.ftl.test.util import assert_matrix
+from federatedml.ftl.autoencoder import Autoencoder
 
 
 def getKaggleMNIST(file_path):

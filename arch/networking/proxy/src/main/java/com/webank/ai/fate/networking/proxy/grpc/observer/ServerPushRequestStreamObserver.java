@@ -22,7 +22,6 @@ import com.webank.ai.fate.networking.proxy.event.model.PipeHandleNotificationEve
 import com.webank.ai.fate.networking.proxy.factory.EventFactory;
 import com.webank.ai.fate.networking.proxy.helper.ModelValidationHelper;
 import com.webank.ai.fate.networking.proxy.infra.Pipe;
-import com.webank.ai.fate.networking.proxy.infra.impl.PacketQueuePipe;
 import com.webank.ai.fate.networking.proxy.manager.StatsManager;
 import com.webank.ai.fate.networking.proxy.model.ServerConf;
 import com.webank.ai.fate.networking.proxy.model.StreamStat;
@@ -225,14 +224,8 @@ public class ServerPushRequestStreamObserver implements StreamObserver<Proxy.Pac
                 loopEndTimestamp = System.currentTimeMillis();
             }
             if (++waitCount % 60 == 0) {
-
-                String extraInfo = "";
-                if (pipe instanceof PacketQueuePipe) {
-                    PacketQueuePipe pqp = (PacketQueuePipe) pipe;
-                    extraInfo = "queueSize: " + pqp.getQueueSize();
-                }
-                LOGGER.info("[PUSH][OBSERVER][ONCOMPLETE] waiting push to complete. wait time: {}. metadata: {}, extrainfo: {}",
-                        (loopEndTimestamp - completionWaitStartTimestamp), oneLineStringInputMetadata, extraInfo);
+                LOGGER.info("[PUSH][OBSERVER][ONCOMPLETE] waiting push to complete. wait time: {}. metadata: {}",
+                        (loopEndTimestamp - completionWaitStartTimestamp), oneLineStringInputMetadata);
             }
         }
 

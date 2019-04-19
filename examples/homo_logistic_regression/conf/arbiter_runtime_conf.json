@@ -25,7 +25,7 @@
         "method": "_workflow_method",
         "train_input_table": "_train_table_name",
         "train_input_namespace": "example_data_namespace",
-        "model_table": "homo_lr_model",
+        "model_table": "homo_lr_model__jobid",
         "model_namespace": "homo_lr",
         "predict_input_table": "_predict_table_name",
         "predict_input_namespace": "example_data_namespace",

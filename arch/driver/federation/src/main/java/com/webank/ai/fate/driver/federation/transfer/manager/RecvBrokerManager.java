@@ -53,7 +53,6 @@ public class RecvBrokerManager {
     private Map<String, Federation.TransferMeta> transferMetaIdToPassedInTransferMeta;
     private Map<String, CountDownLatch> transferMetaIdToPassedInTransferMetaArriveLatches;
     private Map<String, Federation.TransferMeta> finishedTransferMetas;
-    private volatile Map<String, CountDownLatch> transferMetaIdToFinishLatches;
 
     public RecvBrokerManager() {
         this.transferMetaIdToBrokerHolder = Maps.newConcurrentMap();
@@ -62,7 +61,6 @@ public class RecvBrokerManager {
         this.holderLock = new Object();
         this.counterLock = new Object();
         this.finishedTransferMetas = Maps.newConcurrentMap();
-        this.transferMetaIdToFinishLatches = Maps.newConcurrentMap();
     }
 
     public void createTask(Federation.TransferMeta transferMeta) {
@@ -140,16 +138,6 @@ public class RecvBrokerManager {
         return result;
     }
 
-    public CountDownLatch getFinishLatch(String transferMetaId) {
-        if (!transferMetaIdToFinishLatches.containsKey(transferMetaId)) {
-            transferMetaIdToFinishLatches.putIfAbsent(transferMetaId, new CountDownLatch(1));
-        }
-
-        CountDownLatch result = transferMetaIdToFinishLatches.get(transferMetaId);
-
-        return result;
-    }
-
     public TransferBroker createIfNotExists(String transferMetaId) {
         return createIfNotExistsInternal(transferMetaId, null);
     }
@@ -195,15 +183,7 @@ public class RecvBrokerManager {
             Federation.TransferMeta transferMetaWithStatusChanged
                     = transferMeta.toBuilder().setTransferStatus(transferStatus).build();
             finishedTransferMetas.put(transferMetaId, transferMetaWithStatusChanged);
-
             result = true;
-        }
-
-        if (transferStatus.equals(Federation.TransferStatus.COMPLETE)
-                || transferStatus.equals(Federation.TransferStatus.ERROR)
-                || transferStatus.equals(Federation.TransferStatus.CANCELLED)) {
-            transferMetaIdToFinishLatches.putIfAbsent(transferMetaId, new CountDownLatch(1));
-            transferMetaIdToFinishLatches.get(transferMetaId).countDown();
         }
 
         return result;

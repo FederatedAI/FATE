@@ -14,19 +14,17 @@
 #  limitations under the License.
 #
 
-import unittest
-
 import numpy as np
-
-from arch.api.eggroll import init
-from federatedml.feature.instance import Instance
-from federatedml.ftl.data_util.common_data_util import create_table
-from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel
+import unittest
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
-from federatedml.ftl.test.mock_models import MockAutoencoder, MockDiffConverge
+from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest, HeteroFTLGuest
+from federatedml.ftl.plain_ftl import PlainFTLGuestModel
+from federatedml.feature.instance import Instance
+from federatedml.ftl.common.data_util import create_table
+from federatedml.ftl.test.fake_models import FakeAutoencoder, FakeDiffConverge
 from federatedml.param.param import FTLModelParam
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from arch.api.eggroll import init
 
 
 class TestHeteroFTLGuest(HeteroPlainFTLGuest):
@@ -44,7 +42,7 @@ class TestHeteroFTLGuest(HeteroPlainFTLGuest):
         Wh = np.ones((5, U_B.shape[1]))
         bh = np.zeros(U_B.shape[1])
 
-        autoencoderB = MockAutoencoder(1)
+        autoencoderB = FakeAutoencoder(1)
         autoencoderB.build(U_B.shape[1], Wh, bh)
 
         self.host = PlainFTLHostModel(autoencoderB, self.model_param)
@@ -76,11 +74,11 @@ class TestCreateGuestHostEggrollTable(unittest.TestCase):
 
         model_param = FTLModelParam(alpha=1, max_iteration=1)
 
-        autoencoderA = MockAutoencoder(0)
+        autoencoderA = FakeAutoencoder(0)
         autoencoderA.build(U_A.shape[1], Wh, bh)
         guest = PlainFTLGuestModel(autoencoderA, model_param)
 
-        converge_func = MockDiffConverge(None)
+        converge_func = FakeDiffConverge(None)
         ftl_guest = TestHeteroFTLGuest(guest, model_param, HeteroFTLTransferVariable())
         ftl_guest.set_converge_function(converge_func)
 
@@ -109,3 +107,4 @@ class TestCreateGuestHostEggrollTable(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
+

@@ -18,7 +18,6 @@ package com.webank.ai.fate.core.io;
 
 import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
 import com.webank.ai.fate.core.constant.MetaConstants;
-import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.logging.log4j.LogManager;
@@ -63,14 +62,6 @@ public class StoreInfo {
                 .tableName(storageLocator.getName())
                 .fragment(storageLocator.getFragment())
                 .type(storageLocator.getType().name())
-                .build();
-    }
-
-    public static StoreInfo fromDtable(Dtable dtable) {
-        return StoreInfo.builder()
-                .nameSpace(dtable.getNamespace())
-                .tableName(dtable.getTableName())
-                .type(dtable.getTableType())
                 .build();
     }
 

@@ -22,4 +22,4 @@ jobid=$2
 echo "config path is "$config_path
 echo "jobid is "$jobid
 
-python ../../workflow/hetero_secureboosting_tree_workflow/hetero_secureboosting_tree_guest_workflow.py -c $config_path -j $jobid
+python ../../workflow/hetero_secureboosting_tree_workflow/hetero_secureboosting_tree_guest_worflow.py -c $config_path -j $jobid

@@ -74,7 +74,6 @@ public class TestKeyValueStore {
 
     @Test
     public void put() {
-
         store.put(Bytes.wrap("hello".getBytes()), "world".getBytes());
         store.put(Bytes.wrap("coffee".getBytes()), "latte".getBytes());
         store.put(Bytes.wrap("now".getBytes()), String.valueOf(System.currentTimeMillis()).getBytes());

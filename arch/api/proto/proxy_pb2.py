@@ -36,7 +36,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.networking.proxy',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x0bproxy.proto\x12\'com.webank.ai.fate.api.networking.proxy\x1a\x10\x62\x61sic-meta.proto\"&\n\x05Model\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taKey\x18\x02 \x01(\t\"U\n\x04Task\x12\x0e\n\x06taskId\x18\x01 \x01(\t\x12=\n\x05model\x18\x02 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Model\"m\n\x05Topic\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\x12\x0c\n\x04role\x18\x03 \x01(\t\x12\x37\n\x08\x63\x61llback\x18\x04 \x01(\x0b\x32%.com.webank.ai.fate.api.core.Endpoint\"\x17\n\x07\x43ommand\x12\x0c\n\x04name\x18\x01 \x01(\t\"p\n\x04\x43onf\x12\x16\n\x0eoverallTimeout\x18\x01 \x01(\x03\x12\x1d\n\x15\x63ompletionWaitTimeout\x18\x02 \x01(\x03\x12\x1d\n\x15packetIntervalTimeout\x18\x03 \x01(\x03\x12\x12\n\nmaxRetries\x18\x04 \x01(\x05\"\xed\x02\n\x08Metadata\x12;\n\x04task\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Task\x12;\n\x03src\x18\x02 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Topic\x12;\n\x03\x64st\x18\x03 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Topic\x12\x41\n\x07\x63ommand\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.api.networking.proxy.Command\x12\x10\n\x08operator\x18\x05 \x01(\t\x12\x0b\n\x03seq\x18\x06 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x07 \x01(\x03\x12;\n\x04\x63onf\x18\x08 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Conf\"\"\n\x04\x44\x61ta\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x0c\"\x88\x01\n\x06Packet\x12\x41\n\x06header\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12;\n\x04\x62ody\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Data\"\x9d\x01\n\x11HeartbeatResponse\x12\x41\n\x06header\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12\x45\n\toperation\x18\x02 \x01(\x0e\x32\x32.com.webank.ai.fate.api.networking.proxy.Operation*O\n\tOperation\x12\t\n\x05START\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\x08\n\x04STOP\x10\x02\x12\x08\n\x04KILL\x10\x03\x12\x0c\n\x08GET_DATA\x10\x04\x12\x0c\n\x08PUT_DATA\x10\x05\x32\xe0\x02\n\x13\x44\x61taTransferService\x12l\n\x04push\x12/.com.webank.ai.fate.api.networking.proxy.Packet\x1a\x31.com.webank.ai.fate.api.networking.proxy.Metadata(\x01\x12l\n\x04pull\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a/.com.webank.ai.fate.api.networking.proxy.Packet0\x01\x12m\n\tunaryCall\x12/.com.webank.ai.fate.api.networking.proxy.Packet\x1a/.com.webank.ai.fate.api.networking.proxy.Packet2n\n\x0cRouteService\x12^\n\x05query\x12..com.webank.ai.fate.api.networking.proxy.Topic\x1a%.com.webank.ai.fate.api.core.Endpointb\x06proto3')
+  serialized_pb=_b('\n\x0bproxy.proto\x12\'com.webank.ai.fate.api.networking.proxy\x1a\x10\x62\x61sic-meta.proto\"&\n\x05Model\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taKey\x18\x02 \x01(\t\"U\n\x04Task\x12\x0e\n\x06taskId\x18\x01 \x01(\t\x12=\n\x05model\x18\x02 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Model\"m\n\x05Topic\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\x12\x0c\n\x04role\x18\x03 \x01(\t\x12\x37\n\x08\x63\x61llback\x18\x04 \x01(\x0b\x32%.com.webank.ai.fate.api.core.Endpoint\"\x17\n\x07\x43ommand\x12\x0c\n\x04name\x18\x01 \x01(\t\"p\n\x04\x43onf\x12\x16\n\x0eoverallTimeout\x18\x01 \x01(\x03\x12\x1d\n\x15\x63ompletionWaitTimeout\x18\x02 \x01(\x03\x12\x1d\n\x15packetIntervalTimeout\x18\x03 \x01(\x03\x12\x12\n\nmaxRetries\x18\x04 \x01(\x05\"\xed\x02\n\x08Metadata\x12;\n\x04task\x18\x01 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Task\x12;\n\x03src\x18\x02 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Topic\x12;\n\x03\x64st\x18\x03 \x01(\x0b\x32..com.webank.ai.fate.api.networking.proxy.Topic\x12\x41\n\x07\x63ommand\x18\x04 \x01(\x0b\x32\x30.com.webank.ai.fate.api.networking.proxy.Command\x12\x10\n\x08operator\x18\x05 \x01(\t\x12\x0b\n\x03seq\x18\x06 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x07 \x01(\x03\x12;\n\x04\x63onf\x18\x08 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Conf\"\"\n\x04\x44\x61ta\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x0c\"\x88\x01\n\x06Packet\x12\x41\n\x06header\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12;\n\x04\x62ody\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.networking.proxy.Data\"\x9d\x01\n\x11HeartbeatResponse\x12\x41\n\x06header\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12\x45\n\toperation\x18\x02 \x01(\x0e\x32\x32.com.webank.ai.fate.api.networking.proxy.Operation*O\n\tOperation\x12\t\n\x05START\x10\x00\x12\x07\n\x03RUN\x10\x01\x12\x08\n\x04STOP\x10\x02\x12\x08\n\x04KILL\x10\x03\x12\x0c\n\x08GET_DATA\x10\x04\x12\x0c\n\x08PUT_DATA\x10\x05\x32\xe0\x02\n\x13\x44\x61taTransferService\x12l\n\x04push\x12/.com.webank.ai.fate.api.networking.proxy.Packet\x1a\x31.com.webank.ai.fate.api.networking.proxy.Metadata(\x01\x12l\n\x04pull\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a/.com.webank.ai.fate.api.networking.proxy.Packet0\x01\x12m\n\tunaryCall\x12/.com.webank.ai.fate.api.networking.proxy.Packet\x1a/.com.webank.ai.fate.api.networking.proxy.Packet2n\n\x0cRouteService\x12^\n\x05query\x12..com.webank.ai.fate.api.networking.proxy.Topic\x1a%.com.webank.ai.fate.api.core.Endpoint2\xd9\x03\n\x10TaskAdminService\x12m\n\x05start\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12l\n\x04stop\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12l\n\x04kill\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x12z\n\theartbeat\x12\x31.com.webank.ai.fate.api.networking.proxy.Metadata\x1a:.com.webank.ai.fate.api.networking.proxy.HeartbeatResponseb\x06proto3')
   ,
   dependencies=[basic__meta__pb2.DESCRIPTOR,])
 
@@ -644,5 +644,56 @@ _ROUTESERVICE = _descriptor.ServiceDescriptor(
 _sym_db.RegisterServiceDescriptor(_ROUTESERVICE)
 
 DESCRIPTOR.services_by_name['RouteService'] = _ROUTESERVICE
+
+
+_TASKADMINSERVICE = _descriptor.ServiceDescriptor(
+  name='TaskAdminService',
+  full_name='com.webank.ai.fate.api.networking.proxy.TaskAdminService',
+  file=DESCRIPTOR,
+  index=2,
+  serialized_options=None,
+  serialized_start=1703,
+  serialized_end=2176,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='start',
+    full_name='com.webank.ai.fate.api.networking.proxy.TaskAdminService.start',
+    index=0,
+    containing_service=None,
+    input_type=_METADATA,
+    output_type=_METADATA,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='stop',
+    full_name='com.webank.ai.fate.api.networking.proxy.TaskAdminService.stop',
+    index=1,
+    containing_service=None,
+    input_type=_METADATA,
+    output_type=_METADATA,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='kill',
+    full_name='com.webank.ai.fate.api.networking.proxy.TaskAdminService.kill',
+    index=2,
+    containing_service=None,
+    input_type=_METADATA,
+    output_type=_METADATA,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='heartbeat',
+    full_name='com.webank.ai.fate.api.networking.proxy.TaskAdminService.heartbeat',
+    index=3,
+    containing_service=None,
+    input_type=_METADATA,
+    output_type=_HEARTBEATRESPONSE,
+    serialized_options=None,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_TASKADMINSERVICE)
+
+DESCRIPTOR.services_by_name['TaskAdminService'] = _TASKADMINSERVICE
 
 # @@protoc_insertion_point(module_scope)

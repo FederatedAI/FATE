@@ -102,15 +102,12 @@ intersect() {
 }
 
 get_intersect_output_number() {
-    role=$1
     echo "start get intersect output number"
     cur_python_file=$conf_dir/${python_file_name}_${jobid}.py
     cp ${python_file} $cur_python_file
-
-    role_intersect_output_name=${role}_${intersect_output_name}
-    role_intersect_output_namespace=${role}_${intersect_output_namespace}
-    sed -i "s/_intersect_output_table_name/${role_intersect_output_name}/g" $cur_python_file
-    sed -i "s/_intersect_output_namespace/${role_intersect_output_namespace}/g" $cur_python_file
+    
+    sed -i "s/_intersect_output_table_name/${intersect_output_name}/g" $cur_python_file
+    sed -i "s/_intersect_output_namespace/${intersect_output_namespace}/g" $cur_python_file
     sed -i "s/_work_mode/$work_mode/g" $cur_python_file
 
     python $cur_python_file
@@ -120,14 +117,13 @@ get_intersect_output_number() {
 get_log_result() {
     log_path=$1
     keyword=$2
-    role=$3
     sleep 5s
     while true
     do
         num=$(cat $log_path | grep $keyword | wc -l)
         if [ $num -ge 1 ]; then
             # cat $log_path | grep $keyword
-            get_intersect_output_number $role
+            get_intersect_output_number
             break
         else
             echo "please wait or check more info in "$log_path
@@ -150,8 +146,7 @@ if [ $mode = 'intersect' ]; then
         intersect host $intersect_table_host
 
         workflow_log=${log_file}/intersect_guest_workflow.log
-        get_log_result ${workflow_log} Save guest
-        get_log_result ${workflow_log} Save host
+        get_log_result ${workflow_log} Save
 
     elif [[ $role == 'guest' ]]; then
         load_file $intersect_data_guest guest intersect
@@ -159,7 +154,7 @@ if [ $mode = 'intersect' ]; then
         echo "intersect table guest is:"$intersect_table_guest
         intersect guest $intersect_table_guest
         workflow_log=${log_file}/intersect_guest_workflow.log
-        get_log_result ${workflow_log} Save guest
+        get_log_result ${workflow_log} Save
 
     elif [[ $role == 'host' ]]; then
         load_file $intersect_data_host host intersect

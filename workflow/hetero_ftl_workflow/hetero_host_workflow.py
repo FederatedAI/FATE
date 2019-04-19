@@ -15,15 +15,14 @@
 #
 
 import sys
-
 import tensorflow as tf
-
-from arch.api.utils import log_utils
+from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
+from federatedml.ftl.plain_ftl import PlainFTLHostModel
+from federatedml.ftl.hetero_ftl.hetero_ftl_host import HeteroEncryptFTLHost, HeteroPlainFTLHost
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory
 from federatedml.util import consts
 from workflow.hetero_ftl_workflow.hetero_workflow import FTLWorkFlow
-
+from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
@@ -34,7 +33,14 @@ class FTLHostWorkFlow(FTLWorkFlow):
 
     def _do_initialize_model(self, ftl_model_param, ftl_local_model_param, ftl_data_param):
         self.ftl_local_model = self._create_local_model(ftl_local_model_param, ftl_data_param)
-        self.model = HostFactory.create(ftl_model_param, self._get_transfer_variable(), self.ftl_local_model)
+        if ftl_model_param.is_encrypt:
+            LOGGER.debug("@ create encrypt ftl_host")
+            host_model = EncryptedFTLHostModel(local_model=self.ftl_local_model, model_param=ftl_model_param)
+            self.model = HeteroEncryptFTLHost(host_model, ftl_model_param, self._get_transfer_variable())
+        else:
+            LOGGER.debug("@ create plain ftl_host")
+            host_model = PlainFTLHostModel(local_model=self.ftl_local_model, model_param=ftl_model_param)
+            self.model = HeteroPlainFTLHost(host_model, ftl_model_param, self._get_transfer_variable())
 
     def _create_local_model(self, ftl_local_model_param, ftl_data_param):
         autoencoder = Autoencoder("local_ftl_host_model_01")
@@ -56,7 +62,6 @@ class FTLHostWorkFlow(FTLWorkFlow):
             train_eval = self.evaluate(train_pred)
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
-                LOGGER.debug("@ validation")
                 val_pred = self.model.predict(validation_data, self.workflow_param.predict_param)
                 val_eval = self.evaluate(val_pred)
                 eval_result[consts.VALIDATE_EVALUATE] = val_eval
