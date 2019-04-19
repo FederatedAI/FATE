@@ -16,6 +16,7 @@
 
 import json
 import os
+import copy
 from arch.api.utils.log_utils import getLogger
 
 LOGGER = getLogger()
@@ -45,7 +46,7 @@ class ParameterOverride(object):
             _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
             partyid_list = submit_dict["role"][role]
             for idx in range(len(partyid_list)):
-                runtime_json = default_runtime_dict.copy()
+                runtime_json = copy.deepcopy(default_runtime_dict)
                 runtime_json['WorkFlowParam']['method'] = _method
                 for key, value in submit_dict.items():
                     if key not in ["algorithm_parameters", "role_parameters"]:

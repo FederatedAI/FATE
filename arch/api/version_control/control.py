@@ -13,48 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import federation
 from arch.api import eggroll
-from arch.api.utils.core import get_scene_key, json_loads, json_dumps, bytes_to_string
+from arch.api.utils.core import json_loads, json_dumps, bytes_to_string
 from arch.api.utils import log_utils
-import traceback
 LOGGER = log_utils.getLogger()
-
-
-def new_table_info_for_save(namespace=None, data_type=None, scene_id=None, my_role=None, my_party_id=None,
-                            partner_party_id=None, tag=None, branch="master"):
-    if not namespace:
-        if data_type:
-            namespace = get_scene_namespace(data_type=data_type, scene_id=scene_id, my_role=my_role,
-                                            my_party_id=my_party_id, partner_party_id=partner_party_id)
-        else:
-            return None, None
-    # Create new commit id for saving, branch current commit as parent
-    # TODO: get job id from task manager
-    commit_id = eggroll.get_job_id()
-    name = commit_id  # commit id as name
-    save_commit_tmp(commit_id=commit_id, data_table_namespace=namespace, tag=tag, branch=branch)
-    return name, namespace
-
-
-def get_table_info_for_read(namespace=None, data_type=None, scene_id=None, my_role=None, my_party_id=None,
-                            partner_party_id=None, commit_id=None, tag=None, branch="master"):
-    if not namespace:
-        if data_type:
-            namespace = get_scene_namespace(data_type=data_type, scene_id=scene_id, my_role=my_role,
-                                            my_party_id=my_party_id, partner_party_id=partner_party_id)
-        else:
-            return None, None
-    name = None
-    if commit_id:
-        name = commit_id
-    else:
-        version_table = get_version_table(data_table_namespace=namespace)
-        branch_current_commit = get_branch_current_commit(version_table=version_table, branch_name=branch)
-        if branch_current_commit:
-            # Return branch current commit id for reading
-            name = branch_current_commit
-    return name, namespace
 
 
 def save_version(name, namespace, version_log='', tag=None, branch=None):
@@ -69,7 +31,7 @@ def save_version(name, namespace, version_log='', tag=None, branch=None):
         LOGGER.exception(e)
         return False
     finally:
-        delete_commit_tmp(commid_id=name, data_table_namespace=namespace)
+        delete_commit_tmp(commit_id=name, data_table_namespace=namespace)
 
 
 def save_version_info(commit_id, data_table_namespace, version_log, tag, branch):
@@ -91,12 +53,17 @@ def save_version_info(commit_id, data_table_namespace, version_log, tag, branch)
     version_table.put(branch, commit_id, use_serialize=False)
 
 
+def get_latest_commit(data_table_namespace, branch="master"):
+    version_table = get_version_table(data_table_namespace=data_table_namespace)
+    return get_branch_current_commit(version_table=version_table, branch_name=branch)
+
+
 def version_history(data_table_namespace, commit_id=None, branch="master", limit=10):
     version_table = get_version_table(data_table_namespace=data_table_namespace)
-    historys = list()
+    history = list()
     if commit_id:
         # Get this commit information
-        historys.append(get_version_info(version_table=version_table, commit_id=commit_id))
+        history.append(get_version_info(version_table=version_table, commit_id=commit_id))
     else:
         branch_current_commit = get_branch_current_commit(version_table=version_table, branch_name=branch)
         if branch_current_commit:
@@ -104,18 +71,11 @@ def version_history(data_table_namespace, commit_id=None, branch="master", limit
             for i in range(limit):
                 commit_info = get_version_info(version_table=version_table, commit_id=commit_id)
                 if commit_info:
-                    historys.append(commit_info)
+                    history.append(commit_info)
                     commit_id = commit_info["parent"]
                 else:
                     break
-    return historys
-
-
-def get_scene_namespace(data_type, scene_id=None, my_role=None, my_party_id=None, partner_party_id=None):
-    if not (scene_id and my_role and my_party_id and partner_party_id):
-        scene_id, my_role, my_party_id, partner_party_id = get_default_scene_info()
-    scene_key = get_scene_key(scene_id, my_role, my_party_id, partner_party_id)
-    return "%s_%s" % (scene_key, data_type)
+    return history
 
 
 def get_version_table(data_table_namespace):
@@ -139,21 +99,6 @@ def get_version_info(version_table, commit_id):
         return dict()
 
 
-def get_default_scene_info():
-    runtime_conf = federation.get_runtime_conf()
-    scene_id = runtime_conf.get("local", {}).get("scene_id")
-    my_role = runtime_conf.get("local", {}).get("role")
-    my_party_id = runtime_conf.get("local", {}).get("party_id")
-    partner_party_id = runtime_conf.get("role", {}).get("host" if my_role == "guest" else "guest")[0]
-    return scene_id, my_role, my_party_id, partner_party_id
-
-
-def get_commit_tmp_table(data_table_namespace):
-    version_tmp_table = eggroll.table(name=data_table_namespace, namespace="version_tmp",
-                                      partition=1, create_if_missing=True, error_if_exist=False)
-    return version_tmp_table
-
-
 def save_commit_tmp(commit_id, data_table_namespace, tag, branch):
     version_tmp_table = get_commit_tmp_table(data_table_namespace=data_table_namespace)
     version_tmp_table.put(commit_id, json_dumps({"tag": tag, "branch": branch}), use_serialize=False)
@@ -169,6 +114,17 @@ def get_commit_tmp(commit_id, data_table_namespace):
         return None, "master"
 
 
-def delete_commit_tmp(commid_id, data_table_namespace):
+def delete_commit_tmp(commit_id, data_table_namespace):
     version_tmp_table = get_commit_tmp_table(data_table_namespace=data_table_namespace)
-    version_tmp_table.delete(commid_id)
+    version_tmp_table.delete(commit_id)
+
+
+def get_commit_tmp_table(data_table_namespace):
+    version_tmp_table = eggroll.table(name=data_table_namespace, namespace="version_tmp",
+                                      partition=1, create_if_missing=True, error_if_exist=False)
+    return version_tmp_table
+
+
+def get_id_library_table_name():
+    id_library_info = eggroll.table('info', 'id_library', partition=10, create_if_missing=True, error_if_exist=False)
+    return id_library_info.get("use_data_id")

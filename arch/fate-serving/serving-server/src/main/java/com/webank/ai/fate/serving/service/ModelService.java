@@ -18,16 +18,23 @@ package com.webank.ai.fate.serving.service;
 
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceGrpc;
+import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishRequest;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishResponse;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
+import com.webank.ai.fate.serving.manger.ModelInfo;
 import com.webank.ai.fate.serving.manger.ModelManager;
+import com.webank.ai.fate.serving.manger.ModelUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     private static final Logger LOGGER = LogManager.getLogger();
@@ -36,8 +43,13 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver){
         PublishResponse.Builder builder = PublishResponse.newBuilder();
         int loadStatus;
-        if (Configuration.getPropertyInt("party.id").equals(req.getMyPartyId())){
-            ReturnResult returnResult = ModelManager.publishLoadModel(req.getModelsMap());
+        //if (Configuration.getPropertyInt("party.id").equals(req.getLocal().getPartyId())){
+        if (true){
+            ReturnResult returnResult = ModelManager.publishLoadModel(
+                    req.getLocal().getRole(),
+                    req.getLocal().getPartyId(),
+                    ModelUtils.getAllParty(req.getRoleMap()),
+                    ModelUtils.getAllPartyModel(req.getModelMap()));
             loadStatus = returnResult.getStatusCode();
             builder.setStatusCode(returnResult.getStatusCode())
                     .setMessage(returnResult.getMessage())
@@ -55,7 +67,11 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     @Override
     public void publishOnline(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
         PublishResponse.Builder builder = PublishResponse.newBuilder();
-        ReturnResult returnResult = ModelManager.publishOnlineModel(req.getModelsMap());
+        ReturnResult returnResult = ModelManager.publishOnlineModel(
+                req.getLocal().getRole(),
+                req.getLocal().getPartyId(),
+                ModelUtils.getAllParty(req.getRoleMap()),
+                ModelUtils.getAllPartyModel(req.getModelMap()));
         builder.setStatusCode(returnResult.getStatusCode())
                 .setMessage(returnResult.getMessage())
                 .setError(returnResult.getError())

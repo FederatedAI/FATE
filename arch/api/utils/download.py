@@ -8,7 +8,7 @@ from arch.api import storage
 def do_export_file(job_id, _data):
     try:
         work_mode = _data.get("work_mode")
-        name = _data.get("name")
+        name = _data.get("table_name")
         namespace = _data.get("namespace")
         delimitor = _data.get("delimitor", ",")
         output_path = _data.get("output_path")

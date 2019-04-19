@@ -6,21 +6,23 @@
         "host": [10000],
         "arbiter": [10000]
     },
+    "scene_id": 50000,
+    "gen_table_info": true,
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_guest_train_hetero_logistic_regression_example_task_manager_test"],
-                "train_input_namespace": ["task_manager_test"],
-                "model_table": ["hetero_lr_guest_model"],
-                "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_guest_train_hetero_logistic_regression_example_task_manager_test"],
-                "predict_input_namespace": ["task_manager_test"],
-                "predict_output_table": ["breast_guest_predict_out_hetero_logistic_regression_example_task_manager_test"],
-                "predict_output_namespace": ["task_manager_test"],
-                "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_task_manager_test"],
-                "evaluation_output_namespace": ["task_manager_test"],
-                "data_input_table": ["breast_guest_cross_validation_hetero_logistic_regression_example_standalone_20190402211859"],
-                "data_input_namespace": ["example_data_namespace"]
+                "train_input_table": [],
+                "train_input_namespace": [],
+                "model_table": [],
+                "model_namespace": [],
+                "predict_input_table": [],
+                "predict_input_namespace": [],
+                "predict_output_table": [],
+                "predict_output_namespace": [],
+                "evaluation_output_table": [],
+                "evaluation_output_namespace": [],
+                "data_input_table": [],
+                "data_input_namespace": []
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -31,18 +33,18 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_host_train_hetero_logistic_regression_example_task_manager_test"],
-                "train_input_namespace": ["task_manager_test"],
-                "data_input_table": ["breast_host_predict_hetero_logistic_regression_example_standalone_20190402223834"],
-                "data_input_namespace": ["example_data_namespace"],
-                "model_table": ["hetero_lr_host_model"],
-                "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_host_train_hetero_logistic_regression_example_task_manager_test"],
-                "predict_input_namespace": ["task_manager_test"],
-                "predict_output_table": ["breast_host_predict_out_hetero_logistic_regression_example_task_manager_test"],
-                "predict_output_namespace": ["task_manager_test"],
-                "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_task_manager_test"],
-                "evaluation_output_namespace": ["task_manager_test"]
+                "train_input_table": [],
+                "train_input_namespace": [],
+                "data_input_table": [],
+                "data_input_namespace": [],
+                "model_table": [],
+                "model_namespace": [],
+                "predict_input_table": [],
+                "predict_input_namespace": [],
+                "predict_output_table": [],
+                "predict_output_namespace": [],
+                "evaluation_output_table": [],
+                "evaluation_output_namespace": []
             },
              "DataIOParam":{
                 "with_label": [false],

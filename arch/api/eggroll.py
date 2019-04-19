@@ -24,6 +24,8 @@ from arch.api import RuntimeInstance
 
 
 def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE):
+    if RuntimeInstance.EGGROLL:
+        return
     if job_id is None:
         job_id = str(uuid.uuid1())
         LoggerFactory.setDirectory()

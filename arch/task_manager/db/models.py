@@ -68,11 +68,10 @@ class JobInfo(DataBaseModel):
     module = CharField(max_length=50, null=True, index=True)
     scene_id = IntegerField(null=True, index=True)
     initiator = IntegerField(null=True, index=True)
-    my_role = CharField(max_length=10, null=True, default='', index=True)
-    my_party_id = IntegerField(null=True, default=0, index=True)
-    partner_party_id = IntegerField(null=True, index=True)
+    role = CharField(max_length=50, null=True, default='', index=True)
+    party_id = IntegerField(null=True, default=0, index=True)
     config = TextField(null=True)
-    roles = TextField(null=True)
+    all_party = TextField(null=True)
     pid = IntegerField(null=True, index=True)
     status = CharField(max_length=50, null=True, default='ready')  # waiting/ready/start/running/success/failed/partial/deleted
     set_status = CharField(max_length=50, null=True)  # ready/running/success/failed/partial/deleted
@@ -86,13 +85,13 @@ class JobInfo(DataBaseModel):
 
     class Meta:
         db_table = "job_info"
-        primary_key = CompositeKey('job_id', 'my_role', 'my_party_id')
+        primary_key = CompositeKey('job_id', 'role', 'party_id')
 
 
 class JobQueue(DataBaseModel):
     job_id = CharField(max_length=50)
-    my_role = CharField(max_length=10, null=True, default='', index=True)
-    my_party_id = IntegerField(null=True, default=0, index=True)
+    role = CharField(max_length=50, null=True, default='', index=True)
+    party_id = IntegerField(null=True, default=0, index=True)
     config = TextField(null=True)
     status = CharField(max_length=50, null=True, default='ready')  # waiting/ready/start/running/success/failed/partial/deleted
     pid = IntegerField(null=True, index=True)
@@ -101,7 +100,7 @@ class JobQueue(DataBaseModel):
 
     class Meta:
         db_table = "job_queue"
-        primary_key = CompositeKey('job_id', 'my_role', 'my_party_id')
+        primary_key = CompositeKey('job_id', 'role', 'party_id')
 
 
 init_tables()

@@ -1,16 +1,30 @@
 {
     "task": "publish_model",
-    "partyId": 10000,
+    "local": {
+        "party_id": 9999,
+        "role": "guest"
+    },
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "scene_id": 50000,
+    "gen_table_info": true,
     "servings": [
     ],
-    "models": {
-        "9999": {
-            "name": "hetero_lr_host_model",
-            "namespace": "hetero_lr"
+    "model": {
+        "guest": {
+            "9999": {
+                "table_name": "",
+                "namespace": ""
+            }
         },
-        "10000": {
-            "name": "hetero_lr_guest_model",
-            "namespace": "hetero_lr"
+        "host": {
+            "10000": {
+                "table_name": "",
+                "namespace": ""
+            }
         }
     }
 }

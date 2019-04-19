@@ -58,23 +58,12 @@ load_file() {
     input_path=$1
     role=$2   
     load_mode=$3
-    if [ "$role"x = "guest"x ];then
-        my_party_id=$guest_partyid
-        partner_party_id=$host_partyid
-    elif [ "$role"x = "host"x ];then
-        my_party_id=$host_partyid
-        partner_party_id=$guest_partyid
-    fi
     conf_path=$conf_dir/load_file.json_${role}_${load_mode}_$jobid
     cp $load_data_conf $conf_path
     data_table=${data_set}_${role}_${load_mode}_$jobid
 	sed -ie "s|_input_path|${input_path}|g" ${conf_path}
 	sed -ie "s/_table_name/${data_table}/g" ${conf_path}
     sed -ie "s/_work_mode/${work_mode}/g" ${conf_path}
-
-    sed -ie "s/_role/${role}/g" ${conf_path}
-    sed -ie "s/_my_party_id/${my_party_id}/g" ${conf_path}
-    sed -ie "s/_partner_party_id/${partner_party_id}/g" ${conf_path}
 
     python $load_file_program -c ${conf_path}
 }

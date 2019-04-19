@@ -19,30 +19,27 @@ package com.webank.ai.fate.serving.utils;
 import com.webank.ai.fate.core.storage.dtable.DTableInfo;
 import com.webank.ai.fate.core.utils.SceneUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class DTableUtils {
-    public static DTableInfo genTableInfo(String namespace){
-        Map<String, String> versionInfo = VersionControl.getVersionInfo(namespace, "", "", "master");
-        if (versionInfo == null){
-            return null;
-        }
-        else{
-            return new DTableInfo(versionInfo.get("commitId"), namespace);
-        }
-    }
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static DTableInfo genTableInfo(String tableName, String namespace, int sceneId, String role, int partyId, Map<String, List<Integer>> allParty, String dataType){
 
-    public static DTableInfo genTableInfo(int sceneId, String myRole, int myPartyId, int partnerPartyId, String dataType){
-        String sceneKey = SceneUtils.genSceneKey(sceneId, myRole, myPartyId, partnerPartyId);
-        String namespace = getSceneNamespace(sceneKey, dataType);
-        return genTableInfo(namespace);
-    }
-
-    public static DTableInfo genTableInfo(int sceneId, String myRole, int myPartyId, int partnerPartyId, String dataType, String name){
-        String sceneKey = SceneUtils.genSceneKey(sceneId, myRole, myPartyId, partnerPartyId);
-        return new DTableInfo(name, getSceneNamespace(sceneKey, dataType));
+        if (StringUtils.isEmpty(namespace)){
+            namespace = getSceneNamespace(SceneUtils.genSceneKey(sceneId, role, partyId, allParty), dataType);
+        }
+        if (StringUtils.isEmpty(tableName)){
+            Map<String, String> versionInfo = VersionControl.getVersionInfo(namespace, "", "", "master");
+            if (versionInfo != null){
+                tableName = versionInfo.get("commitId");
+            }
+        }
+        return new DTableInfo(tableName, namespace);
     }
 
     public static String getSceneNamespace(String sceneKey, String dataType){
