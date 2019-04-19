@@ -185,7 +185,7 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void delete(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
+    public void delOne(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
         LOGGER.info("Kv.delete request received. key: {}", request.getKey().toStringUtf8());
 
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {

@@ -122,8 +122,8 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
         // init
         if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
             boolean newlyCreated = false;
-            OperandBroker operandBroker = rollModelFactory.createOperandBroker();
 
+            OperandBroker operandBroker = rollModelFactory.createOperandBroker();
             synchronized (fragmentOrderToOperandBrokerLock) {
                 if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
                     fragmentOrderToOperandBroker.put(dispatchedFragment, operandBroker);

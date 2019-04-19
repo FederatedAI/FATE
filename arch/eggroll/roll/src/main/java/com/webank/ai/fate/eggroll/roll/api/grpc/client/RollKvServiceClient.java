@@ -161,7 +161,7 @@ public class RollKvServiceClient {
                 operandBroker.awaitLatch(1, TimeUnit.SECONDS);
                 template.processCallerStreamingRpc();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             template.errorCallerStreamingRpc(e);
         }
 
@@ -177,7 +177,7 @@ public class RollKvServiceClient {
         context.setLatchInitCount(1)
                 .setEndpoint(rollEndpoint)
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delete)
+                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delOne)
                 .setCallerStreamObserverClassAndArguments(RollKvOperandToOperandObserver.class, delayedResult)
                 .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo));
 

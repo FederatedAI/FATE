@@ -126,7 +126,7 @@ public class StorageServiceClient {
                 operandBroker.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT);
                 template.processCallerStreamingRpc();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             template.errorCallerStreamingRpc(e);
         }
 
@@ -142,7 +142,7 @@ public class StorageServiceClient {
         context.setLatchInitCount(1)
                 .setEndpoint(typeConversionUtils.toEndpoint(node))
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delete)
+                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delOne)
                 .setCallerStreamObserverClassAndArguments(StorageKvOperandToOperandObserver.class, delayedResult)
                 .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo));
 
