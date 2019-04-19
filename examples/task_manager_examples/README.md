@@ -23,12 +23,6 @@ TM provide a function for you to import id only from a file instead of loading w
 > python task_manager_client.py -f importIdFromLocal -c import_id_from_local.json
 
 
-### Request Offline Feature
-
-It is a possible case that, the real data is not located at the same system of FATE which cannot use "Load File" function directly. We also provide a generic methods to request data. One party provide an service with which you can somehow upload data to an agreed storage system. Then call an adapter to load data in FATE server. The call statement is as follow:
-
-> python task_manager_client.py -f requestOfflineFeature -c request_offline_feature_host.json
-
 ### Start workflow
 
 This method is use to start a workflow task. You can config all parties configuration in one config file. For those parameters that are different in each party, you set in **role_parameters**. On the other hand, set parameters that are same among all parties in **algorithm_parameters**. The call statement is as follow:
