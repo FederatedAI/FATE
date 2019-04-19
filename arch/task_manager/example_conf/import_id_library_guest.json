@@ -1,7 +1,9 @@
 {
-  "output_path": "./download_id_library_guest.txt",
-  "scene_id": 50000,
-  "gen_table_info": true,
+  "task": "importId",
+  "module": "upload",
+  "file": "examples/data/breast_b.csv",
+  "head": 1,
+  "partition": 10,
   "local": {
     "party_id": 9999,
     "role": "guest"
@@ -11,5 +13,7 @@
     "host": [10000],
     "arbiter": [10000]
   },
+  "scene_id": 50000,
+  "gen_table_info": true,
   "data_type": "id_library_input"
 }

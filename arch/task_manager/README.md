@@ -3,13 +3,13 @@
 To make FATE easy to use, we provide a tool call task manager. With usage of it, you can start both standalone and cluster version task in one terminal. Besides, you can set parameters of all parties in one config files. In one word, you can do everything in one terminal with one config file.
 ## Con
 ### Execution Target 
+Local party configuration.
 ```json
 "local":{
   "party_id": 9999,
   "role": "guest"
 }
 ```
-TM will decide which party of the task to execute based on this configuration.
 ### All Party
 ```json
 "role": {
@@ -20,10 +20,11 @@ TM will decide which party of the task to execute based on this configuration.
 ```
 ### Automatically generate table information
 ```json
-"scene_id": 50000
+"scene_id": 50000,
+"gen_table_info": true,
 "data_type": "train_input"
 ```
-If ``table_name`` and ``namespace`` is null, TM will use ``local``,``role``,``scene_id`` and ``data_type`` configuration to generate table_name and namespace. 
+If `table_name` and `namespace` is null, as the same time, `scene_id` is not null and `gen_table_info` is true and `data_type` is not null.TM will use `local`,`role`,`scene_id` and `data_type` configuration to generate table_name and namespace. 
 ## Examples
 
 We have list several example config files and the TM client script here so that you can easily start to find out the usage of TM. To start task with TM, configuration is (maybe the only) important steps. More example config files has been list in : **arch/task_manager/example_conf**. You use -f represent for function to indicate the function you want.
@@ -42,17 +43,11 @@ After you have set up everything, you can start to load file as simple as:
 
 TM provide a function for you to import id only from a file instead of loading whole data set. The example config file is located in **arch/task_manager/example_conf**. TM will load the 0th column as id column. So if it is not your case, please do some pre-processing work for the data. The call statement is similar:
 
-> python task_manager_client.py -f importIdFromLocal -c import_id_from_local_host.json
+> python task_manager_client.py -f upload -c example_conf/import_id_library_host.json
 
 ### Download ID Library
 
 > python task_manager_client.py -f download -c example_conf/download_id_library_host.json
-
-### Request Offline Feature
-
-It is a possible case that, the real data is not located at the same system of FATE which cannot use "Load File" function directly. We also provide a generic methods to request data. One party provide an service with which you can somehow upload data to an agreed storage system. Then call an adapter to load data in FATE server. The call statement is as follow:
-
-> python task_manager_client.py -f requestOfflineFeature -c request_offline_feature_host.json
 
 ### Start workflow
 

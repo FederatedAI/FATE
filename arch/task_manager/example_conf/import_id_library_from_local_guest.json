@@ -1,8 +1,0 @@
-{
-    "task": "import_id_from_local",
-    "file": "examples/data/breast_b.csv",
-    "local": {
-        "party_id": 9999,
-        "role": "guest"
-    }
-}

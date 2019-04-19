@@ -64,7 +64,7 @@ class JobCron(cron.Cron):
             logger.exception(e)
 
     def fill_runtime_conf_table_info(self, runtime_conf, default_runtime_conf):
-        if not runtime_conf.get('scene_id') or not runtime_conf.get('gen_table'):
+        if not runtime_conf.get('scene_id') or not runtime_conf.get('gen_table_info'):
             return
         table_config = copy.deepcopy(runtime_conf)
         workflow_param = runtime_conf.get('WorkFlowParam')

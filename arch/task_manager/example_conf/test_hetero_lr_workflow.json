@@ -7,7 +7,7 @@
         "arbiter": [10000]
     },
     "scene_id": 50000,
-    "gen_table": true,
+    "gen_table_info": true,
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {

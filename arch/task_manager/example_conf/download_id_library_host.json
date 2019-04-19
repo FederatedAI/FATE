@@ -1,6 +1,7 @@
 {
   "output_path": "./download_id_library_host.txt",
   "scene_id": 50000,
+  "gen_table_info": true,
   "local": {
     "party_id": 10000,
     "role": "host"
@@ -10,5 +11,5 @@
     "host": [10000],
     "arbiter": [10000]
   },
-  "data_type": "id_library"
+  "data_type": "id_library_input"
 }

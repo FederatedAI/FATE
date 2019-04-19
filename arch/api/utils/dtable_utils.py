@@ -26,22 +26,19 @@ def get_table_info(config, create=False):
                                                                       config.get('local', {}).get('party_id'), \
                                                                       config.get('role'), \
                                                                       config.get('data_type')
+    if not config.get('gen_table_info', False):
+        return table_name, namespace
     if not namespace:
         if not check_scene_info(scene_id, role, party_id, all_party) or not data_type:
             return table_name, namespace
-        if data_type in ['id_library', 'id_library_input']:
-            namespace = 'id_library'
-        else:
-            namespace = get_scene_namespace(gen_scene_key(scene_id=scene_id,
-                                                          role=role,
-                                                          party_id=party_id,
-                                                          all_party=all_party),
-                                            data_type=data_type)
+        namespace = get_scene_namespace(gen_scene_key(scene_id=scene_id,
+                                                      role=role,
+                                                      party_id=party_id,
+                                                      all_party=all_party),
+                                        data_type=data_type)
     if not table_name:
         if create:
             table_name = get_commit_id()
-        elif data_type in ['id_library', 'id_library_input']:
-            table_name = get_id_library_table_name()
         else:
             table_name = get_latest_commit(data_table_namespace=namespace, branch='master')
     return table_name, namespace

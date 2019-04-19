@@ -6,7 +6,7 @@
         "host": [9999]
     },
     "scene_id": 50000,
-    "gen_table": true,
+    "gen_table_info": true,
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
