@@ -14,19 +14,18 @@
 #  limitations under the License.
 #
 
-import unittest
-
 import numpy as np
-
-from arch.api.eggroll import init
+import unittest
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 from federatedml.ftl.eggroll_computation.helper import encrypt_matrix, decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+from arch.api.eggroll import init
 
 
 class TestEncryption(unittest.TestCase):
 
     def test_encrypt_2_dim(self):
+
         matrix = np.array([[1, 2, 3],
                            [4, 5, 6],
                            [7, 8, 9],
@@ -38,6 +37,7 @@ class TestEncryption(unittest.TestCase):
         self.__test(matrix)
 
     def test_encrypt_3_dim_1(self):
+
         matrix = np.array([[[33, 22, 31],
                             [14, 15, 16],
                             [17, 18, 19]],
@@ -48,6 +48,7 @@ class TestEncryption(unittest.TestCase):
         self.__test(matrix)
 
     def test_encrypt_3_dim_2(self):
+
         matrix = np.array([[[1, 2, 3],
                             [4, 5, 6],
                             [7, 8, 9]],
@@ -62,10 +63,12 @@ class TestEncryption(unittest.TestCase):
         self.__test(matrix)
 
     def test_encrypt_1_dim(self):
+
         matrix = np.ones((8, 50, 50))
         self.__test(matrix)
 
     def __test(self, matrix):
+
         paillierEncrypt = PaillierEncrypt()
         paillierEncrypt.generate_key()
         publickey = paillierEncrypt.get_public_key()
@@ -79,3 +82,5 @@ class TestEncryption(unittest.TestCase):
 if __name__ == '__main__':
     init()
     unittest.main()
+
+

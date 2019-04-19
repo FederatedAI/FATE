@@ -29,7 +29,7 @@ all() {
         echo "[INFO] processing: ${module}"
         echo "--------------"
         cd ${module}
-        bash service.sh $2
+        sh service.sh $2
         cd ${cwd}
         echo "=================="
     done
@@ -47,11 +47,11 @@ current() {
         echo "----------------"
         cd ${module}
         echo ""
-        `bash service.sh status >> /dev/null`
+        `sh service.sh status >> /dev/null`
 	state=$?
         if [[ ${state} -eq 1 ]]; then
             echo "[INFO] processing ${module} ${action}"
-            bash service.sh ${action}
+            sh service.sh ${action}
         else
             echo "[INFO] ${module} not running"
         fi
@@ -72,7 +72,7 @@ multiple() {
         echo "[INFO] processing: ${module} ${action}"
         echo "=================="
         cd ${module}
-        bash service.sh ${action}
+        sh service.sh ${action}
         cd -
         echo "--------------"
     done

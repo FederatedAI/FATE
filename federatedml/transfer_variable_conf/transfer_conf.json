@@ -32,25 +32,13 @@
     }
   },
   "RawIntersectTransferVariable": {
-    "send_ids_host": {
+    "intersect_host_ids": {
       "src": "host",
       "dst": [
         "guest"
       ]
     },
-    "send_ids_guest": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "intersect_ids_host": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "intersect_ids_guest": {
+    "intersect_ids": {
       "src": "guest",
       "dst": [
         "host"
@@ -291,12 +279,12 @@
         "host"
       ]
     },
-    "dispatch_node_host_result": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
+	"dispatch_node_host_result": {
+	  "src": "host",
+	  "dst": [
+	    "guest"
+	  ]
+	},
     "tree": {
       "src": "guest",
       "dst": [
@@ -357,18 +345,6 @@
       ]
     },
     "guest_component_list": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "host_precomputed_comp_list": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "guest_precomputed_comp_list": {
       "src": "guest",
       "dst": [
         "host"
@@ -439,8 +415,8 @@
     "pred_prob": {
       "src": "guest",
       "dst": [
-        "host"
-      ]
+         "host"
+       ]
     },
     "encrypt_prob": {
       "src": "guest",
@@ -464,149 +440,6 @@
       "src": "host",
       "dst": [
         "guest"
-      ]
-    },
-
-    "guest_public_key": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "host_public_key": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "masked_enc_guest_gradients": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "masked_enc_host_gradients": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "masked_dec_guest_gradients": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "masked_dec_host_gradients": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "masked_enc_loss": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "masked_dec_loss": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "is_decentralized_enc_ftl_stopped": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    }
-  },
-  "HeteroDNNLRTransferVariable": {
-    "guest_dec_gradient": {
-      "src": "arbiter",
-      "dst": [
-        "guest"
-      ]
-    },
-    "guest_enc_gradient": {
-      "src": "guest",
-      "dst": [
-        "arbiter"
-      ]
-    },
-    "host_dec_gradient": {
-      "src": "arbiter",
-      "dst": [
-        "host"
-      ]
-    },
-    "host_enc_gradient": {
-      "src": "host",
-      "dst": [
-        "arbiter"
-      ]
-    }
-  },
-  "HeteroFeatureBinningTransferVariable": {
-    "paillier_pubkey": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "encrypted_label": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "encrypted_bin_sum": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    }
-  },
-  "HeteroFeatureSelectionTransferVariable": {
-    "result_left_cols": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "host_iv_threshold": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    }
-  },
-  "SecureAddExampleTransferVariable": {
-    "guest_share": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
-    "host_share": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-	"host_sum": {
-	  "src": "host",
-	  "dst": [
-	    "guest"
-	  ]
-	}
-  },
-  "SampleTransferVariable": {
-    "sample_ids": {
-      "src": "guest",
-      "dst": [
-          "host"
       ]
     }
   }

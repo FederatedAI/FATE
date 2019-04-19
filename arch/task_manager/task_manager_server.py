@@ -120,7 +120,7 @@ class JobCron(cron.Cron):
     def check_job(self):
         running_jobs = get_job_from_queue(status="running", limit=0)
         for running_job in running_jobs:
-            if not check_job_process(running_job.pid):
+            if running_job.pid and not check_job_process(running_job.pid):
                 local_api(method='POST',
                           suffix='/job/jobStatus/{}/{}/{}'.format(running_job.job_id,
                                                                   running_job.role,
@@ -162,7 +162,7 @@ def update_job(job_id, role, party_id):
                      save_data={"status": request_data.get("status")})
     if request_data.get("status") in ["success", "failed", "deleted"]:
         pop_from_job_queue(job_id=job_id)
-    if is_job_initiator(job_info.initiator, party_id):
+    if is_job_initiator(job_info.initiator, PARTY_ID):
         # I am job initiator
         logger.info('i am job {} initiator'.format(job_id))
         # check job status

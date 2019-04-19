@@ -18,12 +18,9 @@ package com.webank.ai.fate.core.api.grpc.client.crud;
 
 import com.webank.ai.fate.core.api.grpc.client.StreamProcessor;
 import io.grpc.stub.StreamObserver;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public abstract class BaseStreamProcessor<T> implements StreamProcessor<T> {
     protected StreamObserver<T> streamObserver;
-    private static final Logger LOGGER = LogManager.getLogger();
 
     public BaseStreamProcessor(StreamObserver<T> streamObserver) {
         this.streamObserver = streamObserver;
@@ -31,12 +28,6 @@ public abstract class BaseStreamProcessor<T> implements StreamProcessor<T> {
 
     @Override
     public void complete() {
-        try {
-            this.streamObserver.onCompleted();
-        } catch (Exception e) {
-            LOGGER.error(e);
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
+        this.streamObserver.onCompleted();
     }
 }

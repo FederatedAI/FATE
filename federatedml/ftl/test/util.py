@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-
 def assert_matrix(X, Y):
     x_shape_len = len(X.shape)
     y_shape_len = len(Y.shape)
@@ -27,7 +26,7 @@ def assert_matrix(X, Y):
     Y = Y.reshape(-1)
     dim_num = X.shape[0]
     for index in range(dim_num):
-        assert round(X[index], 6) == round(Y[index], 6)
+        assert X[index] == Y[index]
 
 
 def assert_array(X, Y):
@@ -35,4 +34,5 @@ def assert_array(X, Y):
 
     elem_num = X.shape[0]
     for index in range(elem_num):
-        assert round(X[index], 6) == round(Y[index], 6)
+        # print("-->", round(X[index], 4), round(Y[index], 4))
+        assert round(X[index], 4) == round(Y[index], 4)

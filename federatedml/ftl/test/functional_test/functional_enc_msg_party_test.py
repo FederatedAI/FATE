@@ -14,21 +14,16 @@
 #  limitations under the License.
 #
 
-import time
-
 import numpy as np
+import time
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
-
-from arch.api.eggroll import init
+from federatedml.ftl.common.data_util import series_plot, load_UCI_Credit_Card_data, split_data_combined
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.data_util.common_data_util import series_plot, split_data_combined
-from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
-from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, \
-    LocalEncryptedFederatedTransferLearning
-from federatedml.ftl.test.mock_models import MockFTLModelParam
+from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGuestModel, LocalEncryptedFederatedTransferLearning
 from federatedml.secureprotol.encrypt import PaillierEncrypt
-
+from federatedml.ftl.test.fake_models import FakeFTLModelParam
+from arch.api.eggroll import init
 
 if __name__ == '__main__':
 
@@ -36,8 +31,8 @@ if __name__ == '__main__':
     infile = "../../../../examples/data/UCI_Credit_Card.csv"
     X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
 
-    X = X[:500]
-    y = y[:500]
+    X = X[:300]
+    y = y[:300]
 
     X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
                                                               overlap_ratio=0.1,
@@ -70,15 +65,16 @@ if __name__ == '__main__':
     autoencoder_A = Autoencoder(1)
     autoencoder_B = Autoencoder(2)
 
-    autoencoder_A.build(X_A.shape[-1], 32, learning_rate=0.01)
-    autoencoder_B.build(X_B.shape[-1], 32, learning_rate=0.01)
+    autoencoder_A.build(X_A.shape[-1], 10, learning_rate=0.01)
+    autoencoder_B.build(X_B.shape[-1], 10, learning_rate=0.01)
 
     paillierEncrypt = PaillierEncrypt()
     paillierEncrypt.generate_key()
     publickey = paillierEncrypt.get_public_key()
     privatekey = paillierEncrypt.get_privacy_key()
 
-    fake_model_param = MockFTLModelParam(alpha=100)
+    # alpha = 100
+    fake_model_param = FakeFTLModelParam()
     partyA = EncryptedFTLGuestModel(autoencoder_A, fake_model_param, public_key=publickey)
     partyB = EncryptedFTLHostModel(autoencoder_B, fake_model_param, public_key=publickey)
 

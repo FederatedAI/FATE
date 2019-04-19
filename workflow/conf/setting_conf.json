@@ -5,7 +5,7 @@
 	{
 	    "HomoLR":
 	    {
-	        "module_path":  "workflow/homo_lr_workflow",
+	        "module_path":  "federatedml/workflow/homo_lr_workflow",
 	        "role":
 	        {
 	            "guest":
@@ -27,7 +27,7 @@
 	    },
 		"HeteroLR":
 	    {
-	        "module_path":  "workflow/hetero_lr_workflow",
+	        "module_path":  "federatedml/workflow/hetero_lr_workflow",
 	        "role":
 	        {
 	            "guest":
@@ -47,9 +47,9 @@
 	            }
 	        }
 	    },
-	    "HeteroSecureBoostingTree":
+	    "HeteroSecureBoostringTree":
 	    {
-	    	"module_path": "workflow/hetero_secureboosting_tree_workflow",
+	    	"module_path": "federatedml/workflow/hetero_secureboosting_tree_workflow",
             "role":
             {
             	"guest":
@@ -66,7 +66,7 @@
 	    },
 		"HeteroFTL":
 	    {
-	    	"module_path": "workflow/hetero_ftl_workflow",
+	    	"module_path": "federatedml/workflow/hetero_ftl_workflow",
             "role":
             {
 	            "guest":
@@ -88,7 +88,7 @@
 	    },
 		"Intersect":
 	    {
-	    	"module_path": "workflow/intersect_workflow",
+	    	"module_path": "federatedml/workflow/intersect_workflow",
             "role":
             {
             	"guest":
@@ -102,57 +102,6 @@
             		"tasklist": ["intersect"]
             	}
             }
-	    },
-		"HeteroFeatureBinning":
-		{
-			"module_path": "workflow/hetero_binning_workflow",
-			"role":
-			{
-				"guest":
-				{
-					"program": "hetero_binning_guest_workflow.py",
-					"tasklist": ["binning"]
-				},
-				"host":
-				{
-					"program": "hetero_binning_host_workflow.py",
-					"tasklist": ["binning"]
-				}
-			}
-		},
-		"HeteroFeatureSelection":
-		{
-			"module_path": "workflow/hetero_feature_selection_workflow",
-			"role":
-			{
-				"guest":
-				{
-					"program": "hetero_feature_selection_guest_workflow.py",
-					"tasklist": ["feature_select"]
-				},
-				"host":
-				{
-					"program": "hetero_feature_selection_host_workflow.py",
-					"tasklist": ["binning"]
-				}
-			}
-		},
-        "ToyExample":
-        {
-            "module_path": "workflow/toy_example_workflow",
-			"role":
-			{
-				"guest":
-				{
-					"program": "secure_add_guest_workflow.py",
-					"tasklist": ["secure_add"]
-				},
-				"host":
-				{
-					"program": "secure_add_host_workflow.py",
-					"tasklist": ["secure_add"]
-				}
-			}
-        }
+	    }
 	}
 }

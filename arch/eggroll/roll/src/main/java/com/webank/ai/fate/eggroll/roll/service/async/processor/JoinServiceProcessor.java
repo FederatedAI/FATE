@@ -16,9 +16,9 @@
 
 package com.webank.ai.fate.eggroll.roll.service.async.processor;
 
-import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
+import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.EggProcessServiceClient;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -26,12 +26,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("prototype")
 public class JoinServiceProcessor extends BaseProcessServiceProcessor<Processor.BinaryProcess, StorageBasic.StorageLocator> {
-    public JoinServiceProcessor(EggProcessServiceClient eggProcessServiceClient, Processor.BinaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        super(eggProcessServiceClient, request, processorEndpoint);
+    public JoinServiceProcessor(EggProcessServiceClient eggProcessServiceClient, Processor.BinaryProcess request, Node node) {
+        super(eggProcessServiceClient, request, node);
     }
 
     @Override
     public StorageBasic.StorageLocator call() throws Exception {
-        return eggProcessServiceClient.join(request, processorEndpoint);
+        return eggProcessServiceClient.join(request, node);
     }
 }

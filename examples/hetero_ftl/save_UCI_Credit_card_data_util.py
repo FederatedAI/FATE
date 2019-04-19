@@ -19,8 +19,8 @@ import sys
 import json
 import argparse
 import traceback
-from federatedml.ftl.data_util.common_data_util import save_data_to_eggroll_table, generate_table_namespace_n_name
-from federatedml.ftl.data_util.uci_credit_card_util import load_guest_host_generators_for_UCI_Credit_Card
+from federatedml.ftl.common.data_util import load_guest_host_generators_for_UCI_Credit_Card, \
+    save_data_to_eggroll_table, generate_table_namespace_n_name
 from arch.api.eggroll import init
 
 
@@ -59,7 +59,7 @@ def convert_and_save_source_data_to_eggroll_table(config_data):
     # save data meta to a json file
     print("overlap_indexes[0]", overlap_indexes[0], type(overlap_indexes[0]))
     print("overlap_indexes[0]", overlap_indexes[-1], type(overlap_indexes[-1]))
-    output = dict()
+    output = {}
     output["guest_table_namespace"] = namespace
     output["guest_table_name"] = guest_table_name
     output["guest_table_count"] = guest_table_count

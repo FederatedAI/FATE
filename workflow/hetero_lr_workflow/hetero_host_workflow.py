@@ -19,8 +19,6 @@ from federatedml.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util import ParamExtract
 from workflow.workflow import WorkFlow
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
 
 
 class LRHostWorkFlow(WorkFlow):

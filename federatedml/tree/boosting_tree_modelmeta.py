@@ -26,19 +26,12 @@
 # =============================================================================
 
 
-class DecisionTree(object):
-    def __init__(self, tree_param):
-        self.criterion_method = tree_param.criterion_method
-        self.criterion_params = tree_param.criterion_params
-        self.max_depth = tree_param.max_depth
-        self.min_sample_split = tree_param.min_sample_split
-        self.min_impurity_split = tree_param.min_impurity_split
-        self.min_leaf_node = tree_param.min_leaf_node
-        self.n_iter_no_change = tree_param.n_iter_no_change
-        self.tol = tree_param.tol
-
-    def fit(self):
-        raise NotImplementedError("fit method should overload")
-
-    def predict(self, data_inst):
-        raise NotImplementedError("fit method should overload")
+class BoostingTreeModelMeta(object):
+    def __init__(self):
+        self.loss_type = "cross_entropy"
+        self.task_type = "classification"
+        self.trees_ = []
+        self.tree_dim = 0
+        self.num_classes = 0
+        self.classes_ = None
+        self.loss = []

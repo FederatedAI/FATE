@@ -21,18 +21,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Collections;
-import java.util.Enumeration;
-
 @Component
 @Scope("prototype")
 public class NetworkingUtils {
-
     public String getIpOrHost(Node node) {
         String result = null;
 
@@ -45,6 +36,4 @@ public class NetworkingUtils {
 
         return result;
     }
-
-
 }

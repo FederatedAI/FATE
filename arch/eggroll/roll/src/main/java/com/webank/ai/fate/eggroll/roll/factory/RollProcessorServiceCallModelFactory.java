@@ -16,8 +16,6 @@
 
 package com.webank.ai.fate.eggroll.roll.factory;
 
-import com.webank.ai.fate.api.core.BasicMeta;
-import com.webank.ai.fate.api.eggroll.egg.NodeServiceGrpc;
 import com.webank.ai.fate.api.eggroll.processor.ProcessServiceGrpc;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.Kv;

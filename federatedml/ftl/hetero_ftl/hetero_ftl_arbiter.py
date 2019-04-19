@@ -15,17 +15,15 @@
 #
 
 import time
-
-from arch.api.utils import log_utils
-from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
-from federatedml.ftl.encryption.encryption import decrypt_scalar, decrypt_array
-from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
+from federatedml.util import consts
+from federatedml.util.transfer_variable import HeteroFTLTransferVariable
 from federatedml.optim.convergence import AbsConverge
 from federatedml.param.param import FTLModelParam
 from federatedml.secureprotol.encrypt import PaillierEncrypt
-from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
-
+from federatedml.ftl.encryption.encryption import decrypt_scalar, decrypt_array
+from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
+from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
+from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
@@ -93,8 +91,7 @@ class HeteroFTLArbiter(HeteroFTLParty):
 
             # decrypt loss from guest
             encrypt_loss = self._do_get(name=self.transfer_variable.encrypt_loss.name,
-                                        tag=self.transfer_variable.generate_transferid(
-                                            self.transfer_variable.encrypt_loss, self.n_iter_),
+                                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.encrypt_loss, self.n_iter_),
                                         idx=-1)[0]
 
             loss = self.__decrypt_loss(encrypt_loss)
@@ -120,13 +117,11 @@ class HeteroFTLArbiter(HeteroFTLParty):
             self.n_iter_ += 1
             if is_stop:
                 break
-
         end_time = time.time()
         LOGGER.info("@ running time: " + str(end_time - start_time))
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
-                                                                                     encrypt_gradients[1])
+        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key, encrypt_gradients[1])
 
     def __decrypt_loss(self, encrypt_loss):
         return decrypt_scalar(self.private_key, encrypt_loss)

@@ -16,8 +16,8 @@
 
 package com.webank.ai.fate.eggroll.roll.service.async.processor;
 
-import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
+import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.EggProcessServiceClient;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import org.springframework.context.annotation.Scope;
@@ -26,12 +26,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("prototype")
 public class ReduceServiceProcessor extends BaseProcessServiceProcessor<Processor.UnaryProcess, OperandBroker> {
-    public ReduceServiceProcessor(EggProcessServiceClient eggProcessServiceClient, Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        super(eggProcessServiceClient, request, processorEndpoint);
+    public ReduceServiceProcessor(EggProcessServiceClient eggProcessServiceClient, Processor.UnaryProcess request, Node node) {
+        super(eggProcessServiceClient, request, node);
     }
 
     @Override
     public OperandBroker call() throws Exception {
-        return eggProcessServiceClient.reduce(request, processorEndpoint);
+        return eggProcessServiceClient.reduce(request, node);
     }
 }

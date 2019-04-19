@@ -99,15 +99,6 @@ public class TestStorageMetaClient {
     }
 
     @Test
-    public void testGetTables() {
-        String namespace = "ce46817e-13bf-11e9-8d62-4a00003fc630";
-        String tableName = "*x*";
-
-        List<Dtable> result = storageMetaClient.getTables(namespace, tableName);
-        LOGGER.info("result: count: {}, value: {}", result.size(), result);
-    }
-
-    @Test
     public void testGetNodeByNodeId() {
         Node result = storageMetaClient.getNodeByNodeId(4L);
         LOGGER.info(result);
@@ -120,15 +111,8 @@ public class TestStorageMetaClient {
     }
 
     @Test
-    public void testGetStorageNodesByTableId() {
+    public void testGetNodesByTableId() {
         List<Node> result = storageMetaClient.getStorageNodesByTableId(3L);
-        LOGGER.info(result);
-    }
-
-    @Test
-    public void testGetEggNodeManagerByIp() {
-        Node result = storageMetaClient.getEggNodeManagerByIp("127.0.0.1");
-
         LOGGER.info(result);
     }
 

@@ -122,7 +122,7 @@ public class DefaultStrategyGrpcCrudService implements GrpcCrudService {
         processCrudRequest(request, responseObserver, new CrudServerProcessor<Integer>() {
             @Override
             public Integer process(Object record) {
-                return genericDaoService.updateByPrimaryKeySelective(record);
+                return genericDaoService.updateByPrimaryKey(record);
             }
 
             @Override
@@ -147,7 +147,7 @@ public class DefaultStrategyGrpcCrudService implements GrpcCrudService {
                     return insertRowsAffected;
                 }
 
-                int updateRowsAffected = genericDaoService.updateByPrimaryKeySelective(record);
+                int updateRowsAffected = genericDaoService.updateByPrimaryKey(record);
 
                 return updateRowsAffected;
             }
