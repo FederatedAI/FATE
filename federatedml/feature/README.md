@@ -40,3 +40,6 @@ which means that the sample ratios of different labels of data set.
 Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 
 1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
 2. standard scale: standardize features by removing the mean and scaling to unit variance
+
+# Feature impute
+Feature impute is a transformer for missing value imputation. The datasets may contain missing value such as blanks, NaN, None or Null, which is incompatible with some algorithm like logistic regression. To get the better effect, We can replace the missing value with mean value of each column, as well as minimum value, maximum value or any other value you want. You can also regard some values in dataset as outlier values, and replace them.
