@@ -88,11 +88,14 @@ def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_
         mul_ops[op_id]["last_left_1"] = X_shape[1]
         mul_ops[op_id]["last_right_0"] = Y_shape[0]
         mul_ops[op_id]["last_right_1"] = Y_shape[1]
+
         if num_dim == 3:
             mul_ops[op_id]["left_2"] = X_shape[2]
             mul_ops[op_id]["last_left_2"] = X_shape[2]
             mul_ops[op_id]["right_2"] = Y_shape[2]
             mul_ops[op_id]["last_right_2"] = Y_shape[2]
+
+        # return number of batch, which is 1
         return 1
 
     residual = X_shape[0] % batch_size
@@ -261,6 +264,7 @@ def create_beaver_triples(mul_ops, global_iters, num_batch):
             elif val["num_dim"] == 3:
                 j, k, l, o, p, q = ret
                 print("j, k, l, o, p, q:", j, k, l, o, p, q)
+
                 # party A generate data
                 A0 = generate_random_3_dim_matrix(j, k, l)
                 A00 = generate_random_3_dim_matrix(j, k, l)
@@ -280,15 +284,6 @@ def create_beaver_triples(mul_ops, global_iters, num_batch):
             else:
                 raise TypeError()
 
-            # # party A generate data
-            # A0 = generate_random_matrix(k, l)
-            # A00 = generate_random_matrix(k, l)
-            # A01 = A0 - A00
-            #
-            # B0 = generate_random_matrix(p, q)
-            # B00 = generate_random_matrix(p, q)
-            # B01 = B0 - B00
-
             party_a_bt_map[i][op_id] = dict()
             party_a_bt_map[i][op_id]["A0"] = A0
             party_a_bt_map[i][op_id]["B0"] = B0
@@ -296,15 +291,6 @@ def create_beaver_triples(mul_ops, global_iters, num_batch):
             party_a_bt_map[i][op_id]["U1"] = A01
             party_a_bt_map[i][op_id]["E0"] = B00
             party_a_bt_map[i][op_id]["E1"] = B01
-
-            # # party B generate data
-            # A1 = generate_random_matrix(k, l)
-            # A11 = generate_random_matrix(k, l)
-            # A10 = A1 - A11
-            #
-            # B1 = generate_random_matrix(p, q)
-            # B11 = generate_random_matrix(p, q)
-            # B10 = B1 - B11
 
             party_b_bt_map[i][op_id] = dict()
             party_b_bt_map[i][op_id]["A1"] = A1
@@ -444,6 +430,8 @@ def carlo_deal_data(party_a_bt_map, party_b_bt_map, mul_ops):
             elif len(S.shape) == 3:
                 S0 = generate_random_3_dim_matrix(S.shape[0], S.shape[1], S.shape[2])
                 K0 = generate_random_3_dim_matrix(K.shape[0], K.shape[1], K.shape[2])
+            else:
+                raise TypeError("does not support shape {0}".format(len(S.shape)))
             S1 = S - S0
             K1 = K - K0
 

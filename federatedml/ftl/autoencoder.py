@@ -18,8 +18,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-from federatedml.ftl.eggroll_computation.helper import compute_sum_XY
-
 
 class Autoencoder(object):
 
@@ -29,6 +27,7 @@ class Autoencoder(object):
         self.sess = None
         self.built = False
         self.lr = None
+        self.repr_l2_param = None
         self.input_dim = None
         self.hidden_dim = None
 
@@ -38,11 +37,12 @@ class Autoencoder(object):
     def get_session(self):
         return self.sess
 
-    def build(self, input_dim, hidden_dim, learning_rate=1e-2):
+    def build(self, input_dim, hidden_dim, learning_rate=1e-2, repr_l2_param=0.1):
         if self.built:
             return
 
         self.lr = learning_rate
+        self.repr_l2_param = repr_l2_param
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
 
@@ -86,7 +86,8 @@ class Autoencoder(object):
     def _add_representation_training_ops(self):
         vars_to_train = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.encoder_vars_scope)
         self.init_grad = tf.placeholder(tf.float64, shape=(None, self.hidden_dim))
-        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=self.Z, var_list=vars_to_train,
+        repr_loss = self.Z + self.repr_l2_param * tf.nn.l2_loss(self.Wh)
+        self.train_op = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss=repr_loss, var_list=vars_to_train,
                                                                                grad_loss=self.init_grad)
 
     def _add_e2e_training_ops(self):
@@ -122,15 +123,6 @@ class Autoencoder(object):
             grads_W_collector.append(grads_w_i)
             grads_b_collector.append(grads_b_i)
         return [np.array(grads_W_collector), np.array(grads_b_collector)]
-
-    def compute_encrypted_params_grads(self, X, encrypt_grads):
-        grads = self.compute_gradients(X)
-        grads_W = grads[0]
-        grads_b = grads[1]
-        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
-        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
-        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
-        return encrypt_grads_W, encrypt_grads_b
 
     def apply_gradients(self, gradients):
         grads_W = gradients[0]

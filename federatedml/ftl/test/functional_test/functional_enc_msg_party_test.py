@@ -29,7 +29,6 @@ from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel, EncryptedFTLGue
 from federatedml.ftl.test.mock_models import MockFTLModelParam
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 
-
 if __name__ == '__main__':
 
     init()
@@ -41,15 +40,14 @@ if __name__ == '__main__':
 
     X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
                                                               overlap_ratio=0.1,
-                                                              ab_split_ratio=0.1,
+                                                              b_samples_ratio=0.1,
                                                               n_feature_b=23)
 
+    guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
+    host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
+
     valid_ratio = 0.3
-    non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
-    validate_indexes = non_overlap_indexes[:int(valid_ratio * len(non_overlap_indexes))]
-    test_indexes = non_overlap_indexes[int(valid_ratio*len(non_overlap_indexes)):]
-    x_B_valid = X_B[validate_indexes]
-    y_B_valid = y_B[validate_indexes]
+    test_indexes = host_non_overlap_indexes[int(valid_ratio * len(host_non_overlap_indexes)):]
     x_B_test = X_B[test_indexes]
     y_B_test = y_B[test_indexes]
 
@@ -59,8 +57,8 @@ if __name__ == '__main__':
     print("y_B shape", y_B.shape)
 
     print("overlap_indexes len", len(overlap_indexes))
-    print("non_overlap_indexes len", len(non_overlap_indexes))
-    print("validate_indexes len", len(validate_indexes))
+    print("guest_non_overlap_indexes", guest_non_overlap_indexes)
+    print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
     print("test_indexes len", len(test_indexes))
 
     print("################################ Build Federated Models ############################")
@@ -78,9 +76,9 @@ if __name__ == '__main__':
     publickey = paillierEncrypt.get_public_key()
     privatekey = paillierEncrypt.get_privacy_key()
 
-    fake_model_param = MockFTLModelParam(alpha=100)
-    partyA = EncryptedFTLGuestModel(autoencoder_A, fake_model_param, public_key=publickey)
-    partyB = EncryptedFTLHostModel(autoencoder_B, fake_model_param, public_key=publickey)
+    mock_model_param = MockFTLModelParam(alpha=100)
+    partyA = EncryptedFTLGuestModel(autoencoder_A, mock_model_param, public_key=publickey)
+    partyB = EncryptedFTLHostModel(autoencoder_B, mock_model_param, public_key=publickey)
 
     federatedLearning = LocalEncryptedFederatedTransferLearning(partyA, partyB, privatekey)
 
@@ -97,7 +95,7 @@ if __name__ == '__main__':
         fscores = []
         aucs = []
         for ep in range(epochs):
-            loss = federatedLearning.fit(X_A, X_B, y_A, overlap_indexes, non_overlap_indexes)
+            loss = federatedLearning.fit(X_A, X_B, y_A, overlap_indexes, guest_non_overlap_indexes)
             losses.append(loss)
 
             if ep % 1 == 0:
@@ -115,7 +113,8 @@ if __name__ == '__main__':
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
                 print("neg：", neg_count, "pos:", pos_count)
-                precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label, average="weighted")
+                precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label,
+                                                                               average="weighted")
                 fscores.append(fscore)
                 print("fscore:", fscore)
                 # auc = roc_auc_score(y_B_test, y_pred, average="weighted")

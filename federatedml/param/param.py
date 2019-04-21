@@ -523,15 +523,17 @@ class FTLModelParam(object):
     """
 
     def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True, enc_ftl="dct_enc_ftl"):
+                 alpha=100, gamma=0.01, lr_decay=0.001, l2_para=1, l2_param=0.1, is_encrypt=True, enc_ftl="dct_enc_ftl"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
         self.alpha = alpha
+        self.gamma = gamma
         self.lr_decay = lr_decay
         self.l2_para = l2_para
         self.is_encrypt = is_encrypt
         self.enc_ftl = enc_ftl
+        self.l2_param = l2_param
 
 
 class LocalModelParam(object):

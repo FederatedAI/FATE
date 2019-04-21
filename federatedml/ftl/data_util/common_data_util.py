@@ -96,11 +96,11 @@ def load_data(infile, id_index, feature_index_range, label_index):
     return ids, X, y
 
 
-def split_data_combined(X, y, overlap_ratio=0.3, ab_split_ratio=0.1, n_feature_b=16):
+def split_data_combined(X, y, overlap_ratio=0.3, b_samples_ratio=0.1, n_feature_b=16):
     data_size = X.shape[0]
     overlap_size = int(data_size * overlap_ratio)
     overlap_indexes = np.array(range(overlap_size))
-    A_size = int((data_size - overlap_size) * (1 - ab_split_ratio))
+    A_size = int((data_size - overlap_size) * (1 - b_samples_ratio))
     X_A = X[:A_size + overlap_size, n_feature_b:]
     y_A = y[:A_size + overlap_size, :]
     X_B = np.vstack((X[:overlap_size, :n_feature_b], X[A_size + overlap_size:, :n_feature_b]))

@@ -130,8 +130,16 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
             self.logger.debug("enc_loss_grad_A" + str(enc_loss_grad_A))
 
         self.loss_grads = enc_loss_grad_A
-        self.enc_grads_W, self.enc_grads_b = self.localModel.compute_encrypted_params_grads(
-            self.X, enc_loss_grad_A)
+        self.enc_grads_W, self.enc_grads_b = self.compute_encrypted_params_grads(self.X, enc_loss_grad_A)
+
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.localModel.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
+        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
+        return encrypt_grads_W, encrypt_grads_b
 
     def send_gradients(self):
         return [self.enc_grads_W, self.enc_grads_b]
@@ -147,9 +155,9 @@ class EncryptedFTLGuestModel(PlainFTLGuestModel):
 
     def _update_loss(self):
         uA_overlap_prime = - self.uA_overlap / self.feature_dim
-        enc_loss_overlap = np.sum(compute_sum_XY(uA_overlap_prime, self.enc_uB_overlap))
-        enc_loss_y = self.__compute_encrypt_loss_y(self.enc_uB_overlap, self.enc_uB_overlap_2, self.y_overlap, self.phi)
-        self.loss = self.alpha * enc_loss_y + enc_loss_overlap
+        enc_mapping_loss = np.sum(compute_sum_XY(uA_overlap_prime, self.enc_uB_overlap))
+        enc_clf_loss = self.__compute_encrypt_loss_y(self.enc_uB_overlap, self.enc_uB_overlap_2, self.y_overlap, self.phi)
+        self.loss = self.alpha * enc_clf_loss + enc_mapping_loss
 
     def __compute_encrypt_loss_y(self, enc_uB_overlap, enc_uB_overlap_2, y_overlap, phi):
         enc_uB_phi = encrypt_matmul_2_ob(enc_uB_overlap, phi.transpose())
@@ -224,8 +232,17 @@ class EncryptedFTLHostModel(PlainFTLHostModel):
         enc_loss_grad_B = compute_X_plus_Y(self.alpha * enc_l1_grad_B, self.enc_mapping_comp_A)
 
         self.loss_grads = enc_loss_grad_B
-        self.enc_grads_W, self.enc_grads_b = self.localModel.compute_encrypted_params_grads(
-            self.X[self.overlap_indexes], enc_loss_grad_B)
+        self.enc_grads_W, self.enc_grads_b = self.compute_encrypted_params_grads(self.X[self.overlap_indexes],
+                                                                                 enc_loss_grad_B)
+
+    def compute_encrypted_params_grads(self, X, encrypt_grads):
+        grads = self.localModel.compute_gradients(X)
+        grads_W = grads[0]
+        grads_b = grads[1]
+        encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
+        encrypt_grads_W = compute_sum_XY(encrypt_grads_ex, grads_W)
+        encrypt_grads_b = compute_sum_XY(encrypt_grads, grads_b)
+        return encrypt_grads_W, encrypt_grads_b
 
     def send_gradients(self):
         return [self.enc_grads_W, self.enc_grads_b]

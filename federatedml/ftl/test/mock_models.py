@@ -16,8 +16,6 @@
 
 import numpy as np
 
-# from federatedml.optim.convergence import ConvergeFunction
-
 
 class MockAutoencoder(object):
 
@@ -86,24 +84,24 @@ class MockAutoencoder(object):
 
 class MockFTLModelParam(object):
     def __init__(self, max_iteration=10, batch_size=64, eps=1e-5, alpha=100, gamma=0.01, lr_decay=0.001,
-                 l2_para=1, is_encrypt=True, enc_ftl="enc_ftl2"):
+                 l2_param=0.1, is_encrypt=True, enc_ftl="enc_ftl2"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
         self.alpha = alpha
         self.gamma = gamma
         self.lr_decay = lr_decay
-        self.l2_para = l2_para
+        self.l2_param = l2_param
         self.is_encrypt = is_encrypt
         self.enc_ftl = enc_ftl
 
 
-# class MockDiffConverge(ConvergeFunction):
-#
-#     def __init__(self, expected_loss, eps=0.001):
-#         super(MockDiffConverge, self).__init__(eps)
-#         self.eps = eps
-#         self.expected_loss = expected_loss
-#
-#     def is_converge(self, loss):
-#         return True
+class MockDiffConverge(object):
+
+    def __init__(self, expected_loss, eps=0.001):
+        super(MockDiffConverge, self).__init__(eps)
+        self.eps = eps
+        self.expected_loss = expected_loss
+
+    def is_converge(self, loss):
+        return True
