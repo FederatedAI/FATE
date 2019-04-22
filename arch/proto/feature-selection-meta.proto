@@ -19,7 +19,7 @@ syntax = "proto3";
 import "feature-binning-meta.proto";
 
 package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "FeatureSelectionMeta";
+option java_outer_classname = "FeatureSelectionMetaProto";
 
 message FeatureSelectionMeta {
     repeated string filter_methods = 1;
