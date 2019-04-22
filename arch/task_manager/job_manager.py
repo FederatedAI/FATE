@@ -62,14 +62,16 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_info(job_id, role, party_id, save_info):
+def save_job_info(job_id, role, party_id, save_info, create=False):
     jobs = JobInfo.select().where(JobInfo.job_id == job_id, JobInfo.role == role, JobInfo.party_id == party_id)
     is_insert = True
     if jobs:
         job_info = jobs[0]
         is_insert = False
-    else:
+    elif create:
         job_info = JobInfo()
+    else:
+        return None
     job_info.job_id = job_id
     job_info.role = role
     job_info.party_id = party_id
@@ -152,12 +154,12 @@ def job_queue_size():
 
 
 def show_job_queue():
-    jobs = JobQueue.select().where(JobQueue.role == 'guest').distinct()
+    jobs = JobQueue.select().where(JobQueue.role == 'guest', JobQueue.pid.is_null(False)).distinct()
     return jobs
 
 
 def running_job_amount():
-    return JobQueue.select().where(JobQueue.status == "running").distinct().count()
+    return JobQueue.select().where(JobQueue.status == "running", JobQueue.pid.is_null(False)).distinct().count()
 
 
 def is_job_initiator(initiator, party_id=PARTY_ID):

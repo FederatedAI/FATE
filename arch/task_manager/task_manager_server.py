@@ -23,6 +23,7 @@ from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WOR
 from arch.task_manager.apps.data_access import manager as data_access_manager
 from arch.task_manager.apps.machine_learning_model import manager as model_manager
 from arch.task_manager.apps.workflow import manager as workflow_manager
+from arch.task_manager.apps.dtable import manager as dtable_manager
 
 '''
 Initialize the manager
@@ -63,25 +64,6 @@ class JobCron(cron.Cron):
         except Exception as e:
             logger.exception(e)
 
-    def fill_runtime_conf_table_info(self, runtime_conf, default_runtime_conf):
-        if not runtime_conf.get('scene_id') or not runtime_conf.get('gen_table_info'):
-            return
-        table_config = copy.deepcopy(runtime_conf)
-        workflow_param = runtime_conf.get('WorkFlowParam')
-        default_workflow_param = default_runtime_conf.get('WorkFlowParam')
-        for data_type in DEFAULT_WORKFLOW_DATA_TYPE:
-            name_param = '{}_table'.format(data_type)
-            namespace_param = '{}_namespace'.format(data_type)
-            table_config['data_type'] = data_type
-            input_output = data_type.split('_')[-1]
-            if (not workflow_param.get(name_param)
-                or workflow_param.get(name_param) == default_workflow_param.get(name_param)) \
-                    and (not workflow_param.get(namespace_param)
-                         or workflow_param.get(namespace_param) == default_workflow_param.get(namespace_param)):
-                table_name, namespace = dtable_utils.get_table_info(config=table_config,
-                                                                    create=(False if input_output == 'input' else True))
-                workflow_param[name_param] = table_name
-                workflow_param[namespace_param] = namespace
 
     def run_job(self, job_id, config):
         default_runtime_dict = file_utils.load_json_conf('workflow/conf/default_runtime_conf.json')
@@ -100,8 +82,6 @@ class JobCron(cron.Cron):
             _role = runtime_conf['local']['role']
             _party_id = runtime_conf['local']['party_id']
             _module = runtime_conf['module']
-            self.fill_runtime_conf_table_info(runtime_conf=runtime_conf,
-                                              default_runtime_conf=default_runtime_dict)
             st, msg = federated_api(job_id=job_id,
                                     method='POST',
                                     url='/workflow/{}/{}/{}'.format(job_id, _module, _role),
@@ -111,7 +91,8 @@ class JobCron(cron.Cron):
                 save_job_info(job_id=job_id,
                               role=_role,
                               party_id=_party_id,
-                              save_info={"status": "ready", "initiator": PARTY_ID})
+                              save_info={"status": "ready", "initiator": PARTY_ID},
+                              create=True)
             else:
                 run_job_success = False
         logger.info("run job done")
@@ -120,7 +101,7 @@ class JobCron(cron.Cron):
     def check_job(self):
         running_jobs = get_job_from_queue(status="running", limit=0)
         for running_job in running_jobs:
-            if not check_job_process(running_job.pid):
+            if running_job.pid and not check_job_process(running_job.pid):
                 local_api(method='POST',
                           suffix='/job/jobStatus/{}/{}/{}'.format(running_job.job_id,
                                                                   running_job.role,
@@ -156,13 +137,16 @@ def update_job(job_id, role, party_id):
                              role=role,
                              party_id=party_id,
                              save_info={"status": request_data.get("status")})
+    if not job_info:
+        logger.info('job_id {} may not be started by the Task Manager.'.format(job_id))
+        return get_json_result(job_id=job_id, status=101, msg='this task may not be started by the Task Manager.')
     update_job_queue(job_id=job_id,
                      role=role,
                      party_id=party_id,
                      save_data={"status": request_data.get("status")})
     if request_data.get("status") in ["success", "failed", "deleted"]:
         pop_from_job_queue(job_id=job_id)
-    if is_job_initiator(job_info.initiator, party_id):
+    if is_job_initiator(job_info.initiator, PARTY_ID):
         # I am job initiator
         logger.info('i am job {} initiator'.format(job_id))
         # check job status
@@ -216,6 +200,7 @@ if __name__ == '__main__':
             '/data': data_access_manager,
             '/model': model_manager,
             '/workflow': workflow_manager,
+            '/dtable': dtable_manager,
             '/job': manager
         }
     )

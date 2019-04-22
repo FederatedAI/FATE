@@ -21,10 +21,10 @@ from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning import IVAttributes
 from federatedml.feature.binning import QuantileBinning
-from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
 from federatedml.statistic.data_overview import get_features_shape
 from federatedml.util import abnormal_detection
+from federatedml.util import consts
+from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -42,6 +42,8 @@ class BaseHeteroFeatureBinning(object):
         self.header = []
         self.has_synchronized = False
         self.flowid = ''
+        self.host_iv_attrs = None
+        self.iv_attrs = None
 
     def _save_meta(self, name, namespace):
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
@@ -123,9 +125,7 @@ class BaseHeteroFeatureBinning(object):
         if self.bin_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.bin_param)
         else:
-            # LOGGER.warning("bin method: {} is not support yet. Change to quantile binning".format(
-            #     self.bin_param.method
-            # ))
+
             self.binning_obj = QuantileBinning(self.bin_param)
         self.cols = params.cols
 
