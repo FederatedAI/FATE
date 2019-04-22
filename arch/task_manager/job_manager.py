@@ -152,12 +152,12 @@ def job_queue_size():
 
 
 def show_job_queue():
-    jobs = JobQueue.select().where(JobQueue.role == 'guest', JobQueue.pid.is_null(False)).distinct()
+    jobs = JobQueue.select().where(JobQueue.role == 'guest').distinct()
     return jobs
 
 
 def running_job_amount():
-    return JobQueue.select().where(JobQueue.status == "running", JobQueue.pid.is_null(False)).distinct().count()
+    return JobQueue.select().where(JobQueue.status == "running").distinct().count()
 
 
 def is_job_initiator(initiator, party_id=PARTY_ID):
