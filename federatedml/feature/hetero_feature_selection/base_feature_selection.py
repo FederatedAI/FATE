@@ -24,6 +24,7 @@ import numpy as np
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from arch.api.proto.feature_binning_meta_pb2 import FeatureBinningMeta
+from federatedml.statistic.data_overview import get_features_shape
 from federatedml.util import abnormal_detection
 from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
 

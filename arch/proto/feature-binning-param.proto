@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "FeatureBinningParam";
+option java_outer_classname = "FeatureBinningParamProto";
 
 
 message IVParam {
