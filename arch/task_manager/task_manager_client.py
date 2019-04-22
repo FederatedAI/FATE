@@ -16,6 +16,7 @@ server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 WORKFLOW_FUNC = ["workflow"]
 WORKFLOW_JOB_FUNC = ["workflowRuntimeConf"]
 DATA_FUNC = ["download", "upload"]
+DTABLE_FUNC = ["tableInfo"]
 OTHER_FUNC = ["delete"]
 JOB_FUNC = ["jobStatus"]
 JOB_QUEUE_FUNC = ["queueStatus"]
@@ -53,6 +54,8 @@ def call_fun(func, config_data):
         response = requests.post("/".join([LOCAL_URL, "job", func]))
     elif func in DATA_FUNC:
         response = requests.post("/".join([LOCAL_URL, "data", func]), json=config_data)
+    elif func in DTABLE_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "dtable", func]), json=config_data)
     elif func in MODEL_FUNC:
         response = requests.post("/".join([LOCAL_URL, "model", func]), json=config_data)
 
@@ -63,7 +66,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', required=False, type=str, help="config json path")
     parser.add_argument('-f', '--function', type=str,
-                        choices=WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + MODEL_FUNC + JOB_FUNC + WORKFLOW_JOB_FUNC + JOB_QUEUE_FUNC,
+                        choices=(WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + MODEL_FUNC + JOB_FUNC +
+                                 WORKFLOW_JOB_FUNC + JOB_QUEUE_FUNC + DATA_FUNC + DTABLE_FUNC),
                         required=True,
                         help="function to call")
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")

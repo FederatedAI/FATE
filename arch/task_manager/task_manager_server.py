@@ -23,6 +23,7 @@ from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WOR
 from arch.task_manager.apps.data_access import manager as data_access_manager
 from arch.task_manager.apps.machine_learning_model import manager as model_manager
 from arch.task_manager.apps.workflow import manager as workflow_manager
+from arch.task_manager.apps.dtable import manager as dtable_manager
 
 '''
 Initialize the manager
@@ -216,6 +217,7 @@ if __name__ == '__main__':
             '/data': data_access_manager,
             '/model': model_manager,
             '/workflow': workflow_manager,
+            '/dtable': dtable_manager,
             '/job': manager
         }
     )
