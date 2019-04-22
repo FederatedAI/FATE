@@ -12,7 +12,7 @@ from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
 LOGGER = log_utils.getLogger()
 
 
-class BaseLocalModelProxy(object):
+class BaseLocalModelUpdateProxy(object):
 
     def __init__(self):
         self.transfer_variable = HeteroDNNLRTransferVariable()
@@ -76,10 +76,10 @@ class BaseLocalModelProxy(object):
         pass
 
 
-class PlainLocalModelGradientUpdateProxy(BaseLocalModelProxy):
+class PlainLocalModelUpdateUpdateProxy(BaseLocalModelUpdateProxy):
 
     def __init__(self):
-        super(PlainLocalModelGradientUpdateProxy).__init__()
+        super(PlainLocalModelUpdateUpdateProxy, self).__init__()
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """
@@ -163,10 +163,10 @@ class PlainLocalModelGradientUpdateProxy(BaseLocalModelProxy):
         return cleared_dec_grads
 
 
-class SemiEncryptedLocalModelUpdateProxy(BaseLocalModelProxy):
+class SemiEncryptedLocalModelUpdateProxy(BaseLocalModelUpdateProxy):
 
     def __init__(self):
-        super(SemiEncryptedLocalModelUpdateProxy).__init__()
+        super(SemiEncryptedLocalModelUpdateProxy, self).__init__()
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
         """

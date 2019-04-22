@@ -16,8 +16,8 @@
 
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import load_model_parameters, save_model_parameters
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelProxy, \
-    PlainLocalModelGradientUpdateProxy
+from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy, \
+    PlainLocalModelUpdateUpdateProxy
 from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRHost
 
 LOGGER = log_utils.getLogger()
@@ -30,11 +30,12 @@ class HeteroDNNLRHost(HeteroLRHost):
         self.data_shape = local_model.get_encode_dim()
         self.index_tracking_list = []
         self.local_model = local_model
-        self.local_model_proxy = PlainLocalModelGradientUpdateProxy()
-        self.local_model_proxy.set_model(local_model)
+        self.local_model_update_proxy = PlainLocalModelUpdateUpdateProxy()
+        self.local_model_update_proxy.set_model(local_model)
 
-    def set_local_model_update_proxy(self, local_model_proxy: BaseLocalModelProxy):
-        self.local_model_proxy = local_model_proxy
+    def set_local_model_update_proxy(self, local_model_update_proxy: BaseLocalModelUpdateProxy):
+        self.local_model_update_proxy = local_model_update_proxy
+        self.local_model_update_proxy.set_model(self.local_model)
 
     def transform(self, instance_table):
         """
@@ -50,7 +51,7 @@ class HeteroDNNLRHost(HeteroLRHost):
         LOGGER.info("@ extract representative features from host raw input")
 
         # delegate to local_model_proxy for performing the feature extraction task
-        dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)
+        dtable, self.index_tracking_list = self.local_model_update_proxy.transform(instance_table)
         return dtable
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
@@ -71,7 +72,7 @@ class HeteroDNNLRHost(HeteroLRHost):
         # delegate to local_model_proxy for performing the local model update task
         training_info["index_tracking_list"] = self.index_tracking_list
         training_info["is_host"] = True
-        self.local_model_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)
+        self.local_model_update_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)
 
     def save_model(self, model_table_name, model_namespace):
         LOGGER.info("@ save guest model to name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
