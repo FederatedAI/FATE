@@ -47,7 +47,7 @@ class HomoFederatedAggregator:
             encrypter = host_encrypter[idx]
             host_model = encrypter.decrypt_list(host_model)
             host_model = np.array(host_model)
-            final_model += party_weights[idx + 1] * host_model
+            final_model = final_model + party_weights[idx + 1] * host_model
         # LOGGER.debug("Finish aggregate model, final model shape: {}".format(
         #     np.shape(final_model)))
         return final_model

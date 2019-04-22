@@ -14,8 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
 import numpy as np
+
+from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
 
 
 def distribute_compute_XY(X, Y):
@@ -28,6 +29,8 @@ def distribute_compute_XY(X, Y):
     R = X.join(Y, lambda x, y: x * y)
     val = R.collect()
     table = dict(val)
+
+    R.destroy()
     return table
 
 
@@ -42,6 +45,8 @@ def distribute_compute_X_plus_Y(X, Y):
     R = X.join(Y, lambda x, y: x + y)
     val = R.collect()
     table = dict(val)
+
+    R.destroy()
     return table
 
 
@@ -55,6 +60,8 @@ def distribute_compute_hSum_XY(X, Y):
     R = X.join(Y, lambda x, y: np.sum(x * y))
     val = R.collect()
     table = dict(val)
+
+    R.destroy()
     return table
 
 
@@ -70,6 +77,8 @@ def distribute_compute_vAvg_XY(X, Y, sample_dim):
 
     R = X.join(Y, lambda x, y: y * x / sample_dim)
     result = R.reduce(lambda agg_val, v: agg_val + v)
+
+    R.destroy()
     return result
 
 
@@ -83,6 +92,8 @@ def distribute_encrypt(public_key, X):
     X2 = X.mapValues(lambda x: encrypt_matrix(public_key, x))
     val = X2.collect()
     val = dict(val)
+
+    X2.destroy()
     return val
 
 
@@ -96,4 +107,6 @@ def distribute_decrypt(private_key, X):
     X2 = X.mapValues(lambda x: decrypt_matrix(private_key, x))
     val = X2.collect()
     val = dict(val)
+
+    X2.destroy()
     return val

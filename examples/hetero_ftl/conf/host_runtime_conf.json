@@ -18,7 +18,7 @@
     },
 
     "DataIOParam": {
-        "with_label": "True",
+        "with_label": true,
         "label_idx": 0,
         "label_type": "int",
         "output_format": "dense"
@@ -57,12 +57,13 @@
         "predict_threshold": [0.5]
     },
     "FTLModelParam": {
-            "eps": 1e-3,
+            "eps": 0.1,
             "alpha": 100,
             "max_iter": 10,
-            "is_encrypt": false
+            "is_encrypt": true,
+            "enc_ftl": "dct_enc_ftl"
     },
-    "FTLLocalModelParam": {
+    "LocalModelParam": {
             "encode_dim": 32,
             "learning_rate": 0.01
     },
@@ -74,6 +75,11 @@
             "guest_split_ratio" : 0.9,
             "num_samples" : 500,
             "balanced"  : true,
+            "is_read_table" : false
+    },
+    "FTLValidDataParam": {
+            "file_path" : "../data/UCI_Credit_Card_val.csv",
+            "num_samples" : 500,
             "is_read_table" : false
     }
 }

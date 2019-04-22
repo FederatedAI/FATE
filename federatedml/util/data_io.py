@@ -78,9 +78,9 @@ class DenseFeatureReader(object):
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
         LOGGER.info("start to read dense data and change data to instance")
-
+        
         abnormal_detection.empty_table_detection(input_data)
-
+        
         input_data_features = None
         input_data_labels = None
 
@@ -327,10 +327,10 @@ class SparseFeatureReader(object):
         LOGGER.info("start to read sparse data and change data to instance")
 
         abnormal_detection.empty_table_detection(input_data)
-
+        
         if not data_overview.get_data_shape(input_data):
             raise ValueError("input data's value is empty, it does not contain a label")
-
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -486,7 +486,7 @@ class SparseTagReader(object):
         LOGGER.info("start to read sparse data and change data to instance")
 
         abnormal_detection.empty_table_detection(input_data)
-
+        
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:

@@ -57,6 +57,8 @@ class ParamExtract(object):
         with open(config_file, "r") as fin:
             config_json = json.loads(fin.read())
 
+        # print('In param extract, config_json is :{}'.format(config_json))
+
         if config_json is None:
             raise Exception("config file is not valid, please have a check!")
 
@@ -64,6 +66,7 @@ class ParamExtract(object):
         valid_classes = [class_info[0] for class_info in inspect.getmembers(param, inspect.isclass)]
         param_var = ParamExtract.recursive_parse_param_from_config(param_var, config_json, valid_classes,
                                                                    param_parse_depth=0)
+
         return param_var
 
     @staticmethod

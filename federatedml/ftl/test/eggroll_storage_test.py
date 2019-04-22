@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-import numpy as np
 import unittest
 import uuid
-from federatedml.ftl.common.data_util import save_data_to_eggroll_table, create_guest_host_data_generator, \
-    create_table, split_guest_host_data, load_model_parameters, save_model_parameters
+
+import numpy as np
+
+from arch.api.eggroll import init, table
+from federatedml.ftl.data_util.common_data_util import save_data_to_eggroll_table, create_guest_host_data_generator, \
+    create_table, split_into_guest_host_dtable, load_model_parameters, save_model_parameters, feed_into_dtable
 from federatedml.ftl.test.util import assert_array, assert_matrix
-from arch.api.eggroll import init, parallelize, table
 
 
 class TestEggrollStorage(unittest.TestCase):
@@ -47,7 +49,7 @@ class TestEggrollStorage(unittest.TestCase):
             actual_data[item[0]] = item[1]
 
         assert dtable.count() == feature_count
-        assert_matrix(np.expand_dims(expect_data,axis=1), actual_data)
+        assert_matrix(np.expand_dims(expect_data, axis=1), actual_data)
 
     def test_create_table_with_dict(self):
 
@@ -63,7 +65,7 @@ class TestEggrollStorage(unittest.TestCase):
         for i, index in enumerate(indexes):
             assert_array(actual_data[indexes[i]], expect_data[i])
 
-    def test_create_guest_host_eggroll_table(self):
+    def test_split_into_guest_host_dtable(self):
 
         X = np.random.rand(600, 3)
         y = np.random.rand(600, 1)
@@ -79,14 +81,53 @@ class TestEggrollStorage(unittest.TestCase):
         expected_guest_size = overlap_size + particular_guest_size
         expected_host_size = overlap_size + data_size - expected_guest_size
 
-        guest_data, host_data, overlap_indexes = split_guest_host_data(X, y, overlap_ratio=overlap_ratio,
-                                                                       guest_split_ratio=guest_split_ratio,
-                                                                       guest_feature_num=guest_feature_num)
+        guest_data, host_data, overlap_indexes = split_into_guest_host_dtable(X, y, overlap_ratio=overlap_ratio,
+                                                                              guest_split_ratio=guest_split_ratio,
+                                                                              guest_feature_num=guest_feature_num)
 
         actual_guest_size = guest_data.count()
         actual_host_size = host_data.count()
         assert expected_guest_size == actual_guest_size
         assert expected_host_size == actual_host_size
+
+    def test_feed_into_dtable(self):
+
+        ids = list(range(50))
+        X = np.random.rand(50, 6)
+        y = np.random.rand(50, 1)
+        sample_range = (10, 30)
+        feature_range = (2, 5)
+        expected_sample_number = sample_range[1] - sample_range[0]
+
+        expected_ids = ids[sample_range[0]: sample_range[1]]
+        expected_X = X[sample_range[0]:sample_range[1], feature_range[0]: feature_range[1]]
+        expected_y = y[sample_range[0]:sample_range[1]]
+
+        expected_data = {}
+        for i, id in enumerate(expected_ids):
+            expected_data[id] = {
+                "X": expected_X[i],
+                "y": expected_y[i]
+            }
+
+        data_table = feed_into_dtable(ids, X, y, sample_range, feature_range)
+
+        val = data_table.collect()
+        data_dict = dict(val)
+
+        actual_table_size = len(data_dict)
+        assert expected_sample_number == actual_table_size
+        for item in data_dict.items():
+            id = item[0]
+            inst = item[1]
+            expected_item = expected_data[id]
+            X_i = expected_item["X"]
+            y_i = expected_item["y"]
+
+            features = inst.features
+            label = inst.label
+            assert_array(X_i, features)
+            assert y_i[0] == label
 
     def test_create_n_guest_generators(self):
 
@@ -214,10 +255,10 @@ class TestEggrollStorage(unittest.TestCase):
         tables_name["host_table_ns"] = "host_table_ns_01"
         tables_name["host_table_name"] = "host_table_name_01"
 
-        guest_data, host_data, overlap_indexes = split_guest_host_data(X, y, overlap_ratio=overlap_ratio,
-                                                                       guest_split_ratio=guest_split_ratio,
-                                                                       guest_feature_num=guest_feature_num,
-                                                                       tables_name=tables_name)
+        guest_data, host_data, overlap_indexes = split_into_guest_host_dtable(X, y, overlap_ratio=overlap_ratio,
+                                                                              guest_split_ratio=guest_split_ratio,
+                                                                              guest_feature_num=guest_feature_num,
+                                                                              tables_name=tables_name)
 
         expected_guest_size = guest_data.count()
         expected_host_size = host_data.count()
@@ -256,11 +297,22 @@ class TestEggrollStorage(unittest.TestCase):
             else:
                 assert_matrix(actual_model_parameters[k], model_parameters[k])
 
+    def test_destroy_table(self):
+
+        row_count = 10
+        expect_data = np.random.rand(row_count, 10)
+
+        table_name = "table_name"
+        table_ns = "table_ns"
+        dtable = create_table(expect_data, model_table_name=table_name, model_namespace=table_ns, persistent=True)
+        dtable_2 = table(name=table_name, namespace=table_ns)
+        assert dtable.count() == dtable_2.count()
+
+        dtable_2.destroy()
+        dtable_3 = table(name=table_name, namespace=table_ns)
+        assert dtable_3.count() == 0
+
 
 if __name__ == '__main__':
     init()
     unittest.main()
-
-
-
-

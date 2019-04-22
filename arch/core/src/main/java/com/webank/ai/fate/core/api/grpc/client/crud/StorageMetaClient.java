@@ -93,6 +93,33 @@ public class StorageMetaClient extends BaseCrudClient<StorageMetaServiceGrpc.Sto
         return getTable(dtable);
     }
 
+    public List<Dtable> getTables(Dtable dtable) {
+        List<Dtable> result = Lists.newArrayList();
+        result = doCrudRequest(dtable,
+                (CrudRequestProcessor<StorageMetaServiceGrpc.StorageMetaServiceStub>)
+                StorageMetaServiceGrpc.StorageMetaServiceStub::getTables,
+                result.getClass());
+
+        return result;
+    }
+
+    public List<Dtable> getTables(String namespace, String tableName) {
+        Dtable dtable = new Dtable();
+        dtable.setNamespace(namespace);
+        dtable.setTableName(tableName);
+
+        return getTables(dtable);
+    }
+
+    public List<Dtable> getTables(StoreInfo storeInfo) {
+        Dtable dtable = new Dtable();
+        dtable.setTableType(storeInfo.getType());
+        dtable.setNamespace(storeInfo.getNameSpace());
+        dtable.setTableName(storeInfo.getTableName());
+
+        return getTables(dtable);
+    }
+
     public Node getNodeByNodeId(Long nodeId) {
         return doCrudRequest(
                 nodeId,
@@ -190,6 +217,16 @@ public class StorageMetaClient extends BaseCrudClient<StorageMetaServiceGrpc.Sto
         result = doCrudRequest(node,
                 (CrudRequestProcessor<StorageMetaServiceGrpc.StorageMetaServiceStub>)
                         StorageMetaServiceGrpc.StorageMetaServiceStub::getNodes,
+                result.getClass());
+
+        return result;
+    }
+
+    public Node getEggNodeManagerByIp(String ip) {
+        Node result = new Node();
+
+        result = doCrudRequest(ip, (CrudRequestProcessor<StorageMetaServiceGrpc.StorageMetaServiceStub>)
+                        StorageMetaServiceGrpc.StorageMetaServiceStub::getEggNodeManagerByIp,
                 result.getClass());
 
         return result;
