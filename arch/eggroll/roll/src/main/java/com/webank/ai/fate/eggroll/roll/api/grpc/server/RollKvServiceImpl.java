@@ -318,10 +318,11 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     // todo: eliminate duplicate codes
     @Override
     public void destroyAll(Kv.Empty request, StreamObserver<Kv.Empty> responseObserver) {
-        LOGGER.info("Kv.destroyAll request received");
+        // LOGGER.info("Kv.destroyAll request received");
 
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.destroyAll request received. storeInfo: {}", storeInfo);
 
             List<Dtable> dtables = storageMetaClient.getTables(storeInfo);
             List<Dtable> destroyedDtables = Lists.newArrayListWithExpectedSize(dtables.size());

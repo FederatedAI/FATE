@@ -37,7 +37,6 @@ public class OperandBroker {
     private BlockingQueue<Kv.Operand> operandQueue;
 
     private @GuardedBy("this") volatile boolean isFinished;
-    private Object latchLock;
     private CountDownLatch readyLatch;
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -46,7 +45,6 @@ public class OperandBroker {
         this.operandQueue = Queues.newLinkedBlockingQueue();
 
         this.isFinished = false;
-        this.latchLock = new Object();
 
         resetLatch();
     }
@@ -67,7 +65,10 @@ public class OperandBroker {
     }
 
     public void addAll(Collection<Kv.Operand> operands) {
-        operandQueue.addAll(operands);
+        if (operands.size() > 0) {
+            operandQueue.addAll(operands);
+            resetLatch();
+        }
     }
 
     public Kv.Operand get() {
@@ -102,16 +103,24 @@ public class OperandBroker {
         return result;
     }
 
-    public void resetLatch() {
-        if (readyLatch == null || readyLatch.getCount() != 1) {
-            synchronized (latchLock) {
-                this.readyLatch = new CountDownLatch(1);
-            }
+    public synchronized void resetLatch() {
+        if ((readyLatch == null || readyLatch.getCount() != 1)
+                && operandQueue.size() <= 0 && !isFinished()) {
+            this.readyLatch = new CountDownLatch(1);
         }
     }
 
     public boolean awaitLatch(long timeout, TimeUnit unit) throws InterruptedException {
-        return this.readyLatch.await(timeout, unit);
+        boolean awaitResult = this.readyLatch.await(timeout, unit);
+
+        if (!awaitResult) {
+            if (isReady()) {
+                readyLatch.countDown();
+                awaitResult = true;
+            }
+        }
+
+        return awaitResult;
     }
 
     public boolean isReady() {

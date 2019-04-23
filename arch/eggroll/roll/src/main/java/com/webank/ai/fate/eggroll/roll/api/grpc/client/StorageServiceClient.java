@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Scope("prototype")
@@ -123,8 +124,10 @@ public class StorageServiceClient {
 
         try {
             while (!operandBroker.isClosable()) {
-                operandBroker.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT);
-                template.processCallerStreamingRpc();
+                boolean awaitResult = operandBroker.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, TimeUnit.SECONDS);
+                if (awaitResult) {
+                    template.processCallerStreamingRpc();
+                }
             }
         } catch (Throwable e) {
             template.errorCallerStreamingRpc(e);

@@ -110,7 +110,7 @@ public class LMDBServicer extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void delete(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
+    public void delOne(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             LMDBStore store = getStore();
 

@@ -27,6 +27,7 @@ import com.webank.ai.fate.core.utils.AbstractIterator;
 import com.webank.ai.fate.core.utils.ErrorUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.iq80.leveldb.DBException;
@@ -52,7 +53,6 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
     private Dbi<byte[]> dbi;
 
     private ErrorUtils errorUtils;
-
 
     public LMDBStore(StoreInfo info) {
         this.storeInfo = info;
@@ -173,15 +173,21 @@ public class LMDBStore implements KeyValueStore<Bytes, byte[]> {
 
     @Override
     public void destroy() {
-        try (Txn<byte[]> txn = env.txnWrite()) {
-            dbi.drop(txn, true);
-        }
-        String[] files = dbDir.list();
-        if (null != files) {
-            for (String s : files) {
-                File currentFile = new File(dbDir.getPath(), s);
-                FileUtils.deleteQuietly(currentFile);
+        try {
+            try (Txn<byte[]> txn = env.txnWrite()) {
+                dbi.drop(txn, true);
             }
+            String[] files = dbDir.list();
+            if (null != files) {
+                for (String s : files) {
+                    File currentFile = new File(dbDir.getPath(), s);
+                    FileUtils.deleteQuietly(currentFile);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.info("[STORAGE] error in destroy: " + ExceptionUtils.getStackTrace(e));
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
         this.close();
     }
