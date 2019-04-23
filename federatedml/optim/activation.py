@@ -28,7 +28,12 @@ def softmax(x, axis=-1):
 
 
 def sigmoid(x):
-    return 1. / (1. + np.exp(-x))
+    if x <= 0:
+        a = np.exp(x)
+        a /= (1. + a)
+    else:
+        a = 1. / (1. + np.exp(-x))
+    return a
 
 
 def softplus(x):
@@ -41,3 +46,11 @@ def softsign(x):
 
 def tanh(x):
     return np.tanh(x)
+
+
+def log_logistic(x):
+    if x <= 0:
+        a = x - np.log(1 + np.exp(x))
+    else:
+        a = - np.log(1 + np.exp(-x))
+    return a
