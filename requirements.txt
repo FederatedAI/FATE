@@ -12,7 +12,7 @@ grpcio==1.16.1
 grpcio-tools==1.16.1
 idna==2.8
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2==2.10.1
 kiwisolver==1.0.1
 llvmlite==0.26.0
 lmdb==0.94
@@ -34,5 +34,5 @@ scikit-learn==0.20.1
 scipy==1.1.0
 six==1.11.0
 sklearn==0.0
-urllib3==1.24.1
+urllib3==1.24.2
 Werkzeug==0.14.1
