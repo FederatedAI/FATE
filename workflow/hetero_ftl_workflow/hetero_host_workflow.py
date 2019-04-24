@@ -48,7 +48,7 @@ class FTLHostWorkFlow(FTLWorkFlow):
         with tf.Session() as sess:
             self.ftl_local_model.set_session(sess)
             sess.run(init)
-            self.model.fit(train_data_instance)
+            self.model.fit_split_points(train_data_instance)
             self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             train_pred = self.model.predict(train_data_instance, self.workflow_param.predict_param)
             # self.save_predict_result(train_pred)

@@ -20,18 +20,17 @@
 import functools
 import math
 
-import numpy as np
-
 from arch.api.utils import log_utils
 from federatedml.feature.quantile_summaries import QuantileSummaries
-from federatedml.statistic.data_overview import get_features_shape
+from federatedml.statistic.data_overview import get_header
+# from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 LOGGER = log_utils.getLogger()
 
 
 class IVAttributes(object):
     def __init__(self, woe_array, iv_array, event_count_array, non_event_count_array,
-                 event_rate_array, non_event_rate_array, split_points, iv=None):
+                 event_rate_array, non_event_rate_array, split_points=None, iv=None):
         self.woe_array = woe_array
         self.iv_array = iv_array
         self.event_count_array = event_count_array
@@ -41,11 +40,8 @@ class IVAttributes(object):
         if split_points is None:
             self.split_points = []
         else:
-            self.split_points = []
-            # Remove those repeated split points
-            for s_p in split_points:
-                if s_p not in self.split_points:
-                    self.split_points.append(s_p)
+            self.split_points = split_points
+
         if iv is None:
             iv = 0
             for idx, woe in enumerate(self.woe_array):
@@ -91,18 +87,71 @@ class IVAttributes(object):
         self.non_event_count_array = list(iv_obj.non_event_count_array)
         self.event_rate_array = list(iv_obj.event_rate_array)
         self.non_event_rate_array = list(iv_obj.non_event_rate_array)
-        self.split_points = list(iv_obj.split_points)
+        self.split_points = dict(iv_obj.split_points)
+        for key, values in self.split_points.items():
+            values = list(values)
+            self.split_points[key] = values
+
         self.iv = iv_obj.iv
 
+
 class Binning(object):
+    """
+    This is use for discrete data so that can transform data or use information for feature selection.
+
+    Parameters
+    ----------
+    param : FeatureBinningParam object,
+            Parameters that user set.
+
+    Attributes
+    ----------
+    cols_dict: dict
+        Record key, value pairs where key is cols' name, and value is cols' index. This is use for obtain correct
+        data from a data_instance
+
+    """
+
     def __init__(self, params):
         self.params = params
         self.bin_num = params.bin_num
+        self.cols = params.cols
+        self.cols_dict = {}
 
-    def binning(self, data_instances, cols):
+    def fit_split_points(self, data_instances):
+        """
+        Get split points
+
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
+
+        Returns
+        -------
+
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
+            the corresponding split point.
+            e.g.
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
+                            ...]                         # Other features
+
+        """
         raise NotImplementedError("Should not call this class directly")
 
-    def transform(self, data_instances, split_points=None, cols=-1):
+    def _init_cols(self, data_instances):
+        header = get_header(data_instances)
+        if self.cols == -1:
+            self.cols = header
+
+        self.cols_dict = {}
+        for col in self.cols:
+            col_index = header.index(col)
+            self.cols_dict[col] = col_index
+
+    def transform(self, data_instances, split_points=None):
         """
         Apply the binning method
 
@@ -111,87 +160,126 @@ class Binning(object):
         data_instances : DTable
             The input data
 
-        split_points : list.
-            Each row represent for the split points for a feature. The element in each row represent for
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
             the corresponding split point.
             e.g.
-            split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            [1, 2, 3, 4, ...],           # The second feature
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
                             ...]                         # Other features
-
-        cols : int or list of int
-            Specify which column(s) need to apply binning. -1 means do binning for all columns.
 
         Returns
         -------
         data_bin_table : DTable.
-            The element in each row represent for the corresponding bin number this feature belongs to.
-            e.g. for each row, it could be:
-            (1, 5, 2, 6, 0, ...)    # Each number represent for the bin number it belongs to. The order is the
-                                # same as the order of cols.
 
-
+            Each element represent for the corresponding bin number this feature belongs to.
+            e.g. it could be:
+            [{'x1': 1, 'x2': 5, 'x3': 2}
+            ...
+             ]
         """
-        if cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            cols = [i for i in range(features_shape)]
-
-        if isinstance(cols, int):
-            cols = [cols]
-
-        assert len(split_points) == len(cols)
+        self._init_cols(data_instances)
 
         if split_points is None:
-            split_points = self.binning(data_instances, cols)
+            split_points = self.fit_split_points(data_instances)
 
         f = functools.partial(self.bin_data,
                               split_points=split_points,
-                              cols=cols)
-        data_bin_table = data_instances.mapValues(f)
-        return data_bin_table
+                              cols_dict=self.cols_dict)
+        data_bin_dict = data_instances.mapValues(f)
+        return data_bin_dict
 
-    def cal_local_iv(self, data_instances, cols, split_points=None, label_table=None):
-        if cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            cols = [i for i in range(features_shape)]
+    def cal_local_iv(self, data_instances, split_points=None, label_table=None):
+        """
+        Calculate iv attributes
+
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
+
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
+            the corresponding split point.
+            e.g.
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
+                            ...]                         # Other features
+
+        label_table : DTable
+            id with labels
+
+        Returns
+        -------
+        Dict of IVAttributes object
+
+        """
+        self._init_cols(data_instances)
 
         if split_points is None:
-            split_points = self.binning(data_instances, cols=cols)
+            split_points = self.fit_split_points(data_instances)
 
-        data_bin_table = self.transform(data_instances, split_points, cols)
+        data_bin_table = self.transform(data_instances, split_points)
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
         event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
         data_bin_with_label = data_bin_table.join(event_count_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
                               total_bin=self.bin_num,
-                              cols=cols)
+                              cols_dict=self.cols_dict)
 
         result_sum = data_bin_with_label.mapPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
 
-        iv_attrs = self.cal_iv_woe(result_counts, self.params.adjustment_factor,
+        iv_attrs = self.cal_iv_woe(result_counts,
+                                   self.params.adjustment_factor,
                                    split_points=split_points)
         return iv_attrs
 
     @staticmethod
-    def bin_data(instance, split_points, cols):
-        result_bin_nums = []
-        for col_index, col in enumerate(cols):
-            col_split_points = split_points[col_index]
+    def bin_data(instance, split_points, cols_dict):
+        """
+        Apply the binning method
 
-            value = instance.features[col]
+        Parameters
+        ----------
+        instance : DTable
+            The input data
+
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
+            the corresponding split point.
+            e.g.
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
+                            ...]                         # Other features
+
+        cols_dict: dict
+            Record key, value pairs where key is cols' name, and value is cols' index.
+
+        Returns
+        -------
+        result_bin_dict : dict.
+            Each element represent for the corresponding bin number this feature belongs to.
+            e.g. it could be:
+            [{'x1': 1, 'x2': 5, 'x3': 2}
+            ...
+             ]  # Each number represent for the bin number it belongs to.
+        """
+
+        result_bin_nums = {}
+        for col_name, col_index in cols_dict.items():
+            col_split_points = split_points[col_name]
+
+            value = instance.features[col_index]
+
             col_bin_num = len(col_split_points)
             for bin_num, split_point in enumerate(col_split_points):
                 if value < split_point:
                     col_bin_num = bin_num
                     break
-            result_bin_nums.append(col_bin_num)
-        result_bin_nums = tuple(result_bin_nums)
+            result_bin_nums[col_name] = col_bin_num
+        # result_bin_nums = tuple(result_bin_nums)
         return result_bin_nums
 
     @staticmethod
@@ -208,7 +296,7 @@ class Binning(object):
             The adjustment factor when calculating WOE
 
         split_points : list
-            Use to display in the final result
+            For this specific column, its split_points for each bin.
 
         Returns
         -------
@@ -268,31 +356,38 @@ class Binning(object):
         ----------
         result_counts: DTable.
             It is like:
-            [[(event_sum, non-event_sum), (same sum in second_bin), (in third bin) ... (first col in cols)],
-            [(event_sum, non-event_sum), ... (second col in cols)],
-            ...]
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
 
         adjustment_factor : float
             The adjustment factor when calculating WOE
 
-        split_points : list
-            Use to display in the final result
+        split_points : dict
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
+                            ...]                         # Other features
 
         Returns
         -------
-        list of IVAttributes object
+        Dict of IVAttributes object
+            {'x1': attr_obj,
+             'x2': attr_obj
+             ...
+             }
         """
-        result_ivs = []
-        for idx, data_event_count in enumerate(result_counts):
+        result_ivs = {}
+        for col_name, data_event_count in result_counts.items():
             if split_points is not None:
-                feature_split_point = split_points[idx]
+                feature_split_point = split_points[col_name]
             else:
                 feature_split_point = None
-            result_ivs.append(Binning.woe_1d(data_event_count, adjustment_factor, feature_split_point))
+            result_ivs[col_name] = Binning.woe_1d(data_event_count, adjustment_factor, feature_split_point)
         return result_ivs
 
     @staticmethod
-    def add_label_in_partition(data_bin_with_table, total_bin, cols, encryptor=None):
+    def add_label_in_partition(data_bin_with_table, total_bin, cols_dict, encryptor=None):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -300,48 +395,51 @@ class Binning(object):
         ----------
         data_bin_with_table : DTable
             The input data, the DTable is like:
-            (id, (1, 5, 2, 6, 0, ...), y, 1 - y)
+            (id, {'x1': 1, 'x2': 5, 'x3': 2}, y, 1 - y)
 
         total_bin : int, > 0
             Specify the largest bin number
 
-        cols : list of int or int,
-            Specify which columns need to calculated. -1 represent for all columns
+        cols_dict: dict
+            Record key, value pairs where key is cols' name, and value is cols' index.
+
+        encryptor: Paillier Object
+            If encryptor is not None, y and 1-y is indicated to be encrypted and will initialize 0 with encryption.
 
         Returns
         -------
         result_sum: the result DTable. It is like:
-            [[(event_count, non_event_count), (same sum in second_bin), (in third bin) ... (first feature in cols)],
-             [(event_count, non_event_count), ... (second feature in cols)],
-             ...]
+            {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+             'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+             ...
+            }
 
         """
-        result_sum = []
-        # LOGGER.debug("In add_label_in_partition, cols: {}".format(cols))
-        for _ in cols:
+        result_sum = {}
+        for col_name in cols_dict:
             result_col_sum = []
             for bin_index in range(total_bin):
                 if encryptor is not None:
                     result_col_sum.append([encryptor.encrypt(0), encryptor.encrypt(0)])
                 else:
                     result_col_sum.append([0, 0])
-            result_sum.append(result_col_sum)
+            result_sum[col_name] = result_col_sum  # {'x1': [[0, 0], [0, 0] ... ],...}
 
         for _, datas in data_bin_with_table:
-            bin_idxs = datas[0]
+            bin_idx_dict = datas[0]
             y_combo = datas[1]
             # LOGGER.debug("In data_bin_with_table loop, bin_idxs: {}, y: {}, inverse_y: {}".format(
             #     bin_idxs, y_combo[0], y_combo[1]
             # ))
             y = y_combo[0]
             inverse_y = y_combo[1]
-            for col_idx, bin_idx in enumerate(bin_idxs):
-                col_sum = result_sum[col_idx]
+            for col_name, bin_idx in bin_idx_dict.items():
+                col_sum = result_sum[col_name]
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + inverse_y
                 col_sum[bin_idx] = label_sum
-                result_sum[col_idx] = col_sum
+                result_sum[col_name] = col_sum
 
         return result_sum
 
@@ -354,9 +452,10 @@ class Binning(object):
         ----------
         sum1 :  DTable.
             It is like:
-            [[(event_count, non_event_count), (same sum in second_bin), (in third bin) ... (first feature in cols)],
-            [(event_count, non_event_count), ... (second feature in cols)],
-            ...]
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
 
         sum2 : DTable
             Same as sum1
@@ -374,15 +473,15 @@ class Binning(object):
         if sum2 is None:
             return sum1
 
-        new_result = []
-        for idx, feature_sum1 in enumerate(sum1):
-            feature_sum2 = sum2[idx]
+        new_result = {}
+        for col_name, count_sum1 in sum1.items():
+            count_sum2 = sum2[col_name]
             tmp_list = []
-            for idx, label_sum1 in enumerate(feature_sum1):
-                label_sum2 = feature_sum2[idx]
+            for idx, label_sum1 in enumerate(count_sum1):
+                label_sum2 = count_sum2[idx]
                 tmp = (label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1])
                 tmp_list.append(tmp)
-            new_result.append(tmp_list)
+            new_result[col_name] = tmp_list
         return new_result
 
 
@@ -406,9 +505,9 @@ class QuantileBinning(Binning):
 
     def __init__(self, params):
         super(QuantileBinning, self).__init__(params)
-        self.summary_list = None
+        self.summary_dict = None
 
-    def binning(self, data_instances, cols):
+    def fit_split_points(self, data_instances):
         """
         Apply the binning method
 
@@ -417,109 +516,174 @@ class QuantileBinning(Binning):
         data_instances : DTable
             The input data
 
-        cols : int or list of int
-            Specify which column(s) need to apply binning. -1 means do binning for all columns.
-
         Returns
         -------
-        split_points, 2-dimension list.
-            Each row represent for the split points for a feature. The element in each row represent for
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
             the corresponding split point.
             e.g.
-            split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            [1, 2, 3, 4, ...],           # The second feature
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
                             ...]                         # Other features
 
         """
+        self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
         # calculate the split points
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
 
-        if self.summary_list is None:
+        if self.summary_dict is None:
             f = functools.partial(self.approxiQuantile,
-                                  cols=cols,
+                                  cols_dict=self.cols_dict,
                                   params=self.params)
-            summary_list = data_instances.mapPartitions(f)
-            summary_list = summary_list.reduce(self.merge_summary_list)
-            self.summary_list = summary_list
+            summary_dict = data_instances.mapPartitions(f)
+            summary_dict = summary_dict.reduce(self.merge_summary_dict)
+            self.summary_dict = summary_dict
         else:
-            summary_list = self.summary_list
-        split_points = []
-        for percen_rate in percentile_rate:
-            feature_dimension_points = [s_l.query(percen_rate) for s_l in summary_list]
-            split_points.append(feature_dimension_points)
-        split_points = np.array(split_points)
-        split_points = split_points.transpose()
+            summary_dict = self.summary_dict
+        split_points = {}
+        for col_name, summary in summary_dict.items():
+            split_point = []
+            for percen_rate in percentile_rate:
+                split_point.append(summary.query(percen_rate))
+            split_points[col_name] = split_point
+
         return split_points
 
     @staticmethod
-    def approxiQuantile(data_instances, cols, params):
-        # cols == -1 means all features
-        if cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            cols = [i for i in range(features_shape)]
+    def approxiQuantile(data_instances, cols_dict, params):
+        """
+        Calculates each quantile information
 
-        if isinstance(cols, int):
-            cols = [cols]
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
 
-        num_of_qs = len(cols)
-        summary_list = []
-        for _ in range(num_of_qs):
+        cols_dict: dict
+            Record key, value pairs where key is cols' name, and value is cols' index.
+
+        param : FeatureBinningParam object,
+                Parameters that user set.
+
+        Returns
+        -------
+        summary_dict: dict
+            {'col_name1': summary1,
+             'col_name2': summary2,
+             ...
+             }
+
+        """
+
+        summary_dict = {}
+        for col_name, col_index in cols_dict.items():
             quantile_summaries = QuantileSummaries(compress_thres=params.compress_thres,
                                                    head_size=params.head_size,
                                                    error=params.error)
-            summary_list.append(quantile_summaries)
-        QuantileBinning.insert_datas(data_instances, summary_list, cols)
-        return summary_list
+            summary_dict[col_name] = quantile_summaries
+        QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict)
+        return summary_dict
 
     @staticmethod
-    def insert_datas(data_instances, summary_list, cols):
-
+    def insert_datas(data_instances, summary_dict, cols_dict):
         for iter_key, instant in data_instances:
             features = instant.features
-            for idx, summary in enumerate(summary_list):
-                feature_id = cols[idx]
-                summary.insert(features[feature_id])
+            for col_name, summary in summary_dict.items():
+                col_index = cols_dict[col_name]
+                summary.insert(features[col_index])
 
     @staticmethod
-    def merge_summary_list(s_list1, s_list2):
-        if s_list1 is None and s_list2 is None:
+    def merge_summary_dict(s_dict1, s_dict2):
+        if s_dict1 is None and s_dict2 is None:
             return None
-        if s_list1 is None:
-            return s_list2
-        if s_list2 is None:
-            return s_list1
+        if s_dict1 is None:
+            return s_dict2
+        if s_dict2 is None:
+            return s_dict1
 
-        new_list = []
-        for idx, summary1 in enumerate(s_list1):
-            summary1.merge(s_list2[idx])
-            new_list.append(summary1)
-        return new_list
+        new_dict = {}
+        for col_name, summary1 in s_dict1.items():
+            summary2 = s_dict2.get(col_name)
+            summary1.merge(summary2)
+            new_dict[col_name] = summary1
+        return new_dict
 
     def query_quantile_point(self, data_instances, cols, query_points):
-        if self.summary_list is None:
+        if self.summary_dict is None:
             f = functools.partial(self.approxiQuantile,
-                                  cols=cols,
+                                  cols_dict=self.cols_dict,
                                   params=self.params)
-            summary_list = data_instances.mapPartitions(f)
-            summary_list = summary_list.reduce(self.merge_summary_list)
-            self.summary_list = summary_list
+            summary_dict = data_instances.mapPartitions(f)
+            summary_dict = summary_dict.reduce(self.merge_summary_dict)
+            self.summary_dict = summary_dict
         else:
-            summary_list = self.summary_list
+            summary_dict = self.summary_dict
 
         if isinstance(query_points, (int, float)):
-            query_points = [query_points] * len(cols)
+            query_dict = {}
+            for col_name in cols:
+                query_dict[col_name] = query_points
+        elif isinstance(query_points, dict):
+            query_dict = query_points
+        else:
+            raise ValueError("query_points has wrong type, should be a float, int or dict")
 
-        if len(cols) != len(query_points) or len(summary_list) != len(query_points):
-            raise AssertionError("number of quantile points are not equal to number of select_cols")
-
-        result = []
-        for idx, query_point in enumerate(query_points):
-            summary = summary_list[idx]
-            result.append(summary.query(query_point))
-
+        result = {}
+        for col_name, query_point in query_dict.items():
+            summary = summary_dict[col_name]
+            result[col_name] = summary
         return result
 
 
+# class BucketBinning(Binning):
+#     """
+#     For bucket binning, the length of each bin is the same which is:
+#     L = [max(x) - min(x)] / n
+#
+#     The split points are min(x) + L * k
+#     where k is the index of a bin.
+#     """
+#
+#     def __init__(self, params):
+#         super(BucketBinning, self).__init__(params)
+#
+#     def fit_split_points(self, data_instances):
+#         """
+#         Apply the binning method
+#
+#         Parameters
+#         ----------
+#         data_instances : DTable
+#             The input data
+#
+#         cols : int or list of int
+#             Specify which column(s) need to apply binning. -1 means do binning for all columns.
+#
+#         Returns
+#         -------
+#         split_points, 2-dimension list.
+#             Each row represent for the split points for a feature. The element in each row represent for
+#             the corresponding split point.
+#             e.g.
+#             split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+#                             [1, 2, 3, 4, ...],           # The second feature
+#                             ...]                         # Other features
+#
+#         """
+#         self._init_cols(data_instances)
+#
+#         statistics = MultivariateStatisticalSummary(data_instances, cols)
+#         split_points = []
+#         max_list = statistics.get_max(cols)
+#         min_list = statistics.get_min(cols)
+#         n = data_instances.count()
+#         for idx, max_value in enumerate(max_list):
+#             min_value = min_list[idx]
+#             split_point = []
+#             L = (max_value - min_value) / n
+#             for k in range(self.bin_num - 1):
+#                 s_p = min_value + (k + 1) * L
+#                 split_point.append(s_p)
+#             split_points.append(split_point)
+#         return split_points

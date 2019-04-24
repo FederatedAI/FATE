@@ -73,6 +73,7 @@ class HeteroBinningGuestWorkflow(WorkFlow):
                 if self.binning_param.local_only:
                     self.model.fit_local(train_data_instance)
                 else:
+                    LOGGER.debug("Start model fit")
                     self.model.fit(train_data_instance)
                 self.save_binning_result()
             else:

@@ -177,7 +177,7 @@ class MultivariateStatisticalSummary(object):
     def _get_quantile_median(self, cols):
         bin_param = FeatureBinningParam(bin_num=2)
         binning_obj = QuantileBinning(bin_param)
-        split_points = binning_obj.binning(self.data_instances, cols)
+        split_points = binning_obj.fit_split_points(self.data_instances)
         medians = [x[0] for x in split_points]
         return medians
 

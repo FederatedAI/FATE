@@ -59,7 +59,7 @@ class TestQuantileBinning(unittest.TestCase):
                                         error=error,
                                         bin_num=bin_num)
         quan_bin = QuantileBinning(bin_param)
-        split_points = quan_bin.binning(self.table, cols=self.cols)
+        split_points = quan_bin.fit_split_points(self.table, cols=self.cols)
         for col_idx, col in enumerate(self.cols):
             bin_percent = [i * (1.0 / bin_num) for i in range(1, bin_num)]
             x = self.numpy_table[:, col]
@@ -117,7 +117,7 @@ class TestQuantileBinningSpeed(unittest.TestCase):
                                  bin_num=bin_num)
         quan_bin = QuantileBinning(bin_param)
         t0 = time.time()
-        split_points = quan_bin.binning(self.table, cols=self.cols)
+        split_points = quan_bin.fit_split_points(self.table, cols=self.cols)
         t1 = time.time()
         print('Spend time: {}'.format(t1 - t0))
 

@@ -48,6 +48,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         # 2. Prepare labels
         data_instances = data_instances.mapValues(self.load_data)
+        self.set_schema(data_instances)
+
         label_table = data_instances.mapValues(lambda x: x.label)
 
         # 3. Transfer encrypted label
@@ -81,8 +83,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         # for idx, col in enumerate(self.cols):
         #     LOGGER.info("The local iv of {}th feature is {}".format(col, local_iv[idx].iv))
 
-        for idx, iv_attr in enumerate(host_iv_attrs):
-            LOGGER.info("The remote iv of {}th measured feature is {}".format(idx, iv_attr.iv))
+        for cols_name, iv_attr in host_iv_attrs.items():
+            LOGGER.info("The feature {} 's iv is {}".format(cols_name, iv_attr.iv))
 
         iv_result = {'local': local_iv,
                      'remote': host_iv_attrs}
@@ -113,7 +115,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Sent encrypted_label_table to host for transform")
 
         # 4. Transform locally
-        self.transform_local(data_instances, reformated=True)
+        self.transform_local(data_instances, label_table=label_table)
 
         # 5. Received host result and calculate iv value
         encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
@@ -134,22 +136,20 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def encrypt(x, encryptor):
         return encryptor.encrypt(x), encryptor.encrypt(1 - x)
 
-    def transform_local(self, data_instances, reformated=False):
+    def transform_local(self, data_instances, label_table=None):
         self._abnormal_detection(data_instances)
 
         self._parse_cols(data_instances)
-
-        if not reformated:  # Reformat the label type
-            data_instances = data_instances.mapValues(self.load_data)
 
         split_points = []
         for iv_attr in self.iv_attrs:
             s_p = list(iv_attr.split_points)
             split_points.append(s_p)
 
-        self.iv_attrs = self.binning_obj.cal_local_iv(data_instances, self.cols, split_points)
-        for idx, col in enumerate(self.cols):
-            LOGGER.info("The local iv of {}th feature is {}".format(col, self.iv_attrs[idx].iv))
+        self.iv_attrs = self.binning_obj.cal_local_iv(data_instances, split_points=split_points,
+                                                      label_table=label_table)
+        for col_name, col_index in self.iv_attrs.items():
+            LOGGER.info("The feature {} 's iv is {}".format(col_name, self.iv_attrs[col_name].iv))
 
     def __synchronize_encryption(self):
         pub_key = self.encryptor.get_public_key()
@@ -163,21 +163,23 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.has_synchronized = True
 
     def __decrypt_bin_sum(self, encrypted_bin_sum):
-        for feature_sum in encrypted_bin_sum:
-            for idx, (encrypted_event, encrypted_non_event) in enumerate(feature_sum):
+        # for feature_sum in encrypted_bin_sum:
+        for col_name, count_list in encrypted_bin_sum.items():
+            new_list = []
+            for encrypted_event, encrypted_non_event in count_list:
                 event_count = self.encryptor.decrypt(encrypted_event)
                 non_event_count = self.encryptor.decrypt(encrypted_non_event)
-                feature_sum[idx] = (event_count, non_event_count)
+                new_list.append((event_count, non_event_count))
+            encrypted_bin_sum[col_name] = new_list
         return encrypted_bin_sum
 
     def fit_local(self, data_instances, label_table=None):
         self._abnormal_detection(data_instances)
-
         self._parse_cols(data_instances)
 
-        iv_attrs = self.binning_obj.cal_local_iv(data_instances, self.cols, label_table=label_table)
-        for idx, col in enumerate(self.cols):
-            LOGGER.info("The local iv of {}th feature is {}".format(col, iv_attrs[idx].iv))
+        iv_attrs = self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+        for col_name, col_index in iv_attrs.items():
+            LOGGER.info("The feature {} 's iv is {}".format(col_name, iv_attrs[col_name].iv))
         self.iv_attrs = iv_attrs
         return iv_attrs
 
@@ -188,4 +190,3 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         if data_instance.label != 1:
             data_instance.label = 0
         return data_instance
-

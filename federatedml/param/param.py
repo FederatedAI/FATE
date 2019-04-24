@@ -706,8 +706,9 @@ class FeatureBinningParam(object):
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
 
-    cols : list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns
+    cols : list of string or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
+        cols, provide a list of header string instead of -1.
 
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in

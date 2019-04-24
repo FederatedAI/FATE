@@ -47,11 +47,11 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.__synchronize_encryption()
 
         # Calculates split points of datas in self party
-        split_points = self.binning_obj.binning(data_instances, cols=self.cols)
+        split_points = self.binning_obj.fit_split_points(data_instances)
         self._make_iv_obj(split_points)
         # LOGGER.debug("host split_points are: {}".format(split_points))
         LOGGER.debug("Before transform, self cols: {}".format(self.cols))
-        data_bin_table = self.binning_obj.transform(data_instances, split_points, self.cols)
+        data_bin_table = self.binning_obj.transform(data_instances, split_points)
 
         encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
         encrypted_label_table = federation.get(name=self.transfer_variable.encrypted_label.name,
@@ -60,7 +60,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols)
+        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols_dict)
         encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
 
         federation.remote(encrypted_bin_sum,
@@ -85,7 +85,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
             split_points.append(s_p)
 
         # LOGGER.debug("In transform, self.cols: {}".format(self.cols))
-        data_bin_table = self.binning_obj.transform(data_instances, split_points, self.cols)
+        data_bin_table = self.binning_obj.transform(data_instances, split_points)
 
         encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
         encrypted_label_table = federation.get(name=self.transfer_variable.encrypted_label.name,
@@ -93,7 +93,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                                                idx=0)
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols)
+        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols_dict)
         encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
         federation.remote(encrypted_bin_sum,
                           name=self.transfer_variable.encrypted_bin_sum.name,
@@ -103,10 +103,10 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         LOGGER.info("Sent encrypted_bin_sum to guest")
 
     def _make_iv_obj(self, split_points):
-        iv_objs = []
-        for s_p in split_points:
+        iv_objs = {}
+        for col_name, s_p in split_points.items():
             iv_obj = IVAttributes([], [], [], [], [], [], s_p)
-            iv_objs.append(iv_obj)
+            iv_objs[col_name] = iv_obj
         self.iv_attrs = iv_objs
 
     def __synchronize_encryption(self):
@@ -119,11 +119,11 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.encryptor.set_public_key(pubkey)
         self.has_synchronized = True
 
-    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols):
+    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
         f = functools.partial(self.binning_obj.add_label_in_partition,
                               total_bin=self.bin_param.bin_num,
-                              cols=cols,
+                              cols_dict=cols_dict,
                               encryptor=self.encryptor)
         result_sum = data_bin_with_label.mapPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)

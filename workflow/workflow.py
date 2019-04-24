@@ -149,7 +149,7 @@ class WorkFlow(object):
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
 
-        self.model.fit(train_data)
+        self.model.fit_split_points(train_data)
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
@@ -425,7 +425,7 @@ class WorkFlow(object):
                 train_data, cols_scale_value = self.scale(train_data)
 
                 self.model.set_flowid(flowid)
-                self.model.fit(train_data)
+                self.model.fit_split_points(train_data)
 
                 feature_selection_flowid = "feature_selection_transform_" + str(flowid)
                 test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
@@ -462,7 +462,7 @@ class WorkFlow(object):
                 LOGGER.info("End feature selection fit_transform")
 
                 self.model.set_flowid(flowid)
-                self.model.fit(train_data)
+                self.model.fit_split_points(train_data)
 
                 feature_selection_flowid = "feature_selection_transform_" + str(flowid)
                 test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
@@ -477,7 +477,7 @@ class WorkFlow(object):
             for flowid in range(n_splits):
                 LOGGER.info("flowid:{}".format(flowid))
                 self.model.set_flowid(flowid)
-                self.model.fit()
+                self.model.fit_split_points()
                 flowid += 1
                 self._initialize_model(self.config_path)
 
@@ -505,7 +505,7 @@ class WorkFlow(object):
             LOGGER.info("End sample before_train")
 
             self.model.set_flowid(flowid)
-            self.model.fit(train_data)
+            self.model.fit_split_points(train_data)
             # self.save_model()
             predict_result = self.model.predict(test_data, self.workflow_param.predict_param)
             flowid += 1

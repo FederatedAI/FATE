@@ -47,7 +47,7 @@ class FTLGuestWorkFlow(FTLWorkFlow):
         with tf.Session() as sess:
             self.ftl_local_model.set_session(sess)
             sess.run(init)
-            self.model.fit(train_data_instance)
+            self.model.fit_split_points(train_data_instance)
             self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             self.model.predict(train_data_instance)
             if validation_data is not None:
