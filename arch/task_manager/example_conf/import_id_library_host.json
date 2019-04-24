@@ -12,8 +12,7 @@
   },
   "role": {
     "guest": [9999],
-    "host": [10000],
-    "arbiter": [10000]
+    "host": [10000]
   },
-  "data_type": "id_library_input"
+  "data_type": "data_input"
 }
