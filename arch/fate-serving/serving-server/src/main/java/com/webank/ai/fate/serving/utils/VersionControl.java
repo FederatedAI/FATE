@@ -20,11 +20,13 @@ import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 
 public class VersionControl {
+    private static final Logger LOGGER = LogManager.getLogger();
     public static Map<String, String> getVersionInfo(String namespace, String commitId, String tag, String branch){
         DTable versionDTable = getVersionTable(namespace);
         if (!StringUtils.isEmpty(commitId)){
@@ -53,7 +55,7 @@ public class VersionControl {
         if (tmp == null){
             return null;
         }
-        return (Map<String, String>)ObjectTransform.json2Bean(tmp.toString(), HashMap.class);
+        return (Map<String, String>)ObjectTransform.json2Bean(new String(tmp), HashMap.class);
     }
 
     public static DTable getVersionTable(String dataNamespace){
@@ -66,6 +68,6 @@ public class VersionControl {
         if (tmp == null){
             return null;
         }
-        return tmp.toString();
+        return new String(tmp);
     }
 }

@@ -140,7 +140,7 @@ if __name__ == "__main__":
             print("------------load data finish!-----------------")
             print("file: {}".format(input_file_path))
             print("total data_count: {}".format(data_table.count()))
-            print("table name: {}, table namespace: {}".format(_table_name, _namespace))
+            print("table name: {}, table namespace: {}".format(table_name, namespace))
 
         except ValueError:
             print('json parse error')

@@ -17,6 +17,7 @@ from arch.task_manager.utils.api_utils import get_json_result
 from arch.task_manager.settings import logger
 from arch.api.utils.dtable_utils import get_table_info
 from flask import Flask, request
+from arch.api import storage
 
 manager = Flask(__name__)
 
@@ -32,6 +33,11 @@ def dtable(table_func):
     config = request.json
     if table_func == 'tableInfo':
         table_name, namespace = get_table_info(config=config, create=config.get('create', False))
-        return get_json_result(data={'table_name': table_name, 'namespace': namespace})
+        dtable = storage.get_data_table(name=table_name, namespace=namespace)
+        if dtable:
+            table_key_count = dtable.count()
+        else:
+            table_key_count = 0
+        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count})
     else:
         return get_json_result()
