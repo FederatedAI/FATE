@@ -133,8 +133,13 @@ def fill_runtime_conf_table_info(runtime_conf, default_runtime_conf):
             or workflow_param.get(name_param) == default_workflow_param.get(name_param)) \
                 and (not workflow_param.get(namespace_param)
                      or workflow_param.get(namespace_param) == default_workflow_param.get(namespace_param)):
-            table_name, namespace = dtable_utils.get_table_info(config=table_config,
-                                                                create=(False if input_output == 'input' else True))
+            if input_output == 'input':
+                _create = False
+                table_config['table_name'] = ''
+            else:
+                _create = True
+                table_config['table_name'] = runtime_conf.get('JobParam', {}).get('job_id')
+            table_name, namespace = dtable_utils.get_table_info(config=table_config, create=_create)
             workflow_param[name_param] = table_name
             workflow_param[namespace_param] = namespace
 
