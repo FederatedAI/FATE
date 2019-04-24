@@ -38,6 +38,8 @@ job_id = None
 
 def call_back(status):
     global job_id
+    global role
+    global party_id
     global LOCAL_URL
 
     if job_id is None:
@@ -47,9 +49,12 @@ def call_back(status):
 
         args = parser.parse_args()
         job_id = args.job_id
+        config = file_utils.load_json_conf(args.config)
+        role = config.get('local', {}).get('role')
+        party_id = config.get('local', {}).get('party_id')
 
     try:
-        requests.post("/".join([LOCAL_URL, str(job_id)]), json={"status": status})
+        requests.post("/".join([LOCAL_URL, str(job_id), str(role), str(party_id)]), json={"status": status})
     except:
         LOGGER.info("fail to post status {}".format(status))
 

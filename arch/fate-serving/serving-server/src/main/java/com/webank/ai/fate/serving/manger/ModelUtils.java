@@ -16,23 +16,30 @@
 
 package com.webank.ai.fate.serving.manger;
 
+import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
+import com.webank.ai.fate.core.utils.SceneUtils;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ModelUtils {
+    private static final Logger LOGGER = LogManager.getLogger();
     public static Map<String, byte[]> readModel(String name, String namespace){
+        LOGGER.info("read model, name: {} namespace: {}", name, namespace);
         DTable dataTable = DTableFactory.getDTable(name, namespace, 1);
         return dataTable.collect();
     }
 
     public static PipelineTask loadModel(String name, String namespace){
         Map<String, byte[]> modelBytes = readModel(name, namespace);
-        if (modelBytes == null){
+        if (modelBytes == null || modelBytes.size() == 0){
             return null;
         }
         PipelineTask pipelineTask = new PipelineTask();
@@ -40,8 +47,8 @@ public class ModelUtils {
         return pipelineTask;
     }
 
-    public static String genModelKey(String name, String namespace){
-        return StringUtils.join(Arrays.asList(name, namespace), "_");
+    public static String genModelKey(String role, int partyId, Map<String, List<Integer>> allParty, String name, String namespace){
+        return StringUtils.join(Arrays.asList(role, partyId, SceneUtils.joinAllParty(allParty), name, namespace), "_");
     }
 
     public static String genPartnerModelIndexKey(int partnerPartyId, String partnerModelName, String partnerModelNamespace){
@@ -50,5 +57,25 @@ public class ModelUtils {
 
     public static String[] splitModelKey(String key){
         return StringUtils.split(key, "-");
+    }
+
+
+    public static Map<String, List<Integer>> getAllParty(Map<String, ModelServiceProto.Party> allPartyProto){
+        Map<String, List<Integer>> allParty = new HashMap<>();
+        allPartyProto.forEach((roleName, party) -> {
+            allParty.put(roleName, party.getPartyIdList());
+        });
+        return allParty;
+    }
+
+    public static Map<String, Map<Integer, ModelInfo>> getAllPartyModel(Map<String, ModelServiceProto.RoleModelInfo> allPartyModelProto){
+        Map<String, Map<Integer, ModelInfo>> allPartyModel = new HashMap<>();
+        allPartyModelProto.forEach((roleName, roleModelInfo)->{
+            allPartyModel.put(roleName, new HashMap<>());
+            roleModelInfo.getRoleModelInfoMap().forEach((partyId, modelInfo)->{
+                allPartyModel.get(roleName).put(partyId, new ModelInfo(modelInfo.getTableName(), modelInfo.getNamespace()));
+            });
+        });
+        return allPartyModel;
     }
 }

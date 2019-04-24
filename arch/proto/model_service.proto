@@ -3,14 +3,28 @@ syntax = "proto3";
 package com.webank.ai.fate.api.mlmodel.manager;
 option java_outer_classname = "ModelServiceProto";
 
+message Party{
+    repeated int32 partyId = 1;
+}
+
+message LocalInfo{
+    string role = 1;
+    int32 partyId = 2;
+}
+
 message ModelInfo{
-    string name = 1;
+    string tableName = 1;
     string namespace = 2;
 }
 
+message RoleModelInfo{
+    map<int32, ModelInfo> roleModelInfo = 1;
+}
+
 message PublishRequest{
-    int32 myPartyId = 1;
-    map<int32, ModelInfo> models = 2;
+    LocalInfo local = 1;
+    map<string, Party> role = 2;
+    map<string, RoleModelInfo> model = 3;
 }
 
 message PublishResponse{

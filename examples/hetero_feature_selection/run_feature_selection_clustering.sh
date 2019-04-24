@@ -23,3 +23,6 @@ host_id=${3}
 jobid=${4}
 
 nohup python ${cur_dir}/run_feature_selection.py 1 ${jobid} ${role} ${guest_id} ${host_id} > nohup.${role} 2>&1 &
+
+log_path=${cur_dir}/../../logs/${jobid}
+echo "Please check log in " ${log_path}

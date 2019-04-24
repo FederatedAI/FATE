@@ -14,11 +14,7 @@
 #  limitations under the License.
 #
 
-import numpy as np
-
 from arch.api import federation
-from arch.api.model_manager import manager as model_manager
-from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import DiffConverge
@@ -65,7 +61,6 @@ class HomoLRArbiter(BaseLogisticRegression):
         LOGGER.info("Finish init parameters")
 
         for iter_num in range(self.max_iter):
-            # LOGGER.debug("iter num: {}".format(iter_num))
             # re_encrypt host models
             self.__re_encrypt(iter_num)
 
@@ -74,7 +69,6 @@ class HomoLRArbiter(BaseLogisticRegression):
                                                           iter_num=iter_num,
                                                           party_weights=self.party_weights,
                                                           host_encrypter=self.host_encrypter)
-            # LOGGER.debug("aggregated model: {}".format(final_model))
             total_loss = self.aggregator.aggregate_loss(transfer_variable=self.transfer_variable,
                                                         iter_num=iter_num,
                                                         party_weights=self.party_weights,
@@ -88,15 +82,9 @@ class HomoLRArbiter(BaseLogisticRegression):
                               tag=final_model_id,
                               role=consts.GUEST,
                               idx=0)
-            # LOGGER.debug("guest_model_id: {}".format(final_model_id))
             for idx, encrypter in enumerate(self.host_encrypter):
                 encrypted_model = encrypter.encrypt_list(final_model)
 
-                # final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num, 100)
-
-                # LOGGER.debug("encryptor: {}, encrypted_model: {}".format(
-                #    encrypter, encrypted_model
-                # ))
                 federation.remote(encrypted_model,
                                   name=self.transfer_variable.final_model.name,
                                   tag=final_model_id,
@@ -136,7 +124,6 @@ class HomoLRArbiter(BaseLogisticRegression):
             if use_encrypt:
                 encrypter = self.host_encrypter[idx]
                 predict_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
-                # LOGGER.debug("predict_wd_id: {}, idx: {}".format(predict_wx_id, idx))
                 predict_wx = federation.get(name=self.transfer_variable.predict_wx.name,
                                             tag=predict_wx_id,
                                             idx=idx
@@ -176,9 +163,7 @@ class HomoLRArbiter(BaseLogisticRegression):
                                       idx=-1)
         weights = [guest_weight]
         weights.extend(host_weights)
-        # LOGGER.debug("All party weights: {}".format(
-        #     weights
-        # ))
+
         self.party_weights = [x / sum(weights) for x in weights]
 
         # 2. Synchronize encryption information
@@ -252,8 +237,6 @@ class HomoLRArbiter(BaseLogisticRegression):
         batch_num = 0
         while True:
             batch_num += self.re_encrypt_batches
-            # re_encrypt_transfer_id = TransferidGenerator.generate_transferid(
-            #     self.transfer_variable.re_encrypted_model, batch_num)
 
             to_encrypt_model_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.to_encrypt_model, iter_num, batch_num
@@ -264,7 +247,6 @@ class HomoLRArbiter(BaseLogisticRegression):
             for idx, left_times in enumerate(self.curt_re_encrypt_times):
                 if left_times <= 0:
                     continue
-                # left_re_encrypt_times = self.curt_re_encrypt_times[host_id]
                 re_encrypt_model = federation.get(
                     name=self.transfer_variable.to_encrypt_model.name,
                     tag=to_encrypt_model_id,
@@ -273,7 +255,6 @@ class HomoLRArbiter(BaseLogisticRegression):
                 encrypter = self.host_encrypter[idx]
                 decrypt_model = encrypter.decrypt_list(re_encrypt_model)
                 re_encrypt_model = encrypter.encrypt_list(decrypt_model)
-                # LOGGER.debug("re_encrypt_mode_id: {}".format(re_encrypted_model_id))
                 federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
                                   tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
 
@@ -282,69 +263,6 @@ class HomoLRArbiter(BaseLogisticRegression):
 
             if sum(self.curt_re_encrypt_times) == 0:
                 break
-
-    # def _save_meta(self, name, namespace):
-    #     meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.param.penalty,
-    #                                                       eps=self.eps,
-    #                                                       alpha=self.alpha,
-    #                                                       optimizer=self.param.optimizer,
-    #                                                       party_weight=self.param.party_weight,
-    #                                                       batch_size=self.batch_size,
-    #                                                       learning_rate=self.learning_rate,
-    #                                                       max_iter=self.max_iter,
-    #                                                       converge_func=self.param.converge_func,
-    #                                                       re_encrypt_batches=self.param.re_encrypt_batches)
-    #     buffer_type = "HomoLRArbiter.meta"
-    #
-    #     model_manager.save_model(buffer_type=buffer_type,
-    #                              proto_buffer=meta_protobuf_obj,
-    #                              name=name,
-    #                              namespace=namespace)
-    #     return buffer_type
-    #
-    # def save_model(self, name, namespace, job_id=None, model_name=None):
-    #     meta_buffer_type = self._save_meta(name, namespace)
-    #     # In case arbiter has no header
-    #
-    #     # Make a virtual header cause no data_instances are available
-    #     header = [str(i) for i in range(len(self.coef_))]
-    #
-    #     weight_dict = {}
-    #     for idx, header_name in enumerate(header):
-    #         coef_i = self.coef_[idx]
-    #         weight_dict[header_name] = coef_i
-    #
-    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
-    #                                                          loss_history=self.loss_history,
-    #                                                          is_converged=self.is_converged,
-    #                                                          weight=weight_dict,
-    #                                                          intercept=self.intercept_,
-    #                                                          header=header)
-    #
-    #     param_buffer_type = "HomoLRArbiter.param"
-    #
-    #     model_manager.save_model(buffer_type=param_buffer_type,
-    #                              proto_buffer=param_protobuf_obj,
-    #                              name=name,
-    #                              namespace=namespace)
-    #     return [(meta_buffer_type, param_buffer_type)]
-    #
-    # def load_model(self, name, namespace):
-    #
-    #     result_obj = lr_model_param_pb2.LRModelParam()
-    #     result_obj = model_manager.read_model(buffer_type="HomoLRArbiter.param",
-    #                                           proto_buffer=result_obj,
-    #                                           name=name,
-    #                                           namespace=namespace)
-    #
-    #     self.header = list(result_obj.header)
-    #     feature_shape = len(self.header)
-    #     self.coef_ = np.zeros(feature_shape)
-    #     weight_dict = dict(result_obj.weight)
-    #     self.intercept_ = result_obj.intercept
-    #
-    #     for idx, header_name in enumerate(self.header):
-    #         self.coef_[idx] = weight_dict.get(header_name)
 
     def _set_header(self):
         self.header = ['head_' + str(x) for x in range(len(self.coef_))]

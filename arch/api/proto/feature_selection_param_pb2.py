@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-selection-param.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1d\x66\x65\x61ture-selection-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xf5\x01\n\x1b\x46\x65\x61tureSelectionFilterParam\x12\x66\n\tparam_set\x18\x01 \x03(\x0b\x32S.com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionFilterParam.ParamSetEntry\x12\x15\n\roriginal_cols\x18\x02 \x03(\x03\x12\x11\n\tleft_cols\x18\x03 \x03(\x03\x12\x13\n\x0b\x66ilter_name\x18\x04 \x01(\t\x1a/\n\rParamSetEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\"o\n\x15\x46\x65\x61tureSelectionParam\x12V\n\x07results\x18\x01 \x03(\x0b\x32\x45.com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionFilterParamB\x17\x42\x15\x46\x65\x61tureSelectionParamb\x06proto3')
+  serialized_pb=_b('\n\x1d\x66\x65\x61ture-selection-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xf5\x01\n\x1b\x46\x65\x61tureSelectionFilterParam\x12\x66\n\tparam_set\x18\x01 \x03(\x0b\x32S.com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionFilterParam.ParamSetEntry\x12\x15\n\roriginal_cols\x18\x02 \x03(\x03\x12\x11\n\tleft_cols\x18\x03 \x03(\x03\x12\x13\n\x0b\x66ilter_name\x18\x04 \x01(\t\x1a/\n\rParamSetEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\"o\n\x15\x46\x65\x61tureSelectionParam\x12V\n\x07results\x18\x01 \x03(\x0b\x32\x45.com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionFilterParamB\x1c\x42\x1a\x46\x65\x61tureSelectionParamProtob\x06proto3')
 )
 
 
@@ -175,7 +175,7 @@ _sym_db.RegisterMessage(FeatureSelectionParam)
 
 
 DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\025FeatureSelectionParam'))
+DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\032FeatureSelectionParamProto'))
 _FEATURESELECTIONFILTERPARAM_PARAMSETENTRY.has_options = True
 _FEATURESELECTIONFILTERPARAM_PARAMSETENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 # @@protoc_insertion_point(module_scope)

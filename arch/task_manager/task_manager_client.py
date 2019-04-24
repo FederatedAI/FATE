@@ -14,109 +14,85 @@ SERVERS = "servers"
 ROLE = "manager"
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 WORKFLOW_FUNC = ["workflow"]
+WORKFLOW_JOB_FUNC = ["workflowRuntimeConf"]
 DATA_FUNC = ["download", "upload"]
+DTABLE_FUNC = ["tableInfo"]
 OTHER_FUNC = ["delete"]
+JOB_FUNC = ["jobStatus"]
+JOB_QUEUE_FUNC = ["queueStatus"]
 MODEL_FUNC = ["load", "online", "version"]
-LOCAL_PROCESS_FUNC = ["import_id", "request_offline_feature"]
 
 
 def get_err_result(msg, body):
-    if not body:
-        body = ''
-    return {"code": -1,
+    return {"status": -1,
             "msg": msg,
             "created_at": time.strftime('%Y-%m-%d %H:%M:%S'),
-            "data": bytes(body, "utf-8")}
+            "data": body}
 
 
 def prettify(response, verbose=True):
-    data = {"code": response.get("status"), "msg": response.get("msg"), 'created_at': time.strftime('%Y-%m-%d %H:%M:%S')}
-    if response.get("data"):
-        data["data"] = response.get("data").decode('utf-8')
+    response['created_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
     if verbose:
-        print(data)
-    return data
+        print(json.dumps(response))
+    return response
 
 
-def call_fun(func, data, config_path, input_args):
-    print(func)
+def call_fun(func, config_data):
     IP = server_conf.get(SERVERS).get(ROLE).get('host')
     HTTP_PORT = server_conf.get(SERVERS).get(ROLE).get('http.port')
     LOCAL_URL = "http://{}:{}".format(IP, HTTP_PORT)
-    print(LOCAL_URL)
 
     if func in WORKFLOW_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "job", "new"]), json=data)
+        response = requests.post("/".join([LOCAL_URL, "workflow", func]), json=config_data)
+    elif func in WORKFLOW_JOB_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "workflow", func, config_data.get("job_id")]), json=config_data)
     elif func in OTHER_FUNC:
-        response = requests.delete("/".join([LOCAL_URL, "job", data.get("job_id") or input_args.job_id]))
+        response = requests.delete("/".join([LOCAL_URL, "job", config_data.get("job_id")]))
+    elif func in JOB_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "job", func, config_data.get("job_id")]))
+    elif func in JOB_QUEUE_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "job", func]))
     elif func in DATA_FUNC:
-        print ("enter here", config_path)
-        response = requests.post("/".join([LOCAL_URL, "data", func]), json={"config_path": config_path})
+        response = requests.post("/".join([LOCAL_URL, "data", func]), json=config_data)
+    elif func in DTABLE_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "dtable", func]), json=config_data)
     elif func in MODEL_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "model", func]), json={"config_path": config_path})
-    elif func in LOCAL_PROCESS_FUNC:
-        response = eval(func)(LOCAL_URL, data)
+        response = requests.post("/".join([LOCAL_URL, "model", func]), json=config_data)
 
     return json.loads(response.text)
 
-
-def import_id(local_url, config):
-    input_file_path = config.request("input_file_path")
-    batch_size = config.request("batch_size", 10)
-    request_data = {"workMode": config.request("work_mode")}
-    with open(input_file_path) as fr:
-        id_tmp = []
-        range_start = 0
-        range_end = -1
-        total = 0
-        file_end = False
-        while True:
-            for i in range(batch_size):
-                line = fr.readline()
-                if not line:
-                    file_end = True
-                    break
-                id_tmp.append(line.split(",")[0])
-                range_end += 1
-                total += 1
-            request_data["rangeStart"] = range_start
-            request_data["rangeEnd"] = range_end
-            request_data["ids"] = id_tmp
-            if file_end:
-                # file end
-                request_data["total"] = total
-                response = requests.post("/".join([local_url, "data/importId"]), json=request_data)
-                break
-            else:
-                request_data["total"] = 0
-                response = requests.post("/".join([local_url, "data/importId"]), json=request_data)
-            range_start = range_end + 1
-            del id_tmp[:]
-    return response
-
-
-def request_offline_feature(local_url, config):
-    response = requests.post("/".join([local_url, "data/requestOfflineFeature"]), json=config)
-    print(response)
-    return response
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', required=False, type=str, help="config json path")
     parser.add_argument('-f', '--function', type=str,
-                        choices=WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + LOCAL_PROCESS_FUNC + MODEL_FUNC,
+                        choices=(WORKFLOW_FUNC + DATA_FUNC + OTHER_FUNC + MODEL_FUNC + JOB_FUNC +
+                                 WORKFLOW_JOB_FUNC + JOB_QUEUE_FUNC + DATA_FUNC + DTABLE_FUNC),
                         required=True,
                         help="function to call")
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
-    parser.add_argument('-np', '--namespace', required=False, type=str, help="namespace")
+    parser.add_argument('-p', '--party_id', required=False, type=str, help="party id")
+    parser.add_argument('-r', '--role', required=False, type=str, help="role")
+    parser.add_argument('-s', '--scene_id', required=False, type=str, help="scene id")
+    parser.add_argument('-n', '--namespace', required=False, type=str, help="namespace")
+    parser.add_argument('-t', '--table_name', required=False, type=str, help="table name")
+    parser.add_argument('-i', '--file', required=False, type=str, help="file")
+    parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
     try:
         args = parser.parse_args()
-        data = {}
+        config_data = {}
         try:
             if args.config:
                 args.config = os.path.abspath(args.config)
                 with open(args.config, 'r') as f:
-                    data = json.load(f)
+                    config_data = json.load(f)
+            config_data.update(dict((k, v) for k, v in vars(args).items() if v is not None))
+            if args.party_id or args.role:
+                config_data['local'] = config_data.get('local', {})
+                if args.party_id:
+                    config_data['local']['party_id'] = args.party_id
+                if args.role:
+                    config_data['local']['role'] = args.role
         except ValueError:
             print('json parse error')
             exit(-102)
@@ -124,13 +100,10 @@ if __name__ == "__main__":
             print("reading config jsonfile error")
             exit(-103)
 
-        response = call_fun(args.function.lower(), data, args.config, args)
-
-        print('===== Task Submit Result =====\n')
+        response = call_fun(args.function, config_data)
         response_dict = prettify(response)
         if response.get("status") < 0:
-            result = get_err_result(response.msg, str(response_dict.get('data')))
-            print(result)
+            result = get_err_result(response_dict.get("msg"), response_dict.get('data'))
             sys.exit(result.get("code"))
 
     except:

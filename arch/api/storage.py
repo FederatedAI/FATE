@@ -95,7 +95,6 @@ if __name__ == '__main__':
     import random
     job_id = str(uuid.uuid1().hex)
     eggroll.init(job_id=job_id, mode=0)
-    #eggroll.init(job_id=job_id, mode=1)
 
     table_name = "test_example"
     table_namespace = "storage_test_example"

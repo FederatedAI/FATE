@@ -67,16 +67,6 @@ def generate_table_name(input_file_path):
     file_name = file_name.split("/")[-1]
     return file_name,str_time
 
-def data_to_eggroll_table(data, namespace, table_name,partition=1, work_mode=0):
-    eggroll.init(mode=work_mode)
-    data_table = eggroll.table(table_name, namespace, partition=partition, create_if_missing=True, error_if_exist=False)
-    data_table.put_all(data)
-    data_table_count = data_table.count()
-    print("------------load data finish!-----------------")
-    print("total data_count:"+str(data_table.count()))
-    print("namespace:%s, table_name:%s" %(namespace, table_name))
-    #for kv in data_table.collect():
-    #    print(kv)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -87,7 +77,7 @@ if __name__ == "__main__":
             print("Can not find the parameter -c")
             sys.exit()
 
-        data = {}
+        job_config = {}
         try:
             args.config = os.path.abspath(args.config)
             input_file_path = None
@@ -95,15 +85,15 @@ if __name__ == "__main__":
             table_name = None
             namespace = None
             with open(args.config, 'r') as f:
-                data = json.load(f)
+                job_config = json.load(f)
 
                 try:
-                    input_file_path = data['file']
+                    input_file_path = job_config['file']
                 except:
                     traceback.print_exc()
                 
                 try:
-                   read_head = data['head']
+                   read_head = job_config['head']
                    if read_head == 0:
                        head = False
                    elif read_head == 1:
@@ -112,7 +102,7 @@ if __name__ == "__main__":
                     print("'head' in .json should be 0 or 1, set head to 1")
                 
                 try:
-                    partition = data['partition']
+                    partition = job_config['partition']
                     if partition <= 0 or partition > MAX_PARTITION_NUM:
                         print("Error number of partition, it should between %d and %d" %(0, MAX_PARTITION_NUM))
                         sys.exit()
@@ -122,16 +112,16 @@ if __name__ == "__main__":
                 
             
                 try:
-                    table_name = data['table_name']
+                    table_name = job_config['table_name']
                 except:
                     print("not setting table_name or setting error, set table_name according to current time")
 
                 try:
-                    namespace = data['namespace']
+                    namespace = job_config['namespace']
                 except:
                     print("not setting namespace or setting error, set namespace according to input file name")
 
-                work_mode = data.get('work_mode')
+                work_mode = job_config.get('work_mode')
                 if work_mode is None:
                     work_mode = 0
 
@@ -146,7 +136,11 @@ if __name__ == "__main__":
             if table_name is None:
                 table_name = _table_name
             eggroll.init(mode=work_mode)
-            save_data(input_data, name=table_name, namespace=namespace, partition=partition)
+            data_table = save_data(input_data, name=table_name, namespace=namespace, partition=partition)
+            print("------------load data finish!-----------------")
+            print("file: {}".format(input_file_path))
+            print("total data_count: {}".format(data_table.count()))
+            print("table name: {}, table namespace: {}".format(table_name, namespace))
 
         except ValueError:
             print('json parse error')

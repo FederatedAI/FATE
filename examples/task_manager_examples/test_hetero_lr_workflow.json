@@ -2,25 +2,25 @@
     "task": "train",
     "module": "HeteroLR",
     "role": {
-        "guest": [10000],
-        "host": [9999],
-        "arbiter": [10001]
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
     },
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_guest_train_hetero_logistic_regression_example_standalone_20190402223834"],
-                "train_input_namespace": ["example_data_namespace"],
+                "train_input_table": ["06749a0264c611e9a529525400a9eda4"],
+                "train_input_namespace": ["50000_guest_9999_10000-9999-10000_id_library_input"],
+                "data_input_table": ["06749a0264c611e9a529525400a9eda4"],
+                "data_input_namespace": ["50000_guest_9999_10000-9999-10000_id_library_input"],
                 "model_table": ["hetero_lr_guest_model"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_guest_predict_hetero_logistic_regression_example_standalone_20190402223834"],
-                "predict_input_namespace": ["example_data_namespace"],
+                "predict_input_table": ["06749a0264c611e9a529525400a9eda4"],
+                "predict_input_namespace": ["50000_guest_9999_10000-9999-10000_id_library_input"],
                 "predict_output_table": ["hetero_lr_guest_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["hetero_lr_evaluation_output_hetero_logistic_regression_example_standalone_20190402211541"],
-                "evaluation_output_namespace": ["hetero_lr"],
-                "data_input_table": ["breast_guest_cross_validation_hetero_logistic_regression_example_standalone_20190402211859"],
-                "data_input_namespace": ["example_data_namespace"]
+                "evaluation_output_namespace": ["hetero_lr"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -31,14 +31,14 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_host_train_hetero_logistic_regression_example_standalone_20190402223834"],
-                "train_input_namespace": ["example_data_namespace"],
-                "data_input_table": ["breast_host_predict_hetero_logistic_regression_example_standalone_20190402223834"],
-                "data_input_namespace": ["example_data_namespace"],
+                "train_input_table": ["b4b21ba264c711e9bbcb525400cf391f"],
+                "train_input_namespace": ["50000_host_10000_10000-9999-10000_train_input"],
+                "data_input_table": ["b4b21ba264c711e9bbcb525400cf391f"],
+                "data_input_namespace": ["50000_host_10000_10000-9999-10000_train_input"],
                 "model_table": ["hetero_lr_host_model"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_host_predict_hetero_logistic_regression_example_standalone_20190402211541"],
-                "predict_input_namespace": ["example_data_namespace"],
+                "predict_input_table": ["b4b21ba264c711e9bbcb525400cf391f"],
+                "predict_input_namespace": ["50000_host_10000_10000-9999-10000_train_input"],
                 "predict_output_table": ["hetero_lr_host_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["some_evaluate_output_table_name_hetero_logistic_regression_example_standalone_20190402211541"],
@@ -64,7 +64,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0,
+            "work_mode": 1,
             "need_sample": false,
             "need_feature_selection": false,
             "need_intersect": true,
@@ -102,7 +102,7 @@
             "alpha": 0.01,
             "max_iter": 10,
             "converge_func": "diff",
-            "batch_size": 320,
+            "batch_size": 3200,
             "learning_rate": 0.15
         },
         "PredictParam": {
@@ -133,7 +133,7 @@
         },
         "FeatureSelectionParam": {
             "method": "fit",
-            "filter_method": ["unique_value", "iv_value_thres", "iv_percentile",
+            "filter_method": ["unique_value", "iv_value_thres",
                     "coefficient_of_variation_value_thres", "outlier_cols"],
             "select_cols": -1,
             "local_only": false,

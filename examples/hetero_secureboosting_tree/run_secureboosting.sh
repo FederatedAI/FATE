@@ -66,13 +66,6 @@ load_file() {
     input_path=$1
     role=$2   
     load_mode=$3
-    if [ "$role"x = "guest"x ];then
-        my_party_id=$guest_partyid
-        partner_party_id=$host_partyid
-    elif [ "$role"x = "host"x ];then
-        my_party_id=$host_partyid
-        partner_party_id=$guest_partyid
-    fi
     conf_path=$conf_dir/load_file.json_${role}_${load_mode}_$jobid
     cp $load_data_conf $conf_path
     data_table=${data_set}_${role}_${load_mode}_$jobid

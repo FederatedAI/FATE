@@ -14,10 +14,13 @@
 #  limitations under the License.
 #
 from arch.api.utils import file_utils
+import subprocess
 import os
-from flask import jsonify
-from arch.task_manager.db.models import DB, JobInfo, JobQueue
-from arch.task_manager.settings import logger, PARTY_ID
+import uuid
+from arch.task_manager.db.models import JobInfo, JobQueue
+from arch.task_manager.settings import logger, PARTY_ID, WORK_MODE
+import errno
+from arch.api import eggroll
 import datetime
 import json
 import threading
@@ -50,27 +53,51 @@ def get_job_directory(job_id=None):
     return os.path.join(file_utils.get_project_base_directory(), *_paths)
 
 
-def get_json_result(status=0, msg='success'):
-    return jsonify({"status": status, "msg": msg})
+def new_runtime_conf(job_dir, method, module, role, party_id):
+    if role:
+        conf_path_dir = os.path.join(job_dir, method, module, role, str(party_id))
+    else:
+        conf_path_dir = os.path.join(job_dir, method, module, str(party_id))
+    os.makedirs(conf_path_dir, exist_ok=True)
+    return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_info(job_id, **kwargs):
-    job_info = JobInfo()
+def save_job_info(job_id, role, party_id, save_info, create=False):
+    jobs = JobInfo.select().where(JobInfo.job_id == job_id, JobInfo.role == role, JobInfo.party_id == party_id)
+    is_insert = True
+    if jobs:
+        job_info = jobs[0]
+        is_insert = False
+    elif create:
+        job_info = JobInfo()
+    else:
+        return None
     job_info.job_id = job_id
+    job_info.role = role
+    job_info.party_id = party_id
     job_info.create_date = datetime.datetime.now()
-    for k, v in kwargs.items():
+    for k, v in save_info.items():
+        if k in ['job_id', 'role', 'party_id']:
+            continue
         setattr(job_info, k, v)
-    job_info.save(force_insert=True)
+    if is_insert:
+        job_info.save(force_insert=True)
+    else:
+        job_info.save()
+    return job_info
 
 
-def query_job_info(job_id):
-    jobs = JobInfo.select().where(JobInfo.job_id == job_id)
-    return [job.to_json() for job in jobs]
-
-
-def update_job_info(job_id, update_data):
-    sql = JobInfo.update(**update_data).where(JobInfo.job_id == job_id)
+def set_job_failed(job_id, role, party_id):
+    sql = JobInfo.update(status='failed').where(JobInfo.job_id == job_id,
+                                                JobInfo.role == role,
+                                                JobInfo.party_id == party_id,
+                                                JobInfo.status != 'success')
     return sql.execute() > 0
+
+
+def query_job_by_id(job_id):
+    jobs = JobInfo.select().where(JobInfo.job_id == job_id)
+    return jobs
 
 
 def push_into_job_queue(job_id, config):
@@ -78,18 +105,40 @@ def push_into_job_queue(job_id, config):
     job_queue.job_id = job_id
     job_queue.status = 'waiting'
     job_queue.config = json.dumps(config)
+    job_queue.party_id = PARTY_ID
     job_queue.create_date = datetime.datetime.now()
     job_queue.save(force_insert=True)
 
 
 def get_job_from_queue(status, limit=1):
-    wait_jobs = JobQueue.select().where(JobQueue.status == status).order_by(JobQueue.create_date.asc()).limit(limit)
-    return [job.to_json() for job in wait_jobs]
+    if limit:
+        wait_jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc()).limit(limit)
+    else:
+        wait_jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc())
+    return wait_jobs
 
 
-def update_job_queue(job_id, update_data):
-    sql = JobQueue.update(**update_data).where(JobQueue.job_id == job_id)
-    return sql.execute() > 0
+def update_job_queue(job_id, role, party_id, save_data):
+    jobs = JobQueue.select().where(JobQueue.job_id == job_id, JobQueue.role == role, JobQueue.party_id == party_id)
+    is_insert = True
+    if jobs:
+        job_queue = jobs[0]
+        is_insert = False
+    else:
+        job_queue = JobQueue()
+        job_queue.create_date = datetime.datetime.now()
+    job_queue.job_id = job_id
+    job_queue.role = role
+    job_queue.party_id = party_id
+    for k, v in save_data.items():
+        if k in ['job_id', 'role', 'party_id']:
+            continue
+        setattr(job_queue, k, v)
+    if is_insert:
+        job_queue.save(force_insert=True)
+    else:
+        job_queue.save()
+    return job_queue
 
 
 def pop_from_job_queue(job_id):
@@ -104,6 +153,79 @@ def job_queue_size():
     return JobQueue.select().count()
 
 
-def running_job_amount():
-    return JobQueue.select().where(JobQueue.status == "running").count()
+def show_job_queue():
+    jobs = JobQueue.select().where(JobQueue.role == 'guest', JobQueue.pid.is_null(False)).distinct()
+    return jobs
 
+
+def running_job_amount():
+    return JobQueue.select().where(JobQueue.status == "running", JobQueue.pid.is_null(False)).distinct().count()
+
+
+def is_job_initiator(initiator, party_id=PARTY_ID):
+    if not initiator or not party_id:
+        return False
+    return int(initiator) == int(party_id)
+
+
+def clean_job(job_id):
+    try:
+        logger.info('ready clean job {}'.format(job_id))
+        eggroll.cleanup('*', namespace=job_id, persistent=False)
+        logger.info('send clean job {}'.format(job_id))
+    except Exception as e:
+        logger.exception(e)
+
+
+def gen_status_id():
+    return uuid.uuid1().hex
+
+
+def check_job_process(pid):
+    if pid < 0:
+        return False
+    if pid == 0:
+        raise ValueError('invalid PID 0')
+    try:
+        os.kill(pid, 0)
+    except OSError as err:
+        if err.errno == errno.ESRCH:
+            # ESRCH == No such process
+            return False
+        elif err.errno == errno.EPERM:
+            # EPERM clearly means there's a process to deny access to
+            return True
+        else:
+            # According to "man 2 kill" possible error values are
+            # (EINVAL, EPERM, ESRCH)
+            raise
+    else:
+        return True
+
+
+def run_subprocess(job_dir, job_role, progs):
+    logger.info('Starting progs: {}'.format(progs))
+
+    std_dir = os.path.join(job_dir, job_role)
+    if not os.path.exists(std_dir):
+        os.makedirs(os.path.join(job_dir, job_role))
+    std_log = open(os.path.join(std_dir, 'std.log'), 'w')
+    task_pid_path = os.path.join(job_dir, 'pids')
+
+    if os.name == 'nt':
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+    else:
+        startupinfo = None
+    p = subprocess.Popen(progs,
+                         stdout=std_log,
+                         stderr=std_log,
+                         startupinfo=startupinfo
+                         )
+    os.makedirs(task_pid_path, exist_ok=True)
+    with open(os.path.join(task_pid_path, job_role + ".pid"), 'w') as f:
+        f.truncate()
+        f.write(str(p.pid) + "\n")
+        f.flush()
+    return p

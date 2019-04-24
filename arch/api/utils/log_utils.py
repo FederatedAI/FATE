@@ -70,21 +70,6 @@ class LoggerFactory(object):
         return handler
 
     @staticmethod
-    def get_hanlder(className):
-        if not LoggerFactory.LOG_DIR:
-            return logging.StreamHandler()
-        formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
-        log_file = os.path.join(LoggerFactory.LOG_DIR, "{}.log".format(className))
-        handler = TimedRotatingFileHandler(log_file,
-                                           when='H',
-                                           interval=4,
-                                           backupCount=7,
-                                           delay=True)
-
-        handler.setFormatter(formatter)
-        return handler
-
-    @staticmethod
     def __initLogger(className):
         with LoggerFactory.lock:
             logger = logging.getLogger(className)

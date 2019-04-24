@@ -40,7 +40,8 @@ def read_model(buffer_type, proto_buffer, name, namespace):
                                create_if_missing=False, error_if_exist=False)
     if data_table:
         buffer_bytes = data_table.get(buffer_type, use_serialize=False)
-        proto_buffer.ParseFromString(buffer_bytes)
+        if buffer_bytes:
+            proto_buffer.ParseFromString(buffer_bytes)
         return True
     else:
         return False

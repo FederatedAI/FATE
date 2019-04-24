@@ -23,7 +23,7 @@ import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.core.utils.Configuration;
-import com.webank.ai.fate.serving.manger.ModelManager;
+import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +40,7 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
 
         switch (req.getHeader().getCommand().getName()) {
             case "federatedPredict":
-                responseData = new InferenceService().federatedPredict(requestData);
+                responseData = InferenceManager.federatedPredict(requestData);
                 break;
             default:
                 responseData = new ReturnResult();
