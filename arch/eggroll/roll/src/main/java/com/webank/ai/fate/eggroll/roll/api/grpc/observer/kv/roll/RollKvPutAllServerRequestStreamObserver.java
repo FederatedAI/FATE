@@ -85,6 +85,7 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     private Set<Integer> finishedFragmentSet;
     private int tableFragmentCount;
     private long totalCount;
+    private volatile boolean inited;
 
     public RollKvPutAllServerRequestStreamObserver(StreamObserver<Kv.Empty> callerNotifier, StoreInfo storeInfo) {
         super(callerNotifier);
@@ -100,7 +101,10 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     }
 
     @PostConstruct
-    public void init() {
+    public synchronized void init() {
+        if (inited) {
+            return;
+        }
         storageMetaClient.init(rollServerUtils.getMetaServiceEndpoint());
         Dtable dtable = storageMetaClient.getTable(storeInfo);
 
@@ -112,10 +116,15 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
 
         tableFragmentCount = fragments.size();
         eggPutAllFinishLatch = new CountDownLatch(fragments.size());
+
+        inited = true;
     }
 
     @Override
     public void onNext(Kv.Operand operand) {
+        if (!inited) {
+            init();
+        }
         // perform dispatch
         int dispatchedFragment = dispatchPolicy.executePolicy(storeInfo, operand.getKey());
 
@@ -123,9 +132,10 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
         if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
             boolean newlyCreated = false;
 
-            OperandBroker operandBroker = rollModelFactory.createOperandBroker();
+            OperandBroker operandBroker = null;
             synchronized (fragmentOrderToOperandBrokerLock) {
                 if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
+                    operandBroker = rollModelFactory.createOperandBroker();
                     fragmentOrderToOperandBroker.put(dispatchedFragment, operandBroker);
                     newlyCreated = true;
                 }
@@ -134,8 +144,9 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
             if (newlyCreated) {
                 StoreInfo storeInfoWithFragment = StoreInfo.copy(storeInfo);
                 storeInfoWithFragment.setFragment(dispatchedFragment);
+                operandBroker = fragmentOrderToOperandBroker.get(dispatchedFragment);
 
-                Callable<BasicMeta.ReturnStatus> callable
+                PutAllProcessor callable
                         = createStoragePutAllRequest(operandBroker, storeInfoWithFragment);
 
                 Node node = fragmentOrderToNodes.get(dispatchedFragment);

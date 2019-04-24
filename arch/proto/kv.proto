@@ -56,7 +56,7 @@ service KVService {
     rpc put (Operand) returns (Empty);                              // put an entry to table
     rpc putIfAbsent (Operand) returns (Operand);                    // put an entry to table if absent
     rpc putAll (stream Operand) returns (Empty);                    // put entries to table (entries will be streaming in)
-    rpc delete (Operand) returns (Operand);                         // delete an entry from table
+    rpc delOne (Operand) returns (Operand);                         // delete an entry from table
     rpc get (Operand) returns (Operand);                            // get an entry from table
     rpc iterate (Range) returns (stream Operand);                   // iterate through a table. Response entries are ordered
     rpc destroy (Empty) returns (Empty);                            // destroy a table

@@ -51,6 +51,10 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
     private long seq;
     private TransferBroker transferBroker;
     private Federation.TransferMeta transferMeta;
+    private String transferMetaString;
+    private int packetCount = 0;
+
+    private volatile boolean inited;
 
     public PushStreamProcessor(StreamObserver<Proxy.Packet> streamObserver, TransferBroker transferBroker) {
         super(streamObserver);
@@ -64,19 +68,32 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
     }
 
     @PostConstruct
-    public void init() {
+    public synchronized void init() {
+        if (inited) {
+            return;
+        }
         headerBuilder
                 .setTask(Proxy.Task.newBuilder().setTaskId(transferPojoUtils.generateTransferId(transferMeta)))
                 .setSrc(transferProtoMessageUtils.partyToTopic(transferMeta.getSrc()))
                 .setDst(transferProtoMessageUtils.partyToTopic(transferMeta.getDst()));
+
+        this.transferMetaString = toStringUtils.toOneLineString(transferMeta);
+        inited = true;
     }
 
     @Override
     public void process() {
+        if (!inited) {
+            init();
+        }
         // LOGGER.info("processing send stream for task: {}", toStringUtils.toOneLineString(transferMeta));
         List<ByteString> dataList = Lists.newLinkedList();
 
-        transferBroker.drainTo(dataList);
+        int drainedCount = transferBroker.drainTo(dataList);
+
+        if (drainedCount <= 0) {
+            return;
+        }
 
         Proxy.Packet packet = null;
         for (ByteString data : dataList) {
@@ -87,13 +104,20 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
                     .setBody(bodyBuilder)
                     .build();
             streamObserver.onNext(packet);
+            ++packetCount;
         }
     }
 
     @Override
     public void complete() {
-        LOGGER.info("[FEDERATION][PUSHPROCESSOR] completing send stream for task: {}, transferBroker remaining: {}",
-                toStringUtils.toOneLineString(transferMeta), transferBroker.getQueueSize());
+        LOGGER.info("[FEDERATION][PUSHPROCESSOR] trying to complete send stream for task: {}, packetCount: {}, transferBroker remaining: {}",
+                transferMetaString, packetCount, transferBroker.getQueueSize());
+        while (!transferBroker.isClosable()) {
+            process();
+        }
+
+        LOGGER.info("[FEDERATION][PUSHPROCESSOR] actual completes send stream for task: {}, packetCount: {}, transferBroker remaining: {}",
+                transferMetaString, packetCount, transferBroker.getQueueSize());
         // transferBroker.setFinished();
         super.complete();
     }

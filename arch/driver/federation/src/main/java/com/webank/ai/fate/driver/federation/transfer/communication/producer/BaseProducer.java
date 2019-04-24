@@ -67,7 +67,7 @@ public abstract class BaseProducer implements Callable<BasicMeta.ReturnStatus> {
         storageMetaClient.init(federationServerUtils.getMetaServiceEndpoint());
     }
 
-    protected void putToBroker(DataStructure.RawMap.Builder rawMapBuilder) {
+    protected synchronized void putToBroker(DataStructure.RawMap.Builder rawMapBuilder) {
         // LOGGER.warn("--- broker: {}", transferBroker);
         DataStructure.RawMap chunk = rawMapBuilder.build();
         // serialize and ready to send

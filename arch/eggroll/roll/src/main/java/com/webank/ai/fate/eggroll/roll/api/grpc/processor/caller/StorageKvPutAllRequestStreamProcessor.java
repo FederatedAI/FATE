@@ -22,6 +22,8 @@ import com.webank.ai.fate.core.api.grpc.client.crud.BaseStreamProcessor;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,8 @@ import java.util.List;
 public class StorageKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.Operand> {
     private OperandBroker broker;
     private Node node;
+    private int entryCount = 0;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public StorageKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker broker, Node node) {
         super(streamObserver);
@@ -43,10 +47,22 @@ public class StorageKvPutAllRequestStreamProcessor extends BaseStreamProcessor<K
     @Override
     public void process() {
         List<Kv.Operand> operands = Lists.newLinkedList();
-        broker.drainTo(operands);
+        broker.drainTo(operands, 1000000);
 
         for (Kv.Operand operand : operands) {
             streamObserver.onNext(operand);
+            ++entryCount;
         }
     }
+
+    @Override
+    public void complete() {
+        LOGGER.info("[PUTALL][SUBTASK] trying to complete putAll sub task. remaining: {}, entryCount: {}", broker.getQueueSize(), entryCount);
+/*        while (!broker.isClosable()) {
+            process();
+        }*/
+        LOGGER.info("[PUTALL][SUBTASK] actual completes putAll sub task. remaining: {}, entryCount: {}", broker.getQueueSize(), entryCount);
+        super.complete();
+    }
+
 }

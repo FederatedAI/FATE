@@ -67,7 +67,7 @@ public class OperandBroker {
     public void addAll(Collection<Kv.Operand> operands) {
         if (operands.size() > 0) {
             operandQueue.addAll(operands);
-            resetLatch();
+            this.readyLatch.countDown();
         }
     }
 
@@ -103,6 +103,15 @@ public class OperandBroker {
         return result;
     }
 
+    public synchronized int drainTo(Collection<Kv.Operand> target, int maxElementSize) {
+        int result = operandQueue.drainTo(target, maxElementSize);
+        if (operandQueue.isEmpty()) {
+            resetLatch();
+        }
+
+        return result;
+    }
+
     public synchronized void resetLatch() {
         if ((readyLatch == null || readyLatch.getCount() != 1)
                 && operandQueue.size() <= 0 && !isFinished()) {
@@ -110,6 +119,7 @@ public class OperandBroker {
         }
     }
 
+    // todo: check thread safety
     public boolean awaitLatch(long timeout, TimeUnit unit) throws InterruptedException {
         boolean awaitResult = this.readyLatch.await(timeout, unit);
 
@@ -151,7 +161,7 @@ public class OperandBroker {
 
     public boolean isClosable() {
         synchronized (this) {
-            return !isReady() && isFinished;
+            return !isReady() && isFinished();
         }
     }
 }

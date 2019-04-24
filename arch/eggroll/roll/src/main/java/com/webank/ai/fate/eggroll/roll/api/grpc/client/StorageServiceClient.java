@@ -105,35 +105,60 @@ public class StorageServiceClient {
     }
 
     public void putAll(OperandBroker operandBroker, StoreInfo storeInfo, Node node) {
-        GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> context
-                = rollKvCallModelFactory.createOperandToEmptyContext();
+        boolean needReset = true;
+        boolean hasError = false;
+        int resetInterval = 100000;
+        int remaining = resetInterval;
+        int resetCount = 0;
 
-        context.setLatchInitCount(1)
-                .setEndpoint(typeConversionUtils.toEndpoint(node))
-                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCallerStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::putAll)
-                .setCallerStreamObserverClassAndArguments(StorageKvPutAllClientResponseStreamObserver.class)
-                .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo))
-                .setRequestStreamProcessorClassAndArguments(StorageKvPutAllRequestStreamProcessor.class, operandBroker, node);
-
-        GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> template
-                = rollKvCallModelFactory.createOperandToEmptyTemplate();
-        template.setGrpcAsyncClientContext(context);
-
-        template.initCallerStreamingRpc();
-
+        GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> context = null;
+        GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> template = null;
         try {
             while (!operandBroker.isClosable()) {
-                boolean awaitResult = operandBroker.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, TimeUnit.SECONDS);
-                if (awaitResult) {
-                    template.processCallerStreamingRpc();
+                // possible init
+                if (needReset) {
+                    LOGGER.info("[ROLL][PUTALL] resetting in putAll subTask. resetCount: {}", ++resetCount);
+                    context = rollKvCallModelFactory.createOperandToEmptyContext();
+
+                    context.setLatchInitCount(1)
+                            .setEndpoint(typeConversionUtils.toEndpoint(node))
+                            .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
+                            .setCallerStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::putAll)
+                            .setCallerStreamObserverClassAndArguments(StorageKvPutAllClientResponseStreamObserver.class)
+                            .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo))
+                            .setRequestStreamProcessorClassAndArguments(StorageKvPutAllRequestStreamProcessor.class, operandBroker, node);
+
+                    template = rollKvCallModelFactory.createOperandToEmptyTemplate();
+                    template.setGrpcAsyncClientContext(context);
+
+                    template.initCallerStreamingRpc();
+
+                    remaining = resetInterval;
+                    needReset = false;
+                }
+
+                // wait for data and send
+                operandBroker.awaitLatch(1, TimeUnit.SECONDS);
+                template.processCallerStreamingRpc();
+                --remaining;
+
+                // possible cleanup
+                if (remaining <= 0) {
+                    template.completeStreamingRpc();
+                    needReset = true;
                 }
             }
         } catch (Throwable e) {
             template.errorCallerStreamingRpc(e);
+            hasError = true;
+        } finally {
+            if (!needReset && !hasError) {
+                template.completeStreamingRpc();
+            }
+            // todo: possible duplicate with DtableRecvConsumeAction
+            operandBroker.setFinished();
         }
 
-        template.completeStreamingRpc();
     }
 
     public Kv.Operand delete(Kv.Operand request, StoreInfo storeInfo, Node node) {
