@@ -262,8 +262,8 @@ class LocalEncryptedFederatedTransferLearning(object):
         self.host = host
         self.private_key = private_key
 
-    def fit(self, X_A, X_B, y, overlap_indexes, non_overlap_indexes):
-        self.guest.set_batch(X_A, y, non_overlap_indexes, overlap_indexes)
+    def fit(self, X_A, X_B, y, overlap_indexes, guest_non_overlap_indexes):
+        self.guest.set_batch(X_A, y, guest_non_overlap_indexes, overlap_indexes)
         self.host.set_batch(X_B, overlap_indexes)
 
         comp_B = self.host.send_components()

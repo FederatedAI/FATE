@@ -24,8 +24,8 @@ from arch.api.eggroll import parallelize, table
 from federatedml.feature.instance import Instance
 
 
-def series_plot(losses, fscores, aucs):
-    fig = plt.figure(figsize=(20, 40))
+def series_plot(losses, fscores, aucs, figsize=(8, 8)):
+    fig = plt.figure(figsize=figsize)
 
     plt.subplot(311)
     plt.plot(losses)

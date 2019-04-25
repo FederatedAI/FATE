@@ -31,13 +31,13 @@ if __name__ == '__main__':
     infile = "../../../../examples/data/UCI_Credit_Card.csv"
     X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
 
-    num_samples = 10000
+    num_samples = 5000
     X = X[:num_samples]
     y = y[:num_samples]
     X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
-                                                              overlap_ratio=0.1,
+                                                              overlap_ratio=0.2,
                                                               b_samples_ratio=0.1,
-                                                              n_feature_b=16)
+                                                              n_feature_b=18)
 
     guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
     host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
@@ -64,20 +64,20 @@ if __name__ == '__main__':
     autoencoder_A = Autoencoder(1)
     autoencoder_B = Autoencoder(2)
 
-    hidden_dim = 32
-    autoencoder_A.build(X_A.shape[-1], hidden_dim, learning_rate=0.01)
-    autoencoder_B.build(X_B.shape[-1], hidden_dim, learning_rate=0.01)
+    hidden_dim = 14
+    autoencoder_A.build(X_A.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
+    autoencoder_B.build(X_B.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
 
-    fake_model_param = MockFTLModelParam(alpha=100, gamma=0.08)
-    partyA = PlainFTLGuestModel(autoencoder_A, fake_model_param)
-    partyB = PlainFTLHostModel(autoencoder_B, fake_model_param)
+    mock_model_param = MockFTLModelParam(alpha=100, gamma=0.08)
+    partyA = PlainFTLGuestModel(autoencoder_A, mock_model_param)
+    partyB = PlainFTLHostModel(autoencoder_B, mock_model_param)
 
     federatedLearning = LocalPlainFederatedTransferLearning(partyA, partyB)
 
     print("################################ Train Federated Models ############################")
-    threshold = 0.55
+    threshold = 0.50
     start_time = time.time()
-    epochs = 1200
+    epochs = 220
     init = tf.global_variables_initializer()
     with tf.Session() as sess:
         autoencoder_A.set_session(sess)
@@ -96,9 +96,8 @@ if __name__ == '__main__':
             losses.append(loss)
 
             if ep % 5 == 0:
-                print("ep", ep, "loss", loss)
+                print("> ep", ep, "loss", loss)
                 y_pred = federatedLearning.predict(x_B_test)
-                print("y_pred shape", y_pred, y_pred.shape)
                 y_pred_label = []
                 pos_count = 0
                 neg_count = 0
@@ -110,15 +109,16 @@ if __name__ == '__main__':
                         pos_count += 1
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
-                print("neg：", neg_count, "pos:", pos_count)
-                print("y_B_test shape", y_B_test, y_B_test.shape)
+                print("| neg：", neg_count, "pos:", pos_count)
+                # print("y_pred shape", y_pred, y_pred.shape)
+                # print("y_B_test shape", y_B_test, y_B_test.shape)
                 precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label,
                                                                                average="weighted")
                 fscores.append(fscore)
                 auc = roc_auc_score(y_B_test, y_pred, average="weighted")
                 aucs.append(auc)
-                print("fscore, auc:", fscore, auc)
+                print("| fscore, auc:", fscore, auc)
         end_time = time.time()
         series_plot(losses, fscores, aucs)
-        print("precision, recall, fscore", precision, recall, fscore)
+        print("precision, recall, fscore, auc", precision, recall, fscore, auc)
         print("running time", end_time - start_time)

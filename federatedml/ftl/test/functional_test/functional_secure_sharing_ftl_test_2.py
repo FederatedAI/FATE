@@ -24,7 +24,7 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
 from federatedml.ftl.data_util.common_data_util import series_plot
-from federatedml.ftl.data_util.nus_wide_util import get_labeled_data, balance_X_y
+from federatedml.ftl.data_util.nus_wide_util import get_labeled_data, balance_X_y, get_top_k_labels
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
 from federatedml.ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel, \
     LocalSecureSharingFederatedTransferLearning
@@ -253,8 +253,20 @@ if __name__ == '__main__':
     #                                                           b_samples_ratio=0.1,
     #                                                           n_feature_b=16)
 
-    sel = ['water', 'person', 'sky']
     file_dir = "/data/app/fate/yankang/"
+
+    # file_dir = "D:/Data/NUS_WIDE/"
+    # # sel = ['water', 'person', 'sky']
+    # sel = ["person"]
+    # all_labels = get_top_k_labels(file_dir, top_k=81)
+    # print(len(all_labels))
+    # all_labels.remove("person")
+    # print(len(all_labels))
+    # sel = sel + all_labels
+    # print(sel)
+    # print(len(sel))
+
+    sel = ['water', 'person', 'sky']
     X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=5000)
     print("X_A shape:", X_A.shape)
     print("X_B shape:", X_B.shape)

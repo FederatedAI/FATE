@@ -18,7 +18,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 from arch.api.eggroll import init
 from federatedml.ftl.autoencoder import Autoencoder
@@ -35,18 +35,18 @@ if __name__ == '__main__':
     infile = "../../../../examples/data/UCI_Credit_Card.csv"
     X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
 
-    X = X[:500]
-    y = y[:500]
-
+    num_samples = 1000
+    X = X[:num_samples]
+    y = y[:num_samples]
     X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
                                                               overlap_ratio=0.1,
                                                               b_samples_ratio=0.1,
-                                                              n_feature_b=23)
+                                                              n_feature_b=18)
 
     guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
     host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
 
-    valid_ratio = 0.3
+    valid_ratio = 0.5
     test_indexes = host_non_overlap_indexes[int(valid_ratio * len(host_non_overlap_indexes)):]
     x_B_test = X_B[test_indexes]
     y_B_test = y_B[test_indexes]
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     print("y_B shape", y_B.shape)
 
     print("overlap_indexes len", len(overlap_indexes))
-    print("guest_non_overlap_indexes", guest_non_overlap_indexes)
     print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
+    print("guest_non_overlap_indexes len", len(guest_non_overlap_indexes))
     print("test_indexes len", len(test_indexes))
 
     print("################################ Build Federated Models ############################")
@@ -68,59 +68,66 @@ if __name__ == '__main__':
     autoencoder_A = Autoencoder(1)
     autoencoder_B = Autoencoder(2)
 
-    autoencoder_A.build(X_A.shape[-1], 32, learning_rate=0.01)
-    autoencoder_B.build(X_B.shape[-1], 32, learning_rate=0.01)
+    hidden_dim = 14
+    autoencoder_A.build(X_A.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
+    autoencoder_B.build(X_B.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
 
     paillierEncrypt = PaillierEncrypt()
     paillierEncrypt.generate_key()
     publickey = paillierEncrypt.get_public_key()
     privatekey = paillierEncrypt.get_privacy_key()
 
-    mock_model_param = MockFTLModelParam(alpha=100)
+    mock_model_param = MockFTLModelParam(alpha=100, gamma=0.08)
     partyA = EncryptedFTLGuestModel(autoencoder_A, mock_model_param, public_key=publickey)
     partyB = EncryptedFTLHostModel(autoencoder_B, mock_model_param, public_key=publickey)
 
     federatedLearning = LocalEncryptedFederatedTransferLearning(partyA, partyB, privatekey)
 
     print("################################ Train Federated Models ############################")
+    threshold = 0.50
     start_time = time.time()
-    epochs = 10
+    epochs = 30
     init = tf.global_variables_initializer()
     with tf.Session() as sess:
         autoencoder_A.set_session(sess)
         autoencoder_B.set_session(sess)
 
         sess.run(init)
+
+        precision, recall, fscore, auc = 0.0, 0.0, 0.0, 0.0
         losses = []
         fscores = []
         aucs = []
         for ep in range(epochs):
-            loss = federatedLearning.fit(X_A, X_B, y_A, overlap_indexes, guest_non_overlap_indexes)
+            loss = federatedLearning.fit(X_A=X_A, X_B=X_B, y=y_A,
+                                         overlap_indexes=overlap_indexes,
+                                         guest_non_overlap_indexes=guest_non_overlap_indexes)
             losses.append(loss)
 
-            if ep % 1 == 0:
-                print("ep", ep, "loss", loss)
+            if ep % 3 == 0:
+                print("> ep", ep, "loss", loss)
                 y_pred = federatedLearning.predict(x_B_test)
                 y_pred_label = []
                 pos_count = 0
                 neg_count = 0
                 for _y in y_pred:
-                    if _y <= 0.5:
+                    if _y <= threshold:
                         neg_count += 1
                         y_pred_label.append(-1)
                     else:
                         pos_count += 1
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
-                print("neg：", neg_count, "pos:", pos_count)
+                print("| neg：", neg_count, "pos:", pos_count)
                 precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label,
                                                                                average="weighted")
                 fscores.append(fscore)
-                print("fscore:", fscore)
+                print("| fscore:", fscore)
                 # auc = roc_auc_score(y_B_test, y_pred, average="weighted")
                 # aucs.append(auc)
 
         end_time = time.time()
         series_plot(losses, fscores, aucs)
+        print("precision, recall, fscore", precision, recall, fscore)
         print("running time", end_time - start_time)
 

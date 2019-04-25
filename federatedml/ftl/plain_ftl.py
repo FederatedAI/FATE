@@ -160,17 +160,17 @@ class PlainFTLGuestModel(PartyModelInterface):
         mapping_loss = np.sum(uA_overlap * self.uB_overlap)
         clf_loss = self.__compute_loss_y(self.uB_overlap, self.y_overlap, self.phi)
         repr_loss = 0.5 * self.repr_l2_param * np.sum(np.square(self.Wh))
-        print("mapping_loss", mapping_loss)
-        print("alpha", self.alpha)
+        # print("mapping_loss", mapping_loss)
+        # print("alpha", self.alpha)
         self.loss = self.alpha * clf_loss + mapping_loss + repr_loss
 
     def __compute_loss_y(self, uB_overlap, y_overlap, phi):
         # uB_phi has shape (len(overlap_indexes), 1)
         uB_phi = np.matmul(uB_overlap, phi.transpose())
 
-        print("y_overlap * uB_phi", y_overlap * uB_phi)
-        print("uB_phi * uB_phi", uB_phi * uB_phi)
-        print("len(y_overlap) * np.log(2)", len(y_overlap) * np.log(2))
+        # print("y_overlap * uB_phi", y_overlap * uB_phi)
+        # print("uB_phi * uB_phi", uB_phi * uB_phi)
+        # print("len(y_overlap) * np.log(2)", len(y_overlap) * np.log(2))
         loss_y = (-0.5 * np.sum(y_overlap * uB_phi) + 1.0 / 8 * np.sum(uB_phi * uB_phi)) + len(y_overlap) * np.log(2)
         return loss_y
 
