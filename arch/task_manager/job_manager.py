@@ -205,6 +205,7 @@ def check_job_process(pid):
 
 def run_subprocess(job_dir, job_role, progs):
     logger.info('Starting progs: {}'.format(progs))
+    logger.info(' '.join(progs))
 
     std_dir = os.path.join(job_dir, job_role)
     if not os.path.exists(std_dir):
