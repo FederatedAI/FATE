@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import os
 import time
 
 import numpy as np
@@ -255,22 +256,40 @@ if __name__ == '__main__':
 
     file_dir = "/data/app/fate/yankang/"
 
-    # file_dir = "D:/Data/NUS_WIDE/"
-    # # sel = ['water', 'person', 'sky']
-    # sel = ["person"]
-    # all_labels = get_top_k_labels(file_dir, top_k=81)
-    # print(len(all_labels))
-    # all_labels.remove("person")
-    # print(len(all_labels))
-    # sel = sel + all_labels
-    # print(sel)
-    # print(len(sel))
+    num_samples = 5000
+    num_categories = 81
+    main_label = 'water'
+    all_labels = get_top_k_labels(file_dir, top_k=num_categories)
+    all_labels.remove(main_label)
+    sel = main_label + all_labels
 
-    sel = ['water', 'person', 'sky']
-    X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=5000)
-    print("X_A shape:", X_A.shape)
-    print("X_B shape:", X_B.shape)
-    print("y shape", y.shape)
+    rel_model_dir = "models"
+    model_dir = file_dir + rel_model_dir
+    if not os.path.exists(model_dir):
+        try:
+            os.mkdir(model_dir)
+        except OSError:
+            print("Creation of the directory %s failed" % model_dir)
+        else:
+            print("Successfully created the directory %s" % model_dir)
+
+    model_name_prefix = main_label + "_" + str(num_categories) + "_" + str(num_samples)
+    model_full_name_prefix = model_dir + "/" + model_name_prefix
+    model_name_X_A = model_full_name_prefix + "_" + "X_A"
+    model_name_X_B = model_full_name_prefix + "_" + "X_B"
+    model_name_y = model_full_name_prefix + "_" + "y"
+    if not os.path.exists(model_name_X_A):
+        X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=num_samples)
+        print("original X_A shape:", X_A.shape)
+        print("original X_B shape:", X_B.shape)
+        print("original y shape", y.shape)
+        np.save(model_name_X_A, X_A)
+        np.save(model_name_X_B, X_B)
+        np.save(model_name_y, y)
+    else:
+        X_A = np.load(model_name_X_A)
+        X_B = np.load(model_name_X_B)
+        y = np.load(model_name_y)
 
     y_ = []
     pos_count = 0
@@ -290,9 +309,9 @@ if __name__ == '__main__':
     print("X_A shape:", X_A.shape)
     print("X_B shape:", X_B.shape)
     print("y shape:", y.shape)
-    print("y:", y)
+    # print("y:", y)
 
-    overlap_ratio = 0.2
+    overlap_ratio = 0.4
     data_size = X_A.shape[0]
     overlap_size = int(data_size * overlap_ratio)
     overlap_indexes = np.array(range(overlap_size))
@@ -317,7 +336,7 @@ if __name__ == '__main__':
 
     print("################################ Create Beaver Triples ############################")
     start_time = time.time()
-    hidden_dim = 32
+    hidden_dim = 48
     num_epoch = 1
     mul_op_def, ops = create_mul_op_def(num_overlap_samples=len(overlap_indexes),
                                         num_non_overlap_samples_host=len(host_non_overlap_indexes),
@@ -407,7 +426,7 @@ if __name__ == '__main__':
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
                 print("neg：", neg_count, "pos:", pos_count)
-                precision, recall, fscore, _ = precision_recall_fscore_support(y_test, y_pred_label, average="weighted")
+                precision, recall, fscore, _ = precision_recall_fscore_support(y_test, y_pred_label)
                 fscores.append(fscore)
                 print("fscore:", fscore)
                 auc = roc_auc_score(y_test, y_pred, average="weighted")
