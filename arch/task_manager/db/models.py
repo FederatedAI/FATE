@@ -39,6 +39,7 @@ def close_db(db):
         LOGGER.exception(e)
 
 
+@DB.connection_context()
 def init_tables():
     members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
     table_objs = []
