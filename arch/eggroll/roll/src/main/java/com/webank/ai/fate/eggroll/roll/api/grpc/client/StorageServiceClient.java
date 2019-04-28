@@ -27,6 +27,7 @@ import com.webank.ai.fate.core.io.StoreInfo;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.core.utils.ErrorUtils;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.core.utils.TypeConversionUtils;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.kv.storage.*;
@@ -55,6 +56,8 @@ public class StorageServiceClient {
     private ErrorUtils errorUtils;
     @Autowired
     private TypeConversionUtils typeConversionUtils;
+    @Autowired
+    private ToStringUtils toStringUtils;
 
     private BasicMeta.Endpoint storageServiceEndpoint = BasicMeta.Endpoint.newBuilder().setHostname("localhost").setPort(7778).build();
 
@@ -114,10 +117,13 @@ public class StorageServiceClient {
         GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> context = null;
         GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> template = null;
         try {
+            LOGGER.info("[ROLL][PUTALL][SUBTASK] putAll subTask request received: {}", toStringUtils.toOneLineString(storeInfo));
             while (!operandBroker.isClosable()) {
                 // possible init
                 if (needReset) {
-                    LOGGER.info("[ROLL][PUTALL] resetting in putAll subTask. resetCount: {}", ++resetCount);
+                    if (resetCount > 1) {
+                        LOGGER.info("[ROLL][PUTALL][SUBTASK] resetting in putAll subTask. resetCount: {}", ++resetCount);
+                    }
                     context = rollKvCallModelFactory.createOperandToEmptyContext();
 
                     context.setLatchInitCount(1)
@@ -138,7 +144,7 @@ public class StorageServiceClient {
                 }
 
                 // wait for data and send
-                operandBroker.awaitLatch(1, TimeUnit.SECONDS);
+                operandBroker.awaitLatch(50, TimeUnit.MILLISECONDS);
                 template.processCallerStreamingRpc();
                 --remaining;
 
@@ -149,6 +155,7 @@ public class StorageServiceClient {
                 }
             }
         } catch (Throwable e) {
+            LOGGER.error("[ROLL][PUTALL][SUBTASK] error in putAll sub task: {}", errorUtils.getStackTrace(e));
             template.errorCallerStreamingRpc(e);
             hasError = true;
         } finally {

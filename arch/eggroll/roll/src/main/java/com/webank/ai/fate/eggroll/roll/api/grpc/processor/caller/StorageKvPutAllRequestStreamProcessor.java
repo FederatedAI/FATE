@@ -33,21 +33,22 @@ import java.util.List;
 @Scope("prototype")
 // todo: see if this can be merged with PushStreamProcessor
 public class StorageKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.Operand> {
-    private OperandBroker broker;
+    private OperandBroker operandBroker;
     private Node node;
     private int entryCount = 0;
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public StorageKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker broker, Node node) {
+    public StorageKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker operandBroker, Node node) {
         super(streamObserver);
-        this.broker = broker;
+        this.operandBroker = operandBroker;
         this.node = node;
     }
 
     @Override
-    public void process() {
+    public synchronized void process() {
+        super.process();
         List<Kv.Operand> operands = Lists.newLinkedList();
-        broker.drainTo(operands, 1000000);
+        operandBroker.drainTo(operands, 200_000);
 
         for (Kv.Operand operand : operands) {
             streamObserver.onNext(operand);
@@ -57,11 +58,11 @@ public class StorageKvPutAllRequestStreamProcessor extends BaseStreamProcessor<K
 
     @Override
     public void complete() {
-        LOGGER.info("[PUTALL][SUBTASK] trying to complete putAll sub task. remaining: {}, entryCount: {}", broker.getQueueSize(), entryCount);
+        // LOGGER.info("[PUTALL][SUBTASK] trying to complete putAll sub task. remaining: {}, entryCount: {}", operandBroker.getQueueSize(), entryCount);
 /*        while (!broker.isClosable()) {
             process();
         }*/
-        LOGGER.info("[PUTALL][SUBTASK] actual completes putAll sub task. remaining: {}, entryCount: {}", broker.getQueueSize(), entryCount);
+        LOGGER.info("[PUTALL][SUBTASK] actual completes putAll sub task. remaining: {}, entryCount: {}", operandBroker.getQueueSize(), entryCount);
         super.complete();
     }
 

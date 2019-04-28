@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @Scope("prototype")
 public class TransferBroker {
-    private static final int DEFAULT_QUEUE_CAPACITY = 10_000_000;
+    private static final int DEFAULT_QUEUE_CAPACITY = 100_000;
     private Federation.TransferMeta transferMeta;
     private BlockingQueue<ByteString> dataQueue;
     private List<TransferBrokerListener> listeners;
@@ -51,10 +51,10 @@ public class TransferBroker {
     private final Object isFinishedLock;
 
     public TransferBroker(Federation.TransferMeta transferMeta) {
-        this(DEFAULT_QUEUE_CAPACITY, transferMeta);
+        this(transferMeta, DEFAULT_QUEUE_CAPACITY);
     }
 
-    public TransferBroker(int queueCapacity, Federation.TransferMeta transferMeta) {
+    public TransferBroker(Federation.TransferMeta transferMeta, int queueCapacity) {
         this.queueCapacity = queueCapacity;
         this.transferMeta = transferMeta;
         this.dataQueue = Queues.newLinkedBlockingQueue(queueCapacity);
@@ -73,7 +73,11 @@ public class TransferBroker {
     }
 
     public TransferBroker(String transferMetaId) {
-        this(DEFAULT_QUEUE_CAPACITY, null);
+        this((Federation.TransferMeta) null, DEFAULT_QUEUE_CAPACITY);
+    }
+
+    public TransferBroker(String transferMetaId, int queueCapacity) {
+        this((Federation.TransferMeta) null, queueCapacity);
     }
 
     /**

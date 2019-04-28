@@ -141,7 +141,7 @@ public class RollKvServiceClient {
     public void putAll(OperandBroker operandBroker, StoreInfo storeInfo) {
         boolean needReset = true;
         boolean hasError = false;
-        int resetInterval = 10;
+        int resetInterval = 2;
         int remaining = resetInterval;
         int resetCount = 0;
 
@@ -151,7 +151,7 @@ public class RollKvServiceClient {
             while (!operandBroker.isClosable()) {
                 // possible init
                 if (needReset) {
-                    LOGGER.info("[ROLL][PUTALL] resetting in putAll main. resetCount: {}", ++resetCount);
+                    LOGGER.info("[ROLL][PUTALL][MAINTASK] resetting in putAll main. resetCount: {}", ++resetCount);
                     context = rollKvCallModelFactory.createOperandToEmptyContext();
 
                     context.setLatchInitCount(1)
@@ -183,6 +183,7 @@ public class RollKvServiceClient {
                 }
             }
         } catch (Throwable e) {
+            LOGGER.error("[ROLL][PUTALL][MAINTASK] error in putAll main task: {}", errorUtils.getStackTrace(e));
             template.errorCallerStreamingRpc(e);
             hasError = true;
         } finally {

@@ -32,6 +32,7 @@ import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.UnaryCall
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.processor.PushStreamProcessor;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferProtoMessageUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class ProxyClient {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public synchronized void initPush(TransferBroker request, BasicMeta.Endpoint endpoint) {
-        LOGGER.info("[DEBUG][FEDERATION] initing push. broker: {}, transferMetaId: {}", request, toStringUtils.toOneLineString(request.getTransferMeta()));
+        LOGGER.info("[DEBUG][FEDERATION] initPush. broker: {}, transferMetaId: {}", request, toStringUtils.toOneLineString(request.getTransferMeta()));
 
         GrpcAsyncClientContext<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> asyncClientContext
                 = transferServiceFactory.createPushClientGrpcAsyncClientContext();
@@ -88,7 +89,7 @@ public class ProxyClient {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                LOGGER.error(e);
+                LOGGER.error("error in doPush: " + ExceptionUtils.getStackTrace(e));
             }
         }
         pushTemplate.processCallerStreamingRpc();

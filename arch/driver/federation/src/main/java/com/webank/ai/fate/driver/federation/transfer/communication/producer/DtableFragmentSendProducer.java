@@ -25,7 +25,6 @@ import com.webank.ai.fate.core.error.exception.CrudException;
 import com.webank.ai.fate.core.io.KeyValue;
 import com.webank.ai.fate.core.io.KeyValueIterator;
 import com.webank.ai.fate.core.io.KeyValueStore;
-import com.webank.ai.fate.core.io.StoreInfo;
 import com.webank.ai.fate.core.model.Bytes;
 import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.KeyValueStoreFactory;
@@ -107,15 +106,18 @@ public class DtableFragmentSendProducer extends BaseProducer {
                 DataStructure.RawEntry entry = null;
                 DataStructure.RawMap.Builder rawMapBuilder = DataStructure.RawMap.newBuilder();
 
+                int serializedSize = 0;
                 while (iterator.hasNext()) {
                     cur = iterator.next();
                     entry = keyValueToRawEntrySerDes.serialize(cur);
+                    serializedSize += entry.getSerializedSize();
 
                     rawMapBuilder.addEntries(entry);
 
-                    if (++entryCount >= chunkSize) {
+                    if (serializedSize >= chunkSize) {
                         ++packetCount;
                         putToBroker(rawMapBuilder);
+                        serializedSize = 0;
                     }
                 }
 

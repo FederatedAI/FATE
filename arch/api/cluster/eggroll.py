@@ -115,14 +115,20 @@ class _DTable(object):
         return _EggRoll.get_instance().reduce(self, func)
 
     def join(self, other, func):
+        other_count = other.count()
+        self_count = self.count()
         if other._partitions != self._partitions:
-            if other.count() > self.count():
+            if other_count > self_count:
                 return self.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=other._partitions).join(other,
                                                                                                                func)
             else:
                 return self.join(other.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=self._partitions),
                                  func)
-        return _EggRoll.get_instance().join(self, other, func)
+        else:
+            if other_count > self_count:
+                return _EggRoll.get_instance().join(self, other, func)
+            else:
+                return _EggRoll.get_instance().join(other, self, func)
 
     def glom(self):
         return _EggRoll.get_instance().glom(self)

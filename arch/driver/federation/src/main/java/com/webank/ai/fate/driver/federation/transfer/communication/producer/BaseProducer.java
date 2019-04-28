@@ -36,7 +36,7 @@ import javax.annotation.PostConstruct;
 import java.util.concurrent.Callable;
 
 public abstract class BaseProducer implements Callable<BasicMeta.ReturnStatus> {
-    protected static final int DEFAULT_CHUNK_SIZE = 8 << 10; // 8k
+    protected static final int DEFAULT_CHUNK_SIZE = 32 << 10; // 32k
     private static final Logger LOGGER = LogManager.getLogger();
     protected final Federation.TransferMeta transferMeta;
     protected final TransferBroker transferBroker;

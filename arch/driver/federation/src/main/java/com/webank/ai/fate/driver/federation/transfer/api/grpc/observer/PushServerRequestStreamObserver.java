@@ -27,6 +27,7 @@ import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -65,12 +67,17 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
     private int resetInterval = 10000;
     private int resetCount = resetInterval;
 
+    // todo: implement this in framework
+    private final AtomicBoolean wasReady;
+    private final ServerCallStreamObserver<Proxy.Metadata> serverCallStreamObserver;
+
     private final Object receivedDataLock = new Object();
 
-    public PushServerRequestStreamObserver(StreamObserver<Proxy.Metadata> callerNotifier) {
+    public PushServerRequestStreamObserver(final StreamObserver<Proxy.Metadata> callerNotifier, final AtomicBoolean wasReady) {
         super(callerNotifier);
+        this.serverCallStreamObserver = (ServerCallStreamObserver<Proxy.Metadata>) callerNotifier;
+        this.wasReady = wasReady;
     }
-
 
     public synchronized void init(Proxy.Metadata metadata) {
         if (inited) {
@@ -88,7 +95,7 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
             }*/
         }
         transferBroker = recvBrokerManager.getBroker(transferMetaId);
-        LOGGER.info("[FEDERATION][SERVER][OBSERVER] broker: {}, transferMetaId: {}", transferBroker, transferMetaId);
+        LOGGER.info("[FEDERATION][SERVER][OBSERVER] broker: {}, transferMetaId: {}, broker capacity: {}", transferBroker, transferMetaId, transferBroker.getQueueCapacity());
 
         this.receivedData = Lists.newLinkedList();
         this.response = metadata;
@@ -111,13 +118,22 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         }
         maxAck.incrementAndGet();
 
-        boolean result = transferBroker.add(value);
+        /*boolean result = transferBroker.add(value);
         if (!result) {
             synchronized (receivedDataLock) {
                 receivedData.add(value);
             }
-        }
+        }*/
+
+        transferBroker.put(value);
         ++packetCount;
+
+        if (serverCallStreamObserver.isReady()) {
+            serverCallStreamObserver.request(1);
+        } else {
+            LOGGER.warn("[SEND][SERVER][FLOWCONTROL] not ready");
+            wasReady.set(false);
+        }
     }
 
     @Override
@@ -142,12 +158,12 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         }
 
         int putCount = 0;
-        synchronized (receivedDataLock) {
+/*        synchronized (receivedDataLock) {
             for (ByteString bs : receivedData) {
                 transferBroker.put(bs);
                 ++putCount;
             }
-        }
+        }*/
         LOGGER.info("[SEND][SERVER][OBSERVER] actual completes PushServerRequestStreamObserver: header: {}, transferBrokerRemaining: {}, total packetCount: {}, putCount: {}",
                 toStringUtils.toOneLineString(response), transferBroker.getQueueSize(), packetCount, putCount);
 

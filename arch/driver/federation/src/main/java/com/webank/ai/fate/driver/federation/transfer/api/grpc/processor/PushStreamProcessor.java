@@ -25,7 +25,9 @@ import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferProtoMessageUtils;
+import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,10 +88,13 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
         if (!inited) {
             init();
         }
+
+        super.process();
+
         // LOGGER.info("processing send stream for task: {}", toStringUtils.toOneLineString(transferMeta));
         List<ByteString> dataList = Lists.newLinkedList();
 
-        int drainedCount = transferBroker.drainTo(dataList);
+        int drainedCount = transferBroker.drainTo(dataList, 1000);
 
         if (drainedCount <= 0) {
             return;
@@ -110,11 +115,11 @@ public class PushStreamProcessor extends BaseStreamProcessor<Proxy.Packet> {
 
     @Override
     public void complete() {
-        LOGGER.info("[FEDERATION][PUSHPROCESSOR] trying to complete send stream for task: {}, packetCount: {}, transferBroker remaining: {}",
-                transferMetaString, packetCount, transferBroker.getQueueSize());
-        while (!transferBroker.isClosable()) {
+/*        LOGGER.info("[FEDERATION][PUSHPROCESSOR] trying to complete send stream for task: {}, packetCount: {}, transferBroker remaining: {}",
+                transferMetaString, packetCount, transferBroker.getQueueSize());*/
+/*        while (!transferBroker.isClosable()) {
             process();
-        }
+        }*/
 
         LOGGER.info("[FEDERATION][PUSHPROCESSOR] actual completes send stream for task: {}, packetCount: {}, transferBroker remaining: {}",
                 transferMetaString, packetCount, transferBroker.getQueueSize());

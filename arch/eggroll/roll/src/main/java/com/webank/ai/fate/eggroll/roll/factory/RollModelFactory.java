@@ -51,6 +51,10 @@ public class RollModelFactory {
         return applicationContext.getBean(OperandBroker.class);
     }
 
+    public OperandBroker createOperandBroker(int capacity) {
+        return applicationContext.getBean(OperandBroker.class, capacity);
+    }
+
     public OperandBrokerSortedHub createOperandSortedBrokerHub() {
         return applicationContext.getBean(OperandBrokerSortedHub.class);
     }

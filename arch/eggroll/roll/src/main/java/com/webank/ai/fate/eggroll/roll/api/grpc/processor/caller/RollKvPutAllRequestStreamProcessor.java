@@ -30,7 +30,8 @@ import java.util.List;
 
 @Component
 @Scope("prototype")
-public class RollKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.Operand> {
+public class RollKvPutAllRequestStreamProcessor
+        extends BaseStreamProcessor<Kv.Operand> {
     private OperandBroker operandBroker;
     private List<Kv.Operand> operandsToSend;
     private int entryCount = 0;
@@ -44,9 +45,9 @@ public class RollKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.O
 
     @Override
     public void process() {
+        super.process();
         operandsToSend = Lists.newLinkedList();
-        operandBroker.drainTo(operandsToSend, 100000);
-
+        operandBroker.drainTo(operandsToSend, 500_000);
         for (Kv.Operand operand : operandsToSend) {
             streamObserver.onNext(operand);
             ++entryCount;
@@ -56,11 +57,11 @@ public class RollKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.O
     @Override
     public void complete() {
         // operandBroker.setFinished();
-        LOGGER.info("[ROLL][PUTALL][COMPLETE] trying to complete putAll stream processor. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
+        // LOGGER.info("[ROLL][PUTALL][COMPLETE] trying to complete putAll stream processor. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
 
-        while (!operandBroker.isClosable()) {
+/*        while (!operandBroker.isClosable()) {
             process();
-        }
+        }*/
 
         LOGGER.info("[ROLL][PUTALL][COMPLETE] actual completes putAll stream processor. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
 

@@ -91,7 +91,8 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
                 transferMetaId);
         super.onInit();
 
-        this.operandBroker = rollModelFactory.createOperandBroker();
+        // todo: make this configurable
+        this.operandBroker = rollModelFactory.createOperandBroker(500_000);
         storageMetaClient.init(federationServerUtils.getMetaServiceEndpoint());
 
         // if no data specified in recv side, namespace: jobid; name: "__" + transferMetaId; fragment: use sender's
