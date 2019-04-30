@@ -1,6 +1,7 @@
 [submodule "arch/eggroll/storage-service-cxx/third_party/lmdb"]
 	path = arch/eggroll/storage-service-cxx/third_party/lmdb
 	url = https://github.com/LMDB/lmdb.git
+    branch = LMDB_0.9.23
 [submodule "arch/eggroll/storage-service-cxx/third_party/glog"]
 	path = arch/eggroll/storage-service-cxx/third_party/glog
 	url = https://github.com/google/glog.git
