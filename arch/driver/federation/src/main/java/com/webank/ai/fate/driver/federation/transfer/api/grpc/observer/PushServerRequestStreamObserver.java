@@ -56,14 +56,14 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
     private RecvBrokerManager recvBrokerManager;
     @Autowired
     private TransferServiceFactory transferServiceFactory;
+
     private TransferBroker transferBroker;
     private List<ByteString> receivedData;
 
     private volatile boolean inited = false;
     private Proxy.Metadata response;
-    private volatile int packetCount = 0;
+    private AtomicLong packetCount = new AtomicLong(0L);
     private AtomicLong maxSeq = new AtomicLong(0L);
-    private AtomicLong maxAck = new AtomicLong(0L);
     private int resetInterval = 10000;
     private int resetCount = resetInterval;
 
@@ -99,6 +99,9 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
 
         this.receivedData = Lists.newLinkedList();
         this.response = metadata;
+
+        recvBrokerManager.createRecvTaskFromPassedInTransferMetaId(transferMetaId);
+
         this.inited = true;
     }
 
@@ -116,7 +119,6 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         if (seq > currentMaxSeq) {
             maxSeq.compareAndSet(currentMaxSeq, seq);
         }
-        maxAck.incrementAndGet();
 
         /*boolean result = transferBroker.add(value);
         if (!result) {
@@ -126,7 +128,7 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         }*/
 
         transferBroker.put(value);
-        ++packetCount;
+        packetCount.incrementAndGet();
 
         if (serverCallStreamObserver.isReady()) {
             serverCallStreamObserver.request(1);
@@ -148,7 +150,14 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         LOGGER.info("[SEND][SERVER][OBSERVER] trying to complete PushServerRequestStreamObserver: header: {}, transferBrokerRemaining: {}, total packetCount: {}, receivedData size: {}",
                 toStringUtils.toOneLineString(response), transferBroker.getQueueSize(), packetCount, receivedData.size());
 
-        while (transferBroker.isReady() || packetCount < maxSeq.get()) {
+        int whileInterval = 300;
+        int whileCount = 10;
+        while (transferBroker.isReady() || packetCount.get() < maxSeq.get()) {
+            if (--whileCount <= 0) {
+                LOGGER.info("[SEND][SERVER][OBSERVER] still trying. isReady: {}, isFinished: {}, isClosable: {}, packetCount: {}, maxSeq: {}",
+                        transferBroker.isReady(), transferBroker.isFinished(), transferBroker.isClosable(), packetCount, maxSeq.get());
+                whileCount = whileInterval;
+            }
             try {
                 transferBroker.awaitClose(1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {

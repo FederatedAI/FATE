@@ -16,6 +16,7 @@
 
 package com.webank.ai.fate.core.factory;
 
+import com.google.common.base.Preconditions;
 import com.webank.ai.fate.api.core.BasicMeta;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.AbstractStub;
@@ -51,6 +52,7 @@ public class GrpcStubFactory {
     }
 
     public AbstractStub createGrpcStub(boolean isAsync, Class grpcClass, BasicMeta.Endpoint endpoint) {
+        Preconditions.checkNotNull(endpoint, "Endpoint cannot be null");
         ManagedChannel managedChannel = grpcChannelFactory.getChannel(endpoint);
 
         return createGrpcStub(isAsync, grpcClass, managedChannel);

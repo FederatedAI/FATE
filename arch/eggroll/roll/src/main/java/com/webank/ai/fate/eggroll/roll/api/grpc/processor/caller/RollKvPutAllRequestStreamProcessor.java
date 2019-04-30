@@ -63,7 +63,7 @@ public class RollKvPutAllRequestStreamProcessor
             process();
         }*/
 
-        LOGGER.info("[ROLL][PUTALL][COMPLETE] actual completes putAll stream processor. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
+        LOGGER.info("[ROLL][PUTALL][COMPLETE] actual completes putAll stream processor for this batch. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
 
         super.complete();
     }

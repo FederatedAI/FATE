@@ -80,9 +80,13 @@ public class TransferSubmitServiceImpl extends TransferSubmitServiceGrpc.Transfe
             String transferMetaId = transferPojoUtils.generateTransferId(request);
             Federation.TransferMeta result = recvBrokerManager.getFinishedTask(transferMetaId);
             if (result == null) {
-                LOGGER.info("[FEDERATION][RECV] creating new task for {}", transferMetaId);
-                recvBrokerManager.createTask(request);
-                result = request;
+                result = recvBrokerManager.getSubmittedTask(transferMetaId);
+
+                if (result == null) {
+                    LOGGER.info("[FEDERATION][RECV] creating new task for {}", transferMetaId);
+                    recvBrokerManager.createTask(request);
+                    result = request;
+                }
             }
 
             responseObserver.onNext(result);

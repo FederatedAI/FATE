@@ -17,6 +17,7 @@
 package com.webank.ai.fate.driver.federation.transfer.manager;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
@@ -54,6 +55,7 @@ public class RecvBrokerManager {
     private Map<String, CountDownLatch> transferMetaIdToPassedInTransferMetaArriveLatches;
     private Map<String, Federation.TransferMeta> finishedTransferMetas;
     private volatile Map<String, CountDownLatch> transferMetaIdToFinishLatches;
+    private Map<String, Federation.TransferMeta> createdTasks;
 
     public RecvBrokerManager() {
         this.transferMetaIdToBrokerHolder = Maps.newConcurrentMap();
@@ -63,10 +65,31 @@ public class RecvBrokerManager {
         this.counterLock = new Object();
         this.finishedTransferMetas = Maps.newConcurrentMap();
         this.transferMetaIdToFinishLatches = Maps.newConcurrentMap();
+        this.createdTasks = Maps.newConcurrentMap();
     }
 
     public void createTask(Federation.TransferMeta transferMeta) {
+        String transferMetaId = transferPojoUtils.generateTransferId(transferMeta);
+
+        if (getSubmittedTask(transferMetaId) != null) {
+            return;
+        }
+
+        createdTasks.put(transferMetaId, transferMeta);
+
         applicationEventPublisher.publishEvent(new TransferJobEvent(this, transferMeta));
+    }
+
+    public void createRecvTaskFromPassedInTransferMetaId(String transferMetaId) {
+        Federation.TransferMeta passedInTransferMeta = transferMetaIdToPassedInTransferMeta.get(transferMetaId);
+        Federation.TransferMeta transferMeta = passedInTransferMeta.toBuilder().setType(Federation.TransferType.RECV).build();
+
+        if (transferMeta != null) {
+            LOGGER.info("[RECV][MANAGER] createTask: got transferMeta from transferMetaIdToPassedInTransferMeta: {}", transferMetaId);
+            createTask(transferMeta);
+        } else {
+            LOGGER.info("[RECV][MANAGER] createTask: transferMeta: {} not exists", transferMetaId);
+        }
     }
 
     /**
@@ -181,6 +204,10 @@ public class RecvBrokerManager {
 
     public Federation.TransferMeta getFinishedTask(String transferMetaId) {
         return finishedTransferMetas.get(transferMetaId);
+    }
+
+    public Federation.TransferMeta getSubmittedTask(String transferMetaId) {
+        return createdTasks.get(transferMetaId);
     }
 
     public boolean setFinishedTask(Federation.TransferMeta transferMeta, Federation.TransferStatus transferStatus) {

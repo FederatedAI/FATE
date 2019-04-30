@@ -354,6 +354,10 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
                         storageMetaClient.updateFragment(fragment);
 
                         Node node = nodeIdToNode.get(fragment.getNodeId());
+                        if (node == null) {
+                            continue;
+                        }
+
                         StoreInfo storeInfoWithExactTableNameAndFragment = StoreInfo.copy(storeInfoWithExactTableName);
                         storeInfoWithExactTableNameAndFragment.setFragment(fragment.getFragmentOrder());
                         storageServiceClient.destroy(request, storeInfoWithExactTableNameAndFragment, node);

@@ -33,6 +33,8 @@ import com.webank.ai.fate.eggroll.roll.service.handler.impl.ReduceProcessService
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBrokerSortedHub;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBrokerUnSortedHub;
+import com.webank.ai.fate.eggroll.roll.strategy.DispatchPolicy;
+import com.webank.ai.fate.eggroll.roll.strategy.impl.DefaultModDispatchPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -134,5 +136,9 @@ public class RollModelFactory {
                 port,
                 storeInfoWithFragment,
                 finishedFragmentSet);
+    }
+
+    public DispatchPolicy createDefaultDispatchPolicy() {
+        return applicationContext.getBean(DefaultModDispatchPolicy.class);
     }
 }

@@ -110,7 +110,7 @@ public class StorageServiceClient {
     public void putAll(OperandBroker operandBroker, StoreInfo storeInfo, Node node) {
         boolean needReset = true;
         boolean hasError = false;
-        int resetInterval = 100000;
+        int resetInterval = 1000;
         int remaining = resetInterval;
         int resetCount = 0;
 
@@ -144,7 +144,7 @@ public class StorageServiceClient {
                 }
 
                 // wait for data and send
-                operandBroker.awaitLatch(50, TimeUnit.MILLISECONDS);
+                operandBroker.awaitLatch(100, TimeUnit.MILLISECONDS);
                 template.processCallerStreamingRpc();
                 --remaining;
 
