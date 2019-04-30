@@ -16,37 +16,37 @@
 
 syntax = "proto3";
 
-import "feature-binning-meta.proto";
-
 package com.webank.ai.fate.common.mlmodel.buffer;
 option java_outer_classname = "FeatureSelectionMetaProto";
 
 message FeatureSelectionMeta {
     repeated string filter_methods = 1;
     bool local_only = 2;
-    repeated string select_cols = 3;
-    UniqueValueParam unique_param = 4;
-    IVSelectionParam iv_param = 5;
-    CoeffOfVarSelectionParam coe_param = 6;
-    OutlierColsSelectionParam outlier_param = 7;
-
+    repeated string cols = 3;
+    UniqueValueMata unique_meta = 4;
+    IVValueSelectionMata iv_value_meta = 5;
+    IVPercentileSelectionMata iv_percentile_meta = 6;
+    CoeffOfVarSelectionMata coe_meta = 7;
+    OutlierColsSelectionMata outlier_meta = 8;
 }
 
-message UniqueValueParam {
+message UniqueValueMata {
     double eps = 1;
 }
 
-message IVSelectionParam{
-    double value_threshold = 1;
-    double percentile_threshold = 2;
-    FeatureBinningMeta bin_param = 3;
-}
-
-message CoeffOfVarSelectionParam {
+message IVValueSelectionMata{
     double value_threshold = 1;
 }
 
-message OutlierColsSelectionParam {
+message IVPercentileSelectionMata{
+    double percentile_threshold = 1;
+}
+
+message CoeffOfVarSelectionMata {
+    double value_threshold = 1;
+}
+
+message OutlierColsSelectionMata {
     double percentile = 1;
     double upper_threshold = 2;
 }

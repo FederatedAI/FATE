@@ -78,6 +78,7 @@ DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
 
 QUANTILE = 'quantile'
+BUCKET = 'bucket'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'

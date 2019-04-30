@@ -179,7 +179,7 @@ class HeteroFeatureBinningTransferVariable(BaseTransferVariable):
 class HeteroFeatureSelectionTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.result_left_cols = Variable(name="HeteroFeatureSelectionTransferVariable.result_left_cols", auth={'src': "guest", 'dst': ['host']})
-        self.host_iv_threshold = Variable(name="HeteroFeatureSelectionTransferVariable.host_iv_threshold", auth={'src': "host", 'dst': ['guest']})
+        self.host_select_cols = Variable(name="HeteroFeatureSelectionTransferVariable.host_select_cols", auth={'src': "host", 'dst': ['guest']})
         pass
 
 

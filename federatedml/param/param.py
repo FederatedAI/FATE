@@ -717,12 +717,6 @@ class FeatureBinningParam(object):
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
 
-    result_table : str, default: 'binning_table'
-        Table name to save result
-
-    result_namespace : str, default: 'binning_namespace'
-        Namespace to save result
-
     display_result : list, default: ['iv']
         Specify what results to show. The available results include:
         ['iv', 'woe_array', 'iv_array', 'event_count_array', 'non_event_count_array', 'event_rate_array',
@@ -737,8 +731,10 @@ class FeatureBinningParam(object):
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
                  local_only=False,
-                 result_table='binning_table',
-                 result_namespace='binning_namespace',
+                 # meta_table='binning_meta_table',
+                 # param_table='binning_param_table',
+                 # transform_table='binning_transform_table',
+                 # result_namespace='binning_namespace',
                  display_result='simple'):
         self.process_method = process_method
         self.method = method
@@ -749,8 +745,10 @@ class FeatureBinningParam(object):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-        self.result_table = result_table
-        self.result_namespace = result_namespace
+        # self.meta_table = meta_table
+        # self.transform_table = transform_table
+        # self.param_table = param_table
+        # self.result_namespace = result_namespace
 
         if display_result == 'simple':
             display_result = ['iv']
@@ -771,7 +769,7 @@ class UniqueValueParam(object):
         self.eps = eps
 
 
-class IVSelectionParam(object):
+class IVValueSelectionParam(object):
     """
     Use information values to select features.
 
@@ -780,18 +778,27 @@ class IVSelectionParam(object):
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
 
+    """
+
+    def __init__(self, value_threshold=1.0):
+        self.value_threshold = value_threshold
+
+
+class IVPercentileSelectionParam(object):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
     percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
         Percentile threshold for iv_percentile method
 
-    bin_param : FeatureBinningParam
-        Use to calculate iv.
 
     """
 
-    def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
-        self.value_threshold = value_threshold
+    def __init__(self, percentile_threshold=1.0):
         self.percentile_threshold = percentile_threshold
-        self.bin_param = copy.deepcopy(bin_param)
+
 
 
 class CoeffOfVarSelectionParam(object):
@@ -848,6 +855,7 @@ class FeatureSelectionParam(object):
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
         Please be notified that, if a percentile method is used after some certain filter method,
         the percentile represent for the ratio of rest features.
+
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
@@ -870,7 +878,9 @@ class FeatureSelectionParam(object):
 
     def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
                  unique_param=UniqueValueParam(),
-                 iv_param=IVSelectionParam(), coe_param=CoeffOfVarSelectionParam(),
+                 iv_value_param=IVValueSelectionParam(),
+                 iv_percentile_param=IVPercentileSelectionParam(),
+                 coe_param=CoeffOfVarSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
                  result_table='binning_table',
                  result_namespace='binning_namespace',
@@ -884,7 +894,8 @@ class FeatureSelectionParam(object):
 
         self.local_only = local_only
         self.unique_param = copy.deepcopy(unique_param)
-        self.iv_param = copy.deepcopy(iv_param)
+        self.iv_value_param = copy.deepcopy(iv_value_param)
+        self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.bin_param = copy.deepcopy(bin_param)

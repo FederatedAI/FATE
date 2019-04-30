@@ -42,9 +42,11 @@ def read_model(buffer_type, proto_buffer, name, namespace):
         buffer_bytes = data_table.get(buffer_type, use_serialize=False)
         if buffer_bytes:
             proto_buffer.ParseFromString(buffer_bytes)
-        return True
+        else:
+            return 1
+        return 0
     else:
-        return False
+        return 2
 
 
 def get_model_table_partition_count():

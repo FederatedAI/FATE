@@ -18,7 +18,7 @@ import functools
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.feature.binning import IVAttributes
+from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.param.param import FeatureBinningParam
 from federatedml.secureprotol import PaillierEncrypt
@@ -33,6 +33,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         self.encryptor = PaillierEncrypt()
         self.iv_attrs = None
+        self.party_name = consts.HOST
 
     def fit(self, data_instances):
         """
@@ -48,8 +49,9 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
-        self._make_iv_obj(split_points)
-        # LOGGER.debug("host split_points are: {}".format(split_points))
+
+        self._make_iv_obj(split_points)    # Save split points
+
         LOGGER.debug("Before transform, self cols: {}".format(self.cols))
         data_bin_table = self.binning_obj.transform(data_instances, split_points)
 
@@ -70,6 +72,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                           idx=0)
 
         LOGGER.info("Sent encrypted_bin_sum to guest")
+        self.set_schema(data_instances)
+        return data_instances
 
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
@@ -101,13 +105,15 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                           role=consts.GUEST,
                           idx=0)
         LOGGER.info("Sent encrypted_bin_sum to guest")
+        self.set_schema(data_instances)
+        return data_instances
 
     def _make_iv_obj(self, split_points):
         iv_objs = {}
         for col_name, s_p in split_points.items():
             iv_obj = IVAttributes([], [], [], [], [], [], s_p)
             iv_objs[col_name] = iv_obj
-        self.iv_attrs = iv_objs
+        self.binning_result = iv_objs
 
     def __synchronize_encryption(self):
         pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)

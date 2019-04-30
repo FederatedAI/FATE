@@ -31,6 +31,8 @@ from arch.api import federation
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import pipeline_pb2
 from arch.api.utils import log_utils
+from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
+from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.feature.sampler import Sampler
@@ -257,6 +259,40 @@ class WorkFlow(object):
             LOGGER.info("need_intersect: false!")
             return data_instance
 
+    def feature_binning(self, data_instances, flow_id='sample_flowid'):
+        if self.mode == consts.HOMO:
+            LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
+            return data_instances
+
+        if data_instances is None:
+            return data_instances
+
+        LOGGER.info("Start feature binning")
+        feature_binning_param = param_generator.FeatureBinningParam()
+        feature_binning_param = ParamExtract.parse_param_from_config(feature_binning_param, self.config_path)
+        param_checker.FeatureBinningParamChecker.check_param(feature_binning_param)
+
+        if self.role == consts.HOST:
+            feature_binning_obj = HeteroFeatureBinningHost(feature_binning_param)
+        elif self.role == consts.GUEST:
+            feature_binning_obj = HeteroFeatureBinningGuest(feature_binning_param)
+        elif self.role == consts.ARBITER:
+            return data_instances
+        else:
+            raise ValueError("Unknown role of workflow")
+
+        feature_binning_obj.set_flowid(flow_id)
+        data_instances = feature_binning_obj.fit(data_instances)
+        save_result = feature_binning_obj.save_model(self.workflow_param.model_table,
+                                                     self.workflow_param.model_namespace)
+        # Save model result in pipeline
+        for meta_buffer_type, param_buffer_type in save_result:
+            self.pipeline.node_meta.append(meta_buffer_type)
+            self.pipeline.node_param.append(param_buffer_type)
+
+        LOGGER.info("Finish feature selection")
+        return data_instances
+
     def feature_selection_fit(self, data_instance, flow_id='sample_flowid'):
         if self.mode == consts.HOMO:
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
@@ -281,25 +317,19 @@ class WorkFlow(object):
                 raise ValueError("Unknown role of workflow")
 
             feature_selector.set_flowid(flow_id)
+            binning_model = {
+                'name': self.workflow_param.model_table,
+                'namespace': self.workflow_param.model_namespace
+            }
+            feature_selector.init_previous_model(binning_model=binning_model)
 
-            local_only = feature_select_param.local_only  # Decide whether do fit_local or fit
-            if local_only:
-                data_instance = feature_selector.fit_local_transform(data_instance)
-                save_result = feature_selector.save_model(self.workflow_param.model_table,
-                                                          self.workflow_param.model_namespace)
-                # Save model result in pipeline
-                for meta_buffer_type, param_buffer_type in save_result:
-                    self.pipeline.node_meta.append(meta_buffer_type)
-                    self.pipeline.node_param.append(param_buffer_type)
-
-            else:
-                data_instance = feature_selector.fit_transform(data_instance)
-                save_result = feature_selector.save_model(self.workflow_param.model_table,
-                                                          self.workflow_param.model_namespace)
-                # Save model result in pipeline
-                for meta_buffer_type, param_buffer_type in save_result:
-                    self.pipeline.node_meta.append(meta_buffer_type)
-                    self.pipeline.node_param.append(param_buffer_type)
+            data_instance = feature_selector.fit(data_instance)
+            save_result = feature_selector.save_model(self.workflow_param.model_table,
+                                                      self.workflow_param.model_namespace)
+            # Save model result in pipeline
+            for meta_buffer_type, param_buffer_type in save_result:
+                self.pipeline.node_meta.append(meta_buffer_type)
+                self.pipeline.node_param.append(param_buffer_type)
 
             LOGGER.info("Finish feature selection")
             return data_instance
@@ -505,7 +535,7 @@ class WorkFlow(object):
             LOGGER.info("End sample before_train")
 
             self.model.set_flowid(flowid)
-            self.model.fit_split_points(train_data)
+            self.model.fit(train_data)
             # self.save_model()
             predict_result = self.model.predict(test_data, self.workflow_param.predict_param)
             flowid += 1

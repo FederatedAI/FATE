@@ -15,15 +15,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
 import functools
 import math
 
 from arch.api.utils import log_utils
-from federatedml.feature.quantile_summaries import QuantileSummaries
 from federatedml.statistic.data_overview import get_header
-# from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 LOGGER = log_utils.getLogger()
 
@@ -87,11 +84,7 @@ class IVAttributes(object):
         self.non_event_count_array = list(iv_obj.non_event_count_array)
         self.event_rate_array = list(iv_obj.event_rate_array)
         self.non_event_rate_array = list(iv_obj.non_event_rate_array)
-        self.split_points = dict(iv_obj.split_points)
-        for key, values in self.split_points.items():
-            values = list(values)
-            self.split_points[key] = values
-
+        self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
 
 
@@ -483,207 +476,3 @@ class Binning(object):
                 tmp_list.append(tmp)
             new_result[col_name] = tmp_list
         return new_result
-
-
-class QuantileBinning(Binning):
-    """
-    After quantile binning, the numbers of elements in each binning are equal.
-
-    The result of this algorithm has the following deterministic bound:
-    If the data_instances has N elements and if we request the quantile at probability `p` up to error
-    `err`, then the algorithm will return a sample `x` from the data so that the *exact* rank
-    of `x` is close to (p * N).
-    More precisely,
-
-    {{{
-      floor((p - 2 * err) * N) <= rank(x) <= ceil((p + 2 * err) * N)
-    }}}
-
-    This method implements a variation of the Greenwald-Khanna algorithm (with some speed
-    optimizations).
-    """
-
-    def __init__(self, params):
-        super(QuantileBinning, self).__init__(params)
-        self.summary_dict = None
-
-    def fit_split_points(self, data_instances):
-        """
-        Apply the binning method
-
-        Parameters
-        ----------
-        data_instances : DTable
-            The input data
-
-        Returns
-        -------
-        split_points : dict.
-            Each value represent for the split points for a feature. The element in each row represent for
-            the corresponding split point.
-            e.g.
-            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            'x2': [1, 2, 3, 4, ...],           # The second feature
-                            ...]                         # Other features
-
-        """
-        self._init_cols(data_instances)
-        percent_value = 1.0 / self.bin_num
-        # calculate the split points
-        percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
-
-        if self.summary_dict is None:
-            f = functools.partial(self.approxiQuantile,
-                                  cols_dict=self.cols_dict,
-                                  params=self.params)
-            summary_dict = data_instances.mapPartitions(f)
-            summary_dict = summary_dict.reduce(self.merge_summary_dict)
-            self.summary_dict = summary_dict
-        else:
-            summary_dict = self.summary_dict
-        split_points = {}
-        for col_name, summary in summary_dict.items():
-            split_point = []
-            for percen_rate in percentile_rate:
-                split_point.append(summary.query(percen_rate))
-            split_points[col_name] = split_point
-
-        return split_points
-
-    @staticmethod
-    def approxiQuantile(data_instances, cols_dict, params):
-        """
-        Calculates each quantile information
-
-        Parameters
-        ----------
-        data_instances : DTable
-            The input data
-
-        cols_dict: dict
-            Record key, value pairs where key is cols' name, and value is cols' index.
-
-        param : FeatureBinningParam object,
-                Parameters that user set.
-
-        Returns
-        -------
-        summary_dict: dict
-            {'col_name1': summary1,
-             'col_name2': summary2,
-             ...
-             }
-
-        """
-
-        summary_dict = {}
-        for col_name, col_index in cols_dict.items():
-            quantile_summaries = QuantileSummaries(compress_thres=params.compress_thres,
-                                                   head_size=params.head_size,
-                                                   error=params.error)
-            summary_dict[col_name] = quantile_summaries
-        QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict)
-        return summary_dict
-
-    @staticmethod
-    def insert_datas(data_instances, summary_dict, cols_dict):
-        for iter_key, instant in data_instances:
-            features = instant.features
-            for col_name, summary in summary_dict.items():
-                col_index = cols_dict[col_name]
-                summary.insert(features[col_index])
-
-    @staticmethod
-    def merge_summary_dict(s_dict1, s_dict2):
-        if s_dict1 is None and s_dict2 is None:
-            return None
-        if s_dict1 is None:
-            return s_dict2
-        if s_dict2 is None:
-            return s_dict1
-
-        new_dict = {}
-        for col_name, summary1 in s_dict1.items():
-            summary2 = s_dict2.get(col_name)
-            summary1.merge(summary2)
-            new_dict[col_name] = summary1
-        return new_dict
-
-    def query_quantile_point(self, data_instances, cols, query_points):
-        if self.summary_dict is None:
-            f = functools.partial(self.approxiQuantile,
-                                  cols_dict=self.cols_dict,
-                                  params=self.params)
-            summary_dict = data_instances.mapPartitions(f)
-            summary_dict = summary_dict.reduce(self.merge_summary_dict)
-            self.summary_dict = summary_dict
-        else:
-            summary_dict = self.summary_dict
-
-        if isinstance(query_points, (int, float)):
-            query_dict = {}
-            for col_name in cols:
-                query_dict[col_name] = query_points
-        elif isinstance(query_points, dict):
-            query_dict = query_points
-        else:
-            raise ValueError("query_points has wrong type, should be a float, int or dict")
-
-        result = {}
-        for col_name, query_point in query_dict.items():
-            summary = summary_dict[col_name]
-            result[col_name] = summary
-        return result
-
-
-# class BucketBinning(Binning):
-#     """
-#     For bucket binning, the length of each bin is the same which is:
-#     L = [max(x) - min(x)] / n
-#
-#     The split points are min(x) + L * k
-#     where k is the index of a bin.
-#     """
-#
-#     def __init__(self, params):
-#         super(BucketBinning, self).__init__(params)
-#
-#     def fit_split_points(self, data_instances):
-#         """
-#         Apply the binning method
-#
-#         Parameters
-#         ----------
-#         data_instances : DTable
-#             The input data
-#
-#         cols : int or list of int
-#             Specify which column(s) need to apply binning. -1 means do binning for all columns.
-#
-#         Returns
-#         -------
-#         split_points, 2-dimension list.
-#             Each row represent for the split points for a feature. The element in each row represent for
-#             the corresponding split point.
-#             e.g.
-#             split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-#                             [1, 2, 3, 4, ...],           # The second feature
-#                             ...]                         # Other features
-#
-#         """
-#         self._init_cols(data_instances)
-#
-#         statistics = MultivariateStatisticalSummary(data_instances, cols)
-#         split_points = []
-#         max_list = statistics.get_max(cols)
-#         min_list = statistics.get_min(cols)
-#         n = data_instances.count()
-#         for idx, max_value in enumerate(max_list):
-#             min_value = min_list[idx]
-#             split_point = []
-#             L = (max_value - min_value) / n
-#             for k in range(self.bin_num - 1):
-#                 s_p = min_value + (k + 1) * L
-#                 split_point.append(s_p)
-#             split_points.append(split_point)
-#         return split_points

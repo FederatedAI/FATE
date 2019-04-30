@@ -13,16 +13,14 @@ from google.protobuf import descriptor_pb2
 _sym_db = _symbol_database.Default()
 
 
-import feature_binning_meta_pb2 as feature__binning__meta__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-selection-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\x1a\x1a\x66\x65\x61ture-binning-meta.proto\"\xaa\x03\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x13\n\x0bselect_cols\x18\x03 \x03(\t\x12P\n\x0cunique_param\x18\x04 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam\x12L\n\x08iv_param\x18\x05 \x01(\x0b\x32:.com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam\x12U\n\tcoe_param\x18\x06 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam\x12Z\n\routlier_param\x18\x07 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam\"\x1f\n\x10UniqueValueParam\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"\x9a\x01\n\x10IVSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\x12\x1c\n\x14percentile_threshold\x18\x02 \x01(\x01\x12O\n\tbin_param\x18\x03 \x01(\x0b\x32<.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningMeta\"3\n\x18\x43oeffOfVarSelectionParam\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"H\n\x19OutlierColsSelectionParam\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3')
-  ,
-  dependencies=[feature__binning__meta__pb2.DESCRIPTOR,])
+  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x87\x04\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x0c\n\x04\x63ols\x18\x03 \x03(\t\x12N\n\x0bunique_meta\x18\x04 \x01(\x0b\x32\x39.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMata\x12U\n\riv_value_meta\x18\x05 \x01(\x0b\x32>.com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMata\x12_\n\x12iv_percentile_meta\x18\x06 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMata\x12S\n\x08\x63oe_meta\x18\x07 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMata\x12X\n\x0coutlier_meta\x18\x08 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMata\"\x1e\n\x0fUniqueValueMata\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"/\n\x14IVValueSelectionMata\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"9\n\x19IVPercentileSelectionMata\x12\x1c\n\x14percentile_threshold\x18\x01 \x01(\x01\"2\n\x17\x43oeffOfVarSelectionMata\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"G\n\x18OutlierColsSelectionMata\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3')
+)
 
 
 
@@ -49,112 +47,43 @@ _FEATURESELECTIONMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='select_cols', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.select_cols', index=2,
+      name='cols', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.cols', index=2,
       number=3, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='unique_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.unique_param', index=3,
+      name='unique_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.unique_meta', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='iv_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.iv_param', index=4,
+      name='iv_value_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.iv_value_meta', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='coe_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.coe_param', index=5,
+      name='iv_percentile_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.iv_percentile_meta', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='outlier_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.outlier_param', index=6,
+      name='coe_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.coe_meta', index=6,
       number=7, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=103,
-  serialized_end=529,
-)
-
-
-_UNIQUEVALUEPARAM = _descriptor.Descriptor(
-  name='UniqueValueParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='eps', full_name='com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam.eps', index=0,
-      number=1, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=531,
-  serialized_end=562,
-)
-
-
-_IVSELECTIONPARAM = _descriptor.Descriptor(
-  name='IVSelectionParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam.value_threshold', index=0,
-      number=1, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='percentile_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam.percentile_threshold', index=1,
-      number=2, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='bin_param', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam.bin_param', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      name='outlier_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.outlier_meta', index=7,
+      number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -171,20 +100,20 @@ _IVSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=565,
-  serialized_end=719,
+  serialized_start=75,
+  serialized_end=594,
 )
 
 
-_COEFFOFVARSELECTIONPARAM = _descriptor.Descriptor(
-  name='CoeffOfVarSelectionParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam',
+_UNIQUEVALUEMATA = _descriptor.Descriptor(
+  name='UniqueValueMata',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMata',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam.value_threshold', index=0,
+      name='eps', full_name='com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMata.eps', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
@@ -202,27 +131,120 @@ _COEFFOFVARSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=721,
-  serialized_end=772,
+  serialized_start=596,
+  serialized_end=626,
 )
 
 
-_OUTLIERCOLSSELECTIONPARAM = _descriptor.Descriptor(
-  name='OutlierColsSelectionParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam',
+_IVVALUESELECTIONMATA = _descriptor.Descriptor(
+  name='IVValueSelectionMata',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMata',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='percentile', full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam.percentile', index=0,
+      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMata.value_threshold', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=628,
+  serialized_end=675,
+)
+
+
+_IVPERCENTILESELECTIONMATA = _descriptor.Descriptor(
+  name='IVPercentileSelectionMata',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMata',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='percentile_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMata.percentile_threshold', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=677,
+  serialized_end=734,
+)
+
+
+_COEFFOFVARSELECTIONMATA = _descriptor.Descriptor(
+  name='CoeffOfVarSelectionMata',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMata',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMata.value_threshold', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=736,
+  serialized_end=786,
+)
+
+
+_OUTLIERCOLSSELECTIONMATA = _descriptor.Descriptor(
+  name='OutlierColsSelectionMata',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMata',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='percentile', full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMata.percentile', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='upper_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam.upper_threshold', index=1,
+      name='upper_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMata.upper_threshold', index=1,
       number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
@@ -240,20 +262,21 @@ _OUTLIERCOLSSELECTIONPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=774,
-  serialized_end=846,
+  serialized_start=788,
+  serialized_end=859,
 )
 
-_FEATURESELECTIONMETA.fields_by_name['unique_param'].message_type = _UNIQUEVALUEPARAM
-_FEATURESELECTIONMETA.fields_by_name['iv_param'].message_type = _IVSELECTIONPARAM
-_FEATURESELECTIONMETA.fields_by_name['coe_param'].message_type = _COEFFOFVARSELECTIONPARAM
-_FEATURESELECTIONMETA.fields_by_name['outlier_param'].message_type = _OUTLIERCOLSSELECTIONPARAM
-_IVSELECTIONPARAM.fields_by_name['bin_param'].message_type = feature__binning__meta__pb2._FEATUREBINNINGMETA
+_FEATURESELECTIONMETA.fields_by_name['unique_meta'].message_type = _UNIQUEVALUEMATA
+_FEATURESELECTIONMETA.fields_by_name['iv_value_meta'].message_type = _IVVALUESELECTIONMATA
+_FEATURESELECTIONMETA.fields_by_name['iv_percentile_meta'].message_type = _IVPERCENTILESELECTIONMATA
+_FEATURESELECTIONMETA.fields_by_name['coe_meta'].message_type = _COEFFOFVARSELECTIONMATA
+_FEATURESELECTIONMETA.fields_by_name['outlier_meta'].message_type = _OUTLIERCOLSSELECTIONMATA
 DESCRIPTOR.message_types_by_name['FeatureSelectionMeta'] = _FEATURESELECTIONMETA
-DESCRIPTOR.message_types_by_name['UniqueValueParam'] = _UNIQUEVALUEPARAM
-DESCRIPTOR.message_types_by_name['IVSelectionParam'] = _IVSELECTIONPARAM
-DESCRIPTOR.message_types_by_name['CoeffOfVarSelectionParam'] = _COEFFOFVARSELECTIONPARAM
-DESCRIPTOR.message_types_by_name['OutlierColsSelectionParam'] = _OUTLIERCOLSSELECTIONPARAM
+DESCRIPTOR.message_types_by_name['UniqueValueMata'] = _UNIQUEVALUEMATA
+DESCRIPTOR.message_types_by_name['IVValueSelectionMata'] = _IVVALUESELECTIONMATA
+DESCRIPTOR.message_types_by_name['IVPercentileSelectionMata'] = _IVPERCENTILESELECTIONMATA
+DESCRIPTOR.message_types_by_name['CoeffOfVarSelectionMata'] = _COEFFOFVARSELECTIONMATA
+DESCRIPTOR.message_types_by_name['OutlierColsSelectionMata'] = _OUTLIERCOLSSELECTIONMATA
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 FeatureSelectionMeta = _reflection.GeneratedProtocolMessageType('FeatureSelectionMeta', (_message.Message,), dict(
@@ -263,33 +286,40 @@ FeatureSelectionMeta = _reflection.GeneratedProtocolMessageType('FeatureSelectio
   ))
 _sym_db.RegisterMessage(FeatureSelectionMeta)
 
-UniqueValueParam = _reflection.GeneratedProtocolMessageType('UniqueValueParam', (_message.Message,), dict(
-  DESCRIPTOR = _UNIQUEVALUEPARAM,
+UniqueValueMata = _reflection.GeneratedProtocolMessageType('UniqueValueMata', (_message.Message,), dict(
+  DESCRIPTOR = _UNIQUEVALUEMATA,
   __module__ = 'feature_selection_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.UniqueValueParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMata)
   ))
-_sym_db.RegisterMessage(UniqueValueParam)
+_sym_db.RegisterMessage(UniqueValueMata)
 
-IVSelectionParam = _reflection.GeneratedProtocolMessageType('IVSelectionParam', (_message.Message,), dict(
-  DESCRIPTOR = _IVSELECTIONPARAM,
+IVValueSelectionMata = _reflection.GeneratedProtocolMessageType('IVValueSelectionMata', (_message.Message,), dict(
+  DESCRIPTOR = _IVVALUESELECTIONMATA,
   __module__ = 'feature_selection_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IVSelectionParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMata)
   ))
-_sym_db.RegisterMessage(IVSelectionParam)
+_sym_db.RegisterMessage(IVValueSelectionMata)
 
-CoeffOfVarSelectionParam = _reflection.GeneratedProtocolMessageType('CoeffOfVarSelectionParam', (_message.Message,), dict(
-  DESCRIPTOR = _COEFFOFVARSELECTIONPARAM,
+IVPercentileSelectionMata = _reflection.GeneratedProtocolMessageType('IVPercentileSelectionMata', (_message.Message,), dict(
+  DESCRIPTOR = _IVPERCENTILESELECTIONMATA,
   __module__ = 'feature_selection_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMata)
   ))
-_sym_db.RegisterMessage(CoeffOfVarSelectionParam)
+_sym_db.RegisterMessage(IVPercentileSelectionMata)
 
-OutlierColsSelectionParam = _reflection.GeneratedProtocolMessageType('OutlierColsSelectionParam', (_message.Message,), dict(
-  DESCRIPTOR = _OUTLIERCOLSSELECTIONPARAM,
+CoeffOfVarSelectionMata = _reflection.GeneratedProtocolMessageType('CoeffOfVarSelectionMata', (_message.Message,), dict(
+  DESCRIPTOR = _COEFFOFVARSELECTIONMATA,
   __module__ = 'feature_selection_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMata)
   ))
-_sym_db.RegisterMessage(OutlierColsSelectionParam)
+_sym_db.RegisterMessage(CoeffOfVarSelectionMata)
+
+OutlierColsSelectionMata = _reflection.GeneratedProtocolMessageType('OutlierColsSelectionMata', (_message.Message,), dict(
+  DESCRIPTOR = _OUTLIERCOLSSELECTIONMATA,
+  __module__ = 'feature_selection_meta_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMata)
+  ))
+_sym_db.RegisterMessage(OutlierColsSelectionMata)
 
 
 DESCRIPTOR.has_options = True

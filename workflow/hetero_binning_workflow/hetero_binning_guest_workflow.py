@@ -21,16 +21,14 @@
 #
 ################################################################################
 
-from arch.api import eggroll
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.param import FeatureBinningParam
 from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
-from workflow.workflow import WorkFlow
 from workflow import status_tracer_decorator
-
+from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
 
@@ -75,12 +73,11 @@ class HeteroBinningGuestWorkflow(WorkFlow):
                 else:
                     LOGGER.debug("Start model fit")
                     self.model.fit(train_data_instance)
-                self.save_binning_result()
+                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
             else:
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,
                                                              mode='transform')
-                self.load_model()
 
                 if self.binning_param.local_only:
                     self.model.transform_local(train_data_instance)

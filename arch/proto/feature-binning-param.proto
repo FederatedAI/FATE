@@ -38,10 +38,13 @@ message IVParam {
     int64 bin_nums = 10;
 }
 
-message FeatureBinningParam{
-    map<string, IVParam> iv_result = 1;
+message FeatureBinningResult {
+    map<string, IVParam> binning_result = 1;
+}
 
-//    repeated IVParam iv_result = 1;
-//    repeated IVParam host_iv_result = 2;
-//    repeated string cols = 3;
+
+message FeatureBinningParam {
+    FeatureBinningResult binning_result = 1;
+    map<string, FeatureBinningResult> host_results = 2;
+
 }
