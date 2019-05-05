@@ -60,7 +60,7 @@ vpath %.cc .
 
 all: system-check $(OBJS) $(TARGET)
 
-$(TARGET): storage.pb.o storage.grpc.pb.o StoreInfo.o LMDBStore.o LMDBServicer.o $(TARGET).o
+$(TARGET): storage.pb.o storage.grpc.pb.o ExceptionHandler.o StoreInfo.o LMDBStore.o LMDBServicer.o $(TARGET).o
 	-mv *.pb.cc src
 	$(CXX) -o $@-$(VERSION) $^ $(LDFLAGS) $(INCLUDES)
 	-ln -sf $@-$(VERSION) $@
