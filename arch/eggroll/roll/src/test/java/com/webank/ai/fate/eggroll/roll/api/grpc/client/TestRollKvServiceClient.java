@@ -258,7 +258,7 @@ public class TestRollKvServiceClient {
 
     @Test
     public void testIterate() throws Exception {
-        Kv.Range range = Kv.Range.newBuilder().setStart(ByteString.copyFromUtf8("k")).setEnd(ByteString.copyFromUtf8("k10")).setMinChunkSize(1000).build();
+        Kv.Range range = Kv.Range.newBuilder().setStart(ByteString.copyFromUtf8("")).setEnd(ByteString.copyFromUtf8("")).setMinChunkSize(1000).build();
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
                 .nameSpace(namespace)

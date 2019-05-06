@@ -25,6 +25,7 @@ import com.webank.ai.fate.core.api.grpc.client.GrpcStreamingClientTemplate;
 import com.webank.ai.fate.core.constant.RuntimeConstants;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
+import com.webank.ai.fate.core.server.DefaultServerConf;
 import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushClientResponseStreamObserver;
@@ -51,6 +52,8 @@ public class ProxyClient {
     private TransferProtoMessageUtils transferProtoMessageUtils;
     @Autowired
     private ToStringUtils toStringUtils;
+    @Autowired
+    private DefaultServerConf defaultServerConf;
 
     private AtomicBoolean inited = new AtomicBoolean(false);
 
@@ -65,6 +68,7 @@ public class ProxyClient {
 
         asyncClientContext.setLatchInitCount(1)
                 .setEndpoint(endpoint)
+                .setSecureRequest(defaultServerConf.isSecureClient())
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCallerStreamingMethodInvoker(DataTransferServiceGrpc.DataTransferServiceStub::push)
                 .setCallerStreamObserverClassAndArguments(PushClientResponseStreamObserver.class, request)
@@ -110,6 +114,7 @@ public class ProxyClient {
 
         context.setLatchInitCount(1)
                 .setEndpoint(endpoint)
+                .setSecureRequest(defaultServerConf.isSecureClient())
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(DataTransferServiceGrpc.DataTransferServiceStub::unaryCall)
                 .setCallerStreamObserverClassAndArguments(UnaryCallServerRequestStreamObserver.class, delayedResult);
