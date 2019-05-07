@@ -170,14 +170,13 @@ public class TransferSubmitServiceImpl extends TransferSubmitServiceGrpc.Transfe
                         if (!latchWaitResult) {
                             transferStatus = result.getTransferStatus();
 
-
                             if (timeInterval >= 300000) {
                                 LOGGER.info("[FEDERATION][CHECKSTATUS] breaking. transferMetaId: {}, status: {}, type: {}",
                                         transferMetaId, transferStatus.name(), transferType.name());
                                 break;
                             } else {
-                                LOGGER.info("[FEDERATION][CHECKSTATUS] waiting. transferMetaId: {}, status: {}, type: {}",
-                                        transferMetaId, transferStatus.name(), transferType.name());
+                                LOGGER.info("[FEDERATION][CHECKSTATUS] waiting. transferMetaId: {}, status: {}, type: {}, latch: {}",
+                                        transferMetaId, transferStatus.name(), transferType.name(), finishLatch);
                             }
                         } else {
                             LOGGER.info("[FEDERATION][CHECKSTATUS] finished. transferMetaId: {}, status: {}, type: {}",
