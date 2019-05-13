@@ -1,6 +1,8 @@
 #!/usr/bin/env python    
 # -*- coding: utf-8 -*- 
 
+import copy
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -21,7 +23,7 @@
 #
 ################################################################################
 from federatedml.util import consts
-import copy
+
 
 class DataIOParam(object):
     """
@@ -800,7 +802,6 @@ class IVPercentileSelectionParam(object):
         self.percentile_threshold = percentile_threshold
 
 
-
 class CoeffOfVarSelectionParam(object):
     """
     Use coefficient of variation to select features. When judging, the absolute value will be used.
@@ -882,8 +883,7 @@ class FeatureSelectionParam(object):
                  iv_percentile_param=IVPercentileSelectionParam(),
                  coe_param=CoeffOfVarSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
-                 result_table='binning_table',
-                 result_namespace='binning_namespace',
+
                  ):
         self.method = method
         self.select_cols = select_cols
@@ -899,8 +899,6 @@ class FeatureSelectionParam(object):
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.bin_param = copy.deepcopy(bin_param)
-        self.result_table = result_table
-        self.result_namespace = result_namespace
 
 
 class ScaleParam(object):
@@ -945,3 +943,48 @@ class ScaleParam(object):
 
         self.with_mean = with_mean
         self.with_std = with_std
+
+
+class CorrelationParam(object):
+    """
+
+    Parameters
+    ----------
+    method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
+        Decide what process to do.
+
+    cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    local_only : bool, default: False
+        Whether just provide binning method to guest party. If true, host party will do nothing.
+
+    with_label: bool, default: False
+        Indicate if calculate correlation with label
+
+    run_mode: str, 'normal' or 'fast, default: 'normal'
+        Specify the running mode
+
+    """
+
+    def __init__(self, method='Pearson', cols=-1, local_only=False, with_label=False, run_mode='normal'):
+        self.method = method
+        self.cols = cols
+        self.local_only = local_only
+        self.with_label = with_label
+        self.run_mode = run_mode
+
+
+class OneHotEncoderParam(object):
+    """
+
+    Parameters
+    ----------
+
+    cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    """
+
+    def __init__(self, cols=-1):
+        self.cols = cols

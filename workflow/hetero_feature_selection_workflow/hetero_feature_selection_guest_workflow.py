@@ -64,7 +64,6 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
             train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                          self.workflow_param.train_input_namespace,
                                                          mode='transform')
-
         # Step 2: intersect
         LOGGER.debug("Star intersection before train")
         intersect_flowid = "train_0"

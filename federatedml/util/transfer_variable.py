@@ -183,6 +183,13 @@ class HeteroFeatureSelectionTransferVariable(BaseTransferVariable):
         pass
 
 
+class HeteroCorrelationTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.encrypted_data = Variable(name="HeteroCorrelationTransferVariable.encrypted_data", auth={'src': "guest", 'dst': ['host']})
+        self.inner_product = Variable(name="HeteroCorrelationTransferVariable.inner_product", auth={'src': "host", 'dst': ['guest']})
+        pass
+
+
 class SecureAddExampleTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.guest_share = Variable(name="SecureAddExampleTransferVariable.guest_share", auth={'src': "guest", 'dst': ['host']})

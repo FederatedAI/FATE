@@ -24,7 +24,7 @@ from arch.api import eggroll
 
 eggroll.init("123")
 
-from federatedml.feature.binning import QuantileBinning
+from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.param import FeatureBinningParam
 

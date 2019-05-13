@@ -60,18 +60,19 @@ class BaseHeteroFeatureSelection(object):
         self.results = []
 
     def init_previous_model(self, **models):
-        binning_model_params = models.get('binning_model')
-        binning_param = FeatureBinningParam()
-        if self.party_name == consts.GUEST:
-            binning_obj = HeteroFeatureBinningGuest(binning_param)
-        else:
-            binning_obj = HeteroFeatureBinningHost(binning_param)
+        if 'binning_model' in models:
+            binning_model_params = models.get('binning_model')
+            binning_param = FeatureBinningParam()
+            if self.party_name == consts.GUEST:
+                binning_obj = HeteroFeatureBinningGuest(binning_param)
+            else:
+                binning_obj = HeteroFeatureBinningHost(binning_param)
 
-        name = binning_model_params.get('name')
-        namespace = binning_model_params.get('namespace')
+            name = binning_model_params.get('name')
+            namespace = binning_model_params.get('namespace')
 
-        binning_obj.load_model(name, namespace)
-        self.binning_model = binning_obj
+            binning_obj.load_model(name, namespace)
+            self.binning_model = binning_obj
 
     def _save_meta(self, name, namespace):
 
