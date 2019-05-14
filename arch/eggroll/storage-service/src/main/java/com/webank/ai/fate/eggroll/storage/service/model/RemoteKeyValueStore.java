@@ -66,7 +66,7 @@ public class RemoteKeyValueStore implements KeyValueStore<Bytes, byte[]> {
     public void put(Bytes key, byte[] value) {
         Objects.requireNonNull(key, "key cannot be null");
         if (value == null) {
-            blockingStub.delete(POJOUtils.buildOperand(key, new byte[0]));
+            blockingStub.delOne(POJOUtils.buildOperand(key, new byte[0]));
         } else {
             blockingStub.put(POJOUtils.buildOperand(key, value));
         }
@@ -77,7 +77,7 @@ public class RemoteKeyValueStore implements KeyValueStore<Bytes, byte[]> {
         Objects.requireNonNull(key, "key cannot be null");
         byte[] rtn;
         if (value == null) {
-            rtn = blockingStub.delete(POJOUtils.buildOperand(key, new byte[0])).getValue().toByteArray();
+            rtn = blockingStub.delOne(POJOUtils.buildOperand(key, new byte[0])).getValue().toByteArray();
         } else {
             rtn = blockingStub.putIfAbsent(POJOUtils.buildOperand(key, value)).getValue().toByteArray();
         }
@@ -139,7 +139,7 @@ public class RemoteKeyValueStore implements KeyValueStore<Bytes, byte[]> {
     @Override
     public byte[] delete(Bytes key) {
         Objects.requireNonNull(key, "key cannot be null");
-        byte[] rtn = blockingStub.delete(POJOUtils.buildOperand(key, new byte[0])).getValue().toByteArray();
+        byte[] rtn = blockingStub.delOne(POJOUtils.buildOperand(key, new byte[0])).getValue().toByteArray();
         if (null == rtn || rtn.length == 0) {
             return null;
         }

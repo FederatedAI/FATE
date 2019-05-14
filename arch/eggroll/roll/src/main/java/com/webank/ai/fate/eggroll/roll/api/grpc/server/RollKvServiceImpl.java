@@ -52,6 +52,7 @@ import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.strategy.DispatchPolicy;
 import com.webank.ai.fate.eggroll.roll.strategy.Dispatcher;
 import com.webank.ai.fate.eggroll.roll.util.RollServerUtils;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -144,10 +146,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void put(Kv.Operand request, StreamObserver<Kv.Empty> responseObserver) {
-        LOGGER.info("Kv.put request received. key: {}", request.getKey().toStringUtf8());
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.put request received. storeInfo: {}", toStringUtils.toOneLineString(storeInfo));
 
             DispatchResult dispatchResult = dispatchInternal(storeInfo, request.getKey());
             storageServiceClient.put(request, dispatchResult.getStoreInfo(), dispatchResult.getNode());
@@ -159,10 +160,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void putIfAbsent(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LOGGER.info("Kv.putIfAbsent request received. key: {}", request.getKey().toStringUtf8());
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.putIfAbsent request received. storeInfo: {}", storeInfo);
 
             DispatchResult dispatchResult = dispatchInternal(storeInfo, request.getKey());
             Kv.Operand result = storageServiceClient.putIfAbsent(request, dispatchResult.getStoreInfo(), dispatchResult.getNode());
@@ -174,22 +174,32 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public StreamObserver<Kv.Operand> putAll(StreamObserver<Kv.Empty> responseObserver) {
-        LOGGER.info("Kv.putAll request received");
-
         StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+        LOGGER.info("Kv.putAll request received: {}", toStringUtils.toOneLineString(storeInfo));
+
+        final ServerCallStreamObserver<Kv.Empty> serverCallStreamObserver
+                = (ServerCallStreamObserver<Kv.Empty>) responseObserver;
+        serverCallStreamObserver.disableAutoInboundFlowControl();
+
+        final AtomicBoolean wasReady = new AtomicBoolean(false);
+
+        serverCallStreamObserver.setOnReadyHandler(() -> {
+            if (serverCallStreamObserver.isReady() && wasReady.compareAndSet(false, true)) {
+                serverCallStreamObserver.request(1);
+            }
+        });
 
         RollKvPutAllServerRequestStreamObserver requestObserver
-                = rollGrpcObserverFactory.createRollKvPutAllServerRequestStreamObserver(responseObserver, storeInfo);
+                = rollGrpcObserverFactory.createRollKvPutAllServerRequestStreamObserver(responseObserver, storeInfo, wasReady);
 
         return requestObserver;
     }
 
     @Override
-    public void delete(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LOGGER.info("Kv.delete request received. key: {}", request.getKey().toStringUtf8());
-
+    public void delOne(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.delete request received. storeInfo: {}", toStringUtils.toOneLineString(storeInfo));
 
             DispatchResult dispatchResult = dispatchInternal(storeInfo, request.getKey());
             Kv.Operand result = storageServiceClient.delete(request, dispatchResult.getStoreInfo(), dispatchResult.getNode());
@@ -201,10 +211,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void get(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LOGGER.info("Kv.get request received. key: {}", request.getKey().toStringUtf8());
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.get request received. storeInfo: {}", toStringUtils.toOneLineString(storeInfo));
 
             DispatchResult dispatchResult = dispatchInternal(storeInfo, request.getKey());
             Kv.Operand result = storageServiceClient.get(request, dispatchResult.getStoreInfo(), dispatchResult.getNode());
@@ -216,10 +225,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void iterate(Kv.Range request, StreamObserver<Kv.Operand> responseObserver) {
-        LOGGER.info("Kv.iterate request received");
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.iterate request received: {}", toStringUtils.toOneLineString(storeInfo));
             OperandBroker sortedBroker = rollModelFactory.createOperandBroker();
 
             final List<Throwable> errorContainer = Collections.synchronizedList(Lists.newLinkedList());
@@ -246,8 +254,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
             int totalIterated = 0;
             List<Kv.Operand> sortedOperands = Lists.newLinkedList();
+            int spinCount = 0;
             while (!sortedBroker.isClosable()) {
-                sortedBroker.awaitLatch(1, TimeUnit.SECONDS);
+                sortedBroker.awaitLatch(50, TimeUnit.MILLISECONDS);
 
                 if (sortedBroker.isReady()) {
                     sortedOperands.clear();
@@ -256,9 +265,14 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
                     for (Kv.Operand next : sortedOperands) {
                         responseObserver.onNext(next);
                     }
+                    spinCount = 0;
                 } else {
-                    LOGGER.info("[ROLL][KV][ITERATE] waiting for sortedBroker to finish storeInfo: {}. closable: {}, queueSize: {}, finished: {}, peek: {}",
-                            storeInfo, sortedBroker.isClosable(), sortedBroker.getQueueSize(), sortedBroker.isFinished(), sortedBroker.peek());
+                    ++spinCount;
+                    if (spinCount == 1000) {
+                        LOGGER.info("[ROLL][KV][ITERATE] waiting for sortedBroker to finish storeInfo: {}. closable: {}, queueSize: {}, finished: {}, peek: {}",
+                                storeInfo, sortedBroker.isClosable(), sortedBroker.getQueueSize(), sortedBroker.isFinished(), sortedBroker.peek());
+                        spinCount = 0;
+                    }
                 }
             }
 
@@ -275,7 +289,6 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     @Override
     public void destroy(Kv.Empty request, StreamObserver<Kv.Empty> responseObserver) {
         LOGGER.info("Kv.destroy request received");
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
 
@@ -318,10 +331,11 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     // todo: eliminate duplicate codes
     @Override
     public void destroyAll(Kv.Empty request, StreamObserver<Kv.Empty> responseObserver) {
-        LOGGER.info("Kv.destroyAll request received");
+        // LOGGER.info("Kv.destroyAll request received");
 
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.destroyAll request received. storeInfo: {}", storeInfo);
 
             List<Dtable> dtables = storageMetaClient.getTables(storeInfo);
             List<Dtable> destroyedDtables = Lists.newArrayListWithExpectedSize(dtables.size());
@@ -340,6 +354,10 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
                         storageMetaClient.updateFragment(fragment);
 
                         Node node = nodeIdToNode.get(fragment.getNodeId());
+                        if (node == null) {
+                            continue;
+                        }
+
                         StoreInfo storeInfoWithExactTableNameAndFragment = StoreInfo.copy(storeInfoWithExactTableName);
                         storeInfoWithExactTableNameAndFragment.setFragment(fragment.getFragmentOrder());
                         storageServiceClient.destroy(request, storeInfoWithExactTableNameAndFragment, node);
@@ -367,10 +385,9 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void count(Kv.Empty request, StreamObserver<Kv.Count> responseObserver) {
-        LOGGER.info("Kv.count request received");
-
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
+            LOGGER.info("Kv.count request received. storeInfo: {}", storeInfo);
 
             Dtable dtable = storageMetaClient.getTable(storeInfo.getNameSpace(), storeInfo.getTableName());
             if (dtable != null && DtableStatus.NORMAL.name().equals(dtable.getStatus())) {

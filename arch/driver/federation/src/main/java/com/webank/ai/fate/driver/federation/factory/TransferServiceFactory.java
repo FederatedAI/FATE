@@ -40,6 +40,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @Component
 public class TransferServiceFactory {
     @Autowired
@@ -81,8 +83,16 @@ public class TransferServiceFactory {
         return applicationContext.getBean(TransferBroker.class, transferMeta);
     }
 
+    public TransferBroker createTransferBroker(Federation.TransferMeta transferMeta, int capacity) {
+        return applicationContext.getBean(TransferBroker.class, transferMeta, capacity);
+    }
+
     public TransferBroker createTransferBroker(String transferMetaId) {
         return applicationContext.getBean(TransferBroker.class, transferMetaId);
+    }
+
+    public TransferBroker createTransferBroker(String transferMetaId, int capacity) {
+        return applicationContext.getBean(TransferBroker.class, transferMetaId, capacity);
     }
 
     public TransferQueueConsumeAction createSendConsumeAction(TransferBroker transferBroker, BasicMeta.Endpoint target) {
@@ -126,8 +136,9 @@ public class TransferServiceFactory {
         return applicationContext.getBean(nonSpringSubmitTemplate.getClass());
     }
 
-    public PushServerRequestStreamObserver createPushServerRequestStreamObserver(StreamObserver<Proxy.Metadata> streamObserver) {
-        return applicationContext.getBean(PushServerRequestStreamObserver.class, streamObserver);
+    public PushServerRequestStreamObserver createPushServerRequestStreamObserver(final StreamObserver<Proxy.Metadata> streamObserver,
+                                                                                 final AtomicBoolean wasReady) {
+        return applicationContext.getBean(PushServerRequestStreamObserver.class, streamObserver, wasReady);
     }
 
     public TransferQueueConsumeAction createDtableRecvConsumeAction(TransferBroker transferBroker) {

@@ -25,12 +25,15 @@ import com.webank.ai.fate.core.api.grpc.client.GrpcStreamingClientTemplate;
 import com.webank.ai.fate.core.constant.RuntimeConstants;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
+import com.webank.ai.fate.core.server.DefaultServerConf;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushClientResponseStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.UnaryCallServerRequestStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.processor.PushStreamProcessor;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferProtoMessageUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Scope("prototype")
@@ -46,16 +50,25 @@ public class ProxyClient {
     private TransferServiceFactory transferServiceFactory;
     @Autowired
     private TransferProtoMessageUtils transferProtoMessageUtils;
+    @Autowired
+    private ToStringUtils toStringUtils;
+    @Autowired
+    private DefaultServerConf defaultServerConf;
+
+    private AtomicBoolean inited = new AtomicBoolean(false);
 
     private GrpcStreamingClientTemplate<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> pushTemplate;
     private static final Logger LOGGER = LogManager.getLogger();
 
     public synchronized void initPush(TransferBroker request, BasicMeta.Endpoint endpoint) {
+        LOGGER.info("[DEBUG][FEDERATION] initPush. broker: {}, transferMetaId: {}", request, toStringUtils.toOneLineString(request.getTransferMeta()));
+
         GrpcAsyncClientContext<DataTransferServiceGrpc.DataTransferServiceStub, Proxy.Packet, Proxy.Metadata> asyncClientContext
                 = transferServiceFactory.createPushClientGrpcAsyncClientContext();
 
         asyncClientContext.setLatchInitCount(1)
                 .setEndpoint(endpoint)
+                .setSecureRequest(defaultServerConf.isSecureClient())
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCallerStreamingMethodInvoker(DataTransferServiceGrpc.DataTransferServiceStub::push)
                 .setCallerStreamObserverClassAndArguments(PushClientResponseStreamObserver.class, request)
@@ -65,11 +78,23 @@ public class ProxyClient {
         pushTemplate.setGrpcAsyncClientContext(asyncClientContext);
 
         pushTemplate.initCallerStreamingRpc();
+
+        inited.compareAndSet(false, true);
     }
 
     public void doPush() {
         if (pushTemplate == null) {
             throw new IllegalStateException("pushTemplate has not been initialized yet");
+        }
+
+        while (!inited.get()) {
+            LOGGER.info("[DEBUG][FEDERATION] proxyClient not inited yet");
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                LOGGER.error("error in doPush: " + ExceptionUtils.getStackTrace(e));
+            }
         }
         pushTemplate.processCallerStreamingRpc();
     }
@@ -89,6 +114,7 @@ public class ProxyClient {
 
         context.setLatchInitCount(1)
                 .setEndpoint(endpoint)
+                .setSecureRequest(defaultServerConf.isSecureClient())
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
                 .setCalleeStreamingMethodInvoker(DataTransferServiceGrpc.DataTransferServiceStub::unaryCall)
                 .setCallerStreamObserverClassAndArguments(UnaryCallServerRequestStreamObserver.class, delayedResult);

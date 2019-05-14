@@ -92,7 +92,7 @@ public class TestRollKvServiceClient {
     public void testPut() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(null).setValue(null).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("lemon")).setValue(ByteString.copyFromUtf8("tea")).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
@@ -107,7 +107,7 @@ public class TestRollKvServiceClient {
     public void testPutIfAbsent() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time2")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())
@@ -160,8 +160,9 @@ public class TestRollKvServiceClient {
                 .build();
 
         Kv.Operand operand = null;
-        for (int i = 0; i < 1000; ++i) {
-            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+        for (int i = 0; i < 100; ++i) {
+            //operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8("k" + i)).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }
 
@@ -169,8 +170,8 @@ public class TestRollKvServiceClient {
         rollKvServiceClient.putAll(operandBroker, storeInfo);
 
         operandBroker = new OperandBroker();
-        for (int i = 1001; i < 2000; ++i) {
-            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+        for (int i = 1000; i < 1100; ++i) {
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8("k" + i)).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }
 
@@ -179,7 +180,7 @@ public class TestRollKvServiceClient {
     }
 
     @Test
-    public void testPutAllMany() {
+    public void testPutAllMany() throws Exception {
         OperandBroker operandBroker = new OperandBroker();
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
@@ -189,14 +190,35 @@ public class TestRollKvServiceClient {
                 .tableName(name)
                 .build();
 
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                rollKvServiceClient.putAll(operandBroker, storeInfo);
+            }
+        });
+
+        thread.start();
+
         Kv.Operand operand = null;
-        for (int i = 0; i < 1000; ++i) {
-            operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+        int resetInterval = 100000;
+        int curCount = 0;
+        for (int i = 0; i < 100; ++i) {
+            if (curCount <= 0) {
+                curCount = resetInterval;
+                LOGGER.info("current: {}", i);
+            }
+
+            --curCount;
+            //operand = operandBuilder.setKey(ByteString.copyFromUtf8(RandomStringUtils.randomAlphanumeric(20))).setValue(ByteString.copyFromUtf8("v" + i)).build();
+            operand = operandBuilder.setKey(ByteString.copyFromUtf8("k" + i)).setValue(ByteString.copyFromUtf8("v" + i)).build();
             operandBroker.put(operand);
         }
 
         operandBroker.setFinished();
-        rollKvServiceClient.putAll(operandBroker, storeInfo);
+
+        thread.join();
+        //rollKvServiceClient.putAll(operandBroker, storeInfo);
     }
 
     @Test
@@ -211,6 +233,7 @@ public class TestRollKvServiceClient {
                 .tableName(name)
                 .build();
 
+        rollKvServiceClient.put(operand, storeInfo);
         Kv.Operand result = rollKvServiceClient.delete(operand, storeInfo);
 
         LOGGER.info("delete result: {}", result);
@@ -220,7 +243,7 @@ public class TestRollKvServiceClient {
     public void testGet() {
         Kv.Operand.Builder operandBuilder = Kv.Operand.newBuilder();
 
-        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("time")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
+        Kv.Operand operand = operandBuilder.setKey(ByteString.copyFromUtf8("happy")).setValue(ByteString.copyFromUtf8(String.valueOf(System.currentTimeMillis()))).build();
 
         StoreInfo storeInfo = StoreInfo.builder()
                 .type(Stores.LMDB.name())

@@ -51,7 +51,7 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
     private AtomicBoolean isProxyClientInited;
     private int reinitCount;
 
-    private static final int DEFAULT_REINIT_INTERVAL = 100000;
+    private static final int DEFAULT_REINIT_INTERVAL = 2;
     private final int reinitInterval;
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -75,16 +75,21 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
         if (currentTransferStatus != Federation.TransferStatus.PROCESSING) {
             transferMetaHelper.onProcess(transferMeta);
             currentTransferStatus = Federation.TransferStatus.PROCESSING;
+
+            boolean pushCountResetResult = pushCount.compareAndSet(0, reinitInterval);
+            if (!pushCountResetResult) {
+                throw new IllegalStateException("[FEDERATION] error in reinit pushCount");
+            }
         }
 
         if (!isProxyClientInited.getAndSet(true)) {
             proxyClient.initPush(transferBroker, target);
-            LOGGER.info("[FEDERATION] transferMeta: {}, reinitCount: {}", toStringUtils.toOneLineString(transferMeta), ++reinitCount);
+            LOGGER.info("[FEDERATION] reiniting push. transferMeta: {}, reinitCount: {}", toStringUtils.toOneLineString(transferMeta), ++reinitCount);
         }
 
         proxyClient.doPush();
 
-        if (pushCount.incrementAndGet() % reinitInterval == 0) {
+        if (pushCount.decrementAndGet() == 0) {
             if (!isProxyClientInited.getAndSet(false)) {
                 throw new IllegalStateException("exception in reinit: should be true when hitting reinitInterval. current value: " + pushCount.get());
             }
@@ -94,6 +99,12 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
 
     @Override
     public void onComplete() {
+        LOGGER.info("[FEDERATION][SEND][CONSUME][ACTION] trying to complete send action. transferMeta: {}, transferBroker remaining: {}, final reinitCount: {}",
+                toStringUtils.toOneLineString(transferMeta), transferBroker.getQueueSize(), reinitCount);
+        while (!transferBroker.isClosable()) {
+            onProcess();
+        }
+
         if (isProxyClientInited.get()) {
             boolean cleanupResult = isProxyClientInited.compareAndSet(true, false);
             if (!cleanupResult) {
@@ -102,7 +113,8 @@ public class SendConsumeAction implements TransferQueueConsumeAction {
             proxyClient.completePush();
         }
 
-        LOGGER.info("[FEDERATION] transferMeta: {}, final reinitCount: {}", toStringUtils.toOneLineString(transferMeta), reinitCount);
+        LOGGER.info("[FEDERATION][SEND][CONSUME][ACTION] actual completes send action. transferMeta: {}, transferBroker remaining: {}, final reinitCount: {}",
+                toStringUtils.toOneLineString(transferMeta), transferBroker.getQueueSize(), reinitCount);
         if (!transferBroker.hasError()) {
             transferMetaHelper.onComplete(transferMeta);
             currentTransferStatus = Federation.TransferStatus.COMPLETE;

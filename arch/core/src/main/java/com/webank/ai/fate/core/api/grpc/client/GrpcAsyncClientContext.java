@@ -64,6 +64,7 @@ public class GrpcAsyncClientContext<S extends AbstractStub, R extends Message, E
     private Metadata grpcMetadata;
     private BasicMeta.Endpoint endpoint;
     private int latchInitCount = 1;
+    private boolean isSecureRequest;
 
     public GrpcAsyncClientContext() {
     }
@@ -196,6 +197,15 @@ public class GrpcAsyncClientContext<S extends AbstractStub, R extends Message, E
         return this;
     }
 
+    public boolean isSecureRequest() {
+        return isSecureRequest;
+    }
+
+    public GrpcAsyncClientContext<S, R, E> setSecureRequest(boolean secureRequest) {
+        isSecureRequest = secureRequest;
+        return this;
+    }
+
     public S getStub() {
         return stub;
     }
@@ -204,7 +214,7 @@ public class GrpcAsyncClientContext<S extends AbstractStub, R extends Message, E
         if (stub == null) {
             init();
 
-            this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint);
+            this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint, isSecureRequest());
             if (grpcMetadata != null) {
                 this.stub = (S) MetadataUtils.attachHeaders(this.stub, grpcMetadata);
             }

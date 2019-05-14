@@ -78,7 +78,7 @@ public class RecvProcessor extends BaseTransferProcessor {
             if (transferDataType == null || transferDataType == Federation.TransferDataType.NOT_SPECIFIED) {
                 // todo: make this configurable
                 Federation.TransferMeta passedInTransferMeta = recvBrokerManager.blockingGetPassedInTransferMeta(transferMetaId,
-                        1, TimeUnit.HOURS);
+                        1, TimeUnit.DAYS);
                 if (passedInTransferMeta == null) {
                     throw new TimeoutException("time exceeds when waiting for send request");
                 }
