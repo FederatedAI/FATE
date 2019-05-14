@@ -69,6 +69,8 @@ def version_history(data_table_namespace, commit_id=None, branch="master", limit
         if branch_current_commit:
             commit_id = branch_current_commit
             for i in range(limit):
+                if not commit_id:
+                    continue
                 commit_info = get_version_info(version_table=version_table, commit_id=commit_id)
                 if commit_info:
                     history.append(commit_info)

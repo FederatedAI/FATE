@@ -55,7 +55,7 @@ def new_federated_job(request, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
                             )
     if st == 0:
         json_body = json.loads(msg)
-        return get_json_result(msg=json_body['msg'], data=json_body.get('data'), job_id=json_body['jobId'])
+        return get_json_result(status=json_body['status'], msg=json_body['msg'], data=json_body.get('data'), job_id=json_body['jobId'])
     else:
         return get_json_result(status=st, msg=msg, job_id=_job_id)
 
