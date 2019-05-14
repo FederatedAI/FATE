@@ -37,6 +37,7 @@ LOGGER = log_utils.getLogger()
 PROCESS_RECV_FORMAT = "method {} receive task: {}"
 
 PROCESS_DONE_FORMAT = "method {} done response: {}"
+LMDB_MAP_SIZE = 1 * 1024 * 1024 * 1024
 
 
 def generator(serdes: eggroll_serdes.ABCSerdes, cursor):
@@ -122,7 +123,8 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 for k_bytes, v_bytes in cursor:
                     v = _serdes.deserialize(v_bytes)
                     v1 = _mapper(v)
-                    dst_txn.put(k_bytes, _serdes.serialize(v1))
+                    serialized_value = _serdes.serialize(v1)
+                    dst_txn.put(k_bytes, serialized_value)
                 cursor.close()
         LOGGER.debug(PROCESS_DONE_FORMAT.format('mapValues', rtn))
         return rtn
@@ -237,7 +239,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
         if create_if_missing:
             os.makedirs(path, exist_ok=True)
-        return lmdb.open(path, create=create_if_missing, max_dbs=1, sync=False, map_size=1_073_741_824)
+        return lmdb.open(path, create=create_if_missing, max_dbs=1, sync=False, map_size=LMDB_MAP_SIZE)
 
     @staticmethod
     def get_path(d_table: storage_basic_pb2.StorageLocator):

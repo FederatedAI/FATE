@@ -36,6 +36,7 @@ import com.webank.ai.fate.eggroll.roll.service.async.storage.PutAllProcessor;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import com.webank.ai.fate.eggroll.roll.strategy.DispatchPolicy;
 import com.webank.ai.fate.eggroll.roll.util.RollServerUtils;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +55,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Scope("prototype")
@@ -74,10 +76,13 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     @Autowired
     private NodeHelper nodeHelper;
 
+    private final ServerCallStreamObserver<Kv.Empty> serverCallStreamObserver;
+    private final StoreInfo storeInfo;
+    private final AtomicBoolean wasReady;
+
     private Map<Long, Node> nodeIdToNodes;
     private Map<Integer, Node> fragmentOrderToNodes;
     private Map<Integer, OperandBroker> fragmentOrderToOperandBroker;
-    private StoreInfo storeInfo;
     private List<BasicMeta.ReturnStatus> resultContainer;
     private CountDownLatch eggPutAllFinishLatch;
     private List<Throwable> errorContainer;
@@ -85,10 +90,13 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     private Set<Integer> finishedFragmentSet;
     private int tableFragmentCount;
     private long totalCount;
+    private volatile boolean inited;
 
-    public RollKvPutAllServerRequestStreamObserver(StreamObserver<Kv.Empty> callerNotifier, StoreInfo storeInfo) {
+    public RollKvPutAllServerRequestStreamObserver(StreamObserver<Kv.Empty> callerNotifier, StoreInfo storeInfo, AtomicBoolean wasReady) {
         super(callerNotifier);
+        this.serverCallStreamObserver = (ServerCallStreamObserver<Kv.Empty>) callerNotifier;
         this.storeInfo = storeInfo;
+        this.wasReady = wasReady;
 
         this.fragmentOrderToOperandBroker = Maps.newConcurrentMap();
 
@@ -100,7 +108,10 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
     }
 
     @PostConstruct
-    public void init() {
+    public synchronized void init() {
+        if (inited) {
+            return;
+        }
         storageMetaClient.init(rollServerUtils.getMetaServiceEndpoint());
         Dtable dtable = storageMetaClient.getTable(storeInfo);
 
@@ -112,20 +123,26 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
 
         tableFragmentCount = fragments.size();
         eggPutAllFinishLatch = new CountDownLatch(fragments.size());
+
+        inited = true;
     }
 
     @Override
     public void onNext(Kv.Operand operand) {
+        if (!inited) {
+            init();
+        }
         // perform dispatch
         int dispatchedFragment = dispatchPolicy.executePolicy(storeInfo, operand.getKey());
 
         // init
         if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
             boolean newlyCreated = false;
-            OperandBroker operandBroker = rollModelFactory.createOperandBroker();
 
+            OperandBroker operandBroker = null;
             synchronized (fragmentOrderToOperandBrokerLock) {
                 if (!fragmentOrderToOperandBroker.containsKey(dispatchedFragment)) {
+                    operandBroker = rollModelFactory.createOperandBroker(500_000);
                     fragmentOrderToOperandBroker.put(dispatchedFragment, operandBroker);
                     newlyCreated = true;
                 }
@@ -134,8 +151,9 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
             if (newlyCreated) {
                 StoreInfo storeInfoWithFragment = StoreInfo.copy(storeInfo);
                 storeInfoWithFragment.setFragment(dispatchedFragment);
+                operandBroker = fragmentOrderToOperandBroker.get(dispatchedFragment);
 
-                Callable<BasicMeta.ReturnStatus> callable
+                PutAllProcessor callable
                         = createStoragePutAllRequest(operandBroker, storeInfoWithFragment);
 
                 Node node = fragmentOrderToNodes.get(dispatchedFragment);
@@ -152,6 +170,14 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
 
         fragmentOrderToOperandBroker.get(dispatchedFragment).put(operand);
         ++totalCount;
+
+        // todo: implement this in framework
+        if (serverCallStreamObserver.isReady()) {
+            serverCallStreamObserver.request(1);
+        } else {
+            LOGGER.warn("[PUTALL][SERVER][FLOWCONTROL] not ready");
+            wasReady.set(false);
+        }
     }
 
     @Override

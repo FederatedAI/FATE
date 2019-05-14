@@ -321,7 +321,7 @@ class EggRoll(object):
     def delete(self, _table, k):
         p, i = self.__get_index(k, _table.partition)
         stub = self.egg_list[i]
-        op = stub.delete(kv_pb2.Operand(key=self._serdes.serialize(k)),
+        op = stub.delOne(kv_pb2.Operand(key=self._serdes.serialize(k)),
                          metadata=self.__get_meta(_table, str(p)))
         return self.__get_pair(op)
 
