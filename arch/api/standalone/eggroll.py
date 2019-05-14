@@ -513,10 +513,8 @@ class _DTable(object):
 
     def join(self, other, func):
         _job_id = Standalone.get_instance().job_id
-        other_count = other.count()
-        self_count = self.count()
         if other._partitions != self._partitions:
-            if other_count > self_count:
+            if other.count() > self.count():
                 return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).join(other,
                                                                                                   func)
             else:
@@ -525,17 +523,9 @@ class _DTable(object):
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(_job_id, func_id, pickled_function)
         results = []
-
-        if self_count <= other_count:
-            small = self
-            large = other
-        else:
-            small = other
-            large = self
-
-        for p in range(small._partitions):
-            _left = _Operand(small._type, small._namespace, small._name, p)
-            _right = _Operand(large._type, large._namespace, large._name, p)
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
             _p = _BinaryProcess(_task_info, _left, _right)
             results.append(Standalone.get_instance().pool.submit(do_join, _p))
         for r in results:
