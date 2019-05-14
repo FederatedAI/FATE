@@ -47,7 +47,7 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Start rsa intersection")
 
         encrypt_operator = RsaEncrypt()
-        encrypt_operator.generate_key(rsa_bit=1028)
+        encrypt_operator.generate_key(rsa_bit=1024)
         self.e, self.d, self.n = encrypt_operator.get_key_pair()
         LOGGER.info("Generate rsa keys.")
         public_key = {"e": self.e, "n": self.n}
