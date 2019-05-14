@@ -66,6 +66,7 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
     private AtomicLong maxSeq = new AtomicLong(0L);
     private int resetInterval = 10000;
     private int resetCount = resetInterval;
+    private String transferMetaId;
 
     // todo: implement this in framework
     private final AtomicBoolean wasReady;
@@ -84,7 +85,7 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
             return;
         }
 
-        String transferMetaId = metadata.getTask().getTaskId();
+        transferMetaId = metadata.getTask().getTaskId();
         transferBroker = recvBrokerManager.getBroker(transferMetaId);
         if (transferBroker == null) {
             transferBroker = recvBrokerManager.createIfNotExists(transferMetaId);
@@ -154,8 +155,8 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
         int whileCount = 10;
         while (transferBroker.isReady() || packetCount.get() < maxSeq.get()) {
             if (--whileCount <= 0) {
-                LOGGER.info("[SEND][SERVER][OBSERVER] still trying. isReady: {}, isFinished: {}, isClosable: {}, packetCount: {}, maxSeq: {}",
-                        transferBroker.isReady(), transferBroker.isFinished(), transferBroker.isClosable(), packetCount, maxSeq.get());
+                LOGGER.info("[SEND][SERVER][OBSERVER] still trying. transferMetaId: {}, isReady: {}, isFinished: {}, isClosable: {}, packetCount: {}, maxSeq: {}",
+                        transferMetaId, transferBroker.isReady(), transferBroker.isFinished(), transferBroker.isClosable(), packetCount, maxSeq.get());
                 whileCount = whileInterval;
             }
             try {
@@ -173,8 +174,8 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
                 ++putCount;
             }
         }*/
-        LOGGER.info("[SEND][SERVER][OBSERVER] actual completes PushServerRequestStreamObserver: header: {}, transferBrokerRemaining: {}, total packetCount: {}, putCount: {}",
-                toStringUtils.toOneLineString(response), transferBroker.getQueueSize(), packetCount, putCount);
+        LOGGER.info("[SEND][SERVER][OBSERVER] actual completes PushServerRequestStreamObserver: header: {}, transferMetaId: {}, transferBrokerRemaining: {}, total packetCount: {}, putCount: {}",
+                toStringUtils.toOneLineString(response), transferMetaId, transferBroker.getQueueSize(), packetCount, putCount);
 
         // transferBroker.setFinished();
         callerNotifier.onNext(response);

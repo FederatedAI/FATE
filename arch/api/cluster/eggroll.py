@@ -130,6 +130,28 @@ class _DTable(object):
     def sample(self, fraction, seed=None):
         return _EggRoll.get_instance().sample(self, fraction, seed)
 
+    def subtractByKey(self, other):
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return _repartition(self, partition_num=other._partitions).subtractByKey(other)
+            else:
+                return self.subtractByKey(_repartition(other, partition_num=self._partitions))
+        return _EggRoll.get_instance().subtractByKey(self, other)
+
+    def filter(self, func):
+        return _EggRoll.get_instance().filter(self, func)
+
+    def union(self, other, func=lambda v1, v2 : v1):
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return _repartition(self, partition_num=other._partitions).union(other, func)
+            else:
+                return self.union(_repartition(other, partition_num=self._partitions), func)
+        return _EggRoll.get_instance().subtractByKey(self, other, func)
+
+    @staticmethod
+    def _repartition(dtable, partition_num, repartition_policy=None):
+        return dtable.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition_num)
 
 class _EggRoll(object):
     value_serdes = eggroll_serdes.get_serdes()
@@ -363,6 +385,32 @@ class _EggRoll(object):
         resp = self.proc_stub.sample(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 
+    def subtractByKey(self, _left: _DTable, _right: _DTable):
+        l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
+        r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
+        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op)
+        resp = self.proc_stub.subtractByKey(binary_p)
+        return self._create_table_from_locator(resp, _left._partitions)
+
+    def filter(self, _table: _DTable, func):
+        func_id, func_bytes = self.serialize_and_hash_func(func)
+        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
+        unary_p = processor_pb2.UnaryProcess(operand=operand,
+                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
+                                                                         function_id=func_id,
+                                                                         function_bytes=func_bytes))
+        resp = self.proc_stub.filter(unary_p)
+        return self._create_table_from_locator(resp, _table._partitions)
+
+    def union(self, _left: _DTable, _right: _DTable, func):
+        func_id, func_bytes = self.serialize_and_hash_func(func)
+        l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
+        r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
+        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
+                                                                                                  function_id=func_id,
+                                                                                                  function_bytes=func_bytes))
+        resp = self.proc_stub.union(binary_p)
+        return self._create_table_from_locator(resp, _left._partitions)
 
 class _EggRollIterator(object):
 

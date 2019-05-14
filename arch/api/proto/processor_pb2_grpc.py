@@ -51,6 +51,21 @@ class ProcessServiceStub(object):
         request_serializer=processor__pb2.UnaryProcess.SerializeToString,
         response_deserializer=storage__basic__pb2.StorageLocator.FromString,
         )
+    self.subtractByKey = channel.unary_unary(
+        '/com.webank.ai.fate.api.eggroll.processor.ProcessService/subtractByKey',
+        request_serializer=processor__pb2.BinaryProcess.SerializeToString,
+        response_deserializer=storage__basic__pb2.StorageLocator.FromString,
+        )
+    self.filter = channel.unary_unary(
+        '/com.webank.ai.fate.api.eggroll.processor.ProcessService/filter',
+        request_serializer=processor__pb2.UnaryProcess.SerializeToString,
+        response_deserializer=storage__basic__pb2.StorageLocator.FromString,
+        )
+    self.union = channel.unary_unary(
+        '/com.webank.ai.fate.api.eggroll.processor.ProcessService/union',
+        request_serializer=processor__pb2.BinaryProcess.SerializeToString,
+        response_deserializer=storage__basic__pb2.StorageLocator.FromString,
+        )
 
 
 class ProcessServiceServicer(object):
@@ -106,6 +121,27 @@ class ProcessServiceServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def subtractByKey(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def filter(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def union(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
 
 def add_ProcessServiceServicer_to_server(servicer, server):
   rpc_method_handlers = {
@@ -142,6 +178,21 @@ def add_ProcessServiceServicer_to_server(servicer, server):
       'sample': grpc.unary_unary_rpc_method_handler(
           servicer.sample,
           request_deserializer=processor__pb2.UnaryProcess.FromString,
+          response_serializer=storage__basic__pb2.StorageLocator.SerializeToString,
+      ),
+      'subtractByKey': grpc.unary_unary_rpc_method_handler(
+          servicer.subtractByKey,
+          request_deserializer=processor__pb2.BinaryProcess.FromString,
+          response_serializer=storage__basic__pb2.StorageLocator.SerializeToString,
+      ),
+      'filter': grpc.unary_unary_rpc_method_handler(
+          servicer.filter,
+          request_deserializer=processor__pb2.UnaryProcess.FromString,
+          response_serializer=storage__basic__pb2.StorageLocator.SerializeToString,
+      ),
+      'union': grpc.unary_unary_rpc_method_handler(
+          servicer.union,
+          request_deserializer=processor__pb2.BinaryProcess.FromString,
           response_serializer=storage__basic__pb2.StorageLocator.SerializeToString,
       ),
   }

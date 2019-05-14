@@ -316,7 +316,79 @@ def do_sample(p: _UnaryProcess):
                     dst_txn.put(k, v)
     return rtn
 
+def do_subtract_by_key(p: _BinaryProcess):
+    left_op = p._left
+    right_op = p._right
+    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    right_env = right_op.as_env()
+    left_env = left_op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with left_env.begin() as left_txn:
+        with right_env.begin() as right_txn:
+            with dst_env.begin(write=True) as dst_txn:
+                cursor = left_txn.cursor()
+                for k_bytes, left_v_bytes in cursor:
+                    right_v_bytes = right_txn.get(k_bytes)
+                    if right_v_bytes is not None:
+                        dst_txn.put(k_bytes, left_v_bytes)
+                cursor.close()
+    return rtn
 
+def do_filter(p: _UnaryProcess):
+    _func = __get_function(p._info)
+    op = p._operand
+    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    source_env = op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with source_env.begin() as source_txn:
+        with dst_env.begin(write=True) as dst_txn:
+            cursor = source_txn.cursor()
+            for k_bytes, v_bytes in cursor:
+                k = deserialize(k_bytes)
+                if _func(k):
+                    dst_txn.put(k_bytes, v_bytes)
+            cursor.close()
+    return rtn
+
+def do_union(p: _BinaryProcess):
+    _func = __get_function(p._info)
+    left_op = p._left
+    right_op = p._right
+    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    right_env = right_op.as_env()
+    left_env = left_op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with left_env.begin() as left_txn:
+        with right_env.begin() as right_txn:
+            with dst_env.begin(write=True) as dst_txn:
+                # process left op
+                left_cursor = left_txn.cursor()
+                for k_bytes, left_v_bytes in left_cursor:
+                    right_v_bytes = right_txn.get(k_bytes)
+                    if right_v_bytes is None:
+                        dst_txn.put(k_bytes, left_v_bytes)
+                    else:
+                        left_v = deserialize(left_v_bytes)
+                        right_v = deserialize(right_v_bytes)
+                        final_v = _func(left_v, right_v)
+                        dst_txn.put(k_bytes, serialize(final_v))
+                left_cursor.close()
+                # process right op
+                right_cursor = right_txn.cursor()
+                for k_bytes, right_v_bytes in right_cursor:
+                    final_v_bytes = dst_txn.get(k_bytes)
+                    if final_v_bytes is None:
+                        dst_txn.put(k_bytes, right_v_bytes)
+                right_cursor.close()
+    return rtn
+
+# todo: abstraction
 class _DTable(object):
 
     def __init__(self, _type, namespace, name, partitions):
@@ -467,6 +539,10 @@ class _DTable(object):
         func_id = str(uuid.uuid1())
         return func_id, pickled_function
 
+    @staticmethod
+    def _repartition(dtable, partition_num, repartition_policy=None):
+        return dtable.save_as(str(uuid.uuid1()), Standalone.get_instance().job_id, partition_num)
+
     def _submit_to_pool(self, func, _do_func):
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(Standalone.get_instance().job_id, func_id, pickled_function)
@@ -513,10 +589,8 @@ class _DTable(object):
 
     def join(self, other, func):
         _job_id = Standalone.get_instance().job_id
-        other_count = other.count()
-        self_count = self.count()
         if other._partitions != self._partitions:
-            if other_count > self_count:
+            if other.count() > self.count():
                 return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).join(other,
                                                                                                   func)
             else:
@@ -525,17 +599,9 @@ class _DTable(object):
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(_job_id, func_id, pickled_function)
         results = []
-
-        if self_count <= other_count:
-            small = self
-            large = other
-        else:
-            small = other
-            large = self
-
-        for p in range(small._partitions):
-            _left = _Operand(small._type, small._namespace, small._name, p)
-            _right = _Operand(large._type, large._namespace, large._name, p)
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
             _p = _BinaryProcess(_task_info, _left, _right)
             results.append(Standalone.get_instance().pool.submit(do_join, _p))
         for r in results:
@@ -548,6 +614,49 @@ class _DTable(object):
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def subtractByKey(self, other):
+        _job_id = Standalone.get_instance().job_id
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).subtractByKey(other)
+            else:
+                return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions))
+        _task_info = _TaskInfo(_job_id, None, pickled_function)
+        results = []
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
+            _p = _BinaryProcess(_task_info, _left, _right)
+            results.append(Standalone.get_instance().pool.submit(do_subtract_by_key, _p))
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def filter(self, func):
+        results = self._submit_to_pool(func, do_filter)
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
+
+    def union(self, other, func):
+        _job_id = Standalone.get_instance().job_id
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).union(other,
+                                                                                                  func)
+            else:
+                return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions),
+                                 func)
+        func_id, pickled_function = self._serialize_and_hash_func(func)
+        _task_info = _TaskInfo(_job_id, func_id, pickled_function)
+        results = []
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
+            _p = _BinaryProcess(_task_info, _left, _right)
+            results.append(Standalone.get_instance().pool.submit(do_union, _p))
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
 

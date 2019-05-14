@@ -46,4 +46,8 @@ service ProcessService {
     rpc mapPartitions (UnaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
     rpc glom (UnaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
     rpc sample (UnaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
+
+    rpc subtractByKey(BinaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
+    rpc filter (UnaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
+    rpc union(BinaryProcess) returns (com.webank.ai.fate.api.eggroll.storage.StorageLocator);
 }
