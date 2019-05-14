@@ -81,8 +81,8 @@ class _DTable(object):
     def get(self, k, use_serialize=True):
         return _EggRoll.get_instance().get(self, k, use_serialize=use_serialize)
 
-    def collect(self, use_serialize=True):
-        return _EggRollIterator(self, use_serialize=use_serialize)
+    def collect(self, min_chunk_size=0, use_serialize=True):
+        return _EggRollIterator(self, min_chunk_size=min_chunk_size, use_serialize=use_serialize)
 
     def delete(self, k, use_serialize=True):
         return _EggRoll.get_instance().delete(self, k, use_serialize=use_serialize)
@@ -95,6 +95,24 @@ class _DTable(object):
 
     def put_if_absent(self, k, v, use_serialize=True):
         return _EggRoll.get_instance().put_if_absent(self, k, v, use_serialize=use_serialize)
+
+    def take(self, n, keysOnly=False):
+        it = _EggRollIterator(self, min_chunk_size=10_000)
+        rtn = list()
+        i = 0
+        for item in next(it):
+            if keysOnly:
+                rtn.append(item[0])
+            else:
+                rtn.append(item)
+            i += 1
+            if i == n:
+                break
+        return rtn
+
+
+    def first(self):
+        return self.take(1, keysOnly=False)
 
     '''
     Computing apis
@@ -414,10 +432,11 @@ class _EggRoll(object):
 
 class _EggRollIterator(object):
 
-    def __init__(self, _table, start=None, end=None, use_serialize=True):
+    def __init__(self, _table, start=None, end=None, min_chunk_size=0, use_serialize=True):
         self._table = _table
         self._start = start
         self._end = end
+        self._min_chunk_size = min_chunk_size
         self._cache = None
         self._index = 0
         self._next_item = None
@@ -435,10 +454,10 @@ class _EggRollIterator(object):
     def __refresh_cache(self):
         if self._next_item is None:
             self._cache = list(
-                _EggRoll.get_instance().iterate(self._table, kv_pb2.Range(start=self._start, end=self._end)))
+                _EggRoll.get_instance().iterate(self._table, kv_pb2.Range(start=self._start, end=self._end, minChunkSize=self._min_chunk_size)))
         else:
             self._cache = list(
-                _EggRoll.get_instance().iterate(self._table, kv_pb2.Range(start=self._next_item.key, end=self._end)))
+                _EggRoll.get_instance().iterate(self._table, kv_pb2.Range(start=self._next_item.key, end=self._end, minChunkSize=self._min_chunk_size)))
         if len(self._cache) == 0:
             raise StopIteration
         self._index = 0

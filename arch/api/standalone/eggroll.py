@@ -509,6 +509,12 @@ class _DTable(object):
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
+    def take(self, n, keysOnly=False):
+        pass
+
+    def first(self):
+        return self.take(1, keysOnly=False)
+
     @staticmethod
     def _merge(cursors, use_serialize=True):
         ''' Merge sorted iterators. '''
