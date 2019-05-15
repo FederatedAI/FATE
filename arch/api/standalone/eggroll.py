@@ -49,8 +49,12 @@ class Standalone:
         self.unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
 
         # todo: move to EggRollContext
-        self.host_name = socket.gethostname()
-        self.host_ip = socket.gethostbyname(self.host_name)
+        try:
+            self.host_name = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self.host_name)
+        except socket.gaierror as e:
+            self.host_name = 'unknown'
+            self.host_ip = 'unknown'
 
     def table(self, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, persistent=True):
         __type = StoreType.LMDB.value if persistent else StoreType.IN_MEMORY.value
@@ -535,7 +539,6 @@ class _DTable(object):
             if i == n:
                 break
         return rtn
-
 
     def first(self, keysOnly=False, use_serialize=True):
         resp = self.take(1, keysOnly=keysOnly, use_serialize=use_serialize)

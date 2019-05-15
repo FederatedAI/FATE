@@ -189,10 +189,17 @@ class _EggRoll(object):
     value_serdes = eggroll_serdes.get_serdes()
     instance = None
     unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
+    host_name = 'unknown'
+    host_ip = 'unknown'
 
     # todo: move to EggRollContext
-    host_name = socket.gethostname()
-    host_ip = socket.gethostbyname(host_name)
+    def __init__(self):
+        try:
+            host_name = socket.gethostname()
+            host_ip = socket.gethostbyname(self.host_name)
+        except socket.gaierror as e:
+            host_name = 'unknown'
+            host_ip = 'unknown'
 
     @staticmethod
     def get_instance():
