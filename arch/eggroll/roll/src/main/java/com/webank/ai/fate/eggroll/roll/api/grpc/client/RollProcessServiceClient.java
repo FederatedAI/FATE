@@ -123,6 +123,12 @@ public class RollProcessServiceClient {
         return binaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::union);
     }
 
+    public DelayedResult<StorageBasic.StorageLocator> flatMap(Processor.UnaryProcess request) {
+        LOGGER.info("roll flatMap request received");
+
+        return unaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::flatMap);
+    }
+
     private DelayedResult<StorageBasic.StorageLocator>
     unaryProcessToStorageLocatorUnaryCall(Processor.UnaryProcess request,
                                           GrpcCalleeStreamingStubMethodInvoker<

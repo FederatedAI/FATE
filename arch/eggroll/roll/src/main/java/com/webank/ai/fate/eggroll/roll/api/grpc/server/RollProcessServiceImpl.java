@@ -210,6 +210,17 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
 
     }
 
+    @Override
+    public void flatMap(Processor.UnaryProcess request, StreamObserver<StorageBasic.StorageLocator> responseObserver) {
+        LOGGER.info("[ROLL][PROCESS][FlatMap] request received: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver,
+                new ProcessServiceTemplate<>(request,
+                        responseObserver,
+                        FlatMapServiceProcessor.class,
+                        rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
+    }
+
     private Map<String, List<Node>> getEggTargetToNodes() {
         Map<String, List<Node>> result = Maps.newConcurrentMap();
 

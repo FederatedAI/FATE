@@ -310,6 +310,31 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         LOGGER.debug(PROCESS_DONE_FORMAT.format('union', rtn))
         return rtn
 
+    def flatMap(self, request, context):
+        task_info = request.info
+        LOGGER.debug(PROCESS_RECV_FORMAT.format('flatMap', task_info))
+
+        _func, _serdes = self.get_function_and_serdes(task_info)
+        op = request.operand
+        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                               fragment=op.fragment,
+                                               type=storage_basic_pb2.IN_MEMORY)
+        src_db_path = Processor.get_path(op)
+        dst_db_path = Processor.get_path(rtn)
+        with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
+                src_db_path) as src_env:
+            with src_env.begin() as src_txn, dst_env.begin(write=True) as dst_txn:
+                cursor = src_txn.cursor()
+                for k_bytes, v_bytes in cursor:
+                    k = _serdes.deserialize(k_bytes)
+                    v = _serdes.deserialize(v_bytes)
+                    map_result = _func(k, v)
+                    for result_k, result_v in map_result:
+                        dst_txn.put(_serdes.serialize(result_k), _serdes.serialize(result_v))
+                cursor.close()
+        LOGGER.debug(PROCESS_DONE_FORMAT.format('flatMap', rtn))
+        return rtn
+
     def get_function_and_serdes(self, task_info: processor_pb2.TaskInfo):
         _function_bytes = task_info.function_bytes
         return self.get_function(_function_bytes), self._serdes

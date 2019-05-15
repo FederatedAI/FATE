@@ -403,6 +403,26 @@ def do_union(p: _BinaryProcess):
                 right_cursor.close()
     return rtn
 
+def do_flat_map(p: _UnaryProcess):
+    _func = __get_function(p._info)
+    op = p._operand
+    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    source_env = op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with source_env.begin() as source_txn:
+        with dst_env.begin(write=True) as dst_txn:
+            cursor = source_txn.cursor()
+            for k_bytes, v_bytes in cursor:
+                k = deserialize(k_bytes)
+                v = deserialize(v_bytes)
+                map_result = _func(k, v)
+                for result_k, result_v in map_result:
+                    dst_txn.put(serialize(result_k), serialize(result_v))
+            cursor.close()
+    return rtn
+
 # todo: abstraction
 class _DTable(object):
 
@@ -698,4 +718,8 @@ class _DTable(object):
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
-
+    def flatMap(self, func):
+        results = self._submit_to_pool(func, do_flat_map)
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)

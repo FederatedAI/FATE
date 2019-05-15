@@ -119,7 +119,6 @@ class _DTable(object):
                 break
         return rtn
 
-
     def first(self, keysOnly=False, use_serialize=True):
         resp = self.take(1, keysOnly=keysOnly, use_serialize=use_serialize)
         if resp:
@@ -181,6 +180,9 @@ class _DTable(object):
                 return self.union(_repartition(other, partition_num=self._partitions), func)
         return _EggRoll.get_instance().union(self, other, func)
 
+    def flatMap(self, func):
+        return _EggRoll.get_instance().flatMap(self, func)
+
     @staticmethod
     def _repartition(dtable, partition_num, repartition_policy=None):
         return dtable.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition_num)
@@ -195,11 +197,11 @@ class _EggRoll(object):
     # todo: move to EggRollContext
     def __init__(self):
         try:
-            host_name = socket.gethostname()
-            host_ip = socket.gethostbyname(self.host_name)
+            self.host_name = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self.host_name)
         except socket.gaierror as e:
-            host_name = 'unknown'
-            host_ip = 'unknown'
+            self.host_name = 'unknown'
+            self.host_ip = 'unknown'
 
     @staticmethod
     def get_instance():
@@ -462,6 +464,16 @@ class _EggRoll(object):
                                                                                                   function_bytes=func_bytes))
         resp = self.proc_stub.union(binary_p)
         return self._create_table_from_locator(resp, _left._partitions)
+
+    def flatMap(self, _table: _DTable, func):
+        func_id, func_bytes = self.serialize_and_hash_func(func)
+        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
+        unary_p = processor_pb2.UnaryProcess(operand=operand,
+                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
+                                                                         function_id=func_id,
+                                                                         function_bytes=func_bytes))
+        resp = self.proc_stub.flatMap(unary_p)
+        return self._create_table_from_locator(resp, _table._partitions)
 
 class _EggRollIterator(object):
 
