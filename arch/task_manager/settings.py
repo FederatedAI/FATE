@@ -33,6 +33,7 @@ DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
 HEADERS = {
     'Content-Type': 'application/json',
 }
+JOB_SCHEDULER = True
 
 
 IP = '0.0.0.0'
@@ -49,7 +50,7 @@ DATABASE = {
     'passwd': 'root1234',
     'host': '127.0.0.1',
     'port': 3306,
-    'max_connections': 500,
+    'max_connections': 100,
     'stale_timeout': 30,
 }
 
