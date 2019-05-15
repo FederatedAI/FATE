@@ -174,6 +174,42 @@ public class RollProcessServiceImpl extends ProcessServiceGrpc.ProcessServiceImp
                         rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
     }
 
+    @Override
+    public void subtractByKey(Processor.BinaryProcess request, StreamObserver<StorageBasic.StorageLocator> responseObserver) {
+        LOGGER.info("[ROLL][PROCESS][SubtractByKey] request received: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver,
+                new ProcessServiceTemplate<>(request,
+                        responseObserver,
+                        SubtractByKeyServiceProcessor.class,
+                        rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
+
+    }
+
+    @Override
+    public void filter(Processor.UnaryProcess request, StreamObserver<StorageBasic.StorageLocator> responseObserver) {
+        LOGGER.info("[ROLL][PROCESS][Filter] request received: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver,
+                new ProcessServiceTemplate<>(request,
+                        responseObserver,
+                        FilterServiceProcessor.class,
+                        rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
+
+    }
+
+    @Override
+    public void union(Processor.BinaryProcess request, StreamObserver<StorageBasic.StorageLocator> responseObserver) {
+        LOGGER.info("[ROLL][PROCESS][Union] request received: {}", toStringUtils.toOneLineString(request));
+
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver,
+                new ProcessServiceTemplate<>(request,
+                        responseObserver,
+                        UnionServiceProcessor.class,
+                        rollModelFactory.createProcessServiceStorageLocatorResultHandler()));
+
+    }
+
     private Map<String, List<Node>> getEggTargetToNodes() {
         Map<String, List<Node>> result = Maps.newConcurrentMap();
 

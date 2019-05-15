@@ -244,10 +244,11 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 cursor = left_txn.cursor()
                 for k_bytes, left_v_bytes in cursor:
                     right_v_bytes = right_txn.get(k_bytes)
-                    if right_v_bytes is not None:
+                    if right_v_bytes is None:
                         dst_txn.put(k_bytes, left_v_bytes)
                 cursor.close()
         LOGGER.debug(PROCESS_DONE_FORMAT.format('subtractByKey', rtn))
+        LOGGER.debug(rtn.namespace, rtn.name)
         return rtn
 
     def filter(self, request, context):

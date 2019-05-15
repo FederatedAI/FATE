@@ -31,6 +31,9 @@ from operator import is_not
 import hashlib
 import fnmatch
 import shutil
+import time
+import socket
+import random
 
 
 class Standalone:
@@ -42,6 +45,12 @@ class Standalone:
         self.meta_table = _DTable('__META__', '__META__', 'fragments', 10)
         self.pool = Executor()
         Standalone.__instance = self
+
+        self.unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
+
+        # todo: move to EggRollContext
+        self.host_name = socket.gethostname()
+        self.host_ip = socket.gethostbyname(self.host_name)
 
     def table(self, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, persistent=True):
         __type = StoreType.LMDB.value if persistent else StoreType.IN_MEMORY.value
@@ -82,6 +91,8 @@ class Standalone:
         for table in _tables_to_delete:
             shutil.rmtree(os.sep.join([_namespace_dir, table]))
 
+    def generateUniqueId(self):
+        return self.unique_id_template % (self.job_id, self.host_name, self.host_ip, time.time(), random.randint(10000, 99999))
 
     @staticmethod
     def get_instance():
@@ -331,7 +342,7 @@ def do_subtract_by_key(p: _BinaryProcess):
                 cursor = left_txn.cursor()
                 for k_bytes, left_v_bytes in cursor:
                     right_v_bytes = right_txn.get(k_bytes)
-                    if right_v_bytes is not None:
+                    if right_v_bytes is None:
                         dst_txn.put(k_bytes, left_v_bytes)
                 cursor.close()
     return rtn
@@ -494,7 +505,7 @@ class _DTable(object):
         import shutil
         shutil.rmtree(_path)
 
-    def collect(self, use_serialize=True):
+    def collect(self, min_chunk_size=0, use_serialize=True):
         iterators = []
         for p in range(self._partitions):
             env = self._get_env_for_partition(p)
@@ -509,11 +520,29 @@ class _DTable(object):
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
-    def take(self, n, keysOnly=False):
-        pass
+    def take(self, n, keysOnly=False, use_serialize=True):
+        if n <= 0:
+            n = 1
+        it = self.collect(use_serialize=use_serialize)
+        rtn = list()
+        i = 0
+        for item in it:
+            if keysOnly:
+                rtn.append(item[0])
+            else:
+                rtn.append(item)
+            i += 1
+            if i == n:
+                break
+        return rtn
 
-    def first(self):
-        return self.take(1, keysOnly=False)
+
+    def first(self, keysOnly=False, use_serialize=True):
+        resp = self.take(1, keysOnly=keysOnly, use_serialize=use_serialize)
+        if resp:
+            return resp[0]
+        else:
+            return None
 
     @staticmethod
     def _merge(cursors, use_serialize=True):
@@ -627,7 +656,8 @@ class _DTable(object):
                 return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).subtractByKey(other)
             else:
                 return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions))
-        _task_info = _TaskInfo(_job_id, None, pickled_function)
+        func_id, pickled_function = self._serialize_and_hash_func(self._namespace + '.' + self._name + '-' + other._namespace + '.' + other._name)
+        _task_info = _TaskInfo(_job_id, func_id, pickled_function)
         results = []
         for p in range(self._partitions):
             _left = _Operand(self._type, self._namespace, self._name, p)
@@ -644,7 +674,7 @@ class _DTable(object):
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
-    def union(self, other, func):
+    def union(self, other, func=lambda v1, v2 : v1):
         _job_id = Standalone.get_instance().job_id
         if other._partitions != self._partitions:
             if other.count() > self.count():

@@ -18,6 +18,9 @@ import uuid
 from functools import partial
 from operator import is_not
 from typing import Iterable
+import time
+import socket
+import random
 
 import grpc
 
@@ -96,11 +99,17 @@ class _DTable(object):
     def put_if_absent(self, k, v, use_serialize=True):
         return _EggRoll.get_instance().put_if_absent(self, k, v, use_serialize=use_serialize)
 
-    def take(self, n, keysOnly=False):
-        it = _EggRollIterator(self, min_chunk_size=10_000)
+    def take(self, n=1, keysOnly=False, use_serialize=True):
+        if n <= 0:
+            n = 1
+        if n == 1:
+            min_chunk_size = 1
+        else:
+            min_chunk_size = 10_000
+        it = _EggRollIterator(self, min_chunk_size=min_chunk_size, use_serialize=use_serialize)
         rtn = list()
         i = 0
-        for item in next(it):
+        for item in it:
             if keysOnly:
                 rtn.append(item[0])
             else:
@@ -111,8 +120,12 @@ class _DTable(object):
         return rtn
 
 
-    def first(self):
-        return self.take(1, keysOnly=False)
+    def first(self, keysOnly=False, use_serialize=True):
+        resp = self.take(1, keysOnly=keysOnly, use_serialize=use_serialize)
+        if resp:
+            return resp[0]
+        else:
+            return None
 
     '''
     Computing apis
@@ -154,6 +167,7 @@ class _DTable(object):
                 return _repartition(self, partition_num=other._partitions).subtractByKey(other)
             else:
                 return self.subtractByKey(_repartition(other, partition_num=self._partitions))
+
         return _EggRoll.get_instance().subtractByKey(self, other)
 
     def filter(self, func):
@@ -165,7 +179,7 @@ class _DTable(object):
                 return _repartition(self, partition_num=other._partitions).union(other, func)
             else:
                 return self.union(_repartition(other, partition_num=self._partitions), func)
-        return _EggRoll.get_instance().subtractByKey(self, other, func)
+        return _EggRoll.get_instance().union(self, other, func)
 
     @staticmethod
     def _repartition(dtable, partition_num, repartition_policy=None):
@@ -174,6 +188,11 @@ class _DTable(object):
 class _EggRoll(object):
     value_serdes = eggroll_serdes.get_serdes()
     instance = None
+    unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
+
+    # todo: move to EggRollContext
+    host_name = socket.gethostname()
+    host_ip = socket.gethostbyname(host_name)
 
     @staticmethod
     def get_instance():
@@ -229,6 +248,9 @@ class _EggRoll(object):
         self.destroy_all(_table)
 
         LOGGER.debug("cleaned up: %s", _table)
+
+    def generateUniqueId(self):
+        return self.unique_id_template % (self.job_id, self.host_name, self.host_ip, time.time(), random.randint(10000, 99999))
 
 
     @staticmethod
@@ -404,9 +426,13 @@ class _EggRoll(object):
         return self._create_table_from_locator(resp, _table._partitions)
 
     def subtractByKey(self, _left: _DTable, _right: _DTable):
+        func_bytes = self.value_serdes.serialize(_left._namespace + '.' + _left._name + '-' + _right._namespace + '.' + _right._name)
+        func_id = str(uuid.uuid1())
         l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
         r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
-        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op)
+        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
+                                                                                                  function_id=func_id,
+                                                                                                  function_bytes=func_bytes))
         resp = self.proc_stub.subtractByKey(binary_p)
         return self._create_table_from_locator(resp, _left._partitions)
 
