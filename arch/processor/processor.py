@@ -368,7 +368,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         left_stat = left_env.stat()
         right_stat = right_env.stat()
 
-        if left_stat.entries <= right_stat.entries:
+        if left_stat['entries'] <= right_stat['entries']
             return left_env, right_env, False
         else:
             return right_env, left_env, True
