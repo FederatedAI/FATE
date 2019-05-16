@@ -52,17 +52,28 @@ empty = kv_pb2.Empty()
 
 class _DTable(object):
 
-    def __init__(self, storage_locator, partitions=1):
+    def __init__(self, storage_locator, partitions=1, in_place_computing=False):
         # self.__client = _EggRoll.get_instance()
         self._namespace = storage_locator.namespace
         self._name = storage_locator.name
         self._type = storage_basic_pb2.StorageType.Name(storage_locator.type)
         self._partitions = partitions
         self.schema = {}
+        self._in_place_computing = in_place_computing
 
     def __str__(self):
-        return "type:{} namespace:{} name:{} partitions:{}".format(self._type, self._namespace, self._name,
-                                                                   self._partitions)
+        return "storage_type:{}, namespace:{}, name:{}, partitions:{}, in_place_computing:{}".format(self._type,
+                                                                                                     self._namespace, self._name, self._partitions, self._in_place_computing)
+
+    '''
+    Getter / Setter
+    '''
+    def get_in_place_computing(self):
+        return self._in_place_computing
+
+    def set_in_place_computing(self, is_in_place_computing):
+        self._in_place_computing = is_in_place_computing
+        return self
 
     '''
     Storage apis
@@ -71,7 +82,7 @@ class _DTable(object):
     def save_as(self, name, namespace, partition=None, use_serialize=True):
         if partition is None:
             partition = self._partitions
-        dup = _EggRoll.get_instance().table(name, namespace, partition=partition)
+        dup = _EggRoll.get_instance().table(name, namespace, partition=partition, in_place_computing=self.get_in_place_computing())
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
@@ -220,17 +231,20 @@ class _EggRoll(object):
         self.proc_stub = processor_pb2_grpc.ProcessServiceStub(self.channel)
         _EggRoll.instance = self
 
-    def table(self, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, persistent=True):
+    def table(self, name, namespace, partition=1,
+              create_if_missing=True, error_if_exist=False,
+              persistent=True, in_place_computing=False):
         _type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
         storage_locator = storage_basic_pb2.StorageLocator(type=_type, namespace=namespace, name=name)
         create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=partition)
         _table = self._create_table(create_table_info)
+        _table.set_in_place_computing(in_place_computing)
         LOGGER.debug("created table: %s", _table)
         return _table
 
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
-                    create_if_missing=True,
-                    error_if_exist=False, persistent=False, chunk_size=100000):
+                    create_if_missing=True, error_if_exist=False,
+                    persistent=False, chunk_size=100000, in_place_computing=False):
         if namespace is None:
             namespace = _EggRoll.get_instance().job_id
         if name is None:
@@ -240,6 +254,7 @@ class _EggRoll(object):
             type=storage_basic_pb2.IN_MEMORY, namespace=namespace, name=name)
         create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=partition)
         _table = self._create_table(create_table_info)
+        _table.set_in_place_computing(in_place_computing)
         _iter = data if include_key else enumerate(data)
         _table.put_all(_iter, chunk_size=chunk_size)
         LOGGER.debug("created table: %s", _table)
@@ -358,7 +373,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.map(unary_p)
 
         return self._create_table_from_locator(resp, _table._partitions)
@@ -369,7 +385,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.mapValues(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 
@@ -379,7 +396,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.mapPartitions(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 
@@ -389,7 +407,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         values = [_EggRoll._deserialize_operand(operand) for operand in self.proc_stub.reduce(unary_p)]
         values = [v for v in filter(partial(is_not, None), values)]
         if len(values) <= 0:
@@ -408,7 +427,8 @@ class _EggRoll(object):
         r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
         binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                                                   function_id=func_id,
-                                                                                                  function_bytes=func_bytes))
+                                                                                                  function_bytes=func_bytes,
+                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
         resp = self.proc_stub.join(binary_p)
         return self._create_table_from_locator(resp, _left._partitions)
 
@@ -417,7 +437,8 @@ class _EggRoll(object):
         operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
 
         unary_p = processor_pb2.UnaryProcess(operand=operand, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                          function_id=func_id))
+                                                                                          function_id=func_id,
+                                                                                          isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.glom(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 
@@ -441,7 +462,8 @@ class _EggRoll(object):
         r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
         binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                                                   function_id=func_id,
-                                                                                                  function_bytes=func_bytes))
+                                                                                                  function_bytes=func_bytes,
+                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
         resp = self.proc_stub.subtractByKey(binary_p)
         return self._create_table_from_locator(resp, _left._partitions)
 
@@ -451,7 +473,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.filter(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 
@@ -461,7 +484,8 @@ class _EggRoll(object):
         r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
         binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                                                   function_id=func_id,
-                                                                                                  function_bytes=func_bytes))
+                                                                                                  function_bytes=func_bytes,
+                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
         resp = self.proc_stub.union(binary_p)
         return self._create_table_from_locator(resp, _left._partitions)
 
@@ -471,7 +495,8 @@ class _EggRoll(object):
         unary_p = processor_pb2.UnaryProcess(operand=operand,
                                              info=processor_pb2.TaskInfo(task_id=self.job_id,
                                                                          function_id=func_id,
-                                                                         function_bytes=func_bytes))
+                                                                         function_bytes=func_bytes,
+                                                                         isInPlaceComputing=_table.get_in_place_computing()))
         resp = self.proc_stub.flatMap(unary_p)
         return self._create_table_from_locator(resp, _table._partitions)
 

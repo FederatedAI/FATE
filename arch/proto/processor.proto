@@ -25,6 +25,7 @@ message TaskInfo {
     string task_id = 1;
     string function_id = 2;
     bytes function_bytes = 3;
+    bool isInPlaceComputing = 4;
 }
 
 message UnaryProcess {

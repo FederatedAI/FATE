@@ -107,13 +107,18 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
     def mapValues(self, request, context):
         task_info = request.info
+        is_in_place_computing = task_info.isInPlaceComputing
         LOGGER.debug(PROCESS_RECV_FORMAT.format('mapValues', task_info))
 
         _mapper, _serdes = self.get_function_and_serdes(task_info)
         op = request.operand
-        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
-                                               fragment=op.fragment,
-                                               type=storage_basic_pb2.IN_MEMORY)
+
+        if is_in_place_computing:
+            rtn = op
+        else:
+            rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                                   fragment=op.fragment,
+                                                   type=storage_basic_pb2.IN_MEMORY)
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
@@ -131,13 +136,17 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
     def join(self, request, context):
         task_info = request.info
+        is_in_place_computing = task_info.isInPlaceComputing
         LOGGER.debug(PROCESS_RECV_FORMAT.format('join', task_info))
         _joiner, _serdes = self.get_function_and_serdes(task_info)
         left_op = request.left
         right_op = request.right
-        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
-                                               fragment=left_op.fragment,
-                                               type=storage_basic_pb2.IN_MEMORY)
+        if is_in_place_computing:
+            rtn = left_op
+        else:
+            rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                                   fragment=left_op.fragment,
+                                                   type=storage_basic_pb2.IN_MEMORY)
         with Processor.get_environment(Processor.get_path(left_op)) as left_env, Processor.get_environment(
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
@@ -147,6 +156,8 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 for k_bytes, v1_bytes in cursor:
                     v2_bytes = right_txn.get(k_bytes)
                     if v2_bytes is None:
+                        if is_in_place_computing:
+                            dst_txn.delete(k_bytes)
                         continue
                     v1 = _serdes.deserialize(v1_bytes)
                     v2 = _serdes.deserialize(v2_bytes)
@@ -231,12 +242,16 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
     def subtractByKey(self, request, context):
         task_info = request.info
+        is_in_place_computing = task_info.isInPlaceComputing
         LOGGER.debug(PROCESS_RECV_FORMAT.format('subtractByKey', task_info))
         left_op = request.left
         right_op = request.right
-        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
-                                               fragment=left_op.fragment,
-                                               type=storage_basic_pb2.IN_MEMORY)
+        if is_in_place_computing:
+            rtn = left_op
+        else:
+            rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                                   fragment=left_op.fragment,
+                                                   type=storage_basic_pb2.IN_MEMORY)
         with Processor.get_environment(Processor.get_path(left_op)) as left_env, Processor.get_environment(
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
@@ -245,7 +260,11 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 for k_bytes, left_v_bytes in cursor:
                     right_v_bytes = right_txn.get(k_bytes)
                     if right_v_bytes is None:
-                        dst_txn.put(k_bytes, left_v_bytes)
+                        if not is_in_place_computing:       # add to new table (not in-place)
+                            dst_txn.put(k_bytes, left_v_bytes)
+                    else:                                   # delete in existing table (in-place)
+                        if is_in_place_computing:
+                            dst_txn.delete(k_bytes)
                 cursor.close()
         LOGGER.debug(PROCESS_DONE_FORMAT.format('subtractByKey', rtn))
         LOGGER.debug(rtn.namespace, rtn.name)
@@ -253,13 +272,18 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
     def filter(self, request, context):
         task_info = request.info
+        is_in_place_computing = task_info.isInPlaceComputing
         LOGGER.debug(PROCESS_RECV_FORMAT.format('filter', task_info))
 
         _filter, _serdes = self.get_function_and_serdes(task_info)
         op = request.operand
-        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
-                                               fragment=op.fragment,
-                                               type=storage_basic_pb2.IN_MEMORY)
+
+        if is_in_place_computing:
+            rtn = op
+        else:
+            rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                                   fragment=op.fragment,
+                                                   type=storage_basic_pb2.IN_MEMORY)
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
@@ -268,21 +292,31 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     k = _serdes.deserialize(k_bytes)
-                    if _filter(k):
-                        dst_txn.put(k_bytes, v_bytes)
+                    v = _serdes.deserialize(v_bytes)
+                    if _filter(k, v):
+                        if not is_in_place_computing:
+                            dst_txn.put(k_bytes, v_bytes)
+                    else:
+                        if is_in_place_computing:
+                            dst_txn.delete(k_bytes)
                 cursor.close()
         LOGGER.debug(PROCESS_DONE_FORMAT.format('filter', rtn))
         return rtn
 
     def union(self, request, context):
         task_info = request.info
+        is_in_place_computing = task_info.isInPlaceComputing
         LOGGER.debug(PROCESS_RECV_FORMAT.format('union', task_info))
         _func, _serdes = self.get_function_and_serdes(task_info)
         left_op = request.left
         right_op = request.right
-        rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
-                                               fragment=left_op.fragment,
-                                               type=storage_basic_pb2.IN_MEMORY)
+
+        if is_in_place_computing:
+            rtn = left_op
+        else:
+            rtn = storage_basic_pb2.StorageLocator(namespace=task_info.task_id, name=task_info.function_id,
+                                                   fragment=left_op.fragment,
+                                                   type=storage_basic_pb2.IN_MEMORY)
         with Processor.get_environment(Processor.get_path(left_op)) as left_env, Processor.get_environment(
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
@@ -292,8 +326,9 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 for k_bytes, left_v_bytes in left_cursor:
                     right_v_bytes = right_txn.get(k_bytes)
                     if right_v_bytes is None:
-                        dst_txn.put(k_bytes, left_v_bytes)
-                    else:
+                        if not is_in_place_computing:                           # add left-only to new table
+                            dst_txn.put(k_bytes, left_v_bytes)
+                    else:                                                       # update existing k-v
                         left_v = _serdes.deserialize(left_v_bytes)
                         right_v = _serdes.deserialize(right_v_bytes)
                         final_v = self._run_user_binary_logic(_func, left_v, right_v, False)
@@ -399,13 +434,14 @@ def serve(socket, config):
 
 
 if __name__ == '__main__':
-
+    from datetime import datetime
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--socket')
     parser.add_argument('-p', '--port', default=7888)
     parser.add_argument('-d', '--dir', default=os.path.dirname(os.path.realpath(__file__)))
     args = parser.parse_args()
 
+    LOGGER.info("started at", datetime.now())
     if args.socket:
         serve(args.socket, args.dir)
     else:

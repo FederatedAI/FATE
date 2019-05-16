@@ -47,16 +47,21 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE):
     RuntimeInstance.EGGROLL.table("__federation__", job_id, partition=10)
 
 
-def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False):
-    return RuntimeInstance.EGGROLL.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False, in_place_computing=False):
+    return RuntimeInstance.EGGROLL.table(name=name,
+                                         namespace=namespace,
+                                         partition=partition,
+                                         persistent=persistent,
+                                         in_place_computing=in_place_computing)
 
 
 def parallelize(data: Iterable, include_key=False, name=None, partition=1, namespace=None, persistent=False,
-                create_if_missing=True, error_if_exist=False, chunk_size=100000):
+                create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False):
     return RuntimeInstance.EGGROLL.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
                                                persistent=persistent,
-                                               chunk_size=chunk_size)
+                                               chunk_size=chunk_size,
+                                               in_place_computing=in_place_computing)
 
 def cleanup(name, namespace, persistent=False):
     return RuntimeInstance.EGGROLL.cleanup(name=name, namespace=namespace, persistent=persistent)
