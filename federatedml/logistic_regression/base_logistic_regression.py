@@ -165,7 +165,7 @@ class BaseLogisticRegression(object):
                                  namespace=namespace)
         return buffer_type
 
-    def save_model(self, name, namespace, job_id=None, model_name=None):
+    def save_model(self, name, namespace):
         meta_buffer_type = self._save_meta(name, namespace)
         # In case arbiter has no header
         header = self.header

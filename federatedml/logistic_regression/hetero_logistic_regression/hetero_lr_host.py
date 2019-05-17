@@ -201,4 +201,4 @@ class HeteroLRHost(BaseLogisticRegression):
                               self.transfer_variable.host_prob),
                           role=consts.GUEST,
                           idx=0)
-        LOGGER.info("Remote probability to Host")
+        LOGGER.info("Remote probability to Guest")
