@@ -43,6 +43,7 @@ public class InferenceManager {
                 "model");
         String modelTableName = modelDTableInfo.getName();
         String modelNamespace = modelDTableInfo.getNamespace();
+        LOGGER.info("use model(name: {}, namespace: {})", modelTableName, modelNamespace);
         PipelineTask model = ModelManager.getModel(role, partyId, allParty, modelTableName, modelNamespace);
         if (model == null){
             returnResult.setStatusCode(StatusCode.NOMODEL);

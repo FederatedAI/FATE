@@ -17,16 +17,32 @@
 package com.webank.ai.fate.core.api.grpc.client.crud;
 
 import com.webank.ai.fate.core.api.grpc.client.StreamProcessor;
+import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+// todo: migrate to ClientCallStreamObserver
 public abstract class BaseStreamProcessor<T> implements StreamProcessor<T> {
     protected StreamObserver<T> streamObserver;
+    protected ClientCallStreamObserver<T> clientCallStreamObserver;
     private static final Logger LOGGER = LogManager.getLogger();
 
     public BaseStreamProcessor(StreamObserver<T> streamObserver) {
         this.streamObserver = streamObserver;
+        this.clientCallStreamObserver = (ClientCallStreamObserver<T>) streamObserver;
+    }
+
+    @Override
+    public void process() {
+        try {
+            while (!clientCallStreamObserver.isReady()) {
+                Thread.sleep(50);
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error(ExceptionUtils.getStackTrace(e));
+        }
     }
 
     @Override

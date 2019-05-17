@@ -2,8 +2,8 @@
     "task": "intersect",
     "module": "Intersect",
     "role": {
-        "guest": [10000],
-        "host": [9999]
+        "guest": [9999],
+        "host": [10000]
     },
     "scene_id": 50000,
     "gen_table_info": true,
@@ -35,7 +35,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0
+            "work_mode": 1
         },
         "IntersectParam": {
             "intersect_method": "raw",

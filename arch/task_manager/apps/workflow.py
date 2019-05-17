@@ -19,8 +19,9 @@ import shutil
 from arch.task_manager.job_manager import save_job_info, update_job_queue, pop_from_job_queue, \
     get_job_directory, clean_job, set_job_failed, new_runtime_conf, generate_job_id, push_into_job_queue, run_subprocess
 from arch.task_manager.utils.api_utils import get_json_result
-from arch.task_manager.settings import logger
-import subprocess
+from arch.task_manager.settings import logger, DEFAULT_WORKFLOW_DATA_TYPE
+from arch.api.utils import dtable_utils
+import copy
 from arch.api.utils import file_utils
 import json
 import datetime
@@ -51,6 +52,8 @@ def start_workflow(job_id, module, role):
     _job_dir = get_job_directory(job_id)
     _party_id = str(_config['local']['party_id'])
     _method = _config['WorkFlowParam']['method']
+    default_runtime_dict = file_utils.load_json_conf('workflow/conf/default_runtime_conf.json')
+    fill_runtime_conf_table_info(runtime_conf=_config, default_runtime_conf=default_runtime_dict)
     conf_file_path = new_runtime_conf(job_dir=_job_dir, method=_method, module=module, role=role, party_id=_party_id)
     with open(conf_file_path, 'w+') as f:
         f.truncate()
@@ -73,7 +76,8 @@ def start_workflow(job_id, module, role):
     save_job_info(job_id=job_id,
                   role=_config.get("local", {}).get("role"),
                   party_id=_config.get("local", {}).get("party_id"),
-                  save_info=job_data)
+                  save_info=job_data,
+                  create=True)
     update_job_queue(job_id=job_id,
                      role=role,
                      party_id=_party_id,
@@ -112,6 +116,32 @@ def stop_workflow(job_id, role, party_id):
         pop_from_job_queue(job_id=job_id)
         clean_job(job_id=job_id)
     return get_json_result(job_id=job_id)
+
+
+def fill_runtime_conf_table_info(runtime_conf, default_runtime_conf):
+    if not runtime_conf.get('scene_id') or not runtime_conf.get('gen_table_info'):
+        return
+    table_config = copy.deepcopy(runtime_conf)
+    workflow_param = runtime_conf.get('WorkFlowParam')
+    default_workflow_param = default_runtime_conf.get('WorkFlowParam')
+    for data_type in DEFAULT_WORKFLOW_DATA_TYPE:
+        name_param = '{}_table'.format(data_type)
+        namespace_param = '{}_namespace'.format(data_type)
+        table_config['data_type'] = data_type
+        input_output = data_type.split('_')[-1]
+        if (not workflow_param.get(name_param)
+            or workflow_param.get(name_param) == default_workflow_param.get(name_param)) \
+                and (not workflow_param.get(namespace_param)
+                     or workflow_param.get(namespace_param) == default_workflow_param.get(namespace_param)):
+            if input_output == 'input':
+                _create = False
+                table_config['table_name'] = ''
+            else:
+                _create = True
+                table_config['table_name'] = runtime_conf.get('JobParam', {}).get('job_id')
+            table_name, namespace = dtable_utils.get_table_info(config=table_config, create=_create)
+            workflow_param[name_param] = table_name
+            workflow_param[namespace_param] = namespace
 
 
 @manager.route('/workflowRuntimeConf/<job_id>', methods=['POST'])

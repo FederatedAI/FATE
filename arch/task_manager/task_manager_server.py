@@ -19,7 +19,7 @@ from arch.task_manager.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SEC
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from arch.task_manager.utils.grpc_utils import UnaryServicer
-from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WORK_MODE
+from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WORK_MODE, JOB_SCHEDULER
 from arch.task_manager.apps.data_access import manager as data_access_manager
 from arch.task_manager.apps.machine_learning_model import manager as model_manager
 from arch.task_manager.apps.workflow import manager as workflow_manager
@@ -64,25 +64,6 @@ class JobCron(cron.Cron):
         except Exception as e:
             logger.exception(e)
 
-    def fill_runtime_conf_table_info(self, runtime_conf, default_runtime_conf):
-        if not runtime_conf.get('scene_id') or not runtime_conf.get('gen_table_info'):
-            return
-        table_config = copy.deepcopy(runtime_conf)
-        workflow_param = runtime_conf.get('WorkFlowParam')
-        default_workflow_param = default_runtime_conf.get('WorkFlowParam')
-        for data_type in DEFAULT_WORKFLOW_DATA_TYPE:
-            name_param = '{}_table'.format(data_type)
-            namespace_param = '{}_namespace'.format(data_type)
-            table_config['data_type'] = data_type
-            input_output = data_type.split('_')[-1]
-            if (not workflow_param.get(name_param)
-                or workflow_param.get(name_param) == default_workflow_param.get(name_param)) \
-                    and (not workflow_param.get(namespace_param)
-                         or workflow_param.get(namespace_param) == default_workflow_param.get(namespace_param)):
-                table_name, namespace = dtable_utils.get_table_info(config=table_config,
-                                                                    create=(False if input_output == 'input' else True))
-                workflow_param[name_param] = table_name
-                workflow_param[namespace_param] = namespace
 
     def run_job(self, job_id, config):
         default_runtime_dict = file_utils.load_json_conf('workflow/conf/default_runtime_conf.json')
@@ -101,8 +82,6 @@ class JobCron(cron.Cron):
             _role = runtime_conf['local']['role']
             _party_id = runtime_conf['local']['party_id']
             _module = runtime_conf['module']
-            self.fill_runtime_conf_table_info(runtime_conf=runtime_conf,
-                                              default_runtime_conf=default_runtime_dict)
             st, msg = federated_api(job_id=job_id,
                                     method='POST',
                                     url='/workflow/{}/{}/{}'.format(job_id, _module, _role),
@@ -112,7 +91,8 @@ class JobCron(cron.Cron):
                 save_job_info(job_id=job_id,
                               role=_role,
                               party_id=_party_id,
-                              save_info={"status": "ready", "initiator": PARTY_ID})
+                              save_info={"status": "ready", "initiator": PARTY_ID},
+                              create=True)
             else:
                 run_job_success = False
         logger.info("run job done")
@@ -157,6 +137,9 @@ def update_job(job_id, role, party_id):
                              role=role,
                              party_id=party_id,
                              save_info={"status": request_data.get("status")})
+    if not job_info:
+        logger.info('job_id {} may not be started by the Task Manager.'.format(job_id))
+        return get_json_result(job_id=job_id, status=101, msg='this task may not be started by the Task Manager.')
     update_job_queue(job_id=job_id,
                      role=role,
                      party_id=party_id,
@@ -210,7 +193,8 @@ if __name__ == '__main__':
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryServicer(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
     server.start()
-    JobCron(interval=5*1000).start()
+    if JOB_SCHEDULER:
+        JobCron(interval=5*1000).start()
     app = DispatcherMiddleware(
         manager,
         {

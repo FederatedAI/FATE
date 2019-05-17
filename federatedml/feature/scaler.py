@@ -203,7 +203,7 @@ class Scaler(object):
             for idx, header_name in enumerate(self.header):
                 if header_name in param_dict:
                     mean.append(param_dict[header_name].mean)
-                    std.append(param_dict[header_name].std)
+                    std.append(param_dict[header_name].scale)
                 else:
                     raise ValueError("Can not find the header name {} in model.".format(header_name))
 

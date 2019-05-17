@@ -23,6 +23,7 @@ import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.utils.ErrorUtils;
 import com.webank.ai.fate.core.utils.ToStringUtils;
 import io.grpc.stub.AbstractStub;
+import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,6 +80,7 @@ public class GrpcStreamingClientTemplate<S extends AbstractStub, R extends Messa
     }
 
     public void processCallerStreamingRpc() {
+
         streamProcessor.process();
     }
 
