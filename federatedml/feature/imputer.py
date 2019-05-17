@@ -2,7 +2,6 @@ import functools
 import numpy as np
 
 from federatedml.util import consts
-from federatedml.util import fate_operator
 from federatedml.statistic import data_overview
 
 from arch.api.utils import log_utils
@@ -32,7 +31,7 @@ class Imputer(object):
             'mean': 'col',
             'meadian': 'col',
             'quantile': 'col',
-            'designated': 'all'
+            'designated': 'col'
         }
 
     def get_imputer_value_list(self):
@@ -328,21 +327,25 @@ class Imputer(object):
 
         output_format = self.support_output_format[output_format]
 
-        if isinstance(replace_method, str):
-            replace_method = replace_method.lower()
-            if replace_method not in self.support_replace_method:
-                raise ValueError("Unknown replace method {} in Imputer".format(replace_method))
+        # Now all of replace_method is "col", remain replace_area temporarily
+        replace_area = self.support_replace_area[replace_method]
+        process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
 
-            if replace_method not in self.support_replace_area:
-                raise ValueError("Unknown replace area of method {} in Imputer".format(replace_method))
-
-            replace_area = self.support_replace_area[replace_method]
-            process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
-        elif replace_method is None:
-            replace_area = 'all'
-            process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
-            return process_data
-        else:
-            raise ValueError("parameter replace_method should be str or None only")
+        # if isinstance(replace_method, str):
+        #     replace_method = replace_method.lower()
+        #     if replace_method not in self.support_replace_method:
+        #         raise ValueError("Unknown replace method {} in Imputer".format(replace_method))
+        #
+        #     if replace_method not in self.support_replace_area:
+        #         raise ValueError("Unknown replace area of method {} in Imputer".format(replace_method))
+        #
+        #     replace_area = self.support_replace_area[replace_method]
+        #     process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
+        # elif replace_method is None:
+        #     replace_area = 'all'
+        #     process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
+        #     return process_data
+        # else:
+        #     raise ValueError("parameter replace_method should be str or None only")
 
         return process_data

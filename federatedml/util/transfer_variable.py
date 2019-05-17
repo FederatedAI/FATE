@@ -195,3 +195,10 @@ class SampleTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.sample_ids = Variable(name="SampleTransferVariable.sample_ids", auth={'src': "guest", 'dst': ['host']})
         pass
+
+
+class OneVsRestTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.host_classes = Variable(name="OneVsRestTransferVariable.host_classes", auth={'src': "host", 'dst': ['guest']})
+        self.aggregate_classes = Variable(name="OneVsRestTransferVariable.aggregate_classes", auth={'src': "guest", 'dst': ['host', 'arbiter']})
+        pass

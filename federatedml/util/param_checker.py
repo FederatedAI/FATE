@@ -399,7 +399,7 @@ class WorkFlowParamChecker(object):
 
         workflow_param.method = check_and_change_lower(workflow_param.method,
                                                        ['train', 'predict', 'cross_validation',
-                                                        'intersect', 'binning', 'feature_select'],
+                                                        'intersect', 'binning', 'feature_select', 'one_vs_rest_train', "one_vs_rest_predict"],
                                                        descr)
 
         if workflow_param.method in ['train', 'binning', 'feature_select']:

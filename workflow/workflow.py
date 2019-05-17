@@ -51,6 +51,8 @@ from federatedml.util.param_checker import AllChecker
 from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
 from workflow import status_tracer_decorator
 
+from federatedml.one_vs_rest.one_vs_rest import OneVsRest
+
 LOGGER = log_utils.getLogger()
 
 
@@ -87,7 +89,7 @@ class WorkFlow(object):
         self.model = SecureBoostTreeModel(self.secureboost_param)
         """
 
-    def _synchronous_data(self, data_instance, flowid, data_application=None):
+    def _synchronize_data(self, data_instance, flowid, data_application=None):
         header = data_instance.schema.get('header')
 
         if data_application is None:
@@ -178,6 +180,88 @@ class WorkFlow(object):
                 eval_result[consts.VALIDATE_EVALUATE] = val_eval
             LOGGER.info("{} eval_result: {}".format(self.role, eval_result))
             self.save_eval_result(eval_result)
+
+    def one_vs_rest_train(self, train_data, validation_data=None):
+        if self.mode == consts.HETERO and self.role != consts.ARBITER:
+            LOGGER.debug("Enter train function")
+            LOGGER.debug("Star intersection before train")
+            intersect_flowid = "train_0"
+            train_data = self.intersect(train_data, intersect_flowid)
+            LOGGER.debug("End intersection before train")
+
+        # sample_flowid = "train_sample_0"
+        # train_data = self.sample(train_data, sample_flowid)
+
+        # train_data = self.feature_selection_fit(train_data)
+        # validation_data = self.feature_selection_transform(validation_data)
+
+        # if self.mode == consts.HETERO and self.role != consts.ARBITER:
+        #    train_data, cols_scale_value = self.scale(train_data)
+        one_vs_rest = OneVsRest(self.model, self.role, self.mode)
+        LOGGER.debug("Start OneVsRest train")
+        one_vs_rest.fit(train_data)
+        LOGGER.debug("Start OneVsRest predict")
+        one_vs_rest.predict(validation_data)
+        save_result = one_vs_rest.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+        if save_result is None:
+            return
+        for meta_buffer_type, param_buffer_type in save_result:
+            self.pipeline.node_meta.append(meta_buffer_type)
+            self.pipeline.node_param.append(param_buffer_type)
+        # LOGGER.debug("finish saving, self role: {}".format(self.role))
+        # if self.role == consts.GUEST or self.role == consts.HOST or \
+        #                 self.mode == consts.HOMO:
+        #     eval_result = {}
+        #     LOGGER.debug("predicting...")
+        #     predict_result = self.model.predict(train_data,
+        #                                         self.workflow_param.predict_param)
+        #
+        #     LOGGER.debug("evaluating...")
+        #     train_eval = self.evaluate(predict_result)
+        #     eval_result[consts.TRAIN_EVALUATE] = train_eval
+        #     if validation_data is not None:
+        #         self.model.set_flowid("1")
+        #         if self.mode == consts.HETERO:
+        #             LOGGER.debug("Star intersection before predict")
+        #             intersect_flowid = "predict_0"
+        #             validation_data = self.intersect(validation_data, intersect_flowid)
+        #             LOGGER.debug("End intersection before predict")
+        #
+        #             validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
+        #
+        #         val_pred = self.model.predict(validation_data,
+        #                                       self.workflow_param.predict_param)
+        #         val_eval = self.evaluate(val_pred)
+        #         eval_result[consts.VALIDATE_EVALUATE] = val_eval
+        #     LOGGER.info("{} eval_result: {}".format(self.role, eval_result))
+        #     self.save_eval_result(eval_result)
+
+    def one_vs_rest_predict(self, data_instance):
+        if self.mode == consts.HETERO:
+            LOGGER.debug("Star intersection before predict")
+            intersect_flowid = "predict_module_0"
+            data_instance = self.intersect(data_instance, intersect_flowid)
+            LOGGER.debug("End intersection before predict")
+
+        # data_instance = self.feature_selection_transform(data_instance)
+
+        # data_instance, fit_config = self.scale(data_instance)
+        one_vs_rest = OneVsRest(self.model, self.role, self.mode)
+        one_vs_rest.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+        predict_result =one_vs_rest.predict(data_instance)
+
+        if not predict_result:
+            return None
+
+        if predict_result.count() > 10:
+            local_predict = predict_result.collect()
+            n = 0
+            while n < 10:
+                result = local_predict.__next__()
+                LOGGER.debug("predict result: {}".format(result))
+                n += 1
+
+        return predict_result
 
     def save_eval_result(self, eval_data):
         eggroll.parallelize([eval_data],
@@ -408,10 +492,10 @@ class WorkFlow(object):
             for train_data, test_data in kfold_data_generator:
                 self._init_pipeline()
                 LOGGER.info("flowid:{}".format(flowid))
-                self._synchronous_data(train_data, flowid, consts.TRAIN_DATA)
-                LOGGER.info("synchronous train data")
-                self._synchronous_data(test_data, flowid, consts.TEST_DATA)
-                LOGGER.info("synchronous test data")
+                self._synchronize_data(train_data, flowid, consts.TRAIN_DATA)
+                LOGGER.info("synchronize train data")
+                self._synchronize_data(test_data, flowid, consts.TEST_DATA)
+                LOGGER.info("synchronize test data")
 
                 LOGGER.info("Start sample before train")
                 sample_flowid = "sample_" + str(flowid)
@@ -447,10 +531,10 @@ class WorkFlow(object):
             for flowid in range(n_splits):
                 self._init_pipeline()
                 LOGGER.info("flowid:{}".format(flowid))
-                train_data = self._synchronous_data(data_instance, flowid, consts.TRAIN_DATA)
-                LOGGER.info("synchronous train data")
-                test_data = self._synchronous_data(data_instance, flowid, consts.TEST_DATA)
-                LOGGER.info("synchronous test data")
+                train_data = self._synchronize_data(data_instance, flowid, consts.TRAIN_DATA)
+                LOGGER.info("synchronize train data")
+                test_data = self._synchronize_data(data_instance, flowid, consts.TEST_DATA)
+                LOGGER.info("synchronize test data")
 
                 LOGGER.info("Start sample before train")
                 sample_flowid = "sample_" + str(flowid)
@@ -566,6 +650,9 @@ class WorkFlow(object):
             LOGGER.debug("workflow param need_scale is False")
 
         return data_instance, fit_config
+
+    # def evaluate_multi_class(self, eval_data):
+
 
     def evaluate(self, eval_data):
         if eval_data is None:
@@ -725,6 +812,28 @@ class WorkFlow(object):
         # elif self.workflow_param.method == 'test_methods':
         #     print("This is a test method, Start workflow success!")
         #     LOGGER.debug("Testing LOGGER function")
+        elif self.workflow_param.method == "one_vs_rest_train":
+            LOGGER.debug("In running function, enter one_vs_rest method")
+            train_data_instance = None
+            predict_data_instance = None
+            if self.role != consts.ARBITER:
+                LOGGER.debug("Input table:{}, input namesapce: {}".format(
+                    self.workflow_param.train_input_table, self.workflow_param.train_input_namespace
+                ))
+                train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
+                                                             self.workflow_param.train_input_namespace)
+                LOGGER.debug("gen_data_finish")
+                if self.workflow_param.predict_input_table is not None and self.workflow_param.predict_input_namespace is not None:
+                    LOGGER.debug("Input table:{}, input namesapce: {}".format(
+                        self.workflow_param.predict_input_table, self.workflow_param.predict_input_namespace
+                    ))
+                    predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
+                                                                   self.workflow_param.predict_input_namespace)
+
+            self.one_vs_rest_train(train_data_instance, validation_data=predict_data_instance)
+            self.one_vs_rest_predict(predict_data_instance)
+            self._save_pipeline()
+
         else:
             raise TypeError("method %s is not support yet" % (self.workflow_param.method))
 

@@ -2,7 +2,6 @@ import functools
 from collections import Iterable
 
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.util import fate_operator
 from federatedml.statistic import data_overview
 
 
@@ -44,9 +43,9 @@ class StandardScaler(object):
                 std = summary_obj.get_std_variance()
 
             if not mean and std:
-                mean = [0 for value in std]
+                mean = [0 for _ in std]
             elif mean and not std:
-                std = [1 for value in mean]
+                std = [1 for _ in mean]
 
             if not mean or not std:
                 raise ValueError("mean or std is None")

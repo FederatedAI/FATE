@@ -897,26 +897,26 @@ class ScaleParam(object):
 
     Parameters
     ----------
-        method : str, now it support "MinMaxScale" and "StandardScale", and will support other scale method soon. 
+        method : str, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
                  Default None, which will do nothing for scale
 
-        mode: str, for method is "MinMaxScale" and for "StandardScale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture. 
-              for mode is "MinMaxScale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and 
+        mode: str, for method is "min_max_scale" and for "standard_scale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture.
+              for mode is "min_max_scale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and
               feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
 
-        area: str, for method is "MinMaxScale" and for "StandardScale" it is useless. It supports "all" and "col". For "all", 
+        area: str, for method is "min_max_scale" and for "standard_scale" it is useless. It supports "all" and "col". For "all",
             feat_upper/feat_lower will act on all data column, so it will just be a value, and for "col", it just acts 
             on one column they corresponding to, so feat_lower/feat_upper will be a list, which size will equal to the number of columns
 
-        feat_upper: int or float, used for "MinMaxScale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
-        feat_lower: int or float, used for "MinMaxScale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None. 
-        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None. 
-        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        feat_upper: int or float, used for "min_max_scale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, used for "min_max_scale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None.
+        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
         
 
-        with_mean: bool, used for "StandardScale". Default False.
-        with_std: bool, used for "StandardScale". Default False.
-            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the stanard deviation of the column.
+        with_mean: bool, used for "standard_scale". Default False.
+        with_std: bool, used for "standard_scale". Default False.
+            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
             if with_mean is False, u will be 0, and if with_std is False, s will be 1. 
 
     """
