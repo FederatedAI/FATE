@@ -38,12 +38,17 @@ class DataIOParam(object):
 
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
-    default_value : None or list,  element of list can be any type, which values should be regard as missing value,
+    default_value : None or single object type or list, the value to replace missing value. 
+                    if None, it will use default value define in federatedml/feature/imputer.py,
+                    if single object, will fill missing value with this object,
+                    if list, it's length should be the sample of input data' feature dimension,
+                        means that if some column happens to have missing values, it will replace it
+                        the value by element in the identical position of this list.
                     default: None
 
     missing_fill_method: None or str, the method to replace missing value, should be one of [None, 'min', 'max', 'mean', 'designated'], default: None
 
-    missing_impute: None or list, auto generated
+    missing_impute: None or list, element of list can be any type, or auto generated if value is None, define which values to be consider as missing, default: None 
 
     outlier_replace: bool, need to replace outlier value or not, accepted only True/False, default: True
 
@@ -51,7 +56,13 @@ class DataIOParam(object):
    
     outlier_impute: None or list,  element of list can be any type, which values should be regard as missing value, default: None
 
-    outlier_replace_value: None or list, auto generated
+    outlier_replace_value: None or single object type or list, the value to replace outlier. 
+                    if None, it will use default value define in federatedml/feature/imputer.py,
+                    if single object, will replace outlier with this object,
+                    if list, it's length should be the sample of input data' feature dimension,
+                        means that if some column happens to have outliers, it will replace it
+                        the value by element in the identical position of this list.
+                    default: None
 
     with_label : bool, True if input data consist of label, False otherwise. default: 'false'
 
@@ -457,7 +468,7 @@ class LogisticParam(object):
 
 class DecisionTreeParam(object):
     """
-    Define dataio parameters that used in federated ml.
+    Define decision tree parameters that used in federated ml.
 
     Parameters
     ----------
@@ -498,7 +509,7 @@ class DecisionTreeParam(object):
 
 class BoostingTreeParam(object):
     """
-    Define dataio parameters that used in federated ml.
+    Define boosting tree parameters that used in federated ml.
 
     Parameters
     ----------

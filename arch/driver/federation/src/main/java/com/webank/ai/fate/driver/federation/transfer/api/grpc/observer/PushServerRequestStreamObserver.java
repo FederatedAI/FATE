@@ -16,6 +16,9 @@
 
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.observer;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.core.api.grpc.observer.BaseCalleeRequestStreamObserver;
 import com.webank.ai.fate.core.utils.ErrorUtils;
@@ -24,12 +27,19 @@ import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 @Component
@@ -46,17 +56,30 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
     private RecvBrokerManager recvBrokerManager;
     @Autowired
     private TransferServiceFactory transferServiceFactory;
+
     private TransferBroker transferBroker;
+    private List<ByteString> receivedData;
+
     private volatile boolean inited = false;
     private Proxy.Metadata response;
-    private int packetCount = 0;
+    private AtomicLong packetCount = new AtomicLong(0L);
+    private AtomicLong maxSeq = new AtomicLong(0L);
+    private int resetInterval = 10000;
+    private int resetCount = resetInterval;
 
-    public PushServerRequestStreamObserver(StreamObserver<Proxy.Metadata> callerNotifier) {
+    // todo: implement this in framework
+    private final AtomicBoolean wasReady;
+    private final ServerCallStreamObserver<Proxy.Metadata> serverCallStreamObserver;
+
+    private final Object receivedDataLock = new Object();
+
+    public PushServerRequestStreamObserver(final StreamObserver<Proxy.Metadata> callerNotifier, final AtomicBoolean wasReady) {
         super(callerNotifier);
+        this.serverCallStreamObserver = (ServerCallStreamObserver<Proxy.Metadata>) callerNotifier;
+        this.wasReady = wasReady;
     }
 
-
-    public void init(Proxy.Metadata metadata) {
+    public synchronized void init(Proxy.Metadata metadata) {
         if (inited) {
             return;
         }
@@ -71,12 +94,15 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
                 transferBroker = recvBrokerManager.createIfNotExists(transferMetaId);
             }*/
         }
-
         transferBroker = recvBrokerManager.getBroker(transferMetaId);
-        LOGGER.info("[FEDERATION][SERVER][OBSERVER] broker: {}, transferMetaId: {}", transferBroker, transferMetaId);
+        LOGGER.info("[FEDERATION][SERVER][OBSERVER] broker: {}, transferMetaId: {}, broker capacity: {}", transferBroker, transferMetaId, transferBroker.getQueueCapacity());
 
+        this.receivedData = Lists.newLinkedList();
         this.response = metadata;
-        inited = true;
+
+        recvBrokerManager.createRecvTaskFromPassedInTransferMetaId(transferMetaId);
+
+        this.inited = true;
     }
 
     @Override
@@ -86,11 +112,30 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
             init(packet.getHeader());
         }
 
-        byte[] rawData = packet.getBody().getValue().toByteArray();
+        // byte[] rawData = packet.getBody().getValue().toByteArray();
+        ByteString value = packet.getBody().getValue();
+        long seq = packet.getHeader().getSeq();
+        long currentMaxSeq = maxSeq.get();
+        if (seq > currentMaxSeq) {
+            maxSeq.compareAndSet(currentMaxSeq, seq);
+        }
 
-        transferBroker.put(rawData);
+        /*boolean result = transferBroker.add(value);
+        if (!result) {
+            synchronized (receivedDataLock) {
+                receivedData.add(value);
+            }
+        }*/
 
-        ++packetCount;
+        transferBroker.put(value);
+        packetCount.incrementAndGet();
+
+        if (serverCallStreamObserver.isReady()) {
+            serverCallStreamObserver.request(1);
+        } else {
+            LOGGER.warn("[SEND][SERVER][FLOWCONTROL] not ready");
+            wasReady.set(false);
+        }
     }
 
     @Override
@@ -102,8 +147,35 @@ public class PushServerRequestStreamObserver extends BaseCalleeRequestStreamObse
 
     @Override
     public void onCompleted() {
-        LOGGER.info("[SEND][SERVER][OBSERVER] onComplete: header: {}, total packet count: {}",
-                toStringUtils.toOneLineString(response), packetCount);
+        LOGGER.info("[SEND][SERVER][OBSERVER] trying to complete PushServerRequestStreamObserver: header: {}, transferBrokerRemaining: {}, total packetCount: {}, receivedData size: {}",
+                toStringUtils.toOneLineString(response), transferBroker.getQueueSize(), packetCount, receivedData.size());
+
+        int whileInterval = 300;
+        int whileCount = 10;
+        while (transferBroker.isReady() || packetCount.get() < maxSeq.get()) {
+            if (--whileCount <= 0) {
+                LOGGER.info("[SEND][SERVER][OBSERVER] still trying. isReady: {}, isFinished: {}, isClosable: {}, packetCount: {}, maxSeq: {}",
+                        transferBroker.isReady(), transferBroker.isFinished(), transferBroker.isClosable(), packetCount, maxSeq.get());
+                whileCount = whileInterval;
+            }
+            try {
+                transferBroker.awaitClose(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOGGER.info(errorUtils.getStackTrace(e));
+                onError(e);
+            }
+        }
+
+        int putCount = 0;
+/*        synchronized (receivedDataLock) {
+            for (ByteString bs : receivedData) {
+                transferBroker.put(bs);
+                ++putCount;
+            }
+        }*/
+        LOGGER.info("[SEND][SERVER][OBSERVER] actual completes PushServerRequestStreamObserver: header: {}, transferBrokerRemaining: {}, total packetCount: {}, putCount: {}",
+                toStringUtils.toOneLineString(response), transferBroker.getQueueSize(), packetCount, putCount);
+
         // transferBroker.setFinished();
         callerNotifier.onNext(response);
         super.onCompleted();

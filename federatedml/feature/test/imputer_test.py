@@ -11,6 +11,7 @@ from federatedml.feature.imputer import Imputer
 from sklearn.preprocessing import StandardScaler as SSL
 class TestMinMaxScaler(unittest.TestCase):
     def setUp(self):
+        local_time = time.localtime(time.time())
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
         
         self.test_data = [

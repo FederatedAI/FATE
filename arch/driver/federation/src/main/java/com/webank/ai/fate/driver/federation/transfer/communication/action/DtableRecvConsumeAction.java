@@ -91,7 +91,8 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
                 transferMetaId);
         super.onInit();
 
-        this.operandBroker = rollModelFactory.createOperandBroker();
+        // todo: make this configurable
+        this.operandBroker = rollModelFactory.createOperandBroker(500_000);
         storageMetaClient.init(federationServerUtils.getMetaServiceEndpoint());
 
         // if no data specified in recv side, namespace: jobid; name: "__" + transferMetaId; fragment: use sender's
@@ -152,14 +153,14 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
         putallListenableFuture.addCallback(new ListenableFutureCallback<Object>() {
             @Override
             public void onFailure(Throwable throwable) {
-                LOGGER.error("[FEDERATION][RECV][CONSUMER][DTABLE] putAll failed for data: {}, error: {}",
+                LOGGER.error("[FEDERATION][RECV][CONSUMER][DTABLE] addAll failed for data: {}, error: {}",
                         transferMetaId, errorUtils.getStackTrace(throwable));
                 putAllFinishLatch.countDown();
             }
 
             @Override
             public void onSuccess(Object o) {
-                LOGGER.info("[FEDERATION][RECV][CONSUMER][DTABLE] putAll finished for data: {}",
+                LOGGER.info("[FEDERATION][RECV][CONSUMER][DTABLE] addAll finished for data: {}",
                         transferMetaId);
                 putAllFinishLatch.countDown();
             }
@@ -196,11 +197,19 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
 
     @Override
     public void onComplete() {
-        LOGGER.info("[FEDERATION][SEND][DTABLE][CONSUMER] DtableRecvConsumeAction.onComplete. entryCount: {}, transferMetaId: {}",
+        LOGGER.info("[FEDERATION][SEND][DTABLE][CONSUMER] trying to complete DtableRecvConsumeAction. entryCount: {}, transferMetaId: {}",
                 entryCount, transferMetaId);
-        onProcess();
+        while (!transferBroker.isClosable()) {
+            onProcess();
+        }
 
-        // no setting finish here. transferBroker at recv side is managed by
+        LOGGER.info("[FEDERATION][SEND][DTABLE][CONSUMER] actual completes DtableRecvConsumeAction. entryCount: {}, transferMetaId: {}",
+                entryCount, transferMetaId);
+        if (transferBroker.hasError()) {
+            throw new RuntimeException(transferBroker.getError());
+        }
+
+        // operand is new-ed here so setting finished here
         operandBroker.setFinished();
 
         try {
@@ -211,13 +220,13 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
                 long now = System.currentTimeMillis();
 
                 if (((now - startWaitTime) / 1000) % 10 == 0) {
-                    LOGGER.info("[FEDERATION][RECV][CONSUMER][DTABLE] putAll waiting to finished: {}", transferMetaId);
+                    LOGGER.info("[FEDERATION][RECV][CONSUMER][DTABLE] addAll waiting to finished: {}", transferMetaId);
                 }
 
                 // todo: add timeout mechanism
             }
         } catch (Exception e) {
-            LOGGER.error("[FEDERATION][RECV][CONSUMER][DTABLE] putAll latch await failed. exception: {}", errorUtils.getStackTrace(e));
+            LOGGER.error("[FEDERATION][RECV][CONSUMER][DTABLE] addAll latch await failed. exception: {}", errorUtils.getStackTrace(e));
         }
 
         String transferMetaId = transferPojoUtils.generateTransferId(transferBroker.getTransferMeta());

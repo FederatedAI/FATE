@@ -1,6 +1,4 @@
-import functools
 import numpy as np
-import sys
 import time
 import unittest
 
@@ -23,7 +21,6 @@ class TestStandardScaler(unittest.TestCase):
                     [0,9,2,9.0,9,9],
                     [0,10,1,10.0,10,10]
                     ]
-        local_time = time.localtime(time.time())
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
 
         
@@ -101,7 +98,7 @@ class TestStandardScaler(unittest.TestCase):
         standard_scaler = StandardScaler(with_mean=True, with_std=True)
         fit_instance, mean, std = standard_scaler.fit(self.table_instance)
         transform_data = standard_scaler.transform(self.table_instance, mean, std)
-        self.assertListEqual(self.get_table_instance_feature(fit_instance), self.get_table_instance_feature(fit_instance))
+        self.assertListEqual(self.get_table_instance_feature(transform_data), self.get_table_instance_feature(fit_instance))
 
 
     # test with (with_mean=True, with_std=False):
@@ -109,21 +106,21 @@ class TestStandardScaler(unittest.TestCase):
         standard_scaler = StandardScaler(with_mean=True, with_std=False)
         fit_instance, mean, std = standard_scaler.fit(self.table_instance)
         transform_data = standard_scaler.transform(self.table_instance, mean, std)
-        self.assertListEqual(self.get_table_instance_feature(fit_instance), self.get_table_instance_feature(fit_instance))
+        self.assertListEqual(self.get_table_instance_feature(transform_data), self.get_table_instance_feature(fit_instance))
 
     # test with (with_mean=False, with_std=True):
     def test_transform3(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=True)
         fit_instance, mean, std = standard_scaler.fit(self.table_instance)
         transform_data = standard_scaler.transform(self.table_instance, mean, std)
-        self.assertListEqual(self.get_table_instance_feature(fit_instance), self.get_table_instance_feature(fit_instance))
+        self.assertListEqual(self.get_table_instance_feature(transform_data), self.get_table_instance_feature(fit_instance))
 
     # test with (with_mean=False, with_std=False):
     def test_transform4(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=False)
         fit_instance, mean, std = standard_scaler.fit(self.table_instance)
         transform_data = standard_scaler.transform(self.table_instance, mean, std)
-        self.assertListEqual(self.get_table_instance_feature(fit_instance), self.get_table_instance_feature(fit_instance))
+        self.assertListEqual(self.get_table_instance_feature(transform_data), self.get_table_instance_feature(fit_instance))
 
 
 if __name__ == "__main__":

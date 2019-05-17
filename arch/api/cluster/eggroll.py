@@ -257,7 +257,7 @@ class _EggRoll(object):
 
     def delete(self, _table, k, use_serialize=True):
         k = self.kv_to_bytes(k=k, use_serialize=use_serialize)
-        operand = self.kv_stub.delete(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
+        operand = self.kv_stub.delOne(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
         return self._deserialize_operand(operand, use_serialize=use_serialize)
 
     def get(self, _table, k, use_serialize=True):

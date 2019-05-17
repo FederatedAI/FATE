@@ -16,10 +16,13 @@
 
 package com.webank.ai.fate.core.factory;
 
+import com.google.common.base.Preconditions;
 import com.webank.ai.fate.api.core.BasicMeta;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.AbstractStub;
 import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +35,11 @@ public class GrpcStubFactory {
     @Autowired
     private GrpcChannelFactory grpcChannelFactory;
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public AbstractStub createGrpcStub(boolean isAsync, Class grpcClass, ManagedChannel managedChannel) {
+        LOGGER.info("[CORE] create stub. channel status: isShutdown: {}, isTerminated: {}",
+                managedChannel.isShutdown(), managedChannel.isTerminated());
         String methodName = null;
         if (isAsync) {
             methodName = asyncStubMethodName;
@@ -44,14 +51,15 @@ public class GrpcStubFactory {
         try {
             result = (AbstractStub) MethodUtils.invokeStaticMethod(grpcClass, methodName, managedChannel);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException("should never get here");
+            throw new RuntimeException("error creating stub", e);
         }
 
         return result;
     }
 
-    public AbstractStub createGrpcStub(boolean isAsync, Class grpcClass, BasicMeta.Endpoint endpoint) {
-        ManagedChannel managedChannel = grpcChannelFactory.getChannel(endpoint);
+    public AbstractStub createGrpcStub(boolean isAsync, Class grpcClass, BasicMeta.Endpoint endpoint, boolean isSecure) {
+        Preconditions.checkNotNull(endpoint, "Endpoint cannot be null");
+        ManagedChannel managedChannel = grpcChannelFactory.getChannel(endpoint, isSecure);
 
         return createGrpcStub(isAsync, grpcClass, managedChannel);
     }
