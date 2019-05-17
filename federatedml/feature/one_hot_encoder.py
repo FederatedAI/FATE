@@ -7,6 +7,7 @@ import numpy as np
 
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
+from arch.api.utils import log_utils
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -22,6 +23,8 @@ from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from federatedml.statistic.data_overview import get_header
+
+LOGGER = log_utils.getLogger()
 
 
 class OneHotEncoder(object):
@@ -49,7 +52,7 @@ class OneHotEncoder(object):
     def transform(self, data_instances):
         self._init_cols(data_instances)
         ori_header = self.header.copy()
-        self.transform_schema(data_instances)
+        self._transform_schema(data_instances)
         f = functools.partial(self.transfer_one_instance,
                               col_maps=self.col_maps,
                               ori_header=ori_header,
@@ -58,11 +61,17 @@ class OneHotEncoder(object):
         self.set_schema(new_data)
         return new_data
 
-    def transform_schema(self, data_instances):
+    def fit_transform(self, data_instances):
+        self.fit(data_instances)
+        new_data = self.transform(data_instances)
+        return new_data
+
+    def _transform_schema(self, data_instances):
         if not self.header:
             self._init_cols(data_instances)
 
         header = self.header
+        LOGGER.info("Before one-hot, data_instances schema is : {}".format(header))
         for col_name, value_map in self.col_maps.items():
             col_idx = header.index(col_name)
             new_headers = list(value_map.values())
@@ -76,6 +85,7 @@ class OneHotEncoder(object):
             col_index = header.index(col)
             self.cols_dict[col] = col_index
         self.header = header
+        LOGGER.info("After one-hot, data_instances schema is : {}".format(header))
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
@@ -100,6 +110,7 @@ class OneHotEncoder(object):
                 this_col_map = col_maps.get(col_name)
                 col_index = cols_dict.get(col_name)
                 feature_value = feature[col_index]
+                feature_value = str(feature_value)
                 if feature_value not in this_col_map:
                     new_feature_header = str(col_name) + '_' + str(feature_value)
                     this_col_map[feature_value] = new_feature_header
@@ -126,7 +137,7 @@ class OneHotEncoder(object):
                 for value, header in value_dict.items():
                     if value not in col_1_value_dict:
                         col_1_value_dict[value] = header
-                        
+
         return col_map1
 
     @staticmethod
@@ -142,6 +153,7 @@ class OneHotEncoder(object):
 
         for col_name, value_dict in col_maps.items():
             feature_value = feature_dict.get(col_name)
+            feature_value = str(feature_value)
             header_name = value_dict.get(feature_value)
             feature_dict[header_name] = 1
 
@@ -195,6 +207,6 @@ class OneHotEncoder(object):
                                                namespace=namespace)
         self.col_maps = dict(result_obj.col_map)
         for k, v in self.col_maps.items():
-            self.col_maps[k] = dict(v)
+            self.col_maps[k] = dict(v.encode_map)
 
         return return_code

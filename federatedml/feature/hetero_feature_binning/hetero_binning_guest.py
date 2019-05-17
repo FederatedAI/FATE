@@ -90,7 +90,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
-        self.load_model()
         self._parse_cols(data_instances)
 
         # 1. Synchronize encryption information
@@ -99,6 +98,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         # 2. Prepare labels
         data_instances = data_instances.mapValues(self.load_data)
         label_table = data_instances.mapValues(lambda x: x.label)
+        self.set_schema(data_instances)
 
         # 3. Transfer encrypted label
         f = functools.partial(self.encrypt,
@@ -120,12 +120,12 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
         host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
-        host_results = {'host1': host_iv_attrs}
+        # host_results = {'host1': host_iv_attrs}
 
-        self.save_model(name=self.bin_param.transform_table,
-                        namespace=self.bin_param.result_namespace,
-                        binning_result=self.local_transform_result,
-                        host_results=host_results)
+        # self.save_model(name=self.bin_param.transform_table,
+        #                 namespace=self.bin_param.result_namespace,
+        #                 binning_result=self.local_transform_result,
+        #                 host_results=host_results)
 
         for col_name, iv_attr in host_iv_attrs.items():
             LOGGER.info("The remote feature {} 's iv is {}".format(col_name, iv_attr.iv))
@@ -140,7 +140,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def transform_local(self, data_instances, label_table=None, save_result=True):
         self._abnormal_detection(data_instances)
         self._parse_cols(data_instances)
-
+        LOGGER.debug("transform local, data header: {}".format(data_instances.schema))
         split_points = {}
         for col_name, iv_attr in self.binning_result.items():
             split_points[col_name] = iv_attr.split_points

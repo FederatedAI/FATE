@@ -32,7 +32,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         super(HeteroFeatureBinningHost, self).__init__(params)
 
         self.encryptor = PaillierEncrypt()
-        self.iv_attrs = None
+        self.iv_attrs = []
         self.party_name = consts.HOST
 
     def fit(self, data_instances):
@@ -83,10 +83,13 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         # 1. Synchronize encryption information
         self.__synchronize_encryption()
 
-        split_points = []
-        for iv_attr in self.iv_attrs:
-            s_p = list(iv_attr.split_points)
-            split_points.append(s_p)
+        split_points = {}
+        # for iv_attr in self.iv_attrs:
+        #     s_p = list(iv_attr.split_points)
+        #     split_points.append(s_p)
+
+        for col_name, iv_attr in self.binning_result.items():
+            split_points[col_name] = iv_attr.split_points
 
         # LOGGER.debug("In transform, self.cols: {}".format(self.cols))
         data_bin_table = self.binning_obj.transform(data_instances, split_points)

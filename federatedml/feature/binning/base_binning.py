@@ -211,7 +211,8 @@ class Binning(object):
 
         if split_points is None:
             split_points = self.fit_split_points(data_instances)
-
+        LOGGER.debug("cal_local_iv data header: {}".format(data_instances.schema))
+        LOGGER.debug("split points: {}".format(split_points))
         data_bin_table = self.transform(data_instances, split_points)
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)

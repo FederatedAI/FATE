@@ -671,8 +671,8 @@ class FeatureSelectionParamChecker(object):
             raise ValueError("Two iv methods should not exist at the same time.")
 
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
-        check_string(feature_param.result_table, descr)
-        check_string(feature_param.result_namespace, descr)
+        # check_string(feature_param.result_table, descr)
+        # check_string(feature_param.result_namespace, descr)
         check_boolean(feature_param.local_only, descr)
         UniqueValueParamChecker.check_param(feature_param.unique_param)
         IVValueSelectionParamChecker.check_param(feature_param.iv_value_param)
@@ -721,6 +721,14 @@ class OutlierColsSelectionParamChecker(object):
         descr = "Outlier Filter param's"
         check_decimal_float(feature_param.percentile, descr)
         check_defined_type(feature_param.upper_threshold, descr, ['float', 'int'])
+        return True
+
+
+class OneHotEncoderParamChecker(object):
+    @staticmethod
+    def check_param(param):
+        descr = "One-hot encoder param's"
+        check_defined_type(param.cols, descr, ['list', 'int'])
         return True
 
 

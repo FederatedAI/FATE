@@ -35,6 +35,7 @@ from federatedml.feature.hetero_feature_binning.hetero_binning_guest import Hete
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
+from federatedml.feature.one_hot_encoder import OneHotEncoder
 from federatedml.feature.sampler import Sampler
 from federatedml.feature.scaler import Scaler
 from federatedml.model_selection import KFold
@@ -151,7 +152,10 @@ class WorkFlow(object):
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
 
-        self.model.fit_split_points(train_data)
+        train_data = self.one_hot_encoder_fit_transform(train_data)
+        validation_data = self.one_hot_encoder_transform(validation_data)
+
+        self.model.fit(train_data)
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
@@ -200,6 +204,8 @@ class WorkFlow(object):
         data_instance = self.feature_selection_transform(data_instance)
 
         data_instance, fit_config = self.scale(data_instance)
+
+        data_instance = self.one_hot_encoder_transform(data_instance)
 
         predict_result = self.model.predict(data_instance,
                                             self.workflow_param.predict_param)
@@ -371,6 +377,53 @@ class WorkFlow(object):
             LOGGER.info("No need to do feature selection")
             return data_instance
 
+    def one_hot_encoder_fit_transform(self, data_instance):
+        if data_instance is None:
+            return data_instance
+
+        if self.workflow_param.need_one_hot:
+            LOGGER.info("Start one-hot encode")
+            one_hot_param = param_generator.OneHotEncoderParam()
+            one_hot_param = ParamExtract.parse_param_from_config(one_hot_param, self.config_path)
+            param_checker.OneHotEncoderParamChecker.check_param(one_hot_param)
+
+            one_hot_encoder = OneHotEncoder(one_hot_param)
+
+            data_instance = one_hot_encoder.fit_transform(data_instance)
+            save_result = one_hot_encoder.save_model(self.workflow_param.model_table,
+                                                     self.workflow_param.model_namespace)
+            # Save model result in pipeline
+            for meta_buffer_type, param_buffer_type in save_result:
+                self.pipeline.node_meta.append(meta_buffer_type)
+                self.pipeline.node_param.append(param_buffer_type)
+
+            LOGGER.info("Finish one-hot encode")
+            return data_instance
+        else:
+            LOGGER.info("No need to do one-hot encode")
+            return data_instance
+
+    def one_hot_encoder_transform(self, data_instance):
+        if data_instance is None:
+            return data_instance
+
+        if self.workflow_param.need_one_hot:
+            LOGGER.info("Start one-hot encode")
+            one_hot_param = param_generator.OneHotEncoderParam()
+            one_hot_param = ParamExtract.parse_param_from_config(one_hot_param, self.config_path)
+            param_checker.OneHotEncoderParamChecker.check_param(one_hot_param)
+
+            one_hot_encoder = OneHotEncoder(one_hot_param)
+            one_hot_encoder.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+
+            data_instance = one_hot_encoder.transform(data_instance)
+
+            LOGGER.info("Finish one-hot encode")
+            return data_instance
+        else:
+            LOGGER.info("No need to do one-hot encode")
+            return data_instance
+
     def sample(self, data_instance, sample_flowid="sample_flowid"):
         if not self.workflow_param.need_sample:
             LOGGER.info("need_sample: false!")
@@ -454,14 +507,18 @@ class WorkFlow(object):
 
                 train_data, cols_scale_value = self.scale(train_data)
 
+                train_data = self.one_hot_encoder_fit_transform(train_data)
+
                 self.model.set_flowid(flowid)
-                self.model.fit_split_points(train_data)
+                self.model.fit(train_data)
 
                 feature_selection_flowid = "feature_selection_transform_" + str(flowid)
                 test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
                 LOGGER.info("End feature selection transform")
 
                 test_data, cols_scale_value = self.scale(test_data, cols_scale_value)
+
+                test_data = self.one_hot_encoder_transform(test_data)
                 pred_res = self.model.predict(test_data, self.workflow_param.predict_param)
                 evaluation_results = self.evaluate(pred_res)
                 cv_results.append(evaluation_results)
@@ -490,14 +547,15 @@ class WorkFlow(object):
                 feature_selection_flowid = "feature_selection_fit_" + str(flowid)
                 train_data = self.feature_selection_fit(train_data, feature_selection_flowid)
                 LOGGER.info("End feature selection fit_transform")
-
+                train_data = self.one_hot_encoder_fit_transform(train_data)
                 self.model.set_flowid(flowid)
-                self.model.fit_split_points(train_data)
+                self.model.fit(train_data)
 
                 feature_selection_flowid = "feature_selection_transform_" + str(flowid)
                 test_data = self.feature_selection_transform(test_data, feature_selection_flowid)
                 LOGGER.info("End feature selection transform")
 
+                test_data = self.one_hot_encoder_transform(test_data)
                 self.model.predict(test_data)
                 flowid += 1
                 self._initialize_model(self.config_path)
@@ -507,7 +565,7 @@ class WorkFlow(object):
             for flowid in range(n_splits):
                 LOGGER.info("flowid:{}".format(flowid))
                 self.model.set_flowid(flowid)
-                self.model.fit_split_points()
+                self.model.fit()
                 flowid += 1
                 self._initialize_model(self.config_path)
 
@@ -534,9 +592,12 @@ class WorkFlow(object):
             train_data = self.sample(train_data, sample_flowid)
             LOGGER.info("End sample before_train")
 
+            train_data = self.one_hot_encoder_fit_transform(train_data)
+
             self.model.set_flowid(flowid)
             self.model.fit(train_data)
             # self.save_model()
+            test_data = self.one_hot_encoder_transform(test_data)
             predict_result = self.model.predict(test_data, self.workflow_param.predict_param)
             flowid += 1
             eval_result = self.evaluate(predict_result)
