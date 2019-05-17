@@ -66,13 +66,15 @@ do
 	eval mip=\${meta${i}[0]}
 	eval pip=\${proxy${i}[0]}
 	eval rip=\${roll${i}[0]}
+	eval sip1=\${serving${i}[0]}
+	eval sip2=\${serving${i}[1]}
 	eval tmip=\${tmlist${i}[0]}
-	eval sip=\${serving${i}[0]}
 	eval partyid=\${partylist[${i}]}
 	eval jdbcip=\${JDBC${i}[0]}
 	eval jdbcdbname=\${JDBC${i}[1]}
 	eval jdbcuser=\${JDBC${i}[2]}
 	eval jdbcpasswd=\${JDBC${i}[3]}
+	eval slength=\${serving${i}[*]}
 	eval elength=\${#egglist${i}[*]}
 	eval slength=\${#serving${i}[*]}
 	
@@ -140,7 +142,8 @@ sed -i "s/ip=.*/ip=$pip/g" ./proxy/conf/proxy.properties
 sed -i "s/exchangeip=.*/exchangeip=\"$exchangeip\"/g" ./python/modify_json.py
 sed -i "s/fip=.*/fip=\"$fip\"/g" ./python/modify_json.py
 sed -i "s/tmip=.*/tmip=\"$tmip\"/g" ./python/modify_json.py
-sed -i "s/sip=.*/sip=\"$sip\"/g" ./python/modify_json.py
+sed -i "s/sip1=.*/sip1=\"$sip1\"/g" ./python/modify_json.py
+sed -i "s/sip2=.*/sip2=\"$sip2\"/g" ./python/modify_json.py
 sed -i "s/partyId=.*/partyId=\"$partyid\"/g" ./python/modify_json.py
 python python/modify_json.py proxy ./proxy/conf/route_table.json
 exit
@@ -153,7 +156,10 @@ sed -i "s/meta.service.ip=.*/meta.service.ip=$mip/g" ./roll/conf/roll.properties
 exit
 eeooff
 	echo roll module of $partyid done!
-	ssh -tt $user@$sip << eeooff
+	for ((c=0;c<$slength;c++))
+	do
+		eval sip=\${serving${i}[${c}]}
+		ssh -tt $user@$sip << eeooff
 cd $dir
 sed -i "s/ip=.*/ip=$sip/g" ./serving-server/conf/serving-server.properties
 sed -i "s/workMode=.*/workMode=1/g" ./serving-server/conf/serving-server.properties
@@ -162,6 +168,7 @@ sed -i "s/proxy=.*/proxy=$pip:9370/g" ./serving-server/conf/serving-server.prope
 sed -i "s/roll=.*/roll=$rip:8011/g" ./serving-server/conf/serving-server.properties
 exit
 eeooff
+	done
 	echo serving module of $partyid done!
 	for ((a=0;a<$elength;a++))
 	do

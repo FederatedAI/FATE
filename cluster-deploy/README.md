@@ -12,21 +12,21 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 **1.1. Offline Module**
 
-| Module Name         | Port of module | Method of deployment                                      | Module function                                              |
-| ------------------- | -------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| Federation          | 9394           | Single node deployment in one party                       | Federation module handles task data communication (i.e. 'federation') among Federated |
-| Meta-Service        | 8590           | Single node deployment in one party                       | Meta-Service module stores metadata required by this arch.   |
-| Proxy               | 9370           | Single node deployment in one party                       | Proxy (Exchange) is communication channel among parties.     |
-| Roll                | 8011           | Single node deployment in one party                       | Roll module is responsible for accepting distributed job submission, job / data schedule and result aggregations. |
-| Storage-Service-cxx | 7778           | Single node deployment in one party                       | Storage-Service module handles data storage on that single node. |
-| Egg-Processor       | 7888           | Single node deployment in one party                       | Processor is used to execute user-defined functions.         |
-| Task-Manager        | 9360/9380      | Single node deployment in one party(Current version only) | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
+| Module Name         | Port of module | Method of deployment                                | Module function                                              |
+| ------------------- | -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| Federation          | 9394           | Single node deployment in one party                 | Federation module handles task data communication (i.e. 'federation') among Federated |
+| Meta-Service        | 8590           | Single node deployment in one party                 | Meta-Service module stores metadata required by this arch.   |
+| Proxy               | 9370           | Single node deployment in one party                 | Proxy (Exchange) is communication channel among parties.     |
+| Roll                | 8011           | Single node deployment in one party                 | Roll module is responsible for accepting distributed job submission, job / data schedule and result aggregations. |
+| Storage-Service-cxx | 7778           | Party Multi-node deployment                         | Storage-Service module handles data storage on that single node. |
+| Egg-Processor       | 7888           | Party Multi-node deployment                         | Processor is used to execute user-defined functions.         |
+| Task-Manager        | 9360/9380      | Single node deployment in one party current version | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
 
 ### **1.2. Online Module**
 
-| Module Name    | Port of module | Method of deployment                                      | Module function                                              |
-| -------------- | -------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| Serving-server | 8001           | Single node deployment in one party(Current version only) | Serving-Server is a online service for serving federated learning models. |
+| Module Name    | Port of module | Method of deployment                            | Module function                                              |
+| -------------- | -------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| Serving-server | 8001           | Party Multi-node deployment (two or more nodes) | Serving-Server is a online service for serving federated learning models. |
 
 
 
@@ -259,7 +259,7 @@ The configuration file configurations.sh instructions:
 | meta0              | Meta-Service role  IP list                           | Represents a list of servers with Meta-Service roles in the party (only one in the current version) | If there are more than one party, the order is meta0, meta1... Sequence corresponds to partyid |
 | proxy0             | Proxy role IP list                                   | Represents a list of servers with Proxy roles in the party (only one in the current version) | If there are more than one party, the order is proxy0, proxy1... Sequence corresponds to partyid |
 | roll0              | Roll role IP list                                    | Represents a list of servers with Roll roles in the part (only one in the current version) | If there are more than one party, the order is roll0, roll1... Sequence corresponds to partyid |
-| egglist0           | Egg role list                                        | Represents a list of servers included in each party (current version) | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partyid |
+| egglist0           | Egg role list                                        | Represents a list of servers included in each party          | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partyid |
 | exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
 | tmlist0            | The ip list of the Task-manager role                 | Represents a list of servers with Roll roles in the party (only one in the current version) | If there are more than one party, the order is tmlist0, tmlist1... Sequence corresponds to partyid |
 | serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
@@ -309,8 +309,8 @@ egglist0=(A.E1-ip A.E2-ip A.E3-ip...)
 egglist1=(B.E1-ip B.E2-ip B.E3-ip...) 
 tmlist0=(A.TM-ip)
 tmlist1=(B.TM-ip)
-serving0=(A.S-ip)
-serving1=(B.S-ip)
+serving0=(A.S1-ip A.S2-ip)
+serving1=(B.S1-ip B.S2-ip)
 exchangeip=exchangeip 
 ```
 

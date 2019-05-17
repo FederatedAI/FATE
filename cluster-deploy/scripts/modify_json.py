@@ -8,7 +8,8 @@ fip="0.0.0.0"
 tmip="0.0.0.0"
 rip="0.0.0.0"
 pip="0.0.0.0"
-sip="0.0.0.0"
+sip1="0.0.0.0"
+sip2="0.0.0.0"
 
 
 def get_new_json(module_name,filepath):
@@ -20,13 +21,13 @@ def get_new_json(module_name,filepath):
 		elif module_name == "proxy":
 			a["route_table"]={"default":{"default":[{"ip": exchangeip,"port": 9370}]},\
 			partyId:{"fate":[{"ip": fip,"port": 9394}],"manager":[{"ip": tmip,"port": 9360}],\
-			"serving":[{"ip": sip,"port": 8001}]}}
+			"serving":[{"ip": sip1,"port": 8001},{"ip": sip2,"port": 8001}]}}
 		elif module_name == "python":
 			a["servers"]["roll"]={"host":rip,"port": 8011}
 			a["servers"]["federation"]={"host":fip,"port": 9394}
 			a["servers"]["proxy"]={"host":pip,"port": 9370}
 			a["servers"]["manager"]={"host":tmip,"grpc.port": 9360,"http.port": 9380}
-			a["servers"]["servings"]=["{}:8001".format(sip)]
+			a["servers"]["servings"]=["{}:8001".format(sip1),"{}:8001".format(sip2)]
 			a["party_id"]=partyId
 		else:
 			print("Please input right module name!")
