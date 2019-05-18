@@ -17,6 +17,10 @@
 import math
 import numpy as np
 import sys
+import random
+from numba import jit
+
+from federatedml.secureprotol import gmpy_math
 
 
 class FixedPointNumber(object):
@@ -25,19 +29,37 @@ class FixedPointNumber(object):
     BASE = 16    
     LOG2_BASE = math.log(BASE, 2)
     FLOAT_MANTISSA_BITS = sys.float_info.mant_dig
-
-    def __init__(self, n, encoding, exponent):
+    
+    Q = 293973345475167247070445277780365744413
+    
+    def __init__(self, encoding, exponent, n=None, max_int=None):
         self.n = n
-        self.max_int = n // 3 - 1
+        self.max_int = max_int
+        
+        if self.n is None:
+            self.n = self.Q
+            self.max_int = self.Q // 3 - 1
+            
         self.encoding = encoding
         self.exponent = exponent
-
+   
     @classmethod
-    def encode(cls, n, max_int, scalar, precision=None, max_exponent=None):
+    def encode(cls, scalar, n=None, max_int=None, precision=None, max_exponent=None):
         """return an encoding of an int or float.
         """
         # Calculate the maximum exponent for desired precision
-        exponent = None        
+        exponent = None
+        
+        #  Too low value preprocess;
+        #  avoid "OverflowError: int too large to convert to float"
+        
+        if np.abs(scalar) < 1e-200:
+            scalar = 0
+        
+        if n is None:
+            n = cls.Q
+            max_int = cls.Q // 3 - 1    
+                
         if precision is None:
             if isinstance(scalar, int) or isinstance(scalar, np.int16) or \
               isinstance(scalar, np.int32) or isinstance(scalar, np.int64):
@@ -62,7 +84,7 @@ class FixedPointNumber(object):
             raise ValueError('Integer needs to be within +/- %d but got %d'
                              % (max_int, int_fixpoint))
 
-        return cls(n, int_fixpoint % n, exponent)
+        return cls(int_fixpoint % n, exponent, n, max_int)
 
     def decode(self):
         """return decode plaintext.
@@ -80,7 +102,7 @@ class FixedPointNumber(object):
             raise OverflowError('Overflow detected in decode number')
 
         return mantissa * pow(self.BASE, -self.exponent)
-
+ 
     def increase_exponent_to(self, new_exponent):
         """return FixedPointNumber: new encoding with same value but having great exponent.
         """
@@ -91,6 +113,155 @@ class FixedPointNumber(object):
         factor = pow(self.BASE, new_exponent - self.exponent)
         new_encoding = self.encoding * factor % self.n
         
-        return self.__class__(self.n, new_encoding, new_exponent)
+        return FixedPointNumber(new_encoding, new_exponent, self.n, self.max_int)
+
+    def __align_exponent(self, x, y):
+        """return x,y with same exponet
+        """
+        if x.exponent < y.exponent:
+            x = x.increase_exponent_to(y.exponent)
+        elif x.exponent > y.exponent:
+            y = y.increase_exponent_to(x.exponent)
+        
+        return x, y
+
+    def __truncate(self, a):
+        scalar = a.decode()
+        return FixedPointNumber.encode(scalar)    
+
+    def __add__(self, other):       
+        if isinstance(other, FixedPointNumber):
+            return self.__add_fixpointnumber(other)
+        else:
+            return self.__add_scalar(other)    
     
+    def __radd__(self, other):        
+        return self.__add__(other)
     
+
+    def __sub__(self, other):
+        if isinstance(other, FixedPointNumber):
+            return self.__sub_fixpointnumber(other)
+        else:
+            return self.__sub_scalar(other)    
+ 
+    def __rsub__(self, other):
+        x = self.__sub__(other)
+        x = -1 * x.decode()
+        return self.encode(x)
+    
+    def __rmul__(self, other):
+        return self.__mul__(other)
+   
+    def __mul__(self, other):
+        if isinstance(other, FixedPointNumber):
+            return self.__mul_fixpointnumber(other)
+        else:
+            return self.__mul_scalar(other)
+ 
+    def __truediv__(self, other):
+        if isinstance(other, FixedPointNumber):
+            scalar = other.decode()
+        else:
+            scalar = other
+        
+        return self.__mul__(1 / scalar) 
+   
+    def __rtruediv__(self, other):
+        res = 1.0 / self.__truediv__(other).decode() 
+        return FixedPointNumber.encode(res)
+ 
+    def __lt__(self, other):
+        x = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y = other.decode()                      
+        else:
+            y = other
+        if x < y:
+            return True
+        else:
+            return False  
+
+    def __gt__(self, other):
+        x = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y = other.decode()                      
+        else:
+            y = other
+        if x > y:
+            return True
+        else:
+            return False
+   
+    def __le__(self, other):
+        x = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y = other.decode()                      
+        else:
+            y = other
+        if x <= y:
+            return True
+        else:
+            return False  
+ 
+    def __ge__(self, other):
+        x = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y = other.decode()                      
+        else:
+            y = other
+            
+        if x >= y:
+            return True
+        else:
+            return False 
+ 
+    def __eq__(self, other):
+        x = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y = other.decode()                      
+        else:
+            y = other
+        if x == y:
+            return True
+        else:
+            return False 
+   
+    def __ne__(self, other):
+        x  = self.decode()
+        if isinstance(other, FixedPointNumber):           
+            y  = other.decode()                      
+        else:
+            y = other
+        if x != y:
+            return True
+        else:
+            return False   
+  
+    def __add_fixpointnumber(self, other):        
+        x, y = self.__align_exponent(self, other)
+        encoding = (x.encoding + y.encoding) % self.Q        
+        return FixedPointNumber(encoding, x.exponent)
+ 
+    def __add_scalar(self, scalar):
+        encoded = self.encode(scalar)
+        return self.__add_fixpointnumber(encoded)
+  
+    def __sub_fixpointnumber(self, other):        
+        scalar = -1 * other.decode()
+        return self.__add_scalar(scalar)
+    
+    def __sub_scalar(self, scalar):
+        scalar = -1 * scalar
+        return self.__add_scalar(scalar)    
+  
+    def __mul_fixpointnumber(self, other):     
+        encoding = (self.encoding * other.encoding) % self.Q
+        exponet = self.exponent + other.exponent
+        mul_fixedpoint = FixedPointNumber(encoding, exponet)            
+        truncate_mul_fixedpoint= self.__truncate(mul_fixedpoint)        
+        return truncate_mul_fixedpoint
+   
+    def __mul_scalar(self, scalar):
+        encoded = self.encode(scalar)
+        return self.__mul_fixpointnumber(encoded)
