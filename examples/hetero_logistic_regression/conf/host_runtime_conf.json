@@ -39,7 +39,8 @@
         "n_split": 5,
         "need_intersect": true,
         "need_feature_selection": false,
-        "need_scale": false
+        "need_scale": false,
+        "one_vs_rest": true
         },
 
     "EncryptParam": {
@@ -63,7 +64,7 @@
         "alpha": 0.01,
         "max_iter": 10,
         "converge_func": "diff",
-        "batch_size": 3200,
+        "batch_size": -1,
         "learning_rate": 0.15
     },
     "IntersectParam": {
@@ -127,5 +128,8 @@
     "OutlierColsSelectionParam": {
         "percentile": 0.9,
         "upper_threshold": 1000
+    },
+    "OneVsRestParam":{
+        "has_arbiter":true
     }
 }

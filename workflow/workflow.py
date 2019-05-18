@@ -39,6 +39,7 @@ from federatedml.model_selection import KFold
 from federatedml.param import IntersectParam
 from federatedml.param import WorkFlowParam
 from federatedml.param import param as param_generator
+from federatedml.param.param import OneVsRestParam
 from federatedml.param.param import SampleParam
 from federatedml.param.param import ScaleParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest
@@ -151,6 +152,12 @@ class WorkFlow(object):
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
 
+        if self.workflow_param.one_vs_rest:
+            one_vs_rest_param = OneVsRestParam()
+            self.one_vs_rest_param = ParamExtract.parse_param_from_config(one_vs_rest_param, self.config_path)
+            one_vs_rest = OneVsRest(self.model, self.role, self.mode, self.one_vs_rest_param)
+            self.model = one_vs_rest
+
         self.model.fit(train_data)
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
@@ -182,22 +189,7 @@ class WorkFlow(object):
             self.save_eval_result(eval_result)
 
     def one_vs_rest_train(self, train_data, validation_data=None):
-        if self.mode == consts.HETERO and self.role != consts.ARBITER:
-            LOGGER.debug("Enter train function")
-            LOGGER.debug("Star intersection before train")
-            intersect_flowid = "train_0"
-            train_data = self.intersect(train_data, intersect_flowid)
-            LOGGER.debug("End intersection before train")
-
-        # sample_flowid = "train_sample_0"
-        # train_data = self.sample(train_data, sample_flowid)
-
-        # train_data = self.feature_selection_fit(train_data)
-        # validation_data = self.feature_selection_transform(validation_data)
-
-        # if self.mode == consts.HETERO and self.role != consts.ARBITER:
-        #    train_data, cols_scale_value = self.scale(train_data)
-        one_vs_rest = OneVsRest(self.model, self.role, self.mode)
+        one_vs_rest = OneVsRest(self.model, self.role, self.mode, )
         LOGGER.debug("Start OneVsRest train")
         one_vs_rest.fit(train_data)
         LOGGER.debug("Start OneVsRest predict")
@@ -208,33 +200,6 @@ class WorkFlow(object):
         for meta_buffer_type, param_buffer_type in save_result:
             self.pipeline.node_meta.append(meta_buffer_type)
             self.pipeline.node_param.append(param_buffer_type)
-        # LOGGER.debug("finish saving, self role: {}".format(self.role))
-        # if self.role == consts.GUEST or self.role == consts.HOST or \
-        #                 self.mode == consts.HOMO:
-        #     eval_result = {}
-        #     LOGGER.debug("predicting...")
-        #     predict_result = self.model.predict(train_data,
-        #                                         self.workflow_param.predict_param)
-        #
-        #     LOGGER.debug("evaluating...")
-        #     train_eval = self.evaluate(predict_result)
-        #     eval_result[consts.TRAIN_EVALUATE] = train_eval
-        #     if validation_data is not None:
-        #         self.model.set_flowid("1")
-        #         if self.mode == consts.HETERO:
-        #             LOGGER.debug("Star intersection before predict")
-        #             intersect_flowid = "predict_0"
-        #             validation_data = self.intersect(validation_data, intersect_flowid)
-        #             LOGGER.debug("End intersection before predict")
-        #
-        #             validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
-        #
-        #         val_pred = self.model.predict(validation_data,
-        #                                       self.workflow_param.predict_param)
-        #         val_eval = self.evaluate(val_pred)
-        #         eval_result[consts.VALIDATE_EVALUATE] = val_eval
-        #     LOGGER.info("{} eval_result: {}".format(self.role, eval_result))
-        #     self.save_eval_result(eval_result)
 
     def one_vs_rest_predict(self, data_instance):
         if self.mode == consts.HETERO:
