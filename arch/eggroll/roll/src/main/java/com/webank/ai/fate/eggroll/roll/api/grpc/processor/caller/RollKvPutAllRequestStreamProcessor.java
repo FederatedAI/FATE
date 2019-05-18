@@ -21,6 +21,8 @@ import com.webank.ai.fate.api.eggroll.storage.Kv;
 import com.webank.ai.fate.core.api.grpc.client.crud.BaseStreamProcessor;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -28,9 +30,12 @@ import java.util.List;
 
 @Component
 @Scope("prototype")
-public class RollKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.Operand> {
+public class RollKvPutAllRequestStreamProcessor
+        extends BaseStreamProcessor<Kv.Operand> {
     private OperandBroker operandBroker;
     private List<Kv.Operand> operandsToSend;
+    private int entryCount = 0;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public RollKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker operandBroker) {
         super(streamObserver);
@@ -40,17 +45,26 @@ public class RollKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.O
 
     @Override
     public void process() {
+        super.process();
         operandsToSend = Lists.newLinkedList();
-        operandBroker.drainTo(operandsToSend);
-
+        operandBroker.drainTo(operandsToSend, 500_000);
         for (Kv.Operand operand : operandsToSend) {
             streamObserver.onNext(operand);
+            ++entryCount;
         }
     }
 
     @Override
     public void complete() {
-        operandBroker.setFinished();
+        // operandBroker.setFinished();
+        // LOGGER.info("[ROLL][PUTALL][COMPLETE] trying to complete putAll stream processor. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
+
+/*        while (!operandBroker.isClosable()) {
+            process();
+        }*/
+
+        LOGGER.info("[ROLL][PUTALL][COMPLETE] actual completes putAll stream processor for this batch. remaining: {}, total entryCount: {}", operandBroker.getQueueSize(), entryCount);
+
         super.complete();
     }
 }

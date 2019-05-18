@@ -19,7 +19,7 @@ from arch.task_manager.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SEC
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from arch.task_manager.utils.grpc_utils import UnaryServicer
-from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WORK_MODE
+from arch.task_manager.settings import PARTY_ID, DEFAULT_WORKFLOW_DATA_TYPE, WORK_MODE, JOB_SCHEDULER
 from arch.task_manager.apps.data_access import manager as data_access_manager
 from arch.task_manager.apps.machine_learning_model import manager as model_manager
 from arch.task_manager.apps.workflow import manager as workflow_manager
@@ -193,7 +193,8 @@ if __name__ == '__main__':
     proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryServicer(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
     server.start()
-    JobCron(interval=5*1000).start()
+    if JOB_SCHEDULER:
+        JobCron(interval=5*1000).start()
     app = DispatcherMiddleware(
         manager,
         {

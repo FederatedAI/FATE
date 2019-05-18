@@ -17,7 +17,7 @@ from arch.api.utils import file_utils
 import subprocess
 import os
 import uuid
-from arch.task_manager.db.models import JobInfo, JobQueue
+from arch.task_manager.db.models import JobInfo, JobQueue, DB
 from arch.task_manager.settings import logger, PARTY_ID, WORK_MODE
 import errno
 from arch.api import eggroll
@@ -62,6 +62,7 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
+@DB.connection_context()
 def save_job_info(job_id, role, party_id, save_info, create=False):
     jobs = JobInfo.select().where(JobInfo.job_id == job_id, JobInfo.role == role, JobInfo.party_id == party_id)
     is_insert = True
@@ -87,6 +88,7 @@ def save_job_info(job_id, role, party_id, save_info, create=False):
     return job_info
 
 
+@DB.connection_context()
 def set_job_failed(job_id, role, party_id):
     sql = JobInfo.update(status='failed').where(JobInfo.job_id == job_id,
                                                 JobInfo.role == role,
@@ -95,11 +97,13 @@ def set_job_failed(job_id, role, party_id):
     return sql.execute() > 0
 
 
+@DB.connection_context()
 def query_job_by_id(job_id):
     jobs = JobInfo.select().where(JobInfo.job_id == job_id)
-    return jobs
+    return [job for job in jobs]
 
 
+@DB.connection_context()
 def push_into_job_queue(job_id, config):
     job_queue = JobQueue()
     job_queue.job_id = job_id
@@ -110,14 +114,16 @@ def push_into_job_queue(job_id, config):
     job_queue.save(force_insert=True)
 
 
+@DB.connection_context()
 def get_job_from_queue(status, limit=1):
     if limit:
-        wait_jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc()).limit(limit)
+        jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc()).limit(limit)
     else:
-        wait_jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc())
-    return wait_jobs
+        jobs = JobQueue.select().where(JobQueue.status == status, JobQueue.party_id == PARTY_ID).order_by(JobQueue.create_date.asc())
+    return [job for job in jobs]
 
 
+@DB.connection_context()
 def update_job_queue(job_id, role, party_id, save_data):
     jobs = JobQueue.select().where(JobQueue.job_id == job_id, JobQueue.role == role, JobQueue.party_id == party_id)
     is_insert = True
@@ -141,6 +147,7 @@ def update_job_queue(job_id, role, party_id, save_data):
     return job_queue
 
 
+@DB.connection_context()
 def pop_from_job_queue(job_id):
     try:
         query = JobQueue.delete().where(JobQueue.job_id == job_id)
@@ -149,15 +156,18 @@ def pop_from_job_queue(job_id):
         return False
 
 
+@DB.connection_context()
 def job_queue_size():
     return JobQueue.select().count()
 
 
+@DB.connection_context()
 def show_job_queue():
     jobs = JobQueue.select().where(JobQueue.role == 'guest', JobQueue.pid.is_null(False)).distinct()
-    return jobs
+    return [job for job in jobs]
 
 
+@DB.connection_context()
 def running_job_amount():
     return JobQueue.select().where(JobQueue.status == "running", JobQueue.pid.is_null(False)).distinct().count()
 
@@ -205,6 +215,7 @@ def check_job_process(pid):
 
 def run_subprocess(job_dir, job_role, progs):
     logger.info('Starting progs: {}'.format(progs))
+    logger.info(' '.join(progs))
 
     std_dir = os.path.join(job_dir, job_role)
     if not os.path.exists(std_dir):

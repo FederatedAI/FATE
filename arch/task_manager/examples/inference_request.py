@@ -28,8 +28,6 @@ def send(channel):
     request.role['guest'].partyId.append(9999)
     request.role['host'].partyId.append(10000)
     request.role['arbiter'].partyId.append(10000)
-    request.model.tableName = "c59a667e60fb11e99e0b00e04c6c66f9"
-    request.model.namespace = "50000_guest_9999_10000-9999-10000_model"
     request.sceneId = 50000
 
     data = {}

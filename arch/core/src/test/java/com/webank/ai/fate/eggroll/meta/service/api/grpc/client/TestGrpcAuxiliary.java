@@ -42,7 +42,7 @@ public class TestGrpcAuxiliary {
     @Test
     public void testGrpcChannel() {
         BasicMeta.Endpoint endpoint = BasicMeta.Endpoint.newBuilder().setIp("127.0.0.1").setPort(8888).build();
-        managedChannel = grpcChannelFactory.getChannel(endpoint);
+        managedChannel = grpcChannelFactory.getChannel(endpoint, false);
         System.out.print(managedChannel);
     }
 

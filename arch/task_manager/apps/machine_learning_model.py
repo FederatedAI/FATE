@@ -68,8 +68,5 @@ def publish_model_online():
 
 @manager.route('/version', methods=['POST'])
 def query_model_version_history():
-    request_data = request.json
-    config = file_utils.load_json_conf(request_data.get("config_path"))
-    eggroll.init(mode=WORK_MODE)
-    history = version_history(data_table_namespace=config.get("namespace"))
-    return get_json_result(msg=json.dumps(history))
+    history = version_history(data_table_namespace=request.json.get("namespace"))
+    return get_json_result(data=history)

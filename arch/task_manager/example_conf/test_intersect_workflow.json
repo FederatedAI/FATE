@@ -35,7 +35,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0
+            "work_mode": 1
         },
         "IntersectParam": {
             "intersect_method": "raw",

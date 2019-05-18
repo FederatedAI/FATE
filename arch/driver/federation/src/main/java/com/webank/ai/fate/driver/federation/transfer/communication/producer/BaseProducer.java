@@ -36,7 +36,7 @@ import javax.annotation.PostConstruct;
 import java.util.concurrent.Callable;
 
 public abstract class BaseProducer implements Callable<BasicMeta.ReturnStatus> {
-    protected static final int DEFAULT_CHUNK_SIZE = 8 << 10; // 8k
+    protected static final int DEFAULT_CHUNK_SIZE = 32 << 10; // 32k
     private static final Logger LOGGER = LogManager.getLogger();
     protected final Federation.TransferMeta transferMeta;
     protected final TransferBroker transferBroker;
@@ -67,7 +67,7 @@ public abstract class BaseProducer implements Callable<BasicMeta.ReturnStatus> {
         storageMetaClient.init(federationServerUtils.getMetaServiceEndpoint());
     }
 
-    protected void putToBroker(DataStructure.RawMap.Builder rawMapBuilder) {
+    protected synchronized void putToBroker(DataStructure.RawMap.Builder rawMapBuilder) {
         // LOGGER.warn("--- broker: {}", transferBroker);
         DataStructure.RawMap chunk = rawMapBuilder.build();
         // serialize and ready to send

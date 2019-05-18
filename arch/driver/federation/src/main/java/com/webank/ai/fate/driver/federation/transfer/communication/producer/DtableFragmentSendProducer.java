@@ -26,6 +26,7 @@ import com.webank.ai.fate.core.io.KeyValue;
 import com.webank.ai.fate.core.io.KeyValueIterator;
 import com.webank.ai.fate.core.io.KeyValueStore;
 import com.webank.ai.fate.core.model.Bytes;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.KeyValueStoreFactory;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.PrintUtils;
@@ -47,6 +48,8 @@ public class DtableFragmentSendProducer extends BaseProducer {
     private final Fragment fragment;
     @Autowired
     private PrintUtils printUtils;
+    @Autowired
+    private ToStringUtils toStringUtils;
 
     public DtableFragmentSendProducer(Fragment fragment, TransferBroker transferBroker) {
         super(transferBroker);
@@ -67,6 +70,13 @@ public class DtableFragmentSendProducer extends BaseProducer {
             throw new CrudException(301, "no such node");
         }
         KeyValueStore<Bytes, byte[]> keyValueStore = null;
+        int entryCount = 0;
+        int packetCount = 0;
+
+        Federation.TransferDataDesc dataDesc = transferMeta.getDataDesc();
+        StorageBasic.StorageLocator storageLocator = dataDesc.getStorageLocator();
+
+        String storageLocatorString = toStringUtils.toOneLineString(storageLocator);
         try {
             // todo: defaulting to kv store. need to consider redis in future release
             KeyValueStoreFactory.KeyValueStoreBuilder builder = keyValueStoreFactory.createKeyValueStoreBuilder();
@@ -78,8 +88,6 @@ public class DtableFragmentSendProducer extends BaseProducer {
             }
 
             // getting transfer data desc
-            Federation.TransferDataDesc dataDesc = transferMeta.getDataDesc();
-            StorageBasic.StorageLocator storageLocator = dataDesc.getStorageLocator();
             builder.setDataDir(RuntimeConstants.getDefaultDataDir())
                     .setHost(target)
                     .setPort(node.getPort())
@@ -93,22 +101,28 @@ public class DtableFragmentSendProducer extends BaseProducer {
 
             // reading all data out and send
             try (KeyValueIterator<Bytes, byte[]> iterator = keyValueStore.all()) {
+                LOGGER.info("[FEDERATION][PRODUCER][DTABLE] count of keyValueStore {}: {}", storageLocatorString, keyValueStore.count());
                 KeyValue<Bytes, byte[]> cur = null;
                 DataStructure.RawEntry entry = null;
                 DataStructure.RawMap.Builder rawMapBuilder = DataStructure.RawMap.newBuilder();
-                int entryCount = 0;
+
+                int serializedSize = 0;
                 while (iterator.hasNext()) {
                     cur = iterator.next();
                     entry = keyValueToRawEntrySerDes.serialize(cur);
+                    serializedSize += entry.getSerializedSize();
 
                     rawMapBuilder.addEntries(entry);
 
-                    if (++entryCount >= chunkSize) {
+                    if (serializedSize >= chunkSize) {
+                        ++packetCount;
                         putToBroker(rawMapBuilder);
+                        serializedSize = 0;
                     }
                 }
 
                 if (rawMapBuilder.getEntriesCount() > 0) {
+                    ++packetCount;
                     putToBroker(rawMapBuilder);
                 }
                 if (entryCount == 0) {
@@ -121,7 +135,7 @@ public class DtableFragmentSendProducer extends BaseProducer {
             LOGGER.info("[FEDERATION][PRODUCER][DTABLE][ERROR] Fragment send producer exception: " + errorUtils.getStackTrace(e));
             throw e;
         } finally {
-            LOGGER.info("[FEDERATION][PRODUCER][DTABLE] finish producing data for {}", fragmentString);
+            LOGGER.info("[FEDERATION][PRODUCER][DTABLE] finish producing data for {}, total entryCount: {}, packetCount: {}", storageLocatorString, entryCount, packetCount);
             if (keyValueStore != null) {
                 keyValueStore.close();
             }

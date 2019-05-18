@@ -153,7 +153,7 @@ class WorkFlow(object):
         self.save_model()
         LOGGER.debug("finish saving, self role: {}".format(self.role))
         if self.role == consts.GUEST or self.role == consts.HOST or \
-                        self.mode == consts.HOMO:
+                self.mode == consts.HOMO:
             eval_result = {}
             LOGGER.debug("predicting...")
             predict_result = self.model.predict(train_data,
@@ -694,7 +694,8 @@ class WorkFlow(object):
                         self.workflow_param.predict_input_table, self.workflow_param.predict_input_namespace
                     ))
                     predict_data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
-                                                                   self.workflow_param.predict_input_namespace)
+                                                                   self.workflow_param.predict_input_namespace,
+                                                                   mode='transform')
 
             self.train(train_data_instance, validation_data=predict_data_instance)
             self._save_pipeline()

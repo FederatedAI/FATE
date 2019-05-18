@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Scope("prototype")
 public class IterateProcessor implements Callable<OperandBroker> {
     private static final long DEFAULT_MIN_CHUNK_SIZE = 4 << 20;
-    private static final long DEFAULT_MAX_CHUNK_SIZE = 32 << 20;
+    private static final long DEFAULT_MAX_CHUNK_SIZE = 64 << 20;
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final OperandBroker result;
@@ -269,7 +269,7 @@ public class IterateProcessor implements Callable<OperandBroker> {
             while (!awaitResult) {
                 LOGGER.info("[ROLL][KV][ITERATE][PROCESSOR] waiting latch for: {}", storeInfoWithFragment);
 
-                awaitResult = result.awaitLatch(3, TimeUnit.SECONDS);
+                awaitResult = result.awaitLatch(500, TimeUnit.MILLISECONDS);
 
                 if (result.isReady() || result.isClosable()) {
                     LOGGER.info("[ROLL][KV][ITERATE][PROCESSOR] broker: {}, closable: {}, ready: {}",
