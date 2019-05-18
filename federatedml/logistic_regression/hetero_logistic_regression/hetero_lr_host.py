@@ -90,6 +90,9 @@ class HeteroLRHost(BaseLogisticRegression):
                     LOGGER.info("Get batch_index from Guest")
 
                     batch_size = batch_data_index.count()
+                    if batch_size != self.batch_size:
+                        raise ValueError("Accepted batch_size from guest is not equal to accepted data size from guest")
+
                     if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
                         raise ValueError(
                             "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
