@@ -19,6 +19,7 @@
 from federatedml.feature.binning.base_binning import Binning
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 
+
 class BucketBinning(Binning):
     """
     For bucket binning, the length of each bin is the same which is:
@@ -56,17 +57,17 @@ class BucketBinning(Binning):
         """
         self._init_cols(data_instances)
 
-        statistics = MultivariateStatisticalSummary(data_instances, cols)
-        split_points = []
-        max_list = statistics.get_max(cols)
-        min_list = statistics.get_min(cols)
+        statistics = MultivariateStatisticalSummary(data_instances, self.cols)
+        max_dict = statistics.get_max()
+        min_dict = statistics.get_min()
         n = data_instances.count()
-        for idx, max_value in enumerate(max_list):
-            min_value = min_list[idx]
+        final_split_points = {}
+        for col_name, max_value in max_dict.items():
+            min_value = min_dict.get(col_name)
             split_point = []
             L = (max_value - min_value) / n
             for k in range(self.bin_num - 1):
                 s_p = min_value + (k + 1) * L
                 split_point.append(s_p)
-            split_points.append(split_point)
-        return split_points
+            final_split_points[col_name] = split_point
+        return final_split_points

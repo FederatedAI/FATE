@@ -22,7 +22,7 @@ from arch.api import eggroll
 
 eggroll.init("123")
 
-from federatedml.feature.binning import bucket_binning
+from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.param import FeatureBinningParam
 
@@ -44,13 +44,18 @@ class TestBucketBinning(unittest.TestCase):
         table = eggroll.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
-        self.table = table
-        self.numpy_table = np.array(numpy_array)
-        self.cols = [1]
 
-    def test_quantile_binning(self):
-        bin_param = FeatureBinningParam(bin_num=self.bin_num)
-        bucket_bin = bucket_binning(bin_param)
+        header = ['x' + str(i) for i in range(self.feature_num)]
+
+        self.table = table
+        self.table.schema = {'header': header}
+
+        self.numpy_table = np.array(numpy_array)
+        self.cols = ['x1', 'x2']
+
+    def test_bucket_binning(self):
+        bin_param = FeatureBinningParam(bin_num=self.bin_num, cols=self.cols)
+        bucket_bin = BucketBinning(bin_param)
         split_points = bucket_bin.fit_split_points(self.table)
         print(split_points)
 

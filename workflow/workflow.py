@@ -254,7 +254,7 @@ class WorkFlow(object):
         # data_instance, fit_config = self.scale(data_instance)
         one_vs_rest = OneVsRest(self.model, self.role, self.mode)
         one_vs_rest.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
-        predict_result =one_vs_rest.predict(data_instance)
+        predict_result = one_vs_rest.predict(data_instance)
 
         if not predict_result:
             return None

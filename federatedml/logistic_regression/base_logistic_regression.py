@@ -82,6 +82,11 @@ class BaseLogisticRegression(object):
         return self.data_shape
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
+        LOGGER.debug("data_instances size: {}".format(data_instances.count()))
+        local_data = data_instances.collect()
+        for k, v in local_data:
+            LOGGER.debug("features: {}, coef: {}, intercept: {}".format(v.features, coef_, intercept_))
+
         return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
 
     def set_flowid(self, flowid=0):

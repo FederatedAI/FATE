@@ -30,12 +30,11 @@ from federatedml.param.param import UniqueValueParam
 class TestFeatureSelect(unittest.TestCase):
     def setUp(self):
         param = UniqueValueParam()
-        self.filter_obj = UniqueValueFilter(param, select_cols=[0, 1])
-        self.filter_obj.left_cols = [0, 1]
+        self.filter_obj = UniqueValueFilter(param, cols=-1)
+        # self.filter_obj.left_cols = [0, 1]
 
     def test_protobuf(self):
-        result = self.filter_obj.to_result()
-        print(result)
+        pass
 
 
 if __name__ == '__main__':

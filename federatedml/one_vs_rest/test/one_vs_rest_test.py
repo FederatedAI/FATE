@@ -4,6 +4,7 @@ import unittest
 import random
 from arch.api import eggroll
 from federatedml.feature.instance import Instance
+from federatedml.util import consts
 import time
 
 
@@ -26,7 +27,7 @@ class TestOneVsRest(unittest.TestCase):
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
         self.data_instances = self.data_to_eggroll_table(self.data, str_time)
 
-        self.one_vs_rest_obj = OneVsRest("test")
+        self.one_vs_rest_obj = OneVsRest("test", role=consts.GUEST, mode=consts.HETERO)
 
     def data_to_eggroll_table(self, data, jobid, partition=10, work_mode=1):
         eggroll.init(jobid, mode=work_mode)

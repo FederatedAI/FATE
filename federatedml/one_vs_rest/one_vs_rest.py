@@ -7,9 +7,9 @@ from arch.api.model_manager import manager as model_manager
 from arch.api.proto import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
+from federatedml.param.param import PredictParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import OneVsRestTransferVariable
-from federatedml.param.param import PredictParam
 
 LOGGER = log_utils.getLogger()
 
@@ -96,7 +96,7 @@ class OneVsRest(object):
         else:
             raise ValueError("Unknown role:{}".format(self.role))
 
-    def __synchronize_classes_list__synchronize_classes_list(self):
+    def __synchronize_classes_list(self):
         if self.mode == consts.HOMO:
             if self.role == consts.GUEST:
                 host_classes_list = federation.get(name=self.transfer_variable.host_classes.name,
@@ -117,7 +117,8 @@ class OneVsRest(object):
         self.__synchronize_aggregate_classed_list()
 
     def fit(self, data_instances=None):
-        if (self.mode == consts.HOMO and self.role != consts.ARBITER) or (self.mode == consts.HETERO and self.role == consts.GUEST):
+        if (self.mode == consts.HOMO and self.role != consts.ARBITER) or (
+                self.mode == consts.HETERO and self.role == consts.GUEST):
             LOGGER.info("mode is {}, role is {}, start to get data classes".format(self.mode, self.role))
             self.classes = self.__get_data_classes(data_instances)
             self.need_mask_label = True
@@ -131,7 +132,7 @@ class OneVsRest(object):
 
         for flow_id, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with flow_id:{}, label:{}".format(flow_id, label))
-            classifier = copy.copy(self.classifier)
+            classifier = copy.deepcopy(self.classifier)
             classifier.set_flowid("train_" + str(flow_id))
             if self.need_mask_label:
                 header = data_instances.schema.get("header")
@@ -147,6 +148,7 @@ class OneVsRest(object):
 
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(flow_id))
+            LOGGER.debug("in fit: role: {}, flow_id: {}, model weight: {}".format(self.role, flow_id, classifier.coef_))
 
     @staticmethod
     def __get_multi_class_res(instance):
@@ -165,11 +167,21 @@ class OneVsRest(object):
         return list_obj
 
     def predict(self, data_instances):
+        # if self.mode == consts.HOMO and self.role == consts.HOST:
+        #     LOGGER.info("Cannot provide one vs rest for host homo-lr.")
+        #     return
+
+        if data_instances is None:
+            LOGGER.info("Predict data is None")
+            return
+
         prob = None
         for i, model in enumerate(self.models):
             LOGGER.info("Start to predict with model:{}".format(i))
             predict_param = PredictParam()
             model.set_flowid("predict_" + str(i))
+            LOGGER.debug("in predict: role: {}, flow_id: {}, model weight: {}".format(self.role, i, model.coef_))
+
             predict_res = model.predict(data_instances, predict_param)
             if predict_res:
                 if not prob:
@@ -185,8 +197,6 @@ class OneVsRest(object):
             f = functools.partial(self.__get_multi_class_res)
             multi_classes_res = prob.mapValues(f)
 
-
-
         LOGGER.info("finish OneVsRest Predict, return predict results.")
 
         return multi_classes_res
@@ -198,12 +208,15 @@ class OneVsRest(object):
             classifier_name = str_time + "_" + str(i) + "_" + self.role + "_name"
             classifier_namespace = str_time + "_" + str(i) + "_" + self.role + "_namespace"
 
-            model.save_model(name, namespace)
-            classifier_model = one_vs_rest_param_pb2.ClassifierModel(name=classifier_name, namespace=classifier_namespace)
+            # model.save_model(name, namespace)
+            model.save_model(classifier_name, classifier_namespace)
+
+            classifier_model = one_vs_rest_param_pb2.ClassifierModel(name=classifier_name,
+                                                                     namespace=classifier_namespace)
             classifier_models.append(classifier_model)
             LOGGER.debug("finish save model_{}, role:{}".format(i, self.role))
 
-        str_classes = [ str(c) for c in self.classes]
+        str_classes = [str(c) for c in self.classes]
         one_vs_rest_param_obj = one_vs_rest_param_pb2.OneVsRestParam(classes=str_classes,
                                                                      classifier_models=classifier_models)
 
@@ -233,13 +246,12 @@ class OneVsRest(object):
 
         self.models = []
         for i, classifier_model in enumerate(model_obj.classifier_models):
-            classifier = copy.copy(self.classifier)
+            classifier = copy.deepcopy(self.classifier)
             classifier.load_model(classifier_model.name, classifier_model.namespace)
             self.models.append(classifier)
             LOGGER.info("finish load model_{}, classes is {}".format(i, model_obj.classes[i]))
 
         LOGGER.info("finish load OneVsRest model.")
-
 
     def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
         # predict_res = None

@@ -52,6 +52,6 @@
         "display_result": ["iv"]
     },
     "OneHotEncoderParam": {
-        "cols": ["test_col"]
+        "cols": ["fid20"]
     }
 }
