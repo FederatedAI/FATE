@@ -47,6 +47,7 @@
 
 > EggRoll
 *  Add Node Manager for multiprocessor to improve distributed computing performance
+*  Add C++ overwrite storage service
 *  Add eggroll cleanup API
 
 > Deploy 
