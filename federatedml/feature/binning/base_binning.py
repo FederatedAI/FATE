@@ -211,8 +211,7 @@ class Binning(object):
 
         if split_points is None:
             split_points = self.fit_split_points(data_instances)
-        LOGGER.debug("cal_local_iv data header: {}".format(data_instances.schema))
-        LOGGER.debug("split points: {}".format(split_points))
+
         data_bin_table = self.transform(data_instances, split_points)
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
@@ -302,9 +301,7 @@ class Binning(object):
         for event_sum, non_event_sum in data_event_count:
             event_total += event_sum
             non_event_total += non_event_sum
-        # LOGGER.debug("In woe_1d func, data_event_count is {}, event_total: {}, non_event_total: {}".format(
-        #     data_event_count, event_total, non_event_total
-        # ))
+
         if event_total == 0:
             raise ValueError("NO event label in target data")
         if non_event_total == 0:
@@ -422,9 +419,7 @@ class Binning(object):
         for _, datas in data_bin_with_table:
             bin_idx_dict = datas[0]
             y_combo = datas[1]
-            # LOGGER.debug("In data_bin_with_table loop, bin_idxs: {}, y: {}, inverse_y: {}".format(
-            #     bin_idxs, y_combo[0], y_combo[1]
-            # ))
+
             y = y_combo[0]
             inverse_y = y_combo[1]
             for col_name, bin_idx in bin_idx_dict.items():

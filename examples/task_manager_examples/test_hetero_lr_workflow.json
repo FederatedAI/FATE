@@ -74,7 +74,7 @@
             "need_sample": false,
             "need_feature_selection": false,
             "need_intersect": true,
-            "need_one_hot": true,
+            "need_one_hot": false,
             "n_splits": 5
         },
         "IntersectParam": {

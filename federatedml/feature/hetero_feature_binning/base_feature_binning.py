@@ -172,18 +172,6 @@ class BaseHeteroFeatureBinning(object):
         self.flowid = flowid
         self.transfer_variable.set_flowid(self.flowid)
 
-    # def reset(self, params, flowid):
-    #     self.bin_param = params
-    #     if self.bin_param.method == consts.QUANTILE:
-    #         self.binning_obj = QuantileBinning(self.bin_param)
-    #     else:
-    #
-    #         self.binning_obj = QuantileBinning(self.bin_param)
-    #     self.cols = params.cols
-    #
-    #     # self.flowid += flowid_postfix
-    #     self.set_flowid(flowid)
-
     def _parse_cols(self, data_instances):
         if self.header is not None and len(self.header) != 0:
             return

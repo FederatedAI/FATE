@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import functools
-
-import numpy as np
-
-from arch.api.model_manager import manager as model_manager
-from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
-from arch.api.utils import log_utils
-#
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +13,14 @@ from arch.api.utils import log_utils
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+import functools
+
+import numpy as np
+
+from arch.api.model_manager import manager as model_manager
+from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
+from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 
 LOGGER = log_utils.getLogger()

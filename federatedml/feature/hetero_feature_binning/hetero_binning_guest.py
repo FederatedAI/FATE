@@ -140,7 +140,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def transform_local(self, data_instances, label_table=None, save_result=True):
         self._abnormal_detection(data_instances)
         self._parse_cols(data_instances)
-        LOGGER.debug("transform local, data header: {}".format(data_instances.schema))
         split_points = {}
         for col_name, iv_attr in self.binning_result.items():
             split_points[col_name] = iv_attr.split_points
@@ -162,7 +161,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def __synchronize_encryption(self):
         pub_key = self.encryptor.get_public_key()
         pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
-        # LOGGER.debug("pubkey_id is : {}".format(pubkey_id))
 
         federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
                           tag=pubkey_id, role=consts.HOST, idx=0)
@@ -195,7 +193,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     @staticmethod
     def load_data(data_instance):
         # Here suppose this is a binary question and the event label is 1
-        # LOGGER.debug('label type is {}'.format(type(data_instance.label)))
         if data_instance.label != 1:
             data_instance.label = 0
         return data_instance
