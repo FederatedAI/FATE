@@ -65,7 +65,7 @@ class PaillierPublicKey(object):
 
     def __hash__(self):
         return hash(self.n)
-    
+
     def apply_obfuscator(self, ciphertext, random_value=None):
         """ 
         """
@@ -73,7 +73,7 @@ class PaillierPublicKey(object):
         obfuscator = gmpy_math.powmod(r, self.n, self.nsquare)
 
         return (ciphertext * obfuscator) % self.nsquare
-    
+   
     def raw_encrypt(self, plaintext, random_value=None):
         """
         """
@@ -92,11 +92,11 @@ class PaillierPublicKey(object):
         ciphertext = self.apply_obfuscator(ciphertext, random_value)
         
         return ciphertext
-      
+    
     def encrypt(self, value, precision=None, random_value=None):
         """Encode and Paillier encrypt a real number value.
         """
-        encoding = FixedPointNumber.encode(self.n, self.max_int, value, precision)        
+        encoding = FixedPointNumber.encode(value, self.n, self.max_int, precision)        
         obfuscator = random_value or 1
         ciphertext = self.raw_encrypt(encoding.encoding, random_value=obfuscator)
         encryptednumber = PaillierEncryptedNumber(self, ciphertext, encoding.exponent)
@@ -137,19 +137,19 @@ class PaillierPrivateKey(object):
         hashcode = hex(hash(self))[2:]
         
         return "<PaillierPrivateKey {}>".format(hashcode[:10]) 
-    
+   
     def h_func(self, x, xsquare):
         """Computes the h-function as defined in Paillier's paper page.
         """
         return gmpy_math.invert(self.l_func(gmpy_math.powmod(self.public_key.g, 
                                                                  x - 1, xsquare), x), x)
-
+   
     def l_func(self, x, p):
         """computes the L function as defined in Paillier's paper.
         """
         
         return (x - 1) // p
-
+    
     def crt(self, mp, mq):
         """the Chinese Remainder Theorem as needed for decryption. 
            return the solution modulo n=pq.
@@ -158,7 +158,7 @@ class PaillierPrivateKey(object):
         x = (mq + (u * self.q)) % self.public_key.n
         
         return x
-    
+
     def raw_decrypt(self, ciphertext):
         """return raw plaintext.
         """
@@ -175,7 +175,7 @@ class PaillierPrivateKey(object):
                                               self.q) * self.hq % self.q
         
         return self.crt(mp, mq)
-
+   
     def decrypt(self, encrypted_number):
         """return the decrypted & decoded plaintext of encrypted_number.
         """        
@@ -187,8 +187,10 @@ class PaillierPrivateKey(object):
             raise ValueError("encrypted_number was encrypted against a different key!")
 
         encoded = self.raw_decrypt(encrypted_number.ciphertext(be_secure=False))
-        encoded = FixedPointNumber(self.public_key.n, encoded,
-                             encrypted_number.exponent)
+        encoded = FixedPointNumber(encoded,
+                             encrypted_number.exponent,
+                             self.public_key.n, 
+                             self.public_key.max_int)
         decrypt_value = encoded.decode()
         
         return decrypt_value
@@ -208,7 +210,7 @@ class PaillierEncryptedNumber(object):
         
         if not isinstance(self.public_key, PaillierPublicKey):
             raise TypeError("public_key should be a PaillierPublicKey, not: %s" % type(self.public_key)) 
-    
+
     def ciphertext(self, be_secure=True):
         """return the ciphertext of the PaillierEncryptedNumber.
         """
@@ -222,7 +224,7 @@ class PaillierEncryptedNumber(object):
         """        
         self.__ciphertext = self.public_key.apply_obfuscator(self.__ciphertext)
         self.__is_obfuscator = True
-       
+  
     def __add__(self, other):       
         if isinstance(other, PaillierEncryptedNumber):
             return self.__add_encryptednumber(other)
@@ -231,7 +233,7 @@ class PaillierEncryptedNumber(object):
 
     def __radd__(self, other):        
         return self.__add__(other)
-    
+
     def __sub__(self, other):
         return self + (other * -1)
 
@@ -248,7 +250,7 @@ class PaillierEncryptedNumber(object):
         """return Multiply by an scalar(such as int, float)
         """
                 
-        encode = FixedPointNumber.encode(self.public_key.n, self.public_key.max_int, scalar)
+        encode = FixedPointNumber.encode(scalar, self.public_key.n, self.public_key.max_int)
         plaintext = encode.encoding
         
         if plaintext < 0 or plaintext >= self.public_key.n:
@@ -292,9 +294,9 @@ class PaillierEncryptedNumber(object):
     def __add_scalar(self, scalar):
         """return PaillierEncryptedNumber: z = E(x) + y
         """
-        encoded = FixedPointNumber.encode(self.public_key.n, 
-                                          self.public_key.max_int,
-                                          scalar, 
+        encoded = FixedPointNumber.encode(scalar, 
+                                          self.public_key.n, 
+                                          self.public_key.max_int,                                          
                                           max_exponent=self.exponent)
 
         return self.__add_fixpointnumber(encoded)     
@@ -333,6 +335,4 @@ class PaillierEncryptedNumber(object):
         
         return PaillierEncryptedNumber(self.public_key, ciphertext, exponent)
 
-
-        
         
