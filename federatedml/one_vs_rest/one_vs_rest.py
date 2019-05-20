@@ -34,7 +34,6 @@ class OneVsRest(object):
         self.classifier = classifier
         self.transfer_variable = OneVsRestTransferVariable()
 
-        self.num_classes = None
         self.classes = None
         self.role = role
         self.mode = mode
@@ -69,10 +68,9 @@ class OneVsRest(object):
         return classes
 
     @staticmethod
-    def __get_multi_class_res(instance):
+    def __get_multi_class_res(instance, classes):
         """
-        return max_prob and max_prob_index where max_prob is the max probably in input instance
-        and max_prob_index is th index of it
+        return max_prob and its class where max_prob is the max probably in input instance
         """
         max_prob = -1
         max_prob_index = -1
@@ -81,7 +79,7 @@ class OneVsRest(object):
                 max_prob = prob
                 max_prob_index = i
 
-        return max_prob, max_prob_index
+        return max_prob, classes[max_prob_index]
 
     @staticmethod
     def __append(list_obj, value):
@@ -192,7 +190,6 @@ class OneVsRest(object):
         self.__synchronize_classes_list()
 
         LOGGER.info("Total classes:{}".format(self.classes))
-        self.num_classes = len(self.classes)
 
         for flow_id, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with flow_id:{}, label:{}".format(flow_id, label))
@@ -241,7 +238,7 @@ class OneVsRest(object):
 
         predict_res = None
         if prob:
-            f = functools.partial(self.__get_multi_class_res)
+            f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
             multi_classes_res = prob.mapValues(f)
             predict_res = data_instances.join(multi_classes_res, lambda d, m: (d.label, m[0], m[1]))
 
@@ -299,6 +296,10 @@ class OneVsRest(object):
             classifier.load_model(classifier_model.name, classifier_model.namespace)
             self.models.append(classifier)
             LOGGER.info("finish load model_{}, classes is {}".format(i, model_obj.classes[i]))
+
+        self.classes = []
+        for model_class in model_obj.classes:
+            self.classes.append(model_class)
 
         LOGGER.info("finish load OneVsRest model.")
 

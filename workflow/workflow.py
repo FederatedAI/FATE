@@ -213,7 +213,7 @@ class WorkFlow(object):
         # data_instance, fit_config = self.scale(data_instance)
         one_vs_rest = OneVsRest(self.model, self.role, self.mode)
         one_vs_rest.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
-        predict_result =one_vs_rest.predict(data_instance)
+        predict_result = one_vs_rest.predict(data_instance)
 
         if not predict_result:
             return None
@@ -618,7 +618,6 @@ class WorkFlow(object):
 
     # def evaluate_multi_class(self, eval_data):
 
-
     def evaluate(self, eval_data):
         if eval_data is None:
             LOGGER.info("not eval_data!")
@@ -756,6 +755,13 @@ class WorkFlow(object):
             data_instance = self.gen_data_instance(self.workflow_param.predict_input_table,
                                                    self.workflow_param.predict_input_namespace,
                                                    mode='transform')
+
+            if self.workflow_param.one_vs_rest:
+                one_vs_rest_param = OneVsRestParam()
+                self.one_vs_rest_param = ParamExtract.parse_param_from_config(one_vs_rest_param, self.config_path)
+                one_vs_rest = OneVsRest(self.model, self.role, self.mode, self.one_vs_rest_param)
+                self.model = one_vs_rest
+
             self.load_model()
             self.predict(data_instance)
 
