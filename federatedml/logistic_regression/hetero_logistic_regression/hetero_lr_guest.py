@@ -43,6 +43,15 @@ class HeteroLRGuest(BaseLogisticRegression):
         self.guest_forward = None
 
     def compute_forward(self, data_instances, coef_, intercept_):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
         self.wx = self.compute_wx(data_instances, coef_, intercept_)
         
         en_wx = self.encrypted_calculator.encrypt(self.wx)
@@ -53,17 +62,42 @@ class HeteroLRGuest(BaseLogisticRegression):
         self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx:(e[0], e[1], wx))
 
     def aggregate_forward(self, host_forward):
+        """
+        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h , where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
+        and en_wx_h is the encrypted W * X + b of host.
+        Parameters
+        ----------
+        host_forward: DTable, include encrypted W * X and (W * X)^2
+
+        Returns
+        ----------
+        aggregate_forward_res
+        list
+            include W * X and (W * X)^2 federate with guest and host
+        """
         aggregate_forward_res = self.guest_forward.join(host_forward,
                                                         lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
         return aggregate_forward_res
 
     @staticmethod
     def load_data(data_instance):
+        """
+        set the negative label to -1
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         if data_instance.label != 1:
             data_instance.label = -1
         return data_instance
 
     def fit(self, data_instances):
+        """
+        Train lr model of role guest
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
 
@@ -244,6 +278,18 @@ class HeteroLRGuest(BaseLogisticRegression):
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param):
+        """
+        Prediction of lr
+        Parameters
+        ----------
+        data_instance:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction.
+
+        Returns
+        ----------
+        DTable
+            include input data label, predict probably, label
+        """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)

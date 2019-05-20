@@ -37,6 +37,15 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_index_list = []
 
     def compute_forward(self, data_instances, coef_, intercept_):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
         wx = self.compute_wx(data_instances, coef_, intercept_)
 
         en_wx = self.encrypted_calculator.encrypt(wx)
@@ -48,6 +57,12 @@ class HeteroLRHost(BaseLogisticRegression):
         return host_forward
 
     def fit(self, data_instances):
+        """
+        Train lr model of role host
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         LOGGER.info("Enter hetero_lr host")
         self._abnormal_detection(data_instances)
 
@@ -203,6 +218,13 @@ class HeteroLRHost(BaseLogisticRegression):
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param=None):
+        """
+        Prediction of lr
+        Parameters
+        ----------
+        data_instance:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction. Host may not have predict_param
+        """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)

@@ -67,6 +67,27 @@ class Evaluation(object):
         ]
 
     def report(self, labels, pred_scores, metrics, thresholds=None, pos_label=None):
+        """
+        Define the report of each evaluation method in metrics.
+
+        Parameters
+        ----------
+        labels : value list. The labels of data set.
+        pred_scores : value list. The predict results of model. It should be corresponding to labels each data.
+        metrics: str list. It includes one or several evaluations methods you want. The evaluation method include "auc", "ks", "lift",
+                "precision", "recall", "accuracy", "explained_variance", "mean_absolute_error", "mean_squared_log_error",
+                "median_absolute_error", "r2_score", "root_mean_squared_error".
+        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
+                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
+        pos_label: The same as DataIO label type. This parameter effective only for 'binary'. If input label in parameter labels is pos_label, it will be
+                    set to 1, and set to 0 if not. If pos_label is None, do nothing to labels. Default None
+
+        Returns
+        ----------
+        dict
+            The key of return is element in metrics and the value is evaluation result. For instance, if metrics is ["auc", "precision"], thresholds is [0.5, 0.7],
+            the return is { 'auc': 0.81, 'precision': [ (0.5, 0.77), (0.7, 0.66) ] }. (0.81, 0.77, 0.66 are examples)
+        """
         if metrics is None:
             LOGGER.warning("Not metrics can be found in evaluation, return None")
             return None
@@ -120,6 +141,9 @@ class Evaluation(object):
         return eval_res
 
     def __evaluation_format_translate(self, results, thresholds, eval_type):
+        """
+        Transform evaluation result's format for output
+        """
         if isinstance(results, float):
             return np.around(results, 4)
         else:
@@ -148,6 +172,19 @@ class Evaluation(object):
             return evaluation_format
 
     def auc(self, labels, pred_scores):
+        """
+        Compute AUC for binary classification.
+
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+
+        Returns
+        ----------
+        float
+            The AUC
+        """
         if self.eval_type == consts.BINARY:
             return roc_auc_score(labels, pred_scores)
         else:
@@ -155,27 +192,116 @@ class Evaluation(object):
             return None
 
     def explain_variance(self, labels, pred_scores):
+        """
+        Compute explain variance
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+
+        Returns
+        ----------
+        float
+            The explain variance
+        """
         return explained_variance_score(labels, pred_scores)
 
     def mean_absolute_error(self, labels, pred_scores):
+        """
+        Compute mean absolute error
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            A non-negative floating point.
+        """
         return mean_absolute_error(labels, pred_scores)
 
     def mean_squared_error(self, labels, pred_scores):
+        """
+        Compute mean square error
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            A non-negative floating point value
+        """
         return mean_squared_error(labels, pred_scores)
 
     def mean_squared_log_error(self, labels, pred_scores):
+        """
+        Compute mean squared logarithmic error
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            A non-negative floating point value
+        """
         return mean_squared_log_error(labels, pred_scores)
 
     def median_absolute_error(self, labels, pred_scores):
+        """
+        Compute median absolute error
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            A positive floating point value
+        """
         return median_absolute_error(labels, pred_scores)
 
     def r2_score(self, labels, pred_scores):
+        """
+        Compute R^2 (coefficient of determination) score
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            The R^2 score
+        """
         return r2_score(labels, pred_scores)
 
     def root_mean_squared_error(self, labels, pred_scores):
+        """
+        Compute the root of mean square error
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Return
+        ----------
+        float
+            A positive floating point value
+        """
         return np.sqrt(mean_squared_error(labels, pred_scores))
 
     def ks(self, labels, pred_scores):
+        """
+        Compute Kolmogorov-Smirnov
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        Returns
+        ----------
+        float
+            A positive floating point value
+        """
         if self.eval_type == consts.BINARY:
             fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=0)
             return max(tpr - fpr)
@@ -183,7 +309,20 @@ class Evaluation(object):
             LOGGER.warning("ks is just suppose Binary Classification! return None as results")
             return None
 
-    def lift(self, labels, pred_scores_one_hot, thresholds=None):
+    def lift(self, labels, pred_scores, thresholds=None):
+        """
+        Compute lift of binary classification.
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
+                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
+        Returns
+        ----------
+        float
+            The lift
+        """
         if thresholds is None:
             thresholds = self.thresholds
 
@@ -192,12 +331,26 @@ class Evaluation(object):
 
         if self.eval_type == consts.BINARY:
             lift_operator = Lift()
-            return lift_operator.compute(labels, pred_scores_one_hot, thresholds=thresholds)
+            return lift_operator.compute(labels, pred_scores, thresholds=thresholds)
         else:
             LOGGER.warning("lift is just suppose Binary Classification! return None as results")
             return None
 
     def precision(self, labels, pred_scores, thresholds=None, result_filter=None):
+        """
+        Compute the precision
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
+                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
+        result_filter: value list. If result_filter is not None, it will filter the label results not in result_filter.
+        Returns
+        ----------
+        dict
+            The key is threshold and the value is another dic, which key is label in parameter labels, and value is the label's precision.
+        """
         if thresholds is None:
             thresholds = self.thresholds
 
@@ -214,6 +367,20 @@ class Evaluation(object):
             LOGGER.warning("error:can not find classification type:{}".format(self.eval_type))
 
     def recall(self, labels, pred_scores, thresholds=None, result_filter=None):
+        """
+        Compute the recall
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
+                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
+        result_filter: value list. If result_filter is not None, it will filter the label results not in result_filter.
+        Returns
+        ----------
+        dict
+            The key is threshold and the value is another dic, which key is label in parameter labels, and value is the label's recall.
+        """
         if thresholds is None:
             thresholds = self.thresholds
 
@@ -230,6 +397,20 @@ class Evaluation(object):
             LOGGER.warning("error:can not find classification type:{}".format(self.eval_type))
 
     def accuracy(self, labels, pred_scores, thresholds=None, normalize=True):
+        """
+        Compute the accuracy
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
+                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
+        normalize: bool. If true, return the fraction of correctly classified samples, else returns the number of correctly classified samples
+        Returns
+        ----------
+        dict
+            the key is threshold and the value is the accuracy of this threshold.
+        """
         if thresholds is None:
             thresholds = self.thresholds
 
@@ -247,6 +428,9 @@ class Evaluation(object):
 
 
 class Lift(object):
+    """
+    Compute lift
+    """
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
@@ -289,6 +473,9 @@ class Lift(object):
 
 
 class BiClassPrecision(object):
+    """
+    Compute binary classification precision
+    """
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
@@ -312,6 +499,9 @@ class BiClassPrecision(object):
 
 
 class MultiClassPrecision(object):
+    """
+    Compute multi-classification precision
+    """
     def compute(self, labels, pred_scores, result_filter):
         scores = precision_score(labels, pred_scores, average=None)
 
@@ -349,6 +539,9 @@ class MultiClassPrecision(object):
 
 
 class BiClassRecall(object):
+    """
+    Compute binary classification recall
+    """
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
@@ -373,6 +566,9 @@ class BiClassRecall(object):
 
 
 class MultiClassRecall(object):
+    """
+    Compute multi-classification recall
+    """
     def compute(self, labels, pred_scores, result_filter=None):
         scores = recall_score(labels, pred_scores, average=None)
 
@@ -411,6 +607,9 @@ class MultiClassRecall(object):
 
 
 class BiClassAccuracy(object):
+    """
+    Compute binary classification accuracy
+    """
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
@@ -434,5 +633,8 @@ class BiClassAccuracy(object):
 
 
 class MultiClassAccuracy(object):
+    """
+    Compute multi-classification accuracy
+    """
     def compute(self, labels, pred_scores, normalize=True):
         return accuracy_score(labels, pred_scores, normalize)

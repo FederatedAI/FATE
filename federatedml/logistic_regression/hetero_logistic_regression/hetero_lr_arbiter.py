@@ -61,6 +61,12 @@ class HeteroLRArbiter(BaseLogisticRegression):
         pass
 
     def fit(self, data_instance=None):
+        """
+        Train lr model of role arbiter
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         LOGGER.info("Enter hetero_lr_arbiter fit")
         if data_instance:
             self.header = data_instance.schema.get('header')
