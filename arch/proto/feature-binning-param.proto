@@ -20,21 +20,31 @@ package com.webank.ai.fate.common.mlmodel.buffer;
 option java_outer_classname = "FeatureBinningParamProto";
 
 
+//message SplitPointList {
+//    repeated double split_points = 1;
+//}
+
 message IVParam {
     repeated double woe_array = 1;
     repeated double iv_array = 2;
     repeated int64 event_count_array = 3;
     repeated int64 non_event_count_array = 4;
     repeated double event_rate_array = 5;
-    repeated float non_event_rate_array = 6;
+    repeated double non_event_rate_array = 6;
+//    map<string, SplitPointList> split_points = 7;
     repeated double split_points = 7;
     double iv = 8;
     bool is_woe_monotonic = 9;
     int64 bin_nums = 10;
 }
 
-message FeatureBinningParam{
-    repeated IVParam iv_result = 1;
-    repeated IVParam host_iv_result = 2;
-    repeated int64 cols = 3;
+message FeatureBinningResult {
+    map<string, IVParam> binning_result = 1;
+}
+
+
+message FeatureBinningParam {
+    FeatureBinningResult binning_result = 1;
+    map<string, FeatureBinningResult> host_results = 2;
+
 }

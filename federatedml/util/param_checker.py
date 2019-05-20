@@ -399,7 +399,7 @@ class WorkFlowParamChecker(object):
 
         workflow_param.method = check_and_change_lower(workflow_param.method,
                                                        ['train', 'predict', 'cross_validation',
-                                                        'intersect', 'binning', 'feature_select'],
+                                                        'intersect', 'binning', 'feature_select', 'one_vs_rest_train', "one_vs_rest_predict"],
                                                        descr)
 
         if workflow_param.method in ['train', 'binning', 'feature_select']:
@@ -643,8 +643,9 @@ class FeatureBinningParamChecker(object):
         check_positive_integer(binning_param.bin_num, descr)
         check_defined_type(binning_param.cols, descr, ['list', 'int', 'RepeatedScalarContainer'])
         check_open_unit_interval(binning_param.adjustment_factor, descr)
-        check_string(binning_param.result_table, descr)
-        check_string(binning_param.result_namespace, descr)
+        # check_string(binning_param.meta_table, descr)
+        # check_string(binning_param.param_table, descr)
+        # check_string(binning_param.result_namespace, descr)
         check_defined_type(binning_param.display_result, descr, ['list'])
         for idx, d_s in enumerate(binning_param.display_result):
             binning_param.display_result[idx] = check_and_change_lower(d_s,
@@ -670,11 +671,12 @@ class FeatureSelectionParamChecker(object):
             raise ValueError("Two iv methods should not exist at the same time.")
 
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
-        check_string(feature_param.result_table, descr)
-        check_string(feature_param.result_namespace, descr)
+        # check_string(feature_param.result_table, descr)
+        # check_string(feature_param.result_namespace, descr)
         check_boolean(feature_param.local_only, descr)
         UniqueValueParamChecker.check_param(feature_param.unique_param)
-        IVSelectionParamChecker.check_param(feature_param.iv_param)
+        IVValueSelectionParamChecker.check_param(feature_param.iv_value_param)
+        IVPercentileSelectionParamChecker.check_param(feature_param.iv_percentile_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
         FeatureBinningParamChecker.check_param(feature_param.bin_param)
@@ -689,13 +691,19 @@ class UniqueValueParamChecker(object):
         return True
 
 
-class IVSelectionParamChecker(object):
+class IVValueSelectionParamChecker(object):
     @staticmethod
     def check_param(feature_param):
         descr = "IV selection param's"
         check_positive_number(feature_param.value_threshold, descr)
+        return True
+
+
+class IVPercentileSelectionParamChecker(object):
+    @staticmethod
+    def check_param(feature_param):
+        descr = "IV selection param's"
         check_decimal_float(feature_param.percentile_threshold, descr)
-        FeatureBinningParamChecker.check_param(feature_param.bin_param)
         return True
 
 
@@ -713,6 +721,14 @@ class OutlierColsSelectionParamChecker(object):
         descr = "Outlier Filter param's"
         check_decimal_float(feature_param.percentile, descr)
         check_defined_type(feature_param.upper_threshold, descr, ['float', 'int'])
+        return True
+
+
+class OneHotEncoderParamChecker(object):
+    @staticmethod
+    def check_param(param):
+        descr = "One-hot encoder param's"
+        check_defined_type(param.cols, descr, ['list', 'int'])
         return True
 
 

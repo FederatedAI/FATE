@@ -28,7 +28,8 @@
         "train_input_namespace": "example_data_namespace",
         "work_mode": "TO SET",
         "model_table": "feature_binning_host_table",
-        "model_namespace": "example_data_namespace"
+        "model_namespace": "example_data_namespace",
+        "need_one_hot": true
         },
 
     "EncryptParam": {
@@ -49,5 +50,8 @@
         "result_table": "feature_binning_host_table",
         "result_namespace": "example_data_namespace",
         "display_result": ["iv"]
+    },
+    "OneHotEncoderParam": {
+        "cols": ["fid20"]
     }
 }

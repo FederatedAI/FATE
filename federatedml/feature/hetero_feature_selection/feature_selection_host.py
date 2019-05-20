@@ -20,10 +20,7 @@ from arch.api import federation
 from arch.api.proto import feature_selection_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
-from federatedml.feature.feature_selection import FeatureSelection
-from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
-from federatedml.statistic.data_overview import get_features_shape
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -33,160 +30,121 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
     def __init__(self, params):
         super(HeteroFeatureSelectionHost, self).__init__(params)
 
-        self.left_cols = None
-
-        self.feature_selection_method = FeatureSelection(self.params)
-
-        self.bin_param = self.params.bin_param
         self.static_obj = None
         self.iv_attrs = None
         self.fit_iv = False
-        self.receive_times = 0
         self.binning_obj = None
         self.results = []
         self.header = []
         self.flowid = ''
+        self.party_name = consts.HOST
 
     def fit(self, data_instances):
         self._abnormal_detection(data_instances)
-
-        self._parse_cols(data_instances)
-        self.left_cols = self.cols.copy()
-
+        self._init_cols(data_instances)
+        LOGGER.debug("host data count: {}, host header: {}".format(data_instances.count(), self.header))
         for method in self.filter_method:
             self.filter_one_method(data_instances, method)
-            if len(self.left_cols) == 0:
-                LOGGER.warning("After filter methods, none of feature left. Please check your filter parameters")
-                break
+            self._renew_left_col_names()
+
+        new_data = self._transfer_data(data_instances)
+        self._reset_header()
+        new_data.schema['header'] = self.header
+        return data_instances
 
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
 
-        self._parse_cols(data_instances)
-
-        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+        self._init_cols(data_instances)
         new_data = self._transfer_data(data_instances)
+        self._reset_header()
         new_data.schema['header'] = self.header
+
         return new_data
 
-    def fit_transform(self, data_instances):
+    def fit_without_transform(self, data_instances):
+
         self._abnormal_detection(data_instances)
 
-        self._parse_cols(data_instances)
+        self._init_cols(data_instances)
 
-        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-        self.fit(data_instances)
-        new_data = self.transform(data_instances)
-        new_data.schema['header'] = self.header
-        return new_data
+        for method in self.filter_method:
+            self.filter_one_method(data_instances, method)
+            self._renew_left_col_names()
 
-    def fit_local(self, data_instances):
-        self._abnormal_detection(data_instances)
-
-        self._parse_cols(data_instances)
-
-        feature_selection_obj = FeatureSelection(self.params)
-        self.left_cols = feature_selection_obj.filter(data_instances)
-        if self.cols == -1:
-            self.cols = feature_selection_obj.select_cols
-
-        self.left_cols = feature_selection_obj.filter(data_instances)
-        self.results = feature_selection_obj.results
-
-    def fit_local_transform(self, data_instances):
-        self._abnormal_detection(data_instances)
-
-        self._parse_cols(data_instances)
-
-        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-        self.fit_local(data_instances)
-        new_data = self.transform(data_instances)
-        new_data.schema['header'] = self.header
-        return new_data
+        data_instances.schema['header'] = self.header
+        return data_instances
 
     def filter_one_method(self, data_instances, method):
 
         if method == consts.IV_VALUE_THRES:
-            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_value')
-            self._send_iv_threshold()
-            self._received_result_cols(method=consts.IV_VALUE_THRES)
+            self._send_select_cols(consts.IV_VALUE_THRES)
+            self._received_result_cols(filter_name=consts.IV_VALUE_THRES)
             LOGGER.info("Finish iv value threshold filter. Current left cols are: {}".format(self.left_cols))
 
         if method == consts.IV_PERCENTILE:
-            self._calculates_iv_attrs(data_instances, flowid_postfix='iv_percentile')
-            self._received_result_cols(method=consts.IV_PERCENTILE)
+            self._send_select_cols(consts.IV_PERCENTILE)
+            self._received_result_cols(filter_name=consts.IV_PERCENTILE)
             LOGGER.info("Finish iv percentile filter. Current left cols are: {}".format(self.left_cols))
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             coe_param = self.params.coe_param
-            coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_cols, self.static_obj)
-            self.left_cols = coe_filter.filter(data_instances)
+            coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_col_names, self.static_obj)
+            self.left_cols = coe_filter.fit(data_instances)
             self.static_obj = coe_filter.statics_obj
-            self.results.append(coe_filter.to_result())
+            self.coe_meta = coe_filter.get_meta_obj()
+            self.results.append(coe_filter.get_param_obj())
+            self._renew_left_col_names()
             LOGGER.info("Finish coeffiecient_of_variation value threshold filter. Current left cols are: {}".format(
                 self.left_cols))
 
         if method == consts.UNIQUE_VALUE:
             unique_param = self.params.unique_param
-            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_cols, self.static_obj)
-            self.left_cols = unique_filter.filter(data_instances)
+            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_col_names, self.static_obj)
+            self.left_cols = unique_filter.fit(data_instances)
             self.static_obj = unique_filter.statics_obj
-            self.results.append(unique_filter.to_result())
+            self.unique_meta = unique_filter.get_meta_obj()
+            self.results.append(unique_filter.get_param_obj())
+            self._renew_left_col_names()
             LOGGER.info("Finish unique value filter. Current left cols are: {}".format(
                 self.left_cols))
 
         if method == consts.OUTLIER_COLS:
             outlier_param = self.params.outlier_param
-            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_cols)
-            self.left_cols = outlier_filter.filter(data_instances)
-            self.results.append(outlier_filter.to_result())
+            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_col_names)
+            self.left_cols = outlier_filter.fit(data_instances)
+            self.outlier_meta = outlier_filter.get_meta_obj()
+            self.results.append(outlier_filter.get_param_obj())
+            self._renew_left_col_names()
             LOGGER.info("Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
 
-    def _calculates_iv_attrs(self, data_instances, flowid_postfix=''):
-        self.bin_param.cols = self.left_cols
-        bin_flow_id = self.flowid + flowid_postfix
-
-        if self.binning_obj is None:
-            self.binning_obj = HeteroFeatureBinningHost(self.bin_param)
-            self.binning_obj.set_flowid(bin_flow_id)
-        else:
-            self.binning_obj.reset(self.bin_param, bin_flow_id)
-        self.binning_obj.fit(data_instances)
-        LOGGER.info("Finish federated binning with guest.")
-
-    def _received_result_cols(self, method):
+    def _received_result_cols(self, filter_name):
         result_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.result_left_cols,
-                                                                    self.receive_times)
+                                                                    filter_name)
         left_cols = federation.get(name=self.transfer_variable.result_left_cols.name,
                                    tag=result_cols_id,
                                    idx=0)
-        self.receive_times += 1
         LOGGER.info("Received left columns from guest")
-        new_left = []
-        for col in left_cols:
-            new_left.append(self.left_cols[col])
+        self.left_cols = left_cols
+        self._renew_left_col_names()
 
-        result_obj = feature_selection_param_pb2.FeatureSelectionFilterParam(param_set={},
-                                                                             original_cols=self.left_cols.copy(),
-                                                                             left_cols=new_left.copy(),
-                                                                             filter_name=method)
+        host_cols = list(left_cols.keys())
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
+                                                            left_cols=self.left_cols)
+
+        result_obj = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values={},
+                                                                             left_cols=left_col_obj,
+                                                                             filter_name=filter_name)
         self.results.append(result_obj)
-        self.left_cols = new_left
         LOGGER.info("Received Left cols are {}".format(self.left_cols))
 
-    def _send_iv_threshold(self):
-        iv_thres_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_iv_threshold)
-        federation.remote(self.params.iv_param.value_threshold,
-                          name=self.transfer_variable.host_iv_threshold.name,
-                          tag=iv_thres_id,
+    def _send_select_cols(self, filter_name):
+        host_select_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_select_cols,
+                                                                         filter_name)
+        federation.remote(self.left_col_names,
+                          name=self.transfer_variable.host_select_cols.name,
+                          tag=host_select_cols_id,
                           role=consts.GUEST,
                           idx=0)
-        LOGGER.info("Sent iv threshold to guest")
-
-    def _parse_cols(self, data_instances):
-        if self.cols == -1:
-            features_shape = get_features_shape(data_instances)
-            if features_shape is None:
-                raise RuntimeError('Cannot get feature shape, please check input data')
-            self.cols = [i for i in range(features_shape)]
+        LOGGER.info("Sent select cols to guest")

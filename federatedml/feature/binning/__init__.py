@@ -15,27 +15,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-
-import unittest
-
-# from arch.api import eggroll
-
-# eggroll.init("123")
-
-from federatedml.feature.feature_selection import UniqueValueFilter
-from federatedml.param.param import UniqueValueParam
-
-
-class TestFeatureSelect(unittest.TestCase):
-    def setUp(self):
-        param = UniqueValueParam()
-        self.filter_obj = UniqueValueFilter(param, cols=-1)
-        # self.filter_obj.left_cols = [0, 1]
-
-    def test_protobuf(self):
-        pass
-
-
-if __name__ == '__main__':
-    unittest.main()

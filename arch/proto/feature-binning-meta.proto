@@ -26,7 +26,7 @@ message FeatureBinningMeta {
     int64 head_size = 3;
     double error = 4;
     int64 bin_num = 5;
-    repeated int64 cols = 6;
+    repeated string cols = 6;
     double adjustment_factor = 7;
     bool local_only = 8;
 }

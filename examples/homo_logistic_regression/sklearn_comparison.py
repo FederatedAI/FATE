@@ -26,8 +26,8 @@ from sklearn.linear_model import LogisticRegression
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 
-normal_train_data = home_dir + "/../data/breast_normal_train.csv"
-normal_test_data = home_dir + "/../data/breast_normal_test.csv"
+normal_train_data = home_dir + "/../data/mimic_data.csv"
+normal_test_data = home_dir + "/../data/mimic_homo_test.csv"
 
 
 def get_auc(y_true, y_score):
@@ -62,7 +62,7 @@ def train():
     train_x, train_y = load_data(normal_train_data)
     test_x, test_y = load_data(normal_test_data)
 
-    model = LogisticRegression(solver='sag', tol=1e-5, C=0.01, max_iter=500)
+    model = LogisticRegression(solver='sag', tol=1e-5, max_iter=10)
     t0 = time.time()
     model.fit(train_x, train_y)
     t1 = time.time()
@@ -70,10 +70,16 @@ def train():
     n_iter = int(model.n_iter_)
     print("time per iter: {}".format((t1 - t0) / n_iter))
     proba_y = model.predict_proba(test_x)[:, 1]
+    predict_y = model.predict(test_x)
+    print(proba_y)
     # print("The prob of y is:", proba_y)
     print("model n_iter_: {}".format(model.n_iter_))
 
     get_auc(test_y, proba_y)
+    precision = metrics.precision_score(test_y, predict_y)
+    print("precision: {}".format(precision))
+    print("coef_: {}".format(model.coef_))
+    print("intercept_: {}".format(model.intercept_))
 
 
 if __name__ == '__main__':

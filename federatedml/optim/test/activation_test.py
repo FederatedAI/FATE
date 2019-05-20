@@ -16,25 +16,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-
+import math
 import unittest
-
-# from arch.api import eggroll
-
-# eggroll.init("123")
-
-from federatedml.feature.feature_selection import UniqueValueFilter
-from federatedml.param.param import UniqueValueParam
+import numpy as np
+from federatedml.optim import activation
 
 
-class TestFeatureSelect(unittest.TestCase):
-    def setUp(self):
-        param = UniqueValueParam()
-        self.filter_obj = UniqueValueFilter(param, cols=-1)
-        # self.filter_obj.left_cols = [0, 1]
+class TestConvergeFunction(unittest.TestCase):
+    def test_numeric_stability(self):
+        x_list = np.linspace(-709, 709, 10000)
 
-    def test_protobuf(self):
-        pass
+        # Original function
+        # a = 1. / (1. + np.exp(-x))
+        for x in x_list:
+            a1 = 1. / (1. + np.exp(-x))
+            a2 = activation.sigmoid(x)
+            self.assertTrue(np.abs(a1 - a2) < 1e-5)
+
+        x = 710
 
 
 if __name__ == '__main__':

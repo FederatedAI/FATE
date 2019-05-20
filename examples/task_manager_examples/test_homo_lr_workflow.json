@@ -9,13 +9,13 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_guest_20190418"],
+                "train_input_table": ["breast_homo_guest_201904171524"],
                 "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_20190418"],
+                "predict_input_table": ["breast_homo_test_201904171524"],
                 "predict_input_namespace": ["homo_lr"],
                 "model_table": ["homo_lr_guest_model"],
                 "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_guest_20190418"],
+                "data_input_table": ["breast_homo_guest_201904171524"],
                 "data_input_namespace": ["homo_lr"]
             },
             "DataIOParam":{
@@ -27,13 +27,13 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_host_20190418"],
+                "train_input_table": ["breast_homo_host_201904171524"],
                 "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_20190418"],
+                "predict_input_table": ["breast_homo_test_201904171524"],
                 "predict_input_namespace": ["homo_lr"],
                 "model_table": ["homo_lr_host_model"],
                 "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_host_20190418"],
+                "data_input_table": ["breast_homo_host_201904171524"],
                 "data_input_namespace": ["homo_lr"]
             },
              "DataIOParam":{
@@ -59,7 +59,7 @@
     "algorithm_parameters": {
         "WorkFlowParam": {
             "method": "cross_validation",
-            "work_mode": 0,
+            "work_mode": 1,
             "need_sample": true,
             "need_feature_selection": false,
             "n_splits": 5

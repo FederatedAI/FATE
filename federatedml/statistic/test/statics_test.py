@@ -15,15 +15,15 @@ from federatedml.feature.instance import Instance
 class TestStatistics(unittest.TestCase):
     def setUp(self):
         self.count = 1000
-        self.cols = 10
-        self.datas = []
+        self.cols = [('x' + str(i)) for i in range(10)]
+        self.datas = {}
 
         self.eps = 1e-5
         table = []
-        for col in range(self.cols):
+        for col_name in self.cols:
             tmp_data = np.random.randn(self.count)
             table.append(tmp_data)
-            self.datas.append(tmp_data)
+            self.datas[col_name] = tmp_data
 
         table = np.array(table)
         table = table.transpose()
@@ -36,11 +36,12 @@ class TestStatistics(unittest.TestCase):
         self.table = eggroll.parallelize(table_data,
                                          include_key=True,
                                          partition=10)
+        self.table.schema = {'header': self.cols}
         self.summary_obj = MultivariateStatisticalSummary(self.table, -1)
 
     def test_MultivariateStatisticalSummary(self):
 
-        for col in range(self.cols):
+        for col in self.cols:
             this_data = self.datas[col]
             mean = self.summary_obj.get_mean()[col]
             var = self.summary_obj.get_variance()[col]
@@ -61,11 +62,11 @@ class TestStatistics(unittest.TestCase):
         error = consts.DEFAULT_RELATIVE_ERROR
         medians = self.summary_obj.get_median()
 
-        for idx, this_data in enumerate(self.datas):
+        for col_name, this_data in self.datas.items():
             sort_data = sorted(this_data)
             min_rank = int(math.floor((0.5 - 2 * error) * self.count))
             max_rank = int(math.ceil((0.5 + 2 * error) * self.count))
-            self.assertTrue(sort_data[min_rank] <= medians[idx] <= sort_data[max_rank])
+            self.assertTrue(sort_data[min_rank] <= medians[col_name] <= sort_data[max_rank])
 
     def tearDown(self):
         self.table.destroy()

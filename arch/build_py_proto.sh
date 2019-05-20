@@ -51,6 +51,9 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-scale-meta.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  feature-scale-param.proto
 
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  onehot-meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  onehot-param.proto
+
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data-io-meta.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data-io-param.proto
 

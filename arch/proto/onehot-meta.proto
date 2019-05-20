@@ -17,27 +17,10 @@
 syntax = "proto3";
 
 package com.webank.ai.fate.common.mlmodel.buffer;
-option java_outer_classname = "FeatureSelectionParamProto";
+option java_outer_classname = "OneHotMetaProto";
 
 
-message FeatureValue {
-    map<string, double> feature_values = 1;
-}
 
-message LeftCols {
-    repeated string original_cols = 1;
-    map<string, bool> left_cols = 2;
-}
-
-message FeatureSelectionFilterParam{
-    map<string, double> feature_values = 1;
-    map<string, FeatureValue> host_feature_values = 2;
-    LeftCols left_cols = 3;
-    map<string, LeftCols> host_left_cols = 4;
-    string filter_name = 5;
-}
-
-message FeatureSelectionParam{
-    repeated FeatureSelectionFilterParam results = 1;
-    LeftCols final_left_cols = 2;
+message OneHotMeta {
+    repeated string cols = 1;
 }

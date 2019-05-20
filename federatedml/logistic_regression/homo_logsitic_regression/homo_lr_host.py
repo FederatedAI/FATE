@@ -69,6 +69,7 @@ class HomoLRHost(BaseLogisticRegression):
 
     def fit(self, data_instances):
         self._abnormal_detection(data_instances)
+
         self.__init_parameters(data_instances)
 
         w = self.__init_model(data_instances)
