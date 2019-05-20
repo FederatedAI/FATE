@@ -292,7 +292,7 @@ class WorkFlowParam(object):
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
                  n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False, need_scale=False,
-                 one_vs_rest=True):
+                 one_vs_rest=False):
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -467,7 +467,6 @@ class LogisticParam(object):
         self.model_path = model_path
         self.table_name = table_name
         self.party_weight = party_weight
-        self.encrypted_mode_calculator_param = copy.deepcopy(EncryptedModeCalculatorParam())
 
 
 class DecisionTreeParam(object):

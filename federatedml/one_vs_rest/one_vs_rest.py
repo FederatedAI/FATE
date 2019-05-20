@@ -1,3 +1,19 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import copy
 import functools
 import time
@@ -157,7 +173,7 @@ class OneVsRest(object):
         """
         if self.transfer_variable is not None:
             self.transfer_variable.set_flowid(flowid)
-            LOGGER.debug("set flowid:" + str(flowid))
+            LOGGER.info("set flowid:" + str(flowid))
 
     def fit(self, data_instances=None):
         """
@@ -171,7 +187,6 @@ class OneVsRest(object):
             LOGGER.info("mode is {}, role is {}, start to get data classes".format(self.mode, self.role))
             self.classes = self.__get_data_classes(data_instances)
             self.need_mask_label = True
-            LOGGER.debug("classes:{}".format(self.classes))
 
         LOGGER.info("Start to synchronize")
         self.__synchronize_classes_list()
@@ -187,12 +202,12 @@ class OneVsRest(object):
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self.__mask_data_label(data_instances, label=label)
                 data_instances_mask_label.schema['header'] = header
-                LOGGER.debug("finish mask label:{}".format(label))
+                LOGGER.info("finish mask label:{}".format(label))
 
-                LOGGER.debug("start classifier fit")
+                LOGGER.info("start classifier fit")
                 classifier.fit(data_instances_mask_label)
             else:
-                LOGGER.debug("start classifier fit")
+                LOGGER.info("start classifier fit")
                 classifier.fit(data_instances)
 
             self.models.append(classifier)
@@ -247,7 +262,7 @@ class OneVsRest(object):
             classifier_model = one_vs_rest_param_pb2.ClassifierModel(name=classifier_name,
                                                                      namespace=classifier_namespace)
             classifier_models.append(classifier_model)
-            LOGGER.debug("finish save model_{}, role:{}".format(i, self.role))
+            LOGGER.info("finish save model_{}, role:{}".format(i, self.role))
 
         str_classes = [str(c) for c in self.classes]
         one_vs_rest_param_obj = one_vs_rest_param_pb2.OneVsRestParam(classes=str_classes,
@@ -275,8 +290,6 @@ class OneVsRest(object):
                                  proto_buffer=model_obj,
                                  name=name,
                                  namespace=namespace)
-
-        LOGGER.debug("model_obj:{}".format(model_obj))
 
         LOGGER.info("OneVsRest classes number:{}".format(len(model_obj.classes)))
 

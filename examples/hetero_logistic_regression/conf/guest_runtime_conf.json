@@ -42,7 +42,7 @@
         "need_intersect": true,
         "need_feature_selection": false,
         "need_scale": false,
-        "one_vs_rest": true
+        "one_vs_rest": false
         },
 
     "EncryptParam": {
