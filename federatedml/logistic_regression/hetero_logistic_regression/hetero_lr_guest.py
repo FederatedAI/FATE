@@ -23,6 +23,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.statistic import data_overview
+from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -35,15 +36,21 @@ class HeteroLRGuest(BaseLogisticRegression):
         super(HeteroLRGuest, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []
+        
+        self.encrypted_calculator = None
 
         self.wx = None
         self.guest_forward = None
 
     def compute_forward(self, data_instances, coef_, intercept_):
         self.wx = self.compute_wx(data_instances, coef_, intercept_)
-        encrypt_operator = self.encrypt_operator
-        self.guest_forward = self.wx.mapValues(
-            lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v)), v))
+        
+        en_wx = self.encrypted_calculator.encrypt(self.wx)
+        wx_square = self.wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+        
+        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
+        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx:(e[0], e[1], wx))
 
     def aggregate_forward(self, host_forward):
         aggregate_forward_res = self.guest_forward.join(host_forward,
@@ -69,6 +76,10 @@ class HeteroLRGuest(BaseLogisticRegression):
                                     idx=0)
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
+        
+        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator, 
+                                                          self.encrypted_mode_calculator_param.mode, 
+                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
 
         LOGGER.info("Generate mini-batch from input data")
         mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)

@@ -21,6 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.statistic import data_overview
+from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -37,8 +38,13 @@ class HeteroLRHost(BaseLogisticRegression):
 
     def compute_forward(self, data_instances, coef_, intercept_):
         wx = self.compute_wx(data_instances, coef_, intercept_)
-        encrypt_operator = self.encrypt_operator
-        host_forward = wx.mapValues(lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v))))
+
+        en_wx = self.encrypted_calculator.encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+
+        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
+       
         return host_forward
 
     def fit(self, data_instances):
@@ -53,6 +59,10 @@ class HeteroLRHost(BaseLogisticRegression):
 
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
+        
+        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator, 
+                                                          self.encrypted_mode_calculator_param.mode, 
+                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
 
         batch_info = federation.get(name=self.transfer_variable.batch_info.name,
                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),

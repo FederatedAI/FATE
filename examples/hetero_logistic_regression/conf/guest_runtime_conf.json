@@ -131,6 +131,10 @@
         "percentile": 0.9,
         "upper_threshold": 1000
     },
+    "EncryptedModeCalculatorParam":{
+        "mode": "slow",
+        "re_encrypted_rate": 1
+    },
     "OneVsRestParam":{
         "has_arbiter":true
     }

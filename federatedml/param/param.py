@@ -322,6 +322,12 @@ class WorkFlowParam(object):
         self.one_vs_rest = one_vs_rest
 
 
+class EncryptedModeCalculatorParam(object):
+    def __init__(self, mode="slow", re_encrypted_rate=1):
+        self.mode = mode
+        self.re_encrypted_rate = re_encrypted_rate
+
+
 class InitParam(object):
     """
     Initialize Parameters used in initializing a model.
@@ -452,7 +458,8 @@ class LogisticParam(object):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model', table_name='lr_table'):
+                 model_path='lr_model', table_name='lr_table',
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -467,6 +474,7 @@ class LogisticParam(object):
         self.model_path = model_path
         self.table_name = table_name
         self.party_weight = party_weight
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
 
 class DecisionTreeParam(object):
@@ -956,7 +964,7 @@ class OneVsRestParam(object):
     Parameters
     ----------
     has_arbiter: bool. For some algorithm, may not has arbiter, for instances, secureboost of FATE,  for these algorithms, it should be set to false.
-                 default true
+                default true
     """
 
     def __init__(self, has_arbiter=True):
