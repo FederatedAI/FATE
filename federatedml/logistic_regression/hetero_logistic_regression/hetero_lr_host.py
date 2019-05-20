@@ -21,6 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.statistic import data_overview
+from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -36,12 +37,32 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_index_list = []
 
     def compute_forward(self, data_instances, coef_, intercept_):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
         wx = self.compute_wx(data_instances, coef_, intercept_)
-        encrypt_operator = self.encrypt_operator
-        host_forward = wx.mapValues(lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v))))
+
+        en_wx = self.encrypted_calculator.encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+
+        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
+       
         return host_forward
 
     def fit(self, data_instances):
+        """
+        Train lr model of role host
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         LOGGER.info("Enter hetero_lr host")
         self._abnormal_detection(data_instances)
 
@@ -53,6 +74,10 @@ class HeteroLRHost(BaseLogisticRegression):
 
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
+        
+        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator, 
+                                                          self.encrypted_mode_calculator_param.mode, 
+                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
 
         batch_info = federation.get(name=self.transfer_variable.batch_info.name,
                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
@@ -90,6 +115,9 @@ class HeteroLRHost(BaseLogisticRegression):
                     LOGGER.info("Get batch_index from Guest")
 
                     batch_size = batch_data_index.count()
+                    if batch_size != self.batch_size:
+                        raise ValueError("Accepted batch_size from guest is not equal to accepted data size from guest")
+
                     if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
                         raise ValueError(
                             "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
@@ -190,6 +218,13 @@ class HeteroLRHost(BaseLogisticRegression):
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param=None):
+        """
+        Prediction of lr
+        Parameters
+        ----------
+        data_instance:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction. Host may not have predict_param
+        """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
