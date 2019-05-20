@@ -7,7 +7,27 @@ from federatedml.statistic import data_overview
 
 
 class MinMaxScaler(object):
+    """
+    Transforms features by scaling each feature to a given range,e.g.between minimum and maximum. The transformation is given by:
+            X_scale = (X - X.min) / (X.max - X.min), while X.min is the minimum value of feature, and X.max is the maximum
+    """
     def __init__(self, mode='normal', area='all', feat_upper=None, feat_lower=None, out_upper=None, out_lower=None):
+        """
+        Parameters
+        ----------
+        mode: str, the mode just support "normal" now, and will support "cap" mode in the future.
+              for mode is "normal", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and
+              feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
+
+        area: str. It supports "all" and "col". For "all",feat_upper/feat_lower will act on all data column,
+            so it will just be a value, and for "col", it just acts on one column they corresponding to,
+            so feat_lower/feat_upper will be a list, which size will equal to the number of columns
+
+        feat_upper: int or float, the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None.
+        out_upper: int or float,  the results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        out_upper: int or float, the results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        """
         self.mode = mode
         self.area = area
         self.feat_upper = feat_upper
@@ -16,6 +36,9 @@ class MinMaxScaler(object):
         self.out_lower = out_lower
 
     def __get_min_max_value(self, data):
+        """
+        Get each column minimum and maximum
+        """
         min_value = None
         max_value = None
         summary_obj = MultivariateStatisticalSummary(data, -1)
@@ -77,9 +100,13 @@ class MinMaxScaler(object):
         return min_value_list, max_value_list
 
     def __get_upper_lower_percentile(self, data):
+        # TODO
         pass
 
     def __check_param(self):
+        """
+        Check if input parameter is legal
+        """
         support_mode = ['normal', 'cap']
         support_area = ['col', 'all']
         if self.mode not in support_mode:
@@ -137,6 +164,9 @@ class MinMaxScaler(object):
 
     @staticmethod
     def __scale_with_cols_for_instance(data, max_value_list, min_value_list, scale_value_list, out_lower, out_scale):
+        """
+        Scale operator for each column. The input data type is data_instance
+        """
         for i in range(data.features.shape[0]):
             if data.features[i] > max_value_list[i]:
                 value = 1
@@ -150,6 +180,17 @@ class MinMaxScaler(object):
         return data
 
     def fit(self, data):
+        """
+        Apply min-max scale for input data
+        Parameters
+        ----------
+        data: data_instance, input data
+
+        Returns
+        ----------
+        fit_data:data_instance, data after scale
+        cols_transform_value: list of tuple, each tuple include minimum, maximum, output_minimum, output maximum
+        """
         self.__check_param()
 
         # if self.mode == 'normal':
@@ -180,6 +221,16 @@ class MinMaxScaler(object):
         return fit_data, cols_transform_value
 
     def transform(self, data, cols_transform_value):
+        """
+        Transform input data using min-max scale with fit results
+        Parameters
+        ----------
+        data: data_instance, input data
+        cols_transform_value: list of tuple, the return of fit function. Each tuple include minimum, maximum, output_minimum, output maximum
+        Returns
+        ----------
+        transform_data:data_instance, data after transform
+        """
         max_value = []
         min_value = []
         out_upper = []

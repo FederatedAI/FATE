@@ -1,8 +1,6 @@
 #!/usr/bin/env python    
 # -*- coding: utf-8 -*- 
 
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -23,7 +21,7 @@ import copy
 #
 ################################################################################
 from federatedml.util import consts
-
+import copy
 
 class DataIOParam(object):
     """
@@ -293,7 +291,7 @@ class WorkFlowParam(object):
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
                  n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False, need_scale=False,
-                 need_one_hot=False):
+                 one_vs_rest=False, need_one_hot=False):
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -321,6 +319,13 @@ class WorkFlowParam(object):
         self.need_feature_selection = need_feature_selection
         self.need_scale = need_scale
         self.need_one_hot = need_one_hot
+        self.one_vs_rest = one_vs_rest
+
+
+class EncryptedModeCalculatorParam(object):
+    def __init__(self, mode="slow", re_encrypted_rate=1):
+        self.mode = mode
+        self.re_encrypted_rate = re_encrypted_rate
 
 
 class InitParam(object):
@@ -453,7 +458,8 @@ class LogisticParam(object):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model', table_name='lr_table'):
+                 model_path='lr_model', table_name='lr_table',
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -468,6 +474,7 @@ class LogisticParam(object):
         self.model_path = model_path
         self.table_name = table_name
         self.party_weight = party_weight
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
 
 class DecisionTreeParam(object):
@@ -1001,3 +1008,17 @@ class OneHotEncoderParam(object):
 
     def __init__(self, cols=-1):
         self.cols = cols
+
+
+class OneVsRestParam(object):
+    """
+    Define the one_vs_rest parameters.
+
+    Parameters
+    ----------
+    has_arbiter: bool. For some algorithm, may not has arbiter, for instances, secureboost of FATE,  for these algorithms, it should be set to false.
+                default true
+    """
+
+    def __init__(self, has_arbiter=True):
+        self.has_arbiter = has_arbiter

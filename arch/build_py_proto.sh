@@ -64,3 +64,4 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  boosting
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_param.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_meta.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data_transform_server.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  one-vs-rest-param.proto
