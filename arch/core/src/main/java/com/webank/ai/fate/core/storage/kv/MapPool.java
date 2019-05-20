@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.manger;
+package com.webank.ai.fate.core.storage.kv;
 
-public class ModelInfo {
-    private String name;
-    private String namespace;
-    public ModelInfo(){
+import java.util.Map;
 
-    }
-    public ModelInfo(String name, String namespace){
-        this.name = name;
-        this.namespace = namespace;
-    }
+public interface MapPool<K, V>{
+    void put(K key, V value);
+    void put(K key, V value, boolean onlyIfAbsent);
 
-    public String getName() {
-        return name;
-    }
+    void putIfAbsent(K key, V value);
 
-    public String getNamespace() {
-        return namespace;
-    }
+    void putAll(Map<K, V> kv);
+
+    V get(K key);
 }

@@ -27,9 +27,9 @@ public class DTest implements FeatureData{
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> getData(String id) {
+    public Map<String, Object> getData(Map<String, Object> featureId) {
         Map<String, Object> requestData = new HashMap<>();
-        requestData.put("id", id);
+        requestData.putAll(featureId);
         String responseBody = HttpClientPool.post("http://127.0.0.1:1234/feature", requestData);
         if (StringUtils.isEmpty(responseBody)){
             return null;

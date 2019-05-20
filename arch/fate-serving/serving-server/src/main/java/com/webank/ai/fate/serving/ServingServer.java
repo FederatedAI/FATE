@@ -23,11 +23,13 @@ import com.webank.ai.fate.serving.service.ModelService;
 import com.webank.ai.fate.serving.service.InferenceService;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.service.ProxyService;
+import com.webank.ai.fate.serving.service.ServiceExceptionHandler;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import io.grpc.ServerInterceptors;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +41,7 @@ public class ServingServer {
     private String confPath;
 
     public ServingServer(String confPath){
+        System.out.println(confPath);
         this.confPath = confPath;
     }
 
@@ -48,9 +51,9 @@ public class ServingServer {
         int port = Integer.parseInt(Configuration.getProperty("port"));
         //TODO: Server custom configuration
         server = ServerBuilder.forPort(port)
-                .addService(new InferenceService())
-                .addService(new ModelService())
-                .addService(new ProxyService())
+                .addService(ServerInterceptors.intercept(new InferenceService(), new ServiceExceptionHandler()))
+                .addService(ServerInterceptors.intercept(new ModelService(), new ServiceExceptionHandler()))
+                .addService(ServerInterceptors.intercept(new ProxyService(), new ServiceExceptionHandler()))
                 .build();
         LOGGER.info("Server started listening on port: {}, use configuration: {}", port, this.confPath);
         server.start();
@@ -102,6 +105,7 @@ public class ServingServer {
             Option option = Option.builder("c")
                     .longOpt("config")
                     .argName("file")
+                    .required()
                     .hasArg()
                     .numberOfArgs(1)
                     .desc("configuration file")

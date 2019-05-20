@@ -19,12 +19,14 @@ import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.api.networking.proxy.Proxy.Packet;
+import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.util.HashMap;
@@ -39,12 +41,12 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
         ReturnResult responseData;
 
         switch (req.getHeader().getCommand().getName()) {
-            case "federatedPredict":
-                responseData = InferenceManager.federatedPredict(requestData);
+            case "federatedInference":
+                responseData = InferenceManager.federatedInference(requestData);
                 break;
             default:
                 responseData = new ReturnResult();
-                responseData.setStatusCode(StatusCode.PARAMERROR);
+                responseData.setRetcode(StatusCode.PARAMERROR);
                 break;
         }
 
@@ -55,14 +57,16 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
 
         Proxy.Metadata.Builder metaDataBuilder = Proxy.Metadata.newBuilder();
         Proxy.Topic.Builder topicBuilder = Proxy.Topic.newBuilder();
+        FederatedParty partnerParty = (FederatedParty) ObjectTransform.json2Bean(requestData.get("partner_local").toString(), FederatedParty.class);
+        FederatedParty party = (FederatedParty) ObjectTransform.json2Bean(requestData.get("local").toString(), FederatedParty.class);
 
         metaDataBuilder.setSrc(
-                topicBuilder.setPartyId(Configuration.getProperty("party.id"))
+                topicBuilder.setPartyId(String.valueOf(party.getPartyId()))
                         .setRole("host")
                         .setName("myPartyName")
                         .build());
         metaDataBuilder.setDst(
-                topicBuilder.setPartyId(requestData.get("partyId").toString())
+                topicBuilder.setPartyId(String.valueOf(partnerParty.getPartyId()))
                         .setRole("guest")
                         .setName("partnerPartyName")
                         .build());

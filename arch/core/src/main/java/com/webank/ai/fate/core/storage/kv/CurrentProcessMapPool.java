@@ -17,20 +17,32 @@
 package com.webank.ai.fate.core.storage.kv;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class BaseKVPool<K, V> implements KVPool<K, V> {
-    public abstract void put(K key, V value);
-    public abstract void putIfAbsent(K key, V value);
-    public abstract void putAll(Map<K, V> kv);
-    public abstract V get(K key);
+public abstract class CurrentProcessMapPool<K, V> extends BaseMapPool<K, V> {
+    protected ConcurrentHashMap<K, V> dataPool;
+
+    public CurrentProcessMapPool(){
+        this.dataPool = new ConcurrentHashMap<>();
+    }
 
     @Override
-    public void put(K key, V value, boolean onlyIfAbsent){
-        if(onlyIfAbsent){
-            this.putIfAbsent(key, value);
-        }
-        else{
-            this.put(key, value);
-        }
+    public void put(K key, V value){
+        this.dataPool.put(key, value);
+    }
+
+    @Override
+    public void putIfAbsent(K key, V value){
+        this.dataPool.putIfAbsent(key, value);
+    }
+
+    @Override
+    public void putAll(Map<K, V> kv){
+        this.dataPool.putAll(kv);
+    }
+
+    @Override
+    public V get(K key){
+        return this.dataPool.get(key);
     }
 }

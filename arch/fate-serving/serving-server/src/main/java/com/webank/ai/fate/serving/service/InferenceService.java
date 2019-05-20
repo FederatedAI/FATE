@@ -18,38 +18,25 @@ package com.webank.ai.fate.serving.service;
 
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.serving.InferenceServiceGrpc;
-import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceRequest;
-import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceResponse;
+import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceMessage;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
-import com.webank.ai.fate.serving.manger.ModelInfo;
-import com.webank.ai.fate.serving.manger.ModelUtils;
+import com.webank.ai.fate.serving.bean.InferenceRequest;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.util.List;
-import java.util.Map;
 
 
 public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplBase {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void predict(InferenceRequest req, StreamObserver<InferenceResponse> responseObserver){
-        InferenceResponse.Builder response = InferenceResponse.newBuilder();
-        Map<String, List<Integer>> allParty = ModelUtils.getAllParty(req.getRoleMap());
-        ReturnResult returnResult = InferenceManager.inference(req.getLocal().getRole(),
-                req.getLocal().getPartyId(),
-                allParty,
-                new ModelInfo(req.getModel().getTableName(), req.getModel().getNamespace()),
-                req.getData().toStringUtf8(),
-                req.getSceneId());
-        response.setStatusCode(returnResult.getStatusCode());
-        response.setMessage(returnResult.getMessage());
-        if (returnResult.getData() != null){
-            response.setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
-        }
+    public void inference(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver){
+        InferenceMessage.Builder response = InferenceMessage.newBuilder();
+        InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getData().toStringUtf8(), InferenceRequest.class);
+        ReturnResult returnResult = InferenceManager.inference(inferenceRequest);
+        response.setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult).getBytes()));
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
     }

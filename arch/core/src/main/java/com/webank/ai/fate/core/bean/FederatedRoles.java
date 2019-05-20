@@ -14,24 +14,31 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.manger;
+package com.webank.ai.fate.core.bean;
 
-public class ModelInfo {
-    private String name;
-    private String namespace;
-    public ModelInfo(){
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    }
-    public ModelInfo(String name, String namespace){
-        this.name = name;
-        this.namespace = namespace;
-    }
-
-    public String getName() {
-        return name;
+public class FederatedRoles {
+    private Map<String, List<Integer>> role;
+    public FederatedRoles(){
+        this.role = new HashMap<>();
     }
 
-    public String getNamespace() {
-        return namespace;
+    public Map<String, List<Integer>> getAllRole() {
+        return role;
+    }
+
+    public List<Integer> getRole(String role){
+        return this.role.get(role);
+    }
+
+    public void setRole(String role, List<Integer> partyIds){
+        this.role.put(role, partyIds);
+    }
+
+    public void addParty(String role, int partyId){
+        this.role.get(role).add(partyId);
     }
 }

@@ -23,37 +23,28 @@ import org.apache.logging.log4j.LogManager;
 
 public class ReturnResult{
     private static final Logger LOGGER = LogManager.getLogger();
-    private int statusCode;
-    private String message = "";
-    private String error = "";
+    private int retcode;
+    private String retmsg = "";
     private Map<String, Object> data;
 
     public ReturnResult(){
         this.data = new HashMap<>();
     }
 
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
+    public void setRetcode(int retcode) {
+        this.retcode = retcode;
     }
 
-    public int getStatusCode() {
-        return statusCode;
+    public int getRetcode() {
+        return retcode;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setRetmsg(String retmsg) {
+        this.retmsg = retmsg;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public String getError() {
-        return error;
+    public String getRetmsg() {
+        return retmsg;
     }
 
     public void setData(String name, String value) {

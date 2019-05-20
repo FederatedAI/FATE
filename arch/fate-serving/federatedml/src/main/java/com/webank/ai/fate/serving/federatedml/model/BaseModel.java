@@ -3,6 +3,8 @@ package com.webank.ai.fate.serving.federatedml.model;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
+import com.webank.ai.fate.core.bean.FederatedParty;
+import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
@@ -24,18 +26,20 @@ public abstract class BaseModel {
     // public abstract HashMap<String, Object> predict(HashMap<String, Object> inputData);
     public abstract Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams);
 
-    protected Map<String, Object> getFederatedPredict(Map<String, Object> predictParams) {
+    protected Map<String, Object> getFederatedPredict(Map<String, Object> federatedParams) {
         Map<String, Object> requestData = new HashMap<>();
-        requestData.put("sid", predictParams.get("sid"));
-        requestData.put("partnerPartyId", predictParams.get("partyId"));
-        requestData.put("partnerRole", predictParams.get("role"));
-        requestData.put("partnerModelName", predictParams.get("modelName"));
-        requestData.put("partnerModelNamespace", predictParams.get("modelNamespace"));
-        requestData.put("allParty", predictParams.get("allParty"));
-        //TODO:
-        Map<String, List<Integer>> allParty = (Map<String, List<Integer>>)predictParams.get("allParty");
-        requestData.put("role", "host");
-        requestData.put("partyId", allParty.get("host").get(0));
+        FederatedParty srcParty = (FederatedParty) federatedParams.get("local");
+        requestData.put("partner_local", ObjectTransform.bean2Json(federatedParams.get("local")));
+        requestData.put("partner_model_info", ObjectTransform.bean2Json(federatedParams.get("model_info")));
+
+        //TODO: foreach
+        FederatedRoles federatedRoles = (FederatedRoles) federatedParams.get("role");
+        FederatedParty dstParty = new FederatedParty("host", federatedRoles.getRole("host").get(0));
+        requestData.put("local", ObjectTransform.bean2Json(dstParty));
+
+        requestData.put("role", ObjectTransform.bean2Json(federatedParams.get("role")));
+        requestData.put("device_id", federatedParams.get("device_id"));
+        requestData.put("phone_num", federatedParams.get("phone_num"));
 
         Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
         packetBuilder.setBody(Proxy.Data.newBuilder()
@@ -46,16 +50,16 @@ public abstract class BaseModel {
         Proxy.Topic.Builder topicBuilder = Proxy.Topic.newBuilder();
 
         metaDataBuilder.setSrc(
-                topicBuilder.setPartyId(requestData.get("partnerPartyId").toString()).
+                topicBuilder.setPartyId(String.valueOf(srcParty.getPartyId())).
                         setRole("serving")
                         .setName("partnerPartyName")
                         .build());
         metaDataBuilder.setDst(
-                topicBuilder.setPartyId(requestData.get("partyId").toString())
+                topicBuilder.setPartyId(String.valueOf(dstParty.getPartyId()))
                         .setRole("serving")
                         .setName("partyName")
                         .build());
-        metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedPredict").build());
+        metaDataBuilder.setCommand(Proxy.Command.newBuilder().setName("federatedInference").build());
         metaDataBuilder.setConf(Proxy.Conf.newBuilder().setOverallTimeout(60*1000));
         packetBuilder.setHeader(metaDataBuilder.build());
 

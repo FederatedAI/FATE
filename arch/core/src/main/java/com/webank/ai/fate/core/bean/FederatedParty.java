@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.manger;
+package com.webank.ai.fate.core.bean;
 
-public class ModelInfo {
-    private String name;
-    private String namespace;
-    public ModelInfo(){
+public class FederatedParty {
+    private String role;
+    private int partyId;
+    public FederatedParty(){
 
     }
-    public ModelInfo(String name, String namespace){
-        this.name = name;
-        this.namespace = namespace;
+
+    public FederatedParty(String role, int partyId){
+        this.role = role;
+        this.partyId = partyId;
     }
 
-    public String getName() {
-        return name;
+    public String getRole() {
+        return role;
     }
 
-    public String getNamespace() {
-        return namespace;
+    public int getPartyId() {
+        return partyId;
     }
 }

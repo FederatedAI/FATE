@@ -18,23 +18,16 @@ package com.webank.ai.fate.serving.service;
 
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceGrpc;
-import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishRequest;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishResponse;
+import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.result.ReturnResult;
-import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
-import com.webank.ai.fate.serving.manger.ModelInfo;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.serving.manger.ModelUtils;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     private static final Logger LOGGER = LogManager.getLogger();
@@ -42,23 +35,14 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     @Override
     public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver){
         PublishResponse.Builder builder = PublishResponse.newBuilder();
-        int loadStatus;
-        if (Configuration.getPropertyInt("party.id").equals(req.getLocal().getPartyId())){
-            ReturnResult returnResult = ModelManager.publishLoadModel(
-                    req.getLocal().getRole(),
-                    req.getLocal().getPartyId(),
-                    ModelUtils.getAllParty(req.getRoleMap()),
-                    ModelUtils.getAllPartyModel(req.getModelMap()));
-            loadStatus = returnResult.getStatusCode();
-            builder.setStatusCode(returnResult.getStatusCode())
-                    .setMessage(returnResult.getMessage())
-                    .setError(returnResult.getError())
-                    .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
-        }
-        else{
-            loadStatus = StatusCode.NOTME;
-        }
-        builder.setStatusCode(loadStatus);
+        ReturnResult returnResult = ModelManager.publishLoadModel(
+                new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
+                ModelUtils.getFederatedRoles(req.getRoleMap()),
+                ModelUtils.getFederatedRolesModel(req.getModelMap()));
+        builder.setStatusCode(returnResult.getRetcode())
+                .setMessage(returnResult.getRetmsg())
+                .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
+        builder.setStatusCode(returnResult.getRetcode());
         responseStreamObserver.onNext(builder.build());
         responseStreamObserver.onCompleted();
     }
@@ -67,13 +51,13 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
     public void publishOnline(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
         PublishResponse.Builder builder = PublishResponse.newBuilder();
         ReturnResult returnResult = ModelManager.publishOnlineModel(
-                req.getLocal().getRole(),
-                req.getLocal().getPartyId(),
-                ModelUtils.getAllParty(req.getRoleMap()),
-                ModelUtils.getAllPartyModel(req.getModelMap()));
-        builder.setStatusCode(returnResult.getStatusCode())
-                .setMessage(returnResult.getMessage())
-                .setError(returnResult.getError())
+                new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
+                ModelUtils.getFederatedRoles(req.getRoleMap()),
+                ModelUtils.getFederatedRolesModel(req.getModelMap()),
+                req.getSceneId()
+                );
+        builder.setStatusCode(returnResult.getRetcode())
+                .setMessage(returnResult.getRetmsg())
                 .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
         responseStreamObserver.onNext(builder.build());
         responseStreamObserver.onCompleted();

@@ -18,20 +18,21 @@ package com.webank.ai.fate.core.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import java.util.*;
+import com.webank.ai.fate.core.bean.FederatedRoles;
 
 public class SceneUtils {
     private static final String sceneKeySeparator = "_";
 
-    public static String joinAllParty(Map<String, List<Integer>> allParty){
-        if(allParty == null){
+    public static String federatedRolesIdentificationString(FederatedRoles federatedRoles){
+        if(federatedRoles == null){
             return "all";
         }else{
-            Object[] roleName = allParty.keySet().toArray();
-            Arrays.sort(roleName);
-            System.out.print(roleName);
+            Object[] roleNames = federatedRoles.getAllRole().keySet().toArray();
+            Arrays.sort(roleNames);
+            System.out.print(roleNames);
             List<String> allPartyTmp = new ArrayList<>();
-            for(int i=0;i<roleName.length;i++){
-                Object[] partys = (new ArrayList<>(new HashSet<>(allParty.get(roleName[i])))).toArray();
+            for(int i=0;i<roleNames.length;i++){
+                Object[] partys = (new ArrayList<>(new HashSet<>(federatedRoles.getAllRole().get(roleNames[i])))).toArray();
                 Arrays.sort(partys);
                 System.out.print(partys);
                 allPartyTmp.add(StringUtils.join(partys, "|"));
@@ -40,7 +41,7 @@ public class SceneUtils {
         }
     }
 
-    public static String genSceneKey(int sceneId, String role, int partyId, Map<String, List<Integer>> allParty){
-        return StringUtils.join(Arrays.asList(sceneId, role, partyId, joinAllParty(allParty)), sceneKeySeparator);
+    public static String genSceneKey(int sceneId, String role, int partyId, FederatedRoles federatedRoles){
+        return StringUtils.join(Arrays.asList(sceneId, role, partyId, federatedRolesIdentificationString(federatedRoles)), sceneKeySeparator);
     }
 }

@@ -32,27 +32,6 @@ import org.apache.logging.log4j.LogManager;
 public class ObjectTransform {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static Map<String, Object> bean2Map(Object object) {
-        Map<String, Object> map = null;
-        try {
-            map = new HashMap<>();
-            for (Field field : object.getClass().getDeclaredFields()) {
-                int mod = field.getModifiers();
-                if (Modifier.isStatic(mod) || Modifier.isFinal(mod)) {
-                    continue;
-                }
-                String getter = "get" + field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
-                Method method = object.getClass().getMethod(getter);
-                map.put(field.getName(), method.invoke(object));
-            }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
-            LOGGER.error(ex);
-        } catch (Exception ex) {
-            LOGGER.error(ex);
-        }
-        return map;
-    }
-
     public static String bean2Json(Object object) {
         if (object == null) {
             return "";

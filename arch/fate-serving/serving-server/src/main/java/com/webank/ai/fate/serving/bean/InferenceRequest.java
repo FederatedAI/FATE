@@ -14,35 +14,39 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.core.storage.kv;
+package com.webank.ai.fate.serving.bean;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class CurrentProcessKVPool<K, V> extends BaseKVPool<K, V> {
-    protected ConcurrentHashMap<K, V> dataPool;
-
-    public CurrentProcessKVPool(){
-        this.dataPool = new ConcurrentHashMap<>();
+public class InferenceRequest {
+    private String seqno;
+    private int sceneId;
+    private String modelName;
+    private String modelNamespace;
+    private Map<String, Object> featureData;
+    InferenceRequest(){
+        sceneId = 0;
+        featureData = new HashMap<>();
     }
 
-    @Override
-    public void put(K key, V value){
-        this.dataPool.put(key, value);
+    public String getSeqno() {
+        return seqno;
     }
 
-    @Override
-    public void putIfAbsent(K key, V value){
-        this.dataPool.putIfAbsent(key, value);
+    public int getSceneId() {
+        return sceneId;
     }
 
-    @Override
-    public void putAll(Map<K, V> kv){
-        this.dataPool.putAll(kv);
+    public String getModelName() {
+        return modelName;
     }
 
-    @Override
-    public V get(K key){
-        return this.dataPool.get(key);
+    public String getModelNamespace() {
+        return modelNamespace;
+    }
+
+    public Map<String, Object> getFeatureData() {
+        return featureData;
     }
 }

@@ -82,6 +82,7 @@ def publish_online(config_data):
             publish_model_request = model_service_pb2.PublishRequest()
             for role_name, role_party in config_data.get("role").items():
                 publish_model_request.role[role_name].partyId.extend(role_party)
+            publish_model_request.sceneId = config_data.get("scene_id", 0)
 
             for role_name, role_model_config in config_data.get("model").items():
                 if role_name != _role:

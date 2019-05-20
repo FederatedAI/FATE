@@ -18,13 +18,19 @@ package com.webank.ai.fate.core.storage.kv;
 
 import java.util.Map;
 
-public interface KVPool<K, V>{
-    void put(K key, V value);
-    void put(K key, V value, boolean onlyIfAbsent);
+public abstract class BaseMapPool<K, V> implements MapPool<K, V> {
+    public abstract void put(K key, V value);
+    public abstract void putIfAbsent(K key, V value);
+    public abstract void putAll(Map<K, V> kv);
+    public abstract V get(K key);
 
-    void putIfAbsent(K key, V value);
-
-    void putAll(Map<K, V> kv);
-
-    V get(K key);
+    @Override
+    public void put(K key, V value, boolean onlyIfAbsent){
+        if(onlyIfAbsent){
+            this.putIfAbsent(key, value);
+        }
+        else{
+            this.put(key, value);
+        }
+    }
 }

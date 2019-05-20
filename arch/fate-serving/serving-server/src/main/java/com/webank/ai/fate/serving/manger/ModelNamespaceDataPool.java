@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.serving.manger;
 
-import com.webank.ai.fate.core.storage.kv.BaseKVPool;
+import com.webank.ai.fate.core.storage.kv.BaseMapPool;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,19 +25,19 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.webank.ai.fate.serving.federatedml.PipelineTask;
+import com.webank.ai.fate.serving.bean.ModelNamespaceData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ModelPool extends BaseKVPool<String, PipelineTask> {
+public class ModelNamespaceDataPool extends BaseMapPool<String, ModelNamespaceData> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<String, PipelineTask> pool = new HashMap<>();
+    private static final Map<String, ModelNamespaceData> pool = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
 
     @Override
-    public void put(String key, PipelineTask value){
+    public void put(String key, ModelNamespaceData value){
         this.writeLock.lock();
         try {
             pool.put(key, value);
@@ -51,7 +51,7 @@ public class ModelPool extends BaseKVPool<String, PipelineTask> {
     }
 
     @Override
-    public void putIfAbsent(String key, PipelineTask value){
+    public void putIfAbsent(String key, ModelNamespaceData value){
         this.writeLock.lock();
         try {
             pool.putIfAbsent(key, value);
@@ -65,7 +65,7 @@ public class ModelPool extends BaseKVPool<String, PipelineTask> {
     }
 
     @Override
-    public void putAll(Map<String, PipelineTask> kv){
+    public void putAll(Map<String, ModelNamespaceData> kv){
         this.writeLock.lock();
         try {
             pool.putAll(kv);
@@ -79,9 +79,9 @@ public class ModelPool extends BaseKVPool<String, PipelineTask> {
     }
 
     @Override
-    public PipelineTask get(String key){
+    public ModelNamespaceData get(String key){
         this.readLock.lock();
-        PipelineTask pipelineTask = pool.get(key);
+        ModelNamespaceData pipelineTask = pool.get(key);
         this.readLock.unlock();
         return pipelineTask;
     }

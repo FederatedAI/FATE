@@ -29,7 +29,7 @@ public class TestFile implements FeatureData{
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> getData(String id) {
+    public Map<String, Object> getData(Map<String, Object> featureData) {
         Map<String, Object> data = new HashMap<>();
         try{
             List<String> lines = Files.readAllLines(Paths.get(System.getProperty("user.dir"), "host_data.csv"));

@@ -15,97 +15,108 @@
  */
 
 package com.webank.ai.fate.serving.manger;
+import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.result.ReturnResult;
-import com.webank.ai.fate.core.storage.dtable.DTableInfo;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;
 import com.webank.ai.fate.serving.adapter.resultprocessing.ResultData;
+import com.webank.ai.fate.core.bean.FederatedRoles;
+import com.webank.ai.fate.serving.bean.InferenceRequest;
+import com.webank.ai.fate.serving.bean.ModelNamespaceData;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.serving.utils.DTableUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InferenceManager {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static ReturnResult inference(String role, int partyId, Map<String, List<Integer>> allParty, ModelInfo modelInfo, String data, int sceneId){
+    public static ReturnResult inference(InferenceRequest inferenceRequest){
         ReturnResult returnResult = new ReturnResult();
-        DTableInfo modelDTableInfo = DTableUtils.genTableInfo(modelInfo.getName(),
-                modelInfo.getNamespace(),
-                sceneId,
-                role,
-                partyId,
-                allParty,
-                "model");
-        String modelTableName = modelDTableInfo.getName();
-        String modelNamespace = modelDTableInfo.getNamespace();
-        LOGGER.info("use model(name: {}, namespace: {})", modelTableName, modelNamespace);
-        PipelineTask model = ModelManager.getModel(role, partyId, allParty, modelTableName, modelNamespace);
+        String modelTableName = inferenceRequest.getModelName();
+        String modelNamespace = inferenceRequest.getModelNamespace();
+        LOGGER.info(inferenceRequest);
+        if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.getSceneId() != 0){
+            modelNamespace = ModelManager.getNamespaceBySceneId(inferenceRequest.getSceneId());
+        }
+        LOGGER.info(modelNamespace);
+        if (StringUtils.isEmpty(modelNamespace)){
+            returnResult.setRetcode(StatusCode.NOMODEL);
+            return returnResult;
+        }
+        ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
+        PipelineTask model;
+        if (StringUtils.isEmpty(modelTableName)){
+            modelTableName = modelNamespaceData.getUsedModelName();
+            model = modelNamespaceData.getUsedModel();
+        }else {
+            model = ModelManager.getModel(modelNamespaceData.getLocal().getRole(), modelNamespaceData.getLocal().getPartyId(), modelNamespaceData.getRole(), modelTableName, modelNamespace);
+        }
         if (model == null){
-            returnResult.setStatusCode(StatusCode.NOMODEL);
+            returnResult.setRetcode(StatusCode.NOMODEL);
+            return returnResult;
+        }
+        LOGGER.info("use model to inference, name: {}, namespace: {}", modelTableName, modelNamespace);
+        Map<String, Object> featureData = inferenceRequest.getFeatureData();
+
+        if (featureData == null){
+            returnResult.setRetcode(StatusCode.ILLEGALDATA);
+            returnResult.setRetmsg("Can not parse data json.");
             return returnResult;
         }
 
-        Object inputObject = ObjectTransform.json2Bean(data, HashMap.class);
-        if (inputObject == null){
-            returnResult.setStatusCode(StatusCode.ILLEGALDATA);
-            returnResult.setMessage("Can not parse data json.");
-            return returnResult;
-        }
-        Map<String, Object> inputData = (Map<String, Object>) inputObject;
-        inputData.forEach((sid, f)->{
-            Map<String, Object> predictInputData = (Map<String, Object>)f;
-            Map<String, Object> predictParams = new HashMap<>();
-            predictParams.put("sid", sid);
-            predictParams.put("partyId", partyId);
-            predictParams.put("role", role);
-            predictParams.put("allParty", allParty);
-            predictParams.put("modelName", modelTableName);
-            predictParams.put("modelNamespace", modelNamespace);
-            Map<String, Object> modelResult = model.predict(predictInputData, predictParams);
-            Map<String, Object> result = getProcessedResult(modelResult);
-            returnResult.putAllData(result);
-        });
+        Map<String, Object> predictParams = new HashMap<>();
+        Map<String, Object> federatedParams = new HashMap<>();
+        federatedParams.put("local", modelNamespaceData.getLocal());
+        federatedParams.put("model_info", new ModelInfo(modelTableName, modelNamespace));
+        federatedParams.put("role", modelNamespaceData.getRole());
+        federatedParams.put("device_id", featureData.get("device_id"));
+        federatedParams.put("phone_num", featureData.get("phone_num"));
+        predictParams.put("federatedParams", federatedParams);
+
+        Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
+        Map<String, Object> result = getProcessedResult(modelResult);
+        returnResult.putAllData(result);
         LOGGER.info("Inference successfully.");
         return returnResult;
     }
 
-    public static ReturnResult federatedPredict(Map<String, Object> requestData){
+    public static ReturnResult federatedInference(Map<String, Object> federatedParams){
+        LOGGER.info(federatedParams);
         ReturnResult returnResult = new ReturnResult();
-        int partyId = (int)requestData.get("partyId");
-        String role = requestData.get("role").toString();
-        int partnerPartyId = (int)requestData.get("partnerPartyId");
-        String partnerRole = requestData.get("partnerRole").toString();
-        Map<String, List<Integer>> allParty = (Map<String, List<Integer>>)requestData.get("allParty");
-        String partnerModelName = requestData.get("partnerModelName").toString();
-        String partnerModelNamespace = requestData.get("partnerModelNamespace").toString();
-        PipelineTask model = ModelManager.getModelByPartner(role, partyId, partnerRole, partnerPartyId, allParty, partnerModelName, partnerModelNamespace);
+        FederatedParty partnerParty = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("partner_local").toString(), FederatedParty.class);
+        FederatedParty party = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("local").toString(), FederatedParty.class);
+        FederatedRoles federatedRoles = (FederatedRoles) ObjectTransform.json2Bean(federatedParams.get("role").toString(), FederatedRoles.class);
+        ModelInfo partnerModelInfo = (ModelInfo) ObjectTransform.json2Bean(federatedParams.get("partner_model_info").toString(), ModelInfo.class);
+
+        PipelineTask model = ModelManager.getModelByPartner(party.getRole(), party.getPartyId(), partnerParty.getRole(),
+                partnerParty.getPartyId(), federatedRoles, partnerModelInfo.getName(), partnerModelInfo.getNamespace());
         if (model == null){
-            returnResult.setStatusCode(StatusCode.NOMODEL);
-            returnResult.setMessage("Can not found model.");
+            returnResult.setRetcode(StatusCode.NOMODEL);
+            returnResult.setRetmsg("Can not found model.");
             return returnResult;
         }
         Map<String, Object> predictParams = new HashMap<>();
-        predictParams.putAll(requestData);
+        predictParams.put("federatedParams", federatedParams);
         try{
-            Map<String, Object> inputData = getFeatureData(requestData.get("sid").toString());
-            if (inputData == null || inputData.size() < 1){
-                returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
-                returnResult.setMessage("Can not get feature data.");
+            Map<String, Object> featureData = getFeatureData(federatedParams);
+            if (featureData == null || featureData.size() < 1){
+                returnResult.setRetcode(StatusCode.FEDERATEDERROR);
+                returnResult.setRetmsg("Can not get feature data.");
                 return returnResult;
             }
-            Map<String, Object> result = model.predict(inputData, predictParams);
-            returnResult.setStatusCode(StatusCode.OK);
+            Map<String, Object> result = model.predict(featureData, predictParams);
+            returnResult.setRetcode(StatusCode.OK);
             returnResult.putAllData(result);
         }
         catch (Exception ex){
             LOGGER.error(ex.getStackTrace());
-            returnResult.setStatusCode(StatusCode.FEDERATEDERROR);
-            returnResult.setMessage(ex.getMessage());
+            returnResult.setRetcode(StatusCode.FEDERATEDERROR);
+            returnResult.setRetmsg(ex.getMessage());
         }
         return returnResult;
     }
@@ -137,12 +148,12 @@ public class InferenceManager {
         return resultData.getResult(modelResult);
     }
 
-    private static Map<String, Object> getFeatureData(String sid){
+    private static Map<String, Object> getFeatureData(Map<String, Object> featureId){
         String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
         FeatureData featureData = (FeatureData) getClassByName(classPath);
         if (featureData == null){
             return null;
         }
-        return featureData.getData(sid);
+        return featureData.getData(featureId);
     }
 }

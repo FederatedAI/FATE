@@ -17,6 +17,7 @@
 package com.webank.ai.fate.serving.manger;
 
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
+import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
@@ -47,12 +48,8 @@ public class ModelUtils {
         return pipelineTask;
     }
 
-    public static String genModelKey(String role, int partyId, Map<String, List<Integer>> allParty, String name, String namespace){
-        return StringUtils.join(Arrays.asList(role, partyId, SceneUtils.joinAllParty(allParty), name, namespace), "_");
-    }
-
-    public static String genPartnerModelIndexKey(int partnerPartyId, String partnerModelName, String partnerModelNamespace){
-        return StringUtils.join(Arrays.asList(partnerPartyId, partnerModelName, partnerModelNamespace), "_");
+    public static String genModelKey(String role, int partyId, FederatedRoles federatedRoles, String name, String namespace){
+        return StringUtils.join(Arrays.asList(role, partyId, SceneUtils.federatedRolesIdentificationString(federatedRoles), name, namespace), "_");
     }
 
     public static String[] splitModelKey(String key){
@@ -60,22 +57,22 @@ public class ModelUtils {
     }
 
 
-    public static Map<String, List<Integer>> getAllParty(Map<String, ModelServiceProto.Party> allPartyProto){
-        Map<String, List<Integer>> allParty = new HashMap<>();
-        allPartyProto.forEach((roleName, party) -> {
-            allParty.put(roleName, party.getPartyIdList());
+    public static FederatedRoles getFederatedRoles(Map<String, ModelServiceProto.Party> federatedRolesProto){
+        FederatedRoles federatedRoles = new FederatedRoles();
+        federatedRolesProto.forEach((roleName, party) -> {
+            federatedRoles.setRole(roleName, party.getPartyIdList());
         });
-        return allParty;
+        return federatedRoles;
     }
 
-    public static Map<String, Map<Integer, ModelInfo>> getAllPartyModel(Map<String, ModelServiceProto.RoleModelInfo> allPartyModelProto){
-        Map<String, Map<Integer, ModelInfo>> allPartyModel = new HashMap<>();
-        allPartyModelProto.forEach((roleName, roleModelInfo)->{
-            allPartyModel.put(roleName, new HashMap<>());
+    public static Map<String, Map<Integer, ModelInfo>> getFederatedRolesModel(Map<String, ModelServiceProto.RoleModelInfo> federatedRolesModelProto){
+        Map<String, Map<Integer, ModelInfo>> federatedRolesModel = new HashMap<>();
+        federatedRolesModelProto.forEach((roleName, roleModelInfo)->{
+            federatedRolesModel.put(roleName, new HashMap<>());
             roleModelInfo.getRoleModelInfoMap().forEach((partyId, modelInfo)->{
-                allPartyModel.get(roleName).put(partyId, new ModelInfo(modelInfo.getTableName(), modelInfo.getNamespace()));
+                federatedRolesModel.get(roleName).put(partyId, new ModelInfo(modelInfo.getTableName(), modelInfo.getNamespace()));
             });
         });
-        return allPartyModel;
+        return federatedRolesModel;
     }
 }

@@ -19,5 +19,5 @@ package com.webank.ai.fate.serving.adapter.dataaccess;
 import java.util.Map;
 
 public interface FeatureData {
-    Map<String, Object> getData(String id);
+    Map<String, Object> getData(Map<String, Object> featureId);
 }
