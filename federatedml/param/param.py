@@ -281,6 +281,8 @@ class WorkFlowParam(object):
 
     need_feature_selection: bool, default: False
         Whether this task need to do feature selection or not.
+    one_vs_rest: bool, default: False
+        Whether use one_vs_rest for lr to process multi-classification
 
     """
 
