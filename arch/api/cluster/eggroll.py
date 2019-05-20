@@ -30,9 +30,10 @@ from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grp
 from arch.api.utils import cloudpickle
 from arch.api.utils.core import string_to_bytes, bytes_to_string
 from arch.api.utils.iter_utils import split_every
+from arch.api.core import EggRollContext
 
 
-def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
+def init(job_id=None, server_conf_path="arch/conf/server_conf.json", eggroll_context=None):
     if job_id is None:
         job_id = str(uuid.uuid1())
     global LOGGER
@@ -40,7 +41,10 @@ def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
     server_conf = file_utils.load_json_conf(server_conf_path)
     _roll_host = server_conf.get("servers").get("roll").get("host")
     _roll_port = server_conf.get("servers").get("roll").get("port")
-    _EggRoll(job_id, _roll_host, _roll_port)
+
+    if not eggroll_context:
+        eggroll_context = EggRollContext()
+    _EggRoll(job_id, _roll_host, _roll_port, eggroll_context=eggroll_context)
 
 
 def _get_meta(_table):
@@ -62,7 +66,7 @@ class _DTable(object):
         self._in_place_computing = in_place_computing
 
     def __str__(self):
-        return "storage_type:{}, namespace:{}, name:{}, partitions:{}, in_place_computing:{}".format(self._type,
+        return "storage_type: {}, namespace: {}, name: {}, partitions: {}, in_place_computing: {}".format(self._type,
                                                                                                      self._namespace, self._name, self._partitions, self._in_place_computing)
 
     '''
@@ -79,10 +83,10 @@ class _DTable(object):
     Storage apis
     '''
 
-    def save_as(self, name, namespace, partition=None, use_serialize=True):
+    def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True):
         if partition is None:
             partition = self._partitions
-        dup = _EggRoll.get_instance().table(name, namespace, partition=partition, in_place_computing=self.get_in_place_computing())
+        dup = _EggRoll.get_instance().table(name, namespace, partition=partition, in_place_computing=self.get_in_place_computing(), persistent=persistent)
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
@@ -122,7 +126,10 @@ class _DTable(object):
         i = 0
         for item in it:
             if keysOnly:
-                rtn.append(item[0])
+                if item:
+                    rtn.append(item[0])
+                else:
+                    rtn.append(None)
             else:
                 rtn.append(item)
             i += 1
@@ -142,9 +149,10 @@ class _DTable(object):
     '''
 
     def map(self, func):
-        _intermediate_result = _EggRoll.get_instance().map(self, func)
-        return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
-                                            partition=_intermediate_result._partitions)
+        # _intermediate_result = _EggRoll.get_instance().map(self, func)
+        # return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
+        #                                     partition=_intermediate_result._partitions)
+        return _EggRoll.get_instance().map(self, func)
 
     def mapValues(self, func):
         return _EggRoll.get_instance().map_values(self, func)
@@ -156,14 +164,8 @@ class _DTable(object):
         return _EggRoll.get_instance().reduce(self, func)
 
     def join(self, other, func):
-        if other._partitions != self._partitions:
-            if other.count() > self.count():
-                return self.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=other._partitions).join(other,
-                                                                                                               func)
-            else:
-                return self.join(other.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=self._partitions),
-                                 func)
-        return _EggRoll.get_instance().join(self, other, func)
+        left, right = _DTable._repartition_small_table(self, other)
+        return _EggRoll.get_instance().join(left, right, func)
 
     def glom(self):
         return _EggRoll.get_instance().glom(self)
@@ -172,31 +174,34 @@ class _DTable(object):
         return _EggRoll.get_instance().sample(self, fraction, seed)
 
     def subtractByKey(self, other):
-        if other._partitions != self._partitions:
-            if other.count() > self.count():
-                return _repartition(self, partition_num=other._partitions).subtractByKey(other)
-            else:
-                return self.subtractByKey(_repartition(other, partition_num=self._partitions))
-
-        return _EggRoll.get_instance().subtractByKey(self, other)
+        left, right = _DTable._repartition_small_table(self, other)
+        return _EggRoll.get_instance().subtractByKey(left, right)
 
     def filter(self, func):
         return _EggRoll.get_instance().filter(self, func)
 
     def union(self, other, func=lambda v1, v2 : v1):
-        if other._partitions != self._partitions:
-            if other.count() > self.count():
-                return _repartition(self, partition_num=other._partitions).union(other, func)
-            else:
-                return self.union(_repartition(other, partition_num=self._partitions), func)
-        return _EggRoll.get_instance().union(self, other, func)
+        left, right = _DTable._repartition_small_table(self, other)
+        return _EggRoll.get_instance().union(left, right, func)
 
     def flatMap(self, func):
         return _EggRoll.get_instance().flatMap(self, func)
 
     @staticmethod
-    def _repartition(dtable, partition_num, repartition_policy=None):
-        return dtable.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition_num)
+    def _repartition_small_table(left, right):
+        left_partitions = left._partitions
+        right_partitions = right._partitions
+        if left_partitions != right_partitions:
+            if right.count() > left.count():
+                left = _DTable._repartition(left, partition_num=right_partitions)
+            else:
+                right = _DTable._repartition(right, partition_num=left_partitions)
+
+        return left, right
+
+    @staticmethod
+    def _repartition(dtable, partition_num, persistent=False, repartition_policy=None):
+        return dtable.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition_num, persistent=persistent)
 
 class _EggRoll(object):
     value_serdes = eggroll_serdes.get_serdes()
@@ -205,22 +210,13 @@ class _EggRoll(object):
     host_name = 'unknown'
     host_ip = 'unknown'
 
-    # todo: move to EggRollContext
-    def __init__(self):
-        try:
-            self.host_name = socket.gethostname()
-            self.host_ip = socket.gethostbyname(self.host_name)
-        except socket.gaierror as e:
-            self.host_name = 'unknown'
-            self.host_ip = 'unknown'
-
     @staticmethod
     def get_instance():
         if _EggRoll.instance is None:
             raise EnvironmentError("eggroll should be initialized before use")
         return _EggRoll.instance
 
-    def __init__(self, job_id, host, port):
+    def __init__(self, job_id, host, port, eggroll_context):
         if _EggRoll.instance is not None:
             raise EnvironmentError("eggroll should be initialized only once")
         self.channel = grpc.insecure_channel(target="{}:{}".format(host, port),
@@ -229,7 +225,16 @@ class _EggRoll(object):
         self.job_id = job_id
         self.kv_stub = kv_pb2_grpc.KVServiceStub(self.channel)
         self.proc_stub = processor_pb2_grpc.ProcessServiceStub(self.channel)
+        self.eggroll_context = eggroll_context
         _EggRoll.instance = self
+
+        # todo: move to eggrollContext
+        try:
+            self.host_name = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self.host_name)
+        except socket.gaierror as e:
+            self.host_name = 'unknown'
+            self.host_ip = 'unknown'
 
     def table(self, name, namespace, partition=1,
               create_if_missing=True, error_if_exist=False,
@@ -287,9 +292,11 @@ class _EggRoll(object):
         info = self.kv_stub.createIfAbsent(create_table_info)
         return _DTable(info.storageLocator, info.fragmentCount)
 
-    def _create_table_from_locator(self, storage_locator, partitions):
-        create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=partitions)
-        return self._create_table(create_table_info)
+    def _create_table_from_locator(self, storage_locator, template: _DTable):
+        create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=template._partitions)
+        result = self._create_table(create_table_info)
+        result.set_in_place_computing(template.get_in_place_computing())
+        return result
 
     @staticmethod
     def __generate_operand(kvs: Iterable, use_serialize=True):
@@ -368,47 +375,17 @@ class _EggRoll(object):
     '''
 
     def map(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.map(unary_p)
-
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.map)
 
     def map_values(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.mapValues(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.mapValues)
 
     def map_partitions(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.mapPartitions(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.mapPartitions)
 
     def reduce(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
+        unary_p = self.__create_unary_process(table=_table, func=func)
+
         values = [_EggRoll._deserialize_operand(operand) for operand in self.proc_stub.reduce(unary_p)]
         values = [v for v in filter(partial(is_not, None), values)]
         if len(values) <= 0:
@@ -422,83 +399,85 @@ class _EggRoll(object):
         return val
 
     def join(self, _left: _DTable, _right: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
-        r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
-        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                                  function_id=func_id,
-                                                                                                  function_bytes=func_bytes,
-                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
-        resp = self.proc_stub.join(binary_p)
-        return self._create_table_from_locator(resp, _left._partitions)
+        return self.__do_binary_process_and_create_table(left=_left, right=_right, user_func=func, stub_func=self.proc_stub.join)
 
     def glom(self, _table: _DTable):
-        func_id = str(uuid.uuid1())
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-
-        unary_p = processor_pb2.UnaryProcess(operand=operand, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                          function_id=func_id,
-                                                                                          isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.glom(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=None, stub_func=self.proc_stub.glom)
 
     def sample(self, _table: _DTable, fraction, seed):
         if fraction < 0 or fraction > 1:
             raise ValueError("fraction must be in [0, 1]")
-        func_bytes = self.value_serdes.serialize((fraction, seed))
-        func_id = str(uuid.uuid1())
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
 
-        unary_p = processor_pb2.UnaryProcess(operand=operand, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                          function_id=func_id,
-                                                                                          function_bytes=func_bytes))
-        resp = self.proc_stub.sample(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        func = lambda: (fraction, seed)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.sample)
 
     def subtractByKey(self, _left: _DTable, _right: _DTable):
-        func_bytes = self.value_serdes.serialize(_left._namespace + '.' + _left._name + '-' + _right._namespace + '.' + _right._name)
-        func_id = str(uuid.uuid1())
-        l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
-        r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
-        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                                  function_id=func_id,
-                                                                                                  function_bytes=func_bytes,
-                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
-        resp = self.proc_stub.subtractByKey(binary_p)
-        return self._create_table_from_locator(resp, _left._partitions)
+        return self.__do_binary_process_and_create_table(left=_left, right=_right, user_func=None, stub_func=self.proc_stub.subtractByKey)
 
     def filter(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.filter(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.filter)
 
     def union(self, _left: _DTable, _right: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        l_op = storage_basic_pb2.StorageLocator(namespace=_left._namespace, type=_left._type, name=_left._name)
-        r_op = storage_basic_pb2.StorageLocator(namespace=_right._namespace, type=_right._type, name=_right._name)
-        binary_p = processor_pb2.BinaryProcess(left=l_op, right=r_op, info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                                                  function_id=func_id,
-                                                                                                  function_bytes=func_bytes,
-                                                                                                  isInPlaceComputing=_left.get_in_place_computing()))
-        resp = self.proc_stub.union(binary_p)
-        return self._create_table_from_locator(resp, _left._partitions)
+        return self.__do_binary_process_and_create_table(left=_left, right=_right, user_func=func, stub_func=self.proc_stub.union)
 
     def flatMap(self, _table: _DTable, func):
-        func_id, func_bytes = self.serialize_and_hash_func(func)
-        operand = storage_basic_pb2.StorageLocator(namespace=_table._namespace, type=_table._type, name=_table._name)
-        unary_p = processor_pb2.UnaryProcess(operand=operand,
-                                             info=processor_pb2.TaskInfo(task_id=self.job_id,
-                                                                         function_id=func_id,
-                                                                         function_bytes=func_bytes,
-                                                                         isInPlaceComputing=_table.get_in_place_computing()))
-        resp = self.proc_stub.flatMap(unary_p)
-        return self._create_table_from_locator(resp, _table._partitions)
+        return self.__do_unary_process_and_create_table(table=_table, user_func=func, stub_func=self.proc_stub.flatMap)
+
+    def __create_storage_locator(self, namespace, name, type):
+        return storage_basic_pb2.StorageLocator(namespace=namespace, name=name, type=type)
+
+    def __create_storage_locator_from_dtable(self, _table: _DTable):
+        return self.__create_storage_locator(_table._namespace, _table._name, _table._type)
+
+    def __create_task_info(self, func, is_in_place_computing):
+        if func:
+            func_id, func_bytes = self.serialize_and_hash_func(func)
+        else:
+            func_id = str(uuid.uuid1())
+            func_bytes = b'blank'
+
+        return processor_pb2.TaskInfo(task_id=self.job_id,
+                                      function_id=func_id,
+                                      function_bytes=func_bytes,
+                                      isInPlaceComputing=is_in_place_computing)
+
+    def __create_unary_process(self, table: _DTable, func):
+        operand = self.__create_storage_locator_from_dtable(table)
+        task_info = self.__create_task_info(func=func, is_in_place_computing=table.get_in_place_computing())
+
+        return processor_pb2.UnaryProcess(info=task_info,
+                                          operand=operand,
+                                          conf=processor_pb2.ProcessConf(namingPolicy=self.eggroll_context.get_naming_policy().name))
+
+    def __do_unary_process(self, table: _DTable, user_func, stub_func):
+        process = self.__create_unary_process(table=table, func=user_func)
+
+        return stub_func(process)
+
+    def __do_unary_process_and_create_table(self, table: _DTable, user_func, stub_func):
+        resp = self.__do_unary_process(table=table, user_func=user_func, stub_func=stub_func)
+        return self._create_table_from_locator(resp, table)
+
+
+    def __create_binary_process(self, left: _DTable, right: _DTable, func):
+        left_op = self.__create_storage_locator_from_dtable(left)
+        right_op = self.__create_storage_locator_from_dtable(right)
+        task_info = self.__create_task_info(func=func, is_in_place_computing=left.get_in_place_computing())
+
+        return processor_pb2.BinaryProcess(info=task_info,
+                                           left=left_op,
+                                           right=right_op,
+                                           conf=processor_pb2.ProcessConf(namingPolicy=self.eggroll_context.get_naming_policy().name))
+
+    def __do_binary_process(self, left: _DTable, right: _DTable, user_func, stub_func):
+        process = self.__create_binary_process(left=left, right=right, func=user_func)
+
+        return stub_func(process)
+
+    def __do_binary_process_and_create_table(self, left: _DTable, right: _DTable, user_func, stub_func):
+        resp = self.__do_binary_process(left=left, right=right, user_func=user_func, stub_func=stub_func)
+        return self._create_table_from_locator(resp, left)
+
 
 class _EggRollIterator(object):
 

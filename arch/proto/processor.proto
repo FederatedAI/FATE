@@ -21,6 +21,10 @@ import "storage-basic.proto";
 
 package com.webank.ai.fate.api.eggroll.processor;
 
+message ProcessConf {
+    string namingPolicy = 1;
+}
+
 message TaskInfo {
     string task_id = 1;
     string function_id = 2;
@@ -31,12 +35,14 @@ message TaskInfo {
 message UnaryProcess {
     TaskInfo info = 1;
     com.webank.ai.fate.api.eggroll.storage.StorageLocator operand = 2;
+    ProcessConf conf = 3;
 }
 
 message BinaryProcess {
     TaskInfo info = 1;
     com.webank.ai.fate.api.eggroll.storage.StorageLocator left = 2;
     com.webank.ai.fate.api.eggroll.storage.StorageLocator right = 3;
+    ProcessConf conf = 4;
 }
 
 service ProcessService {

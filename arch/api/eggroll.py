@@ -19,11 +19,12 @@ from arch.api.utils import file_utils
 from typing import Iterable
 import uuid
 import os
-from arch.api import WorkMode
+from arch.api import WorkMode, NamingPolicy
 from arch.api import RuntimeInstance
+from arch.api.core import EggRollContext
 
 
-def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE):
+def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: NamingPolicy = NamingPolicy.DEFAULT):
     if RuntimeInstance.EGGROLL:
         return
     if job_id is None:
@@ -32,13 +33,15 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE):
     else:
         LoggerFactory.setDirectory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
     RuntimeInstance.MODE = mode
+
+    eggroll_context = EggRollContext(naming_policy=naming_policy)
     if mode == WorkMode.STANDALONE:
         from arch.api.standalone.eggroll import Standalone
-        RuntimeInstance.EGGROLL = Standalone(job_id=job_id)
+        RuntimeInstance.EGGROLL = Standalone(job_id=job_id, eggroll_context=eggroll_context)
     elif mode == WorkMode.CLUSTER:
         from arch.api.cluster.eggroll import _EggRoll
         from arch.api.cluster.eggroll import init as c_init
-        c_init(job_id)
+        c_init(job_id, eggroll_context=eggroll_context)
         RuntimeInstance.EGGROLL = _EggRoll.get_instance()
     else:
         from arch.api.cluster import simple_roll

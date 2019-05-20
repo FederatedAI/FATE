@@ -19,6 +19,7 @@ import pickle as c_pickle
 from arch.api import StoreType
 from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
 from arch.api.utils.core import string_to_bytes, bytes_to_string
+from arch.api.core import EggRollContext
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid
@@ -35,16 +36,22 @@ import time
 import socket
 import random
 
+DELIMETER = '-'
+DELIMETER_ENCODED = DELIMETER.encode()
+
 
 class Standalone:
     __instance = None
 
-    def __init__(self, job_id=None):
+    def __init__(self, job_id=None, eggroll_context=None):
         self.data_dir = os.path.join(file_utils.get_project_base_directory(), 'data')
         self.job_id = str(uuid.uuid1()) if job_id is None else "{}".format(job_id)
         self.meta_table = _DTable('__META__', '__META__', 'fragments', 10)
         self.pool = Executor()
         Standalone.__instance = self
+        if not eggroll_context:
+            eggroll_context = EggRollContext()
+        self.eggroll_context = eggroll_context
 
         self.unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
 
@@ -106,6 +113,9 @@ class Standalone:
             raise EnvironmentError("eggroll should initialize before use")
         return Standalone.__instance
 
+    def get_context(self):
+        return self.eggroll_context
+
 
 def serialize(_obj):
     return c_pickle.dumps(_obj)
@@ -151,6 +161,13 @@ class _TaskInfo:
         self._function_bytes = function_bytes
         self._is_in_place_computing = is_in_place_computing
 
+class _ProcessConf:
+    def __init__(self, naming_policy):
+        self._naming_policy = naming_policy
+
+    @staticmethod
+    def get_default():
+        return _ProcessConf(Standalone.get_instance().get_context().get_naming_policy().value)
 
 class _Operand:
     def __init__(self, _type, namespace, name, partition):
@@ -167,16 +184,18 @@ class _Operand:
 
 
 class _UnaryProcess:
-    def __init__(self, task_info: _TaskInfo, operand: _Operand):
+    def __init__(self, task_info: _TaskInfo, operand: _Operand, process_conf: _ProcessConf):
         self._info = task_info
         self._operand = operand
+        self._process_conf = process_conf
 
 
 class _BinaryProcess:
-    def __init__(self, task_info: _TaskInfo, left: _Operand, right: _Operand):
+    def __init__(self, task_info: _TaskInfo, left: _Operand, right: _Operand, process_conf: _ProcessConf):
         self._info = task_info
         self._left = left
         self._right = right
+        self._process_conf = process_conf
 
 
 def __get_function(info: _TaskInfo):
@@ -194,7 +213,7 @@ def _generator_from_cursor(cursor):
 def do_map(p: _UnaryProcess):
     _mapper = __get_function(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     serialize = c_pickle.dumps
     deserialize = c_pickle.loads
@@ -223,7 +242,7 @@ def do_map(p: _UnaryProcess):
 def do_map_partitions(p: _UnaryProcess):
     _mapper = __get_function(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -242,10 +261,7 @@ def do_map_values(p: _UnaryProcess):
     _mapper = __get_function(p._info)
     is_in_place_computing = __get_is_in_place_computing(p._info)
     op = p._operand
-    if is_in_place_computing:
-        rtn = op
-    else:
-        rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, True)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -266,10 +282,7 @@ def do_join(p: _BinaryProcess):
     is_in_place_computing = __get_is_in_place_computing(p._info)
     left_op = p._left
     right_op = p._right
-    if is_in_place_computing:
-        rtn = left_op
-    else:
-        rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
     right_env = right_op.as_env()
     left_env = left_op.as_env()
     dst_env = rtn.as_env(write=True)
@@ -311,7 +324,7 @@ def do_reduce(p: _UnaryProcess):
 
 def do_glom(p: _UnaryProcess):
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -331,7 +344,7 @@ def do_glom(p: _UnaryProcess):
 
 def do_sample(p: _UnaryProcess):
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     deserialize = c_pickle.loads
@@ -350,10 +363,7 @@ def do_subtract_by_key(p: _BinaryProcess):
     is_in_place_computing = __get_is_in_place_computing(p._info)
     left_op = p._left
     right_op = p._right
-    if is_in_place_computing:
-        rtn = left_op
-    else:
-        rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
     right_env = right_op.as_env()
     left_env = left_op.as_env()
     dst_env = rtn.as_env(write=True)
@@ -378,10 +388,7 @@ def do_filter(p: _UnaryProcess):
     _func = __get_function(p._info)
     is_in_place_computing = __get_is_in_place_computing(p._info)
     op = p._operand
-    if is_in_place_computing:
-        rtn = op
-    else:
-        rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, True)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -406,10 +413,7 @@ def do_union(p: _BinaryProcess):
     is_in_place_computing = __get_is_in_place_computing(p._info)
     left_op = p._left
     right_op = p._right
-    if is_in_place_computing:
-        rtn = left_op
-    else:
-        rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
     right_env = right_op.as_env()
     left_env = left_op.as_env()
     dst_env = rtn.as_env(write=True)
@@ -444,7 +448,7 @@ def do_union(p: _BinaryProcess):
 def do_flat_map(p: _UnaryProcess):
     _func = __get_function(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -461,6 +465,27 @@ def do_flat_map(p: _UnaryProcess):
             cursor.close()
     return rtn
 
+def __get_in_place_computing_from_task_info(task_info):
+    return task_info._is_in_place_computing
+
+def __create_output_operand(src_op, task_info, process_conf, is_in_place_computing_effective):
+    if is_in_place_computing_effective:
+        if __get_in_place_computing_from_task_info(task_info):
+            return src_op
+
+    naming_policy = process_conf._naming_policy
+    if naming_policy == 'ITER_AWARE':
+        storage_name = DELIMETER.join([src_op._namespace, src_op._name, src_op._type])
+        name_ba = bytearray(storage_name.encode())
+        name_ba.extend(DELIMETER_ENCODED)
+        name_ba.extend(task_info._function_bytes)
+
+        name = hashlib.md5(name_ba).hexdigest()
+    else:
+        name = task_info._function_id
+
+    return _Operand(StoreType.IN_MEMORY.value, task_info._task_id, name, src_op._partition)
+
 # todo: abstraction
 class _DTable(object):
 
@@ -473,9 +498,8 @@ class _DTable(object):
         self._in_place_computing = in_place_computing
 
     def __str__(self):
-        return "type: {}, namespace: {}, name: {}, partitions: {}".format(self._type, self._namespace, self._name,
-                                                                          self._partitions)
-
+        return "storage_type: {}, namespace: {}, name: {}, partitions: {}, in_place_computing: {}".format(self._type, self._namespace, self._name,
+                                                                          self._partitions, self._in_place_computing)
 
     '''
     Getter / Setter
@@ -658,7 +682,8 @@ class _DTable(object):
         results = []
         for p in range(self._partitions):
             _op = _Operand(self._type, self._namespace, self._name, p)
-            _p = _UnaryProcess(_task_info, _op)
+            _p_conf = _ProcessConf.get_default()
+            _p = _UnaryProcess(_task_info, _op, _p_conf)
             results.append(Standalone.get_instance().pool.submit(_do_func, _p))
         return results
 
@@ -711,7 +736,8 @@ class _DTable(object):
         for p in range(self._partitions):
             _left = _Operand(self._type, self._namespace, self._name, p)
             _right = _Operand(other._type, other._namespace, other._name, p)
-            _p = _BinaryProcess(_task_info, _left, _right)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
             results.append(Standalone.get_instance().pool.submit(do_join, _p))
         for r in results:
             result = r.result()
@@ -736,7 +762,8 @@ class _DTable(object):
         for p in range(self._partitions):
             _left = _Operand(self._type, self._namespace, self._name, p)
             _right = _Operand(other._type, other._namespace, other._name, p)
-            _p = _BinaryProcess(_task_info, _left, _right)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
             results.append(Standalone.get_instance().pool.submit(do_subtract_by_key, _p))
         for r in results:
             result = r.result()
@@ -763,7 +790,8 @@ class _DTable(object):
         for p in range(self._partitions):
             _left = _Operand(self._type, self._namespace, self._name, p)
             _right = _Operand(other._type, other._namespace, other._name, p)
-            _p = _BinaryProcess(_task_info, _left, _right)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
             results.append(Standalone.get_instance().pool.submit(do_union, _p))
         for r in results:
             result = r.result()
