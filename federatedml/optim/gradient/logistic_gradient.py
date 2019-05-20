@@ -21,6 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.optim.gradient.base_gradient import Gradient
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -29,9 +30,9 @@ LOGGER = log_utils.getLogger()
 class LogisticGradient(Gradient):
     def compute_loss(self, X, Y, coef, intercept):
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
-        avg_loss = tot_loss / Y.shape[0]
+        # avg_loss = tot_loss / Y.shape[0]
         # avg_loss = LogLoss.compute(X, Y, coef)
-        return avg_loss
+        return tot_loss
 
     def compute(self, values, coef, intercept, fit_intercept):
 
@@ -51,7 +52,8 @@ class LogisticGradient(Gradient):
         grad_batch = d * X
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        grad = sum(grad_batch) / batch_size
+        # grad = sum(grad_batch) / batch_size
+        grad = sum(grad_batch)
         loss = self.compute_loss(X, Y, coef, intercept)
         return grad, loss
 
@@ -74,7 +76,8 @@ class TaylorLogisticGradient(Gradient):
         grad_batch = grad_batch.transpose()
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        grad = sum(grad_batch) / batch_size
+        # grad = sum(grad_batch) / batch_size
+        grad = sum(grad_batch)
         return grad, None
 
 
@@ -99,15 +102,12 @@ class HeteroLogisticGradient(object):
         for j in range(feature.shape[1]):
             feature_col = feature[:, j]
             gradient_j = fate_operator.dot(feature_col, fore_gradient)
-            gradient_j /= feature.shape[0]
             gradient.append(gradient_j)
 
         if fit_intercept:
-            fore_gradient_size = fore_gradient.shape[0]
-            fore_gradient = fore_gradient / fore_gradient_size
             bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
-
+        gradient.append(feature.shape[0])
         return np.array(gradient)
 
     @staticmethod
@@ -131,7 +131,7 @@ class HeteroLogisticGradient(object):
             else:
                 loss = loss + l
 
-        return loss / len(half_ywx)
+        return np.array([loss, len(half_ywx)])
 
     def compute_fore_gradient(self, data_instance, encrypted_wx):
         fore_gradient = encrypted_wx.join(data_instance, lambda wx, d: 0.25 * wx - 0.5 * d.label)
@@ -140,8 +140,15 @@ class HeteroLogisticGradient(object):
     def compute_gradient(self, data_instance, fore_gradient, fit_intercept):
         feat_join_grad = data_instance.join(fore_gradient, lambda d, g: (d.features, g))
         f = functools.partial(self.__compute_gradient, fit_intercept=fit_intercept)
-        gradient_partition = feat_join_grad.mapPartitions(f)
-        gradient = HeteroFederatedAggregator.aggregate_mean(gradient_partition)
+
+        gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
+        gradient = gradient_partition[:-1] / gradient_partition[-1]
+
+        for i in range(len(gradient)):
+            if not isinstance(gradient[i], PaillierEncryptedNumber):
+                gradient[i] = self.encrypt_operator.encrypt(gradient[i])
+
+
         return gradient
 
     def compute_gradient_and_loss(self, data_instance, fore_gradient, encrypted_wx, en_sum_wx_square, fit_intercept):
@@ -152,7 +159,7 @@ class HeteroLogisticGradient(object):
         half_ywx = encrypted_wx.join(data_instance, lambda wx, d: 0.5 * wx * int(d.label))
         half_ywx_join_en_sum_wx_square = half_ywx.join(en_sum_wx_square, lambda yz, ez: (yz, ez))
         f = functools.partial(self.__compute_loss)
-        loss_partition = half_ywx_join_en_sum_wx_square.mapPartitions(f)
-        loss = HeteroFederatedAggregator.aggregate_mean(loss_partition)
+        loss_partition = half_ywx_join_en_sum_wx_square.mapPartitions(f).reduce(lambda x, y: x + y)
+        loss = loss_partition[0] / loss_partition[1]
 
         return gradient, loss

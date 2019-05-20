@@ -15,53 +15,55 @@
 #
 
 from arch.api import eggroll
-
+from arch.api.utils import log_utils
 from federatedml.model_selection import indices
-# from arch.api.utils import log_utils
 
-# LOGGER = log_utils.getLogger()
+LOGGER = log_utils.getLogger()
 
 
 class MiniBatch:
-    def __init__(self, data_inst=None, batch_size=320):
+    def __init__(self, data_inst, batch_size=320):
         self.batch_data_sids = None
         self.batch_nums = 0
         self.data_inst = data_inst
-        self.batch_size = batch_size
-        if self.data_inst is not None and batch_size is not None:
-            self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
-            # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
+        self.all_batch_data = None
+        self.all_index_data = None
 
-    def mini_batch_data_generator(self, data_inst=None, batch_size=None):
-
-        if data_inst is not None or (batch_size is not None and batch_size != self.batch_size):
-            self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
+        if batch_size == -1:
+            self.batch_size = data_inst.count()
+        else:
             self.batch_size = batch_size
-        if data_inst is None:
-            data_inst = self.data_inst
 
-        batch_data_sids = self.batch_data_sids
-        # for bid in range(len(batch_data_sids)):
-        # yield data_inst
-        for index_data in batch_data_sids:
-            # LOGGER.debug('in generator, index_data is {}'.format(index_data))
-            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_inst._partitions)
-            batch_data = index_table.join(data_inst, lambda x, y: y)
-            yield batch_data
+        self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
+        # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
 
-    def mini_batch_index_generator(self, data_inst=None, batch_size=320):
-        if data_inst is not None or batch_size != self.batch_size:
-            self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
-            self.batch_size = batch_size
-        batch_data_sids = self.batch_data_sids
+    def mini_batch_data_generator(self, result='data'):
+        """
+        Generate mini-batch data or index
 
-        for bid in range(len(batch_data_sids)):
-            index_data = batch_data_sids[bid]
-            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_inst._partitions)
-            yield index_table
+        Parameters
+        ----------
+        result : str, 'data' or 'index', default: 'data'
+            Specify you want batch data or batch index.
+
+        Returns
+        -------
+        A generator that might generate data or index.
+        """
+        if result == 'index':
+            for index_table in self.all_index_data:
+                yield index_table
+        else:
+            for batch_data in self.all_batch_data:
+                yield batch_data
 
     def __mini_batch_data_seperator(self, data_insts, batch_size):
         data_sids_iter, data_size = indices.collect_index(data_insts)
+
+        if batch_size > data_size:
+            batch_size = data_size
+            self.batch_size = batch_size
+
         batch_nums = (data_size + batch_size - 1) // batch_size
 
         batch_data_sids = []
@@ -82,4 +84,16 @@ class MiniBatch:
 
         self.batch_nums = len(batch_data_sids)
 
+        all_batch_data = []
+        all_index_data = []
+        for index_data in batch_data_sids:
+            # LOGGER.debug('in generator, index_data is {}'.format(index_data))
+            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_insts._partitions)
+            batch_data = index_table.join(data_insts, lambda x, y: y)
+
+            # yield batch_data
+            all_batch_data.append(batch_data)
+            all_index_data.append(index_table)
+        self.all_batch_data = all_batch_data
+        self.all_index_data = all_index_data
         return batch_data_sids

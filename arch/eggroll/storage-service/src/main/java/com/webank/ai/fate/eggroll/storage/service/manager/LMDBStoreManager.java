@@ -94,7 +94,6 @@ public class LMDBStoreManager implements StoreManager<Bytes, byte[]> {
 
     @Override
     public KeyValueStore<Bytes, byte[]> getStore(StoreInfo info) {
-
         return storeCache.getIfPresent(info);
     }
 

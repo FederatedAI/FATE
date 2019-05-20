@@ -15,15 +15,18 @@
 #
 
 import numpy as np
+from federatedml.feature.instance import Instance
 from federatedml.util import consts
-from federatedml.util import Statistics
+from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 
 class LeastSquaredErrorLoss(object):
     @staticmethod
     def initialize(y):
-        mean = Statistics().mean(y)
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        mean = statistics.get_mean()
+        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
 
     @staticmethod
     def predict(value):
@@ -51,8 +54,10 @@ class LeastSquaredErrorLoss(object):
 class LeastAbsoluteErrorLoss(object):
     @staticmethod
     def initialize(y):
-        median = Statistics().median(y)
-        return y.mapValues(lambda x: np.asarray([median])), np.asarray([median])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        median = statistics.get_median()
+        return y.mapValues(lambda x: np.asarray(median)), np.asarray(median)
 
     @staticmethod
     def predict(value):
@@ -94,8 +99,10 @@ class LeastAbsoluteErrorLoss(object):
 class HuberLoss(object):
     @staticmethod
     def initialize(y):
-        mean = Statistics().mean(y)
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        mean = statistics.get_mean()
+        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
 
     def __init__(self, delta):
         if delta is None:
@@ -128,8 +135,10 @@ class HuberLoss(object):
 class FairLoss(object):
     @staticmethod
     def initialize(y):
-        mean = Statistics().mean(y)
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        mean = statistics.get_mean()
+        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
 
     def __init__(self, c):
         if c is None:
@@ -163,8 +172,10 @@ class FairLoss(object):
 class LogCoshLoss(object):
     @staticmethod
     def initialize(y):
-        mean = Statistics().mean(y)
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        mean = statistics.get_mean()
+        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
 
     @staticmethod
     def predict(value):
@@ -189,8 +200,10 @@ class LogCoshLoss(object):
 class TweedieLoss(object):
     @staticmethod
     def initialize(y):
-        mean = Statistics().mean(y)
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        statistics = MultivariateStatisticalSummary(y_inst, -1)
+        mean = statistics.get_mean()
+        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
 
     def __init__(self, rho=None):
         if rho is None:

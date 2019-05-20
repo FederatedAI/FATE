@@ -14,9 +14,8 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-
 from arch.api import federation
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import DiffConverge
 from federatedml.optim import activation
@@ -51,15 +50,18 @@ class HomoLRArbiter(BaseLogisticRegression):
         self.host_encrypter = []
         self.party_weights = []  # The first one is guest weight, host weights for otherwise
         self.has_sychronized_encryption = False
+        self.loss_history = []
+        self.is_converged = False
+        self.header = []
 
     def fit(self, data=None):
-
+        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
         self.__init_parameters()
+        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
 
         LOGGER.info("Finish init parameters")
 
         for iter_num in range(self.max_iter):
-            # LOGGER.debug("iter num: {}".format(iter_num))
             # re_encrypt host models
             self.__re_encrypt(iter_num)
 
@@ -68,11 +70,11 @@ class HomoLRArbiter(BaseLogisticRegression):
                                                           iter_num=iter_num,
                                                           party_weights=self.party_weights,
                                                           host_encrypter=self.host_encrypter)
-            # LOGGER.debug("aggregated model: {}".format(final_model))
             total_loss = self.aggregator.aggregate_loss(transfer_variable=self.transfer_variable,
                                                         iter_num=iter_num,
                                                         party_weights=self.party_weights,
                                                         host_use_encryption=self.host_use_encryption)
+            self.loss_history.append(total_loss)
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
@@ -81,15 +83,9 @@ class HomoLRArbiter(BaseLogisticRegression):
                               tag=final_model_id,
                               role=consts.GUEST,
                               idx=0)
-            # LOGGER.debug("guest_model_id: {}".format(final_model_id))
             for idx, encrypter in enumerate(self.host_encrypter):
                 encrypted_model = encrypter.encrypt_list(final_model)
 
-                # final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num, 100)
-
-                # LOGGER.debug("encryptor: {}, encrypted_model: {}".format(
-                #    encrypter, encrypted_model
-                # ))
                 federation.remote(encrypted_model,
                                   name=self.transfer_variable.final_model.name,
                                   tag=final_model_id,
@@ -115,7 +111,9 @@ class HomoLRArbiter(BaseLogisticRegression):
             self.set_coef_(final_model)
             self.n_iter_ = iter_num
             if converge_flag:
+                self.is_converged = True
                 break
+        self._set_header()
 
     def predict(self, data=None, predict_param=None):
         # synchronize encryption information
@@ -127,7 +125,6 @@ class HomoLRArbiter(BaseLogisticRegression):
             if use_encrypt:
                 encrypter = self.host_encrypter[idx]
                 predict_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
-                # LOGGER.debug("predict_wd_id: {}, idx: {}".format(predict_wx_id, idx))
                 predict_wx = federation.get(name=self.transfer_variable.predict_wx.name,
                                             tag=predict_wx_id,
                                             idx=idx
@@ -167,9 +164,7 @@ class HomoLRArbiter(BaseLogisticRegression):
                                       idx=-1)
         weights = [guest_weight]
         weights.extend(host_weights)
-        # LOGGER.debug("All party weights: {}".format(
-        #     weights
-        # ))
+
         self.party_weights = [x / sum(weights) for x in weights]
 
         # 2. Synchronize encryption information
@@ -243,8 +238,6 @@ class HomoLRArbiter(BaseLogisticRegression):
         batch_num = 0
         while True:
             batch_num += self.re_encrypt_batches
-            # re_encrypt_transfer_id = TransferidGenerator.generate_transferid(
-            #     self.transfer_variable.re_encrypted_model, batch_num)
 
             to_encrypt_model_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.to_encrypt_model, iter_num, batch_num
@@ -255,7 +248,6 @@ class HomoLRArbiter(BaseLogisticRegression):
             for idx, left_times in enumerate(self.curt_re_encrypt_times):
                 if left_times <= 0:
                     continue
-                # left_re_encrypt_times = self.curt_re_encrypt_times[host_id]
                 re_encrypt_model = federation.get(
                     name=self.transfer_variable.to_encrypt_model.name,
                     tag=to_encrypt_model_id,
@@ -264,7 +256,6 @@ class HomoLRArbiter(BaseLogisticRegression):
                 encrypter = self.host_encrypter[idx]
                 decrypt_model = encrypter.decrypt_list(re_encrypt_model)
                 re_encrypt_model = encrypter.encrypt_list(decrypt_model)
-                # LOGGER.debug("re_encrypt_mode_id: {}".format(re_encrypted_model_id))
                 federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
                                   tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
 
@@ -273,3 +264,6 @@ class HomoLRArbiter(BaseLogisticRegression):
 
             if sum(self.curt_re_encrypt_times) == 0:
                 break
+
+    def _set_header(self):
+        self.header = ['head_' + str(x) for x in range(len(self.coef_))]

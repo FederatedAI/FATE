@@ -20,6 +20,7 @@ from federatedml.util import ParamExtract
 from federatedml.util.param_checker import FTLDataParamChecker, LocalModelParamChecker, FTLModelParamChecker, \
     FTLValidDataParamChecker
 from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from workflow import status_tracer_decorator
 from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()

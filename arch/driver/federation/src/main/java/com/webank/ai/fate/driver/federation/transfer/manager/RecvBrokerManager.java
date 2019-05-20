@@ -48,25 +48,47 @@ public class RecvBrokerManager {
     private ApplicationEventPublisher applicationEventPublisher;
 
     private Object holderLock;
-    private Object counterLock;
+    private Object finishLatchLock;
     private Map<String, TransferBroker> transferMetaIdToBrokerHolder;
     private Map<String, Federation.TransferMeta> transferMetaIdToPassedInTransferMeta;
     private Map<String, CountDownLatch> transferMetaIdToPassedInTransferMetaArriveLatches;
     private Map<String, Federation.TransferMeta> finishedTransferMetas;
     private volatile Map<String, CountDownLatch> transferMetaIdToFinishLatches;
+    private Map<String, Federation.TransferMeta> createdTasks;
 
     public RecvBrokerManager() {
         this.transferMetaIdToBrokerHolder = Maps.newConcurrentMap();
         this.transferMetaIdToPassedInTransferMeta = Maps.newConcurrentMap();
         this.transferMetaIdToPassedInTransferMetaArriveLatches = Maps.newConcurrentMap();
         this.holderLock = new Object();
-        this.counterLock = new Object();
+        this.finishLatchLock = new Object();
         this.finishedTransferMetas = Maps.newConcurrentMap();
         this.transferMetaIdToFinishLatches = Maps.newConcurrentMap();
+        this.createdTasks = Maps.newConcurrentMap();
     }
 
     public void createTask(Federation.TransferMeta transferMeta) {
+        String transferMetaId = transferPojoUtils.generateTransferId(transferMeta);
+
+        if (getSubmittedTask(transferMetaId) != null) {
+            return;
+        }
+
+        createdTasks.putIfAbsent(transferMetaId, transferMeta);
+
         applicationEventPublisher.publishEvent(new TransferJobEvent(this, transferMeta));
+    }
+
+    public void createRecvTaskFromPassedInTransferMetaId(String transferMetaId) {
+        Federation.TransferMeta passedInTransferMeta = transferMetaIdToPassedInTransferMeta.get(transferMetaId);
+        Federation.TransferMeta transferMeta = passedInTransferMeta.toBuilder().setType(Federation.TransferType.RECV).build();
+
+        if (transferMeta != null) {
+            LOGGER.info("[RECV][MANAGER] createTask: got transferMeta from transferMetaIdToPassedInTransferMeta: {}", transferMetaId);
+            createTask(transferMeta);
+        } else {
+            LOGGER.info("[RECV][MANAGER] createTask: transferMeta: {} not exists", transferMetaId);
+        }
     }
 
     /**
@@ -81,7 +103,7 @@ public class RecvBrokerManager {
         }
 
         result = true;
-        transferMetaIdToPassedInTransferMeta.put(transferMetaId, transferMeta);
+        transferMetaIdToPassedInTransferMeta.putIfAbsent(transferMetaId, transferMeta);
         createIfNotExistsInternal(transferMetaId, transferMeta);
 
         CountDownLatch arriveLatch = transferMetaIdToPassedInTransferMetaArriveLatches.get(transferMetaId);
@@ -130,8 +152,8 @@ public class RecvBrokerManager {
             synchronized (holderLock) {
                 if (!transferMetaIdToBrokerHolder.containsKey(transferMetaId)) {
                     LOGGER.info("[RECV][MANAGER] creating for: {}, {}", transferMetaId, toStringUtils.toOneLineString(transferMeta));
-                    result = transferServiceFactory.createTransferBroker(transferMetaId);
-                    transferMetaIdToBrokerHolder.put(transferMetaId, result);
+                    result = transferServiceFactory.createTransferBroker(transferMetaId, 1000);
+                    transferMetaIdToBrokerHolder.putIfAbsent(transferMetaId, result);
                 }
             }
         }
@@ -141,11 +163,19 @@ public class RecvBrokerManager {
     }
 
     public CountDownLatch getFinishLatch(String transferMetaId) {
+        boolean newlyCreated = false;
         if (!transferMetaIdToFinishLatches.containsKey(transferMetaId)) {
-            transferMetaIdToFinishLatches.putIfAbsent(transferMetaId, new CountDownLatch(1));
+            synchronized (finishLatchLock) {
+                if (!transferMetaIdToFinishLatches.containsKey(transferMetaId)) {
+                    transferMetaIdToFinishLatches.putIfAbsent(transferMetaId, new CountDownLatch(1));
+                    newlyCreated = true;
+                }
+            }
         }
 
         CountDownLatch result = transferMetaIdToFinishLatches.get(transferMetaId);
+        LOGGER.info("[RECV][MANAGER] getting finish latch. transferMetaId: {}, finishLatch: {}, newlyCreated: {}",
+                transferMetaId, result, newlyCreated);
 
         return result;
     }
@@ -183,6 +213,10 @@ public class RecvBrokerManager {
         return finishedTransferMetas.get(transferMetaId);
     }
 
+    public Federation.TransferMeta getSubmittedTask(String transferMetaId) {
+        return createdTasks.get(transferMetaId);
+    }
+
     public boolean setFinishedTask(Federation.TransferMeta transferMeta, Federation.TransferStatus transferStatus) {
         String transferMetaId = transferPojoUtils.generateTransferId(transferMeta);
         boolean result = false;
@@ -202,8 +236,10 @@ public class RecvBrokerManager {
         if (transferStatus.equals(Federation.TransferStatus.COMPLETE)
                 || transferStatus.equals(Federation.TransferStatus.ERROR)
                 || transferStatus.equals(Federation.TransferStatus.CANCELLED)) {
-            transferMetaIdToFinishLatches.putIfAbsent(transferMetaId, new CountDownLatch(1));
-            transferMetaIdToFinishLatches.get(transferMetaId).countDown();
+            CountDownLatch finishLatch = getFinishLatch(transferMetaId);
+
+            LOGGER.info("[RECV][MANAGER] counting down latch: {}, transeferMetaId: {}", finishLatch, transferMetaId);
+            finishLatch.countDown();
         }
 
         return result;
@@ -216,7 +252,7 @@ public class RecvBrokerManager {
         boolean latchWaitResult = false;
         if (!transferMetaIdToPassedInTransferMeta.containsKey(transferMetaId)) {
             CountDownLatch arriveLatch = new CountDownLatch(1);
-            transferMetaIdToPassedInTransferMetaArriveLatches.put(transferMetaId, arriveLatch);
+            transferMetaIdToPassedInTransferMetaArriveLatches.putIfAbsent(transferMetaId, arriveLatch);
 
             latchWaitResult = arriveLatch.await(timeout, timeunit);
         }

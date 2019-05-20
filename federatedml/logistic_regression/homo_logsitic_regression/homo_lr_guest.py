@@ -15,11 +15,11 @@
 #
 
 import functools
-from arch.api.utils import log_utils
 
 import numpy as np
 
 from arch.api import federation
+from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.model_selection import MiniBatch
@@ -31,23 +31,14 @@ from federatedml.optim.gradient import LogisticGradient
 from federatedml.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
 
 class HomoLRGuest(BaseLogisticRegression):
     def __init__(self, params: LogisticParam):
-        """
-        :param penalty: l1 or l2
-        :param alpha:
-        :param lr:
-        :param eps:
-        :param max_iter:
-        :param optim_method: must be in ['sgd', 'RMSProp' ,'Adam', 'AdaGrad']
-        :param batch_size: only work when otpim_method is mini-batch, represent for mini-batch's size
-        """
         super(HomoLRGuest, self).__init__(params)
-
         self.learning_rate = params.learning_rate
         self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
@@ -59,45 +50,53 @@ class HomoLRGuest(BaseLogisticRegression):
         self.classes_ = [0, 1]
 
         self.evaluator = Evaluation()
+        self.header = []
+        self.penalty = params.penalty
+        self.loss_history = []
+        self.is_converged = False
 
     def fit(self, data_instances):
-        LOGGER.info("parameters: alpha: {}, eps: {}, max_iter: {}"
-                    "batch_size: {}".format(self.alpha,
-                                            self.eps, self.max_iter, self.batch_size))
+        self._abnormal_detection(data_instances)
+
+        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+
         self.__init_parameters()
 
-        w = self.__init_model(data_instances)
+        self.__init_model(data_instances)
 
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
+
         for iter_num in range(self.max_iter):
             # mini-batch
-            # LOGGER.debug("Enter iter_num: {}".format(iter_num))
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
             total_loss = 0
             batch_num = 0
+
             for batch_data in batch_data_generator:
+                n = batch_data.count()
+
                 f = functools.partial(self.gradient_operator.compute,
                                       coef=self.coef_,
                                       intercept=self.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
-                n = grad_loss.count()
+
                 grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
+
                 grad /= n
                 loss /= n
 
                 if self.updater is not None:
                     loss_norm = self.updater.loss_norm(self.coef_)
                     total_loss += (loss + loss_norm)
-                # LOGGER.debug("before update: {}".format(grad))
                 delta_grad = self.optimizer.apply_gradients(grad)
-                # LOGGER.debug("after apply: {}".format(delta_grad))
 
                 self.update_model(delta_grad)
                 batch_num += 1
 
             total_loss /= batch_num
             w = self.merge_model()
+            self.loss_history.append(total_loss)
             LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
@@ -107,7 +106,9 @@ class HomoLRGuest(BaseLogisticRegression):
                               tag=model_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+
             # send loss
+
             loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
             federation.remote(total_loss,
                               name=self.transfer_variable.guest_loss.name,
@@ -118,12 +119,11 @@ class HomoLRGuest(BaseLogisticRegression):
             # recv model
             model_transfer_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.final_model, iter_num)
-
             w = federation.get(name=self.transfer_variable.final_model.name,
                                tag=model_transfer_id,
                                idx=0)
+
             w = np.array(w)
-            # LOGGER.debug("Received final model: {}".format(w))
             self.set_coef_(w)
 
             # recv converge flag
@@ -132,17 +132,20 @@ class HomoLRGuest(BaseLogisticRegression):
             converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
                                            tag=converge_flag_id,
                                            idx=0)
+
             self.n_iter_ = iter_num
             LOGGER.debug("converge flag is :{}".format(converge_flag))
 
             if converge_flag:
-                # self.save_model(w)
+                self.is_converged = True
                 break
-        # LOGGER.info("trainning finish, final coef: {}, final intercept: {}".format(
-        #     self.coef_, self.intercept_))
+
+        self.show_meta()
+        self.show_model()
+        LOGGER.debug("in fit self coef: {}".format(self.coef_))
+        return data_instances
 
     def __init_parameters(self):
-
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
         )
@@ -151,11 +154,12 @@ class HomoLRGuest(BaseLogisticRegression):
                           tag=party_weight_id,
                           role=consts.ARBITER,
                           idx=0)
+
         # LOGGER.debug("party weight sent")
         LOGGER.info("Finish initialize parameters")
 
     def __init_model(self, data_instances):
-        model_shape = self.get_features_shape(data_instances)
+        model_shape = data_overview.get_features_shape(data_instances)
 
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
@@ -171,6 +175,7 @@ class HomoLRGuest(BaseLogisticRegression):
         return w
 
     def predict(self, data_instances, predict_param):
+        LOGGER.debug("coef: {}, intercept: {}".format(self.coef_, self.intercept_))
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
         pred_label = self.classified(pred_prob, predict_param.threshold)

@@ -34,6 +34,23 @@ class ClassifyLabelChecker(object):
 
     @staticmethod
     def validate_y(y):
+        """
+        Label Checker in classification task.
+            Check whether the distinct labels is no more than MAX_CLASSNUM which define in consts,
+            also get all distinct lables
+
+        Parameters
+        ----------
+        y : DTable
+            The input data's labels
+
+        Returns
+        -------
+        num_class : int, the number of distinct labels
+
+        labels : list, the distince labels
+
+        """
         class_dict_iters = y.mapPartitions(ClassifyLabelChecker.get_all_class).collect()
         class_dict = {}
         for _, worker_class_dict in class_dict_iters:
@@ -60,6 +77,16 @@ class ClassifyLabelChecker(object):
 class RegressionLabelChecker(object):
     @staticmethod
     def validate_y(y):
+        """
+        Label Checker in regression task.
+            Check if all labels is a float type.
+
+        Parameters
+        ----------
+        y : DTable
+            The input data's labels
+
+        """
         y.mapValues(RegressionLabelChecker.test_numeric_data)
 
     @staticmethod

@@ -11,7 +11,7 @@ class TestQuantileSummaries(unittest.TestCase):
         # self.a = [1, 2, 3, 133, 221, 11, 2, 3, 3, 1, 2, 3, 1, 23, 32] * 100000
         # self.quantile_summary = QuantileSummaries()
         self.percentile_rate = [90]
-        self.data_num = 1000000
+        self.data_num = 100000
         # self.feature_num = 200
         # result = []
         # for i in range(self.data_num):

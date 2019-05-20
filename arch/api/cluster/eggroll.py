@@ -25,6 +25,8 @@ from arch.api.utils import eggroll_serdes, file_utils
 from arch.api.utils.log_utils import getLogger
 from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
 from arch.api.utils import cloudpickle
+from arch.api.utils.core import string_to_bytes, bytes_to_string
+from arch.api.utils.iter_utils import split_every
 
 
 def init(job_id=None, server_conf_path="arch/conf/server_conf.json"):
@@ -48,11 +50,12 @@ empty = kv_pb2.Empty()
 class _DTable(object):
 
     def __init__(self, storage_locator, partitions=1):
-        self.__client = _EggRoll.get_instance()
+        # self.__client = _EggRoll.get_instance()
         self._namespace = storage_locator.namespace
         self._name = storage_locator.name
         self._type = storage_basic_pb2.StorageType.Name(storage_locator.type)
         self._partitions = partitions
+        self.schema = {}
 
     def __str__(self):
         return "type:{} namespace:{} name:{} partitions:{}".format(self._type, self._namespace, self._name,
@@ -62,70 +65,70 @@ class _DTable(object):
     Storage apis
     '''
 
-    def save_as(self, name, namespace, partition=None):
+    def save_as(self, name, namespace, partition=None, use_serialize=True):
         if partition is None:
             partition = self._partitions
-        dup = self.__client.table(name, namespace, partition=partition)
-        dup.put_all(self.collect())
+        dup = _EggRoll.get_instance().table(name, namespace, partition=partition)
+        dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
 
-    def put(self, k, v):
-        self.__client.put(self, k, v)
+    def put(self, k, v, use_serialize=True):
+        _EggRoll.get_instance().put(self, k, v, use_serialize=use_serialize)
 
-    def put_all(self, kv_list: Iterable):
-        return self.__client.put_all(self, kv_list)
+    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+        return _EggRoll.get_instance().put_all(self, kv_list, use_serialize=use_serialize, chunk_size=chunk_size)
 
-    def get(self, k):
-        return self.__client.get(self, k)
+    def get(self, k, use_serialize=True):
+        return _EggRoll.get_instance().get(self, k, use_serialize=use_serialize)
 
-    def collect(self):
-        return _EggRollIterator(self)
+    def collect(self, use_serialize=True):
+        return _EggRollIterator(self, use_serialize=use_serialize)
 
-    def delete(self, k):
-        return self.__client.delete(self, k)
+    def delete(self, k, use_serialize=True):
+        return _EggRoll.get_instance().delete(self, k, use_serialize=use_serialize)
 
     def destroy(self):
-        self.__client.destroy(self)
+        _EggRoll.get_instance().destroy(self)
 
     def count(self):
-        return self.__client.count(self)
+        return _EggRoll.get_instance().count(self)
 
-    def put_if_absent(self, k, v):
-        return self.__client.put_if_absent(self, k, v)
+    def put_if_absent(self, k, v, use_serialize=True):
+        return _EggRoll.get_instance().put_if_absent(self, k, v, use_serialize=use_serialize)
 
     '''
     Computing apis
     '''
 
     def map(self, func):
-        _intermediate_result = self.__client.map(self, func)
+        _intermediate_result = _EggRoll.get_instance().map(self, func)
         return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
                                             partition=_intermediate_result._partitions)
 
     def mapValues(self, func):
-        return self.__client.map_values(self, func)
+        return _EggRoll.get_instance().map_values(self, func)
 
     def mapPartitions(self, func):
-        return self.__client.map_partitions(self, func)
+        return _EggRoll.get_instance().map_partitions(self, func)
 
     def reduce(self, func):
-        return self.__client.reduce(self, func)
+        return _EggRoll.get_instance().reduce(self, func)
 
     def join(self, other, func):
         if other._partitions != self._partitions:
             if other.count() > self.count():
-                return self.save_as(str(uuid.uuid1()), self.__client.job_id, partition=other._partitions).join(other,
+                return self.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=other._partitions).join(other,
                                                                                                                func)
             else:
-                return self.join(other.save_as(str(uuid.uuid1()), self.__client.job_id, partition=self._partitions),
+                return self.join(other.save_as(str(uuid.uuid1()), _EggRoll.get_instance().job_id, partition=self._partitions),
                                  func)
-        return self.__client.join(self, other, func)
+        return _EggRoll.get_instance().join(self, other, func)
 
     def glom(self):
-        return self.__client.glom(self)
+        return _EggRoll.get_instance().glom(self)
 
     def sample(self, fraction, seed=None):
-        return self.__client.sample(self, fraction, seed)
+        return _EggRoll.get_instance().sample(self, fraction, seed)
 
 
 class _EggRoll(object):
@@ -159,7 +162,7 @@ class _EggRoll(object):
 
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
-                    error_if_exist=False, persistent=False):
+                    error_if_exist=False, persistent=False, chunk_size=100000):
         if namespace is None:
             namespace = _EggRoll.get_instance().job_id
         if name is None:
@@ -170,7 +173,7 @@ class _EggRoll(object):
         create_table_info = kv_pb2.CreateTableInfo(storageLocator=storage_locator, fragmentCount=partition)
         _table = self._create_table(create_table_info)
         _iter = data if include_key else enumerate(data)
-        _table.put_all(_iter)
+        _table.put_all(_iter, chunk_size=chunk_size)
         LOGGER.debug("created table: %s", _table)
         return _table
 
@@ -178,9 +181,9 @@ class _EggRoll(object):
         if namespace is None or name is None:
             raise ValueError("neither name nor namespace can be None")
 
-        type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
+        _type = storage_basic_pb2.LMDB if persistent else storage_basic_pb2.IN_MEMORY
 
-        storage_locator = storage_basic_pb2.StorageLocator(type=type, namespace=namespace, name=name)
+        storage_locator = storage_basic_pb2.StorageLocator(type=_type, namespace=namespace, name=name)
         _table = _DTable(storage_locator=storage_locator)
 
         self.destroy_all(_table)
@@ -203,44 +206,64 @@ class _EggRoll(object):
         return self._create_table(create_table_info)
 
     @staticmethod
-    def __generate_operand(kvs: Iterable):
+    def __generate_operand(kvs: Iterable, use_serialize=True):
         for k, v in kvs:
-            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k), value=_EggRoll.value_serdes.serialize(v))
+            yield kv_pb2.Operand(key=_EggRoll.value_serdes.serialize(k) if use_serialize else bytes_to_string(k), value=_EggRoll.value_serdes.serialize(v) if use_serialize else v)
 
     @staticmethod
-    def _deserialize_operand(operand: kv_pb2.Operand, include_key=False):
+    def _deserialize_operand(operand: kv_pb2.Operand, include_key=False, use_serialize=True):
         if operand.value and len(operand.value) > 0:
-            return (_EggRoll.value_serdes.deserialize(operand.key), _EggRoll.value_serdes.deserialize(
-                operand.value)) if include_key else _EggRoll.value_serdes.deserialize(operand.value)
+            if use_serialize:
+                return (_EggRoll.value_serdes.deserialize(operand.key), _EggRoll.value_serdes.deserialize(
+                    operand.value)) if include_key else _EggRoll.value_serdes.deserialize(operand.value)
+            else:
+                return (bytes_to_string(operand.key), operand.value) if include_key else operand.value
         return None
 
     '''
     Storage apis
     '''
 
-    def put(self, _table, k, v):
-        k = self.value_serdes.serialize(k)
-        v = self.value_serdes.serialize(v)
+    def kv_to_bytes(self, **kwargs):
+        use_serialize = kwargs.get("use_serialize", True)
+        # can not use is None
+        if "k" in kwargs and "v" in kwargs:
+            k, v = kwargs["k"], kwargs["v"]
+            return (self.value_serdes.serialize(k), self.value_serdes.serialize(v)) if use_serialize \
+                else (string_to_bytes(k), string_to_bytes(v))
+        elif "k" in kwargs:
+            k = kwargs["k"]
+            return self.value_serdes.serialize(k) if use_serialize else string_to_bytes(k)
+        elif "v" in kwargs:
+            v = kwargs["v"]
+            return self.value_serdes.serialize(v) if use_serialize else string_to_bytes(v)
+
+    def put(self, _table, k, v, use_serialize=True):
+        k, v = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         self.kv_stub.put(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
 
-    def put_if_absent(self, _table, k, v):
-        k = self.value_serdes.serialize(k)
-        v = self.value_serdes.serialize(v)
+    def put_if_absent(self, _table, k, v, use_serialize=True):
+        k, v = self.kv_to_bytes(k=k, v=v, use_serialize=use_serialize)
         operand = self.kv_stub.putIfAbsent(kv_pb2.Operand(key=k, value=v), metadata=_get_meta(_table))
-        return self._deserialize_operand(operand)
+        return self._deserialize_operand(operand, use_serialize=use_serialize)
 
-    def put_all(self, _table, kvs: Iterable):
-        self.kv_stub.putAll(self.__generate_operand(kvs), metadata=_get_meta(_table))
+    def put_all(self, _table, kvs: Iterable, use_serialize=True, chunk_size=100000, skip_chunk=0):
+        skipped_chunk = 0
+        for chunked_iter in split_every(kvs, chunk_size=chunk_size):
+            if skipped_chunk < skip_chunk:
+                skipped_chunk += 1
+            else:
+                self.kv_stub.putAll(self.__generate_operand(chunked_iter, use_serialize=use_serialize), metadata=_get_meta(_table))
 
-    def delete(self, _table, k):
-        k = self.value_serdes.serialize(k)
-        operand = self.kv_stub.delete(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
-        return self._deserialize_operand(operand)
+    def delete(self, _table, k, use_serialize=True):
+        k = self.kv_to_bytes(k=k, use_serialize=use_serialize)
+        operand = self.kv_stub.delOne(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
+        return self._deserialize_operand(operand, use_serialize=use_serialize)
 
-    def get(self, _table, k):
-        k = self.value_serdes.serialize(k)
+    def get(self, _table, k, use_serialize=True):
+        k = self.kv_to_bytes(k=k, use_serialize=use_serialize)
         operand = self.kv_stub.get(kv_pb2.Operand(key=k), metadata=_get_meta(_table))
-        return self._deserialize_operand(operand)
+        return self._deserialize_operand(operand, use_serialize=use_serialize)
 
     def iterate(self, _table, _range):
         return self.kv_stub.iterate(_range, metadata=_get_meta(_table))
@@ -343,13 +366,14 @@ class _EggRoll(object):
 
 class _EggRollIterator(object):
 
-    def __init__(self, _table, start=None, end=None):
+    def __init__(self, _table, start=None, end=None, use_serialize=True):
         self._table = _table
         self._start = start
         self._end = end
         self._cache = None
         self._index = 0
         self._next_item = None
+        self._use_serialize = use_serialize
 
     def __enter__(self):
         return self
@@ -376,4 +400,4 @@ class _EggRollIterator(object):
             self.__refresh_cache()
         self._next_item = self._cache[self._index]
         self._index += 1
-        return _EggRoll._deserialize_operand(self._next_item, include_key=True)
+        return _EggRoll._deserialize_operand(self._next_item, include_key=True, use_serialize=self._use_serialize)

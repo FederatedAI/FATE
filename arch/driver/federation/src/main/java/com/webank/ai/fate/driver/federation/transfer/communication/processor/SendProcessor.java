@@ -121,7 +121,8 @@ public class SendProcessor extends BaseTransferProcessor {
         CountDownLatch finishLatch = new CountDownLatch(fragmentSize);
 
         for (Fragment fragment : fragments) {
-            final TransferBroker broker = transferServiceFactory.createTransferBroker(transferMeta);
+            // todo: make this configurable
+            final TransferBroker broker = transferServiceFactory.createTransferBroker(transferMeta, 10_000);
             TransferQueueConsumeAction sendConsumeAction = transferServiceFactory.createSendConsumeAction(broker, targetProxy);
             broker.setAction(sendConsumeAction);
 

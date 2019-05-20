@@ -14,12 +14,13 @@
 #  limitations under the License.
 #
 
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.homo_logsitic_regression import HomoLRArbiter
 from federatedml.param import LogisticParam
 from federatedml.util import ParamExtract
 from federatedml.util import consts
+from workflow import status_tracer_decorator
 from workflow.homo_lr_workflow.homo_base_workflow import HomoBaseWorkFlow
-from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -45,6 +46,31 @@ class ArbiterWorkFlow(HomoBaseWorkFlow):
     def evaluate(self, eval_data):
         LOGGER.info("No need to evaluate")
         pass
+
+    @status_tracer_decorator.status_trace
+    def run(self):
+        LOGGER.debug("Enter arbiter run")
+        self._init_argument()
+
+        if self.workflow_param.method == "train":
+            # self._init_pipeline()
+
+            LOGGER.debug("In running function, enter train method")
+            train_data_instance = None
+            predict_data_instance = None
+            self.train(train_data_instance, validation_data=predict_data_instance)
+
+        elif self.workflow_param.method == "predict":
+            data_instance = None
+            self.load_model()
+            self.predict(data_instance)
+
+        elif self.workflow_param.method == "cross_validation":
+            data_instance = None
+            self.cross_validation(data_instance)
+
+        else:
+            raise TypeError("method %s is not support yet" % (self.workflow_param.method))
 
 
 if __name__ == "__main__":

@@ -27,6 +27,16 @@
 
 
 class SparseVector(object):
+    """
+    Sparse storage data format of federatedml
+
+    Parameters
+    ----------
+    sparse_vec : dict, record (indice, data) kv tuples
+
+    shape : the real feature shape of data
+
+    """
     def __init__(self, indices=None, data=None, shape=0):
         self.sparse_vec = dict(zip(indices, data))
         self.shape = shape

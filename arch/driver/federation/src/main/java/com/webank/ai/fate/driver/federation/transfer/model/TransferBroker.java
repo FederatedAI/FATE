@@ -29,27 +29,32 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Scope("prototype")
 public class TransferBroker {
-    private static final int DEFAULT_QUEUE_CAPACITY = 1000;
+    private static final int DEFAULT_QUEUE_CAPACITY = 100_000;
     private Federation.TransferMeta transferMeta;
     private BlockingQueue<ByteString> dataQueue;
     private List<TransferBrokerListener> listeners;
     private int queueCapacity;
-    private boolean isFinished;
+    private volatile boolean isFinished;
     private TransferQueueConsumeAction action;
     private BrokerStatus brokerStatus;
     private AtomicInteger producerCount;
     private Throwable error;
+    private CountDownLatch closeLatch;
+
+    private final Object isFinishedLock;
 
     public TransferBroker(Federation.TransferMeta transferMeta) {
-        this(DEFAULT_QUEUE_CAPACITY, transferMeta);
+        this(transferMeta, DEFAULT_QUEUE_CAPACITY);
     }
 
-    public TransferBroker(int queueCapacity, Federation.TransferMeta transferMeta) {
+    public TransferBroker(Federation.TransferMeta transferMeta, int queueCapacity) {
         this.queueCapacity = queueCapacity;
         this.transferMeta = transferMeta;
         this.dataQueue = Queues.newLinkedBlockingQueue(queueCapacity);
@@ -63,10 +68,16 @@ public class TransferBroker {
         } else {
             this.brokerStatus = BrokerStatus.FULL;
         }
+        this.isFinishedLock = new Object();
+        this.closeLatch = new CountDownLatch(1);
     }
 
     public TransferBroker(String transferMetaId) {
-        this(DEFAULT_QUEUE_CAPACITY, null);
+        this((Federation.TransferMeta) null, DEFAULT_QUEUE_CAPACITY);
+    }
+
+    public TransferBroker(String transferMetaId, int queueCapacity) {
+        this((Federation.TransferMeta) null, queueCapacity);
     }
 
     /**
@@ -106,7 +117,7 @@ public class TransferBroker {
     }
 
     public void put(ByteString data) {
-        if (!isFinished) {
+        if (!isFinished()) {
             try {
                 dataQueue.put(data);
             } catch (InterruptedException e) {
@@ -118,6 +129,18 @@ public class TransferBroker {
         } else {
             throw new IllegalStateException("broker has been marked finished. no more element can be put into here");
         }
+    }
+
+    public boolean add(ByteString data) {
+        if (!isFinished()) {
+            return dataQueue.add(data);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean addAll(Collection<ByteString> dataCollection) {
+        return dataQueue.addAll(dataCollection);
     }
 
     public ByteString get() throws Exception {
@@ -134,8 +157,12 @@ public class TransferBroker {
         }
     }
 
-    public void drainTo(Collection<ByteString> target) {
-        dataQueue.drainTo(target);
+    public synchronized int drainTo(Collection<ByteString> target) {
+        return dataQueue.drainTo(target);
+    }
+
+    public synchronized int drainTo(Collection<ByteString> target, int maxElementSize) {
+        return dataQueue.drainTo(target, maxElementSize);
     }
 
     public void addSubscriber(TransferBrokerListener listener) {
@@ -147,7 +174,9 @@ public class TransferBroker {
     public synchronized void setFinished() {
         int curCount = producerCount.decrementAndGet();
         if (curCount == 0) {
-            this.isFinished = true;
+            synchronized (isFinishedLock) {
+                this.isFinished = true;
+            }
         }
         notifySubscribers();
     }
@@ -172,11 +201,23 @@ public class TransferBroker {
     }
 
     public boolean isFinished() {
-        return isFinished;
+        synchronized (isFinishedLock) {
+            return isFinished;
+        }
     }
 
     public boolean isClosable() {
-        return !isReady() && isFinished;
+        boolean result = !isReady() && isFinished() && !hasError();
+
+        if (result) {
+            closeLatch.countDown();
+        }
+
+        return result;
+    }
+
+    public boolean awaitClose(long timeout, TimeUnit unit) throws InterruptedException {
+        return closeLatch.await(timeout, unit);
     }
 
     public BrokerStatus getBrokerStatus() {

@@ -18,8 +18,8 @@ import unittest
 
 from arch.api import eggroll
 from federatedml.tree import FeatureHistogram
-from federatedml.feature import Instance
-from federatedml.feature import SparseVector
+from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import consts
 import copy
 import numpy as np

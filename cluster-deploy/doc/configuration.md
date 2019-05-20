@@ -151,16 +151,40 @@ example:
           "ip": "127.0.0.1",
           "port": 8889
         }
+      ],
+      "manager": [
+        {
+          "ip": "127.0.0.1",
+          "port": 9360
+        }
+      ],
+      "serving": [
+        {
+          "ip": "127.0.0.1",
+          "port": 8001
+        }
+      ]
+    },
+    "9999": {
+      "default": [
+        {
+          "ip": "127.0.0.1",
+          "port": 8890
+        }
+      ],
+      "manager": [
+        {
+          "ip": "127.0.0.1",
+          "port": 9360
+        }
+      ],
+      "serving": [
+        {
+          "ip": "127.0.0.1",
+          "port": 8001
+        }
       ]
     }
-  },
-  "9999": {
-    "default": [
-      {
-        "ip": "127.0.0.1",
-        "port": 8890
-      }
-    ]
   },
   "permission": {
     "default_allow": true
@@ -196,9 +220,44 @@ Item                   | Meaning             | Example / Value
 PORT                   | port to listen on   | storage-service defaults to 7778
 DATADIR                |data dir           | must be the same with processor's data dir
 
-## 2.7. API
+## 2.7. Serving-Server
+Serving-Server is a online service for serving federated learning models.
+### 2.7.1. log4j2.properties
+No modification is required.
+### 2.7.2. serving-server.properties
+Item                            | Meaning                                                    | Example / Value
+--------------------------------|------------------------------------------------------------|------------------------
+ip                              |ip to bind                                                  | e.g. 127.0.0.1 
+port                            |port to listen on                                           | e.g. 8001
+workMode                        |working mode of serving, 0 for standalone and 1 for cluster | e.g. 1
+party.id                        |party id of FL participant                                  | e.g. 10000
+proxy                           |proxy address                                               | e.g. 172.16.153.xx:9370
+roll                            |roll address                                                | e.g. 172.16.153.xx:8011
+standaloneStoragePath           |standalone storage path if you deploy as standalone         | e.g. ${deployDir}/python/data/
+modelCacheAccessTTL(hour)       |the model cache will be cleaned up after this time          | e.g. 12
+modelCacheMaxSize               |maximum number of cached models                             | e.g. 50
+OnlineDataAccessAdapter         |get host data by this adapter, it is a java class           | e.g. TestFile
+InferenceResultProcessingAdapter|some processing can be done after the model results         | e.g. PassProcessing
+### 2.7.3 best practice
+- Use different proxy online service and offline training.
+- Deploy at least two online services and use Load Balancer.
+
+## 2.8. Task-Manager
+Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc.
+### 2.8.1. settings.py
+Item         | Meaning                                                    | Example / Value
+-------------|------------------------------------------------------------|------------------------
+IP           |ip to bind                                                  | e.g. 127.0.0.1 
+HTTP_PORT    |http port to listen on                                      | e.g. 6380
+GRPC_PORT    |grpc port to listen on                                      | e.g. 6360
+PARTY_ID     |party id of FL participant                                  | e.g. 10000
+WORK_MODE    |working mode of serving, 0 for standalone and 1 for cluster | e.g. 1
+DATABASE     |database settings                                           | 
+
+
+## 2.8. API
 APIs are interfaces exposed by the whole running architecture. Algorithm engineers / scientists can utilize FATE framework via API.
-### 2.7.1 arch/conf/server_conf.json
+### 2.8.1 arch/conf/server_conf.json
 ```
 {
   "servers": {
@@ -209,7 +268,20 @@ APIs are interfaces exposed by the whole running architecture. Algorithm enginee
     "federation": {
       "host": "localhost",  # ip address of federation module
       "port": 9394          # port of federation module
-    }
+    },
+    "manager": {             
+      "host": "localhost", # ip address of task_manager
+      "grpc.port": 9360,   # grpc port of task_manager
+      "http.port": 9380    # http port of task_manager
+    },
+    "proxy": {
+       "host": "localhost", # ip address of proxy module
+       "port": 9370         # port address of proxy module
+    },
+    "servings": [
+        "172.153.16.1:8000",
+        "172.153.16.2:8000"
+    ]
   }
 }
 ```

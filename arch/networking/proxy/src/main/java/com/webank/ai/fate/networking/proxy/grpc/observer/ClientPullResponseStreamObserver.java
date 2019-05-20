@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 @Scope("prototype")
 public class ClientPullResponseStreamObserver implements StreamObserver<Proxy.Packet> {
-    private static final Logger LOGGER = LogManager.getLogger(ClientPullResponseStreamObserver.class);
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final Logger AUDIT = LogManager.getLogger("audit");
     private static final Logger DEBUGGING = LogManager.getLogger("debugging");
     private final CountDownLatch finishLatch;

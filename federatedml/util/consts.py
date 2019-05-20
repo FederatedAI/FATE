@@ -29,7 +29,8 @@ L2_PENALTY = 'L2'
 FLOAT_ZERO = 1e-6
 
 PARAM_MAXDEPTH = 5
-MAX_CLASSNUM = 10
+MAX_CLASSNUM = 1000
+MIN_BATCH_SIZE = 10
 SPARSE_VECTOR = "SparseVector"
 
 HETERO = "hetero"
@@ -75,5 +76,33 @@ G_BIN_NUM = 10
 DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
+ONE_HOT_LIMIT = 10    # No more than 10 possible values
 
 QUANTILE = 'quantile'
+BUCKET = 'bucket'
+
+# Feature selection methods
+UNIQUE_VALUE = 'unique_value'
+IV_VALUE_THRES = 'iv_value_thres'
+IV_PERCENTILE = 'iv_percentile'
+COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
+COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
+OUTLIER_COLS = 'outlier_cols'
+
+# imputer
+MIN = 'min'
+MAX = 'max'
+MEAN = 'mean'
+DESIGNATED = 'designated'
+STR = 'str'
+FLOAT = 'float'
+INT = 'int'
+ORIGIN = 'origin'
+
+# min_max_scaler
+NORMAL = 'normal'
+CAP = 'cap'
+MINMAXSCALE = 'min_max_scale'
+STANDARDSCALE = 'standard_scale'
+ALL = 'all'
+COL = 'col'

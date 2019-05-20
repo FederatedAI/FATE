@@ -15,7 +15,7 @@
 #
 
 from federatedml.param.param import LogisticParam, InitParam, DecisionTreeParam, ObjectiveParam, DataIOParam, \
-    WorkFlowParam, FeatureBinningParam, \
+    WorkFlowParam, FeatureBinningParam, FeatureSelectionParam, \
     EncryptParam, BoostingTreeParam, IntersectParam, EvaluateParam, PredictParam
 
 __all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam", "ObjectiveParam",
