@@ -35,7 +35,8 @@ class FTLGuestWorkFlow(FTLWorkFlow):
         self.ftl_local_model = self._create_local_model(ftl_local_model_param, ftl_data_model_param)
         self.model = GuestFactory.create(ftl_model_param, self._get_transfer_variable(), self.ftl_local_model)
 
-    def _create_local_model(self, ftl_local_model_param, ftl_data_model_param):
+    @staticmethod
+    def _create_local_model(ftl_local_model_param, ftl_data_model_param):
         autoencoder = Autoencoder("local_ftl_guest_model_01")
         autoencoder.build(input_dim=ftl_data_model_param.n_feature_guest, hidden_dim=ftl_local_model_param.encode_dim,
                           learning_rate=ftl_local_model_param.learning_rate)
