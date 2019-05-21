@@ -30,6 +30,7 @@ from federatedml.util import ParamExtract
 from federatedml.util import consts
 from federatedml.tree import HeteroSecureBoostingTreeHost
 from workflow.workflow import WorkFlow
+import json
 import sys
 
 
@@ -40,10 +41,20 @@ class HeteroSecureBoostingTreeHostWorkFlow(WorkFlow):
         secureboosting_param = BoostingTreeParam()
         self.secureboosting_tree_param = ParamExtract.parse_param_from_config(secureboosting_param, config)
         self.model = HeteroSecureBoostingTreeHost(self.secureboosting_tree_param)
+        self._set_runtime_idx(config)
 
     def _initialize_role_and_mode(self):
         self.role = consts.HOST
         self.mode = consts.HETERO
+
+    def _set_runtime_idx(self, config_path):
+        with open(config_path) as conf_f:
+            runtime_json = json.load(conf_f)
+        """get runtime index"""
+        local_role = runtime_json["local"]["role"]
+        local_partyid = runtime_json["local"]["party_id"]
+        runtime_idx = runtime_json["role"][local_role].index(local_partyid)
+        self.model.set_runtime_idx(runtime_idx)
 
     def save_predict_result(self, predict_result):
         pass
