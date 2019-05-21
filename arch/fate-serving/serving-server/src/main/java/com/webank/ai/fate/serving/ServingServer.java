@@ -26,6 +26,8 @@ import com.webank.ai.fate.serving.service.ProxyService;
 import com.webank.ai.fate.serving.service.ServiceExceptionHandler;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -41,8 +43,7 @@ public class ServingServer {
     private String confPath;
 
     public ServingServer(String confPath){
-        System.out.println(confPath);
-        this.confPath = confPath;
+        this.confPath = new File(confPath).getAbsolutePath();
     }
 
     private void start() throws IOException {

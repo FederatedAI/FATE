@@ -26,9 +26,13 @@ public class ReturnResult{
     private int retcode;
     private String retmsg = "";
     private Map<String, Object> data;
+    private Map<String, Object> log;
+    private Map<String, Object> warn;
 
     public ReturnResult(){
         this.data = new HashMap<>();
+        this.log = new HashMap<>();
+        this.warn = new HashMap<>();
     }
 
     public void setRetcode(int retcode) {
@@ -47,12 +51,16 @@ public class ReturnResult{
         return retmsg;
     }
 
-    public void setData(String name, String value) {
-        this.data.put(name, value);
-    }
-
     public void putAllData(Map<String, Object> map){
         this.data.putAll(map);
+    }
+
+    public void putAllLog(Map<String, Object> map){
+        this.log.putAll(map);
+    }
+
+    public void putAllWarn(Map<String, Object> map){
+        this.warn.putAll(map);
     }
 
     public Map<String, Object> getData() {

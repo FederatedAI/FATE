@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.adapter.resultprocessing;
+package com.webank.ai.fate.serving.adapter.processing;
 
+import com.webank.ai.fate.core.utils.ObjectTransform;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public interface ResultData {
-    Map<String, Object> getResult(Map<String, Object> modelResult);
+public class PassPreProcessing implements PreProcessing{
+    @Override
+    public Map<String, Object> getResult(String paras){
+        return (Map<String, Object> )ObjectTransform.json2Bean(paras, HashMap.class);
+    }
 }

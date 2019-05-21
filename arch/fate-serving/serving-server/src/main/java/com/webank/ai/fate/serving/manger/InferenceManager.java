@@ -20,21 +20,25 @@ import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;
-import com.webank.ai.fate.serving.adapter.resultprocessing.ResultData;
+import com.webank.ai.fate.serving.adapter.processing.PostProcessing;
 import com.webank.ai.fate.core.bean.FederatedRoles;
+import com.webank.ai.fate.serving.adapter.processing.PreProcessing;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
 import com.webank.ai.fate.serving.bean.ModelNamespaceData;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import com.webank.ai.fate.core.constant.StatusCode;
+import com.webank.ai.fate.serving.utils.InferenceUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class InferenceManager {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger auditLogger = LogManager.getLogger("audit");
     public static ReturnResult inference(InferenceRequest inferenceRequest){
         ReturnResult returnResult = new ReturnResult();
         String modelTableName = inferenceRequest.getModelName();
@@ -69,8 +73,18 @@ public class InferenceManager {
             return returnResult;
         }
 
+        featureData = getPreProcessingFeatureData(featureData);
+        if (featureData == null){
+            returnResult.setRetcode(StatusCode.ILLEGALDATA);
+            returnResult.setRetmsg("Can not preprocessing data");
+            return returnResult;
+        }
+
+
         Map<String, Object> predictParams = new HashMap<>();
         Map<String, Object> federatedParams = new HashMap<>();
+        federatedParams.put("scene_id", inferenceRequest.getSceneId());
+        federatedParams.put("case_id", InferenceUtils.generateCaseId());
         federatedParams.put("local", modelNamespaceData.getLocal());
         federatedParams.put("model_info", new ModelInfo(modelTableName, modelNamespace));
         federatedParams.put("role", modelNamespaceData.getRole());
@@ -79,14 +93,18 @@ public class InferenceManager {
         predictParams.put("federatedParams", federatedParams);
 
         Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
-        Map<String, Object> result = getProcessedResult(modelResult);
-        returnResult.putAllData(result);
+        Map<String, Object> result = getPostProcessedResult(featureData, modelResult);
+        LOGGER.info(result);
+        for(String field: Arrays.asList("data", "log", "warn")){
+            if (result.get(field) != null){
+                returnResult.putAllData((Map<String, Object>) result.get(field));
+            }
+        }
         LOGGER.info("Inference successfully.");
         return returnResult;
     }
 
     public static ReturnResult federatedInference(Map<String, Object> federatedParams){
-        LOGGER.info(federatedParams);
         ReturnResult returnResult = new ReturnResult();
         FederatedParty partnerParty = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("partner_local").toString(), FederatedParty.class);
         FederatedParty party = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("local").toString(), FederatedParty.class);
@@ -121,6 +139,42 @@ public class InferenceManager {
         return returnResult;
     }
 
+    private static Map<String, Object> getPreProcessingFeatureData(Map<String, Object> originFeatureData){
+        try{
+            String classPath = PreProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePreProcessingAdapter");
+            PreProcessing preProcessing = (PreProcessing) getClassByName(classPath);
+            return preProcessing.getResult(ObjectTransform.bean2Json(originFeatureData));
+        }catch (Exception ex){
+            LOGGER.error("", ex);
+            return null;
+        }
+    }
+
+    private static Map<String, Object> getPostProcessedResult(Map<String, Object> featureData, Map<String, Object> modelResult){
+        try{
+            String classPath = PostProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePostProcessingAdapter");
+            PostProcessing postProcessing = (PostProcessing) getClassByName(classPath);
+            return postProcessing.getResult(featureData, modelResult);
+        }catch (Exception ex){
+            LOGGER.error("", ex);
+            return null;
+        }
+    }
+
+    private static Map<String, Object> getFeatureData(Map<String, Object> featureId){
+        String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
+        FeatureData featureData = (FeatureData) getClassByName(classPath);
+        if (featureData == null){
+            return null;
+        }
+        try{
+            return featureData.getData(featureId);
+        }
+        catch (Exception ex){
+            LOGGER.error(ex);
+        }
+        return null;
+    }
 
     public static Object getClassByName(String classPath){
         try{
@@ -134,26 +188,9 @@ public class InferenceManager {
             LOGGER.error("Can not get this class({}) constructor.", classPath);
         }
         catch (Exception ex){
+            LOGGER.error(ex);
             LOGGER.error("Can not create class({}) instance.", classPath);
         }
         return null;
-    }
-
-    private static Map<String, Object> getProcessedResult(Map<String, Object> modelResult){
-        String classPath = ResultData.class.getPackage().getName() + "." + Configuration.getProperty("InferenceResultProcessingAdapter");
-        ResultData resultData = (ResultData) getClassByName(classPath);
-        if (resultData == null){
-            return null;
-        }
-        return resultData.getResult(modelResult);
-    }
-
-    private static Map<String, Object> getFeatureData(Map<String, Object> featureId){
-        String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
-        FeatureData featureData = (FeatureData) getClassByName(classPath);
-        if (featureData == null){
-            return null;
-        }
-        return featureData.getData(featureId);
     }
 }

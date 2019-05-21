@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.adapter.resultprocessing;
+package com.webank.ai.fate.serving.adapter.processing;
 
 import java.util.Map;
 
-public class PassProcessing implements ResultData{
+public class PassPostProcessing implements PostProcessing {
     @Override
-    public Map<String, Object> getResult(Map<String, Object> modelResult) {
+    public Map<String, Object> getResult(Map<String, Object> featureData, Map<String, Object> modelResult) {
         return modelResult;
     }
 }
