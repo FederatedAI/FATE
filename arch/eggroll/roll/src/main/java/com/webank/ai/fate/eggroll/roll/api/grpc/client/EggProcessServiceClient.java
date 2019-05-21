@@ -28,6 +28,7 @@ import com.webank.ai.fate.core.constant.RuntimeConstants;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.core.utils.TypeConversionUtils;
+import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorBinaryProcessToStorageLocatorResponseObserver;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorReduceResponseStreamObserver;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorUnaryProcessToStorageLocatorResponseObserver;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
@@ -58,30 +59,7 @@ public class EggProcessServiceClient {
     }
 
     public StorageBasic.StorageLocator join(Processor.BinaryProcess request, BasicMeta.Endpoint processorEndpoint) {
-        GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> context
-                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorContext();
-
-        DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
-
-        context.setLatchInitCount(1)
-                .setEndpoint(processorEndpoint)
-                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCalleeStreamingMethodInvoker(ProcessServiceGrpc.ProcessServiceStub::join)
-                .setCallerStreamObserverClassAndArguments(EggProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);
-
-        GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> template
-                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorTemplate();
-        template.setGrpcAsyncClientContext(context);
-
-        StorageBasic.StorageLocator result = null;
-
-        try {
-            result = template.calleeStreamingRpcWithImmediateDelayedResult(request, delayedResult);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-
-        return result;
+        return binaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::join);
     }
 
     public OperandBroker reduce(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
@@ -116,6 +94,22 @@ public class EggProcessServiceClient {
         return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::sample);
     }
 
+    public StorageBasic.StorageLocator subtractByKey(Processor.BinaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+        return binaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::subtractByKey);
+    }
+
+    public StorageBasic.StorageLocator filter(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::filter);
+    }
+
+    public StorageBasic.StorageLocator union(Processor.BinaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+        return binaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::union);
+    }
+
+    public StorageBasic.StorageLocator flatMap(Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+        return unaryProcessToStorageLocatorUnaryCall(request, processorEndpoint, ProcessServiceGrpc.ProcessServiceStub::flatMap);
+    }
+
     private StorageBasic.StorageLocator
     unaryProcessToStorageLocatorUnaryCall(Processor.UnaryProcess request,
                                           BasicMeta.Endpoint processorEndpoint,
@@ -136,6 +130,39 @@ public class EggProcessServiceClient {
 
         GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.UnaryProcess, StorageBasic.StorageLocator> template
                 = rollProcessorServiceCallModelFactory.createUnaryProcessToStorageLocatorTemplate();
+        template.setGrpcAsyncClientContext(context);
+
+        StorageBasic.StorageLocator result = null;
+
+        try {
+            result = template.calleeStreamingRpcWithImmediateDelayedResult(request, delayedResult);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    private StorageBasic.StorageLocator
+    binaryProcessToStorageLocatorUnaryCall(Processor.BinaryProcess request,
+                                           BasicMeta.Endpoint processorEndpoint,
+                                           GrpcCalleeStreamingStubMethodInvoker<
+                                                  ProcessServiceGrpc.ProcessServiceStub,
+                                                  Processor.BinaryProcess,
+                                                  StorageBasic.StorageLocator> calleeStreamingStubMethodInvoker) {
+        GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> context
+                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorContext();
+
+        DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
+
+        context.setLatchInitCount(1)
+                .setEndpoint(processorEndpoint)
+                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
+                .setCalleeStreamingMethodInvoker(calleeStreamingStubMethodInvoker)
+                .setCallerStreamObserverClassAndArguments(EggProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);
+
+        GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> template
+                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorTemplate();
         template.setGrpcAsyncClientContext(context);
 
         StorageBasic.StorageLocator result = null;

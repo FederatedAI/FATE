@@ -116,7 +116,7 @@ public class ProcessorManager {
             synchronized (availableProcessorsLock) {
                 while (!created && availableProcessors.size() < maxProcessorCount) {
                     try {
-                        Process process = processorOperator.startProcessor(resultPort);
+                        Process process = processorOperator.start(resultPort);
                         if (process != null) {
                             created = true;
                         }
@@ -176,7 +176,7 @@ public class ProcessorManager {
         synchronized (availableProcessorsLock) {
             if (availableProcessors.contains(port)) {
                 try {
-                    result = processorOperator.stopProcessor(port);
+                    result = processorOperator.stop(port);
                     availableProcessors.remove(port);
                 } catch (IOException | InterruptedException e) {
                     Thread.currentThread().interrupt();

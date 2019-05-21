@@ -27,9 +27,9 @@ import java.util.concurrent.CountDownLatch;
 
 @Component
 @Scope("prototype")
-public class RollProcessorUnaryProcessToStorageLocatorResponseObserver
-        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.UnaryProcess, StorageBasic.StorageLocator> {
-    public RollProcessorUnaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
+public class RollProcessorBinaryProcessToStorageLocatorResponseObserver
+        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.BinaryProcess, StorageBasic.StorageLocator> {
+    public RollProcessorBinaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
         super(finishLatch, delayedResult);
     }
 }

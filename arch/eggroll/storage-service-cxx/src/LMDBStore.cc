@@ -28,7 +28,13 @@ LMDBStore::LMDBStore(const LMDBStore& other) {
 }
 
 LMDBStore::~LMDBStore() {
-    this->env.close();
+    std::exception_ptr eptr;
+    try {
+        this->env.close();
+    } catch (...) {
+        eptr = std::current_exception();
+    }
+    handle_eptr(eptr, __FILE__, __LINE__, this->toString());
 }
 
 bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {

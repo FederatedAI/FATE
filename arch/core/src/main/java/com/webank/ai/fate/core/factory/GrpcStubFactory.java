@@ -38,8 +38,8 @@ public class GrpcStubFactory {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public AbstractStub createGrpcStub(boolean isAsync, Class grpcClass, ManagedChannel managedChannel) {
-        LOGGER.info("[CORE] create stub. channel status: isShutdown: {}, isTerminated: {}",
-                managedChannel.isShutdown(), managedChannel.isTerminated());
+        /*LOGGER.info("[CORE] create stub. channel status: isShutdown: {}, isTerminated: {}",
+                managedChannel.isShutdown(), managedChannel.isTerminated());*/
         String methodName = null;
         if (isAsync) {
             methodName = asyncStubMethodName;

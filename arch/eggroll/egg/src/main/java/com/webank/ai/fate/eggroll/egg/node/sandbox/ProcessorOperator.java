@@ -50,6 +50,7 @@ public class ProcessorOperator {
 
     private static final String startCmdScriptTemplate = "#!/bin/bash;source %s/bin/activate;export PYTHONPATH=$PYTHONPATH:%s;python %s -p $1 -d %s >> %s/processor-$1.log 2>&1 &";
     private static final String stopCmdScriptTemplate = "#!/bin/bash;kill -9 $(lsof -t -i:$1)";
+    private static final String checkStatusCmdScriptTemplate = "#!/bin/bash;ps aux | grep processor.py | grep %s | wc -l";
 
     public void init() throws IOException {
 
@@ -88,7 +89,7 @@ public class ProcessorOperator {
         inited = true;
     }
 
-    public Process startProcessor(int port) throws IOException {
+    public Process start(int port) throws IOException {
         if (!inited) {
             init();
         }
@@ -105,7 +106,7 @@ public class ProcessorOperator {
         return processor;
     }
 
-    public boolean stopProcessor(int port) throws IOException, InterruptedException {
+    public boolean stop(int port) throws IOException, InterruptedException {
         if (!inited) {
             init();
         }
@@ -125,5 +126,14 @@ public class ProcessorOperator {
         }
 
         return result;
+    }
+
+    // todo: implement it
+    public boolean checkStatus(int port) throws IOException {
+        if (!inited) {
+            init();
+        }
+
+        return false;
     }
 }

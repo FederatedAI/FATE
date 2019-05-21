@@ -32,3 +32,8 @@ class RuntimeInstance(object):
 class StoreType(Enum):
     IN_MEMORY = "IN_MEMORY"
     LMDB = "LMDB"
+
+
+class NamingPolicy(Enum):
+    DEFAULT = 'DEFAULT'
+    ITER_AWARE = 'ITER_AWARE'
