@@ -21,24 +21,33 @@ import random
 
 
 class EncryptModeCalculator(object):
-    def __init__(self, encrypter=None, mode="slow", re_encrypted_rate=1):
+    """
+    Encyprt Mode module, a balance of security level and speed.
+
+    Parameters
+    ----------
+    encrypter: object, fate-paillier object, object to encrypt numbers
+
+    mode: str, accpet 'strict', 'fast', 'balance'.
+          'strict' means that re-encrypted every function call.
+          'fast' means that only encrypt data in first round, from second round on, just add the difference to previous encrypt data.
+          'balance': mixes of 'strict' and 'fast', will re-encrypt all data accords to re_encrypt_rate.
+
+    re_encrypted_rate: float or int, numeric, use if mode equals to "balance" 
+    """
+
+    def __init__(self, encrypter=None, mode="strict", re_encrypted_rate=1):
         self.encrypter = encrypter
         self.mode = mode
         self.re_encrypted_rate = re_encrypted_rate
         self.prev_data = None
         self.prev_encrypted_data = None
-        self.call_round = 0
-        self.type_change = {"list": list,
-                            "tuple": tuple,
-                            "ndarray": np.array}
 
     def encrypt_row(self, row):
-        if isinstance(row, Iterable):
-            data_type = type(row).__name__
-            if data_type not in self.type_change:
-                raise NotImplementedError("data type {} not supported yet".format(data_type))
-            else:
-                return self.type_change[data_type](self.encrypter.encrypt(val) for val in row)
+        if type(row).__name__ == "ndarray":
+            return np.array([self.encrypter.encrypt(val) for val in row]) 
+        elif isinstance(row, Iterable):
+            return type(row)(self.encrypter.encrypt(val) for val in row)
         else:
             return self.encrypter.encrypt(row)
 
@@ -46,8 +55,20 @@ class EncryptModeCalculator(object):
         return random.random()
 
     def encrypt(self, input_data):
-        self.call_round += 1
-        if self.prev_data is None or self.mode == "slow" \
+        """
+        Encrypt data according to different mode
+        
+        Parameters 
+        ---------- 
+        input_data: DTable
+
+        Returns 
+        ------- 
+        new_data: DTable, encrypted result of input_data
+
+        """
+        
+        if self.prev_data is None or self.mode == "strict" \
                 or (self.mode == "balance" and self.gen_random_number() <= self.re_encrypted_rate + consts.FLOAT_ZERO):
             new_data = input_data.mapValues(self.encrypt_row)
         else:
@@ -59,22 +80,52 @@ class EncryptModeCalculator(object):
         return new_data
 
     def get_differance(self, new_row, old_row):
-        if isinstance(new_row, Iterable):
+        """
+        Get difference of new_row and old row
+        
+        Parameters 
+        ---------- 
+        new_row: ndarray or single element or iterable python object,
+                  
+        old_row: ndarray or single element or iterable python object, data-format should be same with new_data
+
+        Returns 
+        ------- 
+        diff: ndarray or single element or iterable python object, same data-format of new_row, differance value by new_row subtract old_row
+
+        """
+
+        if type(new_row).__name__ == "ndarray":
             diff = [new_val - old_val for (new_val, old_val) in zip(new_row, old_row)]
-            if type(new_row).__name__ == "ndarray":
-                return np.array(diff)
-            else:
-                return type(new_row)(diff)
+            return np.array(diff)
+        elif isinstance(new_row, Iterable):
+            diff = [new_val - old_val for (new_val, old_val) in zip(new_row, old_row)]
+            return type(new_row)(diff)
         else:
             return new_row - old_row
 
     def add_differance(self, diff_vals, encrypted_data):
-        if isinstance(diff_vals, Iterable):
+        """
+        add difference of new_input and old input to previous encrypted_data to get new encrypted_data
+        
+        Parameters 
+        ---------- 
+        diff_vals: ndarray or single element or iterable python object,
+                  
+        encrypted_data: ndarray or single value or iterable python-type, all value in encrypted_data is fate-paillier object
+
+        Returns 
+        ------- 
+        new_encrypted_data: ndarray or single value or iterable python-type, data-format is same with encrypted_data, equals to sum of encrypted_data and diff_vals
+        
+        """
+        
+        if type(diff_vals).__name__ == "ndarray":
             new_encrypted_data = [diff + encrypted_val for (diff, encrypted_val) in zip(diff_vals, encrypted_data)]
-            if type(new_encrypted_data).__name__ == "ndarray":
-                return np.array(new_encrypted_data)
-            else:
-                return type(diff_vals)(new_encrypted_data)
+            return np.array(new_encrypted_data)
+        elif isinstance(diff_vals, Iterable):
+            new_encrypted_data = [diff + encrypted_val for (diff, encrypted_val) in zip(diff_vals, encrypted_data)]
+            return type(diff_vals)(new_encrypted_data)
         else:
             return diff_vals + encrypted_data
 
