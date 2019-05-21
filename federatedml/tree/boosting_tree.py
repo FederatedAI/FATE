@@ -47,6 +47,8 @@ class BoostingTree(object):
         self.bin_num = boostingtree_param.bin_num
         self.bin_gap = boostingtree_param.bin_gap
         self.bin_sample_num = boostingtree_param.bin_sample_num
+        self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
+        self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
 
     @staticmethod
     def data_format_transform(row):
