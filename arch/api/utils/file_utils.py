@@ -14,10 +14,11 @@
 #  limitations under the License.
 #
 
-import os
-from cachetools import cached
-from cachetools import LRUCache
 import json
+import os
+
+from cachetools import LRUCache
+from cachetools import cached
 
 PROJECT_BASE = None
 
@@ -53,7 +54,6 @@ def dump_json_conf(config_data, conf_path):
             json.dump(config_data, f, indent=4)
     except:
         raise EnvironmentError("loading json file config from '{}' failed!".format(json_conf_path))
-
 
 
 if __name__ == "__main__":
