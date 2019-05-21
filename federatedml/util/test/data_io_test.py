@@ -191,21 +191,28 @@ class TestSparseTagReader(unittest.TestCase):
     def setUp(self):
         self.table = "dataio_sparse_tag_test"
         self.namespace = "dataio_test"
+       
+        self.table2 = "dataio_sparse_tag_value_test"
         
         self.data = []
+        self.data_with_value = []
         for i in range(100):
             row = []
+            row_with_value = []
             for j in range(100):
                 if random.randint(1, 100) > 30:
                     continue
                 str_r = ''.join(random.sample(string.ascii_letters + string.digits, 10))
                 row.append(str_r)
+                row_with_value.append(str_r + ':' + str(random.random()))
 
             self.data.append((i, ' '.join(row)))
-        
-        save_data(self.data, self.table, self.namespace)        
+            self.data_with_value.append((i, ' '.join(row_with_value)))
 
-    def test_sparse_output_format(self):
+        save_data(self.data, self.table, self.namespace)       
+        save_data(self.data_with_value, self.table2, self.namespace)
+
+    def test_tag_sparse_output_format(self):
         dataio_param = DataIOParam()
         dataio_param.input_format = "tag"
         dataio_param.data_type = "int"
@@ -230,7 +237,39 @@ class TestSparseTagReader(unittest.TestCase):
 
             self.assertTrue(ori_feature == features[i].sparse_vec)
 
-    def test_dense_output_format(self):
+    def test_tag_with_value_sparse_output_format(self):
+        dataio_param = DataIOParam()
+        dataio_param.input_format = "tag"
+        dataio_param.data_type = "float"
+        dataio_param.tag_with_value = True
+        dataio_param.tag_value_delimitor = ":"
+        dataio_param.delimitor = ' '
+        dataio_param.with_label = False
+        dataio_param.output_format = "sparse"
+        reader = SparseTagReader(dataio_param)
+        tag_insts = reader.read_data(self.table2, self.namespace)
+        features = [inst.features for key, inst in tag_insts.collect()]
+
+        tags = set()
+        for row in self.data_with_value:
+            tag_list = []
+            for tag_with_value in row[1].split(" ", -1):
+                tag_list.append(tag_with_value.split(":")[0])
+
+            tags |= set(tag_list)
+   
+        tags = sorted(tags)
+        tag_dict = dict(zip(tags, range(len(tags))))
+        
+        for i in range(len(self.data_with_value)):
+            ori_feature = {}
+            for tag_with_value in self.data_with_value[i][1].split(" ", -1):
+                idx = tag_dict.get(tag_with_value.split(":")[0])
+                val = float(tag_with_value.split(":")[1])
+
+                self.assertTrue(np.abs(val - features[i].get_data(idx)) < consts.FLOAT_ZERO) 
+    
+    def test_tag_dense_output_format(self):
         dataio_param = DataIOParam()
         dataio_param.input_format = "tag"
         dataio_param.data_type = 'int'
@@ -257,6 +296,39 @@ class TestSparseTagReader(unittest.TestCase):
             ori_feature = np.asarray(ori_feature, dtype='int')
             self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
 
+    def test_tag_with_value_dense_output_format(self):
+        dataio_param = DataIOParam()
+        dataio_param.input_format = "tag"
+        dataio_param.data_type = 'float'
+        dataio_param.delimitor = ' '
+        dataio_param.with_label = False
+        dataio_param.output_format = "dense"
+        reader = SparseTagReader(dataio_param)
+        tag_insts = reader.read_data(self.table2, self.namespace)
+        features = [inst.features for key, inst in tag_insts.collect()]
+
+        tags = set()
+        for row in self.data_with_value:
+            tag_list = []
+            for tag_with_value in row[1].split(" ", -1):
+                tag_list.append(tag_with_value.split(":")[0])
+
+            tags |= set(tag_list)
+        
+        tags = sorted(tags)
+        tag_dict = dict(zip(tags, range(len(tags))))
+        
+        for i in range(len(self.data_with_value)):
+            ori_feature = [0 for i in range(len(tags))]
+
+            for tag_with_value in self.data_with_value[i][1].split(" ", -1):
+                tag = tag_with_value.split(":", -1)[0]
+                val = float(tag_with_value.split(":", -1)[1])
+                ori_feature[tag_dict.get(tag)] = val
+            
+            ori_feature = np.asarray(ori_feature, dtype='float64')
+            self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
+
 
 def save_data(input_data, table_name, namespace):
     storage.save_data(input_data, table_name, namespace)
@@ -267,14 +339,14 @@ if __name__ == '__main__':
     federation.init("test_dataio", 
                     {"local": {
                        "role": "guest",
-                       "party_id": 10000
+                       "party_id": 9999
                     },
                      "role": {
                        "host": [
-                           9999
+                           10000
                        ],
                        "guest": [
-                           10000
+                           9999
                        ]
                      }
                     })

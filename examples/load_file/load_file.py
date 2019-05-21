@@ -63,7 +63,6 @@ def read_data(input_file='', head=True):
 
 
 def generate_table_name(input_file_path):
-    local_time = time.localtime(time.time())
     str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     file_name = input_file_path.split(".")[0]
     file_name = file_name.split("/")[-1]
@@ -73,7 +72,6 @@ def data_to_eggroll_table(data, namespace, table_name,partition=1, work_mode=0):
     eggroll.init(mode=work_mode)
     data_table = eggroll.table(table_name, namespace, partition=partition, create_if_missing=True, error_if_exist=False)
     data_table.put_all(data)
-    data_table_count = data_table.count()
     print("------------load data finish!-----------------")
     print("total data_count:"+str(data_table.count()))
     print("namespace:%s, table_name:%s" %(namespace, table_name))

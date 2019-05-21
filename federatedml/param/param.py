@@ -36,6 +36,10 @@ class DataIOParam(object):
     data_type : str, the data type of data input, accedted 'float','float64','int','int64','str','long'
                "default: "float64"
 
+    tag_with_value: bool, use if input_format is 'tag', if tag_with_value is True, input column data format should be tag[delimitor]value, otherwise is tag only
+
+    tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True, delimitor of tag[delimitor]value column value.
+
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
     default_value : None or single object type or list, the value to replace missing value. 
@@ -76,6 +80,7 @@ class DataIOParam(object):
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
+                 tag_with_value=False, tag_value_delimitor=":",
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
@@ -84,6 +89,8 @@ class DataIOParam(object):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
+        self.tag_with_value = tag_with_value
+        self.tag_value_delimitor = tag_value_delimitor
         self.missing_fill = missing_fill
         self.default_value = default_value
         self.missing_fill_method = missing_fill_method
@@ -117,6 +124,23 @@ class EncryptParam(object):
     def __init__(self, method=consts.PAILLIER, key_length=1024):
         self.method = method
         self.key_length = key_length
+
+
+class EncryptedModeCalculatorParam(object):
+    """
+    Define the encrypted_mode_calulator parameters.
+
+    Parameters
+    ----------
+    mode: str, support 'strict', 'fast', 'balance' only, default: strict
+
+    re_encrypted_rate: float or int, numeric number, use when mode equals to 'strict', defualt: 1
+
+    """
+
+    def __init__(self, mode="strict", re_encrypted_rate=1):
+        self.mode = mode
+        self.re_encrypted_rate = re_encrypted_rate
 
 
 class EvaluateParam(object):
@@ -192,8 +216,11 @@ class SampleParam(object):
     Parameters
     ----------
     mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
+    
     fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
+    
     random_state: int, RandomState instance or None, default: None
     """
 
@@ -290,7 +317,8 @@ class WorkFlowParam(object):
                  data_input_table=None, data_input_namespace=None, intersect_data_output_table=None,
                  intersect_data_output_namespace=None, dataio_param=DataIOParam(), predict_param=PredictParam(),
                  evaluate_param=EvaluateParam(), do_cross_validation=False, work_mode=0,
-                 n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False, need_scale=False):
+                 n_splits=5, need_intersect=True, need_sample=False, need_feature_selection=False, need_scale=False,
+                 one_vs_rest=False, need_one_hot=False):
         self.method = method
         self.train_input_table = train_input_table
         self.train_input_namespace = train_input_namespace
@@ -317,6 +345,8 @@ class WorkFlowParam(object):
         self.need_sample = need_sample
         self.need_feature_selection = need_feature_selection
         self.need_scale = need_scale
+        self.need_one_hot = need_one_hot
+        self.one_vs_rest = one_vs_rest
 
 
 class InitParam(object):
@@ -449,7 +479,8 @@ class LogisticParam(object):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model', table_name='lr_table'):
+                 model_path='lr_model', table_name='lr_table',
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -464,6 +495,7 @@ class LogisticParam(object):
         self.model_path = model_path
         self.table_name = table_name
         self.party_weight = party_weight
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
 
 class DecisionTreeParam(object):
@@ -490,12 +522,18 @@ class DecisionTreeParam(object):
     n_iter_no_change: bool, accepted True,False only, if set to True, tol will use to consider
                       stop tree growth. default: True
 
+    feature_importance_type: str, support 'split', 'gain' only. 
+                             if is 'split', feature_importances calculate by feature split times,
+                             if is 'gain', feature_importances calculate by feature split gain.
+                             default: 'split'
+
     tol: float, only use when n_iter_no_change is set to True, default: 0.001
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
-                 max_split_nodes=consts.MAX_SPLIT_NODES, n_iter_no_change=True, tol=0.001):
+                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type = "split",
+                 n_iter_no_change=True, tol=0.001):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
@@ -503,6 +541,7 @@ class DecisionTreeParam(object):
         self.min_impurity_split = min_imputiry_split
         self.min_leaf_node = min_leaf_node
         self.max_split_nodes = max_split_nodes
+        self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
@@ -539,13 +578,17 @@ class BoostingTreeParam(object):
 
     bin_sample_num: int, if quantile method is 'bin_by_sample_data', max amount of samples to find bins.
                     default: 10000
+    
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
+                                     default: EncryptedModeCalculatorParam()
     """
 
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
-                 bin_num=32, bin_gap=1e-3, bin_sample_num=10000):
+                 bin_num=32, bin_gap=1e-3, bin_sample_num=10000,
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -559,6 +602,7 @@ class BoostingTreeParam(object):
         self.bin_num = bin_num
         self.bin_gap = bin_gap
         self.bin_sample_num = bin_sample_num
+        self.encrypted_mode_calculator_param = copy.deepcopy(EncryptedModeCalculatorParam())
 
 
 class FTLModelParam(object):
@@ -717,8 +761,9 @@ class FeatureBinningParam(object):
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
 
-    cols : list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns
+    cols : list of string or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
+        cols, provide a list of header string instead of -1.
 
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
@@ -726,12 +771,6 @@ class FeatureBinningParam(object):
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
-
-    result_table : str, default: 'binning_table'
-        Table name to save result
-
-    result_namespace : str, default: 'binning_namespace'
-        Namespace to save result
 
     display_result : list, default: ['iv']
         Specify what results to show. The available results include:
@@ -747,8 +786,10 @@ class FeatureBinningParam(object):
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
                  local_only=False,
-                 result_table='binning_table',
-                 result_namespace='binning_namespace',
+                 # meta_table='binning_meta_table',
+                 # param_table='binning_param_table',
+                 # transform_table='binning_transform_table',
+                 # result_namespace='binning_namespace',
                  display_result='simple'):
         self.process_method = process_method
         self.method = method
@@ -759,8 +800,10 @@ class FeatureBinningParam(object):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-        self.result_table = result_table
-        self.result_namespace = result_namespace
+        # self.meta_table = meta_table
+        # self.transform_table = transform_table
+        # self.param_table = param_table
+        # self.result_namespace = result_namespace
 
         if display_result == 'simple':
             display_result = ['iv']
@@ -781,7 +824,7 @@ class UniqueValueParam(object):
         self.eps = eps
 
 
-class IVSelectionParam(object):
+class IVValueSelectionParam(object):
     """
     Use information values to select features.
 
@@ -790,18 +833,26 @@ class IVSelectionParam(object):
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
 
+    """
+
+    def __init__(self, value_threshold=1.0):
+        self.value_threshold = value_threshold
+
+
+class IVPercentileSelectionParam(object):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
     percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
         Percentile threshold for iv_percentile method
 
-    bin_param : FeatureBinningParam
-        Use to calculate iv.
 
     """
 
-    def __init__(self, value_threshold=1.0, percentile_threshold=1.0, bin_param=FeatureBinningParam()):
-        self.value_threshold = value_threshold
+    def __init__(self, percentile_threshold=1.0):
         self.percentile_threshold = percentile_threshold
-        self.bin_param = copy.deepcopy(bin_param)
 
 
 class CoeffOfVarSelectionParam(object):
@@ -858,6 +909,7 @@ class FeatureSelectionParam(object):
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
         Please be notified that, if a percentile method is used after some certain filter method,
         the percentile represent for the ratio of rest features.
+
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
@@ -880,10 +932,11 @@ class FeatureSelectionParam(object):
 
     def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
                  unique_param=UniqueValueParam(),
-                 iv_param=IVSelectionParam(), coe_param=CoeffOfVarSelectionParam(),
+                 iv_value_param=IVValueSelectionParam(),
+                 iv_percentile_param=IVPercentileSelectionParam(),
+                 coe_param=CoeffOfVarSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
-                 result_table='binning_table',
-                 result_namespace='binning_namespace',
+
                  ):
         self.method = method
         self.select_cols = select_cols
@@ -894,12 +947,11 @@ class FeatureSelectionParam(object):
 
         self.local_only = local_only
         self.unique_param = copy.deepcopy(unique_param)
-        self.iv_param = copy.deepcopy(iv_param)
+        self.iv_value_param = copy.deepcopy(iv_value_param)
+        self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.bin_param = copy.deepcopy(bin_param)
-        self.result_table = result_table
-        self.result_namespace = result_namespace
 
 
 class ScaleParam(object):
@@ -908,26 +960,26 @@ class ScaleParam(object):
 
     Parameters
     ----------
-        method : str, now it support "MinMaxScale" and "StandardScale", and will support other scale method soon. 
+        method : str, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
                  Default None, which will do nothing for scale
 
-        mode: str, for method is "MinMaxScale" and for "StandardScale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture. 
-              for mode is "MinMaxScale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and 
+        mode: str, for method is "min_max_scale" and for "standard_scale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture.
+              for mode is "min_max_scale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and
               feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
 
-        area: str, for method is "MinMaxScale" and for "StandardScale" it is useless. It supports "all" and "col". For "all", 
+        area: str, for method is "min_max_scale" and for "standard_scale" it is useless. It supports "all" and "col". For "all",
             feat_upper/feat_lower will act on all data column, so it will just be a value, and for "col", it just acts 
             on one column they corresponding to, so feat_lower/feat_upper will be a list, which size will equal to the number of columns
 
-        feat_upper: int or float, used for "MinMaxScale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
-        feat_lower: int or float, used for "MinMaxScale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None. 
-        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None. 
-        out_upper: int or float, used for "MinMaxScale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        feat_upper: int or float, used for "min_max_scale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, used for "min_max_scale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None.
+        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
+        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
         
 
-        with_mean: bool, used for "StandardScale". Default False.
-        with_std: bool, used for "StandardScale". Default False.
-            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the stanard deviation of the column.
+        with_mean: bool, used for "standard_scale". Default False.
+        with_std: bool, used for "standard_scale". Default False.
+            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
             if with_mean is False, u will be 0, and if with_std is False, s will be 1. 
 
     """
@@ -944,3 +996,62 @@ class ScaleParam(object):
 
         self.with_mean = with_mean
         self.with_std = with_std
+
+
+class CorrelationParam(object):
+    """
+
+    Parameters
+    ----------
+    correlation_method : str, default: 'Pearson'
+        Decide what process to do. Support Pearson only now.
+
+    cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    local_only : bool, default: False
+        Whether just provide binning method to guest party. If true, host party will do nothing.
+
+    with_label: bool, default: False
+        Indicate if calculate correlation with label
+
+    run_mode: str, 'normal' or 'fast, default: 'normal'
+        Specify the running mode
+
+    """
+
+    def __init__(self, correlation_method='Pearson', cols=-1, local_only=False, with_label=False, run_mode='normal'):
+        self.correlation_method = correlation_method
+        self.cols = cols
+        self.local_only = local_only
+        self.with_label = with_label
+        self.run_mode = run_mode
+
+
+class OneHotEncoderParam(object):
+    """
+
+    Parameters
+    ----------
+
+    cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    """
+
+    def __init__(self, cols=-1):
+        self.cols = cols
+
+
+class OneVsRestParam(object):
+    """
+    Define the one_vs_rest parameters.
+
+    Parameters
+    ----------
+    has_arbiter: bool. For some algorithm, may not has arbiter, for instances, secureboost of FATE,  for these algorithms, it should be set to false.
+                default true
+    """
+
+    def __init__(self, has_arbiter=True):
+        self.has_arbiter = has_arbiter

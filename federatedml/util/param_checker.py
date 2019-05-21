@@ -24,6 +24,8 @@ from arch.api.utils import log_utils
 from federatedml.param import param
 from federatedml.util import consts
 from federatedml.util.param_extract import ParamExtract
+import inspect 
+import json
 
 LOGGER = log_utils.getLogger()
 
@@ -143,6 +145,24 @@ class EncryptParamChecker(object):
         return True
 
 
+class EncryptedModeCalculatorParamChecker(object):
+    @staticmethod
+    def check_param(encrypted_mode_calculator):
+        if type(encrypted_mode_calculator).__name__ != "EncryptedModeCalculatorParam":
+            raise ValueError("param class not match EncryptedModeCalculatorParam")
+
+        descr = "encrypted_mode_calculator param"
+        encrypted_mode_calculator.mode = check_and_change_lower(encrypted_mode_calculator.mode,
+                                                                ["strict", "fast", "balance"],
+                                                                descr)
+
+        if encrypted_mode_calculator.mode == "balance":
+            if type(encrypted_mode_calculator.re_encrypted_rate).__name__ not in ["int", "long", "float"]:
+                raise ValueError("re_encrypted_rate should be a numeric number")
+
+        return True
+
+
 class SampleParamChecker(object):
     @staticmethod
     def check_param(sample_param):
@@ -215,9 +235,13 @@ class DecisionTreeParamChecker(object):
         if type(tree_param.tol).__name__ not in ["float", "int", "long"]:
             raise ValueError("decision tree param's tol {} not supported, should be numeric".format(tree_param.tol))
 
+        tree_param.feature_importance_type = check_and_change_lower(tree_param.feature_importance_type,
+                                                                    ["split", "gain"],
+                                                                    descr)
+
         return True
 
-
+        
 class BoostingTreeParamChecker(object):
     @staticmethod
     def check_param(boost_param):
@@ -884,12 +908,21 @@ def check_and_change_lower(param, valid_list, descr=''):
 
 
 class AllChecker(object):
-    def __init__(self, config_path):
+    def __init__(self, config_path, param_restricted_path=None):
         self.config_path = config_path
-
+        self.param_restricted_path = param_restricted_path
+        self.func = {"ge": self._greater_equal_than,
+                     "le": self._less_equal_than,
+                     "in": self._in,
+                     "not_in": self._not_in,
+                     "range": self._range
+                     }
+                     
     def check_all(self):
         self._check(param.DataIOParam, DataIOParamChecker)
         self._check(param.EncryptParam, EncryptParamChecker)
+        self._check(param.EncryptedModeCalculatorParam, EncryptedModeCalculatorParamChecker)
+        self._check(param.SampleParam, SampleParamChecker)
         self._check(param.EvaluateParam, EvaluateParamChecker)
         self._check(param.ObjectiveParam, ObjectiveParamChecker)
         self._check(param.PredictParam, PredictParamChecker)
@@ -909,6 +942,85 @@ class AllChecker(object):
         self._check(param.ScaleParam, ScaleParamChecker)
 
     def _check(self, Param, Checker):
+        """
+        check if parameters define in Param Ojbect is valid or not.
+            validity of parameters decide by the following two ways:
+                1. match the definition in ParamObject, which will be check in checker
+                2. match the param restriction of user definition, define in workflow/conf/param_validation.json
+
+        Parameters
+        ----------  
+        Param: object, define in federatedml/param/param.py
+
+        Checker: object, define in this module, see above
+
+        """
+
         param_obj = Param()
         param_obj = ParamExtract.parse_param_from_config(param_obj, self.config_path)
         Checker.check_param(param_obj)
+
+        if self.param_restricted_path is not None:
+            with open(self.param_restricted_path, "r") as fin:
+                validation_json = json.loads(fin.read())
+
+            param_classes = [class_info[0] for class_info in inspect.getmembers(param, inspect.isclass)]
+            self.validate_restricted_param(param_obj, validation_json, param_classes)
+
+    def validate_restricted_param(self, param_obj, validation_json, param_classes):
+        """
+        Validate the param restriction of user definition recursively.
+            It will only validation parameters define both in param_obj and validation_json
+
+        Parameters
+        ---------- 
+        param_obj: object, parameter object define in federatedml/param/param.py
+
+        validation_json: dict, parameter restriction of user-define.
+
+        param_classes: list, all object define in federatedml/param/param.py
+  
+        """
+
+        default_section = type(param_obj).__name__
+        var_list = param_obj.__dict__
+
+        for variable in var_list:
+            attr = getattr(param_obj, variable)
+            if type(attr).__name__ in param_classes:
+                self.validate_restricted_param(attr, validation_json, param_classes)
+            else:
+                if default_section in validation_json and variable in validation_json[default_section]:
+                    validation_dict = validation_json[default_section][variable]
+                    value = getattr(param_obj, variable)
+                    value_legal = False
+
+                    for op_type in validation_dict:
+                        if self.func[op_type](value, validation_dict[op_type]):
+                            value_legal = True
+                            break
+
+                    if not value_legal:
+                        raise ValueError("Plase check runtime conf, {} = {} does not match user-parameter restriction".format(variable, value))
+                
+    def _greater_equal_than(self, value, limit):
+        return value >= limit - consts.FLOAT_ZERO
+
+    def _less_equal_than(self, value, limit):
+        return value <= limit + consts.FLOAT_ZERO
+
+    def _range(self, value, ranges):
+        in_range = False
+        for left_limit, right_limit in ranges:
+            if value >= left_limit - consts.FLOAT_ZERO and value <= right_limit + consts.FLOAT_ZERO:
+                in_range = True
+                break
+
+        return in_range
+
+    def _in(self, value, right_value_list):
+        return value in right_value_list
+
+    def _not_in(self, value, wrong_value_list):
+        return value not in wrong_value_list
+

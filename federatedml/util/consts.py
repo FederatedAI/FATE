@@ -76,8 +76,10 @@ G_BIN_NUM = 10
 DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
+ONE_HOT_LIMIT = 10    # No more than 10 possible values
 
 QUANTILE = 'quantile'
+BUCKET = 'bucket'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'

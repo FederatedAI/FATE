@@ -28,7 +28,8 @@
         "model_table": "feature_selection_guest_model_table",
         "model_namespace": "example_data_namespace",
         "predict_output_table": "feature_select_guest_out_table",
-        "predict_output_namespace": "example_data_namespace"
+        "predict_output_namespace": "example_data_namespace",
+        "need_feature_selection": true
         },
 
     "EncryptParam": {

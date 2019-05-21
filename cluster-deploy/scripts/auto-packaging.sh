@@ -50,15 +50,8 @@ for target in ${targets[@]}; do
 done
 
 cd $fate_dir
-git archive -o $output_dir/python/python.tar $(git rev-parse HEAD) arch/api federatedml workflow examples
-cd $output_dir/python
-sed -i "s#PATH=.*#PATH=$dir/python#g" ./processor.sh
-sed -i "s#src/arch/processor#arch/processor#g" ./processor.sh
-sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
-sed -i "s#venv=.*#venv=../venv#g" ./service.sh
-tar -xf python.tar
-rm -rf python.tar
-cd ./arch
-cp -r $base_dir/* ./
-
+cp -r arch federatedml workflow examples $output_dir/python/
+cp -r arch/eggroll/storage-service-cxx/* $output_dir/storage-service-cxx/
+cd $output_dir/storage-service-cxx
+mkdir logs
 cd $cwd

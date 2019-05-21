@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 
 from arch.api.eggroll import init
-from federatedml.ftl.eggroll_computation.helper import encrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matrix
 from federatedml.ftl.encryption import encryption
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 
@@ -40,7 +40,7 @@ class TestEncryptionMatmul(unittest.TestCase):
         encryption.encrypt_matrix(self.publickey, X)
         curr_time2 = time.time()
         seq_running_time = curr_time2 - curr_time1
-        encrypt_matrix(self.publickey, X)
+        distribute_encrypt_matrix(self.publickey, X)
         curr_time3 = time.time()
         parallel_running_time = curr_time3 - curr_time2
 

@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import types
+
 from federatedml.util import consts
 
 
@@ -67,6 +68,11 @@ def get_data_shape(data):
         return len(list(one_feature[1]))
     else:
         return None
+
+
+def get_header(data_instances):
+    header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
+    return header
 
 
 def is_empty_feature(data_instances):

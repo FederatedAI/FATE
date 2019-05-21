@@ -37,17 +37,18 @@ def dot(value, w):
     else:
         X = value
 
-    # dot(a, b)[i, j, k, m] = sum(a[i, j, :] * b[k, :, m])
-    # One-dimension dot, which is the inner product of these two arrays
-    if np.ndim(X) == np.ndim(w) == 1:
-        return _one_dimension_dot(X, w)
-    elif np.ndim(X) == 2 and np.ndim(w) == 1:
-        res = []
-        for x in X:
-            res.append(_one_dimension_dot(x, w))
-        res = np.array(res)
-    else:
-        res = np.dot(X, w)
+    # # dot(a, b)[i, j, k, m] = sum(a[i, j, :] * b[k, :, m])
+    # # One-dimension dot, which is the inner product of these two arrays
+    # if np.ndim(X) == np.ndim(w) == 1:
+    #     return _one_dimension_dot(X, w)
+    # elif np.ndim(X) == 2 and np.ndim(w) == 1:
+    #     res = []
+    #     for x in X:
+    #         res.append(_one_dimension_dot(x, w))
+    #     res = np.array(res)
+    # else:
+    #     res = np.dot(X, w)
+    res = np.dot(X, w)
     return res
 
 
