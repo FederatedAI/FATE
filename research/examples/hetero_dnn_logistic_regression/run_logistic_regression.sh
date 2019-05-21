@@ -26,7 +26,7 @@ if [[ $work_mode -eq 1 ]]; then
 fi
 
 cur_dir=$(pwd)
-data_dir=$cur_dir/../../../data
+data_dir=$cur_dir/../../../examples/data
 load_file_program=$cur_dir/../../../examples/load_file/load_file.py
 conf_dir=$cur_dir/conf
 log_dir=$cur_dir/../../../logs

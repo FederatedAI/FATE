@@ -47,7 +47,7 @@ class HeteroLRArbiter(BaseLogisticRegression):
         """
         performs any tasks that the arbiter is responsible for.
 
-        This 'perform_subtasks' function servers as a handler on conducting any task that the arbiter is responsible
+        This 'perform_subtasks' function serves as a handler on conducting any task that the arbiter is responsible
         for. For example, for the 'perform_subtasks' function of 'HeteroDNNLRArbiter' class located in
         'hetero_dnn_lr_arbiter.py', it performs some works related to updating/training local neural networks of guest
         or host.
@@ -60,16 +60,18 @@ class HeteroLRArbiter(BaseLogisticRegression):
         """
         pass
 
-    def fit(self, data_instance=None):
+    def fit(self, data_instances=None):
         """
         Train lr model of role arbiter
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         """
+
         LOGGER.info("Enter hetero_lr_arbiter fit")
-        if data_instance:
-            self.header = data_instance.schema.get('header')
+        if data_instances:
+            # self.header = data_instance.schema.get('header')
+            self.header = self.get_header(data_instances)
         else:
             self.header = []
 

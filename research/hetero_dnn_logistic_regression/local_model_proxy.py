@@ -76,12 +76,7 @@ class BaseLocalModelUpdateProxy(object):
 
         LOGGER.debug("@ update local model")
 
-        # start = time.time()
-        # n_iter = training_info["iteration"]
-        # batch_index = training_info["batch_index"]
         index_tracking_list = training_info["index_tracking_list"]
-        # is_host = training_info["is_host"]
-
         indexed_fore_gradients = fore_gradient_table.collect()
         indexed_instances = instance_table.collect()
         fore_gradients_dict = dict(indexed_fore_gradients)
@@ -103,20 +98,9 @@ class BaseLocalModelUpdateProxy(object):
 
         grads = np.tile(grads, (1, coef.shape[1]))
         coef = np.tile(coef, (grads.shape[0], 1))
-        # end = time.time()
-        # LOGGER.debug("@ prepare encrypted gradient computation time:" + str(end - start))
 
         LOGGER.debug("@ grads * coef:" + str(grads.shape) + "*" + str(coef.shape))
-        # start = time.time()
         back_grad = grads * coef
-        # end = time.time()
-        # LOGGER.debug("@ encrypted gradient computation time:" + str(end - start))
-
-        # start = time.time()
-        # dec_back_grad = self._decrypt_gradients(enc_back_grad, is_host, n_iter, batch_index)
-        # end = time.time()
-        # LOGGER.debug("@ decryption time (including communication):" + str(end - start))
-
         self.model.backpropogate(feats, None, back_grad)
 
 

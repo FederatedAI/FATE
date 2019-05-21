@@ -39,10 +39,16 @@ class DNNLRHostWorkFlow(WorkFlow):
         local_model_param = ParamExtract.parse_param_from_config(local_model_param, config)
         self.local_model = self._create_local_model(local_model_param)
         self.model = HeteroDNNLRHost(self.local_model, self.logistic_param)
-        self.model.set_data_shape(local_model_param.encode_dim)
+        self.model.set_feature_shape(local_model_param.encode_dim)
+        self.model.set_header(self._create_header(local_model_param.encode_dim))
         self.model.set_local_model_update_proxy(SemiEncryptedLocalModelUpdateProxy())
 
-    def _create_local_model(self, local_model_param):
+    @staticmethod
+    def _create_header(repr_dim):
+        return ['fid' + str(idx) for idx in range(repr_dim)]
+
+    @staticmethod
+    def _create_local_model(local_model_param):
         autoencoder = Autoencoder("local_host_model_01")
         autoencoder.build(input_dim=local_model_param.input_dim, hidden_dim=local_model_param.encode_dim,
                           learning_rate=local_model_param.learning_rate)

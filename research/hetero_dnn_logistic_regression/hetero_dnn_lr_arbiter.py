@@ -72,7 +72,7 @@ class HeteroDNNLRArbiter(HeteroLRArbiter):
         start = time.time()
         guest_dec_grads = self._decrypt_grads(guest_enc_grads)
         end = time.time()
-        LOGGER.debug("@ guest_dec_grads shape:" + str(len(guest_dec_grads.shape)))
+        LOGGER.debug("@ guest_dec_grads shape:" + str(len(guest_dec_grads)))
         LOGGER.debug("@ decrypt: guest_dec_grads time:" + str(end - start))
 
         LOGGER.debug("Remote guest_dec_grads to guest")

@@ -22,9 +22,7 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
-from federatedml.statistic import data_overview
 from federatedml.secureprotol import EncryptModeCalculator
-# from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -97,12 +95,13 @@ class HeteroLRGuest(BaseLogisticRegression):
         Train lr model of role guest
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         """
+
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
 
-        self.header = data_instances.schema.get("header")
+        self.header = self.get_header(data_instances)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
@@ -140,7 +139,6 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
-        # model_shape = data_overview.get_features_shape(data_instances)
         model_shape = self.get_features_shape(data_instances)
         weight = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         if self.init_param_obj.fit_intercept is True:
