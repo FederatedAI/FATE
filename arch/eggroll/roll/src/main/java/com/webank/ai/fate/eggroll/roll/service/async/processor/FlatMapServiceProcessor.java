@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.roll;
+package com.webank.ai.fate.eggroll.roll.service.async.processor;
 
+import com.webank.ai.fate.api.core.BasicMeta;
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
-import com.webank.ai.fate.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
-import com.webank.ai.fate.core.model.DelayedResult;
+import com.webank.ai.fate.eggroll.roll.api.grpc.client.EggProcessServiceClient;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.CountDownLatch;
-
 @Component
 @Scope("prototype")
-public class RollProcessorUnaryProcessToStorageLocatorResponseObserver
-        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.UnaryProcess, StorageBasic.StorageLocator> {
-    public RollProcessorUnaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
-        super(finishLatch, delayedResult);
+public class FlatMapServiceProcessor extends BaseProcessServiceProcessor<Processor.UnaryProcess, StorageBasic.StorageLocator> {
+    public FlatMapServiceProcessor(EggProcessServiceClient eggProcessServiceClient, Processor.UnaryProcess request, BasicMeta.Endpoint processorEndpoint) {
+        super(eggProcessServiceClient, request, processorEndpoint);
+    }
+
+    @Override
+    public StorageBasic.StorageLocator call() throws Exception {
+        return eggProcessServiceClient.flatMap(request, processorEndpoint);
     }
 }

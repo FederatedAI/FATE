@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.roll;
+package com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg;
 
 import com.webank.ai.fate.api.eggroll.processor.Processor;
 import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
@@ -27,9 +27,9 @@ import java.util.concurrent.CountDownLatch;
 
 @Component
 @Scope("prototype")
-public class RollProcessorUnaryProcessToStorageLocatorResponseObserver
-        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.UnaryProcess, StorageBasic.StorageLocator> {
-    public RollProcessorUnaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
+public class EggProcessorBinaryProcessToStorageLocatorResponseObserver
+        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.BinaryProcess, StorageBasic.StorageLocator> {
+    public EggProcessorBinaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
         super(finishLatch, delayedResult);
     }
 }

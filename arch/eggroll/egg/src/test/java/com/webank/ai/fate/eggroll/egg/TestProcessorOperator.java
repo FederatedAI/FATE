@@ -47,14 +47,14 @@ public class TestProcessorOperator {
 
     @Test
     public void testStartProcessor() throws Exception {
-        Process processor = processorOperator.startProcessor(7889);
+        Process processor = processorOperator.start(7889);
 
         System.out.println(processor);
     }
 
     @Test
     public void testStopProcessor() throws Exception {
-        processorOperator.stopProcessor(7889);
+        processorOperator.stop(7889);
         System.out.println();
     }
 

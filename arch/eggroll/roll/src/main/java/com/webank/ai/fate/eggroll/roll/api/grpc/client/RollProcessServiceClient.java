@@ -29,6 +29,7 @@ import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.core.utils.TypeConversionUtils;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.egg.EggProcessorReduceResponseStreamObserver;
+import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.roll.RollProcessorBinaryProcessToStorageLocatorResponseObserver;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.processor.roll.RollProcessorUnaryProcessToStorageLocatorResponseObserver;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
 import com.webank.ai.fate.eggroll.roll.factory.RollProcessorServiceCallModelFactory;
@@ -68,24 +69,8 @@ public class RollProcessServiceClient {
 
     public DelayedResult<StorageBasic.StorageLocator> join(Processor.BinaryProcess request) {
         LOGGER.info("roll join request received");
-        GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> context
-                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorContext();
 
-        DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
-        // todo: change observer class from unary to binary
-        context.setLatchInitCount(1)
-                .setEndpoint(rollEndpoint)
-                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCalleeStreamingMethodInvoker(ProcessServiceGrpc.ProcessServiceStub::join)
-                .setCallerStreamObserverClassAndArguments(RollProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);
-
-        GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> template
-                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorTemplate();
-        template.setGrpcAsyncClientContext(context);
-
-        template.calleeStreamingRpc(request);
-
-        return delayedResult;
+        return binaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::join);
     }
 
     public OperandBroker reduce(Processor.UnaryProcess request) {
@@ -120,6 +105,30 @@ public class RollProcessServiceClient {
         return unaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::glom);
     }
 
+    public DelayedResult<StorageBasic.StorageLocator> subtractByKey(Processor.BinaryProcess request) {
+        LOGGER.info("roll subtractByKey request received");
+
+        return binaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::subtractByKey);
+    }
+
+    public DelayedResult<StorageBasic.StorageLocator> filter(Processor.UnaryProcess request) {
+        LOGGER.info("roll filter request received");
+
+        return unaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::filter);
+    }
+
+    public DelayedResult<StorageBasic.StorageLocator> union(Processor.BinaryProcess request) {
+        LOGGER.info("roll union request received");
+
+        return binaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::union);
+    }
+
+    public DelayedResult<StorageBasic.StorageLocator> flatMap(Processor.UnaryProcess request) {
+        LOGGER.info("roll flatMap request received");
+
+        return unaryProcessToStorageLocatorUnaryCall(request, ProcessServiceGrpc.ProcessServiceStub::flatMap);
+    }
+
     private DelayedResult<StorageBasic.StorageLocator>
     unaryProcessToStorageLocatorUnaryCall(Processor.UnaryProcess request,
                                           GrpcCalleeStreamingStubMethodInvoker<
@@ -139,6 +148,32 @@ public class RollProcessServiceClient {
 
         GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.UnaryProcess, StorageBasic.StorageLocator> template
                 = rollProcessorServiceCallModelFactory.createUnaryProcessToStorageLocatorTemplate();
+        template.setGrpcAsyncClientContext(context);
+
+        template.calleeStreamingRpc(request);
+
+        return delayedResult;
+    }
+
+    private DelayedResult<StorageBasic.StorageLocator>
+    binaryProcessToStorageLocatorUnaryCall(Processor.BinaryProcess request,
+                                          GrpcCalleeStreamingStubMethodInvoker<
+                                                  ProcessServiceGrpc.ProcessServiceStub,
+                                                  Processor.BinaryProcess,
+                                                  StorageBasic.StorageLocator> calleeStreamingStubMethodInvoker) {
+        GrpcAsyncClientContext<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> context
+                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorContext();
+
+        DelayedResult<StorageBasic.StorageLocator> delayedResult = new SingleDelayedResult<>();
+
+        context.setLatchInitCount(1)
+                .setEndpoint(rollEndpoint)
+                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
+                .setCalleeStreamingMethodInvoker(calleeStreamingStubMethodInvoker)
+                .setCallerStreamObserverClassAndArguments(RollProcessorUnaryProcessToStorageLocatorResponseObserver.class, delayedResult);
+
+        GrpcStreamingClientTemplate<ProcessServiceGrpc.ProcessServiceStub, Processor.BinaryProcess, StorageBasic.StorageLocator> template
+                = rollProcessorServiceCallModelFactory.createBinaryProcessToStorageLocatorTemplate();
         template.setGrpcAsyncClientContext(context);
 
         template.calleeStreamingRpc(request);

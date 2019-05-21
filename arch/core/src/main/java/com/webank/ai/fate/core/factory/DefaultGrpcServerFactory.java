@@ -95,7 +95,7 @@ public class DefaultGrpcServerFactory implements GrpcServerFactory {
             }
         });
 
-        serverBuilder.maxInboundMessageSize(256 << 20)
+        serverBuilder.maxInboundMessageSize(32 << 20)
                 .flowControlWindow(16 << 20);
 
 
