@@ -23,6 +23,7 @@
 
 import argparse
 import json
+import os
 
 import numpy as np
 
@@ -805,7 +806,9 @@ class WorkFlow(object):
             exit(-100)
         self.job_id = args.job_id
 
-        all_checker = AllChecker(config_path)
+        home_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+        param_validation_path = home_dir + "/conf/param_validation.json"
+        all_checker = AllChecker(config_path, param_validation_path)
         all_checker.check_all()
         self._initialize(config_path)
         with open(config_path) as conf_f:
