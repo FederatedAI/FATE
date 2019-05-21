@@ -10,7 +10,15 @@ LOGGER = log_utils.getLogger()
 
 
 class Scaler(object):
+    """
+    The Scaler class is used to data scale. MinMaxScale and StandardScale is supported now
+    """
     def __init__(self, scale_param):
+        """
+        Parameters
+        ----------
+        scale_param: object, the parameters of scale
+        """
         self.scale_param = scale_param
         self.cols_scale_value = None
         self.mean = None
@@ -18,6 +26,17 @@ class Scaler(object):
         self.class_name = self.__class__.__name__
 
     def fit(self, data):
+        """
+        Apply scale for input data
+        Parameters
+        ----------
+        data: data_instance, input data
+
+        Returns
+        ----------
+        data:data_instance, data after scale
+        scale_value_results: list, the fit results information of scale
+        """
         LOGGER.info("Start scale data fit ...")
         scale_value_results = []
 
@@ -49,6 +68,17 @@ class Scaler(object):
         return data, scale_value_results
 
     def transform(self, data, fit_config):
+        """
+        Transform input data using scale with fit results
+        Parameters
+        ----------
+        data: data_instance, input data
+        fit_config: list, the fit results information of scale
+
+        Returns
+        ----------
+        transform_data:data_instance, data after transform
+        """
         LOGGER.info("Start scale data transform ...")
 
         if len(fit_config) == 0:
@@ -96,6 +126,18 @@ class Scaler(object):
         return buffer_type
 
     def save_min_max_model(self, name, namespace):
+        """
+        Save MinMaxScaler param and meta
+        Parameters
+        ----------
+        name: str, save DTable table_name
+        namespace: str, DTable namespace
+
+        Returns
+        ----------
+        tuple,
+            include meta string name and param string name
+        """
         meta_buffer_type = self._save_min_max_meta(name, namespace)
 
         min_max_scale_param_dict = {}
@@ -138,6 +180,18 @@ class Scaler(object):
         return buffer_type
 
     def save_standard_scale_model(self, name, namespace):
+        """
+        Save StandardScaler param and meta
+        Parameters
+        ----------
+        name: str, save DTable table_name
+        namespace: str, DTable namespace
+
+        Returns
+        ----------
+        tuple,
+            include meta string name and param string name
+        """
         meta_buffer_type = self._save_standard_scale_meta(name, namespace)
 
         standard_scale_param_dict = {}
@@ -158,6 +212,18 @@ class Scaler(object):
         return [(meta_buffer_type, param_buffer_type)]
 
     def save_model(self, name, namespace):
+        """
+        Save Scaler param and meta
+        Parameters
+        ----------
+        name: str, save DTable table_name
+        namespace: str, DTable namespace
+
+        Returns
+        ----------
+        tuple,
+            include meta string name and param string name
+        """
         if self.scale_param.method == consts.MINMAXSCALE:
             LOGGER.debug("save min_max scale model")
             return self.save_min_max_model(name, namespace)
@@ -169,6 +235,18 @@ class Scaler(object):
             return None
     
     def load_model(self, name, namespace, header):
+        """
+        load Scaler model
+        Parameters
+        ----------
+        name: str, DTable table_name
+        namespace: str, DTable namespace
+
+        Returns
+        ----------
+        list,
+            scale information
+        """
         self.header = header
         param_buffer_type = "{}.param".format(self.class_name)
         param_obj = feature_scale_param_pb2.ScaleParam()

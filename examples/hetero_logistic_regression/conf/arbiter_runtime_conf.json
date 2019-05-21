@@ -39,7 +39,8 @@
         "n_split": 5,
         "need_intersect": true,
         "need_feature_selection": false,
-        "need_scale": false
+        "need_scale": false,
+        "one_vs_rest": false
         },
 
     "EncryptParam": {
@@ -127,5 +128,12 @@
     "OutlierColsSelectionParam": {
         "percentile": 0.9,
         "upper_threshold": 1000
+    },
+    "EncryptedModeCalculatorParam":{
+        "mode": "slow",
+        "re_encrypted_rate": 1
+    },
+    "OneVsRestParam":{
+        "has_arbiter":true
     }
 }
