@@ -22,7 +22,7 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
-from federatedml.statistic import data_overview
+# from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -94,7 +94,8 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
-        model_shape = data_overview.get_features_shape(data_instances)
+        # model_shape = data_overview.get_features_shape(data_instances)
+        model_shape = self.get_features_shape(data_instances)
         weight = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         if self.init_param_obj.fit_intercept is True:
             self.coef_ = weight[:-1]

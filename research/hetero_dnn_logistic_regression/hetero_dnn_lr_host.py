@@ -16,8 +16,8 @@
 
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import load_model_parameters, save_model_parameters
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy, \
-    PlainLocalModelUpdateUpdateProxy
+from research.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy, \
+    PlainLocalModelUpdateProxy
 from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRHost
 
 LOGGER = log_utils.getLogger()
@@ -30,7 +30,7 @@ class HeteroDNNLRHost(HeteroLRHost):
         self.data_shape = local_model.get_encode_dim()
         self.index_tracking_list = []
         self.local_model = local_model
-        self.local_model_update_proxy = PlainLocalModelUpdateUpdateProxy()
+        self.local_model_update_proxy = PlainLocalModelUpdateProxy()
         self.local_model_update_proxy.set_model(local_model)
 
     def set_local_model_update_proxy(self, local_model_update_proxy: BaseLocalModelUpdateProxy):

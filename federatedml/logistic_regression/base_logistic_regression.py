@@ -26,6 +26,7 @@ from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
 from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.statistic import data_overview
 from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
@@ -80,6 +81,12 @@ class BaseLogisticRegression(object):
 
     def get_data_shape(self):
         return self.data_shape
+
+    def get_features_shape(self, data_instances):
+        data_shape = self.get_data_shape()
+        if data_shape is not None:
+            return data_shape
+        return data_overview.get_features_shape(data_instances)
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)

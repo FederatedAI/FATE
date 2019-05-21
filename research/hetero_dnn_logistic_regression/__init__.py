@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,10 +14,8 @@
 #  limitations under the License.
 #
 
-config_path=$1
-jobid=$2
+from research.hetero_dnn_logistic_regression.hetero_dnn_lr_arbiter import HeteroDNNLRArbiter
+from research.hetero_dnn_logistic_regression.hetero_dnn_lr_guest import HeteroDNNLRGuest
+from research.hetero_dnn_logistic_regression.hetero_dnn_lr_host import HeteroDNNLRHost
 
-echo "config path is "$config_path
-echo "jobid is "$jobid
-
-python ../../workflow/hetero_dnn_lr_workflow/hetero_arbiter_workflow.py -c $config_path -j $jobid
+__all__ = ["HeteroDNNLRHost", "HeteroDNNLRGuest", "HeteroDNNLRArbiter"]

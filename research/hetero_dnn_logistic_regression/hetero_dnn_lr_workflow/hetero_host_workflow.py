@@ -18,8 +18,8 @@ import tensorflow as tf
 
 from arch.api.utils import log_utils
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.logistic_regression.hetero_dnn_logistic_regression import HeteroDNNLRHost
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import \
+from research.hetero_dnn_logistic_regression import HeteroDNNLRHost
+from research.hetero_dnn_logistic_regression.local_model_proxy import \
     SemiEncryptedLocalModelUpdateProxy
 from federatedml.param import LogisticParam
 from federatedml.param.param import LocalModelParam

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.logistic_regression.hetero_dnn_logistic_regression import HeteroDNNLRArbiter
+from research.hetero_dnn_logistic_regression import HeteroDNNLRArbiter
 from federatedml.param import LogisticParam
 from federatedml.util import consts
 from federatedml.util import ParamExtract

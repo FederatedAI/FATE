@@ -5,9 +5,9 @@ import numpy as np
 from arch.api import eggroll
 from federatedml.feature.instance import Instance
 from federatedml.ftl.test.util import assert_matrix
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.mock_models import MockAutoencoder
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.test.mock_models import MockFATEFederationClient
+from research.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy
+from research.hetero_dnn_logistic_regression.test.mock_models import MockAutoencoder
+from research.hetero_dnn_logistic_regression.test.mock_models import MockFATEFederationClient
 
 
 def create_instance_table(data, index_list):
@@ -59,7 +59,8 @@ class TestDNNLR(unittest.TestCase):
         trans_features = np.matmul(X, Wh)
 
         # create local model proxy to be tested
-        proxy = BaseLocalModelUpdateProxy(local_model)
+        proxy = BaseLocalModelUpdateProxy()
+        proxy.set_model(local_model)
 
         # run function
         actual_feature_list = []
@@ -103,7 +104,8 @@ class TestDNNLR(unittest.TestCase):
 
         federation_client = MockFATEFederationClient()
 
-        proxy = BaseLocalModelUpdateProxy(local_model)
+        proxy = BaseLocalModelUpdateProxy()
+        proxy.set_model(local_model)
         proxy.set_federation_client(federation_client)
         dtable, index_tracking_list = proxy.transform(instance_table)
 

@@ -22,4 +22,4 @@ jobid=$2
 echo "config path is "$config_path
 echo "jobid is "$jobid
 
-python ../../workflow/hetero_dnn_lr_workflow/hetero_guest_workflow.py -c $config_path -j $jobid
+python ../../hetero_dnn_logistic_regression/hetero_dnn_lr_workflow/hetero_host_workflow.py -c $config_path -j $jobid
