@@ -251,7 +251,7 @@ class WorkFlow(object):
 
     def predict(self, data_instance):
         if self.mode == consts.HETERO:
-            LOGGER.debug("Star intersection before predict")
+            LOGGER.debug("Start intersection before predict")
             intersect_flowid = "predict_module_0"
             data_instance = self.intersect(data_instance, intersect_flowid)
             LOGGER.debug("End intersection before predict")
