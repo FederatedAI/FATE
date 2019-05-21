@@ -36,6 +36,10 @@ class DataIOParam(object):
     data_type : str, the data type of data input, accedted 'float','float64','int','int64','str','long'
                "default: "float64"
 
+    tag_with_value: bool, use if input_format is 'tag', if tag_with_value is True, input column data format should be tag[delimitor]value, otherwise is tag only
+
+    tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True, delimitor of tag[delimitor]value column value.
+
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 
     default_value : None or single object type or list, the value to replace missing value. 
@@ -76,6 +80,7 @@ class DataIOParam(object):
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
+                 tag_with_value=False, tag_value_delimitor=":",
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
@@ -84,6 +89,8 @@ class DataIOParam(object):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
+        self.tag_with_value = tag_with_value
+        self.tag_value_delimitor = tag_value_delimitor
         self.missing_fill = missing_fill
         self.default_value = default_value
         self.missing_fill_method = missing_fill_method
@@ -117,6 +124,23 @@ class EncryptParam(object):
     def __init__(self, method=consts.PAILLIER, key_length=1024):
         self.method = method
         self.key_length = key_length
+
+
+class EncryptedModeCalculatorParam(object):
+    """
+    Define the encrypted_mode_calulator parameters.
+
+    Parameters
+    ----------
+    mode: str, support 'strict', 'fast', 'balance' only, default: strict
+
+    re_encrypted_rate: float or int, numeric number, use when mode equals to 'strict', defualt: 1
+
+    """
+
+    def __init__(self, mode="strict", re_encrypted_rate=1):
+        self.mode = mode
+        self.re_encrypted_rate = re_encrypted_rate
 
 
 class EvaluateParam(object):
@@ -192,8 +216,11 @@ class SampleParam(object):
     Parameters
     ----------
     mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
+    
     fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
+    
     random_state: int, RandomState instance or None, default: None
     """
 
@@ -320,12 +347,6 @@ class WorkFlowParam(object):
         self.need_scale = need_scale
         self.need_one_hot = need_one_hot
         self.one_vs_rest = one_vs_rest
-
-
-class EncryptedModeCalculatorParam(object):
-    def __init__(self, mode="slow", re_encrypted_rate=1):
-        self.mode = mode
-        self.re_encrypted_rate = re_encrypted_rate
 
 
 class InitParam(object):
@@ -501,12 +522,18 @@ class DecisionTreeParam(object):
     n_iter_no_change: bool, accepted True,False only, if set to True, tol will use to consider
                       stop tree growth. default: True
 
+    feature_importance_type: str, support 'split', 'gain' only. 
+                             if is 'split', feature_importances calculate by feature split times,
+                             if is 'gain', feature_importances calculate by feature split gain.
+                             default: 'split'
+
     tol: float, only use when n_iter_no_change is set to True, default: 0.001
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
-                 max_split_nodes=consts.MAX_SPLIT_NODES, n_iter_no_change=True, tol=0.001):
+                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type = "split",
+                 n_iter_no_change=True, tol=0.001):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
@@ -514,6 +541,7 @@ class DecisionTreeParam(object):
         self.min_impurity_split = min_imputiry_split
         self.min_leaf_node = min_leaf_node
         self.max_split_nodes = max_split_nodes
+        self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
@@ -550,13 +578,17 @@ class BoostingTreeParam(object):
 
     bin_sample_num: int, if quantile method is 'bin_by_sample_data', max amount of samples to find bins.
                     default: 10000
+    
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
+                                     default: EncryptedModeCalculatorParam()
     """
 
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
-                 bin_num=32, bin_gap=1e-3, bin_sample_num=10000):
+                 bin_num=32, bin_gap=1e-3, bin_sample_num=10000,
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -570,6 +602,7 @@ class BoostingTreeParam(object):
         self.bin_num = bin_num
         self.bin_gap = bin_gap
         self.bin_sample_num = bin_sample_num
+        self.encrypted_mode_calculator_param = copy.deepcopy(EncryptedModeCalculatorParam())
 
 
 class FTLModelParam(object):
