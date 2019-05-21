@@ -20,7 +20,6 @@ from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
-from federatedml.statistic import data_overview
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
@@ -61,12 +60,13 @@ class HeteroLRHost(BaseLogisticRegression):
         Train lr model of role host
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         """
+
         LOGGER.info("Enter hetero_lr host")
         self._abnormal_detection(data_instances)
 
-        self.header = data_instances.schema.get("header")
+        self.header = self.get_header(data_instances)
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                     tag=self.transfer_variable.generate_transferid(
                                         self.transfer_variable.paillier_pubkey),
@@ -87,7 +87,7 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_num = batch_info["batch_num"]
 
         LOGGER.info("Start initialize model.")
-        model_shape = data_overview.get_features_shape(data_instances)
+        model_shape = self.get_features_shape(data_instances)
 
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False

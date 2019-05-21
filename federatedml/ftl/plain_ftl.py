@@ -20,7 +20,11 @@ from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
-from federatedml.optim.activation import sigmoid
+# from federatedml.optim.activation import sigmoid
+
+
+def sigmoid(x):
+    return 1. / (1. + np.exp(-x))
 
 
 class PartyModelInterface(object):
@@ -48,6 +52,7 @@ class PlainFTLGuestModel(PartyModelInterface):
         self.localModel = local_model
         self.feature_dim = local_model.get_encode_dim()
         self.alpha = model_param.alpha
+        self.gamma = model_param.gamma
         self.is_trace = is_trace
         self.logger = LOGGER
 
@@ -219,6 +224,7 @@ class PlainFTLHostModel(PartyModelInterface):
         # uB_overlap_y_overlap_2_phi_2 has shape (len(overlap_indexes), 1, feature_dim)
         uB_overlap_y_overlap_2_phi_2 = np.matmul(uB_overlap_ex, self.y_overlap_2_phi_2)
 
+        self.overlap_uB_y_overlap_2_phi_2 = np.squeeze(uB_overlap_y_overlap_2_phi_2, axis=1)
         # y_overlap_phi has shape (len(overlap_indexes), feature_dim)
         l1_grad_B = np.squeeze(uB_overlap_y_overlap_2_phi_2, axis=1) + self.y_overlap_phi
         loss_grad_B = self.alpha * l1_grad_B + self.mapping_comp_A

@@ -16,24 +16,30 @@
 
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import load_model_parameters, save_model_parameters
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.local_model_proxy import LocalModelProxy
-from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRHost
+from research.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy, \
+    PlainLocalModelUpdateProxy
+from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRGuest
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroDNNLRHost(HeteroLRHost):
+class HeteroDNNLRGuest(HeteroLRGuest):
 
     def __init__(self, local_model, logistic_params):
-        super(HeteroDNNLRHost, self).__init__(logistic_params)
+        super(HeteroDNNLRGuest, self).__init__(logistic_params)
         self.data_shape = local_model.get_encode_dim()
         self.index_tracking_list = []
         self.local_model = local_model
-        self.local_model_proxy = LocalModelProxy(local_model)
+        self.local_model_update_proxy = PlainLocalModelUpdateProxy()
+        self.local_model_update_proxy.set_model(local_model)
+
+    def set_local_model_update_proxy(self, local_model_proxy: BaseLocalModelUpdateProxy):
+        self.local_model_update_proxy = local_model_proxy
+        self.local_model_update_proxy.set_model(self.local_model)
 
     def transform(self, instance_table):
         """
-        Extract features from instances.
+        Extract features from instances
 
         Parameters
         ----------
@@ -42,10 +48,10 @@ class HeteroDNNLRHost(HeteroLRHost):
         that each instance holds newly extracted features.
         """
 
-        LOGGER.info("@ extract representative features from host raw input")
+        LOGGER.info("@ extract representative features from guest raw input")
 
         # delegate to local_model_proxy for performing the feature extraction task
-        dtable, self.index_tracking_list = self.local_model_proxy.transform(instance_table)
+        dtable, self.index_tracking_list = self.local_model_update_proxy.transform(instance_table)
         return dtable
 
     def update_local_model(self, fore_gradient_table, instance_table, coef, **training_info):
@@ -61,24 +67,24 @@ class HeteroDNNLRHost(HeteroLRHost):
         :param training_info: a dictionary holding information on states of training process
         """
 
-        LOGGER.info("@ update host local model")
+        LOGGER.info("@ update guest local model")
 
         # delegate to local_model_proxy for performing the local model update task
         training_info["index_tracking_list"] = self.index_tracking_list
-        training_info["is_host"] = True
-        self.local_model_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)
+        training_info["is_host"] = False
+        self.local_model_update_proxy.update_local_model(fore_gradient_table, instance_table, coef, **training_info)
 
     def save_model(self, model_table_name, model_namespace):
         LOGGER.info("@ save guest model to name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
         lr_model_name = model_table_name + "_lr_model"
         local_model_name = model_table_name + "_local_model"
-        super(HeteroDNNLRHost, self).save_model(lr_model_name, model_namespace)
+        super(HeteroDNNLRGuest, self).save_model(lr_model_name, model_namespace)
         save_model_parameters(self.local_model.get_model_parameters(), local_model_name, model_namespace)
 
     def load_model(self, model_table_name, model_namespace):
         LOGGER.info("@ load guest model from name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
         lr_model_name = model_table_name + "_lr_model"
         local_model_name = model_table_name + "_local_model"
-        super(HeteroDNNLRHost, self).load_model(lr_model_name, model_namespace)
+        super(HeteroDNNLRGuest, self).load_model(lr_model_name, model_namespace)
         model_parameters = load_model_parameters(local_model_name, model_namespace)
         self.local_model.restore_model(model_parameters)

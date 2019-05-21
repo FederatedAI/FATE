@@ -16,7 +16,7 @@
 
 import numpy as np
 from federatedml.optim.convergence import ConvergeFunction
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.federation_client import FederationClient
+from research.hetero_dnn_logistic_regression.federation_client import FederationClient
 
 
 class MockAutoencoder(object):

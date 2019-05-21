@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,8 +16,10 @@
 #  limitations under the License.
 #
 
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_arbiter import HeteroDNNLRArbiter
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_host import HeteroDNNLRHost
-from federatedml.logistic_regression.hetero_dnn_logistic_regression.hetero_dnn_lr_guest import HeteroDNNLRGuest
+config_path=$1
+jobid=$2
 
-__all__ = ["HeteroDNNLRHost", "HeteroDNNLRGuest", "HeteroDNNLRArbiter"]
+echo "config path is "$config_path
+echo "jobid is "$jobid
+
+python ../../hetero_dnn_logistic_regression/hetero_dnn_lr_workflow/hetero_arbiter_workflow.py -c $config_path -j $jobid

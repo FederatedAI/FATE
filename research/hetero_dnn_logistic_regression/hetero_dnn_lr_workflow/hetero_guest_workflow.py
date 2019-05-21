@@ -13,22 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import tensorflow as tf
 
 from arch.api.utils import log_utils
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.logistic_regression.hetero_dnn_logistic_regression import HeteroDNNLRHost
 from federatedml.param import LogisticParam
 from federatedml.param.param import LocalModelParam
 from federatedml.util import ParamExtract
 from federatedml.util import consts
+from research.hetero_dnn_logistic_regression import HeteroDNNLRGuest
+from research.hetero_dnn_logistic_regression.local_model_proxy import \
+    SemiEncryptedLocalModelUpdateProxy
 from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
 
 
-class DNNLRHostWorkFlow(WorkFlow):
+class DNNLRGuestWorkFlow(WorkFlow):
 
     def _initialize_model(self, config):
         logistic_param = LogisticParam()
@@ -36,43 +37,50 @@ class DNNLRHostWorkFlow(WorkFlow):
         self.logistic_param = ParamExtract.parse_param_from_config(logistic_param, config)
         local_model_param = ParamExtract.parse_param_from_config(local_model_param, config)
         self.local_model = self._create_local_model(local_model_param)
-        self.model = HeteroDNNLRHost(self.local_model, self.logistic_param)
-        self.model.set_data_shape(local_model_param.encode_dim)
+        self.model = HeteroDNNLRGuest(self.local_model, self.logistic_param)
+        self.model.set_feature_shape(local_model_param.encode_dim)
+        self.model.set_header(self._create_header(local_model_param.encode_dim))
+        self.model.set_local_model_update_proxy(SemiEncryptedLocalModelUpdateProxy())
 
-    def _create_local_model(self, local_model_param):
-        autoencoder = Autoencoder("local_host_model_01")
+    @staticmethod
+    def _create_header(repr_dim):
+        return ['fid' + str(idx) for idx in range(repr_dim)]
+
+    @staticmethod
+    def _create_local_model(local_model_param):
+        autoencoder = Autoencoder("local_guest_model_01")
         autoencoder.build(input_dim=local_model_param.input_dim, hidden_dim=local_model_param.encode_dim,
                           learning_rate=local_model_param.learning_rate)
         return autoencoder
 
     def _initialize_role_and_mode(self):
-        self.role = consts.HOST
+        self.role = consts.GUEST
         self.mode = consts.HETERO
 
     def train(self, train_data_instance, validation_data=None):
-        LOGGER.debug("@ enter dnn lr host workflow train function")
+        LOGGER.debug("@ enter dnn lr guest workflow train function")
         init = tf.global_variables_initializer()
         sess = tf.Session()
         self.local_model.set_session(sess)
         sess.run(init)
-        super(DNNLRHostWorkFlow, self).train(train_data_instance, validation_data)
+        super(DNNLRGuestWorkFlow, self).train(train_data_instance, validation_data)
         sess.close()
 
     def load_model(self):
-        LOGGER.debug("@ enter dnn lr host workflow load model")
+        LOGGER.debug("@ enter dnn lr guest workflow load model")
         tf.reset_default_graph()
         self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
 
     def predict(self, data_instance):
-        LOGGER.debug("@ enter dnn lr host workflow predict function")
+        LOGGER.debug("@ enter dnn lr guest workflow predict function")
         init = tf.global_variables_initializer()
         sess = tf.Session()
         self.local_model.set_session(sess)
         sess.run(init)
-        super(DNNLRHostWorkFlow, self).predict(data_instance)
+        super(DNNLRGuestWorkFlow, self).predict(data_instance)
         sess.close()
 
 
 if __name__ == "__main__":
-    host_wf = DNNLRHostWorkFlow()
-    host_wf.run()
+    guest_wf = DNNLRGuestWorkFlow()
+    guest_wf.run()
