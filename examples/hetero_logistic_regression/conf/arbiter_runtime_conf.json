@@ -130,7 +130,7 @@
         "upper_threshold": 1000
     },
     "EncryptedModeCalculatorParam":{
-        "mode": "slow",
+        "mode": "strict",
         "re_encrypted_rate": 1
     },
     "OneVsRestParam":{
