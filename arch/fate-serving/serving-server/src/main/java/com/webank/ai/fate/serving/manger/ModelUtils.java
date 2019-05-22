@@ -20,6 +20,7 @@ import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
+import com.webank.ai.fate.core.utils.FederatedUtils;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
 import com.webank.ai.fate.core.utils.SceneUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,7 +50,7 @@ public class ModelUtils {
     }
 
     public static String genModelKey(String role, int partyId, FederatedRoles federatedRoles, String name, String namespace){
-        return StringUtils.join(Arrays.asList(role, partyId, SceneUtils.federatedRolesIdentificationString(federatedRoles), name, namespace), "_");
+        return StringUtils.join(Arrays.asList(role, partyId, FederatedUtils.federatedRolesIdentificationString(federatedRoles), name, namespace), "_");
     }
 
     public static String[] splitModelKey(String key){

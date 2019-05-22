@@ -25,10 +25,11 @@ def send(channel):
     stub = inference_service_pb2_grpc.InferenceServiceStub(channel)
     request = inference_service_pb2.InferenceMessage()
     request_data = dict()
-    request_data['seqno'] = uuid.uuid1().hex
-    request_data['sceneId'] = 50000
+    request_data['sceneid'] = 50000
     #request_data['modelNamespace'] = '50000_guest_9999_10000-9999-10000_model'  #  You can specify the model namespace this way
     #request_data['modelName'] = 'acd3e1807a1211e9969aacde48001122' #  You can specify the model name this way
+    request_data['seqno'] = uuid.uuid1().hex
+    request_data['caseid'] = uuid.uuid1().hex
 
     feature_data = {}
     feature_data["phone_num"] = "18576637870"

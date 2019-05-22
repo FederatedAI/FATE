@@ -29,6 +29,7 @@ public abstract class BaseModel {
     protected Map<String, Object> getFederatedPredict(Map<String, Object> federatedParams) {
         Map<String, Object> requestData = new HashMap<>();
         FederatedParty srcParty = (FederatedParty) federatedParams.get("local");
+        requestData.putAll(federatedParams);
         requestData.put("partner_local", ObjectTransform.bean2Json(federatedParams.get("local")));
         requestData.put("partner_model_info", ObjectTransform.bean2Json(federatedParams.get("model_info")));
 
@@ -36,10 +37,7 @@ public abstract class BaseModel {
         FederatedRoles federatedRoles = (FederatedRoles) federatedParams.get("role");
         FederatedParty dstParty = new FederatedParty("host", federatedRoles.getRole("host").get(0));
         requestData.put("local", ObjectTransform.bean2Json(dstParty));
-
         requestData.put("role", ObjectTransform.bean2Json(federatedParams.get("role")));
-        requestData.put("device_id", federatedParams.get("device_id"));
-        requestData.put("phone_num", federatedParams.get("phone_num"));
 
         Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
         packetBuilder.setBody(Proxy.Data.newBuilder()

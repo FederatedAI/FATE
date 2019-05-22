@@ -16,17 +16,22 @@
 
 package com.webank.ai.fate.serving.bean;
 
+import com.webank.ai.fate.serving.utils.InferenceUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class InferenceRequest {
-    private String seqno;
-    private int sceneId;
+    private int sceneid;
     private String modelName;
     private String modelNamespace;
+    private String seqno;
+    private String caseid;
     private Map<String, Object> featureData;
     InferenceRequest(){
-        sceneId = 0;
+        sceneid = 0;
+        seqno = InferenceUtils.generateSeqno();
+        caseid = InferenceUtils.generateCaseid();
         featureData = new HashMap<>();
     }
 
@@ -34,8 +39,12 @@ public class InferenceRequest {
         return seqno;
     }
 
-    public int getSceneId() {
-        return sceneId;
+    public int getSceneid() {
+        return sceneid;
+    }
+
+    public String getCaseid() {
+        return caseid;
     }
 
     public String getModelName() {

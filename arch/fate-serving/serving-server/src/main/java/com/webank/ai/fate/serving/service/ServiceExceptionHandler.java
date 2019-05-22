@@ -33,7 +33,7 @@ public class ServiceExceptionHandler implements ServerInterceptor {
                 try {
                     super.onHalfClose();
                 } catch (Exception e) {
-                    LOGGER.info(e);
+                    LOGGER.info("ServiceException:", e);
                     call.close(Status.INTERNAL
                             .withCause (e)
                             .withDescription(e.getMessage()), new Metadata());

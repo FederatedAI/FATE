@@ -23,6 +23,7 @@ import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;
 import com.webank.ai.fate.serving.adapter.processing.PostProcessing;
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.serving.adapter.processing.PreProcessing;
+import com.webank.ai.fate.serving.bean.FederatedInferenceType;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
 import com.webank.ai.fate.serving.bean.ModelNamespaceData;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
@@ -38,14 +39,12 @@ import java.util.Map;
 
 public class InferenceManager {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Logger auditLogger = LogManager.getLogger("audit");
     public static ReturnResult inference(InferenceRequest inferenceRequest){
         ReturnResult returnResult = new ReturnResult();
         String modelTableName = inferenceRequest.getModelName();
         String modelNamespace = inferenceRequest.getModelNamespace();
-        LOGGER.info(inferenceRequest);
-        if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.getSceneId() != 0){
-            modelNamespace = ModelManager.getNamespaceBySceneId(inferenceRequest.getSceneId());
+        if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.getSceneid() != 0){
+            modelNamespace = ModelManager.getNamespaceBySceneId(inferenceRequest.getSceneid());
         }
         LOGGER.info(modelNamespace);
         if (StringUtils.isEmpty(modelNamespace)){
@@ -70,6 +69,7 @@ public class InferenceManager {
         if (featureData == null){
             returnResult.setRetcode(StatusCode.ILLEGALDATA);
             returnResult.setRetmsg("Can not parse data json.");
+            logAudited(inferenceRequest, modelNamespaceData, returnResult, false);
             return returnResult;
         }
 
@@ -77,14 +77,16 @@ public class InferenceManager {
         if (featureData == null){
             returnResult.setRetcode(StatusCode.ILLEGALDATA);
             returnResult.setRetmsg("Can not preprocessing data");
+            logAudited(inferenceRequest, modelNamespaceData, returnResult, false);
             return returnResult;
         }
 
 
         Map<String, Object> predictParams = new HashMap<>();
         Map<String, Object> federatedParams = new HashMap<>();
-        federatedParams.put("scene_id", inferenceRequest.getSceneId());
-        federatedParams.put("case_id", InferenceUtils.generateCaseId());
+        federatedParams.put("sceneid", inferenceRequest.getSceneid());
+        federatedParams.put("caseid", inferenceRequest.getCaseid());
+        federatedParams.put("seqno", inferenceRequest.getSeqno());
         federatedParams.put("local", modelNamespaceData.getLocal());
         federatedParams.put("model_info", new ModelInfo(modelTableName, modelNamespace));
         federatedParams.put("role", modelNamespaceData.getRole());
@@ -94,18 +96,19 @@ public class InferenceManager {
 
         Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
         Map<String, Object> result = getPostProcessedResult(featureData, modelResult);
-        LOGGER.info(result);
         for(String field: Arrays.asList("data", "log", "warn")){
             if (result.get(field) != null){
                 returnResult.putAllData((Map<String, Object>) result.get(field));
             }
         }
         LOGGER.info("Inference successfully.");
+        logAudited(inferenceRequest, modelNamespaceData, returnResult, true);
         return returnResult;
     }
 
     public static ReturnResult federatedInference(Map<String, Object> federatedParams){
         ReturnResult returnResult = new ReturnResult();
+        //TODO: Very ugly, need to be optimized
         FederatedParty partnerParty = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("partner_local").toString(), FederatedParty.class);
         FederatedParty party = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("local").toString(), FederatedParty.class);
         FederatedRoles federatedRoles = (FederatedRoles) ObjectTransform.json2Bean(federatedParams.get("role").toString(), FederatedRoles.class);
@@ -130,9 +133,10 @@ public class InferenceManager {
             Map<String, Object> result = model.predict(featureData, predictParams);
             returnResult.setRetcode(StatusCode.OK);
             returnResult.putAllData(result);
+            logAudited(federatedParams, party, federatedRoles, returnResult, true);
         }
         catch (Exception ex){
-            LOGGER.error(ex.getStackTrace());
+            LOGGER.info("federatedInference", ex);
             returnResult.setRetcode(StatusCode.FEDERATEDERROR);
             returnResult.setRetmsg(ex.getMessage());
         }
@@ -174,6 +178,16 @@ public class InferenceManager {
             LOGGER.error(ex);
         }
         return null;
+    }
+
+    private static void logAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean charge){
+        InferenceUtils.logInferenceAudited(FederatedInferenceType.INITIATED, inferenceRequest.getSceneid(), modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), returnResult.getRetcode(), charge);
+    }
+    private static void logAudited(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult returnResult, boolean charge){
+        LOGGER.info(federatedParams);
+        LOGGER.info(federatedParty);
+        LOGGER.info(federatedRoles);
+        InferenceUtils.logInferenceAudited(FederatedInferenceType.FEDERATED, (int)federatedParams.get("sceneid"), federatedParty, federatedRoles, federatedParams.get("caseid").toString(), returnResult.getRetcode(), charge);
     }
 
     public static Object getClassByName(String classPath){

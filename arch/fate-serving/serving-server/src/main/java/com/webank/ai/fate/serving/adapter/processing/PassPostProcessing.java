@@ -16,11 +16,16 @@
 
 package com.webank.ai.fate.serving.adapter.processing;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class PassPostProcessing implements PostProcessing {
     @Override
     public Map<String, Object> getResult(Map<String, Object> featureData, Map<String, Object> modelResult) {
-        return modelResult;
+        Map<String, Object> processedResult = new HashMap<>();
+        processedResult.put("data", modelResult);
+        processedResult.put("retcode", 0);
+        processedResult.put("retmsg", "success");
+        return processedResult;
     }
 }
