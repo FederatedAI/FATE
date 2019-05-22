@@ -18,7 +18,7 @@ import os
 import shutil
 from arch.task_manager.job_manager import save_job_info, update_job_queue, pop_from_job_queue, \
     get_job_directory, clean_job, set_job_failed, new_runtime_conf, generate_job_id, push_into_job_queue, run_subprocess
-from arch.task_manager.utils.api_utils import get_json_result
+from arch.task_manager.utils.api_utils import get_json_result, federated_api
 from arch.task_manager.settings import logger, DEFAULT_WORKFLOW_DATA_TYPE
 from arch.api.utils import dtable_utils
 import copy
@@ -110,10 +110,11 @@ def stop_workflow(job_id, role, party_id):
             except Exception as e:
                 logger.exception("error")
                 continue
-        set_job_failed(job_id=job_id,
-                       role=role,
-                       party_id=party_id)
-        pop_from_job_queue(job_id=job_id)
+        federated_api(job_id=job_id,
+                      method='POST',
+                      url='/job/jobStatus/{}/{}/{}'.format(job_id, role, party_id),
+                      party_id=party_id,
+                      json_body={'status': 'failed', 'stopJob': True})
         clean_job(job_id=job_id)
     return get_json_result(job_id=job_id)
 

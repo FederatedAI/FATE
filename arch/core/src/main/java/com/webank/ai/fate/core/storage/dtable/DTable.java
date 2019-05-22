@@ -20,6 +20,8 @@ import java.util.Map;
 
 public interface DTable {
     byte[] get(String key);
+
     void put(String key, byte[] value);
+
     Map<String, byte[]> collect();
 }
