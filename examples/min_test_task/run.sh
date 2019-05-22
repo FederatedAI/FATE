@@ -14,10 +14,10 @@ fi
 basepath=$(cd `dirname $0`; pwd)
 if [ ${task} == "fast" ];then
     echo "task is fast"
-    data=${basepath}/data/breast_${party}.csv
+    data=${basepath}/../data/breast_${party}.csv
 elif [ ${task} == "normal" ];then
     echo "task is normal"
-    data=${basepath}/data/default_credit_${party}.csv
+    data=${basepath}/../data/default_credit_${party}.csv
 else
     echo "Not support "${task}", please user 'fast' or 'normal'"
 fi

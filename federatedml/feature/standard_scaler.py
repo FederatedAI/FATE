@@ -2,6 +2,7 @@ import functools
 from collections import Iterable
 
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.statistic.data_overview import get_header
 from federatedml.statistic import data_overview
 
 
@@ -57,12 +58,15 @@ class StandardScaler(object):
             summary_obj = MultivariateStatisticalSummary(data, -1)
             mean = None
             std = None
+            header = get_header(data)
 
             if self.with_mean:
                 mean = summary_obj.get_mean()
+                mean = [ mean[key] for key in header ]
 
             if self.with_std:
                 std = summary_obj.get_std_variance()
+                std = [std[key] for key in header]
 
             if not mean and std:
                 mean = [0 for _ in std]

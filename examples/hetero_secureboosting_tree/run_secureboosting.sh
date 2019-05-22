@@ -321,7 +321,7 @@ elif [ $mode = 'predict' ]; then
         get_log_result ${workflow_log} predict
 
     elif [[ $role == 'host' ]]; then
-        load_file $predict_table_host host predict
+        load_file $predict_data_host host predict
         predict_table_host=$data_table
         echo "cv table host is:"$predict_table_host
         predict host $predict_table_host
