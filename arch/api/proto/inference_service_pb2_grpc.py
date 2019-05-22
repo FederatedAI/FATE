@@ -29,10 +29,15 @@ class InferenceServiceStub(object):
     Args:
       channel: A grpc.Channel.
     """
-    self.predict = channel.unary_unary(
-        '/com.webank.ai.fate.api.serving.InferenceService/predict',
-        request_serializer=inference__service__pb2.InferenceRequest.SerializeToString,
-        response_deserializer=inference__service__pb2.InferenceResponse.FromString,
+    self.inference = channel.unary_unary(
+        '/com.webank.ai.fate.api.serving.InferenceService/inference',
+        request_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
+        response_deserializer=inference__service__pb2.InferenceMessage.FromString,
+        )
+    self.getInferenceResult = channel.unary_unary(
+        '/com.webank.ai.fate.api.serving.InferenceService/getInferenceResult',
+        request_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
+        response_deserializer=inference__service__pb2.InferenceMessage.FromString,
         )
 
 
@@ -40,7 +45,14 @@ class InferenceServiceServicer(object):
   # missing associated documentation comment in .proto file
   pass
 
-  def predict(self, request, context):
+  def inference(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def getInferenceResult(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -50,10 +62,15 @@ class InferenceServiceServicer(object):
 
 def add_InferenceServiceServicer_to_server(servicer, server):
   rpc_method_handlers = {
-      'predict': grpc.unary_unary_rpc_method_handler(
-          servicer.predict,
-          request_deserializer=inference__service__pb2.InferenceRequest.FromString,
-          response_serializer=inference__service__pb2.InferenceResponse.SerializeToString,
+      'inference': grpc.unary_unary_rpc_method_handler(
+          servicer.inference,
+          request_deserializer=inference__service__pb2.InferenceMessage.FromString,
+          response_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
+      ),
+      'getInferenceResult': grpc.unary_unary_rpc_method_handler(
+          servicer.getInferenceResult,
+          request_deserializer=inference__service__pb2.InferenceMessage.FromString,
+          response_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

@@ -2,7 +2,7 @@ import functools
 import numpy as np
 from collections import Iterable
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-# from federatedml.util import fate_operator
+from federatedml.statistic.data_overview import get_header
 from federatedml.statistic import data_overview
 
 
@@ -42,6 +42,7 @@ class MinMaxScaler(object):
         min_value = None
         max_value = None
         summary_obj = MultivariateStatisticalSummary(data, -1)
+        header = get_header(data)
 
         if self.feat_upper is not None:
             max_value = self.feat_upper
@@ -50,7 +51,8 @@ class MinMaxScaler(object):
             min_value = self.feat_lower
 
         if min_value is None and max_value is not None:
-            min_value_list = summary_obj.get_min()
+            min_value_dict = summary_obj.get_min()
+            min_value_list = [ min_value_dict[key] for key in header ]
 
             if isinstance(max_value, Iterable):
                 if len(list(max_value)) != len(min_value_list):
@@ -59,10 +61,11 @@ class MinMaxScaler(object):
                                                                                              len(min_value_list)))
                 max_value_list = max_value
             else:
-                max_value_list = [max_value for v in min_value_list]
+                max_value_list = [max_value for _ in min_value_list]
 
         elif min_value is not None and max_value is None:
-            max_value_list = summary_obj.get_max()
+            max_value_dict = summary_obj.get_max()
+            max_value_list = [max_value_dict[key] for key in header]
 
             if isinstance(min_value, Iterable):
                 if len(list(min_value)) != len(max_value_list):
@@ -71,11 +74,13 @@ class MinMaxScaler(object):
                                                                                              len(max_value_list)))
                 min_value_list = min_value
             else:
-                min_value_list = [min_value for v in max_value_list]
+                min_value_list = [min_value for _ in max_value_list]
 
         elif min_value is None and max_value is None:
-            min_value_list = summary_obj.get_min()
-            max_value_list = summary_obj.get_max()
+            min_value_dict = summary_obj.get_min()
+            max_value_dict = summary_obj.get_max()
+            min_value_list = [min_value_dict[key] for key in header]
+            max_value_list = [max_value_dict[key] for key in header]
         else:
             shape = None
             if isinstance(max_value, Iterable):

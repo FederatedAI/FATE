@@ -937,8 +937,8 @@ class AllChecker(object):
         self._check(param.LocalModelParam, LocalModelParamChecker)
         self._check(param.FTLDataParam, FTLDataParamChecker)
         self._check(param.FTLValidDataParam, FTLValidDataParamChecker)
-        self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
-        self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
+        # self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
+        # self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
         self._check(param.ScaleParam, ScaleParamChecker)
 
     def _check(self, Param, Checker):

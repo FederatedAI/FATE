@@ -57,8 +57,8 @@ class TestParameterChecker(unittest.TestCase):
         self._check(param.LocalModelParam, param_checker.LocalModelParamChecker)
         self._check(param.FTLDataParam, param_checker.FTLDataParamChecker)
         self._check(param.FTLValidDataParam, param_checker.FTLValidDataParamChecker)
-        self._check(param.FeatureBinningParam, param_checker.FeatureBinningParamChecker)
-        self._check(param.FeatureSelectionParam, param_checker.FeatureSelectionParamChecker)
+        # self._check(param.FeatureBinningParam, param_checker.FeatureBinningParamChecker)
+        # self._check(param.FeatureSelectionParam, param_checker.FeatureSelectionParamChecker)
 
     def _check(self, Param, Checker):
         param_obj = Param()

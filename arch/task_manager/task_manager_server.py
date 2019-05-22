@@ -157,7 +157,7 @@ def update_job(job_id, role, party_id):
             do_stop_job = True
         elif len(job_status) == 1 and 'success' in job_status:
             do_stop_job = True
-        if do_stop_job:
+        if do_stop_job and not request_data.get('stopJob', False):
             stop_job(job_id=job_id)
     else:
         # send job status to initiator

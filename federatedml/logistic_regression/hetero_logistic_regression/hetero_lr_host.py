@@ -35,7 +35,7 @@ class HeteroLRHost(BaseLogisticRegression):
         self.batch_num = None
         self.batch_index_list = []
 
-    def compute_forward(self, data_instances, coef_, intercept_):
+    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -47,12 +47,12 @@ class HeteroLRHost(BaseLogisticRegression):
         """
         wx = self.compute_wx(data_instances, coef_, intercept_)
 
-        en_wx = self.encrypted_calculator.encrypt(wx)
+        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
         wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
-        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
-       
+        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+
         return host_forward
 
     def fit(self, data_instances):
@@ -74,10 +74,6 @@ class HeteroLRHost(BaseLogisticRegression):
 
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
-        
-        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator, 
-                                                          self.encrypted_mode_calculator_param.mode, 
-                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
 
         batch_info = federation.get(name=self.transfer_variable.batch_info.name,
                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
@@ -85,6 +81,14 @@ class HeteroLRHost(BaseLogisticRegression):
         LOGGER.info("Get batch_info from guest:" + str(batch_info))
         self.batch_size = batch_info["batch_size"]
         self.batch_num = batch_info["batch_num"]
+        if self.batch_size < consts.MIN_BATCH_SIZE and self.batch_size != -1:
+            raise ValueError(
+                "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
+                    self.batch_size))
+
+        self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _ in range(self.batch_num)]
 
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
@@ -113,14 +117,6 @@ class HeteroLRHost(BaseLogisticRegression):
                                                           batch_index),
                                                       idx=0)
                     LOGGER.info("Get batch_index from Guest")
-
-                    batch_size = batch_data_index.count()
-
-                    if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
-                        raise ValueError(
-                            "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
-                                batch_size))
-
                     self.batch_index_list.append(batch_data_index)
                 else:
                     batch_data_index = self.batch_index_list[batch_index]
@@ -137,7 +133,7 @@ class HeteroLRHost(BaseLogisticRegression):
                 batch_feat_inst = self.transform(batch_data_inst)
 
                 # compute forward
-                host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
+                host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)
                 federation.remote(host_forward,
                                   name=self.transfer_variable.host_forward_dict.name,
                                   tag=self.transfer_variable.generate_transferid(

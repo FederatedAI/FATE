@@ -19,7 +19,8 @@ package com.webank.ai.fate.core.storage.dtable;
 public class DTableInfo {
     private String name;
     private String namespace;
-    public DTableInfo(String name, String namespace){
+
+    public DTableInfo(String name, String namespace) {
         this.name = name;
         this.namespace = namespace;
     }

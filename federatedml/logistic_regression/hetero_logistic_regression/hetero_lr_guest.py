@@ -41,7 +41,7 @@ class HeteroLRGuest(BaseLogisticRegression):
         self.wx = None
         self.guest_forward = None
 
-    def compute_forward(self, data_instances, coef_, intercept_):
+    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -53,12 +53,12 @@ class HeteroLRGuest(BaseLogisticRegression):
         """
         self.wx = self.compute_wx(data_instances, coef_, intercept_)
 
-        en_wx = self.encrypted_calculator.encrypt(self.wx)
+        en_wx = self.encrypted_calculator[batch_index].encrypt(self.wx)
         wx_square = self.wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
-        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx:(e[0], e[1], wx))
+        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx: (e[0], e[1], wx))
 
     def aggregate_forward(self, host_forward):
         """
@@ -111,10 +111,6 @@ class HeteroLRGuest(BaseLogisticRegression):
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
 
-        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator,
-                                                          self.encrypted_mode_calculator_param.mode,
-                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
-
         LOGGER.info("Generate mini-batch from input data")
         mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)
         batch_num = mini_batch_obj.batch_nums
@@ -136,6 +132,10 @@ class HeteroLRGuest(BaseLogisticRegression):
                           role=consts.ARBITER,
                           idx=0)
         LOGGER.info("Remote batch_info to Arbiter")
+
+        self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _ in range(batch_num)]
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
@@ -183,7 +183,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 batch_feat_inst = self.transform(batch_data_inst)
 
                 # guest/host forward
-                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
+                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)
                 host_forward = federation.get(name=self.transfer_variable.host_forward_dict.name,
                                               tag=self.transfer_variable.generate_transferid(
                                                   self.transfer_variable.host_forward_dict, self.n_iter_, batch_index),

@@ -43,7 +43,7 @@ class TestFTLHost(FTLHostWorkFlow):
         federation.init(job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")
 
-    def gen_data_instance(self, table_name, namespace):
+    def gen_data_instance(self, table_name, namespace, mode="fit"):
         data_model_param = self._get_data_model_param()
         if data_model_param.is_read_table:
             return eggroll.table(table_name, namespace)

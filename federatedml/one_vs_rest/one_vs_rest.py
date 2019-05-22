@@ -16,6 +16,7 @@
 
 import copy
 import functools
+import numpy as np
 import time
 
 from arch.api import federation
@@ -27,6 +28,7 @@ from federatedml.util import consts
 from federatedml.util.transfer_variable import OneVsRestTransferVariable
 
 LOGGER = log_utils.getLogger()
+
 
 
 class OneVsRest(object):
@@ -252,12 +254,11 @@ class OneVsRest(object):
         """
         classifier_models = []
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
-        classifier_namespace = str_time + "_" + self.role + "_namespace"
         for i, model in enumerate(self.models):
             classifier_name = str_time + "_" + str(i) + "_" + self.role + "_name"
-            model.save_model(classifier_name, classifier_namespace)
+            model.save_model(classifier_name, namespace)
             classifier_model = one_vs_rest_param_pb2.ClassifierModel(name=classifier_name,
-                                                                     namespace=classifier_namespace)
+                                                                     namespace=namespace)
             classifier_models.append(classifier_model)
             LOGGER.info("finish save model_{}, role:{}".format(i, self.role))
 
@@ -325,5 +326,17 @@ class OneVsRest(object):
             LOGGER.warning("unknown classification type, return None as evaluation results")
 
         eva = Evaluation(evaluate_param.classi_type)
+
+        label_type = type(labels[0])
+
+        if isinstance(predict_res, np.ndarray) and isinstance(labels, np.ndarray):
+            predict_res = predict_res.astype(labels.dtype)
+        else:
+            if not isinstance(predict_res, list):
+                predict_res = list(predict_res)
+
+            for i in range(len(predict_res)):
+                predict_res[i] = label_type(predict_res[i])
+
         return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
                           evaluate_param.pos_label)
