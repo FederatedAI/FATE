@@ -15,20 +15,20 @@
  */
 
 package com.webank.ai.fate.serving.service;
+
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.api.networking.proxy.Proxy.Packet;
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
-import com.webank.ai.fate.core.utils.Configuration;
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.Map;
 

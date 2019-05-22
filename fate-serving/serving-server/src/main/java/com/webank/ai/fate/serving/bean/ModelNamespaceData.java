@@ -27,14 +27,14 @@ public class ModelNamespaceData {
     private String usedModelName;
     private PipelineTask usedModel;
 
-    public ModelNamespaceData(){
+    public ModelNamespaceData() {
         this.namespace = "all";
         this.local = new FederatedParty();
         this.role = new FederatedRoles();
         this.usedModel = new PipelineTask();
     }
 
-    public ModelNamespaceData(String namespace, FederatedParty local, FederatedRoles role, String usedModelName, PipelineTask usedModel){
+    public ModelNamespaceData(String namespace, FederatedParty local, FederatedRoles role, String usedModelName, PipelineTask usedModel) {
         this.namespace = namespace;
         this.local = local;
         this.role = role;

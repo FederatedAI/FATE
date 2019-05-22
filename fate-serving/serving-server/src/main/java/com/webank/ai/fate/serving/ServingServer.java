@@ -42,7 +42,7 @@ public class ServingServer {
     private Server server;
     private String confPath;
 
-    public ServingServer(String confPath){
+    public ServingServer(String confPath) {
         this.confPath = new File(confPath).getAbsolutePath();
     }
 
@@ -80,14 +80,14 @@ public class ServingServer {
         }
     }
 
-    private void init(){
+    private void init() {
         new Configuration(this.confPath).load();
         new ModelManager();
         this.initClientPool();
         HttpClientPool.initPool();
     }
 
-    private void initClientPool(){
+    private void initClientPool() {
         ArrayList<String> serverAddress = new ArrayList<>();
         serverAddress.add(Configuration.getProperty("proxy"));
         serverAddress.add(Configuration.getProperty("roll"));
@@ -100,8 +100,8 @@ public class ServingServer {
         LOGGER.info("Finish init client pool");
     }
 
-    public static void main(String[] args){
-        try{
+    public static void main(String[] args) {
+        try {
             Options options = new Options();
             Option option = Option.builder("c")
                     .longOpt("config")
@@ -118,8 +118,7 @@ public class ServingServer {
             ServingServer a = new ServingServer(cmd.getOptionValue("c"));
             a.start();
             a.blockUntilShutdown();
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

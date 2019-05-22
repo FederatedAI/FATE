@@ -15,19 +15,21 @@
  */
 
 package com.webank.ai.fate.core.utils;
+
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.*;
 
 public class FederatedUtils {
-    public static String federatedRolesIdentificationString(FederatedRoles federatedRoles){
-        if(federatedRoles == null){
+    public static String federatedRolesIdentificationString(FederatedRoles federatedRoles) {
+        if (federatedRoles == null) {
             return "all";
-        }else{
+        } else {
             Object[] roleNames = federatedRoles.getAllRole().keySet().toArray();
             Arrays.sort(roleNames);
             List<String> allPartyTmp = new ArrayList<>();
-            for(int i=0;i<roleNames.length;i++){
+            for (int i = 0; i < roleNames.length; i++) {
                 Object[] partys = (new ArrayList<>(new HashSet<>(federatedRoles.getAllRole().get(roleNames[i])))).toArray();
                 Arrays.sort(partys);
                 allPartyTmp.add(StringUtils.join(partys, "|"));

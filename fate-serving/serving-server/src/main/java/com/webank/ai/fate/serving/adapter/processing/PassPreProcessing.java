@@ -21,9 +21,9 @@ import com.webank.ai.fate.core.utils.ObjectTransform;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PassPreProcessing implements PreProcessing{
+public class PassPreProcessing implements PreProcessing {
     @Override
-    public Map<String, Object> getResult(String paras){
-        return (Map<String, Object> )ObjectTransform.json2Bean(paras, HashMap.class);
+    public Map<String, Object> getResult(String paras) {
+        return (Map<String, Object>) ObjectTransform.json2Bean(paras, HashMap.class);
     }
 }

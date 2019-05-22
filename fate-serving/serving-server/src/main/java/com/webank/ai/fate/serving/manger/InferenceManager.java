@@ -15,8 +15,9 @@
  */
 
 package com.webank.ai.fate.serving.manger;
+
 import com.webank.ai.fate.core.bean.FederatedParty;
-import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.adapter.dataaccess.FeatureData;
@@ -39,34 +40,35 @@ import java.util.Map;
 
 public class InferenceManager {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static ReturnResult inference(InferenceRequest inferenceRequest){
+
+    public static ReturnResult inference(InferenceRequest inferenceRequest) {
         ReturnResult returnResult = new ReturnResult();
         String modelTableName = inferenceRequest.getModelName();
         String modelNamespace = inferenceRequest.getModelNamespace();
-        if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.getSceneid() != 0){
+        if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.getSceneid() != 0) {
             modelNamespace = ModelManager.getNamespaceBySceneId(inferenceRequest.getSceneid());
         }
         LOGGER.info(modelNamespace);
-        if (StringUtils.isEmpty(modelNamespace)){
+        if (StringUtils.isEmpty(modelNamespace)) {
             returnResult.setRetcode(StatusCode.NOMODEL);
             return returnResult;
         }
         ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
         PipelineTask model;
-        if (StringUtils.isEmpty(modelTableName)){
+        if (StringUtils.isEmpty(modelTableName)) {
             modelTableName = modelNamespaceData.getUsedModelName();
             model = modelNamespaceData.getUsedModel();
-        }else {
+        } else {
             model = ModelManager.getModel(modelNamespaceData.getLocal().getRole(), modelNamespaceData.getLocal().getPartyId(), modelNamespaceData.getRole(), modelTableName, modelNamespace);
         }
-        if (model == null){
+        if (model == null) {
             returnResult.setRetcode(StatusCode.NOMODEL);
             return returnResult;
         }
         LOGGER.info("use model to inference, name: {}, namespace: {}", modelTableName, modelNamespace);
         Map<String, Object> featureData = inferenceRequest.getFeatureData();
 
-        if (featureData == null){
+        if (featureData == null) {
             returnResult.setRetcode(StatusCode.ILLEGALDATA);
             returnResult.setRetmsg("Can not parse data json.");
             logAudited(inferenceRequest, modelNamespaceData, returnResult, false);
@@ -74,7 +76,7 @@ public class InferenceManager {
         }
 
         featureData = getPreProcessingFeatureData(featureData);
-        if (featureData == null){
+        if (featureData == null) {
             returnResult.setRetcode(StatusCode.ILLEGALDATA);
             returnResult.setRetmsg("Can not preprocessing data");
             logAudited(inferenceRequest, modelNamespaceData, returnResult, false);
@@ -96,8 +98,8 @@ public class InferenceManager {
 
         Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
         Map<String, Object> result = getPostProcessedResult(featureData, modelResult);
-        for(String field: Arrays.asList("data", "log", "warn")){
-            if (result.get(field) != null){
+        for (String field : Arrays.asList("data", "log", "warn")) {
+            if (result.get(field) != null) {
                 returnResult.putAllData((Map<String, Object>) result.get(field));
             }
         }
@@ -106,7 +108,7 @@ public class InferenceManager {
         return returnResult;
     }
 
-    public static ReturnResult federatedInference(Map<String, Object> federatedParams){
+    public static ReturnResult federatedInference(Map<String, Object> federatedParams) {
         ReturnResult returnResult = new ReturnResult();
         //TODO: Very ugly, need to be optimized
         FederatedParty partnerParty = (FederatedParty) ObjectTransform.json2Bean(federatedParams.get("partner_local").toString(), FederatedParty.class);
@@ -116,16 +118,16 @@ public class InferenceManager {
 
         PipelineTask model = ModelManager.getModelByPartner(party.getRole(), party.getPartyId(), partnerParty.getRole(),
                 partnerParty.getPartyId(), federatedRoles, partnerModelInfo.getName(), partnerModelInfo.getNamespace());
-        if (model == null){
+        if (model == null) {
             returnResult.setRetcode(StatusCode.NOMODEL);
             returnResult.setRetmsg("Can not found model.");
             return returnResult;
         }
         Map<String, Object> predictParams = new HashMap<>();
         predictParams.put("federatedParams", federatedParams);
-        try{
+        try {
             Map<String, Object> featureData = getFeatureData(federatedParams);
-            if (featureData == null || featureData.size() < 1){
+            if (featureData == null || featureData.size() < 1) {
                 returnResult.setRetcode(StatusCode.FEDERATEDERROR);
                 returnResult.setRetmsg("Can not get feature data.");
                 return returnResult;
@@ -134,8 +136,7 @@ public class InferenceManager {
             returnResult.setRetcode(StatusCode.OK);
             returnResult.putAllData(result);
             logAudited(federatedParams, party, federatedRoles, returnResult, true);
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.info("federatedInference", ex);
             returnResult.setRetcode(StatusCode.FEDERATEDERROR);
             returnResult.setRetmsg(ex.getMessage());
@@ -143,65 +144,62 @@ public class InferenceManager {
         return returnResult;
     }
 
-    private static Map<String, Object> getPreProcessingFeatureData(Map<String, Object> originFeatureData){
-        try{
+    private static Map<String, Object> getPreProcessingFeatureData(Map<String, Object> originFeatureData) {
+        try {
             String classPath = PreProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePreProcessingAdapter");
             PreProcessing preProcessing = (PreProcessing) getClassByName(classPath);
             return preProcessing.getResult(ObjectTransform.bean2Json(originFeatureData));
-        }catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("", ex);
             return null;
         }
     }
 
-    private static Map<String, Object> getPostProcessedResult(Map<String, Object> featureData, Map<String, Object> modelResult){
-        try{
+    private static Map<String, Object> getPostProcessedResult(Map<String, Object> featureData, Map<String, Object> modelResult) {
+        try {
             String classPath = PostProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePostProcessingAdapter");
             PostProcessing postProcessing = (PostProcessing) getClassByName(classPath);
             return postProcessing.getResult(featureData, modelResult);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("", ex);
             return null;
         }
     }
 
-    private static Map<String, Object> getFeatureData(Map<String, Object> featureId){
+    private static Map<String, Object> getFeatureData(Map<String, Object> featureId) {
         String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
         FeatureData featureData = (FeatureData) getClassByName(classPath);
-        if (featureData == null){
+        if (featureData == null) {
             return null;
         }
-        try{
+        try {
             return featureData.getData(featureId);
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error(ex);
         }
         return null;
     }
 
-    private static void logAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean charge){
+    private static void logAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean charge) {
         InferenceUtils.logInferenceAudited(FederatedInferenceType.INITIATED, inferenceRequest.getSceneid(), modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), returnResult.getRetcode(), charge);
     }
-    private static void logAudited(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult returnResult, boolean charge){
+
+    private static void logAudited(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult returnResult, boolean charge) {
         LOGGER.info(federatedParams);
         LOGGER.info(federatedParty);
         LOGGER.info(federatedRoles);
-        InferenceUtils.logInferenceAudited(FederatedInferenceType.FEDERATED, (int)federatedParams.get("sceneid"), federatedParty, federatedRoles, federatedParams.get("caseid").toString(), returnResult.getRetcode(), charge);
+        InferenceUtils.logInferenceAudited(FederatedInferenceType.FEDERATED, (int) federatedParams.get("sceneid"), federatedParty, federatedRoles, federatedParams.get("caseid").toString(), returnResult.getRetcode(), charge);
     }
 
-    public static Object getClassByName(String classPath){
-        try{
+    public static Object getClassByName(String classPath) {
+        try {
             Class thisClass = Class.forName(classPath);
             return thisClass.getConstructor().newInstance();
-        }
-        catch (ClassNotFoundException ex){
+        } catch (ClassNotFoundException ex) {
             LOGGER.error("Can not found this class: {}.", classPath);
-        }
-        catch (NoSuchMethodException ex){
+        } catch (NoSuchMethodException ex) {
             LOGGER.error("Can not get this class({}) constructor.", classPath);
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error(ex);
             LOGGER.error("Can not create class({}) instance.", classPath);
         }

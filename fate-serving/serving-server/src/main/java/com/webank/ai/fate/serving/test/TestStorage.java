@@ -28,7 +28,7 @@ import io.grpc.stub.MetadataUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class TestStorage {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", 8011).usePlaintext().build();
         KVServiceGrpc.KVServiceBlockingStub kvServiceBlockingStub = KVServiceGrpc.newBlockingStub(channel);
 

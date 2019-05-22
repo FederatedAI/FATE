@@ -17,13 +17,15 @@
 package com.webank.ai.fate.core.utils;
 
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.*;
+
 import com.webank.ai.fate.core.bean.FederatedRoles;
 
 public class SceneUtils {
     private static final String sceneKeySeparator = "_";
 
-    public static String genSceneKey(int sceneId, String role, int partyId, FederatedRoles federatedRoles){
+    public static String genSceneKey(int sceneId, String role, int partyId, FederatedRoles federatedRoles) {
         return StringUtils.join(Arrays.asList(sceneId, role, partyId, FederatedUtils.federatedRolesIdentificationString(federatedRoles)), sceneKeySeparator);
     }
 }

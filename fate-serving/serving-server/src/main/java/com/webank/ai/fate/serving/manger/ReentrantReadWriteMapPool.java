@@ -34,65 +34,58 @@ public class ReentrantReadWriteMapPool<K, V> extends BaseMapPool<K, V> {
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
 
-    public ReentrantReadWriteMapPool(Map<K, V> staticMap){
+    public ReentrantReadWriteMapPool(Map<K, V> staticMap) {
         this.pool = staticMap;
     }
 
     @Override
-    public void put(K key, V value){
+    public void put(K key, V value) {
         this.writeLock.lock();
         try {
             pool.put(key, value);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOGGER.error(ex);
-        }
-        finally {
+        } finally {
             this.writeLock.unlock();
         }
     }
 
     @Override
-    public void putIfAbsent(K key, V value){
+    public void putIfAbsent(K key, V value) {
         this.writeLock.lock();
         try {
             pool.putIfAbsent(key, value);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOGGER.error(ex);
-        }
-        finally {
+        } finally {
             this.writeLock.unlock();
         }
     }
 
     @Override
-    public void putAll(Map<K, V> kv){
+    public void putAll(Map<K, V> kv) {
         this.writeLock.lock();
         try {
             pool.putAll(kv);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOGGER.error(ex);
-        }
-        finally {
+        } finally {
             this.writeLock.unlock();
         }
     }
 
     @Override
-    public V get(K key){
+    public V get(K key) {
         this.readLock.lock();
         V value = pool.get(key);
         this.readLock.unlock();
         return value;
     }
 
-    public ArrayList<K> keys(){
-        if (pool.size() > 0){
+    public ArrayList<K> keys() {
+        if (pool.size() > 0) {
             return new ArrayList<K>(pool.keySet());
-        }
-        else{
+        } else {
             return null;
         }
     }

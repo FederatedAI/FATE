@@ -28,21 +28,22 @@ import java.util.Map;
 
 public class DTableUtils {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static DTableInfo genTableInfo(String tableName, String namespace, int sceneId, String role, int partyId, FederatedRoles federatedRoles, String dataType){
 
-        if (StringUtils.isEmpty(namespace)){
+    public static DTableInfo genTableInfo(String tableName, String namespace, int sceneId, String role, int partyId, FederatedRoles federatedRoles, String dataType) {
+
+        if (StringUtils.isEmpty(namespace)) {
             namespace = getSceneNamespace(SceneUtils.genSceneKey(sceneId, role, partyId, federatedRoles), dataType);
         }
-        if (StringUtils.isEmpty(tableName)){
+        if (StringUtils.isEmpty(tableName)) {
             Map<String, String> versionInfo = VersionControl.getVersionInfo(namespace, "", "", "master");
-            if (versionInfo != null){
+            if (versionInfo != null) {
                 tableName = versionInfo.get("commitId");
             }
         }
         return new DTableInfo(tableName, namespace);
     }
 
-    public static String getSceneNamespace(String sceneKey, String dataType){
+    public static String getSceneNamespace(String sceneKey, String dataType) {
         return StringUtils.join(Arrays.asList(sceneKey, dataType), "_");
     }
 }

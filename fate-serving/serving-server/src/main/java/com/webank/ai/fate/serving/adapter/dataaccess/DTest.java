@@ -20,10 +20,12 @@ import com.webank.ai.fate.core.utils.ObjectTransform;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.*;
+
 import com.webank.ai.fate.core.network.http.client.HttpClientPool;
 
-public class DTest implements FeatureData{
+public class DTest implements FeatureData {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
@@ -31,16 +33,16 @@ public class DTest implements FeatureData{
         Map<String, Object> requestData = new HashMap<>();
         requestData.putAll(featureId);
         String responseBody = HttpClientPool.post("http://127.0.0.1:1234/feature", requestData);
-        if (StringUtils.isEmpty(responseBody)){
+        if (StringUtils.isEmpty(responseBody)) {
             return null;
         }
-        Map<String, Object> tmp = (Map<String, Object>)ObjectTransform.json2Bean(responseBody, HashMap.class);
-        if ((int)Optional.ofNullable(tmp.get("status")).orElse(1) != 0){
+        Map<String, Object> tmp = (Map<String, Object>) ObjectTransform.json2Bean(responseBody, HashMap.class);
+        if ((int) Optional.ofNullable(tmp.get("status")).orElse(1) != 0) {
             return null;
         }
-        String[] features = StringUtils.split(((List<String>)tmp.get("data")).get(0), "\t");
+        String[] features = StringUtils.split(((List<String>) tmp.get("data")).get(0), "\t");
         Map<String, Object> featureData = new HashMap<>();
-        for(int i =1; i < features.length; i++){
+        for (int i = 1; i < features.length; i++) {
             featureData.put(features[i], i);
         }
         return featureData;

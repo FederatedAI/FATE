@@ -28,7 +28,8 @@ public class InferenceRequest {
     private String seqno;
     private String caseid;
     private Map<String, Object> featureData;
-    InferenceRequest(){
+
+    InferenceRequest() {
         sceneid = 0;
         seqno = InferenceUtils.generateSeqno();
         caseid = InferenceUtils.generateCaseid();

@@ -20,16 +20,18 @@ import java.util.Map;
 
 public abstract class BaseMapPool<K, V> implements MapPool<K, V> {
     public abstract void put(K key, V value);
+
     public abstract void putIfAbsent(K key, V value);
+
     public abstract void putAll(Map<K, V> kv);
+
     public abstract V get(K key);
 
     @Override
-    public void put(K key, V value, boolean onlyIfAbsent){
-        if(onlyIfAbsent){
+    public void put(K key, V value, boolean onlyIfAbsent) {
+        if (onlyIfAbsent) {
             this.putIfAbsent(key, value);
-        }
-        else{
+        } else {
             this.put(key, value);
         }
     }

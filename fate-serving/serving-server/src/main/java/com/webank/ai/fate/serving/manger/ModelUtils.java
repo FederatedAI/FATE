@@ -26,6 +26,7 @@ import com.webank.ai.fate.core.utils.SceneUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,15 +34,16 @@ import java.util.Map;
 
 public class ModelUtils {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static Map<String, byte[]> readModel(String name, String namespace){
+
+    public static Map<String, byte[]> readModel(String name, String namespace) {
         LOGGER.info("read model, name: {} namespace: {}", name, namespace);
         DTable dataTable = DTableFactory.getDTable(name, namespace, 1);
         return dataTable.collect();
     }
 
-    public static PipelineTask loadModel(String name, String namespace){
+    public static PipelineTask loadModel(String name, String namespace) {
         Map<String, byte[]> modelBytes = readModel(name, namespace);
-        if (modelBytes == null || modelBytes.size() == 0){
+        if (modelBytes == null || modelBytes.size() == 0) {
             return null;
         }
         PipelineTask pipelineTask = new PipelineTask();
@@ -49,16 +51,16 @@ public class ModelUtils {
         return pipelineTask;
     }
 
-    public static String genModelKey(String role, int partyId, FederatedRoles federatedRoles, String name, String namespace){
+    public static String genModelKey(String role, int partyId, FederatedRoles federatedRoles, String name, String namespace) {
         return StringUtils.join(Arrays.asList(role, partyId, FederatedUtils.federatedRolesIdentificationString(federatedRoles), name, namespace), "_");
     }
 
-    public static String[] splitModelKey(String key){
+    public static String[] splitModelKey(String key) {
         return StringUtils.split(key, "-");
     }
 
 
-    public static FederatedRoles getFederatedRoles(Map<String, ModelServiceProto.Party> federatedRolesProto){
+    public static FederatedRoles getFederatedRoles(Map<String, ModelServiceProto.Party> federatedRolesProto) {
         FederatedRoles federatedRoles = new FederatedRoles();
         federatedRolesProto.forEach((roleName, party) -> {
             federatedRoles.setRole(roleName, party.getPartyIdList());
@@ -66,11 +68,11 @@ public class ModelUtils {
         return federatedRoles;
     }
 
-    public static Map<String, Map<Integer, ModelInfo>> getFederatedRolesModel(Map<String, ModelServiceProto.RoleModelInfo> federatedRolesModelProto){
+    public static Map<String, Map<Integer, ModelInfo>> getFederatedRolesModel(Map<String, ModelServiceProto.RoleModelInfo> federatedRolesModelProto) {
         Map<String, Map<Integer, ModelInfo>> federatedRolesModel = new HashMap<>();
-        federatedRolesModelProto.forEach((roleName, roleModelInfo)->{
+        federatedRolesModelProto.forEach((roleName, roleModelInfo) -> {
             federatedRolesModel.put(roleName, new HashMap<>());
-            roleModelInfo.getRoleModelInfoMap().forEach((partyId, modelInfo)->{
+            roleModelInfo.getRoleModelInfoMap().forEach((partyId, modelInfo) -> {
                 federatedRolesModel.get(roleName).put(partyId, new ModelInfo(modelInfo.getTableName(), modelInfo.getNamespace()));
             });
         });

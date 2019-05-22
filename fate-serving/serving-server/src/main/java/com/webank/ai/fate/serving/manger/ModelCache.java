@@ -31,7 +31,7 @@ public class ModelCache {
     private static final Logger LOGGER = LogManager.getLogger();
     private static LoadingCache<String, PipelineTask> modelCache = null;
 
-    public ModelCache(){
+    public ModelCache() {
         modelCache = CacheBuilder.newBuilder()
                 .expireAfterAccess(Configuration.getPropertyInt("modelCacheAccessTTL"), TimeUnit.HOURS)
                 .maximumSize(Configuration.getPropertyInt("modelCacheMaxSize"))
@@ -44,20 +44,20 @@ public class ModelCache {
                 });
     }
 
-    public PipelineTask get(String modelKey){
+    public PipelineTask get(String modelKey) {
         try {
             return modelCache.get(modelKey);
-        }catch (ExecutionException ex){
+        } catch (ExecutionException ex) {
             LOGGER.error(ex);
             return null;
         }
     }
 
-    public void put(String modelKey, PipelineTask model){
+    public void put(String modelKey, PipelineTask model) {
         modelCache.put(modelKey, model);
     }
 
-    public long getSize(){
+    public long getSize() {
         return modelCache.size();
     }
 }

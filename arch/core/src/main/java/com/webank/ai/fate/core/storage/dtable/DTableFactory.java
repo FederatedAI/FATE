@@ -21,13 +21,13 @@ import com.webank.ai.fate.core.utils.Configuration;
 
 public class DTableFactory {
 
-    public static DTable getDTable(String name, String namespace, int partition){
+    public static DTable getDTable(String name, String namespace, int partition) {
         return getDTable(Configuration.getPropertyInt("workMode", WorkMode.STANDALONE), name, namespace, partition);
     }
 
-    public static DTable getDTable(int workMode, String name, String namespace, int partition){
+    public static DTable getDTable(int workMode, String name, String namespace, int partition) {
         DTable dTable;
-        switch (workMode){
+        switch (workMode) {
             case WorkMode.STANDALONE:
                 dTable = new StandaloneDTable(name, namespace, partition);
                 break;

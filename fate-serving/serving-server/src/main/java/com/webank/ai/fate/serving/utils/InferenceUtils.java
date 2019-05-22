@@ -18,6 +18,7 @@ package com.webank.ai.fate.serving.utils;
 
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.FederatedRoles;
+
 import java.util.*;
 
 import com.webank.ai.fate.core.utils.FederatedUtils;
@@ -28,19 +29,19 @@ import org.apache.logging.log4j.Logger;
 public class InferenceUtils {
     private static final Logger auditLogger = LogManager.getLogger("audit");
 
-    public static String generateCaseid(){
+    public static String generateCaseid() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    public static String generateSeqno(){
+    public static String generateSeqno() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    public static void logInferenceAudited(Enum<FederatedInferenceType> inferenceType, int sceneid, FederatedParty federatedParty, FederatedRoles federatedRoles, String caseid, int statusCode, boolean charge){
+    public static void logInferenceAudited(Enum<FederatedInferenceType> inferenceType, int sceneid, FederatedParty federatedParty, FederatedRoles federatedRoles, String caseid, int statusCode, boolean charge) {
         String inCharge;
-        if (charge){
+        if (charge) {
             inCharge = "1";
-        }else {
+        } else {
             inCharge = "0";
         }
         auditLogger.info(" {} {} {} {} {} {} {} {}", inferenceType, sceneid, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, statusCode, inCharge);

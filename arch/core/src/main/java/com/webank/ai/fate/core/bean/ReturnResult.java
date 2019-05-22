@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.core.result;
+package com.webank.ai.fate.core.bean;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
-public class ReturnResult{
+public class ReturnResult {
     private static final Logger LOGGER = LogManager.getLogger();
     private int retcode;
     private String retmsg = "";

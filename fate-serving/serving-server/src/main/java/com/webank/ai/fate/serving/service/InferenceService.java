@@ -19,8 +19,8 @@ package com.webank.ai.fate.serving.service;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.serving.InferenceServiceGrpc;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceMessage;
-import com.webank.ai.fate.core.result.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
@@ -32,7 +32,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void inference(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver){
+    public void inference(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver) {
         InferenceMessage.Builder response = InferenceMessage.newBuilder();
         InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getData().toStringUtf8(), InferenceRequest.class);
         ReturnResult returnResult = InferenceManager.inference(inferenceRequest);

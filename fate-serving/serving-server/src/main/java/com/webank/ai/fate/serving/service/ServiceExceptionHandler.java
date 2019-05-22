@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 public class ServiceExceptionHandler implements ServerInterceptor {
     //private static final Logger LOGGER = LogManager.getLogger("audit");
     private static final Logger LOGGER = LogManager.getLogger("audit");
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                                                                  Metadata requestHeaders, ServerCallHandler<ReqT, RespT> next) {
@@ -35,7 +36,7 @@ public class ServiceExceptionHandler implements ServerInterceptor {
                 } catch (Exception e) {
                     LOGGER.info("ServiceException:", e);
                     call.close(Status.INTERNAL
-                            .withCause (e)
+                            .withCause(e)
                             .withDescription(e.getMessage()), new Metadata());
                 }
             }

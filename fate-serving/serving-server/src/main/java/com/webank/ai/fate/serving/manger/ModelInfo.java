@@ -19,10 +19,12 @@ package com.webank.ai.fate.serving.manger;
 public class ModelInfo {
     private String name;
     private String namespace;
-    public ModelInfo(){
+
+    public ModelInfo() {
 
     }
-    public ModelInfo(String name, String namespace){
+
+    public ModelInfo(String name, String namespace) {
         this.name = name;
         this.namespace = namespace;
     }

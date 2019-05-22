@@ -43,26 +43,24 @@ public class Configuration {
         adapterJsonConfigMapPool = new HashMap<>();
     }
 
-    public Configuration(String confPath){
+    public Configuration(String confPath) {
         this.confPath = confPath;
     }
 
-    public int load(){
-        try{
+    public int load() {
+        try {
             Properties pro = new Properties();
             File baseConfFile = new File(this.confPath);
             pro.load(new FileInputStream(baseConfFile));
-            pro.entrySet().forEach(e->{
-                Configuration.putProperty((String)e.getKey(), (String)e.getValue());
+            pro.entrySet().forEach(e -> {
+                Configuration.putProperty((String) e.getKey(), (String) e.getValue());
             });
             loadAdapterConf(baseConfFile.getParent());
             return StatusCode.OK;
-        }
-        catch (FileNotFoundException ex){
+        } catch (FileNotFoundException ex) {
             LOGGER.error("Can not found this file: {}", this.confPath);
             return StatusCode.NOFILE;
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("", ex);
             return StatusCode.UNKNOWNERROR;
         }
@@ -76,19 +74,19 @@ public class Configuration {
                                Map<String, Properties> propertiesMapPool,
                                Map<String, JSONObject> jsonMapConfigPool) {
         File loadConfDir = new File(String.format("%s/%s", confRootDir, confDirName));
-        if (loadConfDir.exists()){
+        if (loadConfDir.exists()) {
             File[] confFiles = loadConfDir.listFiles();
-            for(int i=0; i < confFiles.length; i ++) {
+            for (int i = 0; i < confFiles.length; i++) {
                 File confFile = confFiles[i];
                 try (FileInputStream fileInputStream = new FileInputStream(confFile)) {
-                    switch (confFile.getName().split("\\.")[1]){
+                    switch (confFile.getName().split("\\.")[1]) {
                         case "properties":
                             Properties pro = new Properties();
                             pro.load(fileInputStream);
                             propertiesMapPool.put(confFile.getName(), pro);
                             break;
                         case "json":
-                            byte[] bytes = new byte[(int)confFile.length()];
+                            byte[] bytes = new byte[(int) confFile.length()];
                             fileInputStream.read(bytes);
                             JSONObject jsonObject = new JSONObject(new String(bytes));
                             jsonMapConfigPool.put(confFile.getName(), jsonObject);
@@ -104,7 +102,7 @@ public class Configuration {
         return properties;
     }
 
-    public static Properties getAdapterProperties(String confName){
+    public static Properties getAdapterProperties(String confName) {
         return adapterPropertiesMapPool.get(confName);
     }
 
@@ -112,29 +110,29 @@ public class Configuration {
         return adapterJsonConfigMapPool.get(confName);
     }
 
-    public static String getProperty(String key){
+    public static String getProperty(String key) {
         return properties.get(key);
     }
 
-    public static String getProperty(String key, String defaultValue){
+    public static String getProperty(String key, String defaultValue) {
         return Optional.ofNullable(properties.get(key)).orElse(defaultValue);
     }
 
     public static Integer getPropertyInt(String key) {
-        if (getProperty(key) == null){
+        if (getProperty(key) == null) {
             return null;
         }
         return Integer.parseInt(getProperty(key));
     }
 
     public static Integer getPropertyInt(String key, int defaultValue) {
-        if (getProperty(key) == null){
+        if (getProperty(key) == null) {
             return defaultValue;
         }
         return Integer.parseInt(getProperty(key));
     }
 
-    private static void putProperty(String key, String value){
+    private static void putProperty(String key, String value) {
         properties.put(key, value);
     }
 }

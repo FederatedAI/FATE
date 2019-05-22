@@ -21,7 +21,7 @@ import com.webank.ai.fate.api.mlmodel.manager.ModelServiceGrpc;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishRequest;
 import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishResponse;
 import com.webank.ai.fate.core.bean.FederatedParty;
-import com.webank.ai.fate.core.result.ReturnResult;
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.serving.manger.ModelUtils;
@@ -29,11 +29,11 @@ import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
+public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver){
+    public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
         PublishResponse.Builder builder = PublishResponse.newBuilder();
         ReturnResult returnResult = ModelManager.publishLoadModel(
                 new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
@@ -55,7 +55,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase{
                 ModelUtils.getFederatedRoles(req.getRoleMap()),
                 ModelUtils.getFederatedRolesModel(req.getModelMap()),
                 req.getSceneId()
-                );
+        );
         builder.setStatusCode(returnResult.getRetcode())
                 .setMessage(returnResult.getRetmsg())
                 .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
