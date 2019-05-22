@@ -89,7 +89,8 @@ def compute_XY_plus_Z(X, Y, Z):
     YT = prepare_table(Y, batch)
     ZT = prepare_table(Z, batch)
 
-    R = XT.join(YT, lambda x, y: y * x).join(ZT, lambda x, y: x + y)
+    XYT = XT.join(YT, lambda x, y: y*x)
+    R = XYT.join(ZT, lambda x, y: x+y)
     val = R.collect()
     val = dict(val)
 
@@ -101,6 +102,8 @@ def compute_XY_plus_Z(X, Y, Z):
     destroy_table(XT)
     destroy_table(YT)
     destroy_table(ZT)
+    destroy_table(XYT)
+    destroy_table(R)
     return res
 
 
