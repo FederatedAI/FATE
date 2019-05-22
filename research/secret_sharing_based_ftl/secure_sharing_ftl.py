@@ -17,7 +17,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.ftl.secret_sharing_ops import share, local_compute_alpha_beta_share, compute_matmul_share, \
+from research.secret_sharing_based_ftl.secret_sharing_ops import share, local_compute_alpha_beta_share, compute_matmul_share, \
     compute_add_share, compute_minus_share, compute_sum_of_multiply_share, compute_multiply_share
 
 LOGGER = log_utils.getLogger()

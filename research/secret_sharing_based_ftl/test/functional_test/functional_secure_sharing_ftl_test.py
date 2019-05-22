@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-import os
 import time
 
 import numpy as np
@@ -23,11 +22,11 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 # from arch.api.eggroll import init
 from federatedml.ftl.autoencoder import Autoencoder
-from federatedml.ftl.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
-from federatedml.ftl.data_util.common_data_util import series_plot
-from federatedml.ftl.data_util.nus_wide_util import get_labeled_data, balance_X_y, get_top_k_labels
+from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
+from federatedml.ftl.data_util.common_data_util import split_data_combined
+from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
-from federatedml.ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel, \
+from research.secret_sharing_based_ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel, \
     LocalSecureSharingFederatedTransferLearning
 from federatedml.ftl.test.mock_models import MockFTLModelParam
 
@@ -245,104 +244,42 @@ def generate_beaver_triples(mul_op_def, num_epoch=1):
 
 if __name__ == '__main__':
 
-    # infile = "../../../../examples/data/UCI_Credit_Card.csv"
-    # X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
-    # X = X[:2000]
-    # y = y[:2000]
-    # X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
-    #                                                           overlap_ratio=0.2,
-    #                                                           b_samples_ratio=0.1,
-    #                                                           n_feature_b=16)
-
-    file_dir = "/data/app/fate/yankang/"
-
-    num_samples = 5000
-    num_categories = 81
-    main_label = 'water'
-    all_labels = get_top_k_labels(file_dir, top_k=num_categories)
-    all_labels.remove(main_label)
-    sel = main_label + all_labels
-
-    rel_model_dir = "models"
-    model_dir = file_dir + rel_model_dir
-    if not os.path.exists(model_dir):
-        try:
-            os.mkdir(model_dir)
-        except OSError:
-            print("Creation of the directory %s failed" % model_dir)
-        else:
-            print("Successfully created the directory %s" % model_dir)
-
-    model_name_prefix = main_label + "_" + str(num_categories) + "_" + str(num_samples)
-    model_full_name_prefix = model_dir + "/" + model_name_prefix
-    model_name_X_A = model_full_name_prefix + "_" + "X_A"
-    model_name_X_B = model_full_name_prefix + "_" + "X_B"
-    model_name_y = model_full_name_prefix + "_" + "y"
-    if not os.path.exists(model_name_X_A):
-        X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=num_samples)
-        print("original X_A shape:", X_A.shape)
-        print("original X_B shape:", X_B.shape)
-        print("original y shape", y.shape)
-        np.save(model_name_X_A, X_A)
-        np.save(model_name_X_B, X_B)
-        np.save(model_name_y, y)
-    else:
-        X_A = np.load(model_name_X_A)
-        X_B = np.load(model_name_X_B)
-        y = np.load(model_name_y)
-
-    y_ = []
-    pos_count = 0
-    neg_count = 0
-    for i in range(y.shape[0]):
-        if y[i, 0] == 1:
-            y_.append(1)
-            pos_count += 1
-        else:
-            y_.append(-1)
-            neg_count += 1
-
-    y_ = np.array(y_)
-    X_A, X_B, y = balance_X_y(X_A, X_B, y_)
-
-    y = np.expand_dims(y, axis=1)
-    print("X_A shape:", X_A.shape)
-    print("X_B shape:", X_B.shape)
-    print("y shape:", y.shape)
-    # print("y:", y)
-
-    overlap_ratio = 0.4
-    data_size = X_A.shape[0]
-    overlap_size = int(data_size * overlap_ratio)
-    overlap_indexes = np.array(range(overlap_size))
-
-    num_train = int(0.8 * data_size)
-
-    print("num_train:", num_train)
-    X_A, X_B, y = X_A[:num_train, :], X_B[:num_train, :], y[:num_train, :]
-    X_A_test, X_B_test, y_test = X_A[num_train:, :], X_B[num_train:, :], y[num_train:, :]
+    infile = "../../../../examples/data/UCI_Credit_Card.csv"
+    X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
+    X = X[:1000]
+    y = y[:1000]
+    X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
+                                                              overlap_ratio=0.08,
+                                                              b_samples_ratio=0.1,
+                                                              n_feature_b=16)
 
     guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
     host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
 
+    valid_ratio = 0.5
+    test_indexes = host_non_overlap_indexes[int(valid_ratio * len(host_non_overlap_indexes)):]
+    x_B_test = X_B[test_indexes]
+    y_B_test = y_B[test_indexes]
+
     print("X_A shape", X_A.shape)
+    print("y_A shape", y_A.shape)
     print("X_B shape", X_B.shape)
-    print("X_A_test shape", X_A_test.shape)
-    print("X_B_test shape", X_B_test.shape)
+    print("y_B shape", y_A.shape)
 
     print("overlap_indexes len", len(overlap_indexes))
-    print("guest_non_overlap_indexes len", len(guest_non_overlap_indexes))
     print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
+    print("guest_non_overlap_indexes len", len(guest_non_overlap_indexes))
+    print("test_indexes len", len(test_indexes))
 
     print("################################ Create Beaver Triples ############################")
     start_time = time.time()
-    hidden_dim = 48
-    num_epoch = 1
+    hidden_dim = 15
+    num_epoch = 10
     mul_op_def, ops = create_mul_op_def(num_overlap_samples=len(overlap_indexes),
                                         num_non_overlap_samples_host=len(host_non_overlap_indexes),
                                         num_non_overlap_samples_guest=len(guest_non_overlap_indexes),
-                                        guest_input_dim=634,
-                                        host_input_dim=1000,
+                                        guest_input_dim=17,
+                                        host_input_dim=16,
                                         hidden_dim=hidden_dim)
 
     party_a_bt_map, party_b_bt_map, global_iters = generate_beaver_triples(mul_op_def, num_epoch=num_epoch)
@@ -351,7 +288,7 @@ if __name__ == '__main__':
     print("running time:", beaver_triples_generation_time)
 
     # TODO: save beaver triples
-    global_iters = 20
+
     print("################################ Build Federated Models ############################")
 
     tf.reset_default_graph()
@@ -401,7 +338,7 @@ if __name__ == '__main__':
         aucs = []
         for iter in range(global_iters):
             # self, X_A, X_B, y, overlap_indexes, non_overlap_indexes, global_index
-            loss, v1, v2, v3 = federatedLearning.fit(X_A=X_A, X_B=X_B, y=y,
+            loss, v1, v2, v3 = federatedLearning.fit(X_A=X_A, X_B=X_B, y=y_A,
                                                      overlap_indexes=overlap_indexes,
                                                      guest_non_overlap_indexes=guest_non_overlap_indexes,
                                                      global_index=iter)
@@ -412,11 +349,11 @@ if __name__ == '__main__':
 
             if iter % 5 == 0:
                 print("iter", iter, "loss", loss)
-                y_pred = federatedLearning.predict(X_B_test)
+                y_pred = federatedLearning.predict(x_B_test)
                 y_pred_label = []
                 pos_count = 0
                 neg_count = 0
-                print("y_pred \n", y_pred)
+                # print("y_pred \n", y_pred)
                 for _y in y_pred:
                     if _y <= predict_threshold:
                         neg_count += 1
@@ -426,20 +363,18 @@ if __name__ == '__main__':
                         y_pred_label.append(1)
                 y_pred_label = np.array(y_pred_label)
                 print("neg：", neg_count, "pos:", pos_count)
-                precision, recall, fscore, _ = precision_recall_fscore_support(y_test, y_pred_label)
+                precision, recall, fscore, _ = precision_recall_fscore_support(y_B_test, y_pred_label, average="weighted")
                 fscores.append(fscore)
                 print("fscore:", fscore)
-                auc = roc_auc_score(y_test, y_pred, average="weighted")
+                auc = roc_auc_score(y_B_test, y_pred, average="weighted")
                 aucs.append(auc)
                 # auc = roc_auc_score(y_B_test, y_pred, average="weighted")
                 # aucs.append(auc)
 
         end_time = time.time()
         print("losses:", losses)
-        print("y_test_pos:", np.sum(y_test[y_test == 1]))
-        print("y_test_neg:", np.sum(y_test[y_test == -1]))
         # series_plot(losses, v1s, v2s, v3s)
-        series_plot(losses, fscores, aucs)
+        # series_plot(losses, fscores, aucs)
         print("precision, recall, fscore, auc", precision, recall, fscore, auc)
         print("running time", end_time - start_time)
         print("beaver_triples_generation_time", beaver_triples_generation_time)
