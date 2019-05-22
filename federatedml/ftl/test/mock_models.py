@@ -16,7 +16,7 @@
 
 import numpy as np
 
-from federatedml.optim.convergence import ConvergeFunction
+# from federatedml.optim.convergence import ConvergeFunction
 
 
 class MockAutoencoder(object):
@@ -52,9 +52,9 @@ class MockAutoencoder(object):
         encrypt_grads_ex = np.expand_dims(encrypt_grads, axis=1)
         encrypt_grads_W = np.sum(encrypt_grads_ex * grads_W, axis=1)
         encrypt_grads_b = np.sum(encrypt_grads * grads_b, axis=1)
-        print("encrypt_grads_ex shape", encrypt_grads_ex.shape)
-        print("encrypt_grads_W shape", encrypt_grads_W.shape)
-        print("encrypt_grads_b shape", encrypt_grads_b.shape)
+        # print("encrypt_grads_ex shape", encrypt_grads_ex.shape)
+        # print("encrypt_grads_W shape", encrypt_grads_W.shape)
+        # print("encrypt_grads_b shape", encrypt_grads_b.shape)
         return encrypt_grads_W, encrypt_grads_b
 
     def backpropogate(self, X, y, in_grad):
@@ -66,7 +66,16 @@ class MockAutoencoder(object):
         #     print("y shape", y.shape)
         # print("in_grad shape", in_grad.shape)
         # print("in_grad", in_grad)
-        pass
+        grads_W, grads_b = self.compute_gradients(X)
+        ex_in_grad = np.expand_dims(in_grad, axis=1)
+        self.loss_grad_W = np.multiply(ex_in_grad, grads_W)
+        self.loss_grad_b = np.multiply(in_grad, grads_b)
+
+    def get_loss_grad_W(self):
+        return self.loss_grad_W
+
+    def get_loss_grad_b(self):
+        return self.loss_grad_b
 
     def predict(self, X):
         return 0.0
@@ -76,24 +85,25 @@ class MockAutoencoder(object):
 
 
 class MockFTLModelParam(object):
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5, alpha=100, lr_decay=0.001,
+    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5, alpha=100, gamma=0.01, lr_decay=0.001,
                  l2_para=1, is_encrypt=True, enc_ftl="enc_ftl2"):
         self.max_iter = max_iteration
         self.batch_size = batch_size
         self.eps = eps
         self.alpha = alpha
+        self.gamma = gamma
         self.lr_decay = lr_decay
         self.l2_para = l2_para
         self.is_encrypt = is_encrypt
         self.enc_ftl = enc_ftl
 
 
-class MockDiffConverge(ConvergeFunction):
-
-    def __init__(self, expected_loss, eps=0.001):
-        super(MockDiffConverge, self).__init__(eps)
-        self.eps = eps
-        self.expected_loss = expected_loss
-
-    def is_converge(self, loss):
-        return True
+# class MockDiffConverge(ConvergeFunction):
+#
+#     def __init__(self, expected_loss, eps=0.001):
+#         super(MockDiffConverge, self).__init__(eps)
+#         self.eps = eps
+#         self.expected_loss = expected_loss
+#
+#     def is_converge(self, loss):
+#         return True

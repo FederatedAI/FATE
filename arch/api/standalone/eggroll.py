@@ -19,6 +19,7 @@ import pickle as c_pickle
 from arch.api import StoreType
 from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
 from arch.api.utils.core import string_to_bytes, bytes_to_string
+from arch.api.core import EggRollContext
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid
@@ -31,36 +32,57 @@ from operator import is_not
 import hashlib
 import fnmatch
 import shutil
+import time
+import socket
+import random
+
+DELIMETER = '-'
+DELIMETER_ENCODED = DELIMETER.encode()
 
 
 class Standalone:
     __instance = None
 
-    def __init__(self, job_id=None):
+    def __init__(self, job_id=None, eggroll_context=None):
         self.data_dir = os.path.join(file_utils.get_project_base_directory(), 'data')
         self.job_id = str(uuid.uuid1()) if job_id is None else "{}".format(job_id)
         self.meta_table = _DTable('__META__', '__META__', 'fragments', 10)
         self.pool = Executor()
         Standalone.__instance = self
+        if not eggroll_context:
+            eggroll_context = EggRollContext()
+        self.eggroll_context = eggroll_context
 
-    def table(self, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, persistent=True):
+        self.unique_id_template = '_EggRoll_%s_%s_%s_%.20f_%d'
+
+        # todo: move to EggRollContext
+        try:
+            self.host_name = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self.host_name)
+        except socket.gaierror as e:
+            self.host_name = 'unknown'
+            self.host_ip = 'unknown'
+
+    def table(self, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, persistent=True, in_place_computing=False):
         __type = StoreType.LMDB.value if persistent else StoreType.IN_MEMORY.value
         _table_key = ".".join([__type, namespace, name])
         self.meta_table.put_if_absent(_table_key, partition)
         partition = self.meta_table.get(_table_key)
-        return _DTable(__type, namespace, name, partition)
+        __table = _DTable(__type, namespace, name, partition, in_place_computing)
+
+        return __table
 
 
     def parallelize(self, data: Iterable, include_key=False, name=None, partition=1, namespace=None,
                     create_if_missing=True,
                     error_if_exist=False,
-                    persistent=False, chunk_size=100000):
+                    persistent=False, chunk_size=100000, in_place_computing=False):
         _iter = data if include_key else enumerate(data)
         if name is None:
             name = str(uuid.uuid1())
         if namespace is None:
             namespace = self.job_id
-        __table = self.table(name, namespace, partition, persistent=persistent)
+        __table = self.table(name, namespace, partition, persistent=persistent, in_place_computing=in_place_computing)
         __table.put_all(_iter, chunk_size=chunk_size)
         return __table
 
@@ -82,12 +104,17 @@ class Standalone:
         for table in _tables_to_delete:
             shutil.rmtree(os.sep.join([_namespace_dir, table]))
 
+    def generateUniqueId(self):
+        return self.unique_id_template % (self.job_id, self.host_name, self.host_ip, time.time(), random.randint(10000, 99999))
 
     @staticmethod
     def get_instance():
         if Standalone.__instance is None:
             raise EnvironmentError("eggroll should initialize before use")
         return Standalone.__instance
+
+    def get_context(self):
+        return self.eggroll_context
 
 
 def serialize(_obj):
@@ -128,11 +155,19 @@ def _hash_key_to_partition(key, partitions):
 
 
 class _TaskInfo:
-    def __init__(self, task_id, function_id, function_bytes):
+    def __init__(self, task_id, function_id, function_bytes, is_in_place_computing):
         self._task_id = task_id
         self._function_id = function_id
         self._function_bytes = function_bytes
+        self._is_in_place_computing = is_in_place_computing
 
+class _ProcessConf:
+    def __init__(self, naming_policy):
+        self._naming_policy = naming_policy
+
+    @staticmethod
+    def get_default():
+        return _ProcessConf(Standalone.get_instance().get_context().get_naming_policy().value)
 
 class _Operand:
     def __init__(self, _type, namespace, name, partition):
@@ -149,21 +184,25 @@ class _Operand:
 
 
 class _UnaryProcess:
-    def __init__(self, task_info: _TaskInfo, operand: _Operand):
+    def __init__(self, task_info: _TaskInfo, operand: _Operand, process_conf: _ProcessConf):
         self._info = task_info
         self._operand = operand
+        self._process_conf = process_conf
 
 
 class _BinaryProcess:
-    def __init__(self, task_info: _TaskInfo, left: _Operand, right: _Operand):
+    def __init__(self, task_info: _TaskInfo, left: _Operand, right: _Operand, process_conf: _ProcessConf):
         self._info = task_info
         self._left = left
         self._right = right
+        self._process_conf = process_conf
 
 
 def __get_function(info: _TaskInfo):
     return f_pickle.loads(info._function_bytes)
 
+def __get_is_in_place_computing(info: _TaskInfo):
+    return info._is_in_place_computing
 
 def _generator_from_cursor(cursor):
     deserialize = c_pickle.loads
@@ -174,7 +213,7 @@ def _generator_from_cursor(cursor):
 def do_map(p: _UnaryProcess):
     _mapper = __get_function(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     serialize = c_pickle.dumps
     deserialize = c_pickle.loads
@@ -203,7 +242,7 @@ def do_map(p: _UnaryProcess):
 def do_map_partitions(p: _UnaryProcess):
     _mapper = __get_function(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -220,8 +259,9 @@ def do_map_partitions(p: _UnaryProcess):
 
 def do_map_values(p: _UnaryProcess):
     _mapper = __get_function(p._info)
+    is_in_place_computing = __get_is_in_place_computing(p._info)
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, True)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -239,9 +279,10 @@ def do_map_values(p: _UnaryProcess):
 
 def do_join(p: _BinaryProcess):
     _joiner = __get_function(p._info)
+    is_in_place_computing = __get_is_in_place_computing(p._info)
     left_op = p._left
     right_op = p._right
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, left_op._partition)
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
     right_env = right_op.as_env()
     left_env = left_op.as_env()
     dst_env = rtn.as_env(write=True)
@@ -249,16 +290,18 @@ def do_join(p: _BinaryProcess):
     deserialize = c_pickle.loads
     with left_env.begin() as left_txn:
         with right_env.begin() as right_txn:
-            with dst_env.begin(write=True) as dest_txn:
+            with dst_env.begin(write=True) as dst_txn:
                 cursor = left_txn.cursor()
                 for k_bytes, v1_bytes in cursor:
                     v2_bytes = right_txn.get(k_bytes)
                     if v2_bytes is None:
+                        if is_in_place_computing:
+                            dst_txn.delete(k_bytes)
                         continue
                     v1 = deserialize(v1_bytes)
                     v2 = deserialize(v2_bytes)
                     v3 = _joiner(v1, v2)
-                    dest_txn.put(k_bytes, serialize(v3))
+                    dst_txn.put(k_bytes, serialize(v3))
     return rtn
 
 
@@ -281,7 +324,7 @@ def do_reduce(p: _UnaryProcess):
 
 def do_glom(p: _UnaryProcess):
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     serialize = c_pickle.dumps
@@ -301,7 +344,7 @@ def do_glom(p: _UnaryProcess):
 
 def do_sample(p: _UnaryProcess):
     op = p._operand
-    rtn = _Operand(StoreType.IN_MEMORY.value, p._info._task_id, p._info._function_id, op._partition)
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
     source_env = op.as_env()
     dst_env = rtn.as_env(write=True)
     deserialize = c_pickle.loads
@@ -316,19 +359,158 @@ def do_sample(p: _UnaryProcess):
                     dst_txn.put(k, v)
     return rtn
 
+def do_subtract_by_key(p: _BinaryProcess):
+    is_in_place_computing = __get_is_in_place_computing(p._info)
+    left_op = p._left
+    right_op = p._right
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
+    right_env = right_op.as_env()
+    left_env = left_op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with left_env.begin() as left_txn:
+        with right_env.begin() as right_txn:
+            with dst_env.begin(write=True) as dst_txn:
+                cursor = left_txn.cursor()
+                for k_bytes, left_v_bytes in cursor:
+                    right_v_bytes = right_txn.get(k_bytes)
+                    if right_v_bytes is None:
+                        if not is_in_place_computing:       # add to new table (not in-place)
+                            dst_txn.put(k_bytes, left_v_bytes)
+                    else:                                   # delete in existing table (in-place)
+                        if is_in_place_computing:
+                            dst_txn.delete(k_bytes)
+                cursor.close()
+    return rtn
 
+def do_filter(p: _UnaryProcess):
+    _func = __get_function(p._info)
+    is_in_place_computing = __get_is_in_place_computing(p._info)
+    op = p._operand
+    rtn = __create_output_operand(op, p._info, p._process_conf, True)
+    source_env = op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with source_env.begin() as source_txn:
+        with dst_env.begin(write=True) as dst_txn:
+            cursor = source_txn.cursor()
+            for k_bytes, v_bytes in cursor:
+                k = deserialize(k_bytes)
+                v = deserialize(v_bytes)
+                if _func(k, v):
+                    if not is_in_place_computing:
+                        dst_txn.put(k_bytes, v_bytes)
+                else:
+                    if is_in_place_computing:
+                        dst_txn.delete(k_bytes)
+            cursor.close()
+    return rtn
+
+def do_union(p: _BinaryProcess):
+    _func = __get_function(p._info)
+    is_in_place_computing = __get_is_in_place_computing(p._info)
+    left_op = p._left
+    right_op = p._right
+    rtn = __create_output_operand(left_op, p._info, p._process_conf, True)
+    right_env = right_op.as_env()
+    left_env = left_op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with left_env.begin() as left_txn:
+        with right_env.begin() as right_txn:
+            with dst_env.begin(write=True) as dst_txn:
+                # process left op
+                left_cursor = left_txn.cursor()
+                for k_bytes, left_v_bytes in left_cursor:
+                    right_v_bytes = right_txn.get(k_bytes)
+                    if right_v_bytes is None:
+                        if not is_in_place_computing:                           # add left-only to new table
+                            dst_txn.put(k_bytes, left_v_bytes)
+                    else:
+                        left_v = deserialize(left_v_bytes)
+                        right_v = deserialize(right_v_bytes)
+                        final_v = _func(left_v, right_v)
+                        dst_txn.put(k_bytes, serialize(final_v))
+                left_cursor.close()
+
+                # process right op
+                right_cursor = right_txn.cursor()
+                for k_bytes, right_v_bytes in right_cursor:
+                    final_v_bytes = dst_txn.get(k_bytes)
+                    if final_v_bytes is None:
+                        dst_txn.put(k_bytes, right_v_bytes)
+                right_cursor.close()
+    return rtn
+
+def do_flat_map(p: _UnaryProcess):
+    _func = __get_function(p._info)
+    op = p._operand
+    rtn = __create_output_operand(op, p._info, p._process_conf, False)
+    source_env = op.as_env()
+    dst_env = rtn.as_env(write=True)
+    serialize = c_pickle.dumps
+    deserialize = c_pickle.loads
+    with source_env.begin() as source_txn:
+        with dst_env.begin(write=True) as dst_txn:
+            cursor = source_txn.cursor()
+            for k_bytes, v_bytes in cursor:
+                k = deserialize(k_bytes)
+                v = deserialize(v_bytes)
+                map_result = _func(k, v)
+                for result_k, result_v in map_result:
+                    dst_txn.put(serialize(result_k), serialize(result_v))
+            cursor.close()
+    return rtn
+
+def __get_in_place_computing_from_task_info(task_info):
+    return task_info._is_in_place_computing
+
+def __create_output_operand(src_op, task_info, process_conf, is_in_place_computing_effective):
+    if is_in_place_computing_effective:
+        if __get_in_place_computing_from_task_info(task_info):
+            return src_op
+
+    naming_policy = process_conf._naming_policy
+    if naming_policy == 'ITER_AWARE':
+        storage_name = DELIMETER.join([src_op._namespace, src_op._name, src_op._type])
+        name_ba = bytearray(storage_name.encode())
+        name_ba.extend(DELIMETER_ENCODED)
+        name_ba.extend(task_info._function_bytes)
+
+        name = hashlib.md5(name_ba).hexdigest()
+    else:
+        name = task_info._function_id
+
+    return _Operand(StoreType.IN_MEMORY.value, task_info._task_id, name, src_op._partition)
+
+# todo: abstraction
 class _DTable(object):
 
-    def __init__(self, _type, namespace, name, partitions):
+    def __init__(self, _type, namespace, name, partitions=1, in_place_computing=False):
         self._type = _type
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
         self.schema = {}
+        self._in_place_computing = in_place_computing
 
     def __str__(self):
-        return "type: {}, namespace: {}, name: {}, partitions: {}".format(self._type, self._namespace, self._name,
-                                                                          self._partitions)
+        return "storage_type: {}, namespace: {}, name: {}, partitions: {}, in_place_computing: {}".format(self._type, self._namespace, self._name,
+                                                                          self._partitions, self._in_place_computing)
+
+    '''
+    Getter / Setter
+    '''
+    def get_in_place_computing(self):
+        return self._in_place_computing
+
+    def set_in_place_computing(self, is_in_place_computing):
+        self._in_place_computing = is_in_place_computing
+        return self
+
 
     def _get_env_for_partition(self, p: int, write=False):
         return _get_env(self._type, self._namespace, self._name, str(p), write=write)
@@ -422,7 +604,7 @@ class _DTable(object):
         import shutil
         shutil.rmtree(_path)
 
-    def collect(self, use_serialize=True):
+    def collect(self, min_chunk_size=0, use_serialize=True):
         iterators = []
         for p in range(self._partitions):
             env = self._get_env_for_partition(p)
@@ -436,6 +618,29 @@ class _DTable(object):
         dup = Standalone.get_instance().table(name, namespace, partition, persistent=True)
         dup.put_all(self.collect(use_serialize=use_serialize), use_serialize=use_serialize)
         return dup
+
+    def take(self, n, keysOnly=False, use_serialize=True):
+        if n <= 0:
+            n = 1
+        it = self.collect(use_serialize=use_serialize)
+        rtn = list()
+        i = 0
+        for item in it:
+            if keysOnly:
+                rtn.append(item[0])
+            else:
+                rtn.append(item)
+            i += 1
+            if i == n:
+                break
+        return rtn
+
+    def first(self, keysOnly=False, use_serialize=True):
+        resp = self.take(1, keysOnly=keysOnly, use_serialize=use_serialize)
+        if resp:
+            return resp[0]
+        else:
+            return None
 
     @staticmethod
     def _merge(cursors, use_serialize=True):
@@ -467,13 +672,18 @@ class _DTable(object):
         func_id = str(uuid.uuid1())
         return func_id, pickled_function
 
+    @staticmethod
+    def _repartition(dtable, partition_num, repartition_policy=None):
+        return dtable.save_as(str(uuid.uuid1()), Standalone.get_instance().job_id, partition_num)
+
     def _submit_to_pool(self, func, _do_func):
         func_id, pickled_function = self._serialize_and_hash_func(func)
-        _task_info = _TaskInfo(Standalone.get_instance().job_id, func_id, pickled_function)
+        _task_info = _TaskInfo(Standalone.get_instance().job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
         for p in range(self._partitions):
             _op = _Operand(self._type, self._namespace, self._name, p)
-            _p = _UnaryProcess(_task_info, _op)
+            _p_conf = _ProcessConf.get_default()
+            _p = _UnaryProcess(_task_info, _op, _p_conf)
             results.append(Standalone.get_instance().pool.submit(_do_func, _p))
         return results
 
@@ -521,12 +731,13 @@ class _DTable(object):
                 return self.join(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions),
                                  func)
         func_id, pickled_function = self._serialize_and_hash_func(func)
-        _task_info = _TaskInfo(_job_id, func_id, pickled_function)
+        _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
         for p in range(self._partitions):
             _left = _Operand(self._type, self._namespace, self._name, p)
             _right = _Operand(other._type, other._namespace, other._name, p)
-            _p = _BinaryProcess(_task_info, _left, _right)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
             results.append(Standalone.get_instance().pool.submit(do_join, _p))
         for r in results:
             result = r.result()
@@ -538,6 +749,56 @@ class _DTable(object):
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def subtractByKey(self, other):
+        _job_id = Standalone.get_instance().job_id
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).subtractByKey(other)
+            else:
+                return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions))
+        func_id, pickled_function = self._serialize_and_hash_func(self._namespace + '.' + self._name + '-' + other._namespace + '.' + other._name)
+        _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
+        results = []
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
+            results.append(Standalone.get_instance().pool.submit(do_subtract_by_key, _p))
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def filter(self, func):
+        results = self._submit_to_pool(func, do_filter)
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def union(self, other, func=lambda v1, v2 : v1):
+        _job_id = Standalone.get_instance().job_id
+        if other._partitions != self._partitions:
+            if other.count() > self.count():
+                return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).union(other,
+                                                                                                  func)
+            else:
+                return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions),
+                                 func)
+        func_id, pickled_function = self._serialize_and_hash_func(func)
+        _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
+        results = []
+        for p in range(self._partitions):
+            _left = _Operand(self._type, self._namespace, self._name, p)
+            _right = _Operand(other._type, other._namespace, other._name, p)
+            _p_conf = _ProcessConf.get_default()
+            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
+            results.append(Standalone.get_instance().pool.submit(do_union, _p))
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
 
+    def flatMap(self, func):
+        results = self._submit_to_pool(func, do_flat_map)
+        for r in results:
+            result = r.result()
+        return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)

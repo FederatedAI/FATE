@@ -110,7 +110,7 @@ class Splitter(object):
 
         return tree_node_splitinfo
 
-    def find_split_single_histogram_host(self, histogram, valid_features):
+    def find_split_single_histogram_host(self, histogram, valid_features, sitename):
         node_splitinfo = []
         node_grad_hess = []
         for fid in range(len(histogram)):
@@ -132,7 +132,7 @@ class Splitter(object):
                 node_cnt_r = node_cnt - node_cnt_l
 
                 if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
-                    splitinfo = SplitInfo(sitename=consts.HOST, best_fid=fid,
+                    splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
                                           best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l)
 
                     node_splitinfo.append(splitinfo)
@@ -140,11 +140,11 @@ class Splitter(object):
 
         return node_splitinfo, node_grad_hess
 
-    def find_split_host(self, histograms, valid_features, partitions=1):
+    def find_split_host(self, histograms, valid_features, partitions=1, sitename=consts.HOST):
         LOGGER.info("splitter find split of host")
         histogram_table = eggroll.parallelize(histograms, include_key=False, partition=partitions)
         host_splitinfo_table = histogram_table.mapValues(lambda hist:
-                                                         self.find_split_single_histogram_host(hist, valid_features))
+                                                         self.find_split_single_histogram_host(hist, valid_features, sitename))
 
         tree_node_splitinfo = []
         encrypted_node_grad_hess = []

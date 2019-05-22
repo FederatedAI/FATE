@@ -3,13 +3,13 @@ import os,sys
 import json
 
 partyId="10000"
-exchangeip="172.16.153.113"
-fip="172.16.153.63"
-tmip="172.16.153.63"
-rip="172.16.153.121"
-pip="172.16.153.88"
-sip1='0.0.0.0'
-sip2='0.0.0.0'
+exchangeip="0.0.0.0"
+fip="0.0.0.0"
+tmip="0.0.0.0"
+rip="0.0.0.0"
+pip="0.0.0.0"
+sip1="0.0.0.0"
+sip2="0.0.0.0"
 
 
 def get_new_json(module_name,filepath):
@@ -26,6 +26,7 @@ def get_new_json(module_name,filepath):
 			a["servers"]["roll"]={"host":rip,"port": 8011}
 			a["servers"]["federation"]={"host":fip,"port": 9394}
 			a["servers"]["proxy"]={"host":pip,"port": 9370}
+			a["servers"]["manager"]={"host":tmip,"grpc.port": 9360,"http.port": 9380}
 			a["servers"]["servings"]=["{}:8001".format(sip1),"{}:8001".format(sip2)]
 			a["party_id"]=partyId
 		else:

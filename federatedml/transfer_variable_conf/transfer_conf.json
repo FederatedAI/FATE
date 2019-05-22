@@ -575,7 +575,7 @@
         "host"
       ]
     },
-    "host_iv_threshold": {
+    "host_select_cols": {
       "src": "host",
       "dst": [
         "guest"
@@ -607,6 +607,21 @@
       "src": "guest",
       "dst": [
           "host"
+      ]
+    }
+  },
+  "OneVsRestTransferVariable": {
+    "host_classes": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "aggregate_classes":{
+      "src": "guest",
+      "dst": [
+        "host",
+        "arbiter"
       ]
     }
   }

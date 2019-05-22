@@ -12,15 +12,15 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 **1.1. Offline Module**
 
-| Module Name         | Port of module | Method of deployment                                      | Module function                                              |
-| ------------------- | -------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| Federation          | 9394           | Single node deployment in one party                       | Federation module handles task data communication (i.e. 'federation') among Federated |
-| Meta-Service        | 8590           | Single node deployment in one party                       | Meta-Service module stores metadata required by this arch.   |
-| Proxy               | 9370           | Single node deployment in one party                       | Proxy (Exchange) is communication channel among parties.     |
-| Roll                | 8011           | Single node deployment in one party                       | Roll module is responsible for accepting distributed job submission, job / data schedule and result aggregations. |
-| Egg-Storage-Service | 7778           | Single node deployment in one party                       | Storage-Service module handles data storage on that single node. |
-| Egg-Processor       | 7888           | Single node deployment in one party                       | Processor is used to execute user-defined functions.         |
-| Task-Manager        | 9360/9380      | Single node deployment in one party(Current version only) | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
+| Module Name         | Port of module | Method of deployment                                | Module function                                              |
+| ------------------- | -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| Federation          | 9394           | Single node deployment in one party                 | Federation module handles task data communication (i.e. 'federation') among Federated |
+| Meta-Service        | 8590           | Single node deployment in one party                 | Meta-Service module stores metadata required by this arch.   |
+| Proxy               | 9370           | Single node deployment in one party                 | Proxy (Exchange) is communication channel among parties.     |
+| Roll                | 8011           | Single node deployment in one party                 | Roll module is responsible for accepting distributed job submission, job / data schedule and result aggregations. |
+| Storage-Service-cxx | 7778           | Party Multi-node deployment                         | Storage-Service module handles data storage on that single node. |
+| Egg-Processor       | 7888           | Party Multi-node deployment                         | Processor is used to execute user-defined functions.         |
+| Task-Manager        | 9360/9380      | Single node deployment in one party current version | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
 
 ### **1.2. Online Module**
 
@@ -71,8 +71,8 @@ The following configuration is a one-sided server configuration information. If 
 | **Quantity**           | 1 or more than 1 (according to the actual server allocation module provided) |
 | **Configuration**      | 16 core / 32G memory / 300G hard disk / 50M bandwidth        |
 | **Operating System**   | Version: CentOS Linux release 7.2                            |
-| **Dependency Package** | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl (They can be installed using the initialization script env.sh) |
-| **Users**              | User: app owner:apps                                         |
+| **Dependency Package** | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev (They can be installed using the initialization script env.sh) |
+| **Users**              | User: app owner:apps (app user can sudo su root without password) |
 | **File System**        | 1. The 300G hard disk is mounted to the /data directory.                                                                                2. Created /data/projects directory, projects directory belongs to app:apps |
 
 ### **3.2. Software Version Requirements**
@@ -120,7 +120,7 @@ fate-base
 |   |-- virtualenv-16.1.0-py2.py3-none-any.whl
 |  `-- wheel-0.32.3-py2.py3-none-any.whl
 ```
-According to the above directory structure, the required packages are placed in the corresponding directory, and the dependencies required by Python are given in the form of the requirements.txt file, and the list of dependent packages is downloaded and placed in the pip-dependencies directory and requirements. txt can be juxtaposed.
+According to the above directory structure, the software packages and files needed by Python are placed in the corresponding directory. The dependency packages required by Python are given in the requirements. TXT file as a list. After downloading the dependency packages list, it can be placed in the pip-dependencies directory side by side with requirements. txt. The requirements.txt file can be obtained from [FATE/requirements.txt](https://github.com/WeBankFinTech/FATE/blob/master/requirements.txt) .
 
 ### **3.4. Software environment initialization**
 
@@ -128,9 +128,19 @@ After uploading, you can put the above-mentioned fate-base directory with depend
 
 ```
 cd /data/app
-tar –xf fate-base .tar
+tar –xf fate-base.tar
 cd fate 
 ```
+
+If there is no app user, you need to create an app user:
+
+```
+groupadd -g 6000 apps
+useradd -s /bin/sh -g apps -d /home/app app
+passwd app
+```
+
+After the creation is completed, modify the app user password (according to actual needs)
 
 Initialize the server and execute it under **root user**:
 
@@ -158,7 +168,27 @@ Check if mysql8.0 is installed. If it is not installed, execute the install_mysq
 sh install_mysql.sh 
 ```
 
-After installing mysql, **change the mysql password to Fate123#$** (modified according to actual needs)
+After installing mysql, **change the mysql password to "Fate123#$" and create database user "fate"** (modified according to actual needs):
+
+```
+$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
+Enter password:(please input the original password)
+>set password='Fate123#$';
+>CREATE USER 'fate'@'localhost' IDENTIFIED BY 'Fate123#$';
+>GRANT ALL ON *.* TO 'fate'@'localhost';
+>flush privileges;
+```
+
+After installing mysql, you need to use the following statement on the node where MySQL is installed to empower all IP in the party (replacing IP with actual ip):
+
+```
+$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate -p –S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
+Enter password: Fate123#$
+>CREATE USER 'fate'@'$ip' IDENTIFIED BY 'Fate123#$';
+>GRANT ALL ON *.* TO 'fate'@'$ip';
+>flush privileges;
+```
+
 After the check is completed, return to the execution node for project deployment.
 
 
@@ -185,6 +215,32 @@ cd FATE/arch
 mvn clean package -DskipTests
 ```
 
+```
+cd FATE/
+git submodule update --init --recursive
+```
+
+*<u>Note:This step "git submodule update --init --recursive" takes a long time</u>*
+
+You can also instead of "git submodule update --init --recursive"  by  downloade the list of  [glog-0.4.0](https://github.com/google/glog/tree/96a2f23dca4cc7180821ca5f32e526314395d26a)
+
+、[grpc-1.19.1](https://github.com/grpc/grpc/tree/109c570727c3089fef655edcdd0dd02cc5958010)、[boost-1.68.0](https://github.com/boostorg/boost/tree/8f9a1cf1d15d262e09c16a305034d8bc1e39aca2)、[lmdb-0.9.22](https://github.com/LMDB/lmdb/tree/2a5eaad6919ce6941dec4f0d5cce370707a00ba7)、[protobuf-3.6.1](https://github.com/protocolbuffers/protobuf/tree/ca21b28287871660057a2b8bada2c044b6b3075d) yourself if conditions permit.
+
+nd put them in the corresponding directory as the following directory tree: FATE/arch/eggroll/storage-service-cxx/third_party:
+
+```
+third_party
+|--- boost
+|--- glog
+|--- grpc
+|--- lmdb
+|   `- libraries
+|   |  `- liblmdb 
+|--- protobuf
+```
+
+
+
 ### **4.3. Modify Configuration File**
 
 Go to the FATE/cluster-deploy/scripts directory in the FATE directory and modify the configuration file configurations.sh.
@@ -193,16 +249,20 @@ The configuration file configurations.sh instructions:
 | Configuration item | Configuration item meaning                           | Configuration Item Value                                     | Explanation                                                  |
 | ------------------ | ---------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | user               | Server operation username                            | Default is app                                               | Use the default value                                        |
-| dir                | Fate installation path                               | Default is  /data/projects/fate y                            | Use the default value                                        |
-| mysqldir           | Mysql installation directory                         | Default is  /data/projects/common/mysql/mysql-8.0 "          | Mysql installation path can use the default value            |
+| dir                | Fate installation path                               | Default is  /data/projects/fate                              | Use the default value                                        |
+| mysqldir           | Mysql installation directory                         | Default is  /data/projects/common/mysql/mysql-8.0            | Mysql installation path can use the default value            |
 | javadir            | JAVA_HOME                                            | Default is  /data/projects/common/jdk/jdk1.8                 | Jdk installation path can use the default value              |
 | partylist          | Party.id array                                       | Each array element represents a partyid                      | Modify according to partyid                                  |
 | JDBC0              | Corresponding to the jdbc configuration of the party | The corresponding jdbc configuration for each party: from left to right is ip dbname username password (this user needs to have create database permission) | If there are multiple parties, the order is JDBC0, JDBC1...the order corresponds to the partid order. |
-| roleiplist         | List of module servers                               | The ip of the federation, meta-service, proxy, and roll modules is shown from left to right. | If there are multiple parties, they are placed behind the array. |
-| egglist0           | Egg role list                                        | Represents a list of servers included in each party (current version) | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partid |
+| iplist             | A servers list of each party                         | Represents a list of server IPS contained in each party (except exchange roles) | All parties involved in the IP are placed in this list, repeat the IP once.All parties involved in the IP are placed in this list, repeat the IP once. |
+| fedlist0           | Federation role IP list                              | Represents a list of servers with Federation roles in the party (only one in the current version) | If there are more than one party, the order is fedlist0, fedlist1... Sequence corresponds to partyid |
+| meta0              | Meta-Service role  IP list                           | Represents a list of servers with Meta-Service roles in the party (only one in the current version) | If there are more than one party, the order is meta0, meta1... Sequence corresponds to partyid |
+| proxy0             | Proxy role IP list                                   | Represents a list of servers with Proxy roles in the party (only one in the current version) | If there are more than one party, the order is proxy0, proxy1... Sequence corresponds to partyid |
+| roll0              | Roll role IP list                                    | Represents a list of servers with Roll roles in the part (only one in the current version) | If there are more than one party, the order is roll0, roll1... Sequence corresponds to partyid |
+| egglist0           | Egg role list                                        | Represents a list of servers included in each party          | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partyid |
 | exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
-| tmipList           | The ip list of the Task-manager role                 | The ip of the Task-manager role, the order corresponds to the partyid in the partylist | Since the Task-manager role in the current version is deployed in a single node in the party, the number of ips is the same as the partyid. |
-| serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partid |
+| tmlist0            | The ip list of the Task-manager role                 | Represents a list of servers with Roll roles in the party (only one in the current version) | If there are more than one party, the order is tmlist0, tmlist1... Sequence corresponds to partyid |
+| serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
 
 *<u>Note: tmipList and serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
 
@@ -217,29 +277,42 @@ Assume that each configuration is represented by the following code relationship
 | A.F-ip              | Indicates the ip of the node where the federation module of partyA is located. |
 | A.P-ip              | Indicates the ip of the node where partyA's Proxy module is located. |
 | A.R-ip              | Indicates the ip of the node where the party module's Roll module is located. |
-| A.TM-ipE-ip         | Indicates the server ipexchange where the partyA's Task-manager is located. |
+| A.TM-ip             | Indicates the server ipexchange where the partyA's Task-manager is located. |
 | A.S-ip              | Indicates the server ip of the partyA's Serving-server. If there are multiple, the number is incremented. |
 | A.E-ip              | Indicates the server ip of partyA's Egg. If there are more than one, add the number increment. |
 | exchangeip          | Exchange server ip                                           |
 
-The role code representation in PartyB is similar to the above description.
+The role code representation in partyB is similar to the above description.
 
 *<u>Note: The above ip is based on the actual server ip assigned by each module. When the module is assigned to the same server, the ip is the same. Since the Egg-Storage-Service module and the Egg-Processor module are deployed at all nodes in the party, no special instructions are given.</u>*
 
 According to the above table, the configuration.sh configuration file can be modified like this:
 
-**user=app** (server user, default)
-**dir=/data/projects/fate** (absolute path to the fate directory, default)
-**mysqldir=/data/projects/common/mysql/mysql-8.0** (mysql install absolute path, default)
-**javadir=/data/projects/common/jdk/jdk1.8** (absolute path for java installation, default)
-**partylist=( partyA.id partyB.id)** (representing partyA partyB, respectively)
-**JDBC0=(A.ip A.dbname A.user A.password)** (party j jdbc configuration)
-**JDBC1=( B.ip B.dbname B.user B.password)** (partyb jdbc configuration)
-
-**roleiplist=( A.F-ip A.MS-ip A.P-ip A.R-ip B.F-ip B.MS-ip B.P-ip B.R-ip)** (each module in partyA and partyB is ip)
-**egglist0=( A.E1-ip A.E2-ip A.E3-ip...)** (a list of servers in which the egg role is installed in partyA, ie partyA contains a list of servers)
-**egglist1=(B.E1-ip B.E2-ip B.E3-ip...)** (a list of servers in which the egg role is installed in partyB, ie partyB contains a list of servers)
-**exchangeip=exchangeip** (exchange server ip, if the exchange role does not exist: the default deployment is empty when bilateral deployment; fill the other server ip when deploying unilaterally)
+```
+user=app 
+dir=/data/projects/fate 
+mysqldir=/data/projects/common/mysql/mysql-8.0 
+javadir=/data/projects/common/jdk/jdk1.8 
+partylist=(partyA.id partyB.id) 
+JDBC0=(A.MS-ip A.dbname A.user A.password) 
+JDBC1=(B.MS-ip B.dbname B.user B.password) 
+iplist=(A.F-ip A.MS-ip A.P-ip A.R-ip B.F-ip B.MS-ip B.P-ip B.R-ip) 
+fedlist0=(A.F-ip)
+fedlist1=(B.F-ip)
+meta0=(A.MS-ip)
+meta1=(B.MS-ip)
+proxy0=(A.P-ip)
+proxy1=(B.P-ip)
+roll0=(A.R-ip)
+roll1=(B.R-ip)
+egglist0=(A.E1-ip A.E2-ip A.E3-ip...)
+egglist1=(B.E1-ip B.E2-ip B.E3-ip...) 
+tmlist0=(A.TM-ip)
+tmlist1=(B.TM-ip)
+serving0=(A.S1-ip A.S2-ip)
+serving1=(B.S1-ip B.S2-ip)
+exchangeip=exchangeip 
+```
 
 *<u>Note: According to the above configuration method, you can modify it according to the actual situation.</u>*
 
@@ -250,7 +323,7 @@ cd /data/projects/FATE/cluster-deploy/scripts
 bash auto-packaging.sh
 ```
 
-This script file puts each module and configuration file into the FATE/cluster-deploy/example-dir-tree directory. You can view the directory and files of each module in this directory.
+This script file puts each module and configuration file into the FATE/cluster-deploy/example-dir-tree directory. You can view the directory and files of each module in this directory as following example-dir-tree:
 
 ```
 example-dir-tree
@@ -296,6 +369,7 @@ example-dir-tree
 |    |  |- conf/
 |    |  |- processor/
 |    |  |- task_manager/
+|    |  |- eggroll/
 |    |
 |    |- federatedml/
 |    |- examples/
@@ -323,6 +397,22 @@ example-dir-tree
 |    |- fate-storage-service.jar -> fate-storage-service-0.2.jar
 |    |- service.sh
 |
+|--- storage-service-cxx
+|    |- logs/
+|    |- Makefile
+|    |- proto
+|    |  |- storage.proto
+|    |
+|    |- src/
+|    |- third_party
+|    |  |- boost/
+|    |  |- glog/
+|    |  |- grpc/
+|    |  |- lmdb/
+|    |  |- protobuf/
+|    |
+|    |- storage-service.cc
+|
 |--- serving-server
 |    |- conf/
 |    |  |- log4j2.properties
@@ -342,6 +432,7 @@ bash auto-deploy.sh
 ```
 
 
+
 ## 5.     Configuration Check
 
 After the execution, you can check whether the configuration of the corresponding module is accurate on each target server. Users can find a detailed configuration document in [cluster-deploy/doc](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc) .
@@ -350,22 +441,75 @@ After the execution, you can check whether the configuration of the correspondin
 
 ## 6.     Start And Stop Service
 
-Use ssh to log in to each node **app user**. Go to the /data/projects/fate directory and run the following command to start all services:
+### 6.1. Startup service
+
+Use ssh to log in to each node with **app user**. Go to the /data/projects/fate directory and run the following command to start all services:
 
 ```
+cd  /data/projects/fate
 sh services.sh all start
 ```
+
+If the server is a serving-server node, you also need:
+
+```
+cd /data/projects/fate/serving-server
+sh service.sh start
+```
+
+If the server is a task_manager node, you also need:
+
+```
+cd /data/projects/fate/python/arch/task_manager
+sh service.sh start
+```
+
+*<u>Note: If the target environment cannot install the c++ environment, you can replace storage-serivice-cxx in the services.sh file with storage-serivice and restart it. You can use the Java version of storage-service module.</u>*
+
+### 6.2. Check service status
 
 Check whether each service process starts successfully:
 
 ```
+cd  /data/projects/fate
 sh services.sh all status
 ```
+
+If the server is a serving-server node, you also need:
+
+```
+cd /data/projects/fate/serving-server
+sh service.sh status
+```
+
+If the server is a task_manager node, you also need:
+
+```
+cd /data/projects/fate/python/arch/task_manager
+sh service.sh status
+```
+
+### 6.3. Shutdown service
 
 To turn off the service, use:
 
 ```
+cd  /data/projects/fate
 sh services.sh all stop
+```
+
+If the server is a serving-server node, you also need:
+
+```
+cd /data/projects/fate/serving-server
+sh service.sh stop
+```
+
+If the server is a task_manager node, you also need:
+
+```
+cd /data/projects/fate/python/arch/task_manager
+sh service.sh stop
 ```
 
 *<u>Note: If there is a start and stop operation for a single service, replace all in the above command with the corresponding module name.</u>*
@@ -385,6 +529,8 @@ cd $PYTHONPATH
 sh ./federatedml/test/run_test.sh
 ```
 
+See the "OK" field to indicate that the operation is successful.In other cases, if FAILED or stuck, it means failure, the program should produce results within one minute.
+
 ### **7.2. Toy_example Deployment Verification**
 
 **Stand-alone version:** 
@@ -398,7 +544,7 @@ cd /data/projects/fate/python/examples/toy_example/
 sh run_toy_examples_standalone.sh
 ```
 
-See the OK field to indicate that the operation is successful.In other cases, if FAILED or stuck, it means failure, the program should produce results within one minute.
+See the "OK" field to indicate that the operation is successful.In other cases, if FAILED or stuck, it means failure, the program should produce results within one minute.
 
 **Distributed version:**
 Start the virtualized environment in host and guest respectively. Run run_toy_example_cluster.sh under /data/projects/fate/python/examples/toy_examples.
@@ -412,7 +558,7 @@ cd /data/projects/fate/python/examples/toy_example/
 In the host party, running:
 
 ```
- sh run_toy_example_cluster.sh host $jobid guest_parityid host_partyid
+sh run_toy_example_cluster.sh host $jobid guest_parityid host_partyid
 ```
 
 In the guest party, running: 
@@ -421,6 +567,50 @@ In the guest party, running:
 sh run_toy_example_cluster.sh guest $jobid guest_parityid host_partyid
 ```
 
-See the OK field to indicate that the operation is successful.
+See the "OK" field to indicate that the operation is successful.
 In other cases, if FAILED or stuck, it means failure, the program should produce results within one minute.
 
+### 7.3. Minimization testing
+
+Start the virtualization environment in host and guest respectively and run run under / data / projects / fate / Python / examples / min_test_task,the min_test_task folder needs to be downloaded from [examples /min_test_task](https://github.com/WeBankFinTech/FATE/tree/feature-0.3-min_test_task/examples/min_test_task) :
+
+```
+export PYTHONPATH=/data/projects/fate/python
+source/data/projects/fate/venv/bin/activate
+cd/data/projects/fate/python/examples/min_test_task/
+mkdir test
+```
+
+**Fast mode**
+
+In the task_manager node of host part, running:
+
+```
+sh run.sh host fast 
+```
+
+In the task_manager node of guest part, running: 
+
+```
+sh run.sh guest fast 
+```
+
+Wait a few minutes, see the result show "success" field to indicate that the operation is successful.
+In other cases, if FAILED or stuck, it means failure.
+
+**Normal mode**
+
+In the task_manager node of host part, running:
+
+```
+sh run.sh host normal 
+```
+
+In the task_manager node of guest part, running: 
+
+```
+sh run.sh guest normal 
+```
+
+Waiting for ten minutes, see the result show "success" field to indicate that the operation is successful.
+In other cases, if FAILED or stuck, it means failure.

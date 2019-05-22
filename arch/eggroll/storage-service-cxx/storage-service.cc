@@ -50,6 +50,7 @@ void RunServer(int port, string dataDir) {
         ServerBuilder builder;
         builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
         builder.RegisterService(&lmdbServicer);
+        builder.SetMaxReceiveMessageSize(32 << 20);
 
         std::unique_ptr <Server> server(builder.BuildAndStart());
         cout << "Server listening on " << serverAddress << ", dataDir: " << dataDir << endl;

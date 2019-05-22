@@ -142,6 +142,7 @@ class HomoLRGuest(BaseLogisticRegression):
 
         self.show_meta()
         self.show_model()
+        LOGGER.debug("in fit self coef: {}".format(self.coef_))
         return data_instances
 
     def __init_parameters(self):
@@ -174,6 +175,7 @@ class HomoLRGuest(BaseLogisticRegression):
         return w
 
     def predict(self, data_instances, predict_param):
+        LOGGER.debug("coef: {}, intercept: {}".format(self.coef_, self.intercept_))
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
         pred_label = self.classified(pred_prob, predict_param.threshold)

@@ -66,7 +66,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0,
+            "work_mode": 1,
             "need_sample": false,
             "need_feature_selection": false,
             "need_intersect": true,

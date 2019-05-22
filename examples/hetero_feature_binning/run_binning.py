@@ -29,8 +29,9 @@ data_path = home_dir + '/../data'
 load_file_program = home_dir + '/../load_file/load_file.py'
 
 # data_set = 'breast'
-data_set = 'default_credit'
+# data_set = 'default_credit'
 # data_set = 'give_credit'
+data_set = 'breast_onehot'
 
 mode = 'fit'
 
@@ -109,10 +110,13 @@ if __name__ == '__main__':
     work_path = home_dir + '/../../workflow/hetero_binning_workflow/' \
                            'hetero_binning_{}_workflow.py'.format(role)
 
-    subprocess.Popen(["python",
-                      work_path,
-                      "-c",
-                      role_config_path,
-                      "-j",
-                      jobid
-                      ])
+    workflow_process = subprocess.Popen(["python",
+                                         work_path,
+                                         "-c",
+                                         role_config_path,
+                                         "-j",
+                                         jobid
+                                         ])
+
+    returncode = workflow_process.wait()
+    print("Load file return code : {}".format(returncode))

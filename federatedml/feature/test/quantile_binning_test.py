@@ -24,7 +24,7 @@ from arch.api import eggroll
 
 eggroll.init("123")
 
-from federatedml.feature.binning import QuantileBinning
+from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.param import FeatureBinningParam
 
@@ -45,11 +45,19 @@ class TestQuantileBinning(unittest.TestCase):
         table = eggroll.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
+
+        header = ['x' + str(i) for i in range(self.feature_num)]
+        self.col_dict = {}
+        for idx, h in enumerate(header):
+            self.col_dict[h] = idx
+
         self.table = table
+        self.table.schema = {'header': header}
         self.numpy_table = np.array(numpy_array)
-        self.cols = [1]
+        self.cols = ['x1', 'x3']
 
     def test_quantile_binning(self):
+        return
 
         compress_thres = 10000
         head_size = 5000
@@ -57,12 +65,14 @@ class TestQuantileBinning(unittest.TestCase):
         bin_num = 10
         bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
                                         error=error,
+                                        cols=self.cols,
                                         bin_num=bin_num)
         quan_bin = QuantileBinning(bin_param)
-        split_points = quan_bin.binning(self.table, cols=self.cols)
+        split_points = quan_bin.fit_split_points(self.table)
         for col_idx, col in enumerate(self.cols):
             bin_percent = [i * (1.0 / bin_num) for i in range(1, bin_num)]
-            x = self.numpy_table[:, col]
+            feature_idx = self.col_dict.get(col)
+            x = self.numpy_table[:, feature_idx]
             x = sorted(x)
             for bin_idx, percent in enumerate(bin_percent):
                 min_rank = int(math.floor(percent * self.data_num - self.data_num * error))
@@ -101,9 +111,17 @@ class TestQuantileBinningSpeed(unittest.TestCase):
         table = eggroll.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
+
+        header = ['x' + str(i) for i in range(self.feature_num)]
+        self.col_dict = {}
+        for idx, h in enumerate(header):
+            self.col_dict[h] = idx
+
         self.table = table
+        self.table.schema = {'header': header}
+
         self.numpy_table = np.array(numpy_array)
-        self.cols = [1, 2, 3]
+        self.cols = ['x1', 'x3']
 
     def test_quantile_binning(self):
         error = 0.01
@@ -113,11 +131,13 @@ class TestQuantileBinningSpeed(unittest.TestCase):
         bin_num = 10
         bin_percent = [int(i * (100.0 / bin_num)) for i in range(1, bin_num)]
 
-        bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size, error=error,
-                                 bin_num=bin_num)
+        bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
+                                        error=error,
+                                        cols=self.cols,
+                                        bin_num=bin_num)
         quan_bin = QuantileBinning(bin_param)
         t0 = time.time()
-        split_points = quan_bin.binning(self.table, cols=self.cols)
+        split_points = quan_bin.fit_split_points(self.table)
         t1 = time.time()
         print('Spend time: {}'.format(t1 - t0))
 
@@ -128,7 +148,8 @@ class TestQuantileBinningSpeed(unittest.TestCase):
             total_data.append(data_inst.features)
         total_data = np.array(total_data)
         for col in self.cols:
-            x = total_data[:, col]
+            col_idx = self.col_dict.get(col)
+            x = total_data[:, col_idx]
             sk = np.percentile(x, bin_percent, interpolation="midpoint")
         t2 = time.time()
         print('collect and use numpy time: {}'.format(t2 - t1))

@@ -26,7 +26,7 @@ from arch.api.storage import save_data
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
-MAX_PARTITION_NUM = 32
+MAX_PARTITION_NUM = 1024
 
 def list_to_str(input_list):
     str1 = ''

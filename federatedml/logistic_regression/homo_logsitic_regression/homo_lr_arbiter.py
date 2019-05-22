@@ -55,8 +55,9 @@ class HomoLRArbiter(BaseLogisticRegression):
         self.header = []
 
     def fit(self, data=None):
-
+        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
         self.__init_parameters()
+        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
 
         LOGGER.info("Finish init parameters")
 

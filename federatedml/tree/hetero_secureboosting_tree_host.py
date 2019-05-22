@@ -53,6 +53,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.bin_split_points = None
         self.bin_sparse_points = None
         self.data_bin = None
+        self.runtime_idx = 0
 
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
@@ -77,6 +78,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.flowid = flowid
+
+    def set_runtime_idx(self, runtime_idx):
+        self.runtime_idx = runtime_idx
 
     def generate_flowid(self, round_num, tree_num):
         LOGGER.info("generate encrypter")
@@ -113,6 +117,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
                 valid_features = self.sample_valid_features()
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
+                tree_inst.set_runtime_idx(self.runtime_idx)
                 tree_inst.set_valid_features(valid_features)
 
                 tree_inst.fit()
@@ -142,6 +147,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
                 # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
+                tree_inst.set_runtime_idx(self.runtime_idx)
 
                 tree_inst.predict(data_inst)
 
