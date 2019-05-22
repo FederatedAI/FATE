@@ -1,11 +1,20 @@
 import numpy as np
 
-from research.beaver_triples_generation.carlo import carlo_deal_data
-from research.beaver_triples_generation.secret_sharing_ops import share, generate_random_matrix, \
-    generate_random_3_dim_matrix
+
+def generate_random_matrix(r, c):
+    a1 = np.random.rand(r, c)
+    a2 = -np.random.rand(r, c)
+    return a1 + a2
+
+
+def generate_random_3_dim_matrix(r, c, z):
+    a1 = np.random.rand(r, c, z)
+    a2 = -np.random.rand(r, c, z)
+    return a1 + a2
 
 
 def get_matrix_shapes(val, global_iter_index, num_batch):
+
     if val["is_constant"]:
         if val["num_dim"] == 2:
             k = val["left_0"]
@@ -211,217 +220,226 @@ def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_
     return num_batch
 
 
-def generate_shares(num_dim, ret):
-    if num_dim == 2:
-        k, l, p, q = ret
-        print("k, p, l, q", k, l, p, q)
-
-        X = generate_random_matrix(k, l)
-        X0, X1 = share(X)
-
-        Y = generate_random_matrix(p, q)
-        Y0, Y1 = share(Y)
-
-    elif num_dim == 3:
-        j, k, l, o, p, q = ret
-        print("j, k, l, o, p, q:", j, k, l, o, p, q)
-
-        X = generate_random_3_dim_matrix(j, k, l)
-        X0, X1 = share(X)
-
-        Y = generate_random_3_dim_matrix(o, p, q)
-        Y0, Y1 = share(Y)
-
-    else:
-        raise TypeError()
-
-    return X, X0, X1, Y, Y0, Y1
-
-
-class BaseBeaverTripleGenerationHelper(object):
-
-    def __init__(self, mul_ops, global_iters, num_batch):
-        self.global_iters = global_iters
-        self.mul_ops = mul_ops
-        self.num_batch = num_batch
-
-    def initialize_beaver_triples(self):
-        for i in range(self.global_iters):
-            for op_id, val in self.mul_ops.items():
-                ret = get_matrix_shapes(val=val, global_iter_index=i, num_batch=self.num_batch)
-                X, X0, X1, Y, Y0, Y1 = generate_shares(val["num_dim"], ret)
-                self._initialize_beaver_triples(i, op_id, X, X0, X1, Y, Y0, Y1)
-
-    def complete_beaver_triples(self, other_party_transfer_bt_map, carlo_transfer_bt_map):
-        for i in range(self.global_iters):
-            for op_id in self.mul_ops.keys():
-                self._complete_beaver_triples(i, op_id, other_party_transfer_bt_map, carlo_transfer_bt_map)
-
-    def _initialize_beaver_triples(self, index, op_id, X, X0, X1, Y, Y0, Y1):
-        pass
-
-    def _complete_beaver_triples(self, index, op_id, other_party_transfer_bt_map, carlo_transfer_bt_map):
-        pass
-
-
-class PartyABeaverTripleGenerationHelper(BaseBeaverTripleGenerationHelper):
-
-    def __init__(self, mul_ops, global_iters, num_batch):
-        super(PartyABeaverTripleGenerationHelper, self).__init__(mul_ops, global_iters, num_batch)
-        self.party_a_bt_map = [dict() for _ in range(global_iters)]
-        self.party_a_bt_map_to_carlo = [dict() for _ in range(global_iters)]
-        self.party_a_bt_map_to_b = [dict() for _ in range(global_iters)]
-
-    def _initialize_beaver_triples(self, index, op_id, X, X0, X1, Y, Y0, Y1):
-
-        self.party_a_bt_map[index][op_id] = dict()
-        self.party_a_bt_map[index][op_id]["A0"] = X
-        self.party_a_bt_map[index][op_id]["B0"] = Y
-        self.party_a_bt_map[index][op_id]["U0"] = X0
-        self.party_a_bt_map[index][op_id]["U1"] = X1
-        self.party_a_bt_map[index][op_id]["E0"] = Y0
-        self.party_a_bt_map[index][op_id]["E1"] = Y1
-
-        # exchange
-        self.party_a_bt_map_to_b[index][op_id] = dict()
-        self.party_a_bt_map_to_b[index][op_id]["U1"] = X1
-        self.party_a_bt_map_to_b[index][op_id]["E1"] = Y1
-
-        # to carlo
-        self.party_a_bt_map_to_carlo[index][op_id] = dict()
-        self.party_a_bt_map_to_carlo[index][op_id]["U0"] = X0
-        self.party_a_bt_map_to_carlo[index][op_id]["E0"] = Y0
-
-    def _complete_beaver_triples(self, index, op_id, party_b_bt_map_to_a, carlo_transfer_bt_map):
-        # P0 compute W0, Z0 and C0
-        A0 = self.party_a_bt_map[index][op_id]["A0"]
-        B0 = self.party_a_bt_map[index][op_id]["B0"]
-
-        U0 = self.party_a_bt_map[index][op_id]["U0"]
-        U1 = self.party_a_bt_map[index][op_id]["U1"]
-        V0 = party_b_bt_map_to_a[index][op_id]["V0"]
-        S0 = carlo_transfer_bt_map[index][op_id]["S0"]
-
-        E0 = self.party_a_bt_map[index][op_id]["E0"]
-        E1 = self.party_a_bt_map[index][op_id]["E1"]
-        F0 = party_b_bt_map_to_a[index][op_id]["F0"]
-        K0 = carlo_transfer_bt_map[index][op_id]["K0"]
-
-        mul_type = self.mul_ops[op_id]["mul_type"]
-        if mul_type == "matmul":
-            W0 = np.matmul(U0, V0) + np.matmul(U1, V0) + S0
-            Z0 = np.matmul(F0, E0) + np.matmul(F0, E1) + K0
-            C0 = np.matmul(A0, B0) + W0 + Z0
-        elif mul_type == "multiply":
-            W0 = np.multiply(U0, V0) + np.multiply(U1, V0) + S0
-            Z0 = np.multiply(F0, E0) + np.multiply(F0, E1) + K0
-            C0 = np.multiply(A0, B0) + W0 + Z0
-        else:
-            raise TypeError("does not support" + mul_type)
-
-        self.party_a_bt_map[index][op_id]["C0"] = C0
-
-    def get_beaver_triple_map(self):
-        return self.party_a_bt_map
-
-    def get_to_carlo_beaver_triple_map(self):
-        return self.party_a_bt_map_to_carlo
-
-    def get_to_other_party_beaver_triple_map(self):
-        return self.party_a_bt_map_to_b
-
-
-class PartyBBeaverTripleGenerationHelper(BaseBeaverTripleGenerationHelper):
-
-    def __init__(self, mul_ops, global_iters, num_batch):
-        super(PartyBBeaverTripleGenerationHelper, self).__init__(mul_ops, global_iters, num_batch)
-        self.party_b_bt_map = [dict() for _ in range(global_iters)]
-        self.party_b_bt_map_to_carlo = [dict() for _ in range(global_iters)]
-        self.party_b_bt_map_to_a = [dict() for _ in range(global_iters)]
-
-    def _initialize_beaver_triples(self, index, op_id, X, X0, X1, Y, Y0, Y1):
-        self.party_b_bt_map[index][op_id] = dict()
-        self.party_b_bt_map[index][op_id]["A1"] = X
-        self.party_b_bt_map[index][op_id]["B1"] = Y
-        self.party_b_bt_map[index][op_id]["V0"] = Y0
-        self.party_b_bt_map[index][op_id]["V1"] = Y1
-        self.party_b_bt_map[index][op_id]["F0"] = X0
-        self.party_b_bt_map[index][op_id]["F1"] = X1
-
-        # exchange
-        self.party_b_bt_map_to_a[index][op_id] = dict()
-        self.party_b_bt_map_to_a[index][op_id]["F0"] = X0
-        self.party_b_bt_map_to_a[index][op_id]["V0"] = Y0
-
-        # to carlo
-        self.party_b_bt_map_to_carlo[index][op_id] = dict()
-        self.party_b_bt_map_to_carlo[index][op_id]["V1"] = Y1
-        self.party_b_bt_map_to_carlo[index][op_id]["F1"] = X1
-
-    def _complete_beaver_triples(self, index, op_id, party_a_bt_map_to_b, carlo_transfer_bt_map):
-        # P1 compute W1, Z1 and C1
-
-        A1 = self.party_b_bt_map[index][op_id]["A1"]
-        B1 = self.party_b_bt_map[index][op_id]["B1"]
-
-        U1 = party_a_bt_map_to_b[index][op_id]["U1"]
-        V1 = self.party_b_bt_map[index][op_id]["V1"]
-        S1 = carlo_transfer_bt_map[index][op_id]["S1"]
-
-        E1 = party_a_bt_map_to_b[index][op_id]["E1"]
-        F1 = self.party_b_bt_map[index][op_id]["F1"]
-        K1 = carlo_transfer_bt_map[index][op_id]["K1"]
-
-        mul_type = self.mul_ops[op_id]["mul_type"]
-        if mul_type == "matmul":
-            W1 = np.matmul(U1, V1) + S1
-            Z1 = np.matmul(F1, E1) + K1
-            C1 = np.matmul(A1, B1) + W1 + Z1
-        elif mul_type == "multiply":
-            W1 = np.multiply(U1, V1) + S1
-            Z1 = np.multiply(F1, E1) + K1
-            C1 = np.multiply(A1, B1) + W1 + Z1
-        else:
-            raise TypeError("does not support" + mul_type)
-
-        self.party_b_bt_map[index][op_id]["C1"] = C1
-
-    def get_beaver_triple_map(self):
-        return self.party_b_bt_map
-
-    def get_to_carlo_beaver_triple_map(self):
-        return self.party_b_bt_map_to_carlo
-
-    def get_to_other_party_beaver_triple_map(self):
-        return self.party_b_bt_map_to_a
-
-
 def create_beaver_triples(mul_ops, global_iters, num_batch):
     """
+
     :param mul_ops:
     :param global_iters:  start from 0
-    :param num_batch
     :return:
     """
     print("global_iters, num_batch", global_iters, num_batch)
-    party_a_bt_gene_helper = PartyABeaverTripleGenerationHelper(mul_ops, global_iters, num_batch)
-    party_a_bt_gene_helper.initialize_beaver_triples()
+    party_a_bt_map = [dict() for _ in range(global_iters)]
+    party_a_bt_map_to_carlo = [dict() for _ in range(global_iters)]
+    party_a_bt_map_to_b = [dict() for _ in range(global_iters)]
 
-    party_b_bt_gene_helper = PartyBBeaverTripleGenerationHelper(mul_ops, global_iters, num_batch)
-    party_b_bt_gene_helper.initialize_beaver_triples()
+    party_b_bt_map = [dict() for _ in range(global_iters)]
+    party_b_bt_map_to_carlo = [dict() for _ in range(global_iters)]
+    party_b_bt_map_to_a = [dict() for _ in range(global_iters)]
 
-    party_a_bt_map_to_carlo = party_a_bt_gene_helper.get_to_carlo_beaver_triple_map()
-    party_a_bt_map_to_b = party_a_bt_gene_helper.get_to_other_party_beaver_triple_map()
+    for i in range(global_iters):
 
-    party_b_bt_map_to_carlo = party_b_bt_gene_helper.get_to_carlo_beaver_triple_map()
-    party_b_bt_map_to_a = party_b_bt_gene_helper.get_to_other_party_beaver_triple_map()
+        for op_id, val in mul_ops.items():
+            ret = get_matrix_shapes(val=val, global_iter_index=i, num_batch=num_batch)
 
-    carlo_bt_map_to_party_a, carlo_bt_map_to_party_b = carlo_deal_data(party_a_bt_map_to_carlo,
-                                                                       party_b_bt_map_to_carlo, mul_ops)
+            if val["num_dim"] == 2:
+                k, l, p, q = ret
+                print("k, p, l, q", k, l, p, q)
 
-    party_a_bt_gene_helper.complete_beaver_triples(party_b_bt_map_to_a, carlo_bt_map_to_party_a)
-    party_a_bt_map = party_a_bt_gene_helper.get_beaver_triple_map()
+                # party A generate data
+                A0 = generate_random_matrix(k, l)
+                A00 = generate_random_matrix(k, l)
+                A01 = A0 - A00
+                B0 = generate_random_matrix(p, q)
+                B00 = generate_random_matrix(p, q)
+                B01 = B0 - B00
 
-    party_b_bt_gene_helper.complete_beaver_triples(party_a_bt_map_to_b, carlo_bt_map_to_party_b)
-    party_b_bt_map = party_b_bt_gene_helper.get_beaver_triple_map()
+                # party B generate data
+                A1 = generate_random_matrix(k, l)
+                A11 = generate_random_matrix(k, l)
+                A10 = A1 - A11
+                B1 = generate_random_matrix(p, q)
+                B11 = generate_random_matrix(p, q)
+                B10 = B1 - B11
+
+            elif val["num_dim"] == 3:
+                j, k, l, o, p, q = ret
+                print("j, k, l, o, p, q:", j, k, l, o, p, q)
+
+                # party A generate data
+                A0 = generate_random_3_dim_matrix(j, k, l)
+                A00 = generate_random_3_dim_matrix(j, k, l)
+                A01 = A0 - A00
+                B0 = generate_random_3_dim_matrix(o, p, q)
+                B00 = generate_random_3_dim_matrix(o, p, q)
+                B01 = B0 - B00
+
+                # party B generate data
+                A1 = generate_random_3_dim_matrix(j, k, l)
+                A11 = generate_random_3_dim_matrix(j, k, l)
+                A10 = A1 - A11
+                B1 = generate_random_3_dim_matrix(o, p, q)
+                B11 = generate_random_3_dim_matrix(o, p, q)
+                B10 = B1 - B11
+
+            else:
+                raise TypeError()
+
+            party_a_bt_map[i][op_id] = dict()
+            party_a_bt_map[i][op_id]["A0"] = A0
+            party_a_bt_map[i][op_id]["B0"] = B0
+            party_a_bt_map[i][op_id]["U0"] = A00
+            party_a_bt_map[i][op_id]["U1"] = A01
+            party_a_bt_map[i][op_id]["E0"] = B00
+            party_a_bt_map[i][op_id]["E1"] = B01
+
+            party_b_bt_map[i][op_id] = dict()
+            party_b_bt_map[i][op_id]["A1"] = A1
+            party_b_bt_map[i][op_id]["B1"] = B1
+            party_b_bt_map[i][op_id]["V0"] = B10
+            party_b_bt_map[i][op_id]["V1"] = B11
+            party_b_bt_map[i][op_id]["F0"] = A10
+            party_b_bt_map[i][op_id]["F1"] = A11
+
+            # exchange
+            party_a_bt_map_to_b[i][op_id] = dict()
+            party_a_bt_map_to_b[i][op_id]["U1"] = A01
+            party_a_bt_map_to_b[i][op_id]["E1"] = B01
+
+            party_b_bt_map_to_a[i][op_id] = dict()
+            party_b_bt_map_to_a[i][op_id]["F0"] = A10
+            party_b_bt_map_to_a[i][op_id]["V0"] = B10
+
+            # to carlo
+            party_a_bt_map_to_carlo[i][op_id] = dict()
+            party_a_bt_map_to_carlo[i][op_id]["U0"] = A00
+            party_a_bt_map_to_carlo[i][op_id]["E0"] = B00
+
+            party_b_bt_map_to_carlo[i][op_id] = dict()
+            party_b_bt_map_to_carlo[i][op_id]["V1"] = B11
+            party_b_bt_map_to_carlo[i][op_id]["F1"] = A11
+
+    # print(party_a_bt_map_to_carlo)
+
+    _party_a_bt_map, _party_b_bt_map = carlo_deal_data(party_a_bt_map_to_carlo, party_b_bt_map_to_carlo, mul_ops)
+
+    # print(_party_a_bt_map)
+    # print(_party_b_bt_map)
+
+    for i in range(len(_party_a_bt_map)):
+
+        for op_id in mul_ops.keys():
+
+            A0 = party_a_bt_map[i][op_id]["A0"]
+            B0 = party_a_bt_map[i][op_id]["B0"]
+
+            A1 = party_b_bt_map[i][op_id]["A1"]
+            B1 = party_b_bt_map[i][op_id]["B1"]
+
+            # P0 compute W0, Z0 and C0
+            U0 = party_a_bt_map[i][op_id]["U0"]
+            U1 = party_a_bt_map[i][op_id]["U1"]
+            V0 = party_b_bt_map_to_a[i][op_id]["V0"]
+            S0 = _party_a_bt_map[i][op_id]["S0"]
+
+            E0 = party_a_bt_map[i][op_id]["E0"]
+            E1 = party_a_bt_map[i][op_id]["E1"]
+            F0 = party_b_bt_map_to_a[i][op_id]["F0"]
+            K0 = _party_a_bt_map[i][op_id]["K0"]
+
+            mul_type = mul_ops[op_id]["mul_type"]
+            if mul_type == "matmul":
+                W0 = np.matmul(U0, V0) + np.matmul(U1, V0) + S0
+                Z0 = np.matmul(F0, E0) + np.matmul(F0, E1) + K0
+                C0 = np.matmul(A0, B0) + W0 + Z0
+            elif mul_type == "multiply":
+                W0 = np.multiply(U0, V0) + np.multiply(U1, V0) + S0
+                Z0 = np.multiply(F0, E0) + np.multiply(F0, E1) + K0
+                C0 = np.multiply(A0, B0) + W0 + Z0
+            else:
+                raise TypeError("does not support" + mul_type)
+
+            party_a_bt_map[i][op_id]["C0"] = C0
+
+            # P1 compute W1, Z1 and C1
+            U1 = party_a_bt_map_to_b[i][op_id]["U1"]
+            V1 = party_b_bt_map[i][op_id]["V1"]
+            S1 = _party_b_bt_map[i][op_id]["S1"]
+
+            E1 = party_a_bt_map_to_b[i][op_id]["E1"]
+            F1 = party_b_bt_map[i][op_id]["F1"]
+            K1 = _party_b_bt_map[i][op_id]["K1"]
+
+            mul_type = mul_ops[op_id]["mul_type"]
+            if mul_type == "matmul":
+                W1 = np.matmul(U1, V1) + S1
+                Z1 = np.matmul(F1, E1) + K1
+                C1 = np.matmul(A1, B1) + W1 + Z1
+            elif mul_type == "multiply":
+                W1 = np.multiply(U1, V1) + S1
+                Z1 = np.multiply(F1, E1) + K1
+                C1 = np.multiply(A1, B1) + W1 + Z1
+            else:
+                raise TypeError("does not support" + mul_type)
+
+            party_b_bt_map[i][op_id]["C1"] = C1
+
     return party_a_bt_map, party_b_bt_map
+
+
+def schema_copy(bt_map):
+    _bt_map = [dict() for _ in range(len(bt_map))]
+    for index, item in enumerate(bt_map):
+        for key in item.keys():
+            _bt_map[index][key] = dict()
+    return _bt_map
+
+
+def carlo_deal_data(party_a_bt_map, party_b_bt_map, mul_ops):
+    # print("len(party_a_bt_map) len(party_b_bt_map)", len(party_a_bt_map), len(party_b_bt_map))
+    assert len(party_a_bt_map) == len(party_b_bt_map)
+
+    _party_a_bt_map = schema_copy(party_a_bt_map)
+    _party_b_bt_map = schema_copy(party_b_bt_map)
+
+    global_iters = len(party_a_bt_map)
+    for i in range(global_iters):
+        a_bt_i = party_a_bt_map[i]
+        b_bt_i = party_b_bt_map[i]
+
+        for op_id in mul_ops.keys():
+
+            U0 = a_bt_i[op_id]["U0"]
+            E0 = a_bt_i[op_id]["E0"]
+            V1 = b_bt_i[op_id]["V1"]
+            F1 = b_bt_i[op_id]["F1"]
+
+            mul_type = mul_ops[op_id]["mul_type"]
+            if mul_type == "matmul":
+                S = np.matmul(U0, V1)
+                K = np.matmul(F1, E0)
+            elif mul_type == "multiply":
+                S = np.multiply(U0, V1)
+                K = np.multiply(F1, E0)
+            else:
+                raise TypeError("does not support" + mul_type)
+
+            print(op_id, "S", S.shape, "K", K.shape)
+            if len(S.shape) == 2:
+                S0 = generate_random_matrix(S.shape[0], S.shape[1])
+                K0 = generate_random_matrix(K.shape[0], K.shape[1])
+            elif len(S.shape) == 3:
+                S0 = generate_random_3_dim_matrix(S.shape[0], S.shape[1], S.shape[2])
+                K0 = generate_random_3_dim_matrix(K.shape[0], K.shape[1], K.shape[2])
+            else:
+                raise TypeError("does not support shape {0}".format(len(S.shape)))
+            S1 = S - S0
+            K1 = K - K0
+
+            _party_a_bt_map[i][op_id]["S0"] = S0
+            _party_b_bt_map[i][op_id]["S1"] = S1
+
+            _party_a_bt_map[i][op_id]["K0"] = K0
+            _party_b_bt_map[i][op_id]["K1"] = K1
+
+    # TODO: sends _party_a_bt_map to party A and _party_b_bt_map to party B
+    return _party_a_bt_map, _party_b_bt_map

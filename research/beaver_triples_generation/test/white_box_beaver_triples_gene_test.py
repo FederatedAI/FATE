@@ -18,11 +18,8 @@ import unittest
 
 import numpy as np
 
-from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
-from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
-from research.secret_sharing_based_ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel
-from federatedml.ftl.test.mock_models import MockAutoencoder, MockFTLModelParam
 from federatedml.ftl.test.util import assert_matrix
+from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
 
 
 def create_mul_op_def():

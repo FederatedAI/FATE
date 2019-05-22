@@ -69,6 +69,9 @@ class MockAutoencoder(object):
         self.loss_grad_W = np.multiply(ex_in_grad, grads_W)
         self.loss_grad_b = np.multiply(in_grad, grads_b)
 
+    def get_model_parameters(self):
+        return {"Wh": self.Wh, "bh": self.bh}
+
     def get_loss_grad_W(self):
         return self.loss_grad_W
 
