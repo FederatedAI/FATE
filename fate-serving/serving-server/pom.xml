@@ -14,7 +14,7 @@
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-core</artifactId>
-            <version>${fate.version}</version>
+            <version>0.2</version>
         </dependency>
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
