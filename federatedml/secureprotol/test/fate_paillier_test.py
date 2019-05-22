@@ -22,52 +22,6 @@ from federatedml.secureprotol.fate_paillier import PaillierPrivateKey
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 
 
-class TestPaillierKeypair(unittest.TestCase):
-    def setUp(self):
-        unittest.TestCase.setUp(self)
-        
-    def tearDown(self):
-        unittest.TestCase.tearDown(self)
-        
-    def test_generate_keypair(self):
-        public_key, private_key = PaillierKeypair.generate_keypair()
-        self.assertTrue(isinstance(public_key, PaillierPublicKey)) 
-        self.assertTrue(isinstance(private_key, PaillierPrivateKey)) 
-        self.assertEqual(private_key.public_key, public_key)
-        
-
-class TestPaillierPublicKey(unittest.TestCase):
-    def setUp(self):
-        self.public_key, self.private_key = PaillierKeypair.generate_keypair()
-        
-    def tearDown(self):
-        unittest.TestCase.tearDown(self)
-        
-    def test_encrypt(self):
-        for i in range(100):
-            en_i = self.public_key.encrypt(i)
-            de_en_i = self.private_key.decrypt(en_i)
-            self.assertEqual(de_en_i, i)
-        
-        for i in range(100):
-            x = i * 0.6
-            en_x = self.public_key.encrypt(x)
-            de_en_x = self.private_key.decrypt(en_x)
-            self.assertAlmostEqual(de_en_x, x)
-               
-        elem = np.ones(100) * np.random.rand()
-        for x in elem:
-            en_x = self.public_key.encrypt(x)
-            de_en_x = self.private_key.decrypt(en_x)
-            self.assertAlmostEqual(de_en_x, x)
-        
-        elem = np.ones(100) * np.random.randint(100)
-        for x in elem:
-            en_x = self.public_key.encrypt(x)
-            de_en_x = self.private_key.decrypt(en_x)
-            self.assertAlmostEqual(de_en_x, x)
-        
-        
 class TestPaillierEncryptedNumber(unittest.TestCase):
     def setUp(self):
         self.public_key, self.private_key = PaillierKeypair.generate_keypair()
@@ -97,7 +51,7 @@ class TestPaillierEncryptedNumber(unittest.TestCase):
             
             de_en_res = self.private_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
-            
+ 
     def test_mul(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000) * -1        
@@ -120,8 +74,9 @@ class TestPaillierEncryptedNumber(unittest.TestCase):
         
         x = 9
         en_x = self.public_key.encrypt(x)
+        
         for i in range(100):
-            en_x = en_x + 5000 -0.2
+            en_x = en_x + 5000 - 0.2
             x = x + 5000 - 0.2
             de_en_x = self.private_key.decrypt(en_x)
             self.assertAlmostEqual(de_en_x, x)

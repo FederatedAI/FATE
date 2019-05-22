@@ -22,8 +22,8 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
+from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
-# from federatedml.util import LogisticParamChecker
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -36,71 +36,72 @@ class HeteroLRGuest(BaseLogisticRegression):
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []
 
+        self.encrypted_calculator = None
+
         self.wx = None
         self.guest_forward = None
 
     def compute_forward(self, data_instances, coef_, intercept_):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
         self.wx = self.compute_wx(data_instances, coef_, intercept_)
-        encrypt_operator = self.encrypt_operator
-        self.guest_forward = self.wx.mapValues(
-            lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v)), v))
+
+        en_wx = self.encrypted_calculator.encrypt(self.wx)
+        wx_square = self.wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator.encrypt(wx_square)
+
+        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square:(wx, wx_square))
+        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx:(e[0], e[1], wx))
 
     def aggregate_forward(self, host_forward):
+        """
+        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h , where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
+        and en_wx_h is the encrypted W * X + b of host.
+        Parameters
+        ----------
+        host_forward: DTable, include encrypted W * X and (W * X)^2
+
+        Returns
+        ----------
+        aggregate_forward_res
+        list
+            include W * X and (W * X)^2 federate with guest and host
+        """
         aggregate_forward_res = self.guest_forward.join(host_forward,
                                                         lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
         return aggregate_forward_res
 
-    def transform(self, data_inst):
-        """
-        transform features of instances held by 'data_inst' table into more representative features
-
-        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
-        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
-        transform features. Particularly, we would adopt neural network models such as autoencoder or CNN to perform
-        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
-        folder.
-
-        For this particular class (i.e., 'HeteroLRGuest') that serves as a base guest class for neural-networks-based
-        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
-        passed to it. In other words, no feature transformation performed on the raw input of guest.
-
-        Parameters:
-        ___________
-        :param data_inst: a table holding instances of raw input of guest side
-        :return: a table holding instances with transformed features
-        """
-        return data_inst
-
-    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
-        """
-        update local model that transforms features of raw input
-
-        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
-        input into more representative features. We typically adopt neural networks as the local model, which is
-        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
-        refer to 'hetero_dnn_logistic_regression' folder.
-
-        For this particular class (i.e., 'HeteroLRGuest') that serves as a base guest class for neural-networks-based
-        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
-        performed on the local model since there is no one.
-
-        Parameters:
-        ___________
-        :param fore_gradient: a table holding fore gradient
-        :param data_inst: a table holding instances of raw input of guest side
-        :param coef: coefficients of logistic regression model
-        :param training_info: a dictionary holding training information
-        """
-        pass
-
     @staticmethod
     def load_data(data_instance):
+        """
+        set the negative label to -1
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         if data_instance.label != 1:
             data_instance.label = -1
         return data_instance
 
     def fit(self, data_instances):
+        """
+        Train lr model of role guest
+        Parameters
+        ----------
+        data_instances: DTable of Instance, input data
+        """
+
         LOGGER.info("Enter hetero_lr_guest fit")
+        self._abnormal_detection(data_instances)
+
+        self.header = self.get_header(data_instances)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
@@ -110,10 +111,19 @@ class HeteroLRGuest(BaseLogisticRegression):
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
         self.encrypt_operator.set_public_key(public_key)
 
+        self.encrypted_calculator = EncryptModeCalculator(self.encrypt_operator,
+                                                          self.encrypted_mode_calculator_param.mode,
+                                                          self.encrypted_mode_calculator_param.re_encrypted_rate)
+
         LOGGER.info("Generate mini-batch from input data")
         mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)
-        batch_info = {"batch_size": self.batch_size, "batch_num": mini_batch_obj.batch_nums}
-        LOGGER.info("batch_info:" + str(batch_info))
+        batch_num = mini_batch_obj.batch_nums
+        if self.batch_size == -1:
+            LOGGER.info("batch size is -1, set it to the number of data in data_instances")
+            self.batch_size = data_instances.count()
+
+        batch_info = {"batch_size": self.batch_size, "batch_num": batch_num}
+        LOGGER.info("batch_info:{}".format(batch_info))
         federation.remote(batch_info,
                           name=self.transfer_variable.batch_info.name,
                           tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
@@ -137,13 +147,15 @@ class HeteroLRGuest(BaseLogisticRegression):
         else:
             self.coef_ = weight
 
-        is_stopped = False
         is_send_all_batch_index = False
         self.n_iter_ = 0
+        index_data_inst_map = {}
+
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = mini_batch_obj.mini_batch_index_generator(data_inst=data_instances,
-                                                                             batch_size=self.batch_size)
+            # each iter will get the same batach_data_generator
+            batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
+
             batch_index = 0
             for batch_data_index in batch_data_generator:
                 LOGGER.info("batch:{}".format(batch_index))
@@ -161,7 +173,11 @@ class HeteroLRGuest(BaseLogisticRegression):
                         is_send_all_batch_index = True
 
                 # Get mini-batch train data
-                batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
+                if len(index_data_inst_map) < batch_num:
+                    batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
+                    index_data_inst_map[batch_index] = batch_data_inst
+                else:
+                    batch_data_inst = index_data_inst_map[batch_index]
 
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data_inst)
@@ -246,22 +262,34 @@ class HeteroLRGuest(BaseLogisticRegression):
                 LOGGER.info("Remote loss to arbiter")
 
                 # is converge of loss in arbiter
-                is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                            tag=self.transfer_variable.generate_transferid(
-                                                self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                            idx=0)
-                LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
                 batch_index += 1
-                if is_stopped:
-                    LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
-                    break
+
+            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
+                                        tag=self.transfer_variable.generate_transferid(
+                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
+                                        idx=0)
+            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
 
             self.n_iter_ += 1
             if is_stopped:
+                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
                 break
+
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param):
+        """
+        Prediction of lr
+        Parameters
+        ----------
+        data_instance:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction.
+
+        Returns
+        ----------
+        DTable
+            include input data label, predict probably, label
+        """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)

@@ -5,3 +5,17 @@
 .pyc
 __pycache__
 
+/arch/core/target/
+/arch/driver/federation/target/
+/arch/eggroll/egg/target/
+/arch/eggroll/meta-service/target/
+/arch/eggroll/roll/target/
+/arch/eggroll/storage-service/target/
+/arch/networking/proxy/target/
+/arch/driver/target/
+/arch/eggroll/target/
+/arch/fate-serving/federatedml/target/
+/arch/fate-serving/serving-server/target/
+/arch/fate-serving/target/
+/arch/networking/target/
+/arch/target/

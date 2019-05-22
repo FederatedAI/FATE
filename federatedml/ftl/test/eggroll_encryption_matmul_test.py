@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from arch.api.eggroll import init
-from federatedml.ftl.eggroll_computation.helper import encrypt_matmul_2_ob, encrypt_matmul_3
+from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matmul_2_ob, distribute_encrypt_matmul_3
 from federatedml.ftl.encryption.encryption import decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
 from federatedml.secureprotol import PaillierEncrypt
@@ -68,7 +68,7 @@ class TestEncryptionMatmul(unittest.TestCase):
         Z = np.matmul(X, Y)
 
         encrypt_Y = self.encrypt_2d_matrix(Y)
-        res = encrypt_matmul_2_ob(X, encrypt_Y)
+        res = distribute_encrypt_matmul_2_ob(X, encrypt_Y)
 
         # decrypt res
         decrypt_res = decrypt_matrix(self.privatekey, res)
@@ -89,7 +89,7 @@ class TestEncryptionMatmul(unittest.TestCase):
 
         encrypt_Y = self.encrypt_3d_matrix(Y)
 
-        res = encrypt_matmul_3(X, encrypt_Y)
+        res = distribute_encrypt_matmul_3(X, encrypt_Y)
 
         # decrypt res
         decrypt_res = decrypt_matrix(self.privatekey, res)
@@ -113,7 +113,7 @@ class TestEncryptionMatmul(unittest.TestCase):
         Z = np.matmul(X, Y)
 
         encrypt_Y = self.encrypt_3d_matrix(Y)
-        res = encrypt_matmul_3(X, encrypt_Y)
+        res = distribute_encrypt_matmul_3(X, encrypt_Y)
 
         decrypt_res = decrypt_matrix(self.privatekey, res)
         assert_matrix(Z, decrypt_res)
@@ -132,7 +132,7 @@ class TestEncryptionMatmul(unittest.TestCase):
         Z = np.matmul(X, Y)
 
         encrypt_Y = self.encrypt_3d_matrix(Y)
-        res = encrypt_matmul_3(X, encrypt_Y)
+        res = distribute_encrypt_matmul_3(X, encrypt_Y)
 
         decrypt_res = decrypt_matrix(self.privatekey, res)
         assert_matrix(Z, decrypt_res)

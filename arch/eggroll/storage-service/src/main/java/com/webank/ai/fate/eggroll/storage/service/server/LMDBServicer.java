@@ -20,6 +20,7 @@ package com.webank.ai.fate.eggroll.storage.service.server;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.eggroll.storage.KVServiceGrpc;
 import com.webank.ai.fate.api.eggroll.storage.Kv;
+import com.webank.ai.fate.core.api.grpc.server.GrpcServerWrapper;
 import com.webank.ai.fate.core.constant.MetaConstants;
 import com.webank.ai.fate.core.io.KeyValue;
 import com.webank.ai.fate.core.io.KeyValueIterator;
@@ -38,9 +39,11 @@ public class LMDBServicer extends KVServiceGrpc.KVServiceImplBase {
     private static final long PAYLOAD_THRESHOLD = 2L * 1024 * 1024;
     private static Logger LOGGER = LogManager.getLogger(LMDBServicer.class);
     private final StoreManager<Bytes, byte[]> storeMgr;
+    private GrpcServerWrapper grpcServerWrapper;
 
     public LMDBServicer(StoreManager<Bytes, byte[]> storeMgr) {
         this.storeMgr = storeMgr;
+        this.grpcServerWrapper = new GrpcServerWrapper();
     }
 
     private LMDBStore getStore() {
@@ -50,33 +53,38 @@ public class LMDBServicer extends KVServiceGrpc.KVServiceImplBase {
 
     @Override
     public void put(Kv.Operand request, StreamObserver<Kv.Empty> responseObserver) {
-        LMDBStore store = getStore();
-        LOGGER.info("{} receive put request. keyLength: {}, valueLength: {}",
-                store, request.getKey().size(), request.getValue().size());
-        store.put(Bytes.wrap(request.getKey()), request.getValue().toByteArray());
-        responseObserver.onNext(Kv.Empty.newBuilder().build());
-        responseObserver.onCompleted();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            LMDBStore store = getStore();
+            LOGGER.info("{} receive put request. keyLength: {}, valueLength: {}",
+                    store, request.getKey().size(), request.getValue().size());
+            store.put(Bytes.wrap(request.getKey()), request.getValue().toByteArray());
+            responseObserver.onNext(Kv.Empty.newBuilder().build());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void putIfAbsent(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LMDBStore store = getStore();
-        byte[] oldValue = store.putIfAbsent(Bytes.wrap(request.getKey()), request.getValue().toByteArray());
-        Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
-        if (oldValue != null) {
-            builder.setValue(ByteString.copyFrom(oldValue));
-        }
-        responseObserver.onNext(builder.buildPartial());
-        responseObserver.onCompleted();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            LMDBStore store = getStore();
+            byte[] oldValue = store.putIfAbsent(Bytes.wrap(request.getKey()), request.getValue().toByteArray());
+            Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
+            if (oldValue != null) {
+                builder.setValue(ByteString.copyFrom(oldValue));
+            }
+            responseObserver.onNext(builder.buildPartial());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public StreamObserver<Kv.Operand> putAll(StreamObserver<Kv.Empty> responseObserver) {
+        LMDBStore store = getStore();
+        LOGGER.info("putAll request received. store: {}", store);
+        StreamObserver<KeyValue<Bytes, byte[]>> putObs = store.putAll();
 
         return new StreamObserver<Kv.Operand>() {
-            LMDBStore store = getStore();
             long count = 0;
-            StreamObserver<KeyValue<Bytes, byte[]>> putObs = store.putAll();
 
             @Override
             public void onNext(Kv.Operand operand) {
@@ -102,82 +110,91 @@ public class LMDBServicer extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void delete(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LMDBStore store = getStore();
+    public void delOne(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            LMDBStore store = getStore();
 
-        byte[] valueBuffer = store.delete(Bytes.wrap(request.getKey()));
-        Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
-        if (valueBuffer != null) {
-            builder.setValue(ByteString.copyFrom(valueBuffer));
-        }
-        responseObserver.onNext(builder.buildPartial());
-        responseObserver.onCompleted();
+            byte[] valueBuffer = store.delete(Bytes.wrap(request.getKey()));
+            Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
+            if (valueBuffer != null) {
+                builder.setValue(ByteString.copyFrom(valueBuffer));
+            }
+            responseObserver.onNext(builder.buildPartial());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void get(Kv.Operand request, StreamObserver<Kv.Operand> responseObserver) {
-        LMDBStore store = getStore();
-        byte[] valueBuffer = store.get(Bytes.wrap(request.getKey()));
-        Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
-        if (valueBuffer != null)
-            builder.setValue(ByteString.copyFrom(valueBuffer));
-        responseObserver.onNext(builder.buildPartial());
-        responseObserver.onCompleted();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            LMDBStore store = getStore();
+            byte[] valueBuffer = store.get(Bytes.wrap(request.getKey()));
+            Kv.Operand.Builder builder = Kv.Operand.newBuilder().setKey(request.getKey());
+            if (valueBuffer != null)
+                builder.setValue(ByteString.copyFrom(valueBuffer));
+            responseObserver.onNext(builder.buildPartial());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void iterate(Kv.Range request, StreamObserver<Kv.Operand> responseObserver) {
-        long bytesCount = 0;
-        LMDBStore store = getStore();
-        LOGGER.info("{} receive iterate request. start: {}, end: {}, minChunkSize: {}",
-                store, request.getStart().toStringUtf8(), request.getEnd().toStringUtf8(), request.getMinChunkSize());
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            long bytesCount = 0;
+            LMDBStore store = getStore();
+            LOGGER.info("{} receive iterate request. start: {}, end: {}, minChunkSize: {}",
+                    store, request.getStart().toStringUtf8(), request.getEnd().toStringUtf8(), request.getMinChunkSize());
 
-        byte[] fromBytes = request.getStart().toByteArray();
-        byte[] toBytes = request.getEnd().toByteArray();
-        Bytes fromBuffer = null;
-        Bytes toBuffer = null;
-        long count = 0;
-        if (fromBytes.length > 0) {
-            fromBuffer = Bytes.wrap(fromBytes);
-        }
-        if (toBytes.length > 0) {
-            toBuffer = Bytes.wrap(toBytes);
-        }
-        long threshold = request.getMinChunkSize() > 0 ? request.getMinChunkSize() : PAYLOAD_THRESHOLD;
-        try (KeyValueIterator<Bytes, byte[]> keyValueIterator = store.range(fromBuffer, toBuffer)) {
-            while (keyValueIterator.hasNext()) {
-                KeyValue<Bytes, byte[]> keyValue = keyValueIterator.next();
-                Kv.Operand operand = Kv.Operand.newBuilder().setKey(ByteString.copyFrom(keyValue.key.get()))
-                        .setValue(ByteString.copyFrom(keyValue.value)).build();
-                responseObserver.onNext(operand);
-                ++count;
-                bytesCount += operand.getKey().size();
-                bytesCount += operand.getValue().size();
-                if (bytesCount >= threshold) {
-                    break;
-                }
+            byte[] fromBytes = request.getStart().toByteArray();
+            byte[] toBytes = request.getEnd().toByteArray();
+            Bytes fromBuffer = null;
+            Bytes toBuffer = null;
+            long count = 0;
+            if (fromBytes.length > 0) {
+                fromBuffer = Bytes.wrap(fromBytes);
             }
-        } finally {
-            responseObserver.onCompleted();
-            LOGGER.info("[STORAGE][ITERATE][RESULT]: {} store count: {}, onNext count: {}, start: '{}', end: '{}'",
-                    store, store.count(), count, request.getStart().toStringUtf8(), request.getEnd().toStringUtf8());
-        }
-
+            if (toBytes.length > 0) {
+                toBuffer = Bytes.wrap(toBytes);
+            }
+            long threshold = request.getMinChunkSize() > 0 ? request.getMinChunkSize() : PAYLOAD_THRESHOLD;
+            try (KeyValueIterator<Bytes, byte[]> keyValueIterator = store.range(fromBuffer, toBuffer)) {
+                while (keyValueIterator.hasNext()) {
+                    KeyValue<Bytes, byte[]> keyValue = keyValueIterator.next();
+                    Kv.Operand operand = Kv.Operand.newBuilder().setKey(ByteString.copyFrom(keyValue.key.get()))
+                            .setValue(ByteString.copyFrom(keyValue.value)).build();
+                    responseObserver.onNext(operand);
+                    ++count;
+                    bytesCount += operand.getKey().size();
+                    bytesCount += operand.getValue().size();
+                    if (bytesCount >= threshold) {
+                        break;
+                    }
+                }
+            } finally {
+                responseObserver.onCompleted();
+                LOGGER.info("[STORAGE][ITERATE][RESULT]: {} store count: {}, onNext count: {}, start: '{}', end: '{}'",
+                        store, store.count(), count, request.getStart().toStringUtf8(), request.getEnd().toStringUtf8());
+            }
+        });
     }
 
     @Override
     public void destroy(Kv.Empty request, StreamObserver<Kv.Empty> responseObserver) {
-        StoreInfo info = StoreInfo.fromGrpcContext();
-        storeMgr.destroy(info);
-        responseObserver.onNext(Kv.Empty.newBuilder().build());
-        responseObserver.onCompleted();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            StoreInfo info = StoreInfo.fromGrpcContext();
+            storeMgr.destroy(info);
+            responseObserver.onNext(Kv.Empty.newBuilder().build());
+            responseObserver.onCompleted();
+        });
     }
 
     @Override
     public void count(Kv.Empty request, StreamObserver<Kv.Count> responseObserver) {
-        LMDBStore lmdbStore = getStore();
-        responseObserver.onNext(Kv.Count.newBuilder().setValue(lmdbStore.count()).build());
-        responseObserver.onCompleted();
+        grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            LMDBStore lmdbStore = getStore();
+            responseObserver.onNext(Kv.Count.newBuilder().setValue(lmdbStore.count()).build());
+            responseObserver.onCompleted();
+        });
     }
 
 

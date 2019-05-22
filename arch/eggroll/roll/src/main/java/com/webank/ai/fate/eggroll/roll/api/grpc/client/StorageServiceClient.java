@@ -27,6 +27,7 @@ import com.webank.ai.fate.core.io.StoreInfo;
 import com.webank.ai.fate.core.model.DelayedResult;
 import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.core.utils.ErrorUtils;
+import com.webank.ai.fate.core.utils.ToStringUtils;
 import com.webank.ai.fate.core.utils.TypeConversionUtils;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.api.grpc.observer.kv.storage.*;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Scope("prototype")
@@ -54,6 +56,8 @@ public class StorageServiceClient {
     private ErrorUtils errorUtils;
     @Autowired
     private TypeConversionUtils typeConversionUtils;
+    @Autowired
+    private ToStringUtils toStringUtils;
 
     private BasicMeta.Endpoint storageServiceEndpoint = BasicMeta.Endpoint.newBuilder().setHostname("localhost").setPort(7778).build();
 
@@ -104,33 +108,64 @@ public class StorageServiceClient {
     }
 
     public void putAll(OperandBroker operandBroker, StoreInfo storeInfo, Node node) {
-        GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> context
-                = rollKvCallModelFactory.createOperandToEmptyContext();
+        boolean needReset = true;
+        boolean hasError = false;
+        int resetInterval = 1000;
+        int remaining = resetInterval;
+        int resetCount = 0;
 
-        context.setLatchInitCount(1)
-                .setEndpoint(typeConversionUtils.toEndpoint(node))
-                .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCallerStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::putAll)
-                .setCallerStreamObserverClassAndArguments(StorageKvPutAllClientResponseStreamObserver.class)
-                .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo))
-                .setRequestStreamProcessorClassAndArguments(StorageKvPutAllRequestStreamProcessor.class, operandBroker, node);
-
-        GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> template
-                = rollKvCallModelFactory.createOperandToEmptyTemplate();
-        template.setGrpcAsyncClientContext(context);
-
-        template.initCallerStreamingRpc();
-
+        GrpcAsyncClientContext<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> context = null;
+        GrpcStreamingClientTemplate<KVServiceGrpc.KVServiceStub, Kv.Operand, Kv.Empty> template = null;
         try {
+            LOGGER.info("[ROLL][PUTALL][SUBTASK] putAll subTask request received: {}", toStringUtils.toOneLineString(storeInfo));
             while (!operandBroker.isClosable()) {
-                operandBroker.awaitLatch(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT);
+                // possible init
+                if (needReset) {
+                    if (resetCount > 1) {
+                        LOGGER.info("[ROLL][PUTALL][SUBTASK] resetting in putAll subTask. resetCount: {}", ++resetCount);
+                    }
+                    context = rollKvCallModelFactory.createOperandToEmptyContext();
+
+                    context.setLatchInitCount(1)
+                            .setEndpoint(typeConversionUtils.toEndpoint(node))
+                            .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
+                            .setCallerStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::putAll)
+                            .setCallerStreamObserverClassAndArguments(StorageKvPutAllClientResponseStreamObserver.class)
+                            .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo))
+                            .setRequestStreamProcessorClassAndArguments(StorageKvPutAllRequestStreamProcessor.class, operandBroker, node);
+
+                    template = rollKvCallModelFactory.createOperandToEmptyTemplate();
+                    template.setGrpcAsyncClientContext(context);
+
+                    template.initCallerStreamingRpc();
+
+                    remaining = resetInterval;
+                    needReset = false;
+                }
+
+                // wait for data and send
+                operandBroker.awaitLatch(100, TimeUnit.MILLISECONDS);
                 template.processCallerStreamingRpc();
+                --remaining;
+
+                // possible cleanup
+                if (remaining <= 0) {
+                    template.completeStreamingRpc();
+                    needReset = true;
+                }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            LOGGER.error("[ROLL][PUTALL][SUBTASK] error in putAll sub task: {}", errorUtils.getStackTrace(e));
             template.errorCallerStreamingRpc(e);
+            hasError = true;
+        } finally {
+            if (!needReset && !hasError) {
+                template.completeStreamingRpc();
+            }
+            // todo: possible duplicate with DtableRecvConsumeAction
+            operandBroker.setFinished();
         }
 
-        template.completeStreamingRpc();
     }
 
     public Kv.Operand delete(Kv.Operand request, StoreInfo storeInfo, Node node) {
@@ -142,7 +177,7 @@ public class StorageServiceClient {
         context.setLatchInitCount(1)
                 .setEndpoint(typeConversionUtils.toEndpoint(node))
                 .setFinishTimeout(RuntimeConstants.DEFAULT_WAIT_TIME, RuntimeConstants.DEFAULT_TIMEUNIT)
-                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delete)
+                .setCalleeStreamingMethodInvoker(KVServiceGrpc.KVServiceStub::delOne)
                 .setCallerStreamObserverClassAndArguments(StorageKvOperandToOperandObserver.class, delayedResult)
                 .setGrpcMetadata(MetaConstants.createMetadataFromStoreInfo(storeInfo));
 

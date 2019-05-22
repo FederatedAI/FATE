@@ -70,7 +70,7 @@ public abstract class BaseCrudClient<S> {
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
         }
-        this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint);
+        this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint, false);
     }
 
     public void init(String ip, int port) {
@@ -93,7 +93,7 @@ public abstract class BaseCrudClient<S> {
         ManagedChannel managedChannel = (ManagedChannel) abstractStub.getChannel();
         if (managedChannel.isShutdown() || managedChannel.isTerminated()) {
             LOGGER.info("[COMMON] invalid channel. status: {}", managedChannel.getState(true).name());
-            this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint);
+            this.stub = (S) grpcStubFactory.createGrpcStub(true, grpcClass, endpoint, false);
         }
 
         crudRequestProcessor.process(stub, request, responseObserver);

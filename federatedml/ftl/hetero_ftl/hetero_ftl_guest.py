@@ -23,7 +23,7 @@ from federatedml.ftl.data_util.common_data_util import overlapping_samples_conve
     save_model_parameters, convert_instance_table_to_dict, convert_instance_table_to_array, \
     add_random_mask_for_list_of_values, add_random_mask, remove_random_mask_from_list_of_values, remove_random_mask
 from federatedml.ftl.data_util.log_util import create_shape_msg
-from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from federatedml.ftl.encrypted_ftl import EncryptedFTLGuestModel
 from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, decrypt_array
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel
@@ -434,8 +434,8 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
         LOGGER.info("@ running time: " + str(end_time - start_time))
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
-                                                                                     encrypt_gradients[1])
+        return distribute_decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
+                                                                                                encrypt_gradients[1])
 
 
 class FasterHeteroDecentralizedEncryptFTLGuest(HeteroDecentralizedEncryptFTLGuest):

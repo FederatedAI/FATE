@@ -22,11 +22,11 @@ import csv
 import sys
 import time
 from arch.api import eggroll
-
+from arch.api.storage import save_data
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
-MAX_PARTITION_NUM = 32
+MAX_PARTITION_NUM = 1024
 
 def list_to_str(input_list):
     str1 = ''
@@ -63,7 +63,6 @@ def read_data(input_file='', head=True):
 
 
 def generate_table_name(input_file_path):
-    local_time = time.localtime(time.time())
     str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     file_name = input_file_path.split(".")[0]
     file_name = file_name.split("/")[-1]
@@ -73,7 +72,6 @@ def data_to_eggroll_table(data, namespace, table_name,partition=1, work_mode=0):
     eggroll.init(mode=work_mode)
     data_table = eggroll.table(table_name, namespace, partition=partition, create_if_missing=True, error_if_exist=False)
     data_table.put_all(data)
-    data_table_count = data_table.count()
     print("------------load data finish!-----------------")
     print("total data_count:"+str(data_table.count()))
     print("namespace:%s, table_name:%s" %(namespace, table_name))
@@ -98,7 +96,7 @@ if __name__ == "__main__":
             namespace = None
             with open(args.config, 'r') as f:
                 data = json.load(f)
-                
+
                 try:
                     input_file_path = data['file']
                 except:
@@ -141,14 +139,14 @@ if __name__ == "__main__":
                 print("%s is not exist, please check the configure" % (input_file_path))
                 sys.exit()
 
-
             input_data = read_data(input_file_path, head)
             _namespace, _table_name = generate_table_name(input_file_path)
             if namespace is None:
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            data_to_eggroll_table(input_data, namespace, table_name, partition, work_mode)
+            eggroll.init(mode=work_mode)
+            save_data(input_data, name=table_name, namespace=namespace, partition=partition)
 
         except ValueError:
             print('json parse error')

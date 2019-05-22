@@ -24,7 +24,11 @@
 # =============================================================================
 # Boostring Tree
 # =============================================================================
+import numpy as np
 from federatedml.util import BoostingTreeParamChecker
+from federatedml.util import abnormal_detection
+from federatedml.util import consts
+from federatedml.feature.sparse_vector import SparseVector
 
 
 class BoostingTree(object):
@@ -43,6 +47,34 @@ class BoostingTree(object):
         self.bin_num = boostingtree_param.bin_num
         self.bin_gap = boostingtree_param.bin_gap
         self.bin_sample_num = boostingtree_param.bin_sample_num
+        self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
+        self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
+
+    @staticmethod
+    def data_format_transform(row):
+        if type(row.features).__name__ != consts.SPARSE_VECTOR:
+            feature_shape = row.features.shape[0]
+            indices = []
+            data = []
+
+            for i in range(feature_shape):
+                if np.abs(row.features[i]) < consts.FLOAT_ZERO:
+                    continue
+
+                indices.append(i)
+                data.append(row.features[i])
+
+            row.features = SparseVector(indices, data, feature_shape)
+
+        return row
+
+    def data_alignment(self, data_inst):
+        abnormal_detection.empty_table_detection(data_inst)
+        abnormal_detection.empty_feature_detection(data_inst)
+
+        new_data_inst = data_inst.mapValues(lambda row: BoostingTree.data_format_transform(row))
+
+        return new_data_inst
 
     def fit(self, data_inst):
         pass

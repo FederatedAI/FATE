@@ -36,9 +36,28 @@ class ParamExtract(object):
 
     @staticmethod
     def parse_param_from_config(param_var, config_file):
+        """
+        load json in config_file and initialize all variables define in param_var by json config
+
+        Parameters
+        ----------
+        param_var : object, define in federatedml.param.param,
+            the parameter object need to be initialized.
+
+        config_file : str, the path of json config path,
+            define by users, the variables in param object the user want to initialize.
+
+        Returns
+        -------
+        param_var : object, define in federatedml.param.param,
+            the initialized result
+
+        """
         config_json = None
         with open(config_file, "r") as fin:
             config_json = json.loads(fin.read())
+
+        # print('In param extract, config_json is :{}'.format(config_json))
 
         if config_json is None:
             raise Exception("config file is not valid, please have a check!")
@@ -47,10 +66,35 @@ class ParamExtract(object):
         valid_classes = [class_info[0] for class_info in inspect.getmembers(param, inspect.isclass)]
         param_var = ParamExtract.recursive_parse_param_from_config(param_var, config_json, valid_classes,
                                                                    param_parse_depth=0)
+
         return param_var
 
     @staticmethod
     def recursive_parse_param_from_config(param, config_json, valid_classes, param_parse_depth):
+        """
+        Initialize all variables by config.
+            If variable is define in federatedml.param.param, then recursively initialize it,
+            otherwise, just assignment the value define in config.
+
+        Parameters
+        ----------
+        param : object, define in federatedml.param.param,
+            the parameter object need to be initialized.
+
+        config_json : dict, a dict load by the config file,
+            the variables config.
+
+        valid_classes : list, all objects define in federatedml.param.param,
+            use to judge if the type of a variable is self-define param object or not
+
+        param_parse_depth : int, max recursive depth.
+
+        Returns
+        -------
+        param : object, define in federatedml.param.param,
+            the initialized result
+
+        """
         if param_parse_depth > consts.PARAM_MAXDEPTH:
             raise ValueError("Param define nesting too deep!!!, can not parse it")
 

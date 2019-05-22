@@ -1,0 +1,24 @@
+{
+    "task": "load_model",
+    "scene_id": 50000,
+    "gen_table_info": true,
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "model": {
+      "guest": {
+        "9999": {
+          "table_name": "",
+          "namespace": ""
+        }
+      },
+      "host": {
+        "10000": {
+          "table_name": "",
+          "namespace": ""
+        }
+      }
+    }
+}

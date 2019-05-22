@@ -16,10 +16,10 @@
 
 import numpy as np
 
-from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix
+from federatedml.ftl.encryption.encryption import encrypt_matrix, decrypt_matrix, decrypt_scalar, decrypt_array
 
 
-def distribute_compute_XY(X, Y):
+def eggroll_compute_XY(X, Y):
     """
     compute X * Y
     :param X: DTable, with shape (feature_dim, sample_dim)
@@ -34,7 +34,7 @@ def distribute_compute_XY(X, Y):
     return table
 
 
-def distribute_compute_X_plus_Y(X, Y):
+def eggroll_compute_X_plus_Y(X, Y):
     """
     compute X + Y
     :param X: DTable, with shape (feature_dim, sample_dim)
@@ -50,7 +50,7 @@ def distribute_compute_X_plus_Y(X, Y):
     return table
 
 
-def distribute_compute_hSum_XY(X, Y):
+def eggroll_compute_hSum_XY(X, Y):
     """
     compute np.sum(X * Y, axis=1)
     :param X: DTable, with shape (feature_dim, sample_dim)
@@ -65,7 +65,7 @@ def distribute_compute_hSum_XY(X, Y):
     return table
 
 
-def distribute_compute_vAvg_XY(X, Y, sample_dim):
+def eggroll_compute_vAvg_XY(X, Y, sample_dim):
     """
     compute np.mean(X * Y, axis=0)
     :param X: DTable, with shape (feature_dim, sample_dim)
@@ -82,7 +82,7 @@ def distribute_compute_vAvg_XY(X, Y, sample_dim):
     return result
 
 
-def distribute_encrypt(public_key, X):
+def eggroll_encrypt(public_key, X):
     """
     encrypt X
     :param X: DTable
@@ -97,7 +97,37 @@ def distribute_encrypt(public_key, X):
     return val
 
 
-def distribute_decrypt(private_key, X):
+# def distribute_decrypt_scalar(private_key, X):
+#     """
+#     decrypt X
+#     :param X: DTable
+#     :return: a dictionary
+#     """
+#
+#     X2 = X.mapValues(lambda x: decrypt_scalar(private_key, x))
+#     val = X2.collect()
+#     val = dict(val)
+#
+#     X2.destroy()
+#     return val
+#
+#
+# def distribute_decrypt_array(private_key, X):
+#     """
+#     decrypt X
+#     :param X: DTable
+#     :return: a dictionary
+#     """
+#
+#     X2 = X.mapValues(lambda x: decrypt_array(private_key, x))
+#     val = X2.collect()
+#     val = dict(val)
+#
+#     X2.destroy()
+#     return val
+
+
+def eggroll_decrypt(private_key, X):
     """
     decrypt X
     :param X: DTable

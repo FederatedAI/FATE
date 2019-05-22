@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -36,11 +37,42 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.eggroll.processor',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x0fprocessor.proto\x12(com.webank.ai.fate.api.eggroll.processor\x1a\x08kv.proto\x1a\x13storage-basic.proto\"H\n\x08TaskInfo\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x13\n\x0b\x66unction_id\x18\x02 \x01(\t\x12\x16\n\x0e\x66unction_bytes\x18\x03 \x01(\x0c\"\x99\x01\n\x0cUnaryProcess\x12@\n\x04info\x18\x01 \x01(\x0b\x32\x32.com.webank.ai.fate.api.eggroll.processor.TaskInfo\x12G\n\x07operand\x18\x02 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\"\xde\x01\n\rBinaryProcess\x12@\n\x04info\x18\x01 \x01(\x0b\x32\x32.com.webank.ai.fate.api.eggroll.processor.TaskInfo\x12\x44\n\x04left\x18\x02 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x45\n\x05right\x18\x03 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator2\xe5\x06\n\x0eProcessService\x12u\n\x03map\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12{\n\tmapValues\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12w\n\x04join\x12\x37.com.webank.ai.fate.api.eggroll.processor.BinaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12s\n\x06reduce\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand0\x01\x12\x7f\n\rmapPartitions\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12v\n\x04glom\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12x\n\x06sample\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocatorb\x06proto3')
+  serialized_pb=_b('\n\x0fprocessor.proto\x12(com.webank.ai.fate.api.eggroll.processor\x1a\x08kv.proto\x1a\x13storage-basic.proto\"#\n\x0bProcessConf\x12\x14\n\x0cnamingPolicy\x18\x01 \x01(\t\"d\n\x08TaskInfo\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x13\n\x0b\x66unction_id\x18\x02 \x01(\t\x12\x16\n\x0e\x66unction_bytes\x18\x03 \x01(\x0c\x12\x1a\n\x12isInPlaceComputing\x18\x04 \x01(\x08\"\xde\x01\n\x0cUnaryProcess\x12@\n\x04info\x18\x01 \x01(\x0b\x32\x32.com.webank.ai.fate.api.eggroll.processor.TaskInfo\x12G\n\x07operand\x18\x02 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x43\n\x04\x63onf\x18\x03 \x01(\x0b\x32\x35.com.webank.ai.fate.api.eggroll.processor.ProcessConf\"\xa3\x02\n\rBinaryProcess\x12@\n\x04info\x18\x01 \x01(\x0b\x32\x32.com.webank.ai.fate.api.eggroll.processor.TaskInfo\x12\x44\n\x04left\x18\x02 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x45\n\x05right\x18\x03 \x01(\x0b\x32\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x43\n\x04\x63onf\x18\x04 \x01(\x0b\x32\x35.com.webank.ai.fate.api.eggroll.processor.ProcessConf2\xd7\n\n\x0eProcessService\x12u\n\x03map\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12{\n\tmapValues\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12w\n\x04join\x12\x37.com.webank.ai.fate.api.eggroll.processor.BinaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12s\n\x06reduce\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a/.com.webank.ai.fate.api.eggroll.storage.Operand0\x01\x12\x7f\n\rmapPartitions\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12v\n\x04glom\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12x\n\x06sample\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12\x80\x01\n\rsubtractByKey\x12\x37.com.webank.ai.fate.api.eggroll.processor.BinaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12x\n\x06\x66ilter\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12x\n\x05union\x12\x37.com.webank.ai.fate.api.eggroll.processor.BinaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocator\x12y\n\x07\x66latMap\x12\x36.com.webank.ai.fate.api.eggroll.processor.UnaryProcess\x1a\x36.com.webank.ai.fate.api.eggroll.storage.StorageLocatorb\x06proto3')
   ,
   dependencies=[kv__pb2.DESCRIPTOR,storage__basic__pb2.DESCRIPTOR,])
 
 
+
+
+_PROCESSCONF = _descriptor.Descriptor(
+  name='ProcessConf',
+  full_name='com.webank.ai.fate.api.eggroll.processor.ProcessConf',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='namingPolicy', full_name='com.webank.ai.fate.api.eggroll.processor.ProcessConf.namingPolicy', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=92,
+  serialized_end=127,
+)
 
 
 _TASKINFO = _descriptor.Descriptor(
@@ -71,6 +103,13 @@ _TASKINFO = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='isInPlaceComputing', full_name='com.webank.ai.fate.api.eggroll.processor.TaskInfo.isInPlaceComputing', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -83,8 +122,8 @@ _TASKINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=92,
-  serialized_end=164,
+  serialized_start=129,
+  serialized_end=229,
 )
 
 
@@ -109,6 +148,13 @@ _UNARYPROCESS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='conf', full_name='com.webank.ai.fate.api.eggroll.processor.UnaryProcess.conf', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -121,8 +167,8 @@ _UNARYPROCESS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=167,
-  serialized_end=320,
+  serialized_start=232,
+  serialized_end=454,
 )
 
 
@@ -154,6 +200,13 @@ _BINARYPROCESS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='conf', full_name='com.webank.ai.fate.api.eggroll.processor.BinaryProcess.conf', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -166,19 +219,29 @@ _BINARYPROCESS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=323,
-  serialized_end=545,
+  serialized_start=457,
+  serialized_end=748,
 )
 
 _UNARYPROCESS.fields_by_name['info'].message_type = _TASKINFO
 _UNARYPROCESS.fields_by_name['operand'].message_type = storage__basic__pb2._STORAGELOCATOR
+_UNARYPROCESS.fields_by_name['conf'].message_type = _PROCESSCONF
 _BINARYPROCESS.fields_by_name['info'].message_type = _TASKINFO
 _BINARYPROCESS.fields_by_name['left'].message_type = storage__basic__pb2._STORAGELOCATOR
 _BINARYPROCESS.fields_by_name['right'].message_type = storage__basic__pb2._STORAGELOCATOR
+_BINARYPROCESS.fields_by_name['conf'].message_type = _PROCESSCONF
+DESCRIPTOR.message_types_by_name['ProcessConf'] = _PROCESSCONF
 DESCRIPTOR.message_types_by_name['TaskInfo'] = _TASKINFO
 DESCRIPTOR.message_types_by_name['UnaryProcess'] = _UNARYPROCESS
 DESCRIPTOR.message_types_by_name['BinaryProcess'] = _BINARYPROCESS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+ProcessConf = _reflection.GeneratedProtocolMessageType('ProcessConf', (_message.Message,), dict(
+  DESCRIPTOR = _PROCESSCONF,
+  __module__ = 'processor_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.eggroll.processor.ProcessConf)
+  ))
+_sym_db.RegisterMessage(ProcessConf)
 
 TaskInfo = _reflection.GeneratedProtocolMessageType('TaskInfo', (_message.Message,), dict(
   DESCRIPTOR = _TASKINFO,
@@ -209,8 +272,8 @@ _PROCESSSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=548,
-  serialized_end=1417,
+  serialized_start=751,
+  serialized_end=2118,
   methods=[
   _descriptor.MethodDescriptor(
     name='map',
@@ -270,6 +333,42 @@ _PROCESSSERVICE = _descriptor.ServiceDescriptor(
     name='sample',
     full_name='com.webank.ai.fate.api.eggroll.processor.ProcessService.sample',
     index=6,
+    containing_service=None,
+    input_type=_UNARYPROCESS,
+    output_type=storage__basic__pb2._STORAGELOCATOR,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='subtractByKey',
+    full_name='com.webank.ai.fate.api.eggroll.processor.ProcessService.subtractByKey',
+    index=7,
+    containing_service=None,
+    input_type=_BINARYPROCESS,
+    output_type=storage__basic__pb2._STORAGELOCATOR,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='filter',
+    full_name='com.webank.ai.fate.api.eggroll.processor.ProcessService.filter',
+    index=8,
+    containing_service=None,
+    input_type=_UNARYPROCESS,
+    output_type=storage__basic__pb2._STORAGELOCATOR,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='union',
+    full_name='com.webank.ai.fate.api.eggroll.processor.ProcessService.union',
+    index=9,
+    containing_service=None,
+    input_type=_BINARYPROCESS,
+    output_type=storage__basic__pb2._STORAGELOCATOR,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='flatMap',
+    full_name='com.webank.ai.fate.api.eggroll.processor.ProcessService.flatMap',
+    index=10,
     containing_service=None,
     input_type=_UNARYPROCESS,
     output_type=storage__basic__pb2._STORAGELOCATOR,

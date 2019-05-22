@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from arch.api.eggroll import init
-from federatedml.ftl.eggroll_computation.helper import compute_X_plus_Y
+from federatedml.ftl.eggroll_computation.helper import distribute_compute_X_plus_Y
 from federatedml.ftl.test.util import assert_matrix
 
 
@@ -33,7 +33,7 @@ class TestSum(unittest.TestCase):
         Y = np.array([[1], [-1], [1]])
 
         actual_X_plus_Y = X + Y
-        X_plus_Y = compute_X_plus_Y(X, Y)
+        X_plus_Y = distribute_compute_X_plus_Y(X, Y)
         assert_matrix(actual_X_plus_Y, X_plus_Y)
 
     def test_distributed_calculate_X_plus_Y_2(self):
@@ -46,7 +46,7 @@ class TestSum(unittest.TestCase):
                       [1., 2., 3.]])
 
         actual_X_plus_Z = X + Z
-        X_plus_Z = compute_X_plus_Y(X, Z)
+        X_plus_Z = distribute_compute_X_plus_Y(X, Z)
         assert_matrix(actual_X_plus_Z, X_plus_Z)
 
 

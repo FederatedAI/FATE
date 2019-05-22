@@ -27,6 +27,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 @Component
 @Scope("prototype")
@@ -34,14 +36,15 @@ public class RollGrpcObserverFactory {
     @Autowired
     public ApplicationContext applicationContext;
 
-    public RollKvPutAllServerRequestStreamObserver createRollKvPutAllServerRequestStreamObserver(StreamObserver<Kv.Empty> clientResponseObserver,
-                                                                                                 StoreInfo storeInfo) {
-        return applicationContext.getBean(RollKvPutAllServerRequestStreamObserver.class, clientResponseObserver, storeInfo);
+    public RollKvPutAllServerRequestStreamObserver createRollKvPutAllServerRequestStreamObserver(final StreamObserver<Kv.Empty> clientResponseObserver,
+                                                                                                 final StoreInfo storeInfo,
+                                                                                                 final AtomicBoolean wasReady) {
+        return applicationContext.getBean(RollKvPutAllServerRequestStreamObserver.class, clientResponseObserver, storeInfo, wasReady);
     }
 
-    public StorageKvPutAllServerRequestStreamObserver createStoragePutAllRequestStreamObserver(StreamObserver<Kv.Empty> clientResponseObserver,
-                                                                                               StoreInfo storeInfo,
-                                                                                               Node node) {
+    public StorageKvPutAllServerRequestStreamObserver createStoragePutAllRequestStreamObserver(final StreamObserver<Kv.Empty> clientResponseObserver,
+                                                                                               final StoreInfo storeInfo,
+                                                                                               final Node node) {
         return applicationContext.getBean(StorageKvPutAllServerRequestStreamObserver.class, clientResponseObserver, storeInfo, node);
     }
 }

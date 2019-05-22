@@ -27,7 +27,8 @@ import java.util.concurrent.CountDownLatch;
 
 @Component
 @Scope("prototype")
-public class EggProcessorUnaryProcessToStorageLocatorResponseObserver extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.UnaryProcess, StorageBasic.StorageLocator> {
+public class EggProcessorUnaryProcessToStorageLocatorResponseObserver
+        extends CallerWithSameTypeDelayedResultResponseStreamObserver<Processor.UnaryProcess, StorageBasic.StorageLocator> {
     public EggProcessorUnaryProcessToStorageLocatorResponseObserver(CountDownLatch finishLatch, DelayedResult<StorageBasic.StorageLocator> delayedResult) {
         super(finishLatch, delayedResult);
     }

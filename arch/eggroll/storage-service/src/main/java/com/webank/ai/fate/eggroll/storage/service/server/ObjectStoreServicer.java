@@ -97,7 +97,7 @@ public class ObjectStoreServicer extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void delete(Kv.Operand request,
+    public void delOne(Kv.Operand request,
                        StreamObserver<Kv.Operand> responseObserver) {
         KeyValueStore<Bytes, byte[]> store = getStore();
         byte[] oldValue = store.delete(Bytes.wrap(request.getKey().toByteArray()));

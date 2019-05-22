@@ -160,7 +160,7 @@ public class TransferBrokerConsumer implements Runnable, TransferBrokerListener 
         } catch (Exception e){
             LOGGER.info("[FEDERATION][CONSUMER] error in consumer: {}", errorUtils.getStackTrace(e));
         } finally{
-            LOGGER.info("[FEDERATION][CONSUMER] break from consumer");
+            LOGGER.info("[FEDERATION][CONSUMER] break from consumer: {}", transferMetaId);
             onClose();
         }
     }

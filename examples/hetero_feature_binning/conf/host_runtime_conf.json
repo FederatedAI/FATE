@@ -18,15 +18,18 @@
         "with_label": false,
         "label_idx": 0,
         "label_type": "int",
-        "output_format": "dense"
+        "output_format": "dense",
+        "missing_fill": false,
+        "outlier_replace": false
     },
     "WorkFlowParam": {
         "method": "binning",
         "train_input_table": "TO SET",
-        "train_input_namespace": "example",
+        "train_input_namespace": "example_data_namespace",
         "work_mode": "TO SET",
-        "model_table": "whatever",
-        "model_namespace": "example"
+        "model_table": "feature_binning_host_table",
+        "model_namespace": "example_data_namespace",
+        "need_one_hot": true
         },
 
     "EncryptParam": {
@@ -35,6 +38,7 @@
     },
 
     "FeatureBinningParam": {
+        "process_method": "fit",
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,
@@ -43,8 +47,11 @@
         "bin_num": 10,
         "cols": -1,
         "local_only": false,
-        "result_table": "TO SET",
-        "result_namespace": "TO SET",
+        "result_table": "feature_binning_host_table",
+        "result_namespace": "example_data_namespace",
         "display_result": ["iv"]
+    },
+    "OneHotEncoderParam": {
+        "cols": ["fid20"]
     }
 }

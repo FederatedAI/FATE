@@ -48,6 +48,42 @@ class Quantile(object):
     def convert_feature_to_bin(data_instance, method, bin_num=DEFAULT_BIN_NUM,
                                bin_gap=DEFAULT_BIN_GAP, bin_sample_num=DEFAULT_BIN_SAMPLE_NUM,
                                valid_features=None):
+        """
+        Convert instance's features to binning, use for secureboost only in this version
+
+
+        Parameters
+        ----------
+        data_instance : DTable
+            The input data
+
+        method : str, accepted "bin_by_sample_data", "bin_by_data_block" only
+            if method is "bin_by_sample_data", if will sample bin_sample_num amount of data,
+                then find split points in such data.
+            if method is "bin_by_data_block", it will generated split points in each partition of data firstly,
+                then merge split points of all partition and genenerate final split points
+
+        bin_num : int, max num of bins each column will generate
+
+        bin_gap : float, the least gap of any two adjacent bin split points
+
+        bin_sample_num : int, use when method is "bin_by_sample_data"
+
+        valid_features : None or list,
+            if valid_features is not None, it will specify which columns need to binning
+
+        Returns
+        -------
+        data_bin: DTable,
+            instance, whose features were converted to bins
+
+        bin_split_points: 2D numpy's ndarray,
+            split points of each feature need to binning
+
+        bin_sparse_points: 1D numpy's ndarray,
+            use for sparse representation, which bin is 0 locate for each feature
+
+        """
         LOGGER.info("begin to fconvert feature to bin")
         bin_split_points = Quantile.find_bin_split_points(data_instance, method, bin_num,
                                                           bin_gap, bin_sample_num, valid_features)
@@ -63,6 +99,24 @@ class Quantile(object):
 
     @staticmethod
     def find_bin_sparse_points(bin_split_points):
+        """
+        Find out which bin is 0 should be locate for every feature.
+
+        If split points is no more than 20, will use brute-force,
+        else use binary search instead
+
+
+        Parameters
+        ----------
+        bin_split_points : 2D numpy's ndarray
+            the split points of every column
+
+        Returns
+        -------
+        bin_sparse_points: 1D numpy's ndarray,
+            which bin should 0 be for every feature column
+
+        """
         LOGGER.info("find sparse points of bin")
         bin_sparse_points = [0 for i in range(bin_split_points.shape[0])]
         for i in range(bin_split_points.shape[0]):
@@ -110,6 +164,31 @@ class Quantile(object):
 
     @staticmethod
     def gen_bin_by_merge_data_block(data_instance, bin_num, bin_gap, valid_features):
+        """
+        Find out bin split points by firstly use mapParitions interface to get
+            split points of data partition, then merge all split points to
+            generate final split points.
+
+        Parameters
+        ----------
+        data_instance : DTable
+            value of each object is instance define in federatedml.feature.instance
+
+        bin_num : int, max number of bins each column feature will generate
+
+        bin_gap : float, least gap of two adjacent split points should have
+
+        bin_sample_num : int, max number of data to be sample to generate bin split points
+
+        valid_features: None or list,
+            if valid_features is not None, it will specify which columns need to binning
+
+        Returns
+        -------
+        bin_sparse_points: 1D numpy's ndarray,
+            which bin should 0 be for every feature column
+
+        """
         LOGGER.info("fgen bin split points by merge data block")
 
         generate_bin_by_batch_func = functools.partial(Quantile.generate_bin_by_batch,
@@ -171,6 +250,28 @@ class Quantile(object):
     @staticmethod
     def gen_bin_by_sample_data(data_instance, bin_num=DEFAULT_BIN_NUM, bin_gap=DEFAULT_BIN_GAP,
                                bin_sample_num=DEFAULT_BIN_NUM, valid_features=None):
+        """
+        Find out bin split points by firstly sample bin_sample_num amount of data,
+            then use these data to generate bin split points.
+
+        Parameters
+        ----------
+        data_instance : DTable
+            value of each object is instance define in federatedml.feature.instance
+
+        bin_num : int, max number of bins each column feature will generate
+
+        bin_gap : float, least gap of two adjacent split points should have
+
+        valid_features : None or list,
+            if valid_features is not None, it will specify which columns need to binning
+
+        Returns
+        -------
+        bin_sparse_points : 1D numpy's ndarray,
+            which bin should 0 be for every feature column
+
+        """
         LOGGER.info("gen bin by sample data set")
         sample_datas = Quantile.sample_data(data_instance, bin_sample_num)
 
@@ -183,6 +284,26 @@ class Quantile(object):
 
     @staticmethod
     def gen_bin_by_data_block(data, bin_num=DEFAULT_BIN_NUM, bin_gap=DEFAULT_BIN_GAP, valid_features=None):
+        """
+        Find out bin split points of data
+
+        Parameters
+        ----------
+        data : list, element of the list is instance define in federatedml.feature.instance
+
+        bin_num: int, max number of bins each column feature will generate
+
+        bin_gap: float, least gap of two adjacent split points should have
+
+        valid_features: None or list,
+            if valid_features is not None, it will specify which columns need to binning
+
+        Returns
+        -------
+        bin_sparse_points: 1D numpy's ndarray,
+            which bin should 0 be for every feature column
+
+        """
         bin_split_points = []
         sparse_data = False
         if type(data[0].features).__name__ == "ndarray":
@@ -300,6 +421,21 @@ class Quantile(object):
 
     @staticmethod
     def sample_data(data_instance, bin_sample_num=DEFAULT_BIN_SAMPLE_NUM):
+        """
+        sample data from a dtable
+
+        Parameters
+        ----------
+        data_instance : DTable
+            The input data
+
+        bin_sample_num : int, max number of data to be sample to generate bin split points
+
+        Returns
+        -------
+        sample_data: list, element is a (id, instance) tuple
+
+        """
         LOGGER.info("fsample data set")
 
         data_key_none_value = data_instance.mapValues(lambda value: None)
@@ -319,6 +455,21 @@ class Quantile(object):
 
     @staticmethod
     def convert_instance_to_bin(instance, bin_split_points=None):
+        """
+        Method use by mapValues Api, convert an instance object's features to bins
+
+        Parameters
+        ----------
+        instance : Instance Object
+
+        bin_split_points: 2D numpy's ndarray,
+            split points of each feature need to binning
+
+        Returns
+        -------
+        instance: Instance Object, the instance object's features converted to bins
+
+        """
         sparse_data = False
         if type(instance.features).__name__ == "ndarray":
             feature_shape = instance.features.shape[0]

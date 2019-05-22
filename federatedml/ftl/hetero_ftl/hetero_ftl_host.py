@@ -24,7 +24,7 @@ from federatedml.ftl.data_util.common_data_util import overlapping_samples_conve
     save_model_parameters, create_table, convert_instance_table_to_dict, convert_instance_table_to_array, \
     add_random_mask_for_list_of_values, remove_random_mask_from_list_of_values
 from federatedml.ftl.data_util.log_util import create_shape_msg
-from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from federatedml.ftl.encrypted_ftl import EncryptedFTLHostModel
 from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, decrypt_scalar, decrypt_array
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
@@ -402,7 +402,7 @@ class HeteroDecentralizedEncryptFTLHost(HeteroFTLHost):
         LOGGER.info("@ running time: " + str(end_time - start_time))
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key, encrypt_gradients[1])
+        return distribute_decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key, encrypt_gradients[1])
 
     def __decrypt_loss(self, encrypt_loss):
         return decrypt_scalar(self.private_key, encrypt_loss)

@@ -20,12 +20,12 @@ import unittest
 import numpy as np
 
 from arch.api import eggroll
-from federatedml.feature import Instance
+from federatedml.feature.instance import Instance
 from federatedml.model_selection import MiniBatch
 from federatedml.model_selection import indices
 
-
 eggroll.init("123")
+
 
 class TestMiniBatch(unittest.TestCase):
     def prepare_data(self, data_num, feature_num):

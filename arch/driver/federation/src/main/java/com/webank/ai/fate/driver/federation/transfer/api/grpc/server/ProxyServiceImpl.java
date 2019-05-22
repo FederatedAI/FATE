@@ -17,6 +17,7 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.server;
 
 import com.webank.ai.fate.api.driver.federation.Federation;
+import com.webank.ai.fate.api.eggroll.storage.Kv;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.core.api.grpc.server.GrpcServerWrapper;
@@ -25,12 +26,15 @@ import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushServerRequestStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferProtoMessageUtils;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Scope("prototype")
@@ -48,7 +52,21 @@ public class ProxyServiceImpl extends DataTransferServiceGrpc.DataTransferServic
     @Override
     public PushServerRequestStreamObserver push(StreamObserver<Proxy.Metadata> responseObserver) {
         LOGGER.info("[FEDERATION][PROXY][PUSH] request received");
-        return transferServiceFactory.createPushServerRequestStreamObserver(responseObserver);
+
+        // todo: implement this in framework
+        final ServerCallStreamObserver<Proxy.Metadata> serverCallStreamObserver
+                = (ServerCallStreamObserver<Proxy.Metadata>) responseObserver;
+        serverCallStreamObserver.disableAutoInboundFlowControl();
+
+        final AtomicBoolean wasReady = new AtomicBoolean(false);
+
+        serverCallStreamObserver.setOnReadyHandler(() -> {
+            if (serverCallStreamObserver.isReady() && wasReady.compareAndSet(false, true)) {
+                serverCallStreamObserver.request(1);
+            }
+        });
+
+        return transferServiceFactory.createPushServerRequestStreamObserver(responseObserver, wasReady);
     }
 
     @Override

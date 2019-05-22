@@ -22,8 +22,8 @@
         "method": "_workflow_method",
         "data_input_table": "_intersect_table_name",
         "data_input_namespace": "example_data_namespace",
-        "intersect_data_output_table": "_intersect_output_table_name",
-        "intersect_data_output_namespace": "_intersect_output_namespace",
+        "intersect_data_output_table": "guest__intersect_output_table_name",
+        "intersect_data_output_namespace": "guest__intersect_output_namespace",
         "work_mode": _work_mode
     },
     "IntersectParam": {

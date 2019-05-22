@@ -15,23 +15,39 @@
 #
 
 import json
+import os
+import copy
+from arch.api.utils.log_utils import getLogger
+
+LOGGER = getLogger()
 
 
 class ParameterOverride(object):
     @staticmethod
-    def override_parameter(default_runtime_conf, submit_dict, out_prefix):
-        default_runtime_dict = None
-
-        with open(default_runtime_conf, "r") as fin:
-            default_runtime_dict = json.loads(fin.read())
+    def override_parameter(default_runtime_dict, setting_conf, submit_dict, out_prefix):
 
         if default_runtime_dict is None or submit_dict is None:
             raise Exception("default runtime conf and submit conf should be a json file")
 
+        _method = submit_dict['task']
+        _module = submit_dict['module']
+
+        _module_setting = setting_conf['module'].get(_module)
+
+        if not _module_setting:
+            raise Exception("{} is not set in setting_conf ".format(_module))
+
         for role in submit_dict["role"]:
+            _role_setting = _module_setting["role"].get(role)
+            if not _role_setting:
+                continue
+            if _method not in _role_setting['tasklist']:
+                continue
+            _code_path = os.path.join(_module_setting.get('module_path'), _role_setting.get('program'))
             partyid_list = submit_dict["role"][role]
             for idx in range(len(partyid_list)):
-                runtime_json = default_runtime_dict.copy()
+                runtime_json = copy.deepcopy(default_runtime_dict)
+                runtime_json['WorkFlowParam']['method'] = _method
                 for key, value in submit_dict.items():
                     if key not in ["algorithm_parameters", "role_parameters"]:
                         runtime_json[key] = value
@@ -51,9 +67,22 @@ class ParameterOverride(object):
                         if param_class not in runtime_json:
                             runtime_json[param_class] = {}
                         for attr, valuelist in role_dict[param_class].items():
-                            if len(valuelist) <= idx:
-                                continue
-                            runtime_json[param_class][attr] = valuelist[idx]
-                output_path = out_prefix + str(role) + "_" + str(partyid_list[idx]) + "_runtime_conf.json"
+                            if isinstance(valuelist, list):
+                                if len(valuelist) <= idx:
+                                    continue
+                                else:
+                                    runtime_json[param_class][attr] = valuelist[idx]
+                            else:
+                                runtime_json[param_class][attr] = valuelist
+                runtime_json['local'] = submit_dict.get('local', {})
+                my_local = {
+                    "role": role, "party_id": partyid_list[idx]
+                }
+                runtime_json['local'].update(my_local)
+                runtime_json['CodePath'] = _code_path
+                runtime_json['module'] = _module
+                output_path = os.path.join(out_prefix, _method, _module, str(role),
+                                           str(partyid_list[idx]), "runtime_conf.json")
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 with open(output_path, "w") as fout:
-                    fout.write(json.dumps(runtime_json))
+                    fout.write(json.dumps(runtime_json, indent=4))

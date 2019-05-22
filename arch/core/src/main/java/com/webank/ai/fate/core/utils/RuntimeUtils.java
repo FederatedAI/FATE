@@ -16,11 +16,13 @@
 
 package com.webank.ai.fate.core.utils;
 
+import com.webank.ai.fate.core.server.DefaultServerConf;
 import com.webank.ai.fate.core.server.ServerConf;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
@@ -33,6 +35,13 @@ public class RuntimeUtils {
 
     private static String myIpAndPort = null;
     private static String siteLocalAddress = null;
+
+    @PostConstruct
+    private void init() {
+        if (serverConf == null) {
+            serverConf = new DefaultServerConf();
+        }
+    }
 
     public String getMySiteLocalAddress() {
         if (siteLocalAddress == null) {

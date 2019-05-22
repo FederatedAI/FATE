@@ -22,6 +22,8 @@ import com.webank.ai.fate.core.api.grpc.client.crud.BaseStreamProcessor;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Node;
 import com.webank.ai.fate.eggroll.roll.service.model.OperandBroker;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -31,22 +33,37 @@ import java.util.List;
 @Scope("prototype")
 // todo: see if this can be merged with PushStreamProcessor
 public class StorageKvPutAllRequestStreamProcessor extends BaseStreamProcessor<Kv.Operand> {
-    private OperandBroker broker;
+    private OperandBroker operandBroker;
     private Node node;
+    private int entryCount = 0;
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    public StorageKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker broker, Node node) {
+    public StorageKvPutAllRequestStreamProcessor(StreamObserver<Kv.Operand> streamObserver, OperandBroker operandBroker, Node node) {
         super(streamObserver);
-        this.broker = broker;
+        this.operandBroker = operandBroker;
         this.node = node;
     }
 
     @Override
-    public void process() {
+    public synchronized void process() {
+        super.process();
         List<Kv.Operand> operands = Lists.newLinkedList();
-        broker.drainTo(operands);
+        operandBroker.drainTo(operands, 200_000);
 
         for (Kv.Operand operand : operands) {
             streamObserver.onNext(operand);
+            ++entryCount;
         }
     }
+
+    @Override
+    public void complete() {
+        // LOGGER.info("[PUTALL][SUBTASK] trying to complete putAll sub task. remaining: {}, entryCount: {}", operandBroker.getQueueSize(), entryCount);
+/*        while (!broker.isClosable()) {
+            process();
+        }*/
+        LOGGER.info("[PUTALL][SUBTASK] actual completes putAll sub task. remaining: {}, entryCount: {}", operandBroker.getQueueSize(), entryCount);
+        super.complete();
+    }
+
 }

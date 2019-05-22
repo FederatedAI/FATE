@@ -33,7 +33,7 @@
     <properties>
         <leveldb.version>0.10</leveldb.version>
         <jedis.version>2.9.0</jedis.version>
-        <lmdb.version>0.6.1</lmdb.version>
+        <lmdb.version>0.6.3</lmdb.version>
     </properties>
 
     <dependencies>
@@ -57,6 +57,11 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>${jedis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.webank.ai.fate</groupId>
+            <artifactId>fate-core</artifactId>
+            <version>${fate.version}</version>
         </dependency>
 
     </dependencies>

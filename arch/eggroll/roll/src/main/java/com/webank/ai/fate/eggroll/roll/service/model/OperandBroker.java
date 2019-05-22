@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -35,24 +36,31 @@ import java.util.concurrent.TimeUnit;
 public class OperandBroker {
     private BlockingQueue<Kv.Operand> operandQueue;
 
-    private boolean isFinished;
-    private Object latchLock;
-    private CountDownLatch readyLatch;
+    private @GuardedBy("this") volatile boolean isFinished;
+    private volatile CountDownLatch readyLatch;
+    private final Object readyLatchLock;
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     public OperandBroker() {
-        this.operandQueue = Queues.newLinkedBlockingQueue();
+        this(-1);
+    }
+
+    public OperandBroker(int capacity) {
+        if (capacity <= 0) {
+            this.operandQueue = Queues.newLinkedBlockingQueue();
+        } else {
+            this.operandQueue = Queues.newLinkedBlockingQueue(capacity);
+        }
 
         this.isFinished = false;
-        this.latchLock = new Object();
-
+        this.readyLatchLock = new Object();
         resetLatch();
     }
 
     public void put(Kv.Operand operand) {
         try {
-            if (operand != null) {
+            if (!isFinished() && operand != null) {
                 operandQueue.put(operand);
             } else {
                 LOGGER.warn("[OPERANDBROKER] null value offered. ignoring");
@@ -61,12 +69,21 @@ public class OperandBroker {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         } finally {
-            this.readyLatch.countDown();
+            countDownLatch();
         }
     }
 
-    public void addAll(Collection<Kv.Operand> operands) {
-        operandQueue.addAll(operands);
+    public boolean addAll(Collection<Kv.Operand> operands) {
+        boolean result = false;
+        if (operands.size() > 0) {
+            result = operandQueue.addAll(operands);
+        }
+
+        if (result) {
+            countDownLatch();
+        }
+
+        return result;
     }
 
     public Kv.Operand get() {
@@ -82,10 +99,7 @@ public class OperandBroker {
                 throw new NullPointerException("no element for now");
             }
         }
-
-        if (!isClosable() && operandQueue.isEmpty()) {
-            resetLatch();
-        }
+        resetLatch();
 
         return result;
     }
@@ -95,22 +109,50 @@ public class OperandBroker {
     }
 
     public synchronized int drainTo(Collection<Kv.Operand> target) {
-        int result = operandQueue.drainTo(target);
+        return drainTo(target, Integer.MAX_VALUE);
+    }
+
+    public synchronized int drainTo(Collection<Kv.Operand> target, int maxElementSize) {
+        int result = operandQueue.drainTo(target, maxElementSize);
         resetLatch();
 
         return result;
     }
 
-    public void resetLatch() {
-        if (readyLatch == null || readyLatch.getCount() != 1) {
-            synchronized (latchLock) {
+    private void resetLatch() {
+        synchronized (readyLatchLock) {
+            if ((readyLatch == null || readyLatch.getCount() != 1)
+                    && !isFinished()            // "finished" is an expectation of more data. if finished == true, then there is no need to reset latch again
+                    && !isReady()) {
                 this.readyLatch = new CountDownLatch(1);
             }
         }
     }
 
+    private void countDownLatch() {
+        synchronized (readyLatchLock) {
+            if (readyLatch != null && readyLatch.getCount() > 0) {
+                this.readyLatch.countDown();
+            }
+        }
+    }
+
+    // todo: check thread safety
     public boolean awaitLatch(long timeout, TimeUnit unit) throws InterruptedException {
-        return this.readyLatch.await(timeout, unit);
+        if (!operandQueue.isEmpty()) {
+            countDownLatch();
+        }
+
+        boolean awaitResult = this.readyLatch.await(timeout, unit);
+
+        if (!awaitResult) {
+            if (isReady()) {
+                countDownLatch();
+                awaitResult = true;
+            }
+        }
+
+        return awaitResult;
     }
 
     public boolean isReady() {
@@ -118,12 +160,16 @@ public class OperandBroker {
     }
 
     public boolean isFinished() {
-        return isFinished;
+        synchronized (this) {
+            return isFinished;
+        }
     }
 
     public OperandBroker setFinished() {
-        isFinished = true;
-        this.readyLatch.countDown();
+        synchronized (this) {
+            isFinished = true;
+        }
+        countDownLatch();
         return this;
     }
 
@@ -136,6 +182,8 @@ public class OperandBroker {
     }
 
     public boolean isClosable() {
-        return !isReady() && isFinished;
+        synchronized (this) {
+            return !isReady() && isFinished();
+        }
     }
 }
