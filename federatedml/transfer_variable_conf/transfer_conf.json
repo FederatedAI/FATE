@@ -647,5 +647,20 @@
           "host"
       ]
     }
+  },
+  "OneVsRestTransferVariable": {
+    "host_classes": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "aggregate_classes":{
+      "src": "guest",
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    }
   }
 }

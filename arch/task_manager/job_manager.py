@@ -77,6 +77,10 @@ def save_job_info(job_id, role, party_id, save_info, create=False):
     job_info.role = role
     job_info.party_id = party_id
     job_info.create_date = datetime.datetime.now()
+    if 'status' in save_info:
+        if job_info.status in ['success', 'failed', 'partial', 'deleted']:
+            # Termination status cannot be updated
+            save_info.pop('status')
     for k, v in save_info.items():
         if k in ['job_id', 'role', 'party_id']:
             continue
@@ -136,6 +140,10 @@ def update_job_queue(job_id, role, party_id, save_data):
     job_queue.job_id = job_id
     job_queue.role = role
     job_queue.party_id = party_id
+    if 'status' in save_data:
+        if job_queue.status in ['success', 'failed', 'partial', 'deleted']:
+            # Termination status cannot be updated
+            save_data.pop('status')
     for k, v in save_data.items():
         if k in ['job_id', 'role', 'party_id']:
             continue

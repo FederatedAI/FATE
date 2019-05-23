@@ -26,7 +26,7 @@
         "method": "_workflow_method",
         "train_input_table": "_train_table_name",
         "train_input_namespace": "example_data_namespace",
-        "model_table": "boostingtree_model_guest",
+        "model_table": "boostingtree_model_guest1",
         "model_namespace": "boostingtree_model_namespace",
         "predict_input_table": "_predict_table_name",
         "predict_input_namespace": "example_data_namespace",
@@ -69,7 +69,12 @@
         "min_leaf_node": 10,
         "max_split_nodes": 1024,
         "n_iter_no_change": true,
+        "feature_importance_type": "gain",
         "tol": 0.0001
+    },
+    "EncryptedModeCalculatorParam": {
+        "mode": "strict",
+        "re_encrypted_rate": 0.5
     },
     "BoostingTreeParam": {
         "task_type": _task_type,

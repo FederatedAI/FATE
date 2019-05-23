@@ -44,6 +44,7 @@ class BaseLogisticRegression(object):
         self.fit_intercept = self.init_param_obj.fit_intercept
         self.learning_rate = logistic_params.learning_rate
         self.encrypted_mode_calculator_param = logistic_params.encrypted_mode_calculator_param
+        self.encrypted_calculator = None
 
         if logistic_params.penalty == consts.L1_PENALTY:
             self.updater = L1Updater(self.alpha, self.learning_rate)

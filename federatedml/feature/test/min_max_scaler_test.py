@@ -2,11 +2,11 @@ import numpy as np
 import time
 import unittest
 
+from sklearn.preprocessing import MinMaxScaler as MMS
+
 from arch.api import eggroll
 from federatedml.feature.instance import Instance
 from federatedml.feature.min_max_scaler import MinMaxScaler
-
-from sklearn.preprocessing import MinMaxScaler as MMS
 
 
 class TestMinMaxScaler(unittest.TestCase):
@@ -30,6 +30,7 @@ class TestMinMaxScaler(unittest.TestCase):
             # self.test_instance.append(Instance(features=td))
             self.test_instance.append(Instance(features=np.array(td, dtype=float)))
         self.table_instance = self.data_to_eggroll_table(self.test_instance, str_time)
+        self.table_instance.schema['header'] = ["fid" + str(i) for i in range(len(self.test_data[0]))]
 
     def print_table(self, table):
         for v in (list(table.collect())):

@@ -15,7 +15,7 @@
             "in": ["strict", "balance"]
         },
         "re_encrypted_rate": {
-            "range": [[0.9, 1]]
+            "range": [[0.1, 1]]
         }
     }
 }
