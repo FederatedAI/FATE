@@ -20,11 +20,13 @@ class BeaverTripleGenerationCarlo(BaseBeaverTripleGeneration):
 
         start_time = time.time()
 
+        LOGGER.info("@ get carlo beaver triple shares from a")
         party_a_bt_map_to_carlo = self._do_get(name=self.transfer_variable.party_a_bt_map_to_carlo.name,
                                                tag=self.transfer_variable.generate_transferid(
                                                    self.transfer_variable.party_a_bt_map_to_carlo),
                                                idx=-1)[0]
 
+        LOGGER.info("@ get carlo beaver triple shares from b")
         party_b_bt_map_to_carlo = self._do_get(name=self.transfer_variable.party_b_bt_map_to_carlo.name,
                                                tag=self.transfer_variable.generate_transferid(
                                                    self.transfer_variable.party_b_bt_map_to_carlo),
@@ -34,15 +36,19 @@ class BeaverTripleGenerationCarlo(BaseBeaverTripleGeneration):
                                                                            party_b_bt_map_to_carlo,
                                                                            self.mul_ops_def)
 
+        LOGGER.info("@ send carlo beaver triple shares to a")
         self._do_remote(carlo_bt_map_to_party_a, name=self.transfer_variable.carlo_bt_map_to_party_a.name,
                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.carlo_bt_map_to_party_a),
                         role=consts.GUEST,
                         idx=-1)
 
-        self._do_remote(carlo_bt_map_to_party_a, name=self.transfer_variable.carlo_bt_map_to_party_b.name,
+        LOGGER.info("@ send carlo beaver triple shares to b")
+        self._do_remote(carlo_bt_map_to_party_b, name=self.transfer_variable.carlo_bt_map_to_party_b.name,
                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.carlo_bt_map_to_party_b),
                         role=consts.HOST,
                         idx=-1)
 
         end_time = time.time()
+
+        LOGGER.info("@ carlo beaver triples generation finished!")
         LOGGER.info("@ running time: " + str(end_time - start_time))

@@ -30,4 +30,5 @@ class BaseBeaverTripleGeneration(object):
         return federation.get(name=name, tag=tag, idx=idx)
 
     def save_beaver_triples(self, bt_map, bt_map_name):
-        LOGGER.debug("@ save bt map:" + bt_map_name)
+        LOGGER.debug("@ save bt map with name:" + bt_map_name)
+        # LOGGER.debug("@ save bt map:\n" + bt_map)

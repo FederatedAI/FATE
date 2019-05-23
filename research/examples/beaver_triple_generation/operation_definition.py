@@ -1,4 +1,5 @@
 def get_mul_op_def_example():
+    # This is an example of defining multiplication operation beaver triples
     mul_op_def, ops = create_mul_op_def(num_overlap_samples=20,
                                         num_non_overlap_samples_guest=80,
                                         guest_input_dim=32,

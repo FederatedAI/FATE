@@ -33,7 +33,11 @@ class GuestBeaverTripleGenerationWorkflow(BeaverTripleGenerationWorkflow):
         LOGGER.debug("@ initialize guest beaver triple generator")
         self.ftl_transfer_variable = BeaverTripleTransferVariable()
 
+        # get matrix multiplication operations definition for generating beaver triples
         mul_op_def = get_mul_op_def_example()
+
+        # Normally this kind of information should be read from configuration file.
+        # For simplicity, we just hardcode the number of epoch information here.
         num_epoch = 1
 
         mul_ops, global_iters, num_batch = fill_beaver_triple_matrix_shape(mul_op_def, num_epoch)

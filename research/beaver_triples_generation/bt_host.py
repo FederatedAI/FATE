@@ -20,26 +20,32 @@ class BeaverTripleGenerationHost(BaseBeaverTripleGeneration):
         LOGGER.info("@ start host beaver triples generation")
 
         start_time = time.time()
+
+        LOGGER.info("@ initialize host beaver triples")
         self.party_b_bt_gene_helper.initialize_beaver_triples()
 
         party_b_bt_map_to_carlo = self.party_b_bt_gene_helper.get_to_carlo_beaver_triple_map()
         party_b_bt_map_to_a = self.party_b_bt_gene_helper.get_to_other_party_beaver_triple_map()
 
+        LOGGER.info("@ send host beaver triple shares to guest")
         self._do_remote(party_b_bt_map_to_a, name=self.transfer_variable.party_b_bt_map_to_a.name,
                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.party_b_bt_map_to_a),
                         role=consts.GUEST,
                         idx=-1)
 
+        LOGGER.info("@ get host beaver triple shares from guest")
         party_a_bt_map_to_b = self._do_get(name=self.transfer_variable.party_a_bt_map_to_b.name,
                                            tag=self.transfer_variable.generate_transferid(
                                                self.transfer_variable.party_a_bt_map_to_b),
                                            idx=-1)[0]
 
+        LOGGER.info("@ send host beaver triple shares to carlo")
         self._do_remote(party_b_bt_map_to_carlo, name=self.transfer_variable.party_b_bt_map_to_carlo.name,
                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.party_b_bt_map_to_carlo),
                         role=consts.ARBITER,
                         idx=-1)
 
+        LOGGER.info("@ get host beaver triple shares from carlo")
         carlo_bt_map_to_party_b = self._do_get(name=self.transfer_variable.carlo_bt_map_to_party_b.name,
                                                tag=self.transfer_variable.generate_transferid(
                                                    self.transfer_variable.carlo_bt_map_to_party_b),
