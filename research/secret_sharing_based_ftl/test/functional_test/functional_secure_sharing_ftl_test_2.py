@@ -277,40 +277,61 @@ if __name__ == '__main__':
 
     file_dir = "/data/app/fate/yankang/"
 
-    num_samples = 5000
-    num_categories = 81
-    main_label = 'water'
-    all_labels = get_top_k_labels(file_dir, top_k=num_categories)
-    all_labels.remove(main_label)
-    sel = main_label + all_labels
+    sel = ["person"]
+    all_labels = get_top_k_labels(file_dir, top_k=81)
+    all_labels.remove("person")
 
-    rel_model_dir = "models"
-    model_dir = file_dir + rel_model_dir
-    if not os.path.exists(model_dir):
-        try:
-            os.mkdir(model_dir)
-        except OSError:
-            print("Creation of the directory %s failed" % model_dir)
-        else:
-            print("Successfully created the directory %s" % model_dir)
+    sel = sel + all_labels
+    print("sel:", sel)
+    X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=5000)
+    print("X_A shape:", X_A.shape)
+    print("X_B shape:", X_B.shape)
+    print("y shape", y.shape)
 
-    model_name_prefix = main_label + "_" + str(num_categories) + "_" + str(num_samples)
-    model_full_name_prefix = model_dir + "/" + model_name_prefix
-    model_name_X_A = model_full_name_prefix + "_" + "X_A"
-    model_name_X_B = model_full_name_prefix + "_" + "X_B"
-    model_name_y = model_full_name_prefix + "_" + "y"
-    if not os.path.exists(model_name_X_A):
-        X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=num_samples)
-        print("original X_A shape:", X_A.shape)
-        print("original X_B shape:", X_B.shape)
-        print("original y shape", y.shape)
-        np.save(model_name_X_A, X_A)
-        np.save(model_name_X_B, X_B)
-        np.save(model_name_y, y)
-    else:
-        X_A = np.load(model_name_X_A)
-        X_B = np.load(model_name_X_B)
-        y = np.load(model_name_y)
+    # main_label = 'water'
+    # num_samples = 5000
+    # num_categories = 81
+    # all_labels = get_top_k_labels(file_dir, top_k=num_categories)
+    # all_labels.remove(main_label)
+    # sel = main_label + all_labels
+    #
+    # model_name_prefix = main_label + "_" + str(num_categories) + "_" + str(num_samples)
+    # print("model_name_prefix:", model_name_prefix)
+    #
+    # rel_model_dir = "models"
+    # model_full_path_dir = file_dir + rel_model_dir
+    # if not os.path.exists(model_full_path_dir):
+    #     try:
+    #         os.mkdir(model_full_path_dir)
+    #     except OSError:
+    #         print("Creation of the directory {0} failed".format(model_full_path_dir))
+    #         raise OSError("Creation of the directory {0} failed".format(model_full_path_dir))
+    #     else:
+    #         print("Successfully created the directory {0}".format(model_full_path_dir))
+    # else:
+    #     print("directory {0} already exists".format(model_full_path_dir))
+    #
+    # model_full_name_prefix = model_full_path_dir + "/" + model_name_prefix
+    # model_full_name_X_A = model_full_name_prefix + "_" + "X_A"
+    # model_full_name_X_B = model_full_name_prefix + "_" + "X_B"
+    # model_full_name_y = model_full_name_prefix + "_" + "y"
+    #
+    # print("model_name_X_A", model_full_name_X_A)
+    # print("model_name_X_B", model_full_name_X_B)
+    # print("model_name_y", model_full_name_y)
+    #
+    # if not os.path.exists(model_full_name_X_A):
+    #     X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=num_samples)
+    #     print("original X_A shape:", X_A.shape)
+    #     print("original X_B shape:", X_B.shape)
+    #     print("original y shape", y.shape)
+    #     np.save(model_full_name_X_A, X_A)
+    #     np.save(model_full_name_X_B, X_B)
+    #     np.save(model_full_name_y, y)
+    # else:
+    #     X_A = np.load(model_full_name_X_A)
+    #     X_B = np.load(model_full_name_X_B)
+    #     y = np.load(model_full_name_y)
 
     y_ = []
     pos_count = 0
@@ -340,8 +361,8 @@ if __name__ == '__main__':
     num_train = int(0.8 * data_size)
 
     print("num_train:", num_train)
-    X_A, X_B, y = X_A[:num_train, :], X_B[:num_train, :], y[:num_train, :]
     X_A_test, X_B_test, y_test = X_A[num_train:, :], X_B[num_train:, :], y[num_train:, :]
+    X_A, X_B, y = X_A[:num_train, :], X_B[:num_train, :], y[:num_train, :]
 
     guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
     host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
@@ -436,7 +457,7 @@ if __name__ == '__main__':
                 y_pred_label = []
                 pos_count = 0
                 neg_count = 0
-                print("y_pred \n", y_pred)
+                # print("y_pred \n", y_pred)
                 for _y in y_pred:
                     if _y <= predict_threshold:
                         neg_count += 1

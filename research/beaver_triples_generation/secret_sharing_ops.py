@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 
 def generate_random_matrix(r, c):
     a1 = np.random.rand(r, c)
@@ -77,11 +77,14 @@ def compute_multiply_share(alpha_0, alpha_1, beta_0, beta_1, share_map):
     Bs = share_map["Bs"]
     Cs = share_map["Cs"]
     i = 0 if share_map["is_party_a"] else 1
-
     Zs = i * np.multiply(alpha, beta) + np.multiply(As, beta) + np.multiply(alpha, Bs) + Cs
     return Zs
 
 
 def compute_sum_of_multiply_share(alpha_0, alpha_1, beta_0, beta_1, share_map, axis=None):
+    start = time.time()
+    print(alpha_0.shape, beta_0.shape)
     Zs = compute_multiply_share(alpha_0, alpha_1, beta_0, beta_1, share_map)
+    end = time.time()
+    print(">>> compute_sum_of_multiply_share time:", (end - start))
     return np.sum(Zs, axis=axis)

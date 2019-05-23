@@ -25,37 +25,94 @@ from federatedml.ftl.data_util.common_data_util import series_plot, split_data_c
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.plain_ftl import PlainFTLHostModel, PlainFTLGuestModel, LocalPlainFederatedTransferLearning
 from federatedml.ftl.test.mock_models import MockFTLModelParam
+from federatedml.ftl.data_util.nus_wide_util import get_labeled_data, balance_X_y, get_top_k_labels
 
 if __name__ == '__main__':
 
-    infile = "../../../../examples/data/UCI_Credit_Card.csv"
-    X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
+    # infile = "../../../../examples/data/UCI_Credit_Card.csv"
+    # X, y = load_UCI_Credit_Card_data(infile=infile, balanced=True)
+    #
+    # num_samples = 5000
+    # X = X[:num_samples]
+    # y = y[:num_samples]
+    # X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
+    #                                                           overlap_ratio=0.2,
+    #                                                           b_samples_ratio=0.1,
+    #                                                           n_feature_b=18)
+    #
+    # guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
+    # host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
+    #
+    # valid_ratio = 0.5
+    # test_indexes = host_non_overlap_indexes[int(valid_ratio * len(host_non_overlap_indexes)):]
+    # X_B_test = X_B[test_indexes]
+    # y_B_test = y_B[test_indexes]
+    #
+    # print("X_A shape", X_A.shape)
+    # print("y_A shape", y_A.shape)
+    # print("X_B shape", X_B.shape)
+    # print("y_B shape", y_B.shape)
+    #
+    # print("overlap_indexes len", len(overlap_indexes))
+    # print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
+    # print("guest_non_overlap_indexes len", len(guest_non_overlap_indexes))
+    # print("test_indexes len", len(test_indexes))
 
-    num_samples = 5000
-    X = X[:num_samples]
-    y = y[:num_samples]
-    X_A, y_A, X_B, y_B, overlap_indexes = split_data_combined(X, y,
-                                                              overlap_ratio=0.2,
-                                                              b_samples_ratio=0.1,
-                                                              n_feature_b=18)
+    file_dir = "/data/app/fate/yankang/"
+
+    sel = ["person"]
+    all_labels = get_top_k_labels(file_dir, top_k=81)
+    all_labels.remove("person")
+
+    sel = sel + all_labels
+    print("sel:", sel)
+    X_A, X_B, y = get_labeled_data(data_dir=file_dir, selected_label=sel, n_samples=5000)
+    print("X_A shape:", X_A.shape)
+    print("X_B shape:", X_B.shape)
+    print("y shape", y.shape)
+
+    y_ = []
+    pos_count = 0
+    neg_count = 0
+    for i in range(y.shape[0]):
+        if y[i, 0] == 1:
+            y_.append(1)
+            pos_count += 1
+        else:
+            y_.append(-1)
+            neg_count += 1
+
+    y_ = np.array(y_)
+    X_A, X_B, y = balance_X_y(X_A, X_B, y_)
+
+    y = np.expand_dims(y, axis=1)
+    print("X_A shape:", X_A.shape)
+    print("X_B shape:", X_B.shape)
+    print("y shape:", y.shape)
+    # print("y:", y)
+
+    overlap_ratio = 0.4
+    data_size = X_A.shape[0]
+    overlap_size = int(data_size * overlap_ratio)
+    overlap_indexes = np.array(range(overlap_size))
+
+    num_train = int(0.8 * data_size)
+
+    print("num_train:", num_train)
+    X_A_test, X_B_test, y_B_test = X_A[num_train:, :], X_B[num_train:, :], y[num_train:, :]
+    X_A, X_B, y_A = X_A[:num_train, :], X_B[:num_train, :], y[:num_train, :]
 
     guest_non_overlap_indexes = np.setdiff1d(range(X_A.shape[0]), overlap_indexes)
     host_non_overlap_indexes = np.setdiff1d(range(X_B.shape[0]), overlap_indexes)
 
-    valid_ratio = 0.5
-    test_indexes = host_non_overlap_indexes[int(valid_ratio * len(host_non_overlap_indexes)):]
-    x_B_test = X_B[test_indexes]
-    y_B_test = y_B[test_indexes]
-
     print("X_A shape", X_A.shape)
-    print("y_A shape", y_A.shape)
     print("X_B shape", X_B.shape)
-    print("y_B shape", y_B.shape)
+    print("X_A_test shape", X_A_test.shape)
+    print("X_B_test shape", X_B_test.shape)
 
     print("overlap_indexes len", len(overlap_indexes))
-    print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
     print("guest_non_overlap_indexes len", len(guest_non_overlap_indexes))
-    print("test_indexes len", len(test_indexes))
+    print("host_non_overlap_indexes len", len(host_non_overlap_indexes))
 
     print("################################ Build Federated Models ############################")
 
@@ -64,7 +121,7 @@ if __name__ == '__main__':
     autoencoder_A = Autoencoder(1)
     autoencoder_B = Autoencoder(2)
 
-    hidden_dim = 14
+    hidden_dim = 32
     autoencoder_A.build(X_A.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
     autoencoder_B.build(X_B.shape[-1], hidden_dim, learning_rate=0.01, repr_l2_param=0.03)
 
@@ -77,7 +134,7 @@ if __name__ == '__main__':
     print("################################ Train Federated Models ############################")
     threshold = 0.50
     start_time = time.time()
-    epochs = 220
+    epochs = 50
     init = tf.global_variables_initializer()
     with tf.Session() as sess:
         autoencoder_A.set_session(sess)
@@ -97,7 +154,7 @@ if __name__ == '__main__':
 
             if ep % 5 == 0:
                 print("> ep", ep, "loss", loss)
-                y_pred = federatedLearning.predict(x_B_test)
+                y_pred = federatedLearning.predict(X_B_test)
                 y_pred_label = []
                 pos_count = 0
                 neg_count = 0

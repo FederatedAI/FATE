@@ -19,7 +19,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from research.beaver_triples_generation.secret_sharing_ops import share, local_compute_alpha_beta_share, compute_matmul_share, \
     compute_add_share, compute_minus_share, compute_sum_of_multiply_share, compute_multiply_share
-
+import time
 LOGGER = log_utils.getLogger()
 
 
@@ -266,9 +266,26 @@ class SecureSharingFTLGuestModel(SecureSharingParty):
     #
 
     def compute_shares_for_guest_local_gradients(self):
+        local_model_compute_gradient_start_time = time.time()
         grads_W, grads_b = self.localModel.compute_gradients(self.X)
+        local_model_compute_gradient_end_time = time.time()
+
+        local_model_compute_share_grads_W_start_time = time.time()
         self.guest_grads_W_g, self.guest_grads_W_h = share(grads_W)
+        local_model_compute_share_grads_W_end_time = time.time()
+
+        local_model_compute_share_grads_b_start_time = time.time()
         self.guest_grads_b_g, self.guest_grads_b_h = share(grads_b)
+        local_model_compute_share_grads_b_end_time = time.time()
+
+        local_model_compute_gradient_time = local_model_compute_gradient_end_time - local_model_compute_gradient_start_time
+        local_model_compute_share_grads_W_time = local_model_compute_share_grads_W_end_time - local_model_compute_share_grads_W_start_time
+        local_model_compute_share_grads_b_time = local_model_compute_share_grads_b_end_time - local_model_compute_share_grads_b_start_time
+
+        print("local_model_compute_gradient_time:", local_model_compute_gradient_time)
+        print("local_model_compute_share_grads_W_time:", local_model_compute_share_grads_W_time, " for ", grads_W.shape)
+        print("local_model_compute_share_grads_b_time:", local_model_compute_share_grads_b_time, " for ", grads_b.shape)
+
         return self.guest_grads_W_h, self.guest_grads_b_h
 
     def compute_shares_for_alpha_beta_for_guest_grad_W(self, global_index, op_id=None):
@@ -897,19 +914,11 @@ class LocalSecureSharingFederatedTransferLearning(object):
         self.host.receive_components(comp_A)
         self.guest.receive_components(comp_B)
 
-        # self.party_A.set_batch(X_A, y, guest_non_overlap_indexes, overlap_indexes)
-        # self.party_B.set_batch(X_B, overlap_indexes)
-        # components_A = self.party_A.send_components()
-        # components_B = self.party_B.send_components()
-
-        # actual_host_grads_W, actual_host_grads_b = self.party_B.localModel.compute_gradients(X_B[overlap_indexes])
-
-        # self.party_A.receive_components(components_B)
-        # self.party_B.receive_components(components_A)
-
         #
+        # host compute and update gradients
         #
-        #
+
+        host_start_time = time.time()
 
         alpha_h, beta_h = self.host.compute_shares_for_alpha_beta_for_overlap_uB_y_2_phi_2(global_index)
         alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_overlap_uB_y_2_phi_2(global_index)
@@ -917,21 +926,8 @@ class LocalSecureSharingFederatedTransferLearning(object):
         overlap_uB_y_2_phi_2_h = self.host.compute_share_for_overlap_uB_y_2_phi_2(alpha_g, beta_g)
         overlap_uB_y_2_phi_2_g = self.guest.compute_share_for_overlap_uB_y_2_phi_2(alpha_h, beta_h)
 
-        # actual_overlap_uB_y_2_phi_2 = self.party_B.overlap_uB_y_overlap_2_phi_2
-        # overlap_uB_y_2_phi_2 = overlap_uB_y_2_phi_2_g + overlap_uB_y_2_phi_2_h
-        # print("overlap_uB_y_2_phi_2 shape \n", overlap_uB_y_2_phi_2, overlap_uB_y_2_phi_2.shape)
-        # print("actual_overlap_uB_y_2_phi_2 shape \n", actual_overlap_uB_y_2_phi_2, actual_overlap_uB_y_2_phi_2.shape)
-        # assert_matrix(overlap_uB_y_2_phi_2, actual_overlap_uB_y_2_phi_2)
-
         overlap_federated_layer_grad_h = self.host.compute_share_for_host_overlap_federated_layer_grad()
         overlap_federated_layer_grad_g = self.guest.compute_share_for_host_overlap_federated_layer_grad()
-
-        # actual_overlap_federated_layer_grad = self.party_B.get_loss_grads()
-        # overlap_federated_layer_grad = overlap_federated_layer_grad_g + overlap_federated_layer_grad_h
-        # print("overlap_federated_layer_grad shape \n", overlap_federated_layer_grad, overlap_federated_layer_grad.shape)
-        # print("actual_overlap_federated_layer_grad shape \n", actual_overlap_federated_layer_grad,
-        #       actual_overlap_federated_layer_grad.shape)
-        # assert_matrix(overlap_federated_layer_grad, actual_overlap_federated_layer_grad)
 
         overlap_host_grads_W_g, overlap_host_grads_b_g = self.host.compute_shares_for_host_local_gradients()
 
@@ -947,40 +943,18 @@ class LocalSecureSharingFederatedTransferLearning(object):
         host_grad_b_h = self.host.compute_share_for_host_grad_b(alpha_host_grad_b_g, beta_host_grad_b_g)
         host_grad_b_g = self.guest.compute_share_for_host_grad_b(alpha_host_grad_b_h, beta_host_grad_b_h)
 
-        # host_loss_grad_W = host_grad_W_h + host_grad_W_g
-        # host_loss_grad_b = host_grad_b_h + host_grad_b_g
-        #
-        # actual_host_fl_grads = self.party_B.get_loss_grads()
-        #
-        # # actual_grads_W, actual_grads_b = self.party_B.localModel.compute_gradients(X_B[overlap_indexes])
-        # actual_host_fl_grads_ex = np.expand_dims(actual_host_fl_grads, axis=1)
-        #
-        # print("actual_host_fl_grads_ex.shape", actual_host_fl_grads_ex.shape)
-        # print("actual_host_grads_W.shape, actual_host_grads_b.shape", actual_host_grads_W.shape, actual_host_grads_b.shape)
-        # print("host_loss_grad_W.shape, host_loss_grad_b.shape", host_loss_grad_W.shape, host_loss_grad_b.shape)
-        #
-        # actual_loss_grads_W = np.sum(actual_host_fl_grads_ex * actual_host_grads_W, axis=0)
-        # actual_loss_grads_b = np.sum(actual_host_fl_grads * actual_host_grads_b, axis=0)
-        #
-        # print("actual_loss_grads_W.shape, actual_loss_grads_b.shape \n", actual_loss_grads_W.shape, actual_loss_grads_b.shape)
-        # print("host_loss_grad_W:", host_loss_grad_W)
-        # print("actual_loss_grads_W:", actual_loss_grads_W)
-        # assert_matrix(host_loss_grad_W, actual_loss_grads_W)
-        # assert_matrix(host_loss_grad_b, actual_loss_grads_b)
-
         self.host.receive_gradients([host_grad_W_g, host_grad_b_g])
 
-        # host_grads_W, host_grads_b = self.host.localModel.compute_gradients(X_B[overlap_indexes])
-        # actual_host_grads_W, actual_host_grads_b = self.party_B.localModel.compute_gradients(X_B[overlap_indexes])
-        # print("host_grads_W:", host_grads_W)
-        # print("actual_host_grads_W:", actual_host_grads_W)
-        # assert_matrix(host_grads_W, actual_host_grads_W)
-        # assert_matrix(host_grads_b, actual_host_grads_b)
-
+        host_end_time = time.time()
+        print(">>> host gradient end time:", (host_end_time - host_start_time))
 
         #
+        # guest compute and update gradients
         #
-        #
+
+        guest_gradient_start_time = time.time()
+
+        guest_federation_gradient_start_time = time.time()
 
         alpha_h, beta_h = self.host.compute_shares_for_alpha_beta_for_overlap_y_2_phi_uB_2(global_index)
         alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_overlap_y_2_phi_uB_2(global_index)
@@ -1012,13 +986,38 @@ class LocalSecureSharingFederatedTransferLearning(object):
         guest_overlap_federated_layer_grad_h = self.host.compute_share_for_guest_overlap_federated_layer_grad()
         guest_overlap_federated_layer_grad_g = self.guest.compute_share_for_guest_overlap_federated_layer_grad()
 
+        guest_federation_gradient_end_time = time.time()
+        print(">>> guest federation gradient computing time:", (guest_federation_gradient_end_time - guest_federation_gradient_start_time))
+
+        guest_local_gradient_computing_start_time = time.time()
+
         guest_overlap_grads_W_h, guest_overlap_grads_b_h = self.guest.compute_shares_for_guest_local_gradients()
 
+        guest_host_local_shares_for_alpha_beta_for_guest_grad_W_start_tiem = time.time()
         alpha_h, beta_h = self.host.compute_shares_for_alpha_beta_for_guest_grad_W(guest_overlap_grads_W_h, global_index)
-        alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_guest_grad_W(global_index)
+        guest_host_local_shares_for_alpha_beta_for_guest_grad_W_end_tiem = time.time()
+        print("host local shares for alpha&beta for guest grad W:", (
+                    guest_host_local_shares_for_alpha_beta_for_guest_grad_W_end_tiem - guest_host_local_shares_for_alpha_beta_for_guest_grad_W_start_tiem))
 
+        guest_guest_local_shares_for_alpha_beta_for_guest_grad_W_start_tiem = time.time()
+        alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_guest_grad_W(global_index)
+        guest_guest_local_shares_for_alpha_beta_for_guest_grad_W_end_tiem = time.time()
+        print("guest local shares for alpha&beta for guest grad W:", (
+                guest_guest_local_shares_for_alpha_beta_for_guest_grad_W_end_tiem - guest_guest_local_shares_for_alpha_beta_for_guest_grad_W_start_tiem))
+
+        # guest_local_gradient_computing_start_time = time.time()
+
+        host_local_share_for_guest_grad_W_start_tiem = time.time()
         guest_grad_W_h = self.host.compute_share_for_guest_grad_W(alpha_g, beta_g)
+        host_local_share_for_guest_grad_W_end_tiem = time.time()
+        print("host local share for host grad W:", (
+                host_local_share_for_guest_grad_W_end_tiem - host_local_share_for_guest_grad_W_start_tiem))
+
+        guest_local_share_for_guest_grad_W_start_tiem = time.time()
         guest_grad_W_g = self.guest.compute_share_for_guest_grad_W(alpha_h, beta_h)
+        guest_local_share_for_guest_grad_W_end_tiem = time.time()
+        print("guest local share for guest grad W:", (
+                guest_local_share_for_guest_grad_W_end_tiem - guest_local_share_for_guest_grad_W_start_tiem))
 
         alpha_h, beta_h = self.host.compute_shares_for_alpha_beta_for_guest_grad_b(guest_overlap_grads_b_h, global_index)
         alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_guest_grad_b(global_index)
@@ -1026,16 +1025,23 @@ class LocalSecureSharingFederatedTransferLearning(object):
         guest_grad_b_h = self.host.compute_share_for_guest_grad_b(alpha_g, beta_g)
         guest_grad_b_g = self.guest.compute_share_for_guest_grad_b(alpha_h, beta_h)
 
-        # guest_grad_W = guest_grad_W_g + guest_grad_W_h
-        # guest_grad_b = guest_grad_b_g + guest_grad_b_h
-        #
-        # self.guest.receive_gradients([guest_grad_W, guest_grad_b])
+        guest_local_gradient_computing_end_time = time.time()
 
+        print(">>> guest local gradient computing time:", guest_local_gradient_computing_end_time - guest_local_gradient_computing_start_time)
+
+        guest_local_model_update_start_time = time.time()
         self.guest.receive_gradients([guest_grad_W_h, guest_grad_b_h])
+        guest_local_model_updating_end_time = time.time()
+        print(">>> guest local model updating time:", (guest_local_model_updating_end_time - guest_local_model_update_start_time))
+
+        guest_gradient_end_time = time.time()
+        print(">>> guest gradient end time:", (guest_gradient_end_time - guest_gradient_start_time))
 
         #
         # compute loss
         #
+
+        guest_loss_start_time = time.time()
 
         alpha_h, beta_h = self.host.compute_shares_for_alpha_beta_for_overlap_y_phi_uB(global_index)
         alpha_g, beta_g = self.guest.compute_shares_for_alpha_beta_for_overlap_y_phi_uB(global_index)
@@ -1067,14 +1073,15 @@ class LocalSecureSharingFederatedTransferLearning(object):
         v2 = v2_h + v2_g
         v3 = v3_h + v3_g
 
+        guest_loss_end_time = time.time()
+
+        print(">>> guest loss end time:", (guest_loss_end_time - guest_loss_start_time))
+
         return loss, v1, v2, v3
 
-        # v0 = 1
-        # v1 = 2
-        # v2 = 3
-        # v3 = 4
-        # return v0, v1, v2, v3
-
     def predict(self, X_B):
+        curr_time = time.time()
         msg = self.host.predict(X_B)
+        end_time = time.time()
+        print("predict time: ", (end_time - curr_time))
         return self.guest.predict(msg)
