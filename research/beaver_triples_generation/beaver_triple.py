@@ -61,8 +61,25 @@ def get_matrix_shapes(val, global_iter_index, num_batch):
             raise TypeError("currently does not support {} num of dimensions".format(val["num_dim"]))
 
 
-def fill_beaver_triple_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_id, mul_type, is_constant=False,
-                             batch_axis=0):
+def fill_beaver_triple_matrix_shape(mul_op_def, num_epoch=1):
+    num_batch = 1
+    mul_ops = dict()
+    for op_id, attr in mul_op_def.items():
+        num_batch = fill_op_beaver_triple_matrix_shape(mul_ops,
+                                                       op_id=op_id,
+                                                       X_shape=attr["X_shape"],
+                                                       Y_shape=attr["Y_shape"],
+                                                       batch_size=attr["batch_size"],
+                                                       mul_type=attr["mul_type"],
+                                                       is_constant=attr["is_constant"],
+                                                       batch_axis=attr["batch_axis"])
+        print("num_batch", num_batch)
+    global_iters = num_batch * num_epoch
+    return mul_ops, global_iters, num_batch
+
+
+def fill_op_beaver_triple_matrix_shape(mul_ops: dict, *, X_shape, Y_shape, batch_size, op_id, mul_type,
+                                       is_constant=False, batch_axis=0):
     assert len(X_shape) == len(Y_shape)
     num_dim = len(X_shape)
 

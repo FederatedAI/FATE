@@ -2,7 +2,7 @@ import time
 
 from arch.api.utils import log_utils
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.util.transfer_variable import BeaverTripleTransferVariable
 from research.beaver_triples_generation.beaver_triple import PartyBBeaverTripleGenerationHelper
 from research.beaver_triples_generation.bt_base import BaseBeaverTripleGeneration
 
@@ -12,7 +12,7 @@ LOGGER = log_utils.getLogger()
 class BeaverTripleGenerationHost(BaseBeaverTripleGeneration):
 
     def __init__(self, party_b_bt_gene_helper: PartyBBeaverTripleGenerationHelper,
-                 transfer_variable: HeteroFTLTransferVariable):
+                 transfer_variable: BeaverTripleTransferVariable):
         self.party_b_bt_gene_helper = party_b_bt_gene_helper
         self.transfer_variable = transfer_variable
 
@@ -51,4 +51,4 @@ class BeaverTripleGenerationHost(BaseBeaverTripleGeneration):
         end_time = time.time()
         LOGGER.info("@ running time: " + str(end_time - start_time))
 
-        self.save_beaver_triples(party_b_bt_map)
+        self.save_beaver_triples(party_b_bt_map, bt_map_name="host_bt_map")

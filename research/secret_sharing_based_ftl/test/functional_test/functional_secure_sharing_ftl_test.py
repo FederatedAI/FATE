@@ -22,7 +22,7 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 # from arch.api.eggroll import init
 from federatedml.ftl.autoencoder import Autoencoder
-from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
+from research.beaver_triples_generation.beaver_triple import fill_op_beaver_triple_matrix_shape, create_beaver_triples
 from federatedml.ftl.data_util.common_data_util import split_data_combined
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
@@ -193,14 +193,14 @@ def generate_beaver_triples(mul_op_def, num_epoch=1):
     num_batch = 1
     mul_ops = dict()
     for key, val in mul_op_def.items():
-        num_batch = fill_beaver_triple_shape(mul_ops,
-                                             op_id=key,
-                                             X_shape=val["X_shape"],
-                                             Y_shape=val["Y_shape"],
-                                             batch_size=val["batch_size"],
-                                             mul_type=val["mul_type"],
-                                             is_constant=val["is_constant"],
-                                             batch_axis=val["batch_axis"])
+        num_batch = fill_op_beaver_triple_matrix_shape(mul_ops,
+                                                       op_id=key,
+                                                       X_shape=val["X_shape"],
+                                                       Y_shape=val["Y_shape"],
+                                                       batch_size=val["batch_size"],
+                                                       mul_type=val["mul_type"],
+                                                       is_constant=val["is_constant"],
+                                                       batch_axis=val["batch_axis"])
         print("num_batch", num_batch)
 
     global_iters = num_batch * num_epoch

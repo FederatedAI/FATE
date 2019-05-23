@@ -1,0 +1,23 @@
+{
+
+    "local": {
+        "role": "host",
+        "party_id": 10000
+    },
+
+    "role": {
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            99999
+        ],
+        "guest": [
+            9999
+        ]
+    },
+
+    "WorkFlowParam": {
+        "work_mode": 0
+    }
+}

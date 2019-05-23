@@ -21,7 +21,7 @@ import numpy as np
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
 from federatedml.ftl.test.mock_models import MockAutoencoder, MockFTLModelParam
 from federatedml.ftl.test.util import assert_matrix
-from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
+from research.beaver_triples_generation.beaver_triple import fill_op_beaver_triple_matrix_shape, create_beaver_triples
 from research.secret_sharing_based_ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel
 
 
@@ -448,14 +448,14 @@ def generate_beaver_triples(mul_op_def):
     num_batch = 1
     mul_ops = dict()
     for key, val in mul_op_def.items():
-        num_batch = fill_beaver_triple_shape(mul_ops,
-                                             op_id=key,
-                                             X_shape=val["X_shape"],
-                                             Y_shape=val["Y_shape"],
-                                             batch_size=val["batch_size"],
-                                             mul_type=val["mul_type"],
-                                             is_constant=val["is_constant"],
-                                             batch_axis=val["batch_axis"])
+        num_batch = fill_op_beaver_triple_matrix_shape(mul_ops,
+                                                       op_id=key,
+                                                       X_shape=val["X_shape"],
+                                                       Y_shape=val["Y_shape"],
+                                                       batch_size=val["batch_size"],
+                                                       mul_type=val["mul_type"],
+                                                       is_constant=val["is_constant"],
+                                                       batch_axis=val["batch_axis"])
         print("num_batch", num_batch)
 
     num_epoch = 1

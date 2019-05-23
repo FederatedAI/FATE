@@ -1,7 +1,7 @@
 import time
 
 from arch.api.utils import log_utils
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.util.transfer_variable import BeaverTripleTransferVariable
 from research.beaver_triples_generation.bt_base import BaseBeaverTripleGeneration
 from research.beaver_triples_generation.carlo import carlo_deal_data
 from federatedml.util import consts
@@ -9,9 +9,9 @@ from federatedml.util import consts
 LOGGER = log_utils.getLogger()
 
 
-class BeaverTripleGenerationGuest(BaseBeaverTripleGeneration):
+class BeaverTripleGenerationCarlo(BaseBeaverTripleGeneration):
 
-    def __init__(self, mul_ops_def, transfer_variable: HeteroFTLTransferVariable):
+    def __init__(self, mul_ops_def, transfer_variable: BeaverTripleTransferVariable):
         self.transfer_variable = transfer_variable
         self.mul_ops_def = mul_ops_def
 

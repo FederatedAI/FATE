@@ -609,5 +609,43 @@
           "host"
       ]
     }
+  },
+  "BeaverTripleTransferVariable": {
+    "party_a_bt_map_to_b": {
+      "src": "guest",
+      "dst": [
+          "host"
+      ]
+    },
+    "party_a_bt_map_to_carlo": {
+      "src": "guest",
+      "dst": [
+          "arbiter"
+      ]
+    },
+    "party_b_bt_map_to_a": {
+      "src": "host",
+      "dst": [
+          "guest"
+      ]
+    },
+    "party_b_bt_map_to_carlo": {
+      "src": "host",
+      "dst": [
+          "arbiter"
+      ]
+    },
+    "carlo_bt_map_to_party_a": {
+      "src": "arbiter",
+      "dst": [
+          "guest"
+      ]
+    },
+    "carlo_bt_map_to_party_b": {
+      "src": "arbiter",
+      "dst": [
+          "host"
+      ]
+    }
   }
 }

@@ -23,17 +23,16 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 # from arch.api.eggroll import init
 from federatedml.ftl.autoencoder import Autoencoder
-from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_shape, create_beaver_triples
 from federatedml.ftl.data_util.common_data_util import series_plot
 from federatedml.ftl.data_util.nus_wide_util import get_labeled_data, balance_X_y, get_top_k_labels
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel, PlainFTLHostModel
+from federatedml.ftl.test.mock_models import MockFTLModelParam
+from research.beaver_triples_generation.beaver_triple import fill_beaver_triple_matrix_shape, create_beaver_triples
 from research.secret_sharing_based_ftl.secure_sharing_ftl import SecureSharingFTLGuestModel, SecureSharingFTLHostModel, \
     LocalSecureSharingFederatedTransferLearning
-from federatedml.ftl.test.mock_models import MockFTLModelParam
 
 
-def create_mul_op_def(num_overlap_samples, num_non_overlap_samples_host, num_non_overlap_samples_guest, guest_input_dim,
-                      host_input_dim, hidden_dim):
+def create_mul_op_def(num_overlap_samples, num_non_overlap_samples_guest, guest_input_dim, host_input_dim, hidden_dim):
     # num_samples_host = num_overlap_samples + num_non_overlap_samples_host
     num_samples_guest = num_overlap_samples + num_non_overlap_samples_guest
     ops = []
@@ -190,23 +189,45 @@ def create_mul_op_def(num_overlap_samples, num_non_overlap_samples_host, num_non
     return mul_op_def, ops
 
 
-def generate_beaver_triples(mul_op_def, num_epoch=1):
-    num_batch = 1
-    mul_ops = dict()
-    for key, val in mul_op_def.items():
-        num_batch = fill_beaver_triple_shape(mul_ops,
-                                             op_id=key,
-                                             X_shape=val["X_shape"],
-                                             Y_shape=val["Y_shape"],
-                                             batch_size=val["batch_size"],
-                                             mul_type=val["mul_type"],
-                                             is_constant=val["is_constant"],
-                                             batch_axis=val["batch_axis"])
-        print("num_batch", num_batch)
+# def fill_beaver_triple_matrix_shape(mul_op_def, num_epoch=1):
+#     num_batch = 1
+#     mul_ops = dict()
+#     for op_id, attr in mul_op_def.items():
+#         num_batch = fill_op_beaver_triple_matrix_shape(mul_ops,
+#                                                        op_id=op_id,
+#                                                        X_shape=attr["X_shape"],
+#                                                        Y_shape=attr["Y_shape"],
+#                                                        batch_size=attr["batch_size"],
+#                                                        mul_type=attr["mul_type"],
+#                                                        is_constant=attr["is_constant"],
+#                                                        batch_axis=attr["batch_axis"])
+#         print("num_batch", num_batch)
+#     global_iters = num_batch * num_epoch
+#     return mul_ops, global_iters, num_batch
 
-    global_iters = num_batch * num_epoch
+
+def generate_beaver_triples(mul_op_def, num_epoch=1):
+    mul_ops, global_iters, num_batch = fill_beaver_triple_matrix_shape(mul_op_def, num_epoch)
     party_a_bt_map, party_b_bt_map = create_beaver_triples(mul_ops, global_iters=global_iters, num_batch=num_batch)
     return party_a_bt_map, party_b_bt_map, global_iters
+
+# def generate_beaver_triples(mul_op_def, num_epoch=1):
+#     num_batch = 1
+#     mul_ops = dict()
+#     for op_id, attr in mul_op_def.items():
+#         num_batch = fill_op_beaver_triple_matrix_shape(mul_ops,
+#                                                        op_id=op_id,
+#                                                        X_shape=attr["X_shape"],
+#                                                        Y_shape=attr["Y_shape"],
+#                                                        batch_size=attr["batch_size"],
+#                                                        mul_type=attr["mul_type"],
+#                                                        is_constant=attr["is_constant"],
+#                                                        batch_axis=attr["batch_axis"])
+#         print("num_batch", num_batch)
+#
+#     global_iters = num_batch * num_epoch
+#     party_a_bt_map, party_b_bt_map = create_beaver_triples(mul_ops, global_iters=global_iters, num_batch=num_batch)
+#     return party_a_bt_map, party_b_bt_map, global_iters
 
 
 # def series_plot(losses, fscores, aucs, vs3):
@@ -339,7 +360,6 @@ if __name__ == '__main__':
     hidden_dim = 48
     num_epoch = 1
     mul_op_def, ops = create_mul_op_def(num_overlap_samples=len(overlap_indexes),
-                                        num_non_overlap_samples_host=len(host_non_overlap_indexes),
                                         num_non_overlap_samples_guest=len(guest_non_overlap_indexes),
                                         guest_input_dim=634,
                                         host_input_dim=1000,
