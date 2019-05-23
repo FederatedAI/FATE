@@ -209,3 +209,14 @@ class OneVsRestTransferVariable(BaseTransferVariable):
         self.host_classes = Variable(name="OneVsRestTransferVariable.host_classes", auth={'src': "host", 'dst': ['guest']})
         self.aggregate_classes = Variable(name="OneVsRestTransferVariable.aggregate_classes", auth={'src': "guest", 'dst': ['host', 'arbiter']})
         pass
+
+
+class BeaverTripleTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.party_a_bt_map_to_b = Variable(name="BeaverTripleTransferVariable.party_a_bt_map_to_b", auth={'src': "guest", 'dst': ['host']})
+        self.party_a_bt_map_to_carlo = Variable(name="BeaverTripleTransferVariable.party_a_bt_map_to_carlo", auth={'src': "guest", 'dst': ['arbiter']})
+        self.party_b_bt_map_to_a = Variable(name="BeaverTripleTransferVariable.party_b_bt_map_to_a", auth={'src': "host", 'dst': ['guest']})
+        self.party_b_bt_map_to_carlo = Variable(name="BeaverTripleTransferVariable.party_b_bt_map_to_carlo", auth={'src': "host", 'dst': ['arbiter']})
+        self.carlo_bt_map_to_party_a = Variable(name="BeaverTripleTransferVariable.carlo_bt_map_to_party_a", auth={'src': "arbiter", 'dst': ['guest']})
+        self.carlo_bt_map_to_party_b = Variable(name="BeaverTripleTransferVariable.carlo_bt_map_to_party_b", auth={'src': "arbiter", 'dst': ['host']})
+        pass
