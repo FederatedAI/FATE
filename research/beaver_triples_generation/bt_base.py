@@ -31,4 +31,5 @@ class BaseBeaverTripleGeneration(object):
 
     def save_beaver_triples(self, bt_map, bt_map_name):
         LOGGER.debug("@ save bt map with name:" + bt_map_name)
-        # LOGGER.debug("@ save bt map:\n" + bt_map)
+        # TODO: Save beaver triples persistently
+
