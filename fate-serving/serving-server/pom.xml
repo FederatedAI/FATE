@@ -26,11 +26,16 @@
             <artifactId>fate-core</artifactId>
             <version>${fate.version}</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../arch/core/target/fate-core-0.2.jar</systemPath>
+            <systemPath>${project.basedir}/../../arch/core/target/fate-core-${fate.version}.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-serving-federatedml</artifactId>
+            <version>${fate.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.webank.ai.fate</groupId>
+            <artifactId>fate-serving-core</artifactId>
             <version>${fate.version}</version>
         </dependency>
         <dependency>
@@ -134,11 +139,6 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.7</version>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
         </dependency>
     </dependencies>
 

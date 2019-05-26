@@ -14,9 +14,30 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.serving.bean;
+package com.webank.ai.fate.serving.core.bean;
 
-public enum FederatedInferenceType {
-    INITIATED,
-    FEDERATED,
+import com.google.common.cache.Cache;
+
+public class CacheValueConfig<KT, VT> {
+    private int dbIndex;
+    private int ttl;
+    private Cache<KT, VT> inProcessCache;
+
+    public CacheValueConfig(int dbIndex, int ttl, Cache<KT, VT> inProcessCache) {
+        this.dbIndex = dbIndex;
+        this.ttl = ttl;
+        this.inProcessCache = inProcessCache;
+    }
+
+    public int getDbIndex() {
+        return dbIndex;
+    }
+
+    public int getTtl() {
+        return ttl;
+    }
+
+    public Cache<KT, VT> getInProcessCache() {
+        return inProcessCache;
+    }
 }

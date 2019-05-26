@@ -34,6 +34,11 @@ class InferenceServiceStub(object):
         request_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
         response_deserializer=inference__service__pb2.InferenceMessage.FromString,
         )
+    self.startInferenceJob = channel.unary_unary(
+        '/com.webank.ai.fate.api.serving.InferenceService/startInferenceJob',
+        request_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
+        response_deserializer=inference__service__pb2.InferenceMessage.FromString,
+        )
     self.getInferenceResult = channel.unary_unary(
         '/com.webank.ai.fate.api.serving.InferenceService/getInferenceResult',
         request_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
@@ -52,6 +57,13 @@ class InferenceServiceServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def startInferenceJob(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
   def getInferenceResult(self, request, context):
     # missing associated documentation comment in .proto file
     pass
@@ -64,6 +76,11 @@ def add_InferenceServiceServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'inference': grpc.unary_unary_rpc_method_handler(
           servicer.inference,
+          request_deserializer=inference__service__pb2.InferenceMessage.FromString,
+          response_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
+      ),
+      'startInferenceJob': grpc.unary_unary_rpc_method_handler(
+          servicer.startInferenceJob,
           request_deserializer=inference__service__pb2.InferenceMessage.FromString,
           response_serializer=inference__service__pb2.InferenceMessage.SerializeToString,
       ),

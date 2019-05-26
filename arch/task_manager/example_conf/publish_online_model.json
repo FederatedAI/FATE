@@ -1,15 +1,14 @@
 {
     "task": "publish_model",
     "local": {
-        "party_id": 9999,
+        "party_id": "9999",
         "role": "guest"
     },
     "role": {
-        "guest": [9999],
-        "host": [10000],
-        "arbiter": [10000]
+        "guest": ["9999"],
+        "host": ["10000"],
+        "arbiter": ["10000"]
     },
-    "scene_id": 50000,
     "gen_table_info": true,
     "servings": [
     ],

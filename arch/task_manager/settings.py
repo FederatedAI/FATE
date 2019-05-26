@@ -39,7 +39,7 @@ JOB_SCHEDULER = True
 IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
-PARTY_ID = 9999
+PARTY_ID = "9999"
 WORK_MODE = 0
 LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
 

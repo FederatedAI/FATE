@@ -20,16 +20,13 @@ import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto;
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.storage.dtable.DTable;
 import com.webank.ai.fate.core.storage.dtable.DTableFactory;
-import com.webank.ai.fate.core.utils.FederatedUtils;
 import com.webank.ai.fate.serving.federatedml.PipelineTask;
-import com.webank.ai.fate.core.utils.SceneUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ModelUtils {
@@ -51,8 +48,8 @@ public class ModelUtils {
         return pipelineTask;
     }
 
-    public static String genModelKey(String role, int partyId, FederatedRoles federatedRoles, String name, String namespace) {
-        return StringUtils.join(Arrays.asList(role, partyId, FederatedUtils.federatedRolesIdentificationString(federatedRoles), name, namespace), "_");
+    public static String genModelKey(String name, String namespace) {
+        return StringUtils.join(Arrays.asList(name, namespace), "&");
     }
 
     public static String[] splitModelKey(String key) {
@@ -68,8 +65,8 @@ public class ModelUtils {
         return federatedRoles;
     }
 
-    public static Map<String, Map<Integer, ModelInfo>> getFederatedRolesModel(Map<String, ModelServiceProto.RoleModelInfo> federatedRolesModelProto) {
-        Map<String, Map<Integer, ModelInfo>> federatedRolesModel = new HashMap<>();
+    public static Map<String, Map<String, ModelInfo>> getFederatedRolesModel(Map<String, ModelServiceProto.RoleModelInfo> federatedRolesModelProto) {
+        Map<String, Map<String, ModelInfo>> federatedRolesModel = new HashMap<>();
         federatedRolesModelProto.forEach((roleName, roleModelInfo) -> {
             federatedRolesModel.put(roleName, new HashMap<>());
             roleModelInfo.getRoleModelInfoMap().forEach((partyId, modelInfo) -> {

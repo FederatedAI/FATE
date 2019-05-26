@@ -6,7 +6,6 @@
         "host": [],
         "arbiter": []
     },
-    "scene_id": 0,
     "gen_table_info": true,
     "role_parameters": {
         "guest": {

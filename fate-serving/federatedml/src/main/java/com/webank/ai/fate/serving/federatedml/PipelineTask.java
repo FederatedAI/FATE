@@ -40,10 +40,9 @@ public class PipelineTask {
                     LOGGER.warn("Can not instance {} class", className);
                 }
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
-            LOGGER.info("Pipeline init catch error:{}",ex);
+            LOGGER.info("Pipeline init catch error:{}", ex);
         }
         LOGGER.info("Finish init Pipeline");
         return StatusCode.OK;
