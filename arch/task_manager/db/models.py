@@ -67,7 +67,6 @@ class JobInfo(DataBaseModel):
     name = CharField(max_length=100, null=True, default='')
     task = CharField(max_length=50, null=True, index=True)
     module = CharField(max_length=50, null=True, index=True)
-    scene_id = IntegerField(null=True, index=True)
     initiator = IntegerField(null=True, index=True)
     role = CharField(max_length=50, null=True, default='', index=True)
     party_id = IntegerField(null=True, default=0, index=True)

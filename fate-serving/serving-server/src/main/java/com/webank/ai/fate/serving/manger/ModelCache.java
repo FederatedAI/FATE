@@ -29,22 +29,26 @@ import java.util.concurrent.TimeUnit;
 
 public class ModelCache {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static LoadingCache<String, PipelineTask> modelCache = null;
+    private static LoadingCache<String, PipelineTask> modelCache;
 
-    public ModelCache() {
+    static {
         modelCache = CacheBuilder.newBuilder()
                 .expireAfterAccess(Configuration.getPropertyInt("modelCacheAccessTTL"), TimeUnit.HOURS)
                 .maximumSize(Configuration.getPropertyInt("modelCacheMaxSize"))
                 .build(new CacheLoader<String, PipelineTask>() {
                     @Override
-                    public PipelineTask load(String modelKey) throws Exception {
-                        String[] modelKeyFields = ModelUtils.splitModelKey(modelKey);
-                        return ModelUtils.loadModel(modelKeyFields[0], modelKeyFields[1]);
+                    public PipelineTask load(String s) throws Exception {
+                        return loadModel(s);
                     }
                 });
     }
 
-    public PipelineTask get(String modelKey) {
+    public static PipelineTask loadModel(String modelKey) {
+        String[] modelKeyFields = ModelUtils.splitModelKey(modelKey);
+        return ModelUtils.loadModel(modelKeyFields[0], modelKeyFields[1]);
+    }
+
+    public static PipelineTask get(String modelKey) {
         try {
             return modelCache.get(modelKey);
         } catch (ExecutionException ex) {
@@ -53,11 +57,11 @@ public class ModelCache {
         }
     }
 
-    public void put(String modelKey, PipelineTask model) {
+    public static void put(String modelKey, PipelineTask model) {
         modelCache.put(modelKey, model);
     }
 
-    public long getSize() {
+    public static long getSize() {
         return modelCache.size();
     }
 }

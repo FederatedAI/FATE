@@ -16,9 +16,9 @@
 
 package com.webank.ai.fate.serving.utils;
 
+import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.storage.dtable.DTableInfo;
 import com.webank.ai.fate.core.utils.SceneUtils;
-import com.webank.ai.fate.core.bean.FederatedRoles;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +29,10 @@ import java.util.Map;
 public class DTableUtils {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static DTableInfo genTableInfo(String tableName, String namespace, int sceneId, String role, int partyId, FederatedRoles federatedRoles, String dataType) {
+    public static DTableInfo genTableInfo(String tableName, String namespace, String role, String partyId, FederatedRoles federatedRoles, String dataType) {
 
         if (StringUtils.isEmpty(namespace)) {
-            namespace = getSceneNamespace(SceneUtils.genSceneKey(sceneId, role, partyId, federatedRoles), dataType);
+            namespace = getSceneNamespace(SceneUtils.genSceneKey(role, partyId, federatedRoles), dataType);
         }
         if (StringUtils.isEmpty(tableName)) {
             Map<String, String> versionInfo = VersionControl.getVersionInfo(namespace, "", "", "master");

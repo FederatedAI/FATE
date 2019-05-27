@@ -14,8 +14,13 @@ __pycache__
 /arch/networking/proxy/target/
 /arch/driver/target/
 /arch/eggroll/target/
-/arch/fate-serving/federatedml/target/
-/arch/fate-serving/serving-server/target/
-/arch/fate-serving/target/
+/fate-serving/federatedml/target/
+/fate-serving/serving-server/target/
+/fate-serving/target/
+/fate-serving/fate-serving-core/target/
 /arch/networking/target/
 /arch/target/
+/data/
+/logs/
+/jobs/
+/audit/

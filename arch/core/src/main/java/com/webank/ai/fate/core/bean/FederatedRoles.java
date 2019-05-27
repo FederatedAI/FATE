@@ -21,25 +21,25 @@ import java.util.List;
 import java.util.Map;
 
 public class FederatedRoles {
-    private Map<String, List<Integer>> role;
+    private Map<String, List<String>> role;
 
     public FederatedRoles() {
         this.role = new HashMap<>();
     }
 
-    public Map<String, List<Integer>> getAllRole() {
+    public Map<String, List<String>> getAllRole() {
         return role;
     }
 
-    public List<Integer> getRole(String role) {
+    public List<String> getRole(String role) {
         return this.role.get(role);
     }
 
-    public void setRole(String role, List<Integer> partyIds) {
+    public void setRole(String role, List<String> partyIds) {
         this.role.put(role, partyIds);
     }
 
-    public void addParty(String role, int partyId) {
+    public void addParty(String role, String partyId) {
         this.role.get(role).add(partyId);
     }
 }

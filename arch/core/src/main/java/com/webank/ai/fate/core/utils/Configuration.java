@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import org.json.JSONObject;
 public class Configuration {
     private static final Logger LOGGER = LogManager.getLogger();
     private final String confPath;
+    private static String confDirectory;
     private static HashMap<String, String> properties;
     private static HashMap<String, Properties> adapterPropertiesMapPool;
     private static HashMap<String, JSONObject> adapterJsonConfigMapPool;
@@ -45,6 +47,7 @@ public class Configuration {
 
     public Configuration(String confPath) {
         this.confPath = confPath;
+        confDirectory = Paths.get(confPath).getParent().toString();
     }
 
     public int load() {
@@ -134,5 +137,13 @@ public class Configuration {
 
     private static void putProperty(String key, String value) {
         properties.put(key, value);
+    }
+
+    public String getConfPath() {
+        return confPath;
+    }
+
+    public static String getConfDirectory() {
+        return confDirectory;
     }
 }

@@ -17,7 +17,6 @@ hetero_lr_config_file = home_dir + "/config/hetero_lr.json"
 guest_id = 9999
 host_id = 10000
 arbiter_id = 10000
-scene_id = 50000
 
 intersect_output_name = ''
 intersect_output_namespace = ''
@@ -118,7 +117,7 @@ def job_status_checker(jobid):
     return stdout
 
 
-def import_id_library(config_file, scene_id, guest_id, host_id, role, data_file):
+def import_id_library(config_file, guest_id, host_id, role, data_file):
     if role == GUEST:
         self_party_id = guest_id
     elif role == HOST:
@@ -130,7 +129,6 @@ def import_id_library(config_file, scene_id, guest_id, host_id, role, data_file)
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
     json_info["file"] = data_file
-    json_info['scene_id'] = scene_id
     json_info['local']['party_id'] = self_party_id
     json_info['local']['role'] = role
     json_info['role']['guest'] = [guest_id]
@@ -141,7 +139,7 @@ def import_id_library(config_file, scene_id, guest_id, host_id, role, data_file)
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def upload(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_file, data_type):
+def upload(config_file, guest_id, host_id, arbiter_id, role, data_file, data_type):
     if role == GUEST:
         self_party_id = guest_id
     elif role == HOST:
@@ -154,7 +152,6 @@ def upload(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_file
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
     json_info["file"] = data_file
-    json_info["scene_id"] = scene_id
     json_info["local"]["party_id"] = self_party_id
     json_info["local"]["role"] = role
 
@@ -169,7 +166,7 @@ def upload(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_file
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def download(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_type):
+def download(config_file, guest_id, host_id, arbiter_id, role, data_type):
     if role == GUEST:
         self_party_id = guest_id
     elif role == HOST:
@@ -183,7 +180,6 @@ def download(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_ty
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
 
-    json_info['scene_id'] = scene_id
     json_info['local']['party_id'] = self_party_id
     json_info['local']['role'] = role
     json_info['role']['guest'] = [guest_id]
@@ -199,7 +195,7 @@ def download(config_file, scene_id, guest_id, host_id, arbiter_id, role, data_ty
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def download_id_library(config_file, scene_id, guest_id, host_id, role):
+def download_id_library(config_file, guest_id, host_id, role):
     if role == GUEST:
         self_party_id = guest_id
     elif role == HOST:
@@ -211,7 +207,6 @@ def download_id_library(config_file, scene_id, guest_id, host_id, role):
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
 
-    json_info['scene_id'] = scene_id
     json_info['local']['party_id'] = self_party_id
     json_info['local']['role'] = role
     json_info['role']['guest'] = [guest_id]
@@ -265,13 +260,12 @@ def workflow_job_status_checker(jobid):
     return workflow_status
 
 
-def intersect(config_file, guest_id, host_id, scene_id,
+def intersect(config_file, guest_id, host_id,
               guest_name=None, guest_namespace=None, host_name=None, host_namespace=None):
     # write new json
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
 
-    json_info['scene_id'] = scene_id
     json_info['role']['guest'] = [guest_id]
     json_info['role']['host'] = [host_id]
 
@@ -318,14 +312,13 @@ def intersect(config_file, guest_id, host_id, scene_id,
     return cur_job_status
 
 
-def train(config_file, scene_id, guest_id, host_id, arbiter_id, task):
+def train(config_file, guest_id, host_id, arbiter_id, task):
     if task not in SUPPORT_HETERO_LR_TASK:
         raise ValueError("Not support task:{}, should be one of {}".format(task, SUPPORT_HETERO_LR_TASK))
 
     json_file = open(config_file, 'r', encoding='utf-8')
     json_info = json.load(json_file)
 
-    json_info['scene_id'] = scene_id
     json_info['role']['guest'] = [guest_id]
     json_info['role']['host'] = [host_id]
     json_info['role']['arbiter'] = [arbiter_id]
@@ -458,10 +451,10 @@ if __name__ == "__main__":
             raise ValueError("file:{} is not found".format(data_file))
 
         if target == "intersect":
-            table_name, table_namespace = import_id_library(import_config_file, scene_id, guest_id, host_id, role,
+            table_name, table_namespace = import_id_library(import_config_file, guest_id, host_id, role,
                                                             data_file)
         else:
-            table_name, table_namespace = upload(upload_config_file, scene_id, guest_id, host_id, arbiter_id, role,
+            table_name, table_namespace = upload(upload_config_file, guest_id, host_id, arbiter_id, role,
                                                  data_file, data_type)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
@@ -484,7 +477,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("Unsupport role:{}".format(role))
 
-        download(download_config_file, scene_id, guest_id, host_id, arbiter_id, role, data_type)
+        download(download_config_file, guest_id, host_id, arbiter_id, role, data_type)
 
     elif method == 'intersect':
         try:
@@ -493,11 +486,11 @@ if __name__ == "__main__":
             print("Get guest table_name:{}, namespace:{}".format(guest_table_name, guest_namespace))
         except:
             print("Not input guest table_name or guest namespace, get the guest newest table_name and namespace")
-            guest_table_name, guest_namespace = download(download_config_file, scene_id, guest_id, host_id, arbiter_id,
+            guest_table_name, guest_namespace = download(download_config_file, guest_id, host_id, arbiter_id,
                                                          "guest", "data_input")
 
-        # job_status = intersect(intersect_config_file, guest_id, host_id, scene_id)
-        job_status = intersect(intersect_config_file, guest_id, host_id, scene_id, guest_name=guest_table_name,
+        # job_status = intersect(intersect_config_file, guest_id, host_id)
+        job_status = intersect(intersect_config_file, guest_id, host_id, guest_name=guest_table_name,
                                guest_namespace=guest_namespace)
         if job_status is SUCCESS:
             print("intersect task is success")
@@ -511,14 +504,14 @@ if __name__ == "__main__":
             train_file = sys.argv[2]
             predict_file = sys.argv[3]
 
-            upload(upload_config_file, scene_id, guest_id, host_id, arbiter_id, "guest", train_file, "train_input")
-            upload(upload_config_file, scene_id, guest_id, host_id, arbiter_id, "guest", predict_file, "predict_input")
+            upload(upload_config_file, guest_id, host_id, arbiter_id, "guest", train_file, "train_input")
+            upload(upload_config_file, guest_id, host_id, arbiter_id, "guest", predict_file, "predict_input")
 
-        job_status = train(hetero_lr_config_file, scene_id, guest_id, host_id, arbiter_id, "train")
+        job_status = train(hetero_lr_config_file, guest_id, host_id, arbiter_id, "train")
 
         if job_status is SUCCESS:
             print("train task is success")
-            eval_out_name, eval_out_namespace = download(download_config_file, scene_id, guest_id, host_id, arbiter_id,
+            eval_out_name, eval_out_namespace = download(download_config_file, guest_id, host_id, arbiter_id,
                                                          "guest", "evaluation_output")
             eval_res = get_table_collect(eval_out_name, eval_out_namespace)
             print("eval:{}".format(eval_res))
@@ -538,7 +531,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("Unknown task:{}".format(task))
 
-        guest_table_name, guest_namespace = download_id_library(download_id_library_config_file, scene_id, guest_id,
+        guest_table_name, guest_namespace = download_id_library(download_id_library_config_file, guest_id,
                                                                 host_id, "guest")
         count = get_table_count(guest_table_name, guest_namespace)
         if count != task_data_count:
@@ -552,7 +545,7 @@ if __name__ == "__main__":
 
         test_data_type = ["train_input", "predict_input"]
         for data_type in test_data_type:
-            table_name, table_namespace = download(download_config_file, scene_id, guest_id, host_id, arbiter_id,
+            table_name, table_namespace = download(download_config_file, guest_id, host_id, arbiter_id,
                                                    "guest", data_type)
             count = get_table_count(table_name, table_namespace)
             if count != task_data_count:
@@ -565,7 +558,7 @@ if __name__ == "__main__":
                 print("Test upload {} task success".format(data_type))
                 TEST_TASK["TEST_UPLOAD"] = 0
 
-        job_status = intersect(intersect_config_file, guest_id, host_id, scene_id)
+        job_status = intersect(intersect_config_file, guest_id, host_id)
         if job_status is SUCCESS:
             print("intersect task is success")
             count = get_table_count(intersect_output_name, intersect_output_namespace)
@@ -579,7 +572,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("intersect task is failed")
 
-        job_status = train(hetero_lr_config_file, scene_id, guest_id, host_id, arbiter_id, "train")
+        job_status = train(hetero_lr_config_file, guest_id, host_id, arbiter_id, "train")
 
         if job_status is SUCCESS:
             print("train task is success")

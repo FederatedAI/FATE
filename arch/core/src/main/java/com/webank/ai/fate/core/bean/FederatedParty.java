@@ -18,13 +18,13 @@ package com.webank.ai.fate.core.bean;
 
 public class FederatedParty {
     private String role;
-    private int partyId;
+    private String partyId;
 
     public FederatedParty() {
 
     }
 
-    public FederatedParty(String role, int partyId) {
+    public FederatedParty(String role, String partyId) {
         this.role = role;
         this.partyId = partyId;
     }
@@ -33,7 +33,7 @@ public class FederatedParty {
         return role;
     }
 
-    public int getPartyId() {
+    public String getPartyId() {
         return partyId;
     }
 }

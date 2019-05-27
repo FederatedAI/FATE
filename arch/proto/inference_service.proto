@@ -4,10 +4,12 @@ package com.webank.ai.fate.api.serving;
 option java_outer_classname = "InferenceServiceProto";
 
 message InferenceMessage {
-    bytes data = 1;
+    bytes header = 1;
+    bytes body = 2;
 }
 
 service InferenceService {
     rpc inference (InferenceMessage) returns (InferenceMessage);
+    rpc startInferenceJob (InferenceMessage) returns (InferenceMessage);
     rpc getInferenceResult (InferenceMessage) returns (InferenceMessage);
 }

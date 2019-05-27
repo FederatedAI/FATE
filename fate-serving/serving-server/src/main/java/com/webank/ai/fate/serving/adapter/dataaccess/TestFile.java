@@ -16,21 +16,21 @@
 
 package com.webank.ai.fate.serving.adapter.dataaccess;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestFile implements FeatureData {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> getData(Map<String, Object> featureData) {
+    public Map<String, Object> getData(Map<String, Object> featureIds) {
         Map<String, Object> data = new HashMap<>();
         try {
             List<String> lines = Files.readAllLines(Paths.get(System.getProperty("user.dir"), "host_data.csv"));
