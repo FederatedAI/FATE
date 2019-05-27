@@ -149,10 +149,9 @@ class _DTable(object):
     '''
 
     def map(self, func):
-        # _intermediate_result = _EggRoll.get_instance().map(self, func)
-        # return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
-        #                                     partition=_intermediate_result._partitions)
-        return _EggRoll.get_instance().map(self, func)
+        _intermediate_result = _EggRoll.get_instance().map(self, func)
+        return _intermediate_result.save_as(str(uuid.uuid1()), _intermediate_result._namespace,
+                                            partition=_intermediate_result._partitions)
 
     def mapValues(self, func):
         return _EggRoll.get_instance().map_values(self, func)
