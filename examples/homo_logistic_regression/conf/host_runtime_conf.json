@@ -40,9 +40,13 @@
         "intersect_data_output_table": null,
         "intersect_data_output_namespace": null,
         "work_mode": _work_mode,
+        "need_one_hot": false,
         "n_splits": 5
         },
 
+    "OneHotEncoderParam": {
+        "cols": ["fid0"]
+    },
     "EncryptParam": {
         "method": "Paillier",
         "key_length": 1024

@@ -42,9 +42,12 @@
         "need_intersect": true,
         "need_feature_selection": false,
         "need_scale": false,
+        "need_one_hot": false,
         "one_vs_rest": false
         },
-
+    "OneHotEncoderParam": {
+        "cols": ["fid0"]
+    },
     "EncryptParam": {
         "method": "Paillier",
         "key_length": 1024

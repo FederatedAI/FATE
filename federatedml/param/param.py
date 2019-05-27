@@ -308,6 +308,9 @@ class WorkFlowParam(object):
     need_feature_selection: bool, default: False
         Whether this task need to do feature selection or not.
 
+    need_one_hot : bool, default: False
+        Whether this task need to do one_hot encode
+
     """
 
     def __init__(self, method='train', train_input_table=None, train_input_namespace=None, model_table=None,
@@ -800,10 +803,6 @@ class FeatureBinningParam(object):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-        # self.meta_table = meta_table
-        # self.transform_table = transform_table
-        # self.param_table = param_table
-        # self.result_namespace = result_namespace
 
         if display_result == 'simple':
             display_result = ['iv']
