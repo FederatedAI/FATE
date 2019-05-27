@@ -70,7 +70,7 @@ class OneHotEncoder(object):
             self._init_cols(data_instances)
 
         header = self.header
-        LOGGER.info("Before one-hot, data_instances schema is : {}".format(header))
+        LOGGER.info("[Result][OneHotEncoder]Before one-hot, data_instances schema is : {}".format(header))
         for col_name, value_map in self.col_maps.items():
             col_idx = header.index(col_name)
             new_headers = list(value_map.values())
@@ -84,7 +84,7 @@ class OneHotEncoder(object):
             col_index = header.index(col)
             self.cols_dict[col] = col_index
         self.header = header
-        LOGGER.info("After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.info("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)

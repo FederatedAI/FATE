@@ -897,6 +897,11 @@ class FeatureSelectionParam(object):
     ----------
     method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
         Decide what process to do.
+        fit_transform: fit select models and transfer data instance
+
+        transform: use fit models to transform data
+
+        fit:  fit the model only without transforming the data.
 
     select_cols: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
@@ -996,36 +1001,6 @@ class ScaleParam(object):
 
         self.with_mean = with_mean
         self.with_std = with_std
-
-
-class CorrelationParam(object):
-    """
-
-    Parameters
-    ----------
-    correlation_method : str, default: 'Pearson'
-        Decide what process to do. Support Pearson only now.
-
-    cols: list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns.
-
-    local_only : bool, default: False
-        Whether just provide binning method to guest party. If true, host party will do nothing.
-
-    with_label: bool, default: False
-        Indicate if calculate correlation with label
-
-    run_mode: str, 'normal' or 'fast, default: 'normal'
-        Specify the running mode
-
-    """
-
-    def __init__(self, correlation_method='Pearson', cols=-1, local_only=False, with_label=False, run_mode='normal'):
-        self.correlation_method = correlation_method
-        self.cols = cols
-        self.local_only = local_only
-        self.with_label = with_label
-        self.run_mode = run_mode
 
 
 class OneHotEncoderParam(object):

@@ -58,6 +58,14 @@ class FilterMethod(object):
         """
         pass
 
+    def display_feature_result(self, party_name='Base'):
+        class_name = self.__class__.__name__
+        for col_name, feature_value in self.feature_values.items():
+            LOGGER.info("[Result][FeatureSelection][{}], in {}, col: {} 's feature value is {}".format(
+                party_name, class_name, col_name, feature_value
+            ))
+
+
     def _keep_one_feature(self, pick_high=True, left_cols=None, feature_values=None):
         """
         Make sure at least one feature can be left after filtering.
@@ -196,10 +204,10 @@ class UnionPercentileFilter(FilterMethod):
 
     def get_value_threshold(self):
         total_values = []
-        total_values.extend(list(self.local_variance.values))
+        total_values.extend(list(self.local_variance.values()))
 
         for h_v in self.host_variances.values:
-            total_values.extend(list(h_v.values))
+            total_values.extend(list(h_v.values()))
 
         sorted_value = sorted(total_values, reverse=self.pick_high)
         thres_idx = int(math.floor(self.percentiles * len(sorted_value)))
