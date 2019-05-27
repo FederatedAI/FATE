@@ -1,0 +1,11 @@
+{
+  "file": "examples/data/breast_b.csv",
+  "local": {
+    "party_id": 9999,
+    "role": "guest"
+  },
+  "head": 1,
+  "partition": 10,
+  "table_name": "breast",
+  "namespace": "breast_hetero"
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "ModelParamProto";
+
+message ModelParam{
+    map<string, float> weight = 1;
+    float intercept = 2;
+}

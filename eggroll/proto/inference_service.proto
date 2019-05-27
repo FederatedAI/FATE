@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.api.serving;
+option java_outer_classname = "InferenceServiceProto";
+
+message InferenceMessage {
+    bytes data = 1;
+}
+
+service InferenceService {
+    rpc inference (InferenceMessage) returns (InferenceMessage);
+    rpc getInferenceResult (InferenceMessage) returns (InferenceMessage);
+}

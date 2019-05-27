@@ -1,0 +1,5 @@
+{
+    "task": "model_version",
+    "work_mode": 0,
+    "namespace": "hetero_lr"
+}
