@@ -19,7 +19,7 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <artifactId>eggroll-eggroll</artifactId>
+    <artifactId>eggroll-framework</artifactId>
 
     <parent>
         <groupId>com.webank.ai.fate</groupId>
@@ -34,7 +34,6 @@
         <module>meta-service</module>
         <module>egg</module>
         <module>roll</module>
-        <module>storage-service</module>
     </modules>
 
     <properties>

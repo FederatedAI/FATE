@@ -22,7 +22,7 @@
     <artifactId>eggroll-storage-service</artifactId>
 
     <parent>
-        <artifactId>eggroll-eggroll</artifactId>
+        <artifactId>eggroll-storage</artifactId>
         <groupId>com.webank.ai.fate</groupId>
         <version>${eggroll.version}</version>
     </parent>

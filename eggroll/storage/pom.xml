@@ -15,26 +15,21 @@
   ~ limitations under the License.
   -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <artifactId>eggroll-roll</artifactId>
+    <artifactId>eggroll-storage</artifactId>
 
     <parent>
-        <artifactId>eggroll-eggroll</artifactId>
+        <artifactId>eggroll-all</artifactId>
         <groupId>com.webank.ai.fate</groupId>
         <version>${eggroll.version}</version>
     </parent>
+    <modules>
+        <module>storage-service-java</module>
+    </modules>
 
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
-
-    <dependencies>
-        <dependency>
-            <groupId>com.webank.ai.fate</groupId>
-            <artifactId>eggroll-storage-service</artifactId>
-            <version>${eggroll.version}</version>
-        </dependency>
-    </dependencies>
 </project>

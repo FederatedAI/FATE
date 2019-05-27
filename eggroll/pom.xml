@@ -26,8 +26,9 @@
     <modules>
         <module>core</module>
         <module>driver</module>
-        <module>eggroll</module>
+        <module>framework</module>
         <module>networking</module>
+        <module>storage</module>
     </modules>
 
     <packaging>pom</packaging>
