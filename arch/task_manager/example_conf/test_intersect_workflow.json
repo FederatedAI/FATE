@@ -5,7 +5,6 @@
         "guest": [9999],
         "host": [10000]
     },
-    "scene_id": 50000,
     "gen_table_info": true,
     "role_parameters": {
         "guest": {

@@ -4,7 +4,6 @@
   "file": "examples/data/breast_a.csv",
   "head": 1,
   "partition": 10,
-  "scene_id": 50000,
   "gen_table_info": true,
   "local": {
     "party_id": 10000,

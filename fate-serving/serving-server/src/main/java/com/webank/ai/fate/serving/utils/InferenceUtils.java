@@ -18,15 +18,15 @@ package com.webank.ai.fate.serving.utils;
 
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.FederatedRoles;
-
-import java.util.*;
-
 import com.webank.ai.fate.core.utils.FederatedUtils;
-import com.webank.ai.fate.serving.bean.FederatedInferenceType;
+import com.webank.ai.fate.serving.core.bean.FederatedInferenceType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
+
 public class InferenceUtils {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final Logger auditLogger = LogManager.getLogger("audit");
 
     public static String generateCaseid() {
@@ -37,13 +37,33 @@ public class InferenceUtils {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    public static void logInferenceAudited(Enum<FederatedInferenceType> inferenceType, int sceneid, FederatedParty federatedParty, FederatedRoles federatedRoles, String caseid, int statusCode, boolean charge) {
-        String inCharge;
-        if (charge) {
-            inCharge = "1";
+    public static void logInferenceAudited(Enum<FederatedInferenceType> inferenceType, FederatedParty federatedParty, FederatedRoles federatedRoles, String caseid, int statusCode, boolean useCache, boolean billing) {
+        String billingDesc, useCacheDesc;
+        if (billing) {
+            billingDesc = "billing";
         } else {
-            inCharge = "0";
+            billingDesc = "nobilling";
         }
-        auditLogger.info(" {} {} {} {} {} {} {} {}", inferenceType, sceneid, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, statusCode, inCharge);
+        if (useCache) {
+            useCacheDesc = "fromCache";
+        } else {
+            useCacheDesc = "fromRequest";
+        }
+        auditLogger.info(" {} {} {} {} {} {} {} {}", inferenceType, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, statusCode, useCacheDesc, billingDesc);
+    }
+
+    public static Object getClassByName(String classPath) {
+        try {
+            Class thisClass = Class.forName(classPath);
+            return thisClass.getConstructor().newInstance();
+        } catch (ClassNotFoundException ex) {
+            LOGGER.error("Can not found this class: {}.", classPath);
+        } catch (NoSuchMethodException ex) {
+            LOGGER.error("Can not get this class({}) constructor.", classPath);
+        } catch (Exception ex) {
+            LOGGER.error(ex);
+            LOGGER.error("Can not create class({}) instance.", classPath);
+        }
+        return null;
     }
 }

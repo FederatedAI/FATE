@@ -19,9 +19,10 @@ package com.webank.ai.fate.serving.service;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.serving.InferenceServiceGrpc;
 import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceMessage;
-import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.core.bean.ReturnResult;
+import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
+import com.webank.ai.fate.serving.core.bean.InferenceActionType;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
@@ -33,10 +34,24 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
 
     @Override
     public void inference(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver) {
+        inferenceServiceAction(req, responseObserver, InferenceActionType.SYNC_RUN);
+    }
+
+    @Override
+    public void getInferenceResult(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver) {
+        inferenceServiceAction(req, responseObserver, InferenceActionType.GET_RESULT);
+    }
+
+    @Override
+    public void startInferenceJob(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver) {
+        inferenceServiceAction(req, responseObserver, InferenceActionType.ASYNC_RUN);
+    }
+
+    private void inferenceServiceAction(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver, InferenceActionType actionType) {
         InferenceMessage.Builder response = InferenceMessage.newBuilder();
-        InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getData().toStringUtf8(), InferenceRequest.class);
-        ReturnResult returnResult = InferenceManager.inference(inferenceRequest);
-        response.setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult).getBytes()));
+        InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
+        ReturnResult returnResult = InferenceManager.inference(inferenceRequest, actionType);
+        response.setBody(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult).getBytes()));
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
     }

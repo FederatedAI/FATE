@@ -34,7 +34,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.serving',
   syntax='proto3',
   serialized_options=_b('B\025InferenceServiceProto'),
-  serialized_pb=_b('\n\x17inference_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\" \n\x10InferenceMessage\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x32\xfd\x01\n\x10InferenceService\x12o\n\tinference\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessage\x12x\n\x12getInferenceResult\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessageB\x17\x42\x15InferenceServiceProtob\x06proto3')
+  serialized_pb=_b('\n\x17inference_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\"0\n\x10InferenceMessage\x12\x0e\n\x06header\x18\x01 \x01(\x0c\x12\x0c\n\x04\x62ody\x18\x02 \x01(\x0c\x32\xf6\x02\n\x10InferenceService\x12o\n\tinference\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessage\x12w\n\x11startInferenceJob\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessage\x12x\n\x12getInferenceResult\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessageB\x17\x42\x15InferenceServiceProtob\x06proto3')
 )
 
 
@@ -48,8 +48,15 @@ _INFERENCEMESSAGE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='data', full_name='com.webank.ai.fate.api.serving.InferenceMessage.data', index=0,
+      name='header', full_name='com.webank.ai.fate.api.serving.InferenceMessage.header', index=0,
       number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='body', full_name='com.webank.ai.fate.api.serving.InferenceMessage.body', index=1,
+      number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -67,7 +74,7 @@ _INFERENCEMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=59,
-  serialized_end=91,
+  serialized_end=107,
 )
 
 DESCRIPTOR.message_types_by_name['InferenceMessage'] = _INFERENCEMESSAGE
@@ -89,8 +96,8 @@ _INFERENCESERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=94,
-  serialized_end=347,
+  serialized_start=110,
+  serialized_end=484,
   methods=[
   _descriptor.MethodDescriptor(
     name='inference',
@@ -102,9 +109,18 @@ _INFERENCESERVICE = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='startInferenceJob',
+    full_name='com.webank.ai.fate.api.serving.InferenceService.startInferenceJob',
+    index=1,
+    containing_service=None,
+    input_type=_INFERENCEMESSAGE,
+    output_type=_INFERENCEMESSAGE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='getInferenceResult',
     full_name='com.webank.ai.fate.api.serving.InferenceService.getInferenceResult',
-    index=1,
+    index=2,
     containing_service=None,
     input_type=_INFERENCEMESSAGE,
     output_type=_INFERENCEMESSAGE,

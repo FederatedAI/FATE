@@ -53,8 +53,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
         ReturnResult returnResult = ModelManager.publishOnlineModel(
                 new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
                 ModelUtils.getFederatedRoles(req.getRoleMap()),
-                ModelUtils.getFederatedRolesModel(req.getModelMap()),
-                req.getSceneId()
+                ModelUtils.getFederatedRolesModel(req.getModelMap())
         );
         builder.setStatusCode(returnResult.getRetcode())
                 .setMessage(returnResult.getRetmsg())

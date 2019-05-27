@@ -16,8 +16,10 @@
 
 package com.webank.ai.fate.serving.adapter.processing;
 
+import com.webank.ai.fate.serving.bean.PostProcessingResult;
+
 import java.util.Map;
 
 public interface PostProcessing {
-    Map<String, Object> getResult(Map<String, Object> featureData, Map<String, Object> modelResult);
+    PostProcessingResult getResult(Map<String, Object> featureData, Map<String, Object> modelResult);
 }

@@ -12,6 +12,7 @@
     <modules>
         <module>serving-server</module>
         <module>federatedml</module>
+        <module>fate-serving-core</module>
     </modules>
 
     <properties>

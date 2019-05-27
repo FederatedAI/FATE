@@ -16,8 +16,8 @@
 
 package com.webank.ai.fate.serving.adapter.processing;
 
-import java.util.Map;
+import com.webank.ai.fate.serving.bean.PreProcessingResult;
 
 public interface PreProcessing {
-    Map<String, Object> getResult(String paras);
+    PreProcessingResult getResult(String paras);
 }

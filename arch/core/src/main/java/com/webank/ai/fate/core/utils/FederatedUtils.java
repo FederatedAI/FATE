@@ -32,9 +32,9 @@ public class FederatedUtils {
             for (int i = 0; i < roleNames.length; i++) {
                 Object[] partys = (new ArrayList<>(new HashSet<>(federatedRoles.getAllRole().get(roleNames[i])))).toArray();
                 Arrays.sort(partys);
-                allPartyTmp.add(StringUtils.join(partys, "|"));
+                allPartyTmp.add(StringUtils.join(Arrays.asList(roleNames[i], StringUtils.join(partys, "_")), "-"));
             }
-            return StringUtils.join(allPartyTmp, "-");
+            return StringUtils.join(allPartyTmp, "#");
         }
     }
 }

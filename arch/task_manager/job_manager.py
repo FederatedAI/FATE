@@ -149,7 +149,10 @@ def update_job_queue(job_id, role, party_id, save_data):
             continue
         setattr(job_queue, k, v)
     if is_insert:
-        job_queue.save(force_insert=True)
+        try:
+            job_queue.save(force_insert=True)
+        except:
+            job_queue.save()
     else:
         job_queue.save()
     return job_queue

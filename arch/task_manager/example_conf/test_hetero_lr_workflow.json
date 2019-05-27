@@ -6,7 +6,6 @@
         "host": [10000],
         "arbiter": [10000]
     },
-    "scene_id": 50000,
     "gen_table_info": true,
     "role_parameters": {
         "guest": {
@@ -66,7 +65,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 1,
+            "work_mode": 0,
             "need_sample": false,
             "need_feature_selection": false,
             "need_intersect": true,

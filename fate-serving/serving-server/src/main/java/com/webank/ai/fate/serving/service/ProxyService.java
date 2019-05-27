@@ -21,9 +21,9 @@ import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.api.networking.proxy.Proxy.Packet;
 import com.webank.ai.fate.core.bean.FederatedParty;
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.utils.ObjectTransform;
-import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
@@ -38,21 +38,21 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
     @Override
     public void unaryCall(Proxy.Packet req, StreamObserver<Proxy.Packet> responseObserver) {
         Map<String, Object> requestData = (Map<String, Object>) ObjectTransform.json2Bean(req.getBody().getValue().toStringUtf8(), HashMap.class);
-        ReturnResult responseData;
+        ReturnResult responseResult;
 
         switch (req.getHeader().getCommand().getName()) {
             case "federatedInference":
-                responseData = InferenceManager.federatedInference(requestData);
+                responseResult = InferenceManager.federatedInference(requestData);
                 break;
             default:
-                responseData = new ReturnResult();
-                responseData.setRetcode(StatusCode.PARAMERROR);
+                responseResult = new ReturnResult();
+                responseResult.setRetcode(StatusCode.PARAMERROR);
                 break;
         }
 
         Packet.Builder packetBuilder = Packet.newBuilder();
         packetBuilder.setBody(Proxy.Data.newBuilder()
-                .setValue(ByteString.copyFrom(ObjectTransform.bean2Json(responseData).getBytes()))
+                .setValue(ByteString.copyFrom(ObjectTransform.bean2Json(responseResult).getBytes()))
                 .build());
 
         Proxy.Metadata.Builder metaDataBuilder = Proxy.Metadata.newBuilder();

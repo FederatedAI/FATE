@@ -10,23 +10,23 @@ import static java.lang.Math.exp;
 
 public class HeteroLRGuest extends HeteroLR {
     private static final Logger LOGGER = LogManager.getLogger();
+
     private double sigmod(double x) {
         return 1. / (1. + exp(-x));
     }
 
     @Override
-    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams){
+    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
         Map<String, Object> result = new HashMap<>();
         double score = forward(inputData);
         LOGGER.info("guest score:{}", score);
 
-        try{
-            Map<String, Object> hostPredictResponse = this.getFederatedPredict((Map<String, Object>)predictParams.get("federatedParams"));
-            double hostScore = (double)hostPredictResponse.get("score");
+        try {
+            Map<String, Object> hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
+            double hostScore = (double) hostPredictResponse.get("score");
             LOGGER.info("host score:{}", hostScore);
             score += hostScore;
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error(ex.getStackTrace());
             ex.printStackTrace();
             LOGGER.error(ex);

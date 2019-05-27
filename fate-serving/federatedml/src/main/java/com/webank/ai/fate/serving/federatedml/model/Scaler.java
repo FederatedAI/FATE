@@ -21,8 +21,7 @@ public class Scaler extends BaseModel {
             this.scaleMeta = ScaleMeta.parseFrom(protoMeta);
             this.scaleParam = ScaleParam.parseFrom(protoParam);
             this.isScale = scaleMeta.getIsScale();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             return StatusCode.ILLEGALDATA;
         }

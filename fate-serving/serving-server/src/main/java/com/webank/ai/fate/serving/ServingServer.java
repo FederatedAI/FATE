@@ -16,26 +16,25 @@
 
 package com.webank.ai.fate.serving;
 
-import com.webank.ai.fate.core.network.http.client.HttpClientPool;
-import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.core.network.grpc.client.ClientPool;
-import com.webank.ai.fate.serving.service.ModelService;
-import com.webank.ai.fate.serving.service.InferenceService;
+import com.webank.ai.fate.core.network.http.client.HttpClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
+import com.webank.ai.fate.serving.manger.InferenceWorkerManager;
+import com.webank.ai.fate.serving.manger.ModelManager;
+import com.webank.ai.fate.serving.service.InferenceService;
+import com.webank.ai.fate.serving.service.ModelService;
 import com.webank.ai.fate.serving.service.ProxyService;
 import com.webank.ai.fate.serving.service.ServiceExceptionHandler;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptors;
+import org.apache.commons.cli.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import io.grpc.ServerInterceptors;
-import org.apache.commons.cli.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ServingServer {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -47,7 +46,7 @@ public class ServingServer {
     }
 
     private void start() throws IOException {
-        this.init();
+        this.initialize();
 
         int port = Integer.parseInt(Configuration.getProperty("port"));
         //TODO: Server custom configuration
@@ -80,14 +79,16 @@ public class ServingServer {
         }
     }
 
-    private void init() {
+
+    private void initialize() {
         new Configuration(this.confPath).load();
         new ModelManager();
-        this.initClientPool();
+        this.initializeClientPool();
         HttpClientPool.initPool();
+        InferenceWorkerManager.prestartAllCoreThreads();
     }
 
-    private void initClientPool() {
+    private void initializeClientPool() {
         ArrayList<String> serverAddress = new ArrayList<>();
         serverAddress.add(Configuration.getProperty("proxy"));
         serverAddress.add(Configuration.getProperty("roll"));

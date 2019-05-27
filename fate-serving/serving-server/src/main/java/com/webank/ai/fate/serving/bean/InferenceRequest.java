@@ -17,20 +17,21 @@
 package com.webank.ai.fate.serving.bean;
 
 import com.webank.ai.fate.serving.utils.InferenceUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class InferenceRequest {
-    private int sceneid;
-    private String modelName;
-    private String modelNamespace;
+    private String appid;
+    private String partyId;
+    private String modelVersion;
+    private String modelId;
     private String seqno;
     private String caseid;
     private Map<String, Object> featureData;
 
     InferenceRequest() {
-        sceneid = 0;
         seqno = InferenceUtils.generateSeqno();
         caseid = InferenceUtils.generateCaseid();
         featureData = new HashMap<>();
@@ -40,23 +41,41 @@ public class InferenceRequest {
         return seqno;
     }
 
-    public int getSceneid() {
-        return sceneid;
+    public String getAppid() {
+        return appid;
     }
 
     public String getCaseid() {
         return caseid;
     }
 
-    public String getModelName() {
-        return modelName;
+    public String getPartyId() {
+        return partyId;
     }
 
-    public String getModelNamespace() {
-        return modelNamespace;
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public String getModelId() {
+        return modelId;
     }
 
     public Map<String, Object> getFeatureData() {
         return featureData;
+    }
+
+    public void setAppid(String appid) {
+        this.appid = appid;
+        this.partyId = appid;
+    }
+
+    public void setPartyId(String partyId) {
+        this.partyId = partyId;
+        this.appid = partyId;
+    }
+
+    public boolean haveAppId() {
+        return (!StringUtils.isEmpty(appid) || !StringUtils.isEmpty(partyId));
     }
 }
