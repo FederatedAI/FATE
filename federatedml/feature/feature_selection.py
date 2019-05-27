@@ -264,7 +264,7 @@ class UniqueValueFilter(FilterMethod):
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.UniqueValueMata(eps=self.eps)
+        result = feature_selection_meta_pb2.UniqueValueMeta(eps=self.eps)
         return result
 
 
@@ -333,7 +333,7 @@ class IVValueSelectFilter(FilterMethod):
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.IVValueSelectionMata(value_threshold=self.value_threshold)
+        result = feature_selection_meta_pb2.IVValueSelectionMeta(value_threshold=self.value_threshold)
         return result
 
 
@@ -416,7 +416,7 @@ class IVPercentileFilter(FilterMethod):
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.IVPercentileSelectionMata(percentile_threshold=self.percentile_thres)
+        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_thres)
         return result
 
 
@@ -474,7 +474,7 @@ class CoeffOfVarValueFilter(FilterMethod):
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.CoeffOfVarSelectionMata(value_threshold=self.value_threshold)
+        result = feature_selection_meta_pb2.CoeffOfVarSelectionMeta(value_threshold=self.value_threshold)
         return result
 
 
@@ -524,7 +524,7 @@ class OutlierFilter(FilterMethod):
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.OutlierColsSelectionMata(percentile=self.percentile,
+        result = feature_selection_meta_pb2.OutlierColsSelectionMeta(percentile=self.percentile,
                                                                      upper_threshold=self.upper_threshold)
         return result
 
