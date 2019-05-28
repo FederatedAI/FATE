@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 from typing import Iterable
-from arch.api.utils.core import json_dumps, json_loads
-from arch.api.version_control import control
-from arch.api import eggroll
+from eggroll.api.utils.core import json_dumps, json_loads
+from eggroll.api.version_control import control
+from eggroll.api import eggroll
 import datetime
 
 
@@ -90,7 +90,7 @@ def get_data_table_meta(key, data_table_name, data_table_namespace):
 
 
 if __name__ == '__main__':
-    from arch.api import eggroll
+    from eggroll.api import eggroll
     import uuid
     import random
     job_id = str(uuid.uuid1().hex)

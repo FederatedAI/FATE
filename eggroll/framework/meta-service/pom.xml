@@ -22,7 +22,7 @@
 
     <parent>
         <artifactId>eggroll-framework</artifactId>
-        <groupId>com.webank.ai.fate</groupId>
+        <groupId>com.webank.ai.eggroll</groupId>
         <version>${eggroll.version}</version>
     </parent>
 

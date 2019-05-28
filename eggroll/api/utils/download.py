@@ -1,8 +1,8 @@
 import argparse
 import json
 import os
-from arch.api import eggroll
-from arch.api import storage
+from eggroll.api import eggroll
+from eggroll.api import storage
 
 
 def do_export_file(job_id, _data):

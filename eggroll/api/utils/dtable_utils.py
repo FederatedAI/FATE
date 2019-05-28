@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.version_control.control import get_latest_commit, get_id_library_table_name
-from arch.api.utils.scene_utils import gen_scene_key, check_scene_info
-from arch.api.utils.core import get_commit_id
+from eggroll.api.version_control.control import get_latest_commit, get_id_library_table_name
+from eggroll.api.utils.scene_utils import gen_scene_key, check_scene_info
+from eggroll.api.utils.core import get_commit_id
 
 
 def get_table_info(config, create=False):

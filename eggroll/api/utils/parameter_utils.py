@@ -17,7 +17,7 @@
 import json
 import os
 import copy
-from arch.api.utils.log_utils import getLogger
+from eggroll.api.utils.log_utils import getLogger
 
 LOGGER = getLogger()
 

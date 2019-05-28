@@ -18,44 +18,44 @@ syntax = "proto3";
 
 import "basic-meta.proto";
 
-package com.webank.ai.fate.api.eggroll.meta.service;
+package com.webank.ai.eggroll.api.framework.meta.service;
 
 // Service to operate storage metadata
 service StorageMetaService {
-    rpc createTable (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc createTableIfAbsent (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc updateTable (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc createTable (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc createTableIfAbsent (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc updateTable (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 
-    rpc createFragmentsForTable (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc updateFragment (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc createFragmentsForTable (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc updateFragment (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 
-    rpc getTableById (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getTable (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getTables (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getFragmentById (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getFragmentsByTableId (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc getTableById (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getTable (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getTables (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getFragmentById (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getFragmentsByTableId (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 
-    rpc getStorageNodesByTableId (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getEggNodeManagerByIp (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getNodeById (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getNodesByIds (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getNodesOfStatus (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getNodes (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc getStorageNodesByTableId (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getEggNodeManagerByIp (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getNodeById (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getNodesByIds (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getNodesOfStatus (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getNodes (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 }
 
 // service to change node status
 service ClusterMetaService {
-    rpc registerNode (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc deregisterNode (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc heartbeat (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc registerNode (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc deregisterNode (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc heartbeat (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 }
 
 // will be implemented in stage 2
 service TaskMetaService {
-    rpc createTask (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc updateTask (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc createResult (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc updateResult (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
-    rpc getResultById (com.webank.ai.fate.api.core.CallRequest) returns (com.webank.ai.fate.api.core.CallResponse);
+    rpc createTask (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc updateTask (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc createResult (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc updateResult (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
+    rpc getResultById (com.webank.ai.eggroll.api.core.CallRequest) returns (com.webank.ai.eggroll.api.core.CallResponse);
 }
 

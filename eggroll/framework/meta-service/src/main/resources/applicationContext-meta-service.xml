@@ -30,7 +30,7 @@
     http://www.springframework.org/schema/tx
     http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
 
-    <context:component-scan base-package="com.webank.ai.fate"/>
+    <context:component-scan base-package="com.webank.ai.eggroll"/>
     <context:annotation-config/>
 
     <bean id="configProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
@@ -63,11 +63,11 @@
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="mapperLocations"
-                  value="classpath*:com/webank/ai/fate/eggroll/meta/service/dao/generated/mapper/*Mapper.xml"/>
+                  value="classpath*:com/webank/ai/eggroll/framework/meta/service/dao/generated/mapper/*Mapper.xml"/>
     </bean>
 
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="com.webank.ai.fate.eggroll.meta.service.dao.generated.mapper"/>
+        <property name="basePackage" value="com.webank.ai.eggroll.framework.meta.service.dao.generated.mapper"/>
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
     </bean>
 

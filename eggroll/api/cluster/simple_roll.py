@@ -26,11 +26,11 @@ from operator import is_not
 import grpc
 from cachetools import cached, TTLCache
 
-from arch.api.proto import kv_pb2_grpc, kv_pb2, processor_pb2_grpc, processor_pb2, storage_basic_pb2
-from arch.api.proto.storage_basic_pb2 import StorageLocator
-from arch.api.utils import cloudpickle as pickle, eggroll_serdes
-from arch.api.utils import file_utils
-from arch.api.utils.metric_utils import record_metrics
+from eggroll.api.proto import kv_pb2_grpc, kv_pb2, processor_pb2_grpc, processor_pb2, storage_basic_pb2
+from eggroll.api.proto.storage_basic_pb2 import StorageLocator
+from eggroll.api.utils import cloudpickle as pickle, eggroll_serdes
+from eggroll.api.utils import file_utils
+from eggroll.api.utils.metric_utils import record_metrics
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 

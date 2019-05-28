@@ -14,15 +14,15 @@
 #  limitations under the License.
 #
 
-from arch.api.proto.model_meta_pb2 import ModelMeta
-from arch.api.proto.model_param_pb2 import ModelParam
-from arch.api.proto.data_transform_server_pb2 import DataTransformServer
-from arch.api.utils.core import json_loads
-from arch.api.utils.format_transform import camel_to_pascal
-from arch.api import eggroll
-from arch.api import RuntimeInstance
-from arch.api import WorkMode
-from arch.api.version_control import control
+from eggroll.api.proto.model_meta_pb2 import ModelMeta
+from eggroll.api.proto.model_param_pb2 import ModelParam
+from eggroll.api.proto.data_transform_server_pb2 import DataTransformServer
+from eggroll.api.utils.core import json_loads
+from eggroll.api.utils.format_transform import camel_to_pascal
+from eggroll.api import eggroll
+from eggroll.api import RuntimeInstance
+from eggroll.api import WorkMode
+from eggroll.api.version_control import control
 import datetime
 
 

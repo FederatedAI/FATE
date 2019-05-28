@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import eggroll
-from arch.api.utils.core import json_loads, json_dumps, bytes_to_string
-from arch.api.utils import log_utils
+from eggroll.api import eggroll
+from eggroll.api.utils.core import json_loads, json_dumps, bytes_to_string
+from eggroll.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 

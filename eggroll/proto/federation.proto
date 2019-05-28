@@ -19,7 +19,7 @@ syntax = "proto3";
 import "basic-meta.proto";
 import "storage-basic.proto";
 
-package com.webank.ai.fate.api.driver.federation;
+package com.webank.ai.eggroll.api.driver.federation;
 
 // federation learning participant
 message Party {
@@ -30,7 +30,7 @@ message Party {
 // data description for data to transfer
 message TransferDataDesc {
     TransferDataType transferDataType = 1;
-    com.webank.ai.fate.api.eggroll.storage.StorageLocator storageLocator = 2;
+    com.webank.ai.eggroll.api.storage.StorageLocator storageLocator = 2;
     bytes taggedVariableName = 3;       // must be in form of "tag-readVariableName"
 }
 
@@ -63,7 +63,7 @@ enum TransferDataType {
 
 // transfer meta data
 message TransferMeta {
-    com.webank.ai.fate.api.core.Job job = 1;                    // job description
+    com.webank.ai.eggroll.api.core.Job job = 1;                    // job description
     string tag = 2;                                             // unique transfer tag for this job
     Party src = 3;                                              // data source, also transfer initiator, data sender
     Party dst = 4;                                              // data destination, data receiver
@@ -71,7 +71,7 @@ message TransferMeta {
     TransferType type = 6;                                      // transfer type
     TransferStatus transferStatus = 7;                          // transfer status to mark whether the transfer is sucessful or not
     TransferConf conf = 8;                                      // configuration for transfer
-    com.webank.ai.fate.api.core.ReturnStatus returnStatus = 9;  // error code and message for this transfer operation
+    com.webank.ai.eggroll.api.core.ReturnStatus returnStatus = 9;  // error code and message for this transfer operation
 }
 
 // submit transfer job

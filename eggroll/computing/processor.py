@@ -18,14 +18,14 @@ import argparse
 import sys
 import time
 from concurrent import futures
-from arch.api.utils import log_utils, cloudpickle
+from eggroll.api.utils import log_utils, cloudpickle
 import grpc
 import lmdb
 from cachetools import cached
 from grpc._cython import cygrpc
-from arch.api.utils import eggroll_serdes
+from eggroll.api.utils import eggroll_serdes
 from cachetools import LRUCache
-from arch.api.proto import kv_pb2, processor_pb2, processor_pb2_grpc, storage_basic_pb2
+from eggroll.api.proto import kv_pb2, processor_pb2, processor_pb2_grpc, storage_basic_pb2
 import os
 import numpy as np
 import hashlib

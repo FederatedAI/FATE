@@ -24,13 +24,13 @@ import random
 
 import grpc
 
-from arch.api.utils import eggroll_serdes, file_utils
-from arch.api.utils.log_utils import getLogger
-from arch.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
-from arch.api.utils import cloudpickle
-from arch.api.utils.core import string_to_bytes, bytes_to_string
-from arch.api.utils.iter_utils import split_every
-from arch.api.core import EggRollContext
+from eggroll.api.utils import eggroll_serdes, file_utils
+from eggroll.api.utils.log_utils import getLogger
+from eggroll.api.proto import kv_pb2, kv_pb2_grpc, processor_pb2, processor_pb2_grpc, storage_basic_pb2
+from eggroll.api.utils import cloudpickle
+from eggroll.api.utils.core import string_to_bytes, bytes_to_string
+from eggroll.api.utils.iter_utils import split_every
+from eggroll.api.core import EggRollContext
 
 
 def init(job_id=None, server_conf_path="arch/conf/server_conf.json", eggroll_context=None):

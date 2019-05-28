@@ -15,7 +15,7 @@
 #
 
 import time
-from arch.api.utils import log_utils
+from eggroll.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 

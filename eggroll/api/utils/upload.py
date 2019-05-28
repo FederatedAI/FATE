@@ -21,8 +21,8 @@ import traceback
 import csv
 import sys
 import time
-from arch.api import eggroll
-from arch.api.storage import save_data
+from eggroll.api import eggroll
+from eggroll.api.storage import save_data
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000

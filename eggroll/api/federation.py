@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api import RuntimeInstance
-from arch.api import WorkMode
-from arch.api.standalone import federation as standalone_federation
-from arch.api.cluster import federation as cluster_federation
+from eggroll.api import RuntimeInstance
+from eggroll.api import WorkMode
+from eggroll.api.standalone import federation as standalone_federation
+from eggroll.api.cluster import federation as cluster_federation
 
 
 def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):

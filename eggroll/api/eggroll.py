@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import LoggerFactory
-from arch.api.utils import file_utils
+from eggroll.api.utils.log_utils import LoggerFactory
+from eggroll.api.utils import file_utils
 from typing import Iterable
 import uuid
 import os
-from arch.api import WorkMode, NamingPolicy
-from arch.api import RuntimeInstance
-from arch.api.core import EggRollContext
+from eggroll.api import WorkMode, NamingPolicy
+from eggroll.api import RuntimeInstance
+from eggroll.api.core import EggRollContext
 
 
 def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: NamingPolicy = NamingPolicy.DEFAULT):
@@ -36,15 +36,15 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: Namin
 
     eggroll_context = EggRollContext(naming_policy=naming_policy)
     if mode == WorkMode.STANDALONE:
-        from arch.api.standalone.eggroll import Standalone
+        from eggroll.api.standalone.eggroll import Standalone
         RuntimeInstance.EGGROLL = Standalone(job_id=job_id, eggroll_context=eggroll_context)
     elif mode == WorkMode.CLUSTER:
-        from arch.api.cluster.eggroll import _EggRoll
-        from arch.api.cluster.eggroll import init as c_init
+        from eggroll.api.cluster.eggroll import _EggRoll
+        from eggroll.api.cluster.eggroll import init as c_init
         c_init(job_id, eggroll_context=eggroll_context)
         RuntimeInstance.EGGROLL = _EggRoll.get_instance()
     else:
-        from arch.api.cluster import simple_roll
+        from eggroll.api.cluster import simple_roll
         simple_roll.init(job_id)
         RuntimeInstance.EGGROLL = simple_roll.EggRoll.get_instance()
     RuntimeInstance.EGGROLL.table("__federation__", job_id, partition=10)

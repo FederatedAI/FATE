@@ -15,7 +15,7 @@
 #
 
 from enum import IntEnum, Enum
-from arch.api import NamingPolicy
+from eggroll.api import NamingPolicy
 
 class EggRollContext(object):
     def __init__(self, naming_policy : NamingPolicy = NamingPolicy.DEFAULT):

@@ -18,12 +18,12 @@ syntax = "proto3";
 
 import "basic-meta.proto";
 
-package com.webank.ai.fate.api.eggroll.egg;
+package com.webank.ai.eggroll.api.framework.egg;
 
 service NodeService {
-    rpc getProcessor (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoint);
-    rpc getAllPossibleProcessors (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoints);
-    rpc killProcessor (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoint);
-    rpc killAllProcessors (com.webank.ai.fate.api.core.Endpoint) returns (com.webank.ai.fate.api.core.Endpoints);
+    rpc getProcessor (com.webank.ai.eggroll.api.core.Endpoint) returns (com.webank.ai.eggroll.api.core.Endpoint);
+    rpc getAllPossibleProcessors (com.webank.ai.eggroll.api.core.Endpoint) returns (com.webank.ai.eggroll.api.core.Endpoints);
+    rpc killProcessor (com.webank.ai.eggroll.api.core.Endpoint) returns (com.webank.ai.eggroll.api.core.Endpoint);
+    rpc killAllProcessors (com.webank.ai.eggroll.api.core.Endpoint) returns (com.webank.ai.eggroll.api.core.Endpoints);
 }
 

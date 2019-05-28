@@ -22,7 +22,7 @@
     <artifactId>eggroll-framework</artifactId>
 
     <parent>
-        <groupId>com.webank.ai.fate</groupId>
+        <groupId>com.webank.ai.eggroll</groupId>
         <artifactId>eggroll-all</artifactId>
         <version>${eggroll.version}</version>
     </parent>
@@ -41,7 +41,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.webank.ai.fate</groupId>
+            <groupId>com.webank.ai.eggroll</groupId>
             <artifactId>eggroll-core</artifactId>
             <version>${eggroll.version}</version>
         </dependency>

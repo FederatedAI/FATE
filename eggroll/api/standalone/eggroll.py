@@ -16,10 +16,10 @@
 
 import os
 import pickle as c_pickle
-from arch.api import StoreType
-from arch.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
-from arch.api.utils.core import string_to_bytes, bytes_to_string
-from arch.api.core import EggRollContext
+from eggroll.api import StoreType
+from eggroll.api.utils import cloudpickle as f_pickle, cache_utils, file_utils
+from eggroll.api.utils.core import string_to_bytes, bytes_to_string
+from eggroll.api.core import EggRollContext
 from heapq import heapify, heappop, heapreplace
 from typing import Iterable
 import uuid

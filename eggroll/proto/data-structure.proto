@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.api.core;
+package com.webank.ai.eggroll.api.core;
 
 // raw entry for map
 message RawEntry {

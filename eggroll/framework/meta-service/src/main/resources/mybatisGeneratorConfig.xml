@@ -52,7 +52,7 @@
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
         <!-- generated model package and location -->
-        <javaModelGenerator targetPackage="com.webank.ai.fate.common.dao.generated.model"
+        <javaModelGenerator targetPackage="com.webank.ai.eggroll.common.dao.generated.model"
                             targetProject="${target.project}/src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
@@ -63,14 +63,14 @@
             <property name="immutable" value="false"/>
         </javaModelGenerator>
         <!-- generated mapping package and location -->
-        <sqlMapGenerator targetPackage="com.webank.ai.fate.eggroll.meta.service.dao.generated.mapper"
+        <sqlMapGenerator targetPackage="com.webank.ai.eggroll.framework.meta.service.dao.generated.mapper"
                          targetProject="${target.project}/src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
         </sqlMapGenerator>
         <!-- generated DAO package and locations -->
         <javaClientGenerator type="XMLMAPPER"
-                             targetPackage="com.webank.ai.fate.eggroll.meta.service.dao.generated.mapper"
+                             targetPackage="com.webank.ai.eggroll.framework.meta.service.dao.generated.mapper"
                              targetProject="${target.project}/src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>

@@ -16,12 +16,12 @@
 
 import numpy as np
 from sklearn.datasets import make_moons
-from arch.api import eggroll
-# from arch.api.cluster import mock_roll as eggroll
+from eggroll.api import eggroll
+# from eggroll.api.cluster import mock_roll as eggroll
 import functools
 import uuid
 import time
-from arch.api import WorkMode
+from eggroll.api import WorkMode
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 

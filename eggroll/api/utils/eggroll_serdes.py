@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import cloudpickle
+from eggroll.api.utils import cloudpickle
 from abc import ABCMeta
 from abc import abstractmethod
 from pickle import loads as p_loads

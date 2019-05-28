@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.api.eggroll.storage;
+package com.webank.ai.eggroll.api.storage;
 
 // todo: merge with Stores class
 enum StorageType {

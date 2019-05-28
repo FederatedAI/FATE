@@ -18,7 +18,7 @@ syntax = "proto3";
 
 import "basic-meta.proto";
 
-package com.webank.ai.fate.api.networking.proxy;
+package com.webank.ai.eggroll.api.networking.proxy;
 
 // metadata of event
 message Model {
@@ -36,7 +36,7 @@ message Topic {
     string name = 1;
     string partyId = 2;
     string role = 3;
-    com.webank.ai.fate.api.core.Endpoint callback = 4;  // implication of pub/sub model, necessary for http-based senario
+    com.webank.ai.eggroll.api.core.Endpoint callback = 4;  // implication of pub/sub model, necessary for http-based senario
 }
 
 // task admin command
@@ -99,5 +99,5 @@ service DataTransferService {
 }
 
 service RouteService {
-    rpc query (Topic) returns (com.webank.ai.fate.api.core.Endpoint);
+    rpc query (Topic) returns (com.webank.ai.eggroll.api.core.Endpoint);
 }

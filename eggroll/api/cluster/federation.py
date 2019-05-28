@@ -19,10 +19,10 @@ import concurrent
 
 import grpc
 
-from arch.api.cluster.eggroll import _DTable, _EggRoll
-from arch.api.proto import basic_meta_pb2, federation_pb2, federation_pb2_grpc, storage_basic_pb2
-from arch.api.utils import file_utils, eggroll_serdes
-from arch.api.utils.log_utils import getLogger
+from eggroll.api.cluster.eggroll import _DTable, _EggRoll
+from eggroll.api.proto import basic_meta_pb2, federation_pb2, federation_pb2_grpc, storage_basic_pb2
+from eggroll.api.utils import file_utils, eggroll_serdes
+from eggroll.api.utils.log_utils import getLogger
 
 _serdes = eggroll_serdes.PickleSerdes
 

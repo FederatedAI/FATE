@@ -17,7 +17,7 @@
 syntax = "proto3";
 import "storage-basic.proto";
 
-package com.webank.ai.fate.api.eggroll.storage;
+package com.webank.ai.eggroll.api.storage;
 
 /*
  *
@@ -46,7 +46,7 @@ message Count {
 }
 
 message CreateTableInfo {
-    com.webank.ai.fate.api.eggroll.storage.StorageLocator storageLocator = 1;
+    com.webank.ai.eggroll.api.storage.StorageLocator storageLocator = 1;
     int32 fragmentCount = 2;
 }
 

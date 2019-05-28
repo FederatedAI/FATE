@@ -14,8 +14,8 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
-from arch.api import federation
+from eggroll.api import eggroll
+from eggroll.api import federation
 
 if __name__ == '__main__':
     eggroll.init("atest")

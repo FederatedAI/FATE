@@ -14,12 +14,12 @@
 #  limitations under the License.
 #
 
-from arch.api.standalone.eggroll import _DTable
-from arch.api.standalone.eggroll import Standalone
-from arch.api.utils import file_utils
-from arch.api.utils.log_utils import getLogger
+from eggroll.api.standalone.eggroll import _DTable
+from eggroll.api.standalone.eggroll import Standalone
+from eggroll.api.utils import file_utils
+from eggroll.api.utils.log_utils import getLogger
 import asyncio
-from arch.api import StoreType
+from eggroll.api import StoreType
 
 OBJECT_STORAGE_NAME = "__federation__"
 STATUS_TABLE_NAME = "__status__"
