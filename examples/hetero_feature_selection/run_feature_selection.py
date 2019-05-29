@@ -34,8 +34,6 @@ data_set = 'default_credit'
 # data_set = 'give_credit'
 
 mode = 'fit'
-
-
 # mode = 'transform'
 
 
@@ -54,7 +52,7 @@ def make_config_file(work_mode, job_id, role, guest_partyid, host_partyid):
     role_config['role']['guest'][0] = guest_partyid
     role_config['WorkFlowParam']['work_mode'] = int(work_mode)
 
-    role_config['FeatureSelectionParam']['method'] = mode
+    # role_config['FeatureSelectionParam']['method'] = mode
     role_config['WorkFlowParam']['train_input_table'] = "{}_{}_{}".format(data_set, role, job_id)
 
     # guest_config_path = config_path + '/guest_runtime_conf.json_' + str(job_id)

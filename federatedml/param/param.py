@@ -939,8 +939,7 @@ class FeatureSelectionParam(object):
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
                  coe_param=CoeffOfVarSelectionParam(),
-                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
-
+                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam()
                  ):
         self.method = method
         self.select_cols = select_cols

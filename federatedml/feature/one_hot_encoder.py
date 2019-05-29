@@ -22,6 +22,7 @@ from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -113,6 +114,10 @@ class OneHotEncoder(object):
                 if feature_value not in this_col_map:
                     new_feature_header = str(col_name) + '_' + str(feature_value)
                     this_col_map[feature_value] = new_feature_header
+
+                if len(this_col_map) > consts.ONE_HOT_LIMIT:
+                    raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
+                                     .format(consts.ONE_HOT_LIMIT))
 
         return col_maps
 

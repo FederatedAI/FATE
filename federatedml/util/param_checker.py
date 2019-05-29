@@ -1,6 +1,9 @@
 #!/usr/bin/env python    
 # -*- coding: utf-8 -*- 
 
+import inspect
+import json
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -24,8 +27,6 @@ from arch.api.utils import log_utils
 from federatedml.param import param
 from federatedml.util import consts
 from federatedml.util.param_extract import ParamExtract
-import inspect 
-import json
 
 LOGGER = log_utils.getLogger()
 
@@ -241,7 +242,7 @@ class DecisionTreeParamChecker(object):
 
         return True
 
-        
+
 class BoostingTreeParamChecker(object):
     @staticmethod
     def check_param(boost_param):
@@ -423,8 +424,9 @@ class WorkFlowParamChecker(object):
 
         workflow_param.method = check_and_change_lower(workflow_param.method,
                                                        ['train', 'predict', 'cross_validation',
-                                                       'intersect', 'binning', 'feature_select', 'one_vs_rest_train', "one_vs_rest_predict"],
-                                                        descr)
+                                                        'intersect', 'binning', 'feature_select', 'one_vs_rest_train',
+                                                        "one_vs_rest_predict"],
+                                                       descr)
 
         if workflow_param.method in ['train', 'binning', 'feature_select']:
             if type(workflow_param.train_input_table).__name__ != "str":
@@ -683,7 +685,10 @@ class FeatureSelectionParamChecker(object):
     @staticmethod
     def check_param(feature_param):
         descr = "hetero feature selection param's"
+        feature_param.method = check_and_change_lower(feature_param.method,
+                                                      ['fit', 'fit_transform', 'transform'], descr)
         check_defined_type(feature_param.filter_method, descr, ['list'])
+
         for idx, method in enumerate(feature_param.filter_method):
             method = method.lower()
             check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
@@ -694,13 +699,11 @@ class FeatureSelectionParamChecker(object):
             raise ValueError("Two iv methods should not exist at the same time.")
 
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
-        # check_string(feature_param.result_table, descr)
-        # check_string(feature_param.result_namespace, descr)
+
         check_boolean(feature_param.local_only, descr)
         UniqueValueParamChecker.check_param(feature_param.unique_param)
         IVValueSelectionParamChecker.check_param(feature_param.iv_value_param)
         IVPercentileSelectionParamChecker.check_param(feature_param.iv_percentile_param)
-        # IVSelectionParamChecker.check_param(feature_param.iv_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
         FeatureBinningParamChecker.check_param(feature_param.bin_param)
@@ -713,6 +716,7 @@ class UniqueValueParamChecker(object):
         descr = "Unique value param's"
         check_positive_number(feature_param.eps, descr)
         return True
+
 
 class IVValueSelectionParamChecker(object):
     @staticmethod
@@ -932,7 +936,7 @@ class AllChecker(object):
                      "not_in": self._not_in,
                      "range": self._range
                      }
-                     
+
     def check_all(self):
         self._check(param.DataIOParam, DataIOParamChecker)
         self._check(param.EncryptParam, EncryptParamChecker)
@@ -952,8 +956,8 @@ class AllChecker(object):
         self._check(param.LocalModelParam, LocalModelParamChecker)
         self._check(param.FTLDataParam, FTLDataParamChecker)
         self._check(param.FTLValidDataParam, FTLValidDataParamChecker)
-        # self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
-        # self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
+        self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
+        self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
         self._check(param.ScaleParam, ScaleParamChecker)
 
     def _check(self, Param, Checker):
@@ -1016,8 +1020,10 @@ class AllChecker(object):
                             break
 
                     if not value_legal:
-                        raise ValueError("Plase check runtime conf, {} = {} does not match user-parameter restriction".format(variable, value))
-                
+                        raise ValueError(
+                            "Plase check runtime conf, {} = {} does not match user-parameter restriction".format(
+                                variable, value))
+
     def _greater_equal_than(self, value, limit):
         return value >= limit - consts.FLOAT_ZERO
 
@@ -1038,4 +1044,3 @@ class AllChecker(object):
 
     def _not_in(self, value, wrong_value_list):
         return value not in wrong_value_list
-

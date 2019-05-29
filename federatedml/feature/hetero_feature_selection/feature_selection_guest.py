@@ -54,6 +54,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         self._abnormal_detection(data_instances)
 
         self._init_cols(data_instances)
+        LOGGER.info("[Result][FeatureSelection][Guest]In transform, Self left cols are: {}".format(
+            self.left_cols
+        ))
         new_data = self._transfer_data(data_instances)
         self._reset_header()
         new_data.schema['header'] = self.header
