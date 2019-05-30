@@ -105,7 +105,7 @@ public class InferenceManager {
         if (featureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA);
             inferenceResult.setRetmsg("Can not parse data json.");
-            logAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
+            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
             return inferenceResult;
         }
 
@@ -115,7 +115,7 @@ public class InferenceManager {
         if (featureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR);
             inferenceResult.setRetmsg("Can not preprocessing data");
-            logAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
+            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
             return inferenceResult;
         }
 
@@ -134,9 +134,13 @@ public class InferenceManager {
         PostProcessingResult postProcessingResult = getPostProcessedResult(featureData, modelResult);
         inferenceResult = postProcessingResult.getProcessingResult();
         LOGGER.info("Inference successfully.");
-        logAudited(inferenceRequest, modelNamespaceData, inferenceResult, (boolean) federatedParams.getOrDefault("is_cache", false), true);
+        boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
+        boolean billing = true;
+        if (fromCache){
+            billing = false;
+        }
+        logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult,  fromCache, billing);
         CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
-        LOGGER.info(federatedParams);
         return inferenceResult;
     }
 
@@ -173,7 +177,7 @@ public class InferenceManager {
             Map<String, Object> result = model.predict(featureData, predictParams);
             returnResult.setRetcode(InferenceRetCode.OK);
             returnResult.setData(result);
-            logAudited(federatedParams, party, federatedRoles, returnResult, false, true);
+            logInferenceAudited(federatedParams, party, federatedRoles, returnResult, false, true);
         } catch (Exception ex) {
             LOGGER.info("federatedInference", ex);
             returnResult.setRetcode(InferenceRetCode.SYSTEM_ERROR);
@@ -219,11 +223,11 @@ public class InferenceManager {
         return null;
     }
 
-    private static void logAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean useCache, boolean billing) {
-        InferenceUtils.logInferenceAudited(FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), returnResult.getRetcode(), useCache, billing);
+    private static void logInferenceAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean useCache, boolean billing) {
+        InferenceUtils.logInferenceAudited(FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), inferenceRequest.getSeqno(), returnResult.getRetcode(), useCache, billing);
     }
 
-    private static void logAudited(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult returnResult, boolean useCache, boolean billing) {
-        InferenceUtils.logInferenceAudited(FederatedInferenceType.FEDERATED, federatedParty, federatedRoles, federatedParams.get("caseid").toString(), returnResult.getRetcode(), useCache, billing);
+    private static void logInferenceAudited(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult returnResult, boolean useCache, boolean billing) {
+        InferenceUtils.logInferenceAudited(FederatedInferenceType.FEDERATED, federatedParty, federatedRoles, federatedParams.get("caseid").toString(), federatedParams.get("seqno").toString(), returnResult.getRetcode(), useCache, billing);
     }
 }
