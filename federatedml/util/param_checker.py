@@ -840,19 +840,19 @@ class ScaleParamChecker(object):
             if scale_param.feat_upper is not None:
                 if type(scale_param.feat_upper).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's feat_upper {} not supported, should be float or int type".format(
                             scale_param.feat_upper))
 
             if scale_param.out_lower is not None:
                 if type(scale_param.out_lower).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's out_lower {} not supported, should be float or int type".format(
                             scale_param.out_lower))
 
             if scale_param.out_upper is not None:
                 if type(scale_param.out_upper).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's out_upper {} not supported, should be float or int type".format(
                             scale_param.out_upper))
         elif scale_param.area == consts.COL:
             descr = "scale param's feat_lower"
