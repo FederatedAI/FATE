@@ -34,6 +34,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.encryptor = PaillierEncrypt()
         self.iv_attrs = []
         self.party_name = consts.HOST
+        self._init_binning_obj()
 
     def fit(self, data_instances):
         """

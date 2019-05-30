@@ -22,6 +22,7 @@ from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -70,7 +71,7 @@ class OneHotEncoder(object):
             self._init_cols(data_instances)
 
         header = self.header
-        LOGGER.info("Before one-hot, data_instances schema is : {}".format(header))
+        LOGGER.info("[Result][OneHotEncoder]Before one-hot, data_instances schema is : {}".format(header))
         for col_name, value_map in self.col_maps.items():
             col_idx = header.index(col_name)
             new_headers = list(value_map.values())
@@ -84,7 +85,7 @@ class OneHotEncoder(object):
             col_index = header.index(col)
             self.cols_dict[col] = col_index
         self.header = header
-        LOGGER.info("After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.info("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
@@ -113,6 +114,10 @@ class OneHotEncoder(object):
                 if feature_value not in this_col_map:
                     new_feature_header = str(col_name) + '_' + str(feature_value)
                     this_col_map[feature_value] = new_feature_header
+
+                if len(this_col_map) > consts.ONE_HOT_LIMIT:
+                    raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
+                                     .format(consts.ONE_HOT_LIMIT))
 
         return col_maps
 

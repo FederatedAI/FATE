@@ -47,8 +47,6 @@
         "bin_num": 10,
         "cols": -1,
         "local_only": false,
-        "result_table": "feature_binning_host_table",
-        "result_namespace": "example_data_namespace",
         "display_result": ["iv"]
     },
     "OneHotEncoderParam": {

@@ -55,13 +55,14 @@ class HeteroFeatureSelectHostWorkflow(WorkFlow):
         self._init_argument()
 
         # Step 1: Data io
-        if self.feature_param.method in ['fit', 'fit_without_transform']:
+        if self.feature_param.method in ['fit', 'fit_transform']:
             train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                          self.workflow_param.train_input_namespace)
         else:
             train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                          self.workflow_param.train_input_namespace,
                                                          mode='transform')
+        filter_methods = self.feature_param.filter_method
 
         # Step 2: intersect
         LOGGER.debug("Star intersection before train")
@@ -74,12 +75,15 @@ class HeteroFeatureSelectHostWorkflow(WorkFlow):
         train_data = self.sample(train_data, sample_flowid)
 
         # Step 4: binning
-        binning_flowid = 'feature_binning'
-        train_data = self.feature_binning(data_instances=train_data, flow_id=binning_flowid)
+        if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
+            binning_flowid = 'feature_binning'
+            train_data = self.feature_binning(data_instances=train_data, flow_id=binning_flowid)
 
         # Step 5: feature selection
         feature_selection_id = 'feature_selection'
         if self.feature_param.method == 'fit':
+            self.feature_selection_fit(data_instance=train_data, flow_id=feature_selection_id, without_transform=True)
+        elif self.feature_param.method == 'fit_transform':
             self.feature_selection_fit(data_instance=train_data, flow_id=feature_selection_id)
         else:
             result_table = self.feature_selection_transform(data_instance=train_data, flow_id=feature_selection_id)
