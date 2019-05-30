@@ -134,6 +134,10 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # intersect table(sid, "intersect_id")
         intersect_ids = table_encrypt_intersect_ids.map(lambda k, v: (v, "intersect_id"))
+
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
         return intersect_ids
 
 
