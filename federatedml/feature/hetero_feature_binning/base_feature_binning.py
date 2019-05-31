@@ -67,7 +67,8 @@ class BaseHeteroFeatureBinning(object):
         self.bin_param = params
 
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.cols = params.cols
+        self.cols_index = params.cols
+        self.cols = None
         self.cols_dict = {}
         self.binning_obj = None
         self.header = []
@@ -182,10 +183,24 @@ class BaseHeteroFeatureBinning(object):
         header = get_header(data_instances)
         self.header = header
         # LOGGER.debug("data_instance count: {}, header: {}".format(data_instances.count(), header))
-        if self.cols == -1:
+        if self.cols_index == -1:
             if header is None:
                 raise RuntimeError('Cannot get feature header, please check input data')
             self.cols = header
+        else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
+            self.cols = cols
+
         self.cols_dict = {}
         for col in self.cols:
             col_index = header.index(col)

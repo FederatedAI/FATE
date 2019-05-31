@@ -22,20 +22,21 @@ import numpy as np
 
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
-from federatedml.statistic.data_overview import get_header
-from federatedml.util import abnormal_detection
-from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
-from federatedml.param.param import FeatureBinningParam
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
+from federatedml.param.param import FeatureBinningParam
+from federatedml.statistic.data_overview import get_header
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
 
 
 class BaseHeteroFeatureSelection(object):
     def __init__(self, params):
         self.params = params
         self.transfer_variable = HeteroFeatureSelectionTransferVariable()
-        self.cols = params.select_cols
+        self.cols_index = params.select_cols
+        self.cols = []
         self.left_col_names = []  # temp result
         self.left_cols = {}  # final result
         self.cols_dict = {}
@@ -126,6 +127,8 @@ class BaseHeteroFeatureSelection(object):
         new_feature = []
         for col_idx, col_name in enumerate(header):
             is_left = left_cols.get(col_name)
+            if is_left is None:
+                continue
             if not is_left:
                 continue
             new_feature.append(instance.features[col_idx])
@@ -175,10 +178,31 @@ class BaseHeteroFeatureSelection(object):
                 left_col_names.append(col_name)
         self.left_col_names = left_col_names
 
+    def _renew_final_left_cols(self, new_left_cols):
+        """
+        As for all columns including those not specified in user params, record which columns left.
+        """
+        for col_name, is_left in new_left_cols.items():
+            if not is_left:
+                self.left_cols[col_name] = False
+
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
-        if self.cols == -1:
+        if self.cols_index == -1:
             self.cols = header
+        else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
+            self.cols = cols
 
         self.left_col_names = self.cols.copy()
         self.header = header

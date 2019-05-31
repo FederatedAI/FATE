@@ -22,12 +22,18 @@ from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.param import FeatureBinningParam
+from federatedml.feature.instance import Instance
 
 LOGGER = log_utils.getLogger()
 
 
 class SummaryStatistics(object):
-    def __init__(self):
+    def __init__(self, abnormal_list=None):
+        if abnormal_list is None:
+            self.abnormal_list = abnormal_list
+        else:
+            self.abnormal_list = []
+
         self.sum = 0
         self.sum_square = 0
         self.max_value = - sys.maxsize - 1
@@ -35,6 +41,15 @@ class SummaryStatistics(object):
         self.count = 0
 
     def add_value(self, value):
+        if value in self.abnormal_list:
+            return
+
+        try:
+            value = float(value)
+        except TypeError:
+            LOGGER.warning('The value {} cannot be converted to float'.format(value))
+            return
+
         self.count += 1
         self.sum += value
         self.sum_square += value ** 2
@@ -68,11 +83,16 @@ class SummaryStatistics(object):
 
 
 class MultivariateStatisticalSummary(object):
-    def __init__(self, data_instances, cols):
+    def __init__(self, data_instances, cols, abnormal_list=None):
         self.finish_fit = False
         self.summary_statistics = []
         self.medians = None
         self.data_instances = data_instances
+
+        if abnormal_list is None:
+            self.abnormal_list = []
+        else:
+            self.abnormal_list = abnormal_list
 
         header = get_header(data_instances)
 
@@ -92,13 +112,14 @@ class MultivariateStatisticalSummary(object):
         so that variance is available.
         """
         partition_cal = functools.partial(self.static_in_partition,
-                                          cols_dict=self.cols_dict)
+                                          cols_dict=self.cols_dict,
+                                          abnormal_list=self.abnormal_list)
         summary_statistic_list = self.data_instances.mapPartitions(partition_cal)
         self.summary_statistics = summary_statistic_list.reduce(self.aggregate_statics)
         self.finish_fit = True
 
     @staticmethod
-    def static_in_partition(data_instances, cols_dict):
+    def static_in_partition(data_instances, cols_dict, abnormal_list):
         """
         Statics sums, sum_square, max and min value through one traversal
 
@@ -110,6 +131,9 @@ class MultivariateStatisticalSummary(object):
         cols_dict : dict
             Specify which column(s) need to apply statistic.
 
+        abnormal_list: list
+            Specify which values are not permitted.
+
         Returns
         -------
         Dict of SummaryStatistics object
@@ -117,10 +141,14 @@ class MultivariateStatisticalSummary(object):
         """
         summary_statistic_dict = {}
         for col_name in cols_dict:
-            summary_statistic_dict[col_name] = SummaryStatistics()
+            summary_statistic_dict[col_name] = SummaryStatistics(abnormal_list)
 
         for k, instances in data_instances:
-            features = instances.features
+            if isinstance(instances, Instance):
+                features = instances.features
+            else:
+                features = instances
+
             for col_name, col_index in cols_dict.items():
                 value = features[col_index]
                 stat_obj = summary_statistic_dict[col_name]
@@ -178,13 +206,21 @@ class MultivariateStatisticalSummary(object):
         return medians
 
     def _get_quantile_median(self):
-        bin_param = FeatureBinningParam(bin_num=2, cols=self.cols)
-        binning_obj = QuantileBinning(bin_param)
+        cols_index = self._get_cols_index()
+        bin_param = FeatureBinningParam(bin_num=2, cols=cols_index)
+        binning_obj = QuantileBinning(bin_param, abnormal_list=self.abnormal_list)
         split_points = binning_obj.fit_split_points(self.data_instances)
         medians = {}
         for col_name, split_point in split_points.items():
             medians[col_name] = split_point[0]
         return medians
+
+    def _get_cols_index(self):
+        cols_index = []
+        for col in self.cols:
+            idx = self.cols_dict[col]
+            cols_index.append(idx)
+        return cols_index
 
     def get_variance(self, cols_dict=None):
         return self._prepare_data(cols_dict, "variance")

@@ -105,12 +105,17 @@ class Binning(object):
 
     """
 
-    def __init__(self, params, party_name):
+    def __init__(self, params, party_name, abnormal_list=None):
         self.params = params
         self.bin_num = params.bin_num
-        self.cols = params.cols
+        self.cols_index = params.cols
+        self.cols = []
         self.cols_dict = {}
         self.party_name = party_name
+        if abnormal_list is None:
+            self.abnormal_list = []
+        else:
+            self.abnormal_list = abnormal_list
 
     def fit_split_points(self, data_instances):
         """
@@ -137,8 +142,21 @@ class Binning(object):
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
-        if self.cols == -1:
+        if self.cols_index == -1:
             self.cols = header
+        else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
+            self.cols = cols
 
         self.cols_dict = {}
         for col in self.cols:

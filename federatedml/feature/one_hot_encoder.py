@@ -29,7 +29,8 @@ LOGGER = log_utils.getLogger()
 
 class OneHotEncoder(object):
     def __init__(self, param):
-        self.cols = param.cols
+        self.cols_index = param.cols
+        self.cols = []
         self.header = []
         self.col_maps = {}
         self.cols_dict = {}
@@ -45,9 +46,16 @@ class OneHotEncoder(object):
 
         f2 = functools.partial(self.merge_col_maps)
         col_maps = col_maps.reduce(f2)
+        self._detect_overflow(col_maps)
         self.col_maps = col_maps
         self.set_schema(data_instances)
         return data_instances
+
+    def _detect_overflow(self, col_maps):
+        for col_name, col_value_map in col_maps.items():
+            if len(col_value_map) > consts.ONE_HOT_LIMIT:
+                raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
+                                 .format(consts.ONE_HOT_LIMIT))
 
     def transform(self, data_instances):
         self._init_cols(data_instances)
@@ -90,8 +98,21 @@ class OneHotEncoder(object):
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
         self.header = header
-        if self.cols == -1:
+        if self.cols_index == -1:
             self.cols = header
+        else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
+            self.cols = cols
 
         self.cols_dict = {}
         for col in self.cols:
@@ -114,10 +135,6 @@ class OneHotEncoder(object):
                 if feature_value not in this_col_map:
                     new_feature_header = str(col_name) + '_' + str(feature_value)
                     this_col_map[feature_value] = new_feature_header
-
-                if len(this_col_map) > consts.ONE_HOT_LIMIT:
-                    raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
-                                     .format(consts.ONE_HOT_LIMIT))
 
         return col_maps
 

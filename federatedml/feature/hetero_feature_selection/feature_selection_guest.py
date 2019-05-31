@@ -31,7 +31,6 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         super(HeteroFeatureSelectionGuest, self).__init__(params)
         self.host_left_cols = {}
         self.local_only = params.local_only
-        self.bin_param = self.params.bin_param
         self.static_obj = None
         self.binning_model = None
         self.flowid = ''
@@ -85,7 +84,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                                                               self.binning_model)
             new_left_cols = iv_filter.fit(data_instances)
 
-            self.left_cols = new_left_cols
+            # self.left_cols = new_left_cols
+            self._renew_final_left_cols(new_left_cols)
 
             if not self.local_only:
                 host_select_cols = self._get_host_select_cols(consts.IV_VALUE_THRES)
@@ -122,7 +122,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                                                                  self.left_col_names,
                                                                  {},
                                                                  self.binning_model)
-                self.left_cols = iv_filter.fit(data_instances)
+                new_left_cols = iv_filter.fit(data_instances)
+                self._renew_final_left_cols(new_left_cols)
+
 
             else:
                 host_select_cols = self._get_host_select_cols(consts.IV_PERCENTILE)
@@ -131,7 +133,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                                                                  self.left_col_names,
                                                                  host_cols,
                                                                  self.binning_model)
-                self.left_cols = iv_filter.fit(data_instances)
+                new_left_cols = iv_filter.fit(data_instances)
+                self._renew_final_left_cols(new_left_cols)
 
                 host_left_cols = iv_filter.host_cols
                 # Only one host
@@ -161,7 +164,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             coe_param = self.params.coe_param
             coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_col_names, self.static_obj)
-            self.left_cols = coe_filter.fit(data_instances)
+            new_left_cols = coe_filter.fit(data_instances)
+            self._renew_final_left_cols(new_left_cols)
+
             self.static_obj = coe_filter.statics_obj
             self.coe_meta = coe_filter.get_meta_obj()
             self.results.append(coe_filter.get_param_obj())
@@ -174,7 +179,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         if method == consts.UNIQUE_VALUE:
             unique_param = self.params.unique_param
             unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_col_names, self.static_obj)
-            self.left_cols = unique_filter.fit(data_instances)
+            new_left_cols = unique_filter.fit(data_instances)
+            self._renew_final_left_cols(new_left_cols)
+
             self.static_obj = unique_filter.statics_obj
             self.unique_meta = unique_filter.get_meta_obj()
             self.results.append(unique_filter.get_param_obj())
@@ -186,7 +193,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         if method == consts.OUTLIER_COLS:
             outlier_param = self.params.outlier_param
             outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_col_names)
-            self.left_cols = outlier_filter.fit(data_instances)
+            new_left_cols = outlier_filter.fit(data_instances)
+            self._renew_final_left_cols(new_left_cols)
+
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
             self._renew_left_col_names()

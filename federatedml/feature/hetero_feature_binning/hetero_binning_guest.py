@@ -124,11 +124,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
         # host_results = {'host1': host_iv_attrs}
 
-        # self.save_model(name=self.bin_param.transform_table,
-        #                 namespace=self.bin_param.result_namespace,
-        #                 binning_result=self.local_transform_result,
-        #                 host_results=host_results)
-
         for col_name, iv_attr in host_iv_attrs.items():
             LOGGER.info("The remote feature {} 's iv is {}".format(col_name, iv_attr.iv))
 

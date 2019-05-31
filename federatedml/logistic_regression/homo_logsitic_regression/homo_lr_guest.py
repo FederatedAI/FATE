@@ -101,6 +101,8 @@ class HomoLRGuest(BaseLogisticRegression):
             # send model
             model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
                                                                            iter_num)
+            LOGGER.debug("Start to remote model: {}, transfer_id: {}".format(w, model_transfer_id))
+
             federation.remote(w,
                               name=self.transfer_variable.guest_model.name,
                               tag=model_transfer_id,
@@ -110,6 +112,7 @@ class HomoLRGuest(BaseLogisticRegression):
             # send loss
 
             loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
+            LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
             federation.remote(total_loss,
                               name=self.transfer_variable.guest_loss.name,
                               tag=loss_transfer_id,
@@ -149,6 +152,7 @@ class HomoLRGuest(BaseLogisticRegression):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
         )
+        LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
         federation.remote(self.party_weight,
                           name=self.transfer_variable.guest_party_weight.name,
                           tag=party_weight_id,
@@ -175,7 +179,6 @@ class HomoLRGuest(BaseLogisticRegression):
         return w
 
     def predict(self, data_instances, predict_param):
-        LOGGER.debug("coef: {}, intercept: {}".format(self.coef_, self.intercept_))
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
         pred_label = self.classified(pred_prob, predict_param.threshold)

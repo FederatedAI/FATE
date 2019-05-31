@@ -177,6 +177,8 @@ class HomoLRHost(BaseLogisticRegression):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.host_party_weight
         )
+        LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
+
         federation.remote(self.party_weight,
                           name=self.transfer_variable.host_party_weight.name,
                           tag=party_weight_id,
@@ -192,6 +194,8 @@ class HomoLRHost(BaseLogisticRegression):
             total_batch_num = self.mini_batch_obj.batch_nums
             re_encrypt_times = total_batch_num // self.re_encrypt_batches
             transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.re_encrypt_times)
+            LOGGER.debug("Start to remote re_encrypt_times: {}, transfer_id: {}".format(re_encrypt_times, transfer_id))
+
             federation.remote(re_encrypt_times,
                               name=self.transfer_variable.re_encrypt_times.name,
                               tag=transfer_id,
@@ -207,6 +211,8 @@ class HomoLRHost(BaseLogisticRegression):
         use_encryption_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.use_encrypt
         )
+        LOGGER.debug("Start to remote use_encrypt: {}, transfer_id: {}".format(self.use_encrypt, use_encryption_id))
+
         federation.remote(self.use_encrypt,
                           name=self.transfer_variable.use_encrypt.name,
                           tag=use_encryption_id,
@@ -238,6 +244,7 @@ class HomoLRHost(BaseLogisticRegression):
 
         if self.use_encrypt:
             encrypted_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
+            LOGGER.debug("Start to remote wx: {}, transfer_id: {}".format(wx, encrypted_wx_id))
             federation.remote(wx,
                               name=self.transfer_variable.predict_wx.name,
                               tag=encrypted_wx_id,

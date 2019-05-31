@@ -40,8 +40,8 @@ class QuantileBinning(Binning):
     optimizations).
     """
 
-    def __init__(self, params, party_name='Base'):
-        super(QuantileBinning, self).__init__(params, party_name)
+    def __init__(self, params, party_name='Base', abnormal_list=None):
+        super(QuantileBinning, self).__init__(params, party_name, abnormal_list)
         self.summary_dict = None
 
     def fit_split_points(self, data_instances):
@@ -72,7 +72,8 @@ class QuantileBinning(Binning):
         if self.summary_dict is None:
             f = functools.partial(self.approxiQuantile,
                                   cols_dict=self.cols_dict,
-                                  params=self.params)
+                                  params=self.params,
+                                  abnormal_list=self.abnormal_list)
             summary_dict = data_instances.mapPartitions(f)
             summary_dict = summary_dict.reduce(self.merge_summary_dict)
             self.summary_dict = summary_dict
@@ -80,15 +81,16 @@ class QuantileBinning(Binning):
             summary_dict = self.summary_dict
         split_points = {}
         for col_name, summary in summary_dict.items():
-            split_point = []
+            split_point = set()
             for percen_rate in percentile_rate:
-                split_point.append(summary.query(percen_rate))
+                split_point.add(summary.query(percen_rate))
+            split_point = list(split_point)
             split_points[col_name] = split_point
         self._show_split_points(split_points)
         return split_points
 
     @staticmethod
-    def approxiQuantile(data_instances, cols_dict, params):
+    def approxiQuantile(data_instances, cols_dict, params, abnormal_list):
         """
         Calculates each quantile information
 
@@ -102,6 +104,9 @@ class QuantileBinning(Binning):
 
         params : FeatureBinningParam object,
                 Parameters that user set.
+
+        abnormal_list: list, default: None
+            Specify which columns are abnormal so that will not static when traveling.
 
         Returns
         -------
@@ -117,7 +122,8 @@ class QuantileBinning(Binning):
         for col_name, col_index in cols_dict.items():
             quantile_summaries = QuantileSummaries(compress_thres=params.compress_thres,
                                                    head_size=params.head_size,
-                                                   error=params.error)
+                                                   error=params.error,
+                                                   abnormal_list=abnormal_list)
             summary_dict[col_name] = quantile_summaries
         QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict)
         return summary_dict
@@ -125,7 +131,10 @@ class QuantileBinning(Binning):
     @staticmethod
     def insert_datas(data_instances, summary_dict, cols_dict):
         for iter_key, instant in data_instances:
-            features = instant.features
+            if type(instant).__name__ == 'Instance':
+                features = instant.features
+            else:
+                features = instant
             for col_name, summary in summary_dict.items():
                 col_index = cols_dict[col_name]
                 summary.insert(features[col_index])
@@ -153,7 +162,8 @@ class QuantileBinning(Binning):
         if self.summary_dict is None:
             f = functools.partial(self.approxiQuantile,
                                   cols_dict=self.cols_dict,
-                                  params=self.params)
+                                  params=self.params,
+                                  abnormal_list=self.abnormal_list)
             summary_dict = data_instances.mapPartitions(f)
             summary_dict = summary_dict.reduce(self.merge_summary_dict)
             self.summary_dict = summary_dict

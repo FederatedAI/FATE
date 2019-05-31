@@ -78,6 +78,7 @@ class HomoLRArbiter(BaseLogisticRegression):
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
+            LOGGER.debug("Sending final_model, model id: {}, final_model: {}".format(final_model_id, final_model))
             federation.remote(final_model,
                               name=self.transfer_variable.final_model.name,
                               tag=final_model_id,
@@ -85,6 +86,8 @@ class HomoLRArbiter(BaseLogisticRegression):
                               idx=0)
             for idx, encrypter in enumerate(self.host_encrypter):
                 encrypted_model = encrypter.encrypt_list(final_model)
+                LOGGER.debug(
+                    "Start to remote encrypted_model: {}, transfer_id: {}".format(encrypted_model, final_model_id))
 
                 federation.remote(encrypted_model,
                                   name=self.transfer_variable.final_model.name,
@@ -97,7 +100,8 @@ class HomoLRArbiter(BaseLogisticRegression):
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag,
                 iter_num)
-
+            LOGGER.debug(
+                "Start to remote converge_flag: {}, transfer_id: {}".format(converge_flag, converge_flag_id))
             federation.remote(converge_flag,
                               name=self.transfer_variable.converge_flag.name,
                               tag=converge_flag_id,
@@ -133,6 +137,8 @@ class HomoLRArbiter(BaseLogisticRegression):
                 pred_prob = decrypted_wx.mapValues(lambda x: activation.sigmoid(x))
                 pred_label = self.classified(pred_prob, predict_param.threshold)
                 predict_result_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_result)
+                LOGGER.debug(
+                    "Start to remote pred_label: {}, transfer_id: {}".format(pred_label, predict_result_id))
                 federation.remote(pred_label,
                                   name=self.transfer_variable.predict_result.name,
                                   tag=predict_result_id,
@@ -208,6 +214,7 @@ class HomoLRArbiter(BaseLogisticRegression):
                 encrypter.generate_key(self.encrypt_param.key_length)
                 pub_key = encrypter.get_public_key()
                 pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
+                LOGGER.debug("Start to remote pub_key: {}, transfer_id: {}".format(pub_key, pubkey_id))
                 federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
                                   tag=pubkey_id, role=consts.HOST, idx=idx)
                 # LOGGER.debug("send pubkey to host: {}".format(idx))
@@ -224,6 +231,7 @@ class HomoLRArbiter(BaseLogisticRegression):
                 final_model = encrypter.encrypt_list(model)
             else:
                 final_model = model
+            LOGGER.debug("Start to remote final_model: {}, transfer_id: {}".format(final_model, final_model_id))
             federation.remote(final_model,
                               name=self.transfer_variable.final_model.name,
                               tag=final_model_id,
@@ -256,6 +264,9 @@ class HomoLRArbiter(BaseLogisticRegression):
                 encrypter = self.host_encrypter[idx]
                 decrypt_model = encrypter.decrypt_list(re_encrypt_model)
                 re_encrypt_model = encrypter.encrypt_list(decrypt_model)
+                LOGGER.debug("Start to remote re_encrypt_model: {}, transfer_id: {}".format(re_encrypt_model,
+                                                                                            re_encrypted_model_id))
+
                 federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
                                   tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
 

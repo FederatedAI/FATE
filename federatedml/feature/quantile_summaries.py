@@ -32,13 +32,18 @@ class Stats(object):
 class QuantileSummaries(object):
     def __init__(self, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
-                 error=consts.DEFAULT_RELATIVE_ERROR):
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 abnormal_list=None):
         self.compress_thres = compress_thres
         self.head_size = head_size
         self.error = error
         self.head_sampled = []
         self.sampled = []  # list of Stats
         self.count = 0  # Total observations appeared
+        if abnormal_list is None:
+            self.abnormal_list = []
+        else:
+            self.abnormal_list = abnormal_list
 
     # insert a number
     def insert(self, x):
@@ -51,6 +56,14 @@ class QuantileSummaries(object):
             The observation that prepare to insert
 
         """
+        if x in self.abnormal_list:
+            return
+
+        try:
+            x = float(x)
+        except ValueError:
+            return
+
         self.head_sampled.append(x)
         if len(self.head_sampled) >= self.head_size:
             self._insert_head_buffer()

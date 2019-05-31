@@ -706,7 +706,6 @@ class FeatureSelectionParamChecker(object):
         IVPercentileSelectionParamChecker.check_param(feature_param.iv_percentile_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
-        FeatureBinningParamChecker.check_param(feature_param.bin_param)
         return True
 
 
