@@ -45,6 +45,7 @@ class OneHotEncoder(object):
 
         f2 = functools.partial(self.merge_col_maps)
         col_maps = col_maps.reduce(f2)
+        self._detect_overflow(col_maps)
         self.col_maps = col_maps
         self.set_schema(data_instances)
         return data_instances
@@ -65,6 +66,12 @@ class OneHotEncoder(object):
         self.fit(data_instances)
         new_data = self.transform(data_instances)
         return new_data
+
+    def _detect_overflow(self, col_maps):
+        for col_name, col_value_map in col_maps.items():
+            if len(col_value_map) > consts.ONE_HOT_LIMIT:
+                raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
+                                 .format(consts.ONE_HOT_LIMIT))
 
     def _transform_schema(self, data_instances):
         if not self.header:
