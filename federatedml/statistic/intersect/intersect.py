@@ -49,6 +49,7 @@ class Intersect(object):
         intersect_ids.schema['header'] = data_instances.schema.get("header")
         return intersect_ids
 
+
 class RsaIntersect(Intersect):
     def __init__(self, intersect_params):
         super().__init__(intersect_params)
