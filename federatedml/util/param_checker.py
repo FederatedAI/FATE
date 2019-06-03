@@ -24,7 +24,7 @@ from arch.api.utils import log_utils
 from federatedml.param import param
 from federatedml.util import consts
 from federatedml.util.param_extract import ParamExtract
-import inspect 
+import inspect
 import json
 
 LOGGER = log_utils.getLogger()
@@ -241,7 +241,7 @@ class DecisionTreeParamChecker(object):
 
         return True
 
-        
+
 class BoostingTreeParamChecker(object):
     @staticmethod
     def check_param(boost_param):
@@ -264,7 +264,7 @@ class BoostingTreeParamChecker(object):
                 boost_param.num_trees))
 
         if type(boost_param.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
-                        boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
+                boost_param.subsample_feature_rate < 0 or boost_param.subsample_feature_rate > 1:
             raise ValueError("boosting tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(boost_param.n_iter_no_change).__name__ != "bool":
@@ -352,6 +352,11 @@ class IntersectParamChecker(object):
                 "intersect param's with_encode {} not supported, should be bool type".format(
                     intersect_param.with_encode))
 
+        if type(intersect_param.only_output_key).__name__ != "bool":
+            raise ValueError(
+                "intersect param's only_output_key {} not supported, should be bool type".format(
+                    intersect_param.is_send_intersect_ids))
+
         EncodeParamChecker.check_param(intersect_param.encode_params)
         LOGGER.debug("Finish intersect parameter check!")
         return True
@@ -369,6 +374,18 @@ class PredictParamChecker(object):
                 predict_param.threshold))
 
         LOGGER.debug("Finish predict parameter check!")
+        return True
+
+
+class OneVsRestChecker(object):
+    @staticmethod
+    def check_param(one_vs_rest_param):
+        if type(one_vs_rest_param.has_arbiter).__name__ != "bool":
+            raise ValueError(
+                "one_vs_rest param's has_arbiter {} not supported, should be bool type".format(
+                    one_vs_rest_param.with_proba))
+
+        LOGGER.debug("Finish one_vs_rest parameter check!")
         return True
 
 
@@ -423,8 +440,9 @@ class WorkFlowParamChecker(object):
 
         workflow_param.method = check_and_change_lower(workflow_param.method,
                                                        ['train', 'predict', 'cross_validation',
-                                                       'intersect', 'binning', 'feature_select', 'one_vs_rest_train', "one_vs_rest_predict"],
-                                                        descr)
+                                                        'intersect', 'binning', 'feature_select', 'one_vs_rest_train',
+                                                        "one_vs_rest_predict"],
+                                                       descr)
 
         if workflow_param.method in ['train', 'binning', 'feature_select']:
             if type(workflow_param.train_input_table).__name__ != "str":
@@ -529,6 +547,11 @@ class WorkFlowParamChecker(object):
         if workflow_param.method in ["train", "predict", "cross_validation"]:
             PredictParamChecker.check_param(workflow_param.predict_param)
             EvaluateParamChecker.check_param(workflow_param.evaluate_param)
+
+        if type(workflow_param.one_vs_rest).__name__ != "bool":
+            raise ValueError(
+                "workflow_param param's one_vs_rest {} not supported, should be bool type".format(
+                    workflow_param.one_vs_rest))
 
         LOGGER.debug("Finish workerflow parameter check!")
         return True
@@ -713,6 +736,7 @@ class UniqueValueParamChecker(object):
         descr = "Unique value param's"
         check_positive_number(feature_param.eps, descr)
         return True
+
 
 class IVValueSelectionParamChecker(object):
     @staticmethod
@@ -932,7 +956,7 @@ class AllChecker(object):
                      "not_in": self._not_in,
                      "range": self._range
                      }
-                     
+
     def check_all(self):
         self._check(param.DataIOParam, DataIOParamChecker)
         self._check(param.EncryptParam, EncryptParamChecker)
@@ -955,6 +979,7 @@ class AllChecker(object):
         # self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
         # self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
         self._check(param.ScaleParam, ScaleParamChecker)
+        self._check(param.OneVsRestParam, OneVsRestChecker)
 
     def _check(self, Param, Checker):
         """
@@ -1016,8 +1041,10 @@ class AllChecker(object):
                             break
 
                     if not value_legal:
-                        raise ValueError("Plase check runtime conf, {} = {} does not match user-parameter restriction".format(variable, value))
-                
+                        raise ValueError(
+                            "Plase check runtime conf, {} = {} does not match user-parameter restriction".format(
+                                variable, value))
+
     def _greater_equal_than(self, value, limit):
         return value >= limit - consts.FLOAT_ZERO
 
@@ -1038,4 +1065,3 @@ class AllChecker(object):
 
     def _not_in(self, value, wrong_value_list):
         return value not in wrong_value_list
-
