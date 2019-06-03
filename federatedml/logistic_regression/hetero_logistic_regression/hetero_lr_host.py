@@ -21,6 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -46,12 +47,12 @@ class HeteroLRHost(BaseLogisticRegression):
         intercept_: float, the interception of lr
         """
         wx = self.compute_wx(data_instances, coef_, intercept_)
-
         en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
         wx_square = wx.mapValues(lambda v: np.square(v))
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+
 
         return host_forward
 

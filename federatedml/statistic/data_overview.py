@@ -22,9 +22,6 @@ from federatedml.util import consts
 
 
 def get_features_shape(data_instances):
-    # LOGGER.debug("In get features shape method, data_instances count: {}".format(
-    #     data_instances.count()
-    # ))
     if not isinstance(data_instances, types.GeneratorType):
         features = data_instances.collect()
     else:
@@ -33,7 +30,6 @@ def get_features_shape(data_instances):
     try:
         one_feature = features.__next__()
     except StopIteration:
-        # LOGGER.warning("Data instances is Empty")
         one_feature = None
 
     instance = one_feature[1]
@@ -50,9 +46,6 @@ def get_features_shape(data_instances):
 
 
 def get_data_shape(data):
-    # LOGGER.debug("In get features shape method, data count: {}".format(
-    #     data.count()
-    # ))
     if not isinstance(data, types.GeneratorType):
         features = data.collect()
     else:
@@ -61,7 +54,6 @@ def get_data_shape(data):
     try:
         one_feature = features.__next__()
     except StopIteration:
-        # LOGGER.warning("Data instances is Empty")
         one_feature = None
 
     if one_feature is not None:
@@ -80,3 +72,13 @@ def is_empty_feature(data_instances):
     if shape_of_feature is None or shape_of_feature == 0:
         return True
     return False
+
+def rubbish_clear(rubbish_list):
+    """
+    Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan
+    Parameter
+    ----------
+    rubbish_list: list of DTable, each DTable in this will be destroy
+    """
+    for r in rubbish_list:
+        r.destroy()
