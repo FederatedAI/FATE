@@ -100,22 +100,22 @@ public class InferenceManager {
             return inferenceResult;
         }
         LOGGER.info("use model to inference for {}, id: {}, version: {}", inferenceRequest.getAppid(), modelNamespace, modelName);
-        Map<String, Object> featureData = inferenceRequest.getFeatureData();
+        Map<String, Object> rawFeatureData = inferenceRequest.getFeatureData();
 
-        if (featureData == null) {
+        if (rawFeatureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA);
             inferenceResult.setRetmsg("Can not parse data json.");
-            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
+            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
         }
 
-        PreProcessingResult preProcessingResult = getPreProcessingFeatureData(featureData);
-        featureData = preProcessingResult.getProcessingResult();
+        PreProcessingResult preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
+        Map<String, Object> featureData = preProcessingResult.getProcessingResult();
         Map<String, Object> featureIds = preProcessingResult.getFeatureIds();
         if (featureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR);
             inferenceResult.setRetmsg("Can not preprocessing data");
-            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false);
+            logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
         }
 
@@ -136,10 +136,10 @@ public class InferenceManager {
         LOGGER.info("Inference successfully.");
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
         boolean billing = true;
-        if (fromCache){
+        if (fromCache) {
             billing = false;
         }
-        logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult,  fromCache, billing);
+        logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, fromCache, billing, rawFeatureData);
         CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
         return inferenceResult;
     }
@@ -223,7 +223,8 @@ public class InferenceManager {
         return null;
     }
 
-    private static void logInferenceAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean useCache, boolean billing) {
+    private static void logInferenceAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean useCache, boolean billing, Map<String, Object> featureData) {
+        InferenceUtils.logInference(FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), inferenceRequest.getSeqno(), returnResult.getRetcode(), featureData);
         InferenceUtils.logInferenceAudited(FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), inferenceRequest.getSeqno(), returnResult.getRetcode(), useCache, billing);
     }
 
