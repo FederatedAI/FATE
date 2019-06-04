@@ -20,7 +20,7 @@ set -x
 
 cp requirements.txt ./docker/standalone/
 
-git archive -o ./docker/standalone/fate.tar $(git rev-parse HEAD) arch/api federatedml workflow examples
+git archive -o ./docker/standalone/fate.tar $(git rev-parse HEAD) arch federatedml workflow examples
 
 docker build --no-cache -t fate/standalone docker/standalone
 

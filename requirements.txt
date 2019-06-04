@@ -80,7 +80,6 @@ peewee==3.9.3
 pexpect==4.6.0
 phe==1.4.0
 pickleshare==0.7.4
-pip==18.1
 plyvel==1.0.5
 pox==0.2.4
 ppft==1.6.4.8
@@ -113,7 +112,6 @@ scikit-learn==0.19.2
 scipy==1.1.0
 seaborn==0.7.1
 Send2Trash==1.5.0
-setuptools==40.6.3
 simplegeneric==0.8.1
 six==1.10.0
 sklearn==0.0
@@ -135,6 +133,5 @@ urllib3==1.24.2
 wcwidth==0.1.7
 websocket-client==0.54.0
 Werkzeug==0.14.1
-wheel==0.32.3
 widgetsnbextension==3.4.0
 xlrd==1.1.0

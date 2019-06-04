@@ -5,7 +5,11 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 <https://www.fedai.org/>
 
 ## Install
-FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.
+FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.FATE can be installed on Linux by using:
+
+```
+git clone https://github.com/WeBankFinTech/FATE.git
+```
 
 #### Standalone
 ##### Docker version
@@ -55,15 +59,15 @@ version, please run the prepared shell file like:
 
  Boom, a HomoLR program has been started up. This program will use the setting in configuration files. Please note that the 
  parameters in algorithm part (LogsiticParam for HomoLR, for example) are supposed to be identity among three parties.
- 
+
  As for a real clustering version, we have also provided a quick start script which named **run_XXX_cluster.sh** (run_logistic_regression_cluster.sh for HomoLR)
  But this time, you need to specify the role, jobid and partyid for three parties. Then run the following three instructions in
  the corresponding party respectively:
- 
+
  > sh run_logistic_regression_cluster.sh guest $jobid $guestpartyid $hostpartyid $arbiterpartyid 
- 
+
  > sh run_logistic_regression_cluster.sh host $jobid $guestpartyid $hostpartyid $arbiterpartyid 
- 
+
  > sh run_logistic_regression_cluster.sh arbiter $jobid $guestpartyid $hostpartyid $arbiterpartyid
 
 ### Check log files
