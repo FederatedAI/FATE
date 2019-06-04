@@ -106,10 +106,12 @@ fate-base
 |   `-- my.cnf
 |-- env.sh
 |-- install_java.sh
+|-- install_redis.sh
 |-- install_mysql.sh
 |-- install_py3.sh
 |-- packages
 |   |-- jdk-8u172-linux-x64.tar.gz
+|   |-- redis-5.0.2.tar.gz
 |   |-- Miniconda3-4.5.4-Linux-x86_64.sh
 |   `-- mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
 |-- pip-dependencies
