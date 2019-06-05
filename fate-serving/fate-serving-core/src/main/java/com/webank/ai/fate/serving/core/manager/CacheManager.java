@@ -98,6 +98,9 @@ public class CacheManager {
     }
 
     public static void putRemoteModelInferenceResult(FederatedParty remoteParty, FederatedRoles federatedRoles, Map<String, Object> featureIds, ReturnResult returnResult) {
+        if (! Boolean.parseBoolean(Configuration.getProperty("remoteModelInferenceResultCacheSwitch"))){
+            return;
+        }
         String remoteModelInferenceResultCacheKey = generateRemoteModelInferenceResultCacheKey(remoteParty, federatedRoles, featureIds);
         boolean putCacheSuccess = putIntoCache(remoteModelInferenceResultCacheKey, CacheType.REMOTE_MODEL_INFERENCE_RESULT, returnResult);
         if (putCacheSuccess) {
@@ -106,6 +109,9 @@ public class CacheManager {
     }
 
     public static ReturnResult getRemoteModelInferenceResult(FederatedParty remoteParty, FederatedRoles federatedRoles, Map<String, Object> featureIds) {
+        if (! Boolean.parseBoolean(Configuration.getProperty("remoteModelInferenceResultCacheSwitch"))){
+            return null;
+        }
         String remoteModelInferenceResultCacheKey = generateRemoteModelInferenceResultCacheKey(remoteParty, federatedRoles, featureIds);
         ReturnResult returnResult = getFromCache(remoteModelInferenceResultCacheKey, CacheType.REMOTE_MODEL_INFERENCE_RESULT);
         if (returnResult != null) {
@@ -201,8 +207,8 @@ public class CacheManager {
     }
 
     private static int getCacheDBIndex(String cacheKey, int[] dbIndexs) {
-        int i = Hashing.murmur3_32().hashString(cacheKey, Charsets.UTF_8).asInt() % dbIndexs.length;
-        return dbIndexs[i];
+        int i = Hashing.murmur3_128().hashString(cacheKey, Charsets.UTF_8).asInt() % dbIndexs.length;
+        return dbIndexs[i > 0 ? i : -i];
     }
 
     private static String generateInferenceResultCacheKey(String partyId, String caseid) {

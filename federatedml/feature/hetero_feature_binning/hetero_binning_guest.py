@@ -34,6 +34,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.encryptor.generate_key()
         self.local_transform_result = None
         self.party_name = consts.GUEST
+        self._init_binning_obj()
 
     def fit(self, data_instances):
         """
@@ -83,7 +84,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.host_results[consts.HOST] = host_iv_attrs
 
         for cols_name, iv_attr in host_iv_attrs.items():
-            LOGGER.info("The remote feature {} 's iv is {}".format(cols_name, iv_attr.iv))
+            display_result = iv_attr.display_result(self.bin_param.display_result)
+            LOGGER.info("[Result][FeatureBinning][Host] feature {} 's result is : {}".format(cols_name, display_result))
 
         self.set_schema(data_instances)
         return data_instances
@@ -184,8 +186,10 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._parse_cols(data_instances)
 
         iv_attrs = self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
-        for col_name, col_index in iv_attrs.items():
-            LOGGER.info("The feature {} 's iv is {}".format(col_name, iv_attrs[col_name].iv))
+        for col_name, iv_attr in iv_attrs.items():
+            display_result = iv_attr.display_result(self.bin_param.display_result)
+            LOGGER.info("[Result][FeatureBinning][Guest] feature {} 's result is : {}".format(col_name, display_result))
+            # LOGGER.info("[Result][FeatureBinning]The feature {} 's iv is {}".format(col_name, iv_attrs[col_name].iv))
         self.binning_result = iv_attrs
         self.set_schema(data_instances)
         return data_instances

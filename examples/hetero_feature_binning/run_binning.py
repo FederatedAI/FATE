@@ -20,6 +20,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 # from load_file_functions import load_file
 
@@ -96,6 +97,51 @@ def load_file(load_file_path):
     print("Load file return code : {}".format(returncode))
 
 
+def attach_all_result_log(running_process, job_id, role):
+    while True:
+        poll = running_process.poll()
+        if poll is None:
+            print('Workflow is still running')
+            time.sleep(5)
+        else:
+            break
+
+    log_dir = home_dir + '/../../logs/{}'.format(job_id)
+
+    role = role.lower()
+    if role == 'guest':
+        role_list = ['Guest', 'guest', 'GUEST']
+    else:
+        role_list = ['Host', 'host', 'HOST']
+
+    result_log_list = []
+    for log_file in os.listdir(log_dir):
+        # print('current log_file: {}'.format(log_file))
+        with open(log_dir + '/' + log_file, 'r', encoding='utf-8') as f:
+            for log_line in f:
+                if 'Result' in log_line:
+                    for r in role_list:
+                        if r in log_line:
+                            result_log_list.append(log_line)
+                            break
+
+    log_list = sorted(result_log_list, key=get_time)
+    for log_line in log_list:
+        print(log_line)
+
+
+def get_time(log_line):
+    time_str = log_line.split(' - ')[0]
+    time_str = time_str[1:]
+    time_str.strip()
+
+    time_sec, time_mili_sec = time_str.split(',')
+
+    timestamp = time.mktime(time.strptime(time_sec, '%Y-%m-%d %H:%M:%S'))
+    timestamp += float(time_mili_sec) / 1000
+    return timestamp
+
+
 if __name__ == '__main__':
     work_mode = sys.argv[1]
     jobid = sys.argv[2]
@@ -120,3 +166,4 @@ if __name__ == '__main__':
 
     returncode = workflow_process.wait()
     print("Load file return code : {}".format(returncode))
+    attach_all_result_log(workflow_process, jobid, role)

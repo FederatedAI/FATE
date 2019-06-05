@@ -1,6 +1,9 @@
 #!/usr/bin/env python    
 # -*- coding: utf-8 -*- 
 
+import inspect
+import json
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -706,7 +709,10 @@ class FeatureSelectionParamChecker(object):
     @staticmethod
     def check_param(feature_param):
         descr = "hetero feature selection param's"
+        feature_param.method = check_and_change_lower(feature_param.method,
+                                                      ['fit', 'fit_transform', 'transform'], descr)
         check_defined_type(feature_param.filter_method, descr, ['list'])
+
         for idx, method in enumerate(feature_param.filter_method):
             method = method.lower()
             check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
@@ -717,13 +723,11 @@ class FeatureSelectionParamChecker(object):
             raise ValueError("Two iv methods should not exist at the same time.")
 
         check_defined_type(feature_param.select_cols, descr, ['list', 'int'])
-        # check_string(feature_param.result_table, descr)
-        # check_string(feature_param.result_namespace, descr)
+
         check_boolean(feature_param.local_only, descr)
         UniqueValueParamChecker.check_param(feature_param.unique_param)
         IVValueSelectionParamChecker.check_param(feature_param.iv_value_param)
         IVPercentileSelectionParamChecker.check_param(feature_param.iv_percentile_param)
-        # IVSelectionParamChecker.check_param(feature_param.iv_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
         FeatureBinningParamChecker.check_param(feature_param.bin_param)
@@ -860,19 +864,19 @@ class ScaleParamChecker(object):
             if scale_param.feat_upper is not None:
                 if type(scale_param.feat_upper).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's feat_upper {} not supported, should be float or int type".format(
                             scale_param.feat_upper))
 
             if scale_param.out_lower is not None:
                 if type(scale_param.out_lower).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's out_lower {} not supported, should be float or int type".format(
                             scale_param.out_lower))
 
             if scale_param.out_upper is not None:
                 if type(scale_param.out_upper).__name__ not in ["float", "int"]:
                     raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
+                        "scale param's out_upper {} not supported, should be float or int type".format(
                             scale_param.out_upper))
         elif scale_param.area == consts.COL:
             descr = "scale param's feat_lower"
@@ -976,8 +980,8 @@ class AllChecker(object):
         self._check(param.LocalModelParam, LocalModelParamChecker)
         self._check(param.FTLDataParam, FTLDataParamChecker)
         self._check(param.FTLValidDataParam, FTLValidDataParamChecker)
-        # self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
-        # self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
+        self._check(param.FeatureBinningParam, FeatureBinningParamChecker)
+        self._check(param.FeatureSelectionParam, FeatureSelectionParamChecker)
         self._check(param.ScaleParam, ScaleParamChecker)
         self._check(param.OneVsRestParam, OneVsRestChecker)
 
