@@ -72,7 +72,7 @@ private:
     lmdb::cursor createCursor(lmdb::txn txn, lmdb::dbi dbi);
     void iterateAll();
 
-    string dbDir;
+    string _dbDir;
     StoreInfo storeInfo;
 
     std::shared_ptr<MDBEnv> _env;

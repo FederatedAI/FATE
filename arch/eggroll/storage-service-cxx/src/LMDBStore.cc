@@ -23,12 +23,12 @@ LMDBStore::LMDBStore() {
 }
 
 LMDBStore::LMDBStore(const LMDBStore& other) {
-    this->dbDir = other.dbDir;
+    this->_dbDir = other._dbDir;
     this->storeInfo = other.storeInfo;
 }
 
 LMDBStore::~LMDBStore() {
-    cout << "desctructor use count: " << _env.use_count() << endl;
+    LOG(INFO) << "[LMDBStore::~LMDBStore] dbDir: " << _dbDir << ", desctructor use count: " << _env.use_count() << endl;
 }
 
 bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
@@ -48,33 +48,36 @@ bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
            << delimiter << storeInfo.getTableName()
            << delimiter << storeInfo.getFragment() << delimiter;
 
-        ss >> this->dbDir;
+        ss >> this->_dbDir;
 
-        cout << "dbDir: " << dbDir << endl;
+        cout << "[LMDBStore::init] dbDir: " << _dbDir << endl;
+        LOG(INFO) << "[LMDBStore::init] dbDir: " << _dbDir << endl;
 
-        boost::filesystem::path dst = this->dbDir;
+        boost::filesystem::path dst = this->_dbDir;
         boost::filesystem::create_directories(dst);
 
-        cout << "ready to open" << endl;
+        cout << "[LMDBStore::init] ready to open: " << _dbDir << endl;
 
 //        this->env.set_max_dbs(1).set_max_readers(256).set_mapsize(1UL * 1024UL * 1024UL * 1024UL);
 
-        cout << "env set" << endl;
+        cout << "[LMDBStore::init] env set: " << _dbDir << endl;
 //        this->env.open(dbDir.c_str(), 0, 0644);
 
-        this->_env = getMDBEnv(dbDir.c_str(), 0, 0644);
-        this->_dbi = this->_env->openDB(dbDir, MDB_CREATE);
+        this->_env = getMDBEnv(_dbDir.data(), 0, 0644);
+        this->_dbi = this->_env->openDB(_dbDir, MDB_CREATE);
+        LOG(INFO) << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
+        cout << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
     } catch (...) {
         eptr = std::current_exception();
         result = false;
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
 
-    cout << "inited. use_count: " << _env.use_count() << endl;
     return result;
 }
 
 void LMDBStore::put(const Operand *operand) {
+    LOG(INFO) << "[LMDBStore::put] dbDir: " << _dbDir << endl;
     MDBRWTransaction rwtxn = _env->getRWTransaction();
     std::exception_ptr eptr;
     try {
@@ -88,6 +91,7 @@ void LMDBStore::put(const Operand *operand) {
 }
 
 long LMDBStore::putAll(ServerReader<Operand> *reader) {
+    LOG(INFO) << "[LMDBStore::putAll] dbDir: " << _dbDir << endl;
     MDBRWTransaction rwtxn = _env->getRWTransaction();
     long i = 0;
 
@@ -113,8 +117,8 @@ long LMDBStore::putAll(ServerReader<Operand> *reader) {
         }
 
         rwtxn.commit();
-        cout << "total putAll: " << i << endl;
-        LOG(INFO) << "total putAll: " << i << endl;
+        cout << "[LMDBStore::putAll] dbDir: " << _dbDir << ", total putAll: " << i << endl;
+        LOG(INFO) << "[LMDBStore::putAll] dbDir: " << _dbDir << ", total putAll: " << i << endl;
     } catch (...) {
         eptr = std::current_exception();
         rwtxn.abort();
@@ -124,6 +128,7 @@ long LMDBStore::putAll(ServerReader<Operand> *reader) {
 }
 
 string_view LMDBStore::putIfAbsent(const Operand *operand) {
+    LOG(INFO) << "[LMDBStore::putIfAbsent] dbDir: " << _dbDir << endl;
     MDBRWTransaction rwtxn = _env->getRWTransaction();
     string_view result;
     std::exception_ptr eptr;
@@ -146,6 +151,7 @@ string_view LMDBStore::putIfAbsent(const Operand *operand) {
 }
 
 string_view LMDBStore::delOne(const Operand *operand) {
+    LOG(INFO) << "[LMDBStore::delOne] dbDir: " << _dbDir << endl;
     MDBRWTransaction rwtxn = _env->getRWTransaction();
     string_view oldValue;
 
@@ -172,36 +178,32 @@ string_view LMDBStore::delOne(const Operand *operand) {
 }
 
 bool LMDBStore::destroy() {
+    LOG(INFO) << "[LMDBStore::destroy] dbDir: " << _dbDir << endl;
     bool result = false;
-    MDBRWTransaction rwtxn = _env->getRWTransaction();
-
     std::exception_ptr eptr;
     size_t n;
     try {
         int env_use_count = _env.use_count();
         if (env_use_count > 1) {
-            LOG(INFO) << "unable to destroy " << dbDir << ". env use_count: " << env_use_count << endl;
-            rwtxn.abort();
+            LOG(INFO) << "unable to destroy " << _dbDir << ". env use_count: " << env_use_count << endl;
             return false;
         }
-        n = std::count(dbDir.begin(), dbDir.end(), '/');
+        n = std::count(_dbDir.begin(), _dbDir.end(), '/');
         std::stringstream ss;
         string tableName;
         ss << this->storeInfo.getTableName();
         ss >> tableName;
-        size_t tableNamePos = dbDir.rfind(tableName);
-        cout << "dbDir: " << this->dbDir
+        size_t tableNamePos = _dbDir.rfind(tableName);
+        cout << "dbDir: " << _dbDir
         << ", storeInfo: " << this->storeInfo.toString()
         << ", tableName: " << tableName
         << ", tableNamePos: " << tableNamePos
-        << ", size: " << dbDir.size() << endl;
+        << ", size: " << _dbDir.size() << endl;
 
-        mdb_drop(rwtxn, _dbi, 1);
-        rwtxn.commit();
-        if (n >= 4 && dbDir.substr(0, 4) != "////") {
+        if (n >= 4 && _dbDir.substr(0, 4) != "////") {
             //string dirToRemove = dbDir.substr(0, tableNamePos);
-            string dirToRemove = dbDir + "/../..";
-            LOG(INFO) << "dirToRemove: " << dirToRemove << endl;
+            string dirToRemove = _dbDir + "/../";
+            LOG(INFO) << "[LMDBStore::destroy] dirToRemove: " << dirToRemove << endl;
             cout << "dirToRemove: " << dirToRemove << endl;
             if (boost::filesystem::exists(dirToRemove) && boost::filesystem::is_directory(dirToRemove)) {
                 boost::filesystem::remove_all(dirToRemove);
@@ -210,7 +212,6 @@ bool LMDBStore::destroy() {
         }
     } catch (...) {
         eptr = std::current_exception();
-        rwtxn.abort();
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
 
@@ -220,6 +221,7 @@ bool LMDBStore::destroy() {
 }
 
 long LMDBStore::count() {
+    LOG(INFO) << "[LMDBStore::count] dbDir: " << _dbDir << endl;
     long result;
     MDBROTransaction rotxn = _env->getROTransaction();
     std::exception_ptr eptr;
@@ -240,6 +242,7 @@ long LMDBStore::count() {
 }
 
 string_view LMDBStore::get(const Operand *operand) {
+    LOG(INFO) << "[LMDBStore::get] dbDir: " << _dbDir << endl;
     string_view result;
     MDBROTransaction rotxn = _env->getROTransaction();
 
@@ -258,8 +261,10 @@ string_view LMDBStore::get(const Operand *operand) {
 
 // (a, b]
 void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
+    LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << endl;
     MDBROTransaction rotxn = _env->getROTransaction();
     MDBROCursor rocursor = rotxn.getCursor(_dbi);
+    int count = 0;
 
     std::exception_ptr eptr;
     try {
@@ -285,7 +290,6 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
         }
 
         int rc;
-        int count = 0;
         Operand operand;
 
         // first element
@@ -344,8 +348,8 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
             ++count;
             bytesCount += keyView.size() + valView.size();
         }
-        cout << "total iterated: " << count << endl;
-        LOG(INFO) << "total iterated: " << count << endl;
+        cout << "[LMDBStore::iterate] dbDir: " << _dbDir << "total iterated: " << count << endl;
+        LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << "total iterated: " << count << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -394,7 +398,7 @@ string LMDBStore::toString() {
     std::exception_ptr eptr;
     try {
         ss << "{storeInfo: " << this->storeInfo.toString()
-           << ", dbDir: " << this->dbDir
+           << ", dbDir: " << this->_dbDir
            << "}";
     } catch (...) {
         eptr = std::current_exception();
