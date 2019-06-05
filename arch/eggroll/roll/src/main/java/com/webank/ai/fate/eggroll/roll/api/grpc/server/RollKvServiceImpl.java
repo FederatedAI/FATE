@@ -109,7 +109,7 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void createIfAbsent(Kv.CreateTableInfo request, StreamObserver<Kv.CreateTableInfo> responseObserver) {
+    public synchronized void createIfAbsent(Kv.CreateTableInfo request, StreamObserver<Kv.CreateTableInfo> responseObserver) {
         LOGGER.info("Kv.createIfAbsent request received. request: {}", toStringUtils.toOneLineString(request));
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StorageBasic.StorageLocator storageLocator = request.getStorageLocator();
