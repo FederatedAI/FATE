@@ -203,7 +203,7 @@ class WorkFlow(object):
         LOGGER.debug("Start OneVsRest train")
         one_vs_rest.fit(train_data)
         LOGGER.debug("Start OneVsRest predict")
-        one_vs_rest.predict(validation_data,  self.workflow_param.predict_param)
+        one_vs_rest.predict(validation_data, self.workflow_param.predict_param)
         save_result = one_vs_rest.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
         if save_result is None:
             return
@@ -311,12 +311,7 @@ class WorkFlow(object):
             intersect_ids = intersect_operator.run(data_instance)
             LOGGER.info("finish intersection!")
 
-            intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
-            LOGGER.info("get intersect data_instance!")
-            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
-            intersect_data_instance.schema['header'] = header
-            return intersect_data_instance
-
+            return intersect_ids
         else:
             LOGGER.info("need_intersect: false!")
             return data_instance
@@ -879,7 +874,6 @@ class WorkFlow(object):
             ))
             data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                    self.workflow_param.data_input_namespace)
-            # LOGGER.debug("[Intersect] data_instance count:{}".format(data_instance.count()))
             self.intersect(data_instance)
 
         elif self.workflow_param.method == "cross_validation":
@@ -888,9 +882,7 @@ class WorkFlow(object):
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                        self.workflow_param.data_input_namespace)
             self.cross_validation(data_instance)
-        # elif self.workflow_param.method == 'test_methods':
-        #     print("This is a test method, Start workflow success!")
-        #     LOGGER.debug("Testing LOGGER function")
+
         elif self.workflow_param.method == "one_vs_rest_train":
             LOGGER.debug("In running function, enter one_vs_rest method")
             train_data_instance = None
