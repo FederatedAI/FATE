@@ -56,7 +56,7 @@ public:
     LMDBStore();
     LMDBStore(const LMDBStore& other);
     ~LMDBStore();
-    bool init(string dataDir, StoreInfo storeInfo);
+    bool init(string dataDir, StoreInfo& storeInfo);
     void put(const Operand* operand);
     long putAll(ServerReader<Operand>* reader);
     string_view putIfAbsent(const Operand* operand);

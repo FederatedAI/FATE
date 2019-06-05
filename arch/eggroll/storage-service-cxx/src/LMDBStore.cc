@@ -31,7 +31,7 @@ LMDBStore::~LMDBStore() {
     LOG(INFO) << "[LMDBStore::~LMDBStore] dbDir: " << _dbDir << ", desctructor use count: " << _env.use_count() << endl;
 }
 
-bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
+bool LMDBStore::init(string dataDir, StoreInfo& storeInfo) {
     std::stringstream ss;
     string delimiter = "/";
     bool result = true;
@@ -41,6 +41,8 @@ bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
         if (boost::iequals(storeInfo.getStoreType(), LMDB)) {
             storeType = LMDB;
         }
+
+        cout << storeInfo.toString() << endl;
 
         ss << dataDir
            << delimiter << storeType
@@ -63,6 +65,7 @@ bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
         cout << "[LMDBStore::init] env set: " << _dbDir << endl;
 //        this->env.open(dbDir.c_str(), 0, 0644);
 
+        this->storeInfo = storeInfo;
         this->_env = getMDBEnv(_dbDir.data(), 0, 0644);
         this->_dbi = this->_env->openDB(_dbDir, MDB_CREATE);
         LOG(INFO) << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
@@ -202,7 +205,7 @@ bool LMDBStore::destroy() {
 
         if (n >= 4 && _dbDir.substr(0, 4) != "////") {
             //string dirToRemove = dbDir.substr(0, tableNamePos);
-            string dirToRemove = _dbDir + "/../";
+            string dirToRemove = _dbDir.substr(0, tableNamePos) + tableName;
             LOG(INFO) << "[LMDBStore::destroy] dirToRemove: " << dirToRemove << endl;
             cout << "dirToRemove: " << dirToRemove << endl;
             if (boost::filesystem::exists(dirToRemove) && boost::filesystem::is_directory(dirToRemove)) {
