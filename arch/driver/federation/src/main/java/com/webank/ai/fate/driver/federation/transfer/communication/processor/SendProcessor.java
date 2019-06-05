@@ -135,11 +135,9 @@ public class SendProcessor extends BaseTransferProcessor {
             broker.addSubscriber(consumer);
 
             ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
+            if (consumerListenableFuture != null) {
             consumerListenableFuture.addCallback(
                     federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
-
-            if (consumerListenableFuture != null) {
-
                 // todo: add result tracking and retry mechanism
                 ListenableFuture<BasicMeta.ReturnStatus> producerResult = ioProducerPool.submitListenable(producer);
                 producerResult.addCallback(
@@ -167,10 +165,9 @@ public class SendProcessor extends BaseTransferProcessor {
         CountDownLatch finishLatch = new CountDownLatch(1);
 
         ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
+        if(consumerListenableFuture!=null) {
         consumerListenableFuture.addCallback(
                 federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
-        if(consumerListenableFuture!=null) {
-
             ListenableFuture<BasicMeta.ReturnStatus> producerListenableFuture = ioProducerPool.submitListenable(producer);
             producerListenableFuture.addCallback(
                     federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
