@@ -67,7 +67,7 @@ bool LMDBStore::init(string dataDir, StoreInfo& storeInfo) {
 
         this->storeInfo = storeInfo;
         this->_env = getMDBEnv(_dbDir.data(), 0, 0644);
-        this->_dbi = this->_env->openDB(_dbDir, MDB_CREATE);
+        this->_dbi = this->_env->openDB("main", MDB_CREATE);
         LOG(INFO) << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
         cout << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
     } catch (...) {
@@ -351,8 +351,8 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
             ++count;
             bytesCount += keyView.size() + valView.size();
         }
-        cout << "[LMDBStore::iterate] dbDir: " << _dbDir << "total iterated: " << count << endl;
-        LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << "total iterated: " << count << endl;
+        cout << "[LMDBStore::iterate] dbDir: " << _dbDir << ", total iterated: " << count << endl;
+        LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << ", total iterated: " << count << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
