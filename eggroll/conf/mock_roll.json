@@ -1,0 +1,18 @@
+{
+  "eggs": [
+    "0",
+    "1"
+  ],
+  "storage": {
+    "0": "localhost:7778",
+    "1": "localhost:7779"
+  },
+  "procs": {
+    "0": [
+      "localhost:8250"
+    ],
+    "1": [
+      "localhost:8310"
+    ]
+  }
+}
