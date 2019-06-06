@@ -18,7 +18,10 @@
 
 import types
 
+from arch.api.utils import log_utils
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 def get_features_shape(data_instances):
@@ -81,4 +84,7 @@ def rubbish_clear(rubbish_list):
     rubbish_list: list of DTable, each DTable in this will be destroy
     """
     for r in rubbish_list:
-        r.destroy()
+        try:
+            r.destroy()
+        except Exception as e:
+            LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
