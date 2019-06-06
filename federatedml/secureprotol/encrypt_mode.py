@@ -15,6 +15,7 @@
 #
 
 from collections import Iterable
+from federatedml.statistic.data_overview import rubbish_clear 
 from federatedml.util import consts
 import numpy as np
 import random
@@ -72,10 +73,23 @@ class EncryptModeCalculator(object):
                 or (self.mode == "balance" and self.gen_random_number() <= self.re_encrypted_rate + consts.FLOAT_ZERO):
             new_data = input_data.mapValues(self.encrypt_row)
         else:
-            new_data = input_data.join(self.prev_data, self.get_differance).join(self.prev_encrypted_data, self.add_differance)
+            diff_data = input_data.join(self.prev_data, self.get_differance) 
+            new_data = diff_data.join(self.prev_encrypted_data, self.add_differance)
+            
+            """temporary code, clear unused table begin"""
+            rubbish_list = [diff_data]
+            rubbish_clear(rubbish_list)
+            """temporary code, clear unused table end"""
+            # new_data = input_data.join(self.prev_data, self.get_differance).join(self.prev_encrypted_data, self.add_differance)
 
-        self.prev_data = input_data
-        self.prev_encrypted_data = new_data
+        """temporary code, clear unused table begin"""
+        rubbish_list = [self.prev_data, 
+                        self.prev_encrypted_data]
+        rubbish_clear(rubbish_list)
+        """temporary code, clear unused table end"""
+
+        self.prev_data = input_data.mapValues(lambda val: val)
+        self.prev_encrypted_data = new_data.mapValues(lambda val: val)
 
         return new_data
 
