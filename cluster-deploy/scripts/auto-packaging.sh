@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2
+version=0.3
 cwd=`pwd`
 
 cd ../../
@@ -48,6 +48,12 @@ for target in ${targets[@]}; do
     done
     echo "--------------"
 done
+
+cp -r $fate_dir/fate-serving/serving-server/target/lib $output_dir/serving-server/
+cp $fate_dir/fate-serving/serving-server/target/fate-serving-server-$version.jar $output_dir/serving-server/
+cd $output_dir/serving-server
+ln -s fate-serving-server-$version.jar fate-serving-server.jar
+sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
 
 cd $fate_dir
 cp -r arch federatedml workflow examples $output_dir/python/
