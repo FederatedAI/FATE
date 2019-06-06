@@ -134,16 +134,14 @@ public class SendProcessor extends BaseTransferProcessor {
             TransferBrokerConsumer consumer = transferServiceFactory.createTransferBrokerConsumer();
             broker.addSubscriber(consumer);
 
+            // todo: add result tracking and retry mechanism
+            ListenableFuture<BasicMeta.ReturnStatus> producerResult = ioProducerPool.submitListenable(producer);
+            producerResult.addCallback(
+                    federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
+
             ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
-            if (consumerListenableFuture != null) {
             consumerListenableFuture.addCallback(
                     federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
-                // todo: add result tracking and retry mechanism
-                ListenableFuture<BasicMeta.ReturnStatus> producerResult = ioProducerPool.submitListenable(producer);
-                producerResult.addCallback(
-                        federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
-
-            }
         }
 
         return finishLatch;
@@ -164,15 +162,14 @@ public class SendProcessor extends BaseTransferProcessor {
         final List<BasicMeta.ReturnStatus> results = Collections.synchronizedList(Lists.newArrayList());
         CountDownLatch finishLatch = new CountDownLatch(1);
 
+        ListenableFuture<BasicMeta.ReturnStatus> producerListenableFuture = ioProducerPool.submitListenable(producer);
+        producerListenableFuture.addCallback(
+                federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
+
         ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
-        if(consumerListenableFuture!=null) {
         consumerListenableFuture.addCallback(
                 federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
-            ListenableFuture<BasicMeta.ReturnStatus> producerListenableFuture = ioProducerPool.submitListenable(producer);
-            producerListenableFuture.addCallback(
-                    federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
 
-        }
         return finishLatch;
     }
 
