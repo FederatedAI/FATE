@@ -200,6 +200,19 @@ get_log_result() {
     sleep 5s
     while true
     do
+        if [ ! -f $log_path ];then
+            echo "task is prepraring, please wait"
+            sleep 5s
+            time_pass=$(($time_pass+10))
+
+            if [ $time_pass -gt 120 ]; then
+                echo "task failed, check nohup in current path"
+                break
+            fi
+
+            continue
+        fi
+
         num=$(cat $log_path | grep $keyword | wc -l)
         if [ $num -ge 1 ]; then
             cat $log_path | grep $keyword

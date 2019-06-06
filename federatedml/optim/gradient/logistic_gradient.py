@@ -19,9 +19,9 @@ import functools
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.optim.gradient.base_gradient import Gradient
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -85,6 +85,7 @@ class HeteroLogisticGradient(object):
     """
     Class for compute hetero-lr gradient and loss
     """
+
     def __init__(self, encrypt_method=None):
         """
         Parameters
@@ -204,6 +205,9 @@ class HeteroLogisticGradient(object):
             if not isinstance(gradient[i], PaillierEncryptedNumber):
                 gradient[i] = self.encrypt_operator.encrypt(gradient[i])
 
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [feat_join_grad]
+        rubbish_clear(rubbish_list)
 
         return gradient
 
@@ -232,5 +236,9 @@ class HeteroLogisticGradient(object):
         f = functools.partial(self.__compute_loss)
         loss_partition = half_ywx_join_en_sum_wx_square.mapPartitions(f).reduce(lambda x, y: x + y)
         loss = loss_partition[0] / loss_partition[1]
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [half_ywx, half_ywx_join_en_sum_wx_square]
+        rubbish_clear(rubbish_list)
 
         return gradient, loss

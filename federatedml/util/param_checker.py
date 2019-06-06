@@ -1,9 +1,5 @@
 #!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
-
-import inspect
-import json
-
+# -*- coding: utf-8 -*-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
