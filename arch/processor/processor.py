@@ -38,7 +38,7 @@ LOGGER = log_utils.getLogger()
 PROCESS_RECV_FORMAT = "method {} receive task: {}"
 
 PROCESS_DONE_FORMAT = "method {} done response: {}"
-LMDB_MAP_SIZE = 4 * 1024 * 1024 * 1024
+LMDB_MAP_SIZE = 16 * 4_096 * 244_140        # follows storage-service-cxx's config here
 DEFAULT_DB = b'main'
 DELIMETER = '-'
 DELIMETER_ENCODED = DELIMETER.encode()
