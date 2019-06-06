@@ -23,6 +23,7 @@
 from federatedml.util import consts
 import copy
 
+
 class DataIOParam(object):
     """
     Define dataio parameters that used in federated ml.
@@ -199,7 +200,7 @@ class PredictParam(object):
 
     Parameters
     ----------
-    with_proba: Boolean, Specify whether the result contains probability
+    with_proba: bool, Specify whether the result contains probability
 
     threshold: float or int, The threshold use to separate positive and negative class. Normally, it should be (0,1)
     """
@@ -308,6 +309,9 @@ class WorkFlowParam(object):
     need_feature_selection: bool, default: False
         Whether this task need to do feature selection or not.
 
+    need_one_hot : bool, default: False
+        Whether this task need to do one_hot encode
+
     """
 
     def __init__(self, method='train', train_input_table=None, train_input_namespace=None, model_table=None,
@@ -382,7 +386,7 @@ class EncodeParam(object):
 
     encode_method: str, the encode method of src data string, it support md5, sha1, sha224, sha256, sha384, sha512, default by None
 
-    base64: boolean, if True, the result of encode will be changed to base64, default by False
+    base64: bool, if True, the result of encode will be changed to base64, default by False
     """
 
     def __init__(self, salt='', encode_method='none', base64=False):
@@ -401,22 +405,26 @@ class IntersectParam(object):
 
     random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
 
-    is_send_intersect_ids: boolean. In rsa, 'is_send_intersect_ids' is True means guest will send intersect results to host, and False will not.
+    is_send_intersect_ids: bool. In rsa, 'is_send_intersect_ids' is True means guest will send intersect results to host, and False will not.
                             while in raw, 'is_send_intersect_ids' is True means the role of "join_role" will send intersect results and the other will get them.
                             Default by True.
 
-    is_get_intersect_ids: boolean, In rsa, it will get the results from other. It effective only for rsa and only be True will other's 'is_send_intersect_ids' is True.Default by True
+    is_get_intersect_ids: bool, In rsa, it will get the results from other. It effective only for rsa and only be True will other's 'is_send_intersect_ids' is True.Default by True
 
     join_role: str, it supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
                 ids in guest; if it is "host", the guest will send its ids. Default by "guest".
 
-    with_encode: boolean, if True, it will use encode method for intersect ids. It effective only for "raw".
+    with_encode: bool, if True, it will use encode method for intersect ids. It effective only for "raw".
 
     encode_params: EncodeParam, it effective only for with_encode is True
+    
+    only_output_key: bool, if true, the results of intersection will include key and value which from input data; if false, it will just include key from input
+                    data and the value will be empty or some useless character like "intersect_id"
     """
 
     def __init__(self, intersect_method=consts.RAW, random_bit=128, is_send_intersect_ids=True,
-                 is_get_intersect_ids=True, join_role="guest", with_encode=False, encode_params=EncodeParam()):
+                 is_get_intersect_ids=True, join_role="guest", with_encode=False, encode_params=EncodeParam(),
+                 only_output_key=False):
         self.intersect_method = intersect_method
         self.random_bit = random_bit
         self.is_send_intersect_ids = is_send_intersect_ids
@@ -424,6 +432,7 @@ class IntersectParam(object):
         self.join_role = join_role
         self.with_encode = with_encode
         self.encode_params = copy.deepcopy(encode_params)
+        self.only_output_key = only_output_key
 
 
 class LogisticParam(object):
@@ -532,7 +541,7 @@ class DecisionTreeParam(object):
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
-                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type = "split",
+                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
                  n_iter_no_change=True, tol=0.001):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
@@ -800,10 +809,6 @@ class FeatureBinningParam(object):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-        # self.meta_table = meta_table
-        # self.transform_table = transform_table
-        # self.param_table = param_table
-        # self.result_namespace = result_namespace
 
         if display_result == 'simple':
             display_result = ['iv']
@@ -897,6 +902,11 @@ class FeatureSelectionParam(object):
     ----------
     method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
         Decide what process to do.
+        fit_transform: fit select models and transfer data instance
+
+        transform: use fit models to transform data
+
+        fit:  fit the model only without transforming the data.
 
     select_cols: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
@@ -935,8 +945,7 @@ class FeatureSelectionParam(object):
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
                  coe_param=CoeffOfVarSelectionParam(),
-                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam(),
-
+                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam()
                  ):
         self.method = method
         self.select_cols = select_cols
@@ -996,36 +1005,6 @@ class ScaleParam(object):
 
         self.with_mean = with_mean
         self.with_std = with_std
-
-
-class CorrelationParam(object):
-    """
-
-    Parameters
-    ----------
-    correlation_method : str, default: 'Pearson'
-        Decide what process to do. Support Pearson only now.
-
-    cols: list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns.
-
-    local_only : bool, default: False
-        Whether just provide binning method to guest party. If true, host party will do nothing.
-
-    with_label: bool, default: False
-        Indicate if calculate correlation with label
-
-    run_mode: str, 'normal' or 'fast, default: 'normal'
-        Specify the running mode
-
-    """
-
-    def __init__(self, correlation_method='Pearson', cols=-1, local_only=False, with_label=False, run_mode='normal'):
-        self.correlation_method = correlation_method
-        self.cols = cols
-        self.local_only = local_only
-        self.with_label = with_label
-        self.run_mode = run_mode
 
 
 class OneHotEncoderParam(object):

@@ -65,22 +65,26 @@ class BaseHeteroFeatureBinning(object):
 
     def __init__(self, params):
         self.bin_param = params
-        if self.bin_param.method == consts.QUANTILE:
-            self.binning_obj = QuantileBinning(self.bin_param)
-        elif self.bin_param.method == consts.BUCKET:
-            self.binning_obj = BucketBinning(self.bin_param)
-        else:
-            self.binning_obj = QuantileBinning(self.bin_param)
+
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.cols = params.cols
         self.cols_dict = {}
-
+        self.binning_obj = None
         self.header = []
         self.has_synchronized = False
         self.flowid = ''
         self.binning_result = {}  # dict of iv_attr
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
+
+    def _init_binning_obj(self):
+        if self.bin_param.method == consts.QUANTILE:
+            self.binning_obj = QuantileBinning(self.bin_param, self.party_name)
+        elif self.bin_param.method == consts.BUCKET:
+            self.binning_obj = BucketBinning(self.bin_param, self.party_name)
+        else:
+            # self.binning_obj = QuantileBinning(self.bin_param)
+            raise ValueError("Binning method: {} is not supported yet".format(self.bin_param.method))
 
     def _save_meta(self, name, namespace):
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
@@ -148,8 +152,8 @@ class BaseHeteroFeatureBinning(object):
                                                namespace=namespace)
         binning_result_obj = dict(result_obj.binning_result.binning_result)
         host_params = dict(result_obj.host_results)
-        LOGGER.debug("Party name is :{}".format(self.party_name))
-        LOGGER.debug('Loading model, binning_result_obj is : {}'.format(binning_result_obj))
+        # LOGGER.debug("Party name is :{}".format(self.party_name))
+        # LOGGER.debug('Loading model, binning_result_obj is : {}'.format(binning_result_obj))
         self.binning_result = {}
         self.host_results = {}
         self.cols = []
@@ -177,7 +181,7 @@ class BaseHeteroFeatureBinning(object):
             return
         header = get_header(data_instances)
         self.header = header
-        LOGGER.debug("data_instance count: {}, header: {}".format(data_instances.count(), header))
+        # LOGGER.debug("data_instance count: {}, header: {}".format(data_instances.count(), header))
         if self.cols == -1:
             if header is None:
                 raise RuntimeError('Cannot get feature header, please check input data')

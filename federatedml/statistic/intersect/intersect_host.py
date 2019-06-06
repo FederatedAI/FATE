@@ -22,7 +22,6 @@ from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
-# from federatedml.util import IntersectParamChecker
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -31,7 +30,7 @@ LOGGER = log_utils.getLogger()
 class RsaIntersectionHost(RsaIntersect):
     def __init__(self, intersect_params):
         super().__init__(intersect_params)
-       
+
         self.get_intersect_ids_flag = intersect_params.is_get_intersect_ids
         self.transfer_variable = RsaIntersectTransferVariable()
 
@@ -97,8 +96,11 @@ class RsaIntersectionHost(RsaIntersect):
 
             intersect_ids_pair = encrypt_intersect_ids.join(host_ids_process_pair, lambda e, h: h)
             intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "intersect_id"))
-
             LOGGER.info("Get intersect ids from Guest")
+
+            if not self.only_output_key:
+                intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
         return intersect_ids
 
 

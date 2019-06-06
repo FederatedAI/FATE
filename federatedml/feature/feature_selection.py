@@ -58,6 +58,14 @@ class FilterMethod(object):
         """
         pass
 
+    def display_feature_result(self, party_name='Base'):
+        class_name = self.__class__.__name__
+        for col_name, feature_value in self.feature_values.items():
+            LOGGER.info("[Result][FeatureSelection][{}], in {}, col: {} 's feature value is {}".format(
+                party_name, class_name, col_name, feature_value
+            ))
+
+
     def _keep_one_feature(self, pick_high=True, left_cols=None, feature_values=None):
         """
         Make sure at least one feature can be left after filtering.
@@ -196,10 +204,10 @@ class UnionPercentileFilter(FilterMethod):
 
     def get_value_threshold(self):
         total_values = []
-        total_values.extend(list(self.local_variance.values))
+        total_values.extend(list(self.local_variance.values()))
 
-        for h_v in self.host_variances.values:
-            total_values.extend(list(h_v.values))
+        for h_v in self.host_variances.values():
+            total_values.extend(list(h_v.values()))
 
         sorted_value = sorted(total_values, reverse=self.pick_high)
         thres_idx = int(math.floor(self.percentiles * len(sorted_value)))
@@ -528,97 +536,3 @@ class OutlierFilter(FilterMethod):
                                                                      upper_threshold=self.upper_threshold)
         return result
 
-# class FeatureSelection(object):
-#     """
-#     Made feature selection based on set parameters.
-#
-#     Parameters
-#     ----------
-#     params: float, FeatureSelectionParam
-#         User defined parameters.
-#
-#     """
-#
-#     def __init__(self, params: FeatureSelectionParam):
-#         self.filter_methods = params.filter_method
-#         self.select_cols = params.select_cols
-#         self.left_cols = None
-#         self.params = params
-#         self.static_obj = None
-#         self.iv_attrs = None
-#         self.results = []
-#
-#     def filter(self, data_instances):
-#         if self.select_cols == -1:
-#             features_shape = get_features_shape(data_instances)
-#             if features_shape is None:
-#                 raise RuntimeError('Cannot get feature shape, please check input data')
-#             self.select_cols = [i for i in range(features_shape)]
-#         self.left_cols = self.select_cols.copy()
-#
-#         for method in self.filter_methods:
-#             self.filter_one_method(data_instances, method)
-#         return self.left_cols
-#
-#     def filter_one_method(self, data_instances, method):
-#         """
-#         Given data and method, perform the filter methods.
-#
-#         Parameters
-#         ----------
-#         data_instances: DTable,
-#             Input data
-#
-#         method : str
-#             The method name. if the name is not in
-#
-#         """
-#
-#         if method == consts.UNIQUE_VALUE:
-#             filter_obj = UniqueValueFilter(self.params.unique_param,
-#                                            select_cols=self.left_cols,
-#                                            statics_obj=self.static_obj)
-#             self.left_cols = filter_obj.fit(data_instances)
-#             self.static_obj = filter_obj.statics_obj
-#             self.results.append(filter_obj.to_result())
-#
-#         elif method == consts.IV_VALUE_THRES:
-#             filter_obj = IVValueSelectFilter(self.params.iv_param,
-#                                              select_cols=self.left_cols,
-#                                              iv_attrs=self.iv_attrs)
-#             self.left_cols = filter_obj.fit(data_instances)
-#             self.iv_attrs = filter_obj.iv_attrs
-#             self.results.append(filter_obj.to_result())
-#
-#         elif method == consts.IV_PERCENTILE:
-#             filter_obj = IVPercentileFilter(self.params.iv_param,
-#                                             cols=self.left_cols)
-#             if self.iv_attrs is not None:
-#                 filter_obj.add_attrs_only(self.iv_attrs)
-#             self.left_cols = filter_obj.filter_multiple_parties(data_instances)[0]
-#             self.iv_attrs = filter_obj.all_iv_attrs[0]
-#             self.results.append(filter_obj.to_result())
-#
-#         elif method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
-#             filter_obj = CoeffOfVarValueFilter(self.params.coe_param,
-#                                                select_cols=self.left_cols,
-#                                                statics_obj=self.static_obj)
-#             self.left_cols = filter_obj.fit(data_instances)
-#             self.static_obj = filter_obj.statics_obj
-#             self.results.append(filter_obj.to_result())
-#
-#         elif method == consts.OUTLIER_COLS:
-#             filter_obj = OutlierFilter(self.params.outlier_param,
-#                                        select_cols=self.left_cols)
-#             self.left_cols = filter_obj.fit(data_instances)
-#             self.results.append(filter_obj.to_result())
-#
-#     def set_iv_attrs(self, iv_attrs):
-#         self.iv_attrs = iv_attrs
-#
-#     def set_static_obj(self, static_obj):
-#         self.static_obj = static_obj
-#
-#     def to_result(self):
-#         result = FeatureSelectionParam(results=self.results)
-#         return result

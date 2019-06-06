@@ -40,8 +40,8 @@ class QuantileBinning(Binning):
     optimizations).
     """
 
-    def __init__(self, params):
-        super(QuantileBinning, self).__init__(params)
+    def __init__(self, params, party_name='Base'):
+        super(QuantileBinning, self).__init__(params, party_name)
         self.summary_dict = None
 
     def fit_split_points(self, data_instances):
@@ -84,7 +84,7 @@ class QuantileBinning(Binning):
             for percen_rate in percentile_rate:
                 split_point.append(summary.query(percen_rate))
             split_points[col_name] = split_point
-
+        self._show_split_points(split_points)
         return split_points
 
     @staticmethod
