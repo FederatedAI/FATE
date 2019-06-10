@@ -53,6 +53,7 @@ public class ObjectRecvConsumeLmdbAction extends BaseRecvConsumeAction {
     private ByteString serializedObjectResult;
     private List<ByteString> serializedObjects;
     private long chunkCount = 0;
+    private StorageBasic.StorageLocator federationStorageLocator;
 
     public ObjectRecvConsumeLmdbAction(TransferBroker transferBroker) {
         super(transferBroker);
@@ -76,6 +77,21 @@ public class ObjectRecvConsumeLmdbAction extends BaseRecvConsumeAction {
         } else {
             finalTransferMeta = transferMeta;
         }
+
+        federationStorageLocator = StorageBasic.StorageLocator.newBuilder()
+                .setNamespace(finalTransferMeta.getJob().getJobId())
+                .setName(FederationConstants.OBJECT_STORAGE_NAMESPACE)
+                .setType(StorageBasic.StorageType.LMDB)
+                .setFragment(0)
+                .build();
+
+        Kv.CreateTableInfo createTableInfo = Kv.CreateTableInfo.newBuilder()
+                .setStorageLocator(federationStorageLocator)
+                .setFragmentCount(10)
+                .build();
+
+        // create new table
+        rollKvServiceClient.create(createTableInfo);
     }
 
     @Override
@@ -103,23 +119,9 @@ public class ObjectRecvConsumeLmdbAction extends BaseRecvConsumeAction {
                 serializedObjectResult.size(), chunkCount, transferMetaId);
 
         BasicMeta.ReturnStatus result = null;
-        StorageBasic.StorageLocator createTableStorageLocator = StorageBasic.StorageLocator.newBuilder()
-                .setNamespace(finalTransferMeta.getJob().getJobId())
-                .setName(FederationConstants.OBJECT_STORAGE_NAMESPACE)
-                .setType(StorageBasic.StorageType.LMDB)
-                .setFragment(0)
-                .build();
-
-        Kv.CreateTableInfo createTableInfo = Kv.CreateTableInfo.newBuilder()
-                .setStorageLocator(createTableStorageLocator)
-                .setFragmentCount(10)
-                .build();
-
-        // create new table
-        rollKvServiceClient.create(createTableInfo);
 
         LOGGER.info("objectRecvConsumeAction: table created");
-        StoreInfo storeInfo = StoreInfo.fromStorageLocator(createTableStorageLocator);
+        StoreInfo storeInfo = StoreInfo.fromStorageLocator(federationStorageLocator);
 
         Kv.Operand request = Kv.Operand.newBuilder()
                 .setKey(finalTransferMeta.getDataDesc().getTaggedVariableName())

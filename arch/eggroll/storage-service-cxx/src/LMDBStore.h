@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -41,9 +42,9 @@
 
 #include "StoreInfo.h"
 #include "ExceptionHandler.h"
+#include "third_party/lmdb-safe/lmdb-safe.hh"
 
 using std::string;
-using boost::string_view;
 using com::webank::ai::fate::api::eggroll::storage::Operand;
 using com::webank::ai::fate::api::eggroll::storage::Range;
 using grpc::ServerReader;
@@ -55,9 +56,9 @@ public:
     LMDBStore();
     LMDBStore(const LMDBStore& other);
     ~LMDBStore();
-    bool init(string dataDir, StoreInfo storeInfo);
+    bool init(string dataDir, StoreInfo& storeInfo);
     void put(const Operand* operand);
-    void putAll(ServerReader<Operand>* reader);
+    long putAll(ServerReader<Operand>* reader);
     string_view putIfAbsent(const Operand* operand);
     string_view delOne(const Operand* operand);
     string_view get(const Operand* operand);
@@ -71,10 +72,12 @@ private:
     lmdb::cursor createCursor(lmdb::txn txn, lmdb::dbi dbi);
     void iterateAll();
 
-    string dbDir;
+    string _dbDir;
     StoreInfo storeInfo;
-    lmdb::env env = lmdb::env::create();
-    lmdb::dbi* dbi;
+
+    std::shared_ptr<MDBEnv> _env;
+    MDBDbi _dbi;
+
     long PAYLOAD_THREASHOLD = 2L * 1024 * 1024;
 };
 

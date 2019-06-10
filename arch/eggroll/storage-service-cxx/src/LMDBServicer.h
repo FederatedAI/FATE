@@ -68,7 +68,7 @@ public:
     void sayHello();
 
 private:
-    LMDBStore getStore(ServerContext* context);
+    void getStore(ServerContext* context, LMDBStore &lmdbStore);
 
     string dataDir;
 };
