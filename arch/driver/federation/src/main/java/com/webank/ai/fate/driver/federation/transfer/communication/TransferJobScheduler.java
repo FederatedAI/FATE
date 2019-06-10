@@ -79,10 +79,11 @@ public class TransferJobScheduler implements Runnable {
 
     @Override
     public void run() {
-        try {
+
             boolean latchWaitResult = false;
             int waitCount = 0;
             while (System.currentTimeMillis() > 0) {
+                try {
                 while (!latchWaitResult && ++waitCount < 15 && jobQueue.isEmpty()) {
                     latchWaitResult = jobQueueReadyLatch.await(1, TimeUnit.SECONDS);
                 }
@@ -153,12 +154,14 @@ public class TransferJobScheduler implements Runnable {
                             transferMetaId, type.name());
                 }
 
+            } catch (Throwable e) {
+                LOGGER.error(errorUtils.getStackTrace(e));
+            }
+
 
             }
 
-        } catch (Exception e) {
-            LOGGER.error(errorUtils.getStackTrace(e));
-        }
+
     }
 
     @Async

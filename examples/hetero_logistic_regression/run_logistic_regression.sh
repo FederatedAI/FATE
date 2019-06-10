@@ -35,8 +35,8 @@ guest_runtime_conf=$conf_dir/guest_runtime_conf.json
 host_runtime_conf=$conf_dir/host_runtime_conf.json
 arbiter_runtime_conf=$conf_dir/arbiter_runtime_conf.json
 
-data_set=breast
-#data_set=default_credit
+#data_set=breast
+data_set=default_credit
 #data_set=give_credit
 train_data_host=$data_dir/${data_set}_a.csv
 train_data_guest=$data_dir/${data_set}_b.csv
@@ -193,8 +193,22 @@ get_log_result() {
     log_path=$1
     keyword=$2
     sleep 5s
+    time_pass=0
     while true
     do
+        if [ ! -f $log_path ];then
+            echo "task is prepraring, please wait"
+            sleep 5s
+            time_pass=$(($time_pass+10))
+
+            if [ $time_pass -gt 120 ]; then
+                echo "task failed, check nohup in current path"
+                break
+            fi
+
+            continue
+        fi
+
         num=$(cat $log_path | grep $keyword | wc -l)
         if [ $num -ge 1 ]; then
             cat $log_path | grep $keyword

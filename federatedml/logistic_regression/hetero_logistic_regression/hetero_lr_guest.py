@@ -23,6 +23,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -31,14 +32,12 @@ LOGGER = log_utils.getLogger()
 
 class HeteroLRGuest(BaseLogisticRegression):
     def __init__(self, logistic_params):
-        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRGuest, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []
 
         self.encrypted_calculator = None
 
-        self.wx = None
         self.guest_forward = None
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
@@ -51,14 +50,18 @@ class HeteroLRGuest(BaseLogisticRegression):
         coef_: list, coefficient of lr
         intercept_: float, the interception of lr
         """
-        self.wx = self.compute_wx(data_instances, coef_, intercept_)
+        wx = self.compute_wx(data_instances, coef_, intercept_)
 
-        en_wx = self.encrypted_calculator[batch_index].encrypt(self.wx)
-        wx_square = self.wx.mapValues(lambda v: np.square(v))
+        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx: (e[0], e[1], wx))
+        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [wx, en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
+        rubbish_clear(rubbish_list)
 
     def aggregate_forward(self, host_forward):
         """
@@ -135,7 +138,8 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
                                                            self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _ in range(batch_num)]
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+                                     in range(batch_num)]
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
@@ -153,7 +157,7 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
+            # each iter will get the same batch_data_generator
             batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
 
             batch_index = 0
@@ -263,6 +267,16 @@ class HeteroLRGuest(BaseLogisticRegression):
 
                 # is converge of loss in arbiter
                 batch_index += 1
+
+                # temporary resource recovery and will be removed in the future
+                rubbish_list = [host_forward,
+                                aggregate_forward_res,
+                                en_aggregate_wx,
+                                en_aggregate_wx_square,
+                                fore_gradient,
+                                self.guest_forward
+                                ]
+                rubbish_clear(rubbish_list)
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(
