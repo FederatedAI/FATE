@@ -74,6 +74,8 @@ class DenseFeatureReader(object):
             if self.with_label:
                 self.header = self.header.split(self.delimitor, -1)[: self.label_idx] + \
                               self.header.split(self.delimitor, -1)[self.label_idx + 1:]
+            else:
+                self.header = self.header.split(self.delimitor, -1)
 
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)

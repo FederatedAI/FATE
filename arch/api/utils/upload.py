@@ -21,12 +21,12 @@ import traceback
 import csv
 import sys
 import time
-from arch.api import eggroll
-from arch.api.storage import save_data
+from arch.api import eggroll, storage
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
 MAX_PARTITION_NUM = 1024
+
 
 def list_to_str(input_list):
     str1 = ''
@@ -39,20 +39,28 @@ def list_to_str(input_list):
 
     return str1
 
-def read_data(input_file='', head=True):
+
+def save_data_header(header_source, dst_table_name, dst_table_namespace):
+    storage.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+                                 dst_table_namespace)
+
+
+def read_data(input_file, dst_table_name, dst_table_namespace, head=True):
     split_file_name = input_file.split('.')
     if CSV in split_file_name:
         with open(input_file) as csv_file:
             csv_reader = csv.reader(csv_file)
             if head is True:
-                csv_head = next(csv_reader)
+                data_head = next(csv_reader)
+                save_data_header(','.join(data_head), dst_table_name, dst_table_namespace)
 
             for row in csv_reader:
                 yield (row[0], list_to_str(row[1:]))
     else:
         with open(input_file, 'r') as fin:
             if head is True:
-                head = fin.readline()
+                data_head = fin.readline()
+                save_data_header(data_head, dst_table_name, dst_table_namespace)
 
             lines = fin.readlines()
             for line in lines:
@@ -65,12 +73,13 @@ def generate_table_name(input_file_path):
     str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     file_name = input_file_path.split(".")[0]
     file_name = file_name.split("/")[-1]
-    return file_name,str_time
+    return file_name, str_time
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', required=False, type=str, help="you should provide a path of configure file with json format")
+    parser.add_argument('-c', '--config', required=False, type=str,
+                        help="you should provide a path of configure file with json format")
     try:
         args = parser.parse_args()
         if not args.config:
@@ -91,26 +100,25 @@ if __name__ == "__main__":
                     input_file_path = job_config['file']
                 except:
                     traceback.print_exc()
-                
+
                 try:
-                   read_head = job_config['head']
-                   if read_head == 0:
-                       head = False
-                   elif read_head == 1:
-                       head = True
+                    read_head = job_config['head']
+                    if read_head == 0:
+                        head = False
+                    elif read_head == 1:
+                        head = True
                 except:
                     print("'head' in .json should be 0 or 1, set head to 1")
-                
+
                 try:
                     partition = job_config['partition']
                     if partition <= 0 or partition > MAX_PARTITION_NUM:
-                        print("Error number of partition, it should between %d and %d" %(0, MAX_PARTITION_NUM))
+                        print("Error number of partition, it should between %d and %d" % (0, MAX_PARTITION_NUM))
                         sys.exit()
                 except:
                     print("set partition to 1")
                     partition = 1
-                
-            
+
                 try:
                     table_name = job_config['table_name']
                 except:
@@ -129,14 +137,14 @@ if __name__ == "__main__":
                 print("%s is not exist, please check the configure" % (input_file_path))
                 sys.exit()
 
-            input_data = read_data(input_file_path, head)
             _namespace, _table_name = generate_table_name(input_file_path)
             if namespace is None:
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
             eggroll.init(mode=work_mode)
-            data_table = save_data(input_data, name=table_name, namespace=namespace, partition=partition)
+            input_data = read_data(input_file_path, table_name, namespace, head)
+            data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=partition)
             print("------------load data finish!-----------------")
             print("file: {}".format(input_file_path))
             print("total data_count: {}".format(data_table.count()))
