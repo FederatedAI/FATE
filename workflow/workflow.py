@@ -73,6 +73,7 @@ class WorkFlow(object):
         self.pipeline = None
 
     def _initialize(self, config_path):
+        LOGGER.debug("Get in base workflow initialize")
         self._initialize_role_and_mode()
         self._initialize_model(config_path)
         self._initialize_workflow_param(config_path)
@@ -202,7 +203,7 @@ class WorkFlow(object):
         LOGGER.debug("Start OneVsRest train")
         one_vs_rest.fit(train_data)
         LOGGER.debug("Start OneVsRest predict")
-        one_vs_rest.predict(validation_data,  self.workflow_param.predict_param)
+        one_vs_rest.predict(validation_data, self.workflow_param.predict_param)
         save_result = one_vs_rest.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
         if save_result is None:
             return
@@ -310,12 +311,7 @@ class WorkFlow(object):
             intersect_ids = intersect_operator.run(data_instance)
             LOGGER.info("finish intersection!")
 
-            intersect_data_instance = intersect_ids.join(data_instance, lambda i, d: d)
-            LOGGER.info("get intersect data_instance!")
-            # LOGGER.debug("intersect_data_instance count:{}".format(intersect_data_instance.count()))
-            intersect_data_instance.schema['header'] = header
-            return intersect_data_instance
-
+            return intersect_ids
         else:
             LOGGER.info("need_intersect: false!")
             return data_instance
@@ -354,7 +350,7 @@ class WorkFlow(object):
         LOGGER.info("Finish feature selection")
         return data_instances
 
-    def feature_selection_fit(self, data_instance, flow_id='sample_flowid'):
+    def feature_selection_fit(self, data_instance, flow_id='sample_flowid', without_transform=False):
         if self.mode == consts.HOMO:
             LOGGER.info("Homo feature selection is not supporting yet. Coming soon")
             return data_instance
@@ -378,13 +374,21 @@ class WorkFlow(object):
                 raise ValueError("Unknown role of workflow")
 
             feature_selector.set_flowid(flow_id)
-            binning_model = {
-                'name': self.workflow_param.model_table,
-                'namespace': self.workflow_param.model_namespace
-            }
-            feature_selector.init_previous_model(binning_model=binning_model)
+            filter_methods = feature_select_param.filter_method
+            previous_model = {}
+            if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
 
-            data_instance = feature_selector.fit(data_instance)
+                binning_model = {
+                    'name': self.workflow_param.model_table,
+                    'namespace': self.workflow_param.model_namespace
+                }
+                previous_model['binning_model'] = binning_model
+            feature_selector.init_previous_model(**previous_model)
+
+            if without_transform:
+                data_instance = feature_selector.fit(data_instance)
+            else:
+                data_instance = feature_selector.fit_transform(data_instance)
             save_result = feature_selector.save_model(self.workflow_param.model_table,
                                                       self.workflow_param.model_namespace)
             # Save model result in pipeline
@@ -810,6 +814,7 @@ class WorkFlow(object):
         param_validation_path = home_dir + "/conf/param_validation.json"
         all_checker = AllChecker(config_path, param_validation_path)
         all_checker.check_all()
+        LOGGER.debug("Finish all parameter checkers")
         self._initialize(config_path)
         with open(config_path) as conf_f:
             runtime_json = json.load(conf_f)
@@ -869,7 +874,6 @@ class WorkFlow(object):
             ))
             data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                    self.workflow_param.data_input_namespace)
-            # LOGGER.debug("[Intersect] data_instance count:{}".format(data_instance.count()))
             self.intersect(data_instance)
 
         elif self.workflow_param.method == "cross_validation":
@@ -878,9 +882,7 @@ class WorkFlow(object):
                 data_instance = self.gen_data_instance(self.workflow_param.data_input_table,
                                                        self.workflow_param.data_input_namespace)
             self.cross_validation(data_instance)
-        # elif self.workflow_param.method == 'test_methods':
-        #     print("This is a test method, Start workflow success!")
-        #     LOGGER.debug("Testing LOGGER function")
+
         elif self.workflow_param.method == "one_vs_rest_train":
             LOGGER.debug("In running function, enter one_vs_rest method")
             train_data_instance = None

@@ -105,11 +105,12 @@ class Binning(object):
 
     """
 
-    def __init__(self, params):
+    def __init__(self, params, party_name):
         self.params = params
         self.bin_num = params.bin_num
         self.cols = params.cols
         self.cols_dict = {}
+        self.party_name = party_name
 
     def fit_split_points(self, data_instances):
         """
@@ -228,6 +229,9 @@ class Binning(object):
                                    self.params.adjustment_factor,
                                    split_points=split_points)
         return iv_attrs
+
+    def _show_split_points(self, split_points):
+        LOGGER.info('[Result][FeatureBinning][{}]split points are: {}'.format(self.party_name, split_points))
 
     @staticmethod
     def bin_data(instance, split_points, cols_dict):

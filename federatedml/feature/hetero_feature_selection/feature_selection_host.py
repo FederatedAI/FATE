@@ -39,7 +39,7 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.flowid = ''
         self.party_name = consts.HOST
 
-    def fit(self, data_instances):
+    def fit_transform(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_cols(data_instances)
         LOGGER.debug("host data count: {}, host header: {}".format(data_instances.count(), self.header))
@@ -56,13 +56,16 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self._abnormal_detection(data_instances)
 
         self._init_cols(data_instances)
+        LOGGER.info("[Result][FeatureSelection][Host]In transform, Self left cols are: {}".format(
+            self.left_cols
+        ))
         new_data = self._transfer_data(data_instances)
         self._reset_header()
         new_data.schema['header'] = self.header
 
         return new_data
 
-    def fit_without_transform(self, data_instances):
+    def fit(self, data_instances):
 
         self._abnormal_detection(data_instances)
 
@@ -80,12 +83,15 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         if method == consts.IV_VALUE_THRES:
             self._send_select_cols(consts.IV_VALUE_THRES)
             self._received_result_cols(filter_name=consts.IV_VALUE_THRES)
-            LOGGER.info("Finish iv value threshold filter. Current left cols are: {}".format(self.left_cols))
+            LOGGER.info(
+                "[Result][FeatureSelection][Host]Finish iv value threshold filter. Current left cols are: {}".format(
+                    self.left_cols))
 
         if method == consts.IV_PERCENTILE:
             self._send_select_cols(consts.IV_PERCENTILE)
             self._received_result_cols(filter_name=consts.IV_PERCENTILE)
-            LOGGER.info("Finish iv percentile filter. Current left cols are: {}".format(self.left_cols))
+            LOGGER.info("[Result][FeatureSelection][Host]Finish iv percentile filter. Current left cols are: {}".format(
+                self.left_cols))
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             coe_param = self.params.coe_param
@@ -95,8 +101,11 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
             self.coe_meta = coe_filter.get_meta_obj()
             self.results.append(coe_filter.get_param_obj())
             self._renew_left_col_names()
-            LOGGER.info("Finish coeffiecient_of_variation value threshold filter. Current left cols are: {}".format(
-                self.left_cols))
+            coe_filter.display_feature_result(self.party_name)
+            LOGGER.info(
+                "[Result][FeatureSelection][Host]Finish coeffiecient_of_variation value threshold filter."
+                " Current left cols are: {}".format(
+                    self.left_cols))
 
         if method == consts.UNIQUE_VALUE:
             unique_param = self.params.unique_param
@@ -106,7 +115,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
             self.unique_meta = unique_filter.get_meta_obj()
             self.results.append(unique_filter.get_param_obj())
             self._renew_left_col_names()
-            LOGGER.info("Finish unique value filter. Current left cols are: {}".format(
+            unique_filter.display_feature_result(self.party_name)
+            LOGGER.info("[Result][FeatureSelection][Host]Finish unique value filter. Current left cols are: {}".format(
                 self.left_cols))
 
         if method == consts.OUTLIER_COLS:
@@ -116,7 +126,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
             self._renew_left_col_names()
-            LOGGER.info("Finish outlier cols filter. Current left cols are: {}".format(
+            outlier_filter.display_feature_result(self.party_name)
+            LOGGER.info("[Result][FeatureSelection][Host]Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
 
     def _received_result_cols(self, filter_name):

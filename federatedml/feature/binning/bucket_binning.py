@@ -29,8 +29,8 @@ class BucketBinning(Binning):
     where k is the index of a bin.
     """
 
-    def __init__(self, params):
-        super(BucketBinning, self).__init__(params)
+    def __init__(self, params, party_name='Base'):
+        super(BucketBinning, self).__init__(params, party_name)
 
     def fit_split_points(self, data_instances):
         """
@@ -41,17 +41,14 @@ class BucketBinning(Binning):
         data_instances : DTable
             The input data
 
-        cols : int or list of int
-            Specify which column(s) need to apply binning. -1 means do binning for all columns.
-
         Returns
         -------
-        split_points, 2-dimension list.
-            Each row represent for the split points for a feature. The element in each row represent for
+        split_points : dict.
+            Each value represent for the split points for a feature. The element in each row represent for
             the corresponding split point.
             e.g.
-            split_points = [[0.1, 0.2, 0.3, 0.4 ...],    # The first feature
-                            [1, 2, 3, 4, ...],           # The second feature
+            split_points = {'x1': [0.1, 0.2, 0.3, 0.4 ...],    # The first feature
+                            'x2': [1, 2, 3, 4, ...],           # The second feature
                             ...]                         # Other features
 
         """
@@ -70,4 +67,6 @@ class BucketBinning(Binning):
                 s_p = min_value + (k + 1) * L
                 split_point.append(s_p)
             final_split_points[col_name] = split_point
+
+        self._show_split_points(final_split_points)
         return final_split_points

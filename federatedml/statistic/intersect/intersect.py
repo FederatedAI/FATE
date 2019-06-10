@@ -27,6 +27,7 @@ LOGGER = log_utils.getLogger()
 class Intersect(object):
     def __init__(self, intersect_params):
         self.transfer_variable = None
+        self.only_output_key = intersect_params.only_output_key
         IntersectParamChecker.check_param(intersect_params)
 
     def run(self, data_instances):
@@ -35,6 +36,18 @@ class Intersect(object):
     def set_flowid(self, flowid=0):
         if self.transfer_variable is not None:
             self.transfer_variable.set_flowid(flowid)
+
+    def _set_schema(self, schema):
+        self.schema = schema
+
+    def _get_schema(self):
+        return self.schema
+
+    def _get_value_from_data(self, intersect_ids, data_instances):
+        intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
+        LOGGER.info("get intersect data_instances!")
+        intersect_ids.schema['header'] = data_instances.schema.get("header")
+        return intersect_ids
 
 
 class RsaIntersect(Intersect):
@@ -111,6 +124,9 @@ class RawIntersect(Intersect):
         else:
             LOGGER.info("Not Get intersect ids from role-join!")
 
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
         return intersect_ids
 
     def intersect_join_id(self, data_instances):
@@ -171,5 +187,8 @@ class RawIntersect(Intersect):
             intersect_ids = encode_intersect_ids.map(lambda k, v: (v, 'intersect_id'))
         else:
             intersect_ids = send_intersect_ids
+
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
         return intersect_ids

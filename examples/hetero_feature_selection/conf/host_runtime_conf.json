@@ -45,8 +45,6 @@
         "bin_num": 10,
         "cols": -1,
         "local_only": false,
-        "result_table": "TO SET",
-        "result_namespace": "TO SET",
         "display_result": ["iv"]
     },
     "FeatureSelectionParam": {
@@ -54,16 +52,16 @@
         "filter_method": ["unique_value", "iv_value_thres",
                 "coefficient_of_variation_value_thres", "outlier_cols"],
         "select_cols": -1,
-        "local_only": false,
-        "result_table": "feature_selection_host_model_table",
-        "result_namespace": "example_data_namespace"
+        "local_only": false
     },
     "UniqueValueParam": {
         "eps": 1e-5
     },
-    "IVSelectionParam": {
-        "value_threshold": 0.1,
-        "percentile_threshold": 1.0
+    "IVValueSelectionParam": {
+        "value_threshold": 0.1
+    },
+    "IVPercentileSelectionParam": {
+        "percentile_threshold": 0.8
     },
     "CoeffOfVarSelectionParam": {
         "value_threshold": 0.1,

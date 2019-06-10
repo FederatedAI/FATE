@@ -109,7 +109,7 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     }
 
     @Override
-    public void createIfAbsent(Kv.CreateTableInfo request, StreamObserver<Kv.CreateTableInfo> responseObserver) {
+    public synchronized void createIfAbsent(Kv.CreateTableInfo request, StreamObserver<Kv.CreateTableInfo> responseObserver) {
         LOGGER.info("Kv.createIfAbsent request received. request: {}", toStringUtils.toOneLineString(request));
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
             StorageBasic.StorageLocator storageLocator = request.getStorageLocator();
@@ -294,14 +294,8 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
 
             Dtable dtable = storageMetaClient.getTable(storeInfo.getNameSpace(), storeInfo.getTableName());
 
-            List<Node> healthyNodes = storageMetaClient.getStorageNodesByTableId(dtable.getTableId());
-            Map<Long, Node> nodeIdToNode = Maps.newHashMap();
-
-            for (Node node : healthyNodes) {
-                nodeIdToNode.put(node.getNodeId(), node);
-            }
-
             if (dtable != null && DtableStatus.NORMAL.name().equals(dtable.getStatus())) {
+                Map<Long, Node> nodeIdToNode = nodeHelper.getNodeIdToStorageNodesOfTable(dtable.getTableId());
                 List<Fragment> fragments = storageMetaClient.getFragmentsByTableId(dtable.getTableId());
 
                 // destroy all fragments in all nodes
@@ -386,6 +380,7 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
     @Override
     public void count(Kv.Empty request, StreamObserver<Kv.Count> responseObserver) {
         grpcServerWrapper.wrapGrpcServerRunnable(responseObserver, () -> {
+            long result = 0L;
             StoreInfo storeInfo = StoreInfo.fromGrpcContext();
             LOGGER.info("Kv.count request received. storeInfo: {}", storeInfo);
 
@@ -424,13 +419,13 @@ public class RollKvServiceImpl extends KVServiceGrpc.KVServiceImplBase {
                 if (!throwables.isEmpty()) {
                     throw new MultipleRuntimeThrowables("error in getting counts.", throwables);
                 } else {
-                    long result = countValueResult.get();
-                    Kv.Count countResult = Kv.Count.newBuilder().setValue(result).build();
-                    LOGGER.info("[ROLL][COUNT][EGG] result: {}", result);
-                    responseObserver.onNext(countResult);
-                    responseObserver.onCompleted();
+                    result = countValueResult.get();
                 }
             }
+            Kv.Count countResult = Kv.Count.newBuilder().setValue(result).build();
+            LOGGER.info("[ROLL][COUNT][EGG] result: {}", result);
+            responseObserver.onNext(countResult);
+            responseObserver.onCompleted();
         });
     }
 

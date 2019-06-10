@@ -33,7 +33,7 @@
 
     <properties>
 
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
 
         <mysql.connector.version>8.0.13</mysql.connector.version>
         <mybatis-generator-plugin.version>1.3.7</mybatis-generator-plugin.version>

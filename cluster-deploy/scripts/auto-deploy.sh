@@ -4,7 +4,6 @@ cwd=`pwd`
 
 cd ../../
 fate_dir=`pwd`
-base_dir=$fate_dir/arch
 output_dir=$fate_dir/cluster-deploy/example-dir-tree
 
 cd $cwd
@@ -74,7 +73,6 @@ do
 	eval jdbcdbname=\${JDBC${i}[1]}
 	eval jdbcuser=\${JDBC${i}[2]}
 	eval jdbcpasswd=\${JDBC${i}[3]}
-	eval slength=\${serving${i}[*]}
 	eval elength=\${#egglist${i}[*]}
 	eval slength=\${#serving${i}[*]}
 	
@@ -164,8 +162,12 @@ cd $dir
 sed -i "s/ip=.*/ip=$sip/g" ./serving-server/conf/serving-server.properties
 sed -i "s/workMode=.*/workMode=1/g" ./serving-server/conf/serving-server.properties
 sed -i "s/party.id=.*/party.id=$partyid/g" ./serving-server/conf/serving-server.properties
+sed -i "s/port=8000/port=8001/g" ./serving-server/conf/serving-server.properties
 sed -i "s/proxy=.*/proxy=$pip:9370/g" ./serving-server/conf/serving-server.properties
 sed -i "s/roll=.*/roll=$rip:8011/g" ./serving-server/conf/serving-server.properties
+sed -i "s/redis.ip=.*/redis.ip=0.0.0.0/g" ./serving-server/conf/serving-server.properties
+sed -i "s/redis.port=.*/redis.port=6379/g" ./serving-server/conf/serving-server.properties
+sed -i "s/redis.password=.*/redis.password=$redispass/g" ./serving-server/conf/serving-server.properties
 exit
 eeooff
 	done
@@ -181,11 +183,12 @@ sed -i "s/party.id=.*/party.id=$partyid/g" ./egg/conf/egg.properties
 sed -i "s/fip=.*/fip=\"$fip\"/g" ./python/modify_json.py
 sed -i "s/rip=.*/rip=\"$rip\"/g" ./python/modify_json.py
 sed -i "s/pip=.*/pip=\"$pip\"/g" ./python/modify_json.py
-sed -i "s/sip=.*/sip=\"$sip\"/g" ./python/modify_json.py
+sed -i "s/sip1=.*/sip1=\"$sip1\"/g" ./python/modify_json.py
+sed -i "s/sip2=.*/sip2=\"$sip2\"/g" ./python/modify_json.py
 sed -i "s/tmip=.*/tmip=\"$tmip\"/g" ./python/modify_json.py
 sed -i "s/partyId=.*/partyId=\"$partyid\"/g" ./python/modify_json.py
 python python/modify_json.py python ./python/arch/conf/server_conf.json	
-sed -i "s/PARTY_ID =.*/PARTY_ID = $partyid/g" ./python/arch/task_manager/settings.py
+sed -i "s/PARTY_ID =.*/PARTY_ID = \"$partyid\"/g" ./python/arch/task_manager/settings.py
 sed -i "s/'user':.*/'user': '$jdbcuser',/g" ./python/arch/task_manager/settings.py
 sed -i "s/'passwd':.*/'passwd': '$jdbcpasswd',/g" ./python/arch/task_manager/settings.py
 sed -i "s/'host':.*/'host': '$jdbcip',/g" ./python/arch/task_manager/settings.py

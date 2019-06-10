@@ -147,6 +147,8 @@ class BaseHeteroFeatureSelection(object):
 
     def _transfer_data(self, data_instances):
 
+        if len(self.left_cols) == 0:
+            raise ValueError("None left columns for feature selection. Please check if model has fit.")
         f = functools.partial(self.select_cols,
                               left_cols=self.left_cols,
                               header=self.header)

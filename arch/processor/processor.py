@@ -38,7 +38,8 @@ LOGGER = log_utils.getLogger()
 PROCESS_RECV_FORMAT = "method {} receive task: {}"
 
 PROCESS_DONE_FORMAT = "method {} done response: {}"
-LMDB_MAP_SIZE = 1 * 1024 * 1024 * 1024
+LMDB_MAP_SIZE = 16 * 4_096 * 244_140        # follows storage-service-cxx's config here
+DEFAULT_DB = b'main'
 DELIMETER = '-'
 DELIMETER_ENCODED = DELIMETER.encode()
 
@@ -73,9 +74,9 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
-                src_db_path) as source_env:
-            with source_env.begin() as source_txn, dst_env.begin(write=True) as dst_txn:
-                cursor = source_txn.cursor()
+                src_db_path) as src_env:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
+                cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     k, v = _serdes.deserialize(k_bytes), _serdes.deserialize(v_bytes)
                     k1, v1 = _mapper(k, v)
@@ -96,7 +97,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
                 src_db_path) as src_env:
-            with src_env.begin() as src_txn, dst_env.begin(write=True) as dst_txn:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
                 v = _mapper(generator(_serdes, cursor))
                 if cursor.last():
@@ -119,7 +120,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
                 src_db_path) as src_env:
-            with src_env.begin() as src_txn, dst_env.begin(write=True) as dst_txn:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     v = _serdes.deserialize(v_bytes)
@@ -143,7 +144,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
             small_env, big_env, is_swapped = self._rearrage_binary_envs(left_env, right_env)
-            with small_env.begin() as left_txn, big_env.begin() as right_txn, dst_env.begin(write=True) as dst_txn:
+            with small_env.begin(db=Processor.get_default_db(small_env)) as left_txn, big_env.begin(db=Processor.get_default_db(big_env)) as right_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = left_txn.cursor()
                 for k_bytes, v1_bytes in cursor:
                     v2_bytes = right_txn.get(k_bytes)
@@ -167,10 +168,10 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         op = request.operand
         value = None
         source_db_path = Processor.get_path(op)
-        with Processor.get_environment(source_db_path) as source_env:
+        with Processor.get_environment(source_db_path) as src_env:
             result_key_bytes = None
-            with source_env.begin() as source_txn:
-                cursor = source_txn.cursor()
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn:
+                cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     v = _serdes.deserialize(v_bytes)
                     if value is None:
@@ -190,9 +191,9 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         _serdes = self._serdes
         src_db_path = Processor.get_path(op)
         rtn = self.__create_output_storage_locator(op, task_info, request.conf, False)
-        with Processor.get_environment(src_db_path) as source_env, Processor.get_environment(Processor.get_path(rtn),
+        with Processor.get_environment(src_db_path) as src_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                              create_if_missing=True) as dst_env:
-            with source_env.begin() as srce_txn, dst_env.begin(write=True) as dst_txn:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as srce_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = srce_txn.cursor()
                 v_list = []
                 k_bytes = None
@@ -216,10 +217,10 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
 
         with Processor.get_environment(Processor.get_path(rtn),
                                        create_if_missing=True) as dst_env, Processor.get_environment(
-            source_db_path) as source_env:
-            with source_env.begin() as source_txn:
-                with dst_env.begin(write=True) as dst_txn:
-                    cursor = source_txn.cursor()
+            source_db_path) as src_env:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn:
+                with dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
+                    cursor = src_txn.cursor()
                     cursor.first()
                     random_state = np.random.RandomState(seed)
                     for k, v in cursor:
@@ -238,7 +239,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         with Processor.get_environment(Processor.get_path(left_op)) as left_env, Processor.get_environment(
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
-            with left_env.begin() as left_txn, right_env.begin() as right_txn, dst_env.begin(write=True) as dst_txn:
+            with left_env.begin(db=Processor.get_default_db(left_env)) as left_txn, right_env.begin(db=Processor.get_default_db(right_env)) as right_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = left_txn.cursor()
                 for k_bytes, left_v_bytes in cursor:
                     right_v_bytes = right_txn.get(k_bytes)
@@ -266,7 +267,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
                 src_db_path) as src_env:
-            with src_env.begin() as src_txn, dst_env.begin(write=True) as dst_txn:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     k = _serdes.deserialize(k_bytes)
@@ -293,7 +294,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         with Processor.get_environment(Processor.get_path(left_op)) as left_env, Processor.get_environment(
                 Processor.get_path(right_op)) as right_env, Processor.get_environment(Processor.get_path(rtn),
                                                                                       create_if_missing=True) as dst_env:
-            with left_env.begin() as left_txn, right_env.begin() as right_txn, dst_env.begin(write=True) as dst_txn:
+            with left_env.begin(db=Processor.get_default_db(left_env)) as left_txn, right_env.begin(db=Processor.get_default_db(right_env)) as right_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 # process left op
                 left_cursor = left_txn.cursor()
                 for k_bytes, left_v_bytes in left_cursor:
@@ -330,7 +331,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         dst_db_path = Processor.get_path(rtn)
         with Processor.get_environment(dst_db_path, create_if_missing=True) as dst_env, Processor.get_environment(
                 src_db_path) as src_env:
-            with src_env.begin() as src_txn, dst_env.begin(write=True) as dst_txn:
+            with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
                 for k_bytes, v_bytes in cursor:
                     k = _serdes.deserialize(k_bytes)
@@ -365,6 +366,10 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
             path = os.sep.join([Processor.DATA_DIR, namespace, table, str(fragment)])
         return path
 
+    @staticmethod
+    def get_default_db(env):
+        return env.open_db(DEFAULT_DB)
+
     def _rearrage_binary_envs(self, left_env, right_env):
         """
 
@@ -372,13 +377,14 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         :param right_env:
         :return: small_env, big_env, is_swapped
         """
-        left_stat = left_env.stat()
-        right_stat = right_env.stat()
+        with left_env.begin(db=Processor.get_default_db(left_env)) as left_txn, right_env.begin(db=Processor.get_default_db(right_env)) as right_txn:
+            left_stat = left_txn.stat()
+            right_stat = right_txn.stat()
 
-        if left_stat['entries'] <= right_stat['entries']:
-            return left_env, right_env, False
-        else:
-            return right_env, left_env, True
+            if left_stat['entries'] <= right_stat['entries']:
+                return left_env, right_env, False
+            else:
+                return right_env, left_env, True
 
     def _run_user_binary_logic(self, func, left, right, is_swap):
         if is_swap:
@@ -392,7 +398,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
                 return src_op
 
         naming_policy = process_conf.namingPolicy
-        LOGGER.info('naming policy in processor', naming_policy)
+        LOGGER.info('naming policy in processor: {}'.format(naming_policy))
         if naming_policy == 'ITER_AWARE':
             storage_name = DELIMETER.join([src_op.namespace, src_op.name, storage_basic_pb2.StorageType.Name(src_op.type)])
             name_ba = bytearray(storage_name.encode())
@@ -441,7 +447,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dir', default=os.path.dirname(os.path.realpath(__file__)))
     args = parser.parse_args()
 
-    LOGGER.info("started at", str(datetime.now()))
+    LOGGER.info("started at {}".format(str(datetime.now())))
     if args.socket:
         serve(args.socket, args.dir)
     else:
