@@ -90,45 +90,45 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.set_schema(data_instances)
         return data_instances
 
-    def transform(self, data_instances):
-        self._abnormal_detection(data_instances)
-        self._parse_cols(data_instances)
-
-        # 1. Synchronize encryption information
-        self.__synchronize_encryption()
-
-        # 2. Prepare labels
-        data_instances = data_instances.mapValues(self.load_data)
-        label_table = data_instances.mapValues(lambda x: x.label)
-        self.set_schema(data_instances)
-
-        # 3. Transfer encrypted label
-        f = functools.partial(self.encrypt,
-                              encryptor=self.encryptor)
-        encrypted_label_table = label_table.mapValues(f)
-        encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
-        federation.remote(encrypted_label_table, name=self.transfer_variable.encrypted_label.name,
-                          tag=encrypted_label_table_id, role=consts.HOST, idx=0)
-        LOGGER.info("Sent encrypted_label_table to host for transform")
-
-        # 4. Transform locally
-        self.transform_local(data_instances, label_table=label_table, save_result=False)
-
-        # 5. Received host result and calculate iv value
-        encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
-        encrypted_bin_sum = federation.get(name=self.transfer_variable.encrypted_bin_sum.name,
-                                           tag=encrypted_bin_sum_id,
-                                           idx=0)
-
-        result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
-        host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
-        # host_results = {'host1': host_iv_attrs}
-
-        for col_name, iv_attr in host_iv_attrs.items():
-            LOGGER.info("The remote feature {} 's iv is {}".format(col_name, iv_attr.iv))
-
-        self.set_schema(data_instances)
-        return data_instances
+    # def transform2(self, data_instances):
+    #     self._abnormal_detection(data_instances)
+    #     self._parse_cols(data_instances)
+    #
+    #     # 1. Synchronize encryption information
+    #     self.__synchronize_encryption()
+    #
+    #     # 2. Prepare labels
+    #     data_instances = data_instances.mapValues(self.load_data)
+    #     label_table = data_instances.mapValues(lambda x: x.label)
+    #     self.set_schema(data_instances)
+    #
+    #     # 3. Transfer encrypted label
+    #     f = functools.partial(self.encrypt,
+    #                           encryptor=self.encryptor)
+    #     encrypted_label_table = label_table.mapValues(f)
+    #     encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
+    #     federation.remote(encrypted_label_table, name=self.transfer_variable.encrypted_label.name,
+    #                       tag=encrypted_label_table_id, role=consts.HOST, idx=0)
+    #     LOGGER.info("Sent encrypted_label_table to host for transform")
+    #
+    #     # 4. Transform locally
+    #     self.transform_local(data_instances, label_table=label_table, save_result=False)
+    #
+    #     # 5. Received host result and calculate iv value
+    #     encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
+    #     encrypted_bin_sum = federation.get(name=self.transfer_variable.encrypted_bin_sum.name,
+    #                                        tag=encrypted_bin_sum_id,
+    #                                        idx=0)
+    #
+    #     result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
+    #     host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
+    #     # host_results = {'host1': host_iv_attrs}
+    #
+    #     for col_name, iv_attr in host_iv_attrs.items():
+    #         LOGGER.info("The remote feature {} 's iv is {}".format(col_name, iv_attr.iv))
+    #
+    #     self.set_schema(data_instances)
+    #     return data_instances
 
     @staticmethod
     def encrypt(x, encryptor):

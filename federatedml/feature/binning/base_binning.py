@@ -20,7 +20,8 @@ import functools
 import math
 
 from arch.api.utils import log_utils
-from federatedml.statistic.data_overview import get_header
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -88,13 +89,19 @@ class IVAttributes(object):
         self.iv = iv_obj.iv
 
 
+class SparseBinningResult(object):
+    def __init__(self, split_points, sparse_bin_num):
+        self.split_points = split_points
+        self.sparse_bin_num = sparse_bin_num
+
+
 class Binning(object):
     """
     This is use for discrete data so that can transform data or use information for feature selection.
 
     Parameters
     ----------
-    param : FeatureBinningParam object,
+    params : FeatureBinningParam object,
             Parameters that user set.
 
     Attributes
@@ -112,10 +119,13 @@ class Binning(object):
         self.cols = []
         self.cols_dict = {}
         self.party_name = party_name
+        self.header = None
         if abnormal_list is None:
             self.abnormal_list = []
         else:
             self.abnormal_list = abnormal_list
+        self.iv_result = None
+        self.split_points = None
 
     def fit_split_points(self, data_instances):
         """
@@ -141,9 +151,16 @@ class Binning(object):
         raise NotImplementedError("Should not call this class directly")
 
     def _init_cols(self, data_instances):
-        header = get_header(data_instances)
+
+        # Already initialized
+        if len(self.cols_dict) != 0:
+            return
+
+        header = data_overview.get_header(data_instances)
+        self.header = header
         if self.cols_index == -1:
             self.cols = header
+            self.cols_index = [i for i in range(len(header))]
         else:
             cols = []
             for idx in self.cols_index:
@@ -163,7 +180,14 @@ class Binning(object):
             col_index = header.index(col)
             self.cols_dict[col] = col_index
 
-    def transform(self, data_instances, split_points=None):
+    def transform(self, data_instances, transform_cols_idx=None, transform_type='bin_nums'):
+        self._init_cols(data_instances)
+        if transform_type == 'bin_nums':
+            data_instances, _, _ = self.convert_feature_to_bin(data_instances, transform_cols_idx, self.split_points)
+
+        return data_instances
+
+    def get_data_bin(self, data_instances, split_points=None):
         """
         Apply the binning method
 
@@ -191,15 +215,91 @@ class Binning(object):
              ]
         """
         self._init_cols(data_instances)
-
+        is_sparse = data_overview.is_sparse_data(data_instances)
         if split_points is None:
             split_points = self.fit_split_points(data_instances)
 
         f = functools.partial(self.bin_data,
                               split_points=split_points,
-                              cols_dict=self.cols_dict)
+                              cols_dict=self.cols_dict,
+                              header=self.header,
+                              is_sparse=is_sparse)
         data_bin_dict = data_instances.mapValues(f)
         return data_bin_dict
+
+    def convert_feature_to_bin(self, data_instances, transform_cols_idx=None, split_points=None):
+        self._init_cols(data_instances)
+        if transform_cols_idx is None:
+            transform_cols_idx = self.cols_index
+        else:
+            for col in transform_cols_idx:
+                if col not in self.cols_index:
+                    raise RuntimeError("Binning Transform cols: {} should be fit before transform".format(col))
+
+        if split_points is None:
+            split_points = self.split_points
+
+        is_sparse = data_overview.is_sparse_data(data_instances)
+        if is_sparse:
+            f = functools.partial(self._convert_sparse_data,
+                                  transform_cols_idx=transform_cols_idx,
+                                  split_points_dict=split_points,
+                                  header=self.header)
+            new_data = data_instances.mapValues(f)
+        else:
+            f = functools.partial(self._convert_dense_data,
+                                  transform_cols_idx=transform_cols_idx,
+                                  split_points_dict=split_points,
+                                  header=self.header)
+            new_data = data_instances.mapValues(f)
+        new_data.schema = {"header": self.header}
+        bin_sparse = self.get_sparse_bin(transform_cols_idx, split_points)
+        return new_data, self.split_points, bin_sparse
+
+    @staticmethod
+    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header):
+        all_data = instances.features.get_all_data()
+        data_shape = instances.features.get_shape()
+        indice = []
+        sparse_value = []
+        for col_idx, col_value in all_data:
+            if col_idx in transform_cols_idx:
+                col_name = header[col_idx]
+                split_points = split_points_dict[col_name]
+                bin_num = Binning.get_bin_num(col_value, split_points)
+                indice.append(col_idx)
+                sparse_value.append(bin_num)
+            else:
+                indice.append(col_idx)
+                sparse_value.append(col_value)
+
+        sparse_vector = SparseVector(indice, sparse_value, data_shape)
+        instances.features = sparse_vector
+        return instances
+
+    def get_sparse_bin(self, transform_cols_idx, split_points_dict):
+        """
+        Get which bins the 0 located at for each column.
+        """
+        result = {}
+        for col_idx in transform_cols_idx:
+            col_name = self.header[col_idx]
+            split_points = split_points_dict[col_name]
+            sparse_bin_num = self.get_bin_num(0, split_points)
+            result[col_idx] = sparse_bin_num
+        return result
+
+    @staticmethod
+    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header):
+        features = instances.features
+        for col_idx, col_value in enumerate(features):
+            if col_idx in transform_cols_idx:
+                col_name = header[col_idx]
+                split_points = split_points_dict[col_name]
+                bin_num = Binning.get_bin_num(col_value, split_points)
+                features[col_idx] = bin_num
+        instances.features = features
+        return instances
 
     def cal_local_iv(self, data_instances, split_points=None, label_table=None):
         """
@@ -231,7 +331,7 @@ class Binning(object):
         if split_points is None:
             split_points = self.fit_split_points(data_instances)
 
-        data_bin_table = self.transform(data_instances, split_points)
+        data_bin_table = self.get_data_bin(data_instances, split_points)
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
         event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
@@ -246,13 +346,14 @@ class Binning(object):
         iv_attrs = self.cal_iv_woe(result_counts,
                                    self.params.adjustment_factor,
                                    split_points=split_points)
+        self.iv_result = iv_attrs
         return iv_attrs
 
     def _show_split_points(self, split_points):
         LOGGER.info('[Result][FeatureBinning][{}]split points are: {}'.format(self.party_name, split_points))
 
     @staticmethod
-    def bin_data(instance, split_points, cols_dict):
+    def bin_data(instance, split_points, cols_dict, header, is_sparse):
         """
         Apply the binning method
 
@@ -272,6 +373,9 @@ class Binning(object):
         cols_dict: dict
             Record key, value pairs where key is cols' name, and value is cols' index.
 
+        is_sparse: bool
+            Specify whether it is sparse data or not
+
         Returns
         -------
         result_bin_dict : dict.
@@ -283,19 +387,35 @@ class Binning(object):
         """
 
         result_bin_nums = {}
+
+        if is_sparse:
+            sparse_data = instance.features.get_all_data()
+            for col_idx, col_value in sparse_data:
+                col_name = header[col_idx]
+                if col_name in cols_dict:
+                    col_split_points = split_points[col_name]
+                    col_bin_num = Binning.get_bin_num(col_value, col_split_points)
+                    result_bin_nums[col_name] = col_bin_num
+            return result_bin_nums
+
+        # For dense data
         for col_name, col_index in cols_dict.items():
-            col_split_points = split_points[col_name]
+            col_split_points = split_points[col_index]
 
             value = instance.features[col_index]
-
-            col_bin_num = len(col_split_points)
-            for bin_num, split_point in enumerate(col_split_points):
-                if value < split_point:
-                    col_bin_num = bin_num
-                    break
+            col_bin_num = Binning.get_bin_num(value, col_split_points)
             result_bin_nums[col_name] = col_bin_num
-        # result_bin_nums = tuple(result_bin_nums)
+
         return result_bin_nums
+
+    @staticmethod
+    def get_bin_num(value, split_points):
+        col_bin_num = len(split_points)
+        for bin_num, split_point in enumerate(split_points):
+            if value <= split_point:
+                col_bin_num = bin_num
+                break
+        return col_bin_num
 
     @staticmethod
     def woe_1d(data_event_count, adjustment_factor, split_points):

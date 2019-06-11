@@ -27,7 +27,6 @@ from federatedml.optim import L2Updater
 from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
-from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
 
@@ -38,7 +37,6 @@ class BaseLogisticRegression(object):
     def __init__(self, logistic_params: LogisticParam):
         self.param = logistic_params
         # set params
-        LogisticParamChecker.check_param(logistic_params)
         self.alpha = logistic_params.alpha
         self.init_param_obj = logistic_params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept

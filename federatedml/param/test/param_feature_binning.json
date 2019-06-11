@@ -1,0 +1,15 @@
+{
+    "FeatureBinningParam": {
+        "process_method": "fit",
+        "method": "quantile",
+        "compress_thres": 9999,
+        "subsample_feature_rate": 1,
+        "n_iter_no_change": false,
+        "tol": 0.0001,
+        "transform_param": {
+            "transform_cols": null,
+            "transform_type": "bin_num"
+        },
+        "quantile_method": "bin_by_sample_data"
+    }
+}

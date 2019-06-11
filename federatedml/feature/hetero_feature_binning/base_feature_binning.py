@@ -26,6 +26,7 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
+from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
@@ -77,6 +78,7 @@ class BaseHeteroFeatureBinning(object):
         self.binning_result = {}  # dict of iv_attr
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
+        # super(BaseHeteroFeatureBinning, self).__init__()
 
     def _init_binning_obj(self):
         if self.bin_param.method == consts.QUANTILE:
