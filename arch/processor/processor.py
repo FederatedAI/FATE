@@ -75,7 +75,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with MDBEnv(dst_db_path, create_if_missing=True) as dst_env, \
-                MDBEnv(src_db_path, create_if_missing=False) as src_env:
+                MDBEnv(src_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
@@ -98,7 +98,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with MDBEnv(dst_db_path, create_if_missing=True) as dst_env, \
-                MDBEnv(src_db_path, create_if_missing=False) as src_env:
+                MDBEnv(src_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
@@ -122,7 +122,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with MDBEnv(dst_db_path, create_if_missing=True) as dst_env, \
-                MDBEnv(src_db_path, create_if_missing=False) as src_env:
+                MDBEnv(src_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
@@ -144,8 +144,8 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         right_op = request.right
 
         rtn = self.__create_output_storage_locator(left_op, task_info, request.conf, True)
-        with MDBEnv(Processor.get_path(left_op), create_if_missing=False) as left_env, \
-                MDBEnv(Processor.get_path(right_op), create_if_missing=False) as right_env, \
+        with MDBEnv(Processor.get_path(left_op), create_if_missing=True) as left_env, \
+                MDBEnv(Processor.get_path(right_op), create_if_missing=True) as right_env, \
                 MDBEnv(Processor.get_path(rtn), create_if_missing=True) as dst_env:
             small_env, big_env, is_swapped = self._rearrage_binary_envs(left_env, right_env)
             with small_env.begin(db=Processor.get_default_db(small_env)) as left_txn, \
@@ -174,7 +174,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         op = request.operand
         value = None
         source_db_path = Processor.get_path(op)
-        with MDBEnv(source_db_path, create_if_missing=False) as src_env:
+        with MDBEnv(source_db_path, create_if_missing=True) as src_env:
             result_key_bytes = None
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn:
                 cursor = src_txn.cursor()
@@ -197,7 +197,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         _serdes = self._serdes
         src_db_path = Processor.get_path(op)
         rtn = self.__create_output_storage_locator(op, task_info, request.conf, False)
-        with MDBEnv(src_db_path, create_if_missing=False) as src_env, \
+        with MDBEnv(src_db_path, create_if_missing=True) as src_env, \
                 MDBEnv(Processor.get_path(rtn), create_if_missing=True) as dst_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
@@ -223,7 +223,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         rtn = self.__create_output_storage_locator(op, task_info, request.conf, False)
 
         with MDBEnv(Processor.get_path(rtn), create_if_missing=True) as dst_env, \
-                MDBEnv(source_db_path, create_if_missing=False) as src_env:
+                MDBEnv(source_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn:
                 with dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                     cursor = src_txn.cursor()
@@ -242,8 +242,8 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         left_op = request.left
         right_op = request.right
         rtn = self.__create_output_storage_locator(left_op, task_info, request.conf, True)
-        with MDBEnv(Processor.get_path(left_op), create_if_missing=False) as left_env, \
-                MDBEnv(Processor.get_path(right_op), create_if_missing=False) as right_env, \
+        with MDBEnv(Processor.get_path(left_op), create_if_missing=True) as left_env, \
+                MDBEnv(Processor.get_path(right_op), create_if_missing=True) as right_env, \
                 MDBEnv(Processor.get_path(rtn), create_if_missing=True) as dst_env:
             with left_env.begin(db=Processor.get_default_db(left_env)) as left_txn, \
                     right_env.begin(db=Processor.get_default_db(right_env)) as right_txn, \
@@ -274,7 +274,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with MDBEnv(dst_db_path, create_if_missing=True) as dst_env, \
-                MDBEnv(src_db_path, create_if_missing=False) as src_env:
+                MDBEnv(src_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
@@ -300,8 +300,8 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         right_op = request.right
 
         rtn = self.__create_output_storage_locator(left_op, task_info, request.conf, True)
-        with MDBEnv(Processor.get_path(left_op), create_if_missing=False) as left_env, \
-                MDBEnv(Processor.get_path(right_op), create_if_missing=False) as right_env, \
+        with MDBEnv(Processor.get_path(left_op), create_if_missing=True) as left_env, \
+                MDBEnv(Processor.get_path(right_op), create_if_missing=True) as right_env, \
                 MDBEnv(Processor.get_path(rtn), create_if_missing=True) as dst_env:
             with left_env.begin(db=Processor.get_default_db(left_env)) as left_txn, \
                     right_env.begin(db=Processor.get_default_db(right_env)) as right_txn, \
@@ -341,7 +341,7 @@ class Processor(processor_pb2_grpc.ProcessServiceServicer):
         src_db_path = Processor.get_path(op)
         dst_db_path = Processor.get_path(rtn)
         with MDBEnv(dst_db_path, create_if_missing=True) as dst_env, \
-                MDBEnv(src_db_path, create_if_missing=False) as src_env:
+                MDBEnv(src_db_path, create_if_missing=True) as src_env:
             with src_env.begin(db=Processor.get_default_db(src_env)) as src_txn, \
                     dst_env.begin(db=Processor.get_default_db(dst_env), write=True) as dst_txn:
                 cursor = src_txn.cursor()
@@ -452,8 +452,7 @@ class MDBEnv(object):
             MDBEnv.count_dict[path] = MDBEnv.count_dict[path] + 1
 
     def __enter__(self):
-        with MDBEnv.env_lock:
-            return self.env
+        return self.env
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         with MDBEnv.env_lock:
