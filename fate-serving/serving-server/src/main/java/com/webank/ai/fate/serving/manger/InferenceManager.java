@@ -89,7 +89,7 @@ public class InferenceManager {
         }
         ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
         PipelineTask model;
-        if (StringUtils.isEmpty(modelName)) {
+        if (StringUtils.isEmpty(modelName) || StringUtils.equals(modelName, "stable")) {
             modelName = modelNamespaceData.getUsedModelName();
             model = modelNamespaceData.getUsedModel();
         } else {
@@ -109,7 +109,15 @@ public class InferenceManager {
             return inferenceResult;
         }
 
-        PreProcessingResult preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
+        PreProcessingResult preProcessingResult;
+        try{
+            preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
+        }catch (Exception ex){
+            LOGGER.error("feature data preprocessing failed", ex);
+            inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE);
+            inferenceResult.setRetmsg(ex.getMessage());
+            return inferenceResult;
+        }
         Map<String, Object> featureData = preProcessingResult.getProcessingResult();
         Map<String, Object> featureIds = preProcessingResult.getFeatureIds();
         if (featureData == null) {
@@ -131,7 +139,15 @@ public class InferenceManager {
         predictParams.put("federatedParams", federatedParams);
 
         Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
-        PostProcessingResult postProcessingResult = getPostProcessedResult(featureData, modelResult);
+        PostProcessingResult postProcessingResult;
+        try{
+            postProcessingResult = getPostProcessedResult(featureData, modelResult);
+        }catch (Exception ex){
+            LOGGER.error("model result postprocessing failed", ex);
+            inferenceResult.setRetcode(InferenceRetCode.COMPUTE_ERROR);
+            inferenceResult.setRetmsg(ex.getMessage());
+            return inferenceResult;
+        }
         inferenceResult = postProcessingResult.getProcessingResult();
         LOGGER.info("Inference successfully.");
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
@@ -168,59 +184,56 @@ public class InferenceManager {
         Map<String, Object> predictParams = new HashMap<>();
         predictParams.put("federatedParams", federatedParams);
         try {
-            Map<String, Object> featureData = getFeatureData(featureIds);
-            if (featureData == null || featureData.size() < 1) {
-                returnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
-                returnResult.setRetmsg("Can not get feature data.");
-                return returnResult;
+            ReturnResult getFeatureDataResult = getFeatureData(featureIds);
+            if (getFeatureDataResult.getRetcode() == InferenceRetCode.OK){
+                if (getFeatureDataResult.getData() == null || getFeatureDataResult.getData().size() < 1) {
+                    returnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
+                    returnResult.setRetmsg("Can not get feature data.");
+                    return returnResult;
+                }
+                Map<String, Object> result = model.predict(getFeatureDataResult.getData(), predictParams);
+                returnResult.setRetcode(InferenceRetCode.OK);
+                returnResult.setData(result);
+                logInferenceAudited(federatedParams, party, federatedRoles, returnResult, false, true);
+            }else{
+                returnResult.setRetcode(getFeatureDataResult.getRetcode());
             }
-            Map<String, Object> result = model.predict(featureData, predictParams);
-            returnResult.setRetcode(InferenceRetCode.OK);
-            returnResult.setData(result);
-            logInferenceAudited(federatedParams, party, federatedRoles, returnResult, false, true);
         } catch (Exception ex) {
-            LOGGER.info("federatedInference", ex);
+            LOGGER.info("federatedInference error:", ex);
             returnResult.setRetcode(InferenceRetCode.SYSTEM_ERROR);
             returnResult.setRetmsg(ex.getMessage());
         }
-        LOGGER.info("Inference successfully.");
+        LOGGER.info("federated inference successfully");
         return returnResult;
     }
 
     private static PreProcessingResult getPreProcessingFeatureData(Map<String, Object> originFeatureData) {
-        try {
-            String classPath = PreProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePreProcessingAdapter");
-            PreProcessing preProcessing = (PreProcessing) InferenceUtils.getClassByName(classPath);
-            return preProcessing.getResult(ObjectTransform.bean2Json(originFeatureData));
-        } catch (Exception ex) {
-            LOGGER.error("", ex);
-            return null;
-        }
+        String classPath = PreProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePreProcessingAdapter");
+        PreProcessing preProcessing = (PreProcessing) InferenceUtils.getClassByName(classPath);
+        return preProcessing.getResult(ObjectTransform.bean2Json(originFeatureData));
     }
 
     private static PostProcessingResult getPostProcessedResult(Map<String, Object> featureData, Map<String, Object> modelResult) {
-        try {
-            String classPath = PostProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePostProcessingAdapter");
-            PostProcessing postProcessing = (PostProcessing) InferenceUtils.getClassByName(classPath);
-            return postProcessing.getResult(featureData, modelResult);
-        } catch (Exception ex) {
-            LOGGER.error("", ex);
-            return null;
-        }
+        String classPath = PostProcessing.class.getPackage().getName() + "." + Configuration.getProperty("InferencePostProcessingAdapter");
+        PostProcessing postProcessing = (PostProcessing) InferenceUtils.getClassByName(classPath);
+        return postProcessing.getResult(featureData, modelResult);
     }
 
-    private static Map<String, Object> getFeatureData(Map<String, Object> featureIds) {
+    private static ReturnResult getFeatureData(Map<String, Object> featureIds) {
+        ReturnResult defaultReturnResult = new ReturnResult();
         String classPath = FeatureData.class.getPackage().getName() + "." + Configuration.getProperty("OnlineDataAccessAdapter");
         FeatureData featureData = (FeatureData) InferenceUtils.getClassByName(classPath);
         if (featureData == null) {
-            return null;
+            defaultReturnResult.setRetcode(InferenceRetCode.ADAPTER_ERROR);
+            return defaultReturnResult;
         }
         try {
             return featureData.getData(featureIds);
         } catch (Exception ex) {
-            LOGGER.error(ex);
+            defaultReturnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
+            LOGGER.error("get feature data error:", ex);
+            return defaultReturnResult;
         }
-        return null;
     }
 
     private static void logInferenceAudited(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult returnResult, boolean useCache, boolean billing, Map<String, Object> featureData) {

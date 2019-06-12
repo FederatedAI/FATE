@@ -16,8 +16,10 @@
 
 package com.webank.ai.fate.serving.adapter.dataaccess;
 
+import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.network.http.client.HttpClientPool;
 import com.webank.ai.fate.core.utils.ObjectTransform;
+import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +33,8 @@ public class DTest implements FeatureData {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> getData(Map<String, Object> featureIds) {
+    public ReturnResult getData(Map<String, Object> featureIds) {
+        ReturnResult returnResult = new ReturnResult();
         Map<String, Object> requestData = new HashMap<>();
         requestData.putAll(featureIds);
         String responseBody = HttpClientPool.post("http://127.0.0.1:1234/feature", requestData);
@@ -47,6 +50,8 @@ public class DTest implements FeatureData {
         for (int i = 1; i < features.length; i++) {
             featureData.put(features[i], i);
         }
-        return featureData;
+        returnResult.setData(featureData);
+        returnResult.setRetcode(InferenceRetCode.OK);
+        return returnResult;
     }
 }

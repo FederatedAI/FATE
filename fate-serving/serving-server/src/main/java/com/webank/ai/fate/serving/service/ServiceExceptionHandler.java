@@ -21,8 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ServiceExceptionHandler implements ServerInterceptor {
-    //private static final Logger LOGGER = LogManager.getLogger("audit");
-    private static final Logger LOGGER = LogManager.getLogger("audit");
+    private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,

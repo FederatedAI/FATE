@@ -25,7 +25,7 @@ public abstract class BaseModel {
 
     public abstract Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams);
 
-    protected Map<String, Object> getFederatedPredict(Map<String, Object> federatedParams) {
+    protected ReturnResult getFederatedPredict(Map<String, Object> federatedParams) {
         FederatedParty srcParty = (FederatedParty) federatedParams.get("local");
         FederatedRoles federatedRoles = (FederatedRoles) federatedParams.get("role");
         Map<String, Object> featureIds = (Map<String, Object>) federatedParams.get("feature_id");
@@ -37,7 +37,7 @@ public abstract class BaseModel {
         if (remoteResultFromCache != null) {
             LOGGER.info("Get remote party model inference result from cache.");
             federatedParams.put("is_cache", true);
-            return remoteResultFromCache.getData();
+            return remoteResultFromCache;
         }
 
         Map<String, Object> requestData = new HashMap<>();
@@ -52,7 +52,7 @@ public abstract class BaseModel {
         ReturnResult remoteResult = getFederatedPredictFromRemote(srcParty, dstParty, requestData);
         CacheManager.putRemoteModelInferenceResult(dstParty, federatedRoles, featureIds, remoteResult);
         LOGGER.info("Get remote party model inference result from federated request.");
-        return remoteResult.getData();
+        return remoteResult;
     }
 
     protected ReturnResult getFederatedPredictFromRemote(FederatedParty srcParty, FederatedParty dstParty, Map<String, Object> requestData) {
