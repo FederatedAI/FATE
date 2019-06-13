@@ -84,8 +84,8 @@ public class ProcessorOperator {
         startScriptPath = tempStartScript.getAbsolutePath();
         stopScriptPath = tempStopScript.getAbsolutePath();
 
-        System.out.println(startScriptPath);
-        System.out.println(stopScriptPath);
+        LOGGER.info(startScriptPath);
+        LOGGER.info(stopScriptPath);
         this.startCmdTemplate = "sh " + startScriptPath + " %d";
         this.stopCmdTemplate = "sh " + stopScriptPath + " %d";
 
@@ -100,7 +100,7 @@ public class ProcessorOperator {
         Process processor = null;
         if (runtimeUtils.isPortAvailable(port)) {
             String cmd = String.format(startCmdTemplate, port, port);
-            System.out.println(cmd);
+            LOGGER.info(cmd);
             processor = Runtime.getRuntime().exec(cmd);
         } else {
             throw new SocketException("Address already in use: " + port);
