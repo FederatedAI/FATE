@@ -31,6 +31,7 @@ import java.util.Map;
 
 public class ModelUtils {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final String modelKeySeparator = "&";
 
     public static Map<String, byte[]> readModel(String name, String namespace) {
         LOGGER.info("read model, name: {} namespace: {}", name, namespace);
@@ -49,11 +50,11 @@ public class ModelUtils {
     }
 
     public static String genModelKey(String name, String namespace) {
-        return StringUtils.join(Arrays.asList(name, namespace), "&");
+        return StringUtils.join(Arrays.asList(name, namespace), modelKeySeparator);
     }
 
     public static String[] splitModelKey(String key) {
-        return StringUtils.split(key, "-");
+        return StringUtils.split(key, modelKeySeparator);
     }
 
 

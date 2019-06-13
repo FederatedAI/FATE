@@ -77,6 +77,7 @@ public class ModelManager {
                     }
                 });
             });
+            LOGGER.info("load the model successfully");
             return returnResult;
         } catch (Exception ex) {
             LOGGER.error(ex);

@@ -36,15 +36,18 @@ def internal_server_error(e):
 def load_model():
     request_config = request.json
     _job_id = generate_job_id()
-    all_party = set()
-    for _party_ids in request_config.get('role').values():
-        all_party.update(set(_party_ids))
-    for _party_id in all_party:
-        st, msg = federated_api(job_id=_job_id,
-                                method='POST',
-                                url='/model/load/do',
-                                party_id=_party_id,
-                                json_body=request_config)
+    if request_config.get('gen_table_info', False):
+        publish_model.generate_model_info(request_config)
+    for role_name, role_partys in request_config.get("role").items():
+        if role_name == 'arbiter':
+            continue
+        for _party_id in role_partys:
+            request_config['local'] = {'role': role_name, 'party_id': _party_id}
+            st, msg = federated_api(job_id=_job_id,
+                                    method='POST',
+                                    url='/model/load/do',
+                                    party_id=_party_id,
+                                    json_body=request_config)
     return get_json_result(job_id=_job_id)
 
 
