@@ -29,7 +29,7 @@ python -m grpc_tools.protoc -Ieggroll/proto --python_out=./eggroll/api/proto --g
 
 python -m grpc_tools.protoc -Ieggroll/proto --python_out=./eggroll/api/proto --grpc_python_out=./eggroll/api/proto processor.proto
 
-python -m grpc_tools.protoc -Ieggroll/proto --python_out=./eggroll/api/proto --grpc_python_out=./eggroll/api/proto federation.proto
+python -m grpc_tools.protoc -Ieggroll/proto --python_out=./eggroll/api/proto --grpc_python_out=./eggroll/api/proto cluster-comm.proto
 
 python -m grpc_tools.protoc -Ieggroll/proto --python_out=./eggroll/api/proto --grpc_python_out=./eggroll/api/proto proxy.proto
 

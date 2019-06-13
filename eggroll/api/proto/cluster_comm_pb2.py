@@ -19,16 +19,16 @@ import storage_basic_pb2 as storage__basic__pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='cluster-comm.proto',
-  package='com.webank.ai.eggroll.api.driver.federation',
+  package='com.webank.ai.eggroll.api.driver.clustercomm',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x10\x66\x65\x64\x65ration.proto\x12+com.webank.ai.eggroll.api.driver.federation\x1a\x10\x62\x61sic-meta.proto\x1a\x13storage-basic.proto\"&\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"\xd2\x01\n\x10TransferDataDesc\x12W\n\x10transferDataType\x18\x01 \x01(\x0e\x32=.com.webank.ai.eggroll.api.driver.federation.TransferDataType\x12I\n\x0estorageLocator\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.eggroll.api.storage.StorageLocator\x12\x1a\n\x12taggedVariableName\x18\x03 \x01(\x0c\"d\n\x0cTransferConf\x12\x16\n\x0eoverallTimeout\x18\x01 \x01(\x03\x12\x1d\n\x15\x63ompletionWaitTimeout\x18\x02 \x01(\x03\x12\x1d\n\x15packetIntervalTimeout\x18\x03 \x01(\x03\"\xcb\x04\n\x0cTransferMeta\x12\x30\n\x03job\x18\x01 \x01(\x0b\x32#.com.webank.ai.eggroll.api.core.Job\x12\x0b\n\x03tag\x18\x02 \x01(\t\x12?\n\x03src\x18\x03 \x01(\x0b\x32\x32.com.webank.ai.eggroll.api.driver.federation.Party\x12?\n\x03\x64st\x18\x04 \x01(\x0b\x32\x32.com.webank.ai.eggroll.api.driver.federation.Party\x12O\n\x08\x64\x61taDesc\x18\x05 \x01(\x0b\x32=.com.webank.ai.eggroll.api.driver.federation.TransferDataDesc\x12G\n\x04type\x18\x06 \x01(\x0e\x32\x39.com.webank.ai.eggroll.api.driver.federation.TransferType\x12S\n\x0etransferStatus\x18\x07 \x01(\x0e\x32;.com.webank.ai.eggroll.api.driver.federation.TransferStatus\x12G\n\x04\x63onf\x18\x08 \x01(\x0b\x32\x39.com.webank.ai.eggroll.api.driver.federation.TransferConf\x12\x42\n\x0creturnStatus\x18\t \x01(\x0b\x32,.com.webank.ai.eggroll.api.core.ReturnStatus*m\n\x0eTransferStatus\x12\x11\n\rNOT_PROCESSED\x10\x00\x12\x10\n\x0cINITIALIZING\x10\x01\x12\x0e\n\nPROCESSING\x10\x02\x12\x0c\n\x08\x43OMPLETE\x10\x03\x12\t\n\x05\x45RROR\x10\x04\x12\r\n\tCANCELLED\x10\x05*\"\n\x0cTransferType\x12\x08\n\x04SEND\x10\x00\x12\x08\n\x04RECV\x10\x01*=\n\x10TransferDataType\x12\x11\n\rNOT_SPECIFIED\x10\x00\x12\n\n\x06\x44TABLE\x10\x01\x12\n\n\x06OBJECT\x10\x02\x32\xa2\x04\n\x15TransferSubmitService\x12|\n\x04send\x12\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x1a\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x12|\n\x04recv\x12\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x1a\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x12\x86\x01\n\x0e\x63heckStatusNow\x12\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x1a\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x12\x83\x01\n\x0b\x63heckStatus\x12\x39.com.webank.ai.eggroll.api.driver.federation.TransferMeta\x1a\x39.com.webank.ai.eggroll.api.driver.federation.TransferMetab\x06proto3')
+  serialized_pb=_b('\n\x12\x63luster-comm.proto\x12,com.webank.ai.eggroll.api.driver.clustercomm\x1a\x10\x62\x61sic-meta.proto\x1a\x13storage-basic.proto\"&\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"\xd3\x01\n\x10TransferDataDesc\x12X\n\x10transferDataType\x18\x01 \x01(\x0e\x32>.com.webank.ai.eggroll.api.driver.clustercomm.TransferDataType\x12I\n\x0estorageLocator\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.eggroll.api.storage.StorageLocator\x12\x1a\n\x12taggedVariableName\x18\x03 \x01(\x0c\"d\n\x0cTransferConf\x12\x16\n\x0eoverallTimeout\x18\x01 \x01(\x03\x12\x1d\n\x15\x63ompletionWaitTimeout\x18\x02 \x01(\x03\x12\x1d\n\x15packetIntervalTimeout\x18\x03 \x01(\x03\"\xd1\x04\n\x0cTransferMeta\x12\x30\n\x03job\x18\x01 \x01(\x0b\x32#.com.webank.ai.eggroll.api.core.Job\x12\x0b\n\x03tag\x18\x02 \x01(\t\x12@\n\x03src\x18\x03 \x01(\x0b\x32\x33.com.webank.ai.eggroll.api.driver.clustercomm.Party\x12@\n\x03\x64st\x18\x04 \x01(\x0b\x32\x33.com.webank.ai.eggroll.api.driver.clustercomm.Party\x12P\n\x08\x64\x61taDesc\x18\x05 \x01(\x0b\x32>.com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc\x12H\n\x04type\x18\x06 \x01(\x0e\x32:.com.webank.ai.eggroll.api.driver.clustercomm.TransferType\x12T\n\x0etransferStatus\x18\x07 \x01(\x0e\x32<.com.webank.ai.eggroll.api.driver.clustercomm.TransferStatus\x12H\n\x04\x63onf\x18\x08 \x01(\x0b\x32:.com.webank.ai.eggroll.api.driver.clustercomm.TransferConf\x12\x42\n\x0creturnStatus\x18\t \x01(\x0b\x32,.com.webank.ai.eggroll.api.core.ReturnStatus*m\n\x0eTransferStatus\x12\x11\n\rNOT_PROCESSED\x10\x00\x12\x10\n\x0cINITIALIZING\x10\x01\x12\x0e\n\nPROCESSING\x10\x02\x12\x0c\n\x08\x43OMPLETE\x10\x03\x12\t\n\x05\x45RROR\x10\x04\x12\r\n\tCANCELLED\x10\x05*\"\n\x0cTransferType\x12\x08\n\x04SEND\x10\x00\x12\x08\n\x04RECV\x10\x01*=\n\x10TransferDataType\x12\x11\n\rNOT_SPECIFIED\x10\x00\x12\n\n\x06\x44TABLE\x10\x01\x12\n\n\x06OBJECT\x10\x02\x32\xaa\x04\n\x15TransferSubmitService\x12~\n\x04send\x12:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x1a:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x12~\n\x04recv\x12:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x1a:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x12\x88\x01\n\x0e\x63heckStatusNow\x12:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x1a:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x12\x85\x01\n\x0b\x63heckStatus\x12:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta\x1a:.com.webank.ai.eggroll.api.driver.clustercomm.TransferMetab\x06proto3')
   ,
   dependencies=[basic__meta__pb2.DESCRIPTOR,storage__basic__pb2.DESCRIPTOR,])
 
 _TRANSFERSTATUS = _descriptor.EnumDescriptor(
   name='TransferStatus',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferStatus',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferStatus',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -59,15 +59,15 @@ _TRANSFERSTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1049,
-  serialized_end=1158,
+  serialized_start=1059,
+  serialized_end=1168,
 )
 _sym_db.RegisterEnumDescriptor(_TRANSFERSTATUS)
 
 TransferStatus = enum_type_wrapper.EnumTypeWrapper(_TRANSFERSTATUS)
 _TRANSFERTYPE = _descriptor.EnumDescriptor(
   name='TransferType',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferType',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -82,15 +82,15 @@ _TRANSFERTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1160,
-  serialized_end=1194,
+  serialized_start=1170,
+  serialized_end=1204,
 )
 _sym_db.RegisterEnumDescriptor(_TRANSFERTYPE)
 
 TransferType = enum_type_wrapper.EnumTypeWrapper(_TRANSFERTYPE)
 _TRANSFERDATATYPE = _descriptor.EnumDescriptor(
   name='TransferDataType',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferDataType',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferDataType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -109,8 +109,8 @@ _TRANSFERDATATYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=1196,
-  serialized_end=1257,
+  serialized_start=1206,
+  serialized_end=1267,
 )
 _sym_db.RegisterEnumDescriptor(_TRANSFERDATATYPE)
 
@@ -131,20 +131,20 @@ OBJECT = 2
 
 _PARTY = _descriptor.Descriptor(
   name='Party',
-  full_name='com.webank.ai.eggroll.api.driver.federation.Party',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.Party',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='partyId', full_name='com.webank.ai.eggroll.api.driver.federation.Party.partyId', index=0,
+      name='partyId', full_name='com.webank.ai.eggroll.api.driver.clustercomm.Party.partyId', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='name', full_name='com.webank.ai.eggroll.api.driver.federation.Party.name', index=1,
+      name='name', full_name='com.webank.ai.eggroll.api.driver.clustercomm.Party.name', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -162,34 +162,34 @@ _PARTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=104,
-  serialized_end=142,
+  serialized_start=107,
+  serialized_end=145,
 )
 
 
 _TRANSFERDATADESC = _descriptor.Descriptor(
   name='TransferDataDesc',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferDataDesc',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='transferDataType', full_name='com.webank.ai.eggroll.api.driver.federation.TransferDataDesc.transferDataType', index=0,
+      name='transferDataType', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc.transferDataType', index=0,
       number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='storageLocator', full_name='com.webank.ai.eggroll.api.driver.federation.TransferDataDesc.storageLocator', index=1,
+      name='storageLocator', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc.storageLocator', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='taggedVariableName', full_name='com.webank.ai.eggroll.api.driver.federation.TransferDataDesc.taggedVariableName', index=2,
+      name='taggedVariableName', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc.taggedVariableName', index=2,
       number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
@@ -207,34 +207,34 @@ _TRANSFERDATADESC = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=145,
-  serialized_end=355,
+  serialized_start=148,
+  serialized_end=359,
 )
 
 
 _TRANSFERCONF = _descriptor.Descriptor(
   name='TransferConf',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferConf',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferConf',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='overallTimeout', full_name='com.webank.ai.eggroll.api.driver.federation.TransferConf.overallTimeout', index=0,
+      name='overallTimeout', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferConf.overallTimeout', index=0,
       number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='completionWaitTimeout', full_name='com.webank.ai.eggroll.api.driver.federation.TransferConf.completionWaitTimeout', index=1,
+      name='completionWaitTimeout', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferConf.completionWaitTimeout', index=1,
       number=2, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='packetIntervalTimeout', full_name='com.webank.ai.eggroll.api.driver.federation.TransferConf.packetIntervalTimeout', index=2,
+      name='packetIntervalTimeout', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferConf.packetIntervalTimeout', index=2,
       number=3, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -252,76 +252,76 @@ _TRANSFERCONF = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=357,
-  serialized_end=457,
+  serialized_start=361,
+  serialized_end=461,
 )
 
 
 _TRANSFERMETA = _descriptor.Descriptor(
   name='TransferMeta',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='job', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.job', index=0,
+      name='job', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.job', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='tag', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.tag', index=1,
+      name='tag', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.tag', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='src', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.src', index=2,
+      name='src', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.src', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='dst', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.dst', index=3,
+      name='dst', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.dst', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='dataDesc', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.dataDesc', index=4,
+      name='dataDesc', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.dataDesc', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='type', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.type', index=5,
+      name='type', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.type', index=5,
       number=6, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='transferStatus', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.transferStatus', index=6,
+      name='transferStatus', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.transferStatus', index=6,
       number=7, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='conf', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.conf', index=7,
+      name='conf', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.conf', index=7,
       number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='returnStatus', full_name='com.webank.ai.eggroll.api.driver.federation.TransferMeta.returnStatus', index=8,
+      name='returnStatus', full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta.returnStatus', index=8,
       number=9, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -339,8 +339,8 @@ _TRANSFERMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=460,
-  serialized_end=1047,
+  serialized_start=464,
+  serialized_end=1057,
 )
 
 _TRANSFERDATADESC.fields_by_name['transferDataType'].enum_type = _TRANSFERDATATYPE
@@ -364,29 +364,29 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Party = _reflection.GeneratedProtocolMessageType('Party', (_message.Message,), dict(
   DESCRIPTOR = _PARTY,
-  __module__ = 'federation_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.federation.Party)
+  __module__ = 'cluster_comm_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.clustercomm.Party)
   ))
 _sym_db.RegisterMessage(Party)
 
 TransferDataDesc = _reflection.GeneratedProtocolMessageType('TransferDataDesc', (_message.Message,), dict(
   DESCRIPTOR = _TRANSFERDATADESC,
-  __module__ = 'federation_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.federation.TransferDataDesc)
+  __module__ = 'cluster_comm_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.clustercomm.TransferDataDesc)
   ))
 _sym_db.RegisterMessage(TransferDataDesc)
 
 TransferConf = _reflection.GeneratedProtocolMessageType('TransferConf', (_message.Message,), dict(
   DESCRIPTOR = _TRANSFERCONF,
-  __module__ = 'federation_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.federation.TransferConf)
+  __module__ = 'cluster_comm_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.clustercomm.TransferConf)
   ))
 _sym_db.RegisterMessage(TransferConf)
 
 TransferMeta = _reflection.GeneratedProtocolMessageType('TransferMeta', (_message.Message,), dict(
   DESCRIPTOR = _TRANSFERMETA,
-  __module__ = 'federation_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.federation.TransferMeta)
+  __module__ = 'cluster_comm_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.eggroll.api.driver.clustercomm.TransferMeta)
   ))
 _sym_db.RegisterMessage(TransferMeta)
 
@@ -394,16 +394,16 @@ _sym_db.RegisterMessage(TransferMeta)
 
 _TRANSFERSUBMITSERVICE = _descriptor.ServiceDescriptor(
   name='TransferSubmitService',
-  full_name='com.webank.ai.eggroll.api.driver.federation.TransferSubmitService',
+  full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferSubmitService',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=1260,
-  serialized_end=1806,
+  serialized_start=1270,
+  serialized_end=1824,
   methods=[
   _descriptor.MethodDescriptor(
     name='send',
-    full_name='com.webank.ai.eggroll.api.driver.federation.TransferSubmitService.send',
+    full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferSubmitService.send',
     index=0,
     containing_service=None,
     input_type=_TRANSFERMETA,
@@ -412,7 +412,7 @@ _TRANSFERSUBMITSERVICE = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='recv',
-    full_name='com.webank.ai.eggroll.api.driver.federation.TransferSubmitService.recv',
+    full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferSubmitService.recv',
     index=1,
     containing_service=None,
     input_type=_TRANSFERMETA,
@@ -421,7 +421,7 @@ _TRANSFERSUBMITSERVICE = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='checkStatusNow',
-    full_name='com.webank.ai.eggroll.api.driver.federation.TransferSubmitService.checkStatusNow',
+    full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferSubmitService.checkStatusNow',
     index=2,
     containing_service=None,
     input_type=_TRANSFERMETA,
@@ -430,7 +430,7 @@ _TRANSFERSUBMITSERVICE = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='checkStatus',
-    full_name='com.webank.ai.eggroll.api.driver.federation.TransferSubmitService.checkStatus',
+    full_name='com.webank.ai.eggroll.api.driver.clustercomm.TransferSubmitService.checkStatus',
     index=3,
     containing_service=None,
     input_type=_TRANSFERMETA,
