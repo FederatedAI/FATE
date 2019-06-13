@@ -26,7 +26,7 @@ class WorkMode(IntEnum):
 class RuntimeInstance(object):
     EGGROLL = None
     MODE = None
-    FEDERATION = None
+    CLUSTERCOMM = None
 
 
 class StoreType(Enum):

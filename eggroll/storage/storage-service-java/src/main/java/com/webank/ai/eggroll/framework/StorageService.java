@@ -16,7 +16,7 @@
 
 package com.webank.ai.eggroll.framework;
 
-import com.webank.ai.eggroll.core.server.BaseFateServer;
+import com.webank.ai.eggroll.core.server.BaseEggRollServer;
 import com.webank.ai.eggroll.framework.storage.service.manager.LMDBStoreManager;
 import com.webank.ai.eggroll.framework.storage.service.server.LMDBServicer;
 import io.grpc.Server;
@@ -26,7 +26,7 @@ import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class StorageService extends BaseFateServer {
+public class StorageService extends BaseEggRollServer {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void main(String[] args) throws Exception {

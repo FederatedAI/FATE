@@ -47,7 +47,7 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: Namin
         from eggroll.api.cluster import simple_roll
         simple_roll.init(job_id)
         RuntimeInstance.EGGROLL = simple_roll.EggRoll.get_instance()
-    RuntimeInstance.EGGROLL.table("__federation__", job_id, partition=10)
+    RuntimeInstance.EGGROLL.table("__clustercomm__", job_id, partition=10)
 
 
 def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False, in_place_computing=False):

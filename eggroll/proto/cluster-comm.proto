@@ -21,7 +21,7 @@ import "storage-basic.proto";
 
 package com.webank.ai.eggroll.api.driver.clustercomm;
 
-// federation learning participant
+// cluster communication participant
 message Party {
     string partyId = 1;
     string name = 2;

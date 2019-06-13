@@ -45,18 +45,18 @@ public class TestStorageAmplification {
     private int port = 7778;
     private String namespace = "storage_test_namespace";
     private String name = "storage_test_100m";
-    private String federationTableName = "__federation__";
+    private String clusterCommTableName = "__clustercomm__";
     private String jobid1 = "jobid1";
 
     public TestStorageAmplification() {
         this.store = new RemoteKeyValueStore(StoreInfo.builder()
                 .type(Stores.LMDB.name())
-                //.nameSpace(federationTableName)
+                //.nameSpace(clusterCommTableName)
                 .nameSpace(namespace)
                 //.nameSpace(jobid1)
                 .tableName(name)
                 //.tableName(name + "_recv")
-                //.tableName(federationTableName)
+                //.tableName(clusterCommTableName)
                 .fragment(0)
                 .build());
         //this.type = Stores.LMDB;

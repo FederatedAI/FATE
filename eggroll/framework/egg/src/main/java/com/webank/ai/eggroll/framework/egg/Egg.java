@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import static com.webank.ai.eggroll.core.server.BaseFateServer.parseArgs;
+import static com.webank.ai.eggroll.core.server.BaseEggRollServer.parseArgs;
 
 
 public class Egg {

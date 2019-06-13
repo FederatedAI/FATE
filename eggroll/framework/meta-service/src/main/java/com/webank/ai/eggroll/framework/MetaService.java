@@ -17,7 +17,7 @@
 package com.webank.ai.eggroll.framework;
 
 import com.webank.ai.eggroll.core.factory.DefaultGrpcServerFactory;
-import com.webank.ai.eggroll.core.server.BaseFateServer;
+import com.webank.ai.eggroll.core.server.BaseEggRollServer;
 import com.webank.ai.eggroll.core.server.DefaultServerConf;
 import com.webank.ai.eggroll.framework.meta.service.api.grpc.server.ClusterMetaServiceImpl;
 import com.webank.ai.eggroll.framework.meta.service.api.grpc.server.StorageMetaServiceImpl;
@@ -26,7 +26,7 @@ import org.apache.commons.cli.CommandLine;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class MetaService extends BaseFateServer {
+public class MetaService extends BaseEggRollServer {
     public static void main(String[] args) throws Exception {
         String confFilePath = null;
         CommandLine cmd = parseArgs(args);
