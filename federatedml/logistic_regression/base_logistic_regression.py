@@ -29,6 +29,7 @@ from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
+from google.protobuf import json_format
 
 LOGGER = log_utils.getLogger()
 
@@ -199,6 +200,10 @@ class BaseLogisticRegression(object):
                                  proto_buffer=param_protobuf_obj,
                                  name=name,
                                  namespace=namespace)
+
+        from google.protobuf import json_format
+        json_result = json_format.MessageToJson(param_protobuf_obj)
+        LOGGER.debug("json_result: {}".format(json_result))
         return [(meta_buffer_type, buffer_type)]
 
     def load_model(self, name, namespace):

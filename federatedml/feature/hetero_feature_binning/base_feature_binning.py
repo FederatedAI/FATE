@@ -16,22 +16,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
-from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
+from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.param_exact import ParamExtract
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
-from federatedml.model_base import ModelBase
+from federatedml.feature.binning.base_binning import IVAttributes
 
 LOGGER = log_utils.getLogger()
 
 
-class BaseHeteroFeatureBinning(object):
+class BaseHeteroFeatureBinning(ModelBase):
     """
     Do binning method through guest and host
 
@@ -64,11 +64,9 @@ class BaseHeteroFeatureBinning(object):
 
     """
 
-    def __init__(self, params):
-        self.bin_param = params
-
+    def __init__(self):
+        super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.cols_index = params.cols
         self.cols = None
         self.cols_dict = {}
         self.binning_obj = None
@@ -78,44 +76,40 @@ class BaseHeteroFeatureBinning(object):
         self.binning_result = {}  # dict of iv_attr
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
-        # super(BaseHeteroFeatureBinning, self).__init__()
+        self.output_data = None
+
+    def _init_runtime_parameters(self, component_parameters):
+        param_extracter = ParamExtract()
+        params = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        self.model_param = params
+        self.cols_index = params.cols
 
     def _init_binning_obj(self):
-        if self.bin_param.method == consts.QUANTILE:
-            self.binning_obj = QuantileBinning(self.bin_param, self.party_name)
-        elif self.bin_param.method == consts.BUCKET:
-            self.binning_obj = BucketBinning(self.bin_param, self.party_name)
+        if self.model_param.method == consts.QUANTILE:
+            self.binning_obj = QuantileBinning(self.model_param, self.party_name)
+        elif self.model_param.method == consts.BUCKET:
+            self.binning_obj = BucketBinning(self.model_param, self.party_name)
         else:
             # self.binning_obj = QuantileBinning(self.bin_param)
-            raise ValueError("Binning method: {} is not supported yet".format(self.bin_param.method))
+            raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
 
-    def _save_meta(self, name, namespace):
+    def _get_meta(self):
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
-            method=self.bin_param.method,
-            compress_thres=self.bin_param.compress_thres,
-            head_size=self.bin_param.head_size,
-            error=self.bin_param.error,
-            bin_num=self.bin_param.bin_num,
+            method=self.model_param.method,
+            compress_thres=self.model_param.compress_thres,
+            head_size=self.model_param.head_size,
+            error=self.model_param.error,
+            bin_num=self.model_param.bin_num,
             cols=self.cols,
-            adjustment_factor=self.bin_param.adjustment_factor,
-            local_only=self.bin_param.local_only)
-        buffer_type = "HeteroFeatureBinning{}.meta".format(self.party_name)
+            adjustment_factor=self.model_param.adjustment_factor,
+            local_only=self.model_param.local_only)
+        return meta_protobuf_obj
 
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
+    def _get_param(self):
 
-    def save_model(self, name, namespace, binning_result=None, host_results=None):
+        binning_result = self.binning_result
 
-        if binning_result is None:
-            binning_result = self.binning_result
-
-        if host_results is None:
-            host_results = self.host_results
-
-        meta_buffer_type = self._save_meta(name, namespace)
+        host_results = self.host_results
 
         iv_attrs = {}
         for col_name, iv_attr in binning_result.items():
@@ -137,26 +131,12 @@ class BaseHeteroFeatureBinning(object):
         result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
                                                                    host_results=final_host_results)
 
-        param_buffer_type = "HeteroFeatureBinning{}.param".format(self.party_name)
+        return result_obj
 
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
+    def load_model(self, meta_obj, param_obj):
+        binning_result_obj = dict(param_obj.binning_result.binning_result)
+        host_params = dict(param_obj.host_results)
 
-        return [(meta_buffer_type, param_buffer_type)]
-
-    def load_model(self, name, namespace):
-
-        result_obj = feature_binning_param_pb2.FeatureBinningParam()
-        return_code = model_manager.read_model(buffer_type="HeteroFeatureBinning{}.param".format(self.party_name),
-                                               proto_buffer=result_obj,
-                                               name=name,
-                                               namespace=namespace)
-        binning_result_obj = dict(result_obj.binning_result.binning_result)
-        host_params = dict(result_obj.host_results)
-        # LOGGER.debug("Party name is :{}".format(self.party_name))
-        # LOGGER.debug('Loading model, binning_result_obj is : {}'.format(binning_result_obj))
         self.binning_result = {}
         self.host_results = {}
         self.cols = []
@@ -173,7 +153,22 @@ class BaseHeteroFeatureBinning(object):
                 iv_attr.reconstruct(iv_attr_obj)
                 host_result_obj[col_name] = iv_attr
             self.host_results[host_name] = host_result_obj
-        return return_code
+
+    def save_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            "model": {
+                "FeatureBinning": {
+                    "BinningMeta": meta_obj,
+                    "BinningParam": param_obj
+                }
+            }
+        }
+        return result
+
+    def save_data(self):
+        pass
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid

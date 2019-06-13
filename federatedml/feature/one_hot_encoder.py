@@ -217,6 +217,10 @@ class OneHotEncoder(object):
                                  name=name,
                                  namespace=namespace)
 
+        from google.protobuf import json_format
+        json_result = json_format.MessageToJson(result_obj)
+        LOGGER.debug("json_result: {}".format(json_result))
+
         return [(meta_buffer_type, param_buffer_type)]
 
     def load_model(self, name, namespace):

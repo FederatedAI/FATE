@@ -19,10 +19,11 @@ import math
 import sys
 
 from arch.api.utils import log_utils
-from federatedml.statistic.data_overview import get_header
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.param.param import FeatureBinningParam
+from federatedml.feature.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
+from federatedml.param.param import FeatureBinningParam
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -83,22 +84,48 @@ class SummaryStatistics(object):
 
 
 class MultivariateStatisticalSummary(object):
-    def __init__(self, data_instances, cols, abnormal_list=None):
-        self.finish_fit = False
-        self.summary_statistics = []
+    """
+
+    """
+
+    def __init__(self, data_instances, cols_index=-1, abnormal_list=None):
+        self.finish_fit_statics = False     # Use for static data
+        self.finish_fit_summaries = False   # Use for quantile data
+        self.summary_statistics = {}
+        self.quantile_summary_dict = {}
+        self.cols_dict = {}
         self.medians = None
         self.data_instances = data_instances
-
+        self.cols_index = cols_index
         if abnormal_list is None:
             self.abnormal_list = []
         else:
             self.abnormal_list = abnormal_list
+        self._init_cols(data_instances)
 
-        header = get_header(data_instances)
+    def _init_cols(self, data_instances):
 
-        if cols == -1:
+        # Already initialized
+        if len(self.cols_dict) != 0:
+            return
+
+        header = data_overview.get_header(data_instances)
+        self.header = header
+        if self.cols_index == -1:
             self.cols = header
+            self.cols_index = [i for i in range(len(header))]
         else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
             self.cols = cols
 
         self.cols_dict = {}
@@ -114,9 +141,23 @@ class MultivariateStatisticalSummary(object):
         partition_cal = functools.partial(self.static_in_partition,
                                           cols_dict=self.cols_dict,
                                           abnormal_list=self.abnormal_list)
-        summary_statistic_list = self.data_instances.mapPartitions(partition_cal)
-        self.summary_statistics = summary_statistic_list.reduce(self.aggregate_statics)
-        self.finish_fit = True
+        summary_statistic_dict = self.data_instances.mapPartitions(partition_cal)
+        self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
+        self.finish_fit_statics = True
+
+    def _static_quantile_summaries(self):
+        """
+        Static summaries so that can query a specific quantile point
+        """
+        if self.finish_fit_summaries is True:
+            return
+
+        partition_cal = functools.partial(self.static_summaries_in_partition,
+                                          cols_dict=self.cols_dict,
+                                          abnormal_list=self.abnormal_list)
+        quantile_summary_dict = self.data_instances.mapPartitions(partition_cal)
+        self.quantile_summary_dict = quantile_summary_dict.reduce(self.aggregate_statics)
+        self.finish_fit_summaries = True
 
     @staticmethod
     def static_in_partition(data_instances, cols_dict, abnormal_list):
@@ -155,6 +196,44 @@ class MultivariateStatisticalSummary(object):
                 stat_obj.add_value(value)
 
         return summary_statistic_dict
+
+    @staticmethod
+    def static_summaries_in_partition(data_instances, cols_dict, abnormal_list):
+        """
+        Statics sums, sum_square, max and min value through one traversal
+
+        Parameters
+        ----------
+        data_instances : DTable
+            The input data
+
+        cols_dict : dict
+            Specify which column(s) need to apply statistic.
+
+        abnormal_list: list
+            Specify which values are not permitted.
+
+        Returns
+        -------
+        Dict of SummaryStatistics object
+
+        """
+        summary_dict = {}
+        for col_name in cols_dict:
+            summary_dict[col_name] = QuantileSummaries(abnormal_list=abnormal_list)
+
+        for k, instances in data_instances:
+            if isinstance(instances, Instance):
+                features = instances.features
+            else:
+                features = instances
+
+            for col_name, col_index in cols_dict.items():
+                value = features[col_index]
+                summary_obj = summary_dict[col_name]
+                summary_obj.insert(value)
+
+        return summary_dict
 
     @staticmethod
     def aggregate_statics(s_dict1, s_dict2):
@@ -205,6 +284,41 @@ class MultivariateStatisticalSummary(object):
 
         return medians
 
+    def get_quantile_point(self, quantile, cols_dict=None):
+        """
+        Return the specific quantile point value
+
+        Parameters
+        ----------
+        quantile : float, 0 <= quantile <= 1
+            Specify which column(s) need to apply statistic.
+
+        cols_dict : dict
+            Specify which column(s) need to apply statistic.
+
+        Returns
+        -------
+        return a dict of result quantile points.
+        eg.
+        quantile_point = {"x1": 3, "x2": 5... }
+        """
+        quantile_points = {}
+
+        if cols_dict is None:
+            cols_dict = self.cols_dict
+
+        self._static_quantile_summaries()
+
+        for col_name in cols_dict:
+            if col_name not in self.quantile_summary_dict:
+                LOGGER.warning("The column {}, has not set in selection parameters."
+                               "Quantile point query is not available".format(col_name))
+                continue
+            summary_obj = self.quantile_summary_dict[col_name]
+            quantile_point = summary_obj.query(quantile)
+            quantile_points[col_name] = quantile_point
+        return quantile_points
+
     def _get_quantile_median(self):
         cols_index = self._get_cols_index()
         bin_param = FeatureBinningParam(bin_num=2, cols=cols_index)
@@ -250,7 +364,7 @@ class MultivariateStatisticalSummary(object):
         -------
         return a list of result result. The order is the same as cols.
         """
-        if not self.finish_fit:
+        if not self.finish_fit_statics:
             self._static_sums()
 
         if cols_dict is None:

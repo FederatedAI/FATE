@@ -18,6 +18,7 @@
 
 from federatedml.feature.binning.base_binning import Binning
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.statistic import data_overview
 
 
 class BucketBinning(Binning):
@@ -52,6 +53,9 @@ class BucketBinning(Binning):
                             ...]                         # Other features
 
         """
+        is_sparse = data_overview.is_sparse_data(data_instances)
+        if is_sparse:
+            raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
         self._init_cols(data_instances)
 
         statistics = MultivariateStatisticalSummary(data_instances, self.cols, abnormal_list=self.abnormal_list)

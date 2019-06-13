@@ -328,8 +328,20 @@ class Binning(object):
         """
         self._init_cols(data_instances)
 
-        if split_points is None:
+        if split_points is None and self.split_points is None:
             split_points = self.fit_split_points(data_instances)
+        elif split_points is None:
+            split_points = self.split_points
+
+        is_binary_data = data_overview.is_binary_labels(data_instances)
+        if not is_binary_data:
+            iv_attrs = {}
+            for col_name, split_point in split_points:
+                iv_result = IVAttributes(woe_array=[], iv_array=[], event_count_array=[],
+                                         non_event_count_array=[], split_points=split_point,
+                                         event_rate_array=[], non_event_rate_array=[])
+                iv_attrs[col_name] = iv_result
+            return iv_attrs
 
         data_bin_table = self.get_data_bin(data_instances, split_points)
         if label_table is None:

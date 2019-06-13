@@ -28,8 +28,8 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
-    def __init__(self, params: FeatureBinningParam):
-        super(HeteroFeatureBinningHost, self).__init__(params)
+    def __init__(self):
+        super(HeteroFeatureBinningHost, self).__init__()
 
         self.encryptor = PaillierEncrypt()
         self.iv_attrs = []

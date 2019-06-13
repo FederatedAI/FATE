@@ -79,6 +79,9 @@ def is_empty_feature(data_instances):
 
 def is_sparse_data(data_instance):
     first_data = data_instance.first()
+    if type(first_data[1]).__name__ == 'ndarray':
+        return False
+
     data_feature = first_data[1].features
     if type(data_feature).__name__ == "ndarray":
         return False

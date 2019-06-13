@@ -22,13 +22,14 @@ from federatedml.feature.hetero_feature_binning.base_feature_binning import Base
 from federatedml.param.param import FeatureBinningParam
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
-    def __init__(self, params: FeatureBinningParam):
-        super(HeteroFeatureBinningGuest, self).__init__(params)
+    def __init__(self):
+        super(HeteroFeatureBinningGuest, self).__init__()
 
         self.encryptor = PaillierEncrypt()
         self.encryptor.generate_key()
@@ -39,10 +40,18 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def fit(self, data_instances):
         """
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
-        the specific metric value for specific columns.
+        the specific metric value for specific columns. Currently, iv is support for binary labeled data only.
         """
         self._abnormal_detection(data_instances)
         self._parse_cols(data_instances)
+
+        self.binning_obj.fit_split_points(data_instances)
+        is_binary_data = data_overview.is_binary_labels(data_instances)
+
+        if not is_binary_data:
+            LOGGER.warning("Iv is not supported for Multiple-label data. Return split points only.")
+            data_instances = self.fit_local(data_instances)
+            return data_instances
 
         # 1. Synchronize encryption information
         self.__synchronize_encryption()
@@ -78,13 +87,13 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Get encrypted_bin_sum from host")
 
         result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
-        host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.bin_param.adjustment_factor)
+        host_iv_attrs = self.binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
 
         # Support one host only in this version. Multiple host will be supported in the future.
         self.host_results[consts.HOST] = host_iv_attrs
 
         for cols_name, iv_attr in host_iv_attrs.items():
-            display_result = iv_attr.display_result(self.bin_param.display_result)
+            display_result = iv_attr.display_result(self.model_param.display_result)
             LOGGER.info("[Result][FeatureBinning][Host] feature {} 's result is : {}".format(cols_name, display_result))
 
         self.set_schema(data_instances)
@@ -129,6 +138,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     #
     #     self.set_schema(data_instances)
     #     return data_instances
+    def transform(self, data_instances):
+        return data_instances
 
     @staticmethod
     def encrypt(x, encryptor):
@@ -195,3 +206,23 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         if data_instance.label != 1:
             data_instance.label = 0
         return data_instance
+
+    def run(self, component_parameters={}, args={}):
+        super(HeteroFeatureBinningGuest, self).run(component_parameters, args)
+        if self.model_param.process_method == 'fit':
+            data_instances = args.get('data').get('train_data')
+            data_out = self.fit(data_instances)
+
+        elif self.model_param.process_method == 'transform':
+
+
+            self.load_model()
+            data_instances = args.get('data').get('eval_data')
+            data_out = self.transform(data_instances)
+
+        else:
+            data_instances = args.get('data').get('train_data')
+            data_instances = self.fit(data_instances)
+            data_out = self.transform(data_instances)
+
+        self.output_data = data_out
