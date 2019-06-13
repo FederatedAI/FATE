@@ -28,9 +28,7 @@ public class HeteroLRGuest extends HeteroLR {
             LOGGER.info("host score:{}", hostScore);
             score += hostScore;
         } catch (Exception ex) {
-            LOGGER.error(ex.getStackTrace());
-            ex.printStackTrace();
-            LOGGER.error(ex);
+            LOGGER.error("get host predict failed:", ex);
         }
 
         double prob = sigmod(score);

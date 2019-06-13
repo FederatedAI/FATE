@@ -68,6 +68,7 @@ public class InferenceManager {
                 });
                 ReturnResult startInferenceJobResult = new ReturnResult();
                 startInferenceJobResult.setRetcode(InferenceRetCode.OK);
+                startInferenceJobResult.setCaseid(inferenceRequest.getCaseid());
                 return startInferenceJobResult;
             default:
                 ReturnResult systemErrorReturnResult = new ReturnResult();
@@ -78,6 +79,7 @@ public class InferenceManager {
 
     public static ReturnResult runInference(InferenceRequest inferenceRequest) {
         ReturnResult inferenceResult = new ReturnResult();
+        inferenceResult.setCaseid(inferenceRequest.getCaseid());
         String modelName = inferenceRequest.getModelVersion();
         String modelNamespace = inferenceRequest.getModelId();
         if (StringUtils.isEmpty(modelNamespace) && inferenceRequest.haveAppId()) {
@@ -89,7 +91,7 @@ public class InferenceManager {
         }
         ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
         PipelineTask model;
-        if (StringUtils.isEmpty(modelName) || StringUtils.equals(modelName, "stable")) {
+        if (StringUtils.isEmpty(modelName)) {
             modelName = modelNamespaceData.getUsedModelName();
             model = modelNamespaceData.getUsedModel();
         } else {
@@ -110,9 +112,9 @@ public class InferenceManager {
         }
 
         PreProcessingResult preProcessingResult;
-        try{
+        try {
             preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("feature data preprocessing failed", ex);
             inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE);
             inferenceResult.setRetmsg(ex.getMessage());
@@ -139,16 +141,18 @@ public class InferenceManager {
         predictParams.put("federatedParams", federatedParams);
 
         Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
+        LOGGER.info(modelResult);
         PostProcessingResult postProcessingResult;
-        try{
+        try {
             postProcessingResult = getPostProcessedResult(featureData, modelResult);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("model result postprocessing failed", ex);
             inferenceResult.setRetcode(InferenceRetCode.COMPUTE_ERROR);
             inferenceResult.setRetmsg(ex.getMessage());
             return inferenceResult;
         }
         inferenceResult = postProcessingResult.getProcessingResult();
+        inferenceResult.setCaseid(inferenceRequest.getCaseid());
         LOGGER.info("Inference successfully.");
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
         boolean billing = true;
@@ -185,7 +189,7 @@ public class InferenceManager {
         predictParams.put("federatedParams", federatedParams);
         try {
             ReturnResult getFeatureDataResult = getFeatureData(featureIds);
-            if (getFeatureDataResult.getRetcode() == InferenceRetCode.OK){
+            if (getFeatureDataResult.getRetcode() == InferenceRetCode.OK) {
                 if (getFeatureDataResult.getData() == null || getFeatureDataResult.getData().size() < 1) {
                     returnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
                     returnResult.setRetmsg("Can not get feature data.");
@@ -195,7 +199,7 @@ public class InferenceManager {
                 returnResult.setRetcode(InferenceRetCode.OK);
                 returnResult.setData(result);
                 logInferenceAudited(federatedParams, party, federatedRoles, returnResult, false, true);
-            }else{
+            } else {
                 returnResult.setRetcode(getFeatureDataResult.getRetcode());
             }
         } catch (Exception ex) {
@@ -203,6 +207,7 @@ public class InferenceManager {
             returnResult.setRetcode(InferenceRetCode.SYSTEM_ERROR);
             returnResult.setRetmsg(ex.getMessage());
         }
+        LOGGER.info(returnResult.getData());
         LOGGER.info("federated inference successfully");
         return returnResult;
     }

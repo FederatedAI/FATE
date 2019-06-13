@@ -61,7 +61,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
             if (inferenceRequest != null){
                 returnResult = InferenceManager.inference(inferenceRequest, actionType);
                 if (returnResult.getRetcode() != InferenceRetCode.OK){
-                    LOGGER.warn("inference failed: \n{}", req.getBody().toStringUtf8());
+                    LOGGER.warn("inference {} failed: \n{}", actionType, req.getBody().toStringUtf8());
                 }
             }else{
                 returnResult = new ReturnResult();
