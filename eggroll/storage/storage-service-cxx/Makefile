@@ -51,23 +51,24 @@ FILES=$(foreach dir,$(DIR),$(wildcard $(dir)/*.c))
 
 SRCS = $(wildcard *.cc)
 OBJS = $(patsubst %.c,%.o,$(FILES))
-VERSION = 0.2
+VERSION = 0.3
 
 vpath %.proto $(PROTOS_PATH)
 vpath %.cc ./src
 vpath %.cc ./gen
+vpath %.cc ./third_party/lmdb-safe
 vpath %.cc .
 
 all: system-check $(OBJS) $(TARGET)
 
-$(TARGET): storage.pb.o storage.grpc.pb.o ExceptionHandler.o StoreInfo.o LMDBStore.o LMDBServicer.o $(TARGET).o
+$(TARGET): lmdb-safe.o storage.pb.o storage.grpc.pb.o ExceptionHandler.o StoreInfo.o LMDBStore.o LMDBServicer.o $(TARGET).o
 	-mv *.pb.cc src
 	$(CXX) -o $@-$(VERSION) $^ $(LDFLAGS) $(INCLUDES)
 	-ln -sf $@-$(VERSION) $@
 
 .PRECIOUS: %.grpc.pb.cc
 %.grpc.pb.cc: %.proto
-	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
+	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN) $<
 
 .PRECIOUS: %.pb.cc
 %.pb.cc: %.proto

@@ -19,6 +19,8 @@ package com.webank.ai.fate.eggroll.egg.node.sandbox;
 import com.webank.ai.fate.core.server.ServerConf;
 import com.webank.ai.fate.core.utils.RuntimeUtils;
 import org.apache.commons.io.output.FileWriterWithEncoding;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,12 +50,13 @@ public class ProcessorOperator {
     private String processLogDir;
     private volatile boolean inited;
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private static final String startCmdScriptTemplate = "#!/bin/bash;source %s/bin/activate;export PYTHONPATH=$PYTHONPATH:%s;python %s -p $1 -d %s >> %s/processor-$1.log 2>&1 &";
     private static final String stopCmdScriptTemplate = "#!/bin/bash;kill -9 $(lsof -t -i:$1)";
     private static final String checkStatusCmdScriptTemplate = "#!/bin/bash;ps aux | grep processor.py | grep %s | wc -l";
 
-    public void init() throws IOException {
-
+    public synchronized void init() throws IOException {
         Properties properties = serverConf.getProperties();
         String venv = properties.getProperty("processor.venv");
         String dataDir = properties.getProperty("data.dir");
@@ -110,10 +113,12 @@ public class ProcessorOperator {
         if (!inited) {
             init();
         }
+
+        LOGGER.info("[EGG][PROCESSOROPERATOR] killing: {}", port);
         boolean result = false;
         if (!runtimeUtils.isPortAvailable(port)) {
             String cmd = String.format(stopCmdTemplate, port);
-            System.out.println(cmd);
+            LOGGER.info(cmd);
             Process process = Runtime.getRuntime().exec(cmd);
 
             int returnCode = process.waitFor();

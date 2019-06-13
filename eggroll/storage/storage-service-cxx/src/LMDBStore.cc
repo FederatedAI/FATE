@@ -23,21 +23,15 @@ LMDBStore::LMDBStore() {
 }
 
 LMDBStore::LMDBStore(const LMDBStore& other) {
-    this->dbDir = other.dbDir;
+    this->_dbDir = other._dbDir;
     this->storeInfo = other.storeInfo;
 }
 
 LMDBStore::~LMDBStore() {
-    std::exception_ptr eptr;
-    try {
-        this->env.close();
-    } catch (...) {
-        eptr = std::current_exception();
-    }
-    handle_eptr(eptr, __FILE__, __LINE__, this->toString());
+    LOG(INFO) << "[LMDBStore::~LMDBStore] dbDir: " << _dbDir << ", desctructor use count: " << _env.use_count() << endl;
 }
 
-bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
+bool LMDBStore::init(string dataDir, StoreInfo& storeInfo) {
     std::stringstream ss;
     string delimiter = "/";
     bool result = true;
@@ -48,67 +42,75 @@ bool LMDBStore::init(string dataDir, StoreInfo storeInfo) {
             storeType = LMDB;
         }
 
+        cout << storeInfo.toString() << endl;
+
         ss << dataDir
            << delimiter << storeType
            << delimiter << storeInfo.getNameSpace()
            << delimiter << storeInfo.getTableName()
            << delimiter << storeInfo.getFragment() << delimiter;
 
-        ss >> this->dbDir;
+        ss >> this->_dbDir;
 
-        cout << "dbDir: " << dbDir << endl;
+        cout << "[LMDBStore::init] dbDir: " << _dbDir << endl;
+        LOG(INFO) << "[LMDBStore::init] dbDir: " << _dbDir << endl;
 
-        boost::filesystem::path dst = this->dbDir;
+        boost::filesystem::path dst = this->_dbDir;
         boost::filesystem::create_directories(dst);
 
-        cout << "ready to open" << endl;
+        cout << "[LMDBStore::init] ready to open: " << _dbDir << endl;
 
-        this->env.set_max_dbs(1).set_max_readers(256).set_mapsize(1UL * 1024UL * 1024UL * 1024UL);
+//        this->env.set_max_dbs(1).set_max_readers(256).set_mapsize(1UL * 1024UL * 1024UL * 1024UL);
 
-        cout << "env set" << endl;
-        this->env.open(dbDir.c_str(), 0, 0644);
+        cout << "[LMDBStore::init] env set: " << _dbDir << endl;
+//        this->env.open(dbDir.c_str(), 0, 0644);
+
+        this->storeInfo = storeInfo;
+        this->_env = getMDBEnv(_dbDir.data(), 0, 0644);
+        this->_dbi = this->_env->openDB("main", MDB_CREATE);
+        LOG(INFO) << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
+        cout << "[LMDBStore::init] inited. dbdir: " << _dbDir << ", use_count: " << _env.use_count() << endl;
     } catch (...) {
         eptr = std::current_exception();
         result = false;
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
 
-    cout << "inited" << endl;
     return result;
 }
 
 void LMDBStore::put(const Operand *operand) {
-    lmdb::txn wtxn = lmdb::txn::begin(this->env);
-
+    LOG(INFO) << "[LMDBStore::put] dbDir: " << _dbDir << endl;
+    MDBRWTransaction rwtxn = _env->getRWTransaction();
     std::exception_ptr eptr;
     try {
-        lmdb::dbi dbi = lmdb::dbi::open(wtxn, nullptr);
-        dbi.put(wtxn, operand->key(), operand->value());
+        rwtxn.put(_dbi, operand->key(), operand->value());
+        rwtxn.commit();
     } catch (...) {
         eptr = std::current_exception();
+        rwtxn.abort();
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-
-    wtxn.commit();
-    wtxn.abort();
 }
 
-void LMDBStore::putAll(ServerReader<Operand> *reader) {
-    lmdb::txn wtxn = lmdb::txn::begin(this->env);
+long LMDBStore::putAll(ServerReader<Operand> *reader) {
+    LOG(INFO) << "[LMDBStore::putAll] dbDir: " << _dbDir << endl;
+    MDBRWTransaction rwtxn = _env->getRWTransaction();
+    long i = 0;
 
     std::exception_ptr eptr;
     try {
-        lmdb::dbi dbi = lmdb::dbi::open(wtxn, nullptr);
         Operand operand;
-        long i = 0;
 
         long countInterval = 100000;
         long countRemaining = countInterval;
 
         while (reader->Read(&operand)) {
-            dbi.put(wtxn, operand.key(), operand.value());
-/*            cout << "key: " << operand.key().c_str() << ", size: " << operand.key().size() << ", strlen: " << strlen(operand.key().c_str())
-                << "; value: " << operand.value().c_str() << ", size: " << operand.value().size() << ", strlen: " << strlen(operand.key().c_str()) << endl;*/
+            rwtxn.put(_dbi, operand.key(), operand.value());
+            /*
+            cout << "key: " << operand.key().c_str() << ", size: " << operand.key().size() << ", strlen: " << strlen(operand.key().c_str())
+                << "; value: " << operand.value().c_str() << ", size: " << operand.value().size() << ", strlen: " << strlen(operand.key().c_str()) << endl;
+                */
             ++i;
 
             if (--countRemaining == 0) {
@@ -117,85 +119,94 @@ void LMDBStore::putAll(ServerReader<Operand> *reader) {
             }
         }
 
-        cout << "total putAll: " << i << endl;
-        LOG(INFO) << "total putAll: " << i << endl;
+        rwtxn.commit();
+        cout << "[LMDBStore::putAll] dbDir: " << _dbDir << ", total putAll: " << i << endl;
+        LOG(INFO) << "[LMDBStore::putAll] dbDir: " << _dbDir << ", total putAll: " << i << endl;
     } catch (...) {
         eptr = std::current_exception();
+        rwtxn.abort();
     }
-
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-
-    //iterateAll();
-    wtxn.commit();
-    wtxn.abort();
+    return i;
 }
 
 string_view LMDBStore::putIfAbsent(const Operand *operand) {
-    string_view oldValue;
+    LOG(INFO) << "[LMDBStore::putIfAbsent] dbDir: " << _dbDir << endl;
+    MDBRWTransaction rwtxn = _env->getRWTransaction();
+    string_view result;
     std::exception_ptr eptr;
     try {
-        oldValue = get(operand);
-        if (oldValue.empty()) {
-            if (operand->value().empty()) {
-                delOne(operand);
-            } else {
-                put(operand);
-            }
+        string_view key = operand->key();
+        int rc = rwtxn.get(_dbi, key, result);
+        if (MDB_NOTFOUND == rc) {
+            rwtxn.put(_dbi, key, operand->value());
+            result = operand->value();
         }
+        cout << "putIfAbsent. rc: " << rc << ", result: " << result << endl;
+        rwtxn.commit();
     } catch (...) {
         eptr = std::current_exception();
+        rwtxn.abort();
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
 
-    return oldValue;
+    return result;
 }
 
 string_view LMDBStore::delOne(const Operand *operand) {
-    lmdb::txn wtxn = lmdb::txn::begin(this->env);
+    LOG(INFO) << "[LMDBStore::delOne] dbDir: " << _dbDir << endl;
+    MDBRWTransaction rwtxn = _env->getRWTransaction();
     string_view oldValue;
 
     std::exception_ptr eptr;
     try {
-        lmdb::dbi dbi = lmdb::dbi::open(wtxn, nullptr);
-        oldValue = get(operand);
-        lmdb::val key{operand->key()};
+        string_view key = operand->key();
+        int rc = rwtxn.get(_dbi, key, oldValue);
 
         cout << "----------" << endl
              << "key to delete: " << key.data() << endl;
 
-        bool result = dbi.del(wtxn, key);
-        cout << "after delete: result: " << result << endl;
+        if (MDB_NOTFOUND != rc) {
+            rwtxn.del(_dbi, key);
+        }
+        rwtxn.commit();
+        cout << "after delete: result: " << oldValue << endl;
     } catch (...) {
         eptr = std::current_exception();
+        rwtxn.abort();
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-
-    wtxn.commit();
-    wtxn.abort();
 
     return oldValue;
 }
 
 bool LMDBStore::destroy() {
+    LOG(INFO) << "[LMDBStore::destroy] dbDir: " << _dbDir << endl;
     bool result = false;
     std::exception_ptr eptr;
     size_t n;
     try {
-        n = std::count(dbDir.begin(), dbDir.end(), '/');
+        int env_use_count = _env.use_count();
+        if (env_use_count > 1) {
+            LOG(INFO) << "unable to destroy " << _dbDir << ". env use_count: " << env_use_count << endl;
+            return false;
+        }
+        n = std::count(_dbDir.begin(), _dbDir.end(), '/');
         std::stringstream ss;
         string tableName;
         ss << this->storeInfo.getTableName();
         ss >> tableName;
-        size_t tableNamePos = dbDir.rfind(tableName);
-        cout << "dbDir: " << this->dbDir
+        size_t tableNamePos = _dbDir.rfind(tableName);
+        cout << "dbDir: " << _dbDir
         << ", storeInfo: " << this->storeInfo.toString()
         << ", tableName: " << tableName
         << ", tableNamePos: " << tableNamePos
-        << ", size: " << dbDir.size() << endl;
+        << ", size: " << _dbDir.size() << endl;
 
-        if (n >= 4 && dbDir.substr(0, 4) != "////") {
+        if (n >= 4 && _dbDir.substr(0, 4) != "////") {
             //string dirToRemove = dbDir.substr(0, tableNamePos);
-            string dirToRemove = dbDir + "/../..";
+            string dirToRemove = _dbDir.substr(0, tableNamePos) + tableName;
+            LOG(INFO) << "[LMDBStore::destroy] dirToRemove: " << dirToRemove << endl;
             cout << "dirToRemove: " << dirToRemove << endl;
             if (boost::filesystem::exists(dirToRemove) && boost::filesystem::is_directory(dirToRemove)) {
                 boost::filesystem::remove_all(dirToRemove);
@@ -213,14 +224,16 @@ bool LMDBStore::destroy() {
 }
 
 long LMDBStore::count() {
+    LOG(INFO) << "[LMDBStore::count] dbDir: " << _dbDir << endl;
     long result;
+    MDBROTransaction rotxn = _env->getROTransaction();
     std::exception_ptr eptr;
     try {
         MDB_stat stat;
-        lmdb::env_stat(this->env, &stat);
+        mdb_stat(rotxn, _dbi, &stat);
         result = stat.ms_entries;
 
-        //iterateAll();
+        // iterateAll();
         cout << "count: " << result << endl;
         LOG(INFO) << "count: " << result << endl;
     } catch (...) {
@@ -232,36 +245,29 @@ long LMDBStore::count() {
 }
 
 string_view LMDBStore::get(const Operand *operand) {
-    lmdb::txn rtxn = lmdb::txn::begin(this->env, nullptr, MDB_RDONLY);
-    std::exception_ptr eptr;
+    LOG(INFO) << "[LMDBStore::get] dbDir: " << _dbDir << endl;
     string_view result;
+    MDBROTransaction rotxn = _env->getROTransaction();
+
+    std::exception_ptr eptr;
     try {
-        lmdb::dbi dbi = lmdb::dbi::open(rtxn, nullptr);
-
-        lmdb::val key{operand->key()};
-        lmdb::val value;
-
-        bool found = dbi.get(rtxn, key, value);
-        cout << "found: " << found << endl;
-        if (found) {
-            result = value.to_string_view();
-        }
+        int found = rotxn.get(_dbi, operand->key(), result);
+        cout << "found: " << found << ", result: " << result << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
-
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-//    iterateAll();
-    rtxn.abort();
 
+    // iterateAll();
     return result;
 }
 
 // (a, b]
 void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
-    lmdb::txn rtxn = lmdb::txn::begin(this->env, nullptr, MDB_RDONLY);
-    lmdb::dbi dbi = lmdb::dbi::open(rtxn, nullptr);
-    lmdb::cursor cursor = lmdb::cursor::open(rtxn, dbi);
+    LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << endl;
+    MDBROTransaction rotxn = _env->getROTransaction();
+    MDBROCursor rocursor = rotxn.getCursor(_dbi);
+    int count = 0;
 
     std::exception_ptr eptr;
     try {
@@ -272,8 +278,8 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
         long threshold = range->minchunksize() > 0 ? range->minchunksize() : PAYLOAD_THREASHOLD;
         cout << "start: " << start << " (" << start.size() << "), end: " << end << ", threshold: " << threshold << endl;
 
-        lmdb::val key{start};
-        lmdb::val value;
+        MDBOutVal key, val;
+        string_view keyView, valView;
 
         bool locateStart = true;
         if (start.empty()) {
@@ -286,61 +292,56 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
             checkEnd = false;
         }
 
-        int count = 0;
+        int rc;
         Operand operand;
-        string_view curKey;
-        size_t keySize;
-        size_t valueSize;
 
+        // first element
         if (locateStart) {
-            bool isStartFound = cursor.get(key, value, MDB_SET_RANGE);
-            string_view actualStart(key.to_string_view());
+            // key == actual start returned by the call
+            rc = rocursor.lower_bound(start, key, val);
+            keyView = key.get<string_view>();
+            valView = val.get<string_view>();
 
             cout << "start: " << start <<
-                 ", actual start: " << actualStart
-                 << ", isStartFound: " << isStartFound << endl;
+                 ", actual start: " << keyView
+                 << ", isStartFound: " << (start == keyView);
+            cout << endl;
 
             // first element
-            if (actualStart != start) {
-                keySize = key.size();
-                curKey = string_view(key.data(), keySize);
-                if (checkEnd && curKey.compare(end) > 0) {
+            if (keyView != start) {
+                if (checkEnd && keyView.compare(end) > 0) {
                     return;
                 }
-                operand.set_key(key.data(), keySize);
-
-                valueSize = value.size();
-                operand.set_value(value.data(), valueSize);
+                operand.set_key(keyView.data(), keyView.size());
+                operand.set_value(valView.data(), valView.size());
                 writer->Write(operand);
                 ++count;
 
-                bytesCount += keySize + valueSize;
+                bytesCount += keyView.size() + valView.size();
 
 /*                cout << "key size: " << key.size() << ", key data: " << curKey << ", value size: " << value.size()
                      << ", value data: " << value.to_string_view() << endl;*/
             }
         }
 
-        cout << "located start: " << key.to_string() << endl;
+        cout << "located start: " << keyView << endl;
 
         // 2 to last
-        while (cursor.get(key, value, MDB_NEXT)) {
+        while (0 == rocursor.next(key, val)) {
             if (bytesCount >= threshold) {
                 break;
             }
 
-            keySize = key.size();
-            curKey = string_view(key.data(), keySize);
+            keyView = key.get<string_view>();
+            valView = val.get<string_view>();
 
-            if (checkEnd && curKey.compare(end) > 0) {
-                cout << "breaking. curKey: " << curKey << ", end: " << end << endl;
+            if (checkEnd && keyView.compare(end) > 0) {
+                cout << "breaking. curKey: " << keyView << ", end: " << end << endl;
                 break;
             }
 
-            operand.set_key(key.data(), keySize);
-
-            valueSize = value.size();
-            operand.set_value(value.data(), valueSize);
+            operand.set_key(keyView.data(), keyView.size());
+            operand.set_value(valView.data(), valView.size());
 
             writer->Write(operand);
 
@@ -348,43 +349,51 @@ void LMDBStore::iterate(const Range *range, ServerWriter<Operand> *writer) {
                  << ", value data: " << value.to_string() << endl;*/
 
             ++count;
-            bytesCount += keySize + valueSize;
+            bytesCount += keyView.size() + valView.size();
         }
-        cout << "total iterated: " << count << endl;
-        LOG(INFO) << "total iterated: " << count << endl;
+        cout << "[LMDBStore::iterate] dbDir: " << _dbDir << ", total iterated: " << count << endl;
+        LOG(INFO) << "[LMDBStore::iterate] dbDir: " << _dbDir << ", total iterated: " << count << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
 
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-
-    cursor.close();
-    rtxn.abort();
 }
 
 void LMDBStore::iterateAll() {
-    lmdb::txn rtxn = lmdb::txn::begin(this->env, nullptr, MDB_RDONLY);
-    lmdb::dbi dbi = lmdb::dbi::open(rtxn, nullptr);
-    lmdb::cursor cursor = lmdb::cursor::open(rtxn, dbi);
+    MDBROTransaction rotxn = _env->getROTransaction();
+    MDBROCursor rocursor = rotxn.getCursor(_dbi);
+
+    cout << "------ iterateAll ------" << endl;
 
     std::exception_ptr eptr;
     try {
-        std::string key, value;
 
-        int total = 0;
+        MDBOutVal key, val;
 
-        while (cursor.get(key, value, MDB_NEXT)) {
-            std::printf("key: '%s' (%lu), value: '%s' (%lu)\n", key.c_str(), key.size(), value.c_str(), value.size());
-            ++total;
+        int count = 0;
+
+          while(!rocursor.get(key, val, count ? MDB_NEXT : MDB_FIRST)) {
+            cout << key.get<string>();
+            cout<<": " << val.get<string>();
+            cout << "\n";
+            ++count;
+
+          }
+
+        cout << endl << "------ iterateAll total: " << count << " ------" << endl;
+
+        int rc;
+        if (!(rc = rocursor.find("it", key, val))) {
+            string_view keyResult(key.get<string_view>());
+            cout << keyResult << ": " << val.get<string_view>() << endl;
+        } else {
+            cout << "rc: " << rc << endl;
         }
-        cout << "iterateAll total: " << total << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
     handle_eptr(eptr, __FILE__, __LINE__, this->toString());
-
-    cursor.close();
-    rtxn.abort();
 }
 
 string LMDBStore::toString() {
@@ -392,7 +401,7 @@ string LMDBStore::toString() {
     std::exception_ptr eptr;
     try {
         ss << "{storeInfo: " << this->storeInfo.toString()
-           << ", dbDir: " << this->dbDir
+           << ", dbDir: " << this->_dbDir
            << "}";
     } catch (...) {
         eptr = std::current_exception();
