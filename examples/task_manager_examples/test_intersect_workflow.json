@@ -8,8 +8,8 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "data_input_table": ["06749a0264c611e9a529525400a9eda4"],
-                "data_input_namespace": ["50000_guest_9999_10000-9999-10000_id_library_input"],
+                "data_input_table": ["7b5640568ea011e98170525400fea046"],
+                "data_input_namespace": ["guest#9999#arbiter-10000#guest-9999#host-10000#train_input"],
                 "intersect_data_output_table": ["guest_intersect_output_table_name"],
                 "intersect_data_output_namespace": ["guest_intersect_output_namespace"]
             },
@@ -20,8 +20,8 @@
         },
         "host": {
             "WorkFlowParam": {
-                "data_input_table": ["b4b21ba264c711e9bbcb525400cf391f"],
-                "data_input_namespace": ["50000_host_10000_10000-9999-10000_train_input"],
+                "data_input_table": ["f2e66b228ea111e9bc265254001a8f32"],
+                "data_input_namespace": ["host#10000#arbiter-10000#guest-9999#host-10000#train_input"],
                 "intersect_data_output_table": ["host_intersect_output_table_name"],
                 "intersect_data_output_namespace": ["host_intersect_output_namespace"]
             },
@@ -36,7 +36,7 @@
             "work_mode": 1
         },
         "IntersectParam": {
-            "intersect_method": "raw",
+            "intersect_method": "rsa",
             "is_send_intersect_ids": true,
             "join_role": "guest",
             "with_encode": true

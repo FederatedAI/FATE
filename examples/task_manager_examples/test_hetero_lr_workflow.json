@@ -9,17 +9,17 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_hetero_guest"],
-                "train_input_namespace": ["hetero_lr"],
-                "data_input_table": ["breast_hetero_guest"],
+                "train_input_table": ["7b5640568ea011e98170525400fea046"],
+                "train_input_namespace": ["guest#9999#arbiter-10000#guest-9999#host-10000#train_input"],
+                "data_input_table": ["breast_hetero_guest_20190614"],
                 "data_input_namespace": ["hetero_lr"],
-                "model_table": ["hetero_lr_guest_model"],
+                "model_table": ["hetero_lr_guest_model_20190614"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_hetero_guest"],
-                "predict_input_namespace": ["hetero_lr"],
-                "predict_output_table": ["hetero_lr_guest_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
+                "predict_input_table": ["7b5640568ea011e98170525400fea046"],
+                "predict_input_namespace": ["guest#9999#arbiter-10000#guest-9999#host-10000#train_input"],
+                "predict_output_table": ["hetero_lr_guest_predict_20190614"],
                 "predict_output_namespace": ["hetero_lr"],
-                "evaluation_output_table": ["breast_hetero_guest"],
+                "evaluation_output_table": ["breast_hetero_guest_20190614"],
                 "evaluation_output_namespace": ["hetero_lr"]
             },
             "DataIOParam":{
@@ -34,17 +34,17 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_hetero_host"],
-                "train_input_namespace": ["hetero_lr"],
-                "data_input_table": ["breast_hetero_host"],
+                "train_input_table": ["f2e66b228ea111e9bc265254001a8f32"],
+                "train_input_namespace": ["host#10000#arbiter-10000#guest-9999#host-10000#train_input"],
+                "data_input_table": ["breast_hetero_host_20190614"],
                 "data_input_namespace": ["hetero_lr"],
-                "model_table": ["hetero_lr_host_model"],
+                "model_table": ["hetero_lr_host_model_20190614"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_hetero_host"],
-                "predict_input_namespace": ["hetero_lr"],
-                "predict_output_table": ["hetero_lr_host_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
+                "predict_input_table": ["f2e66b228ea111e9bc265254001a8f32"],
+                "predict_input_namespace": ["host#10000#arbiter-10000#guest-9999#host-10000#train_input"],
+                "predict_output_table": ["hetero_lr_host_predict_20190614"],
                 "predict_output_namespace": ["hetero_lr"],
-                "evaluation_output_table": ["some_evaluate_output_table_name_hetero_logistic_regression_example_standalone_20190402211541"],
+                "evaluation_output_table": ["some_evaluate_output_20190614"],
                 "evaluation_output_namespace": ["hetero_lr"]
             },
              "DataIOParam":{
