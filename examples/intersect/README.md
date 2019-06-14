@@ -28,7 +28,7 @@ In role host:
 After load data, you can get "table_name" and "namespace", this will be used next step.
 
 #### run task
-Then, you need to edit a config file for role guest. A sample config file like **test_intersect_workflow.json** has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
+Then, you need to edit a config file for role guest. A sample config file like *test_intersect_workflow.json* has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
 
 
 You should re-write the configure of  role guest "data_input_table" using "table_name" you have got in guest's load data, and "data_input_namespace" using "namespace" you have got. The same as the configure of  role host using "table_name" and "namespace" you got after host load data.
@@ -41,7 +41,7 @@ After finish editing, you can run the following command to start the task:
 After running this command, a jobid will be generated automatically for you. After intersection, you can not get the intersection results directly because we think print the intersection results like the number of intersection in log file may lead to data leakage. If you want to get the intersection reults, run this:
 > python get_intersect_output.py
 
-However, before you run this, you should configure the "intersect_data_output_table" and "intersect_data_output_namespace" which you can get form **test_intersect_workflow.json**
+However, before you run this, you should configure the "intersect_data_output_table" and "intersect_data_output_namespace" which you can get form *test_intersect_workflow.json*
 
 ### 3. Check log files
 
@@ -52,7 +52,7 @@ However, before you run this, you should configure the "intersect_data_output_ta
 There are a couple of more functions that task-manager has provided. Please check [here](../task_manager_examples/README.md)
 
 ### 5. Some error you may encounter
-1. While run standalone version, you may get info **"task failed, check nohup in current path"**. please check the nohup files to see if there exists any errors.
-2. While run cluster version, if you find not {jobid} fold in  **your_install_path/logs**, please check  **your_install_path/jobs/{jobid}/upload/std.log** or **your_install_path/jobs/{jobid}/guest/std.log** to find if there exist any error
+1. While run standalone version, you may get info *"task failed, check nohup in current path"*. please check the nohup files to see if there exists any errors.
+2. While run cluster version, if you find not {jobid} fold in  *your_install_path/logs*, please check  *your_install_path/jobs/{jobid}/upload/std.log* or *your_install_path/jobs/{jobid}/guest/std.log* to find if there exist any error
 3. Check logs/{jobid}/status_tracer_decorator.log file if there exist any error during these task
  
