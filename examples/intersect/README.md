@@ -12,7 +12,7 @@ In standalone mode, role host, and guest are invoked. You can start them through
 
 After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: your_install_path/logs/intersect_example_standalone_{timestamp}
 
-###2. Run Cluster Version
+### 2. Run Cluster Version
 In cluster version, you can use task-manager which is a tool help you start all the parties easily.
 > cd your_install_path/examples/task_manager_examples/
 
