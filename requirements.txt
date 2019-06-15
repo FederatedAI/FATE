@@ -74,7 +74,6 @@ opencv-python==3.2.0.7
 openpyxl==2.5.8
 pandas==0.23.4
 pandocfilters==1.4.2
-parso==0.3.1
 patsy==0.5.0
 peewee==3.9.3
 pexpect==4.6.0
