@@ -65,8 +65,7 @@ Formally, you can follow steps to run jobs in cluster mode.
     
     jobid will also print out in screen once the command is executed. 
     
-    The task is "cross_validation", if you want to run "train", please have a look at example in 
-    examples/hetero_logistci_regression
+    The task is "cross_validation", if you want to run "train", please have a look at example in examples/hetero_logistci_regression
     
 ### 3. Check log files.
 
