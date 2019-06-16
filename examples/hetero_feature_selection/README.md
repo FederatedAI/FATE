@@ -14,9 +14,9 @@ After doing these two steps, you can wait for the result or go to check some log
 
 
 ### 2. Run Cluster Version
-In cluster version, you can use task-manager which is a tool help you start all the parties easily. The task manager client is located at : /arch/task_manager/task_manager_client.py. We have already copy one in this folder.
+In cluster version, you can use task-manager which is a tool help you start all the parties easily. The task manager client is located at : /arch/task_manager/task_manager_client.py.
 
-1. Before starting a cluster version task, you need to load data among all the data-providers. To do that, you need to edit a load_file config. A sample file named "load_file.json" has been provided in this folder. Then run the following command:
+1. Before starting a cluster version task, you need to load data among all the data-providers. To do that, you need to edit a load_file config. A sample file named "tm_load_file.json" has been provided in the conf folder. Then run the following command:
 
 >  python task_manager_client.py -f upload -c load_file.json
 
