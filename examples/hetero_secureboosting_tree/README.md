@@ -67,6 +67,43 @@ Formally, you can follow steps to run jobs in cluster mode.
     
     The task is "cross_validation", if you want to run "train", please have a look at example in examples/hetero_logistci_regression
     
+Please pay attention that if you want to run other datasets, please execute the following commands and run step 1 and 2 again, otherwise you may use the same table_name again which might raise some errors during running.
+   
+    guest: modify conf/load_file_tm_guest.json
+       
+        "file": $guest_dataset_path
+        "table_name": $new_guest_data_table
+       
+    host: modify conf/load_file_tm_host.json
+       
+        "file": $host_dataset_path
+        "table_name": $new_host_data_table
+     
+    host sync table name to guest, then guest modify conf/hetero_secureboost_tm_submit_conf.json
+    guest should modify data_input_table of guest WorkflowParam and host WorkflowParam.
+        
+        ...
+        "role_parameters": {
+            ...
+            "guest": {
+                "WorkFlowParam": {
+                    "data_input_table": [$new_guest_data_table],
+                    ...
+                 } 
+                 ...     
+            },
+            ...
+            "host": {
+                "WorkFlowParam": {
+                    "data_input_table": [$new_host_data_table],
+                    ...
+                }
+                ...
+            }
+        }
+        ...
+          
+    
 ### 3. Check log files.
 
 Now you can check out the log in the following path: $FATE_install_path/logs/$jobid
