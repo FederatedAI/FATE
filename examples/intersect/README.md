@@ -6,24 +6,24 @@ We supply standalone and cluster mode of running examples for Intersection algor
 
 In standalone mode, role host, and guest are invoked. You can start them through following steps:
 
-> cd your_install_path/examples/intersect/
+> cd $FATE_install_path/examples/intersect/
 
 > sh run_intersect_standalone.sh 
 
-After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: your_install_path/logs/intersect_example_standalone_{timestamp}
+After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: $FATE_install_path/logs/intersect_example_standalone_${timestamp}
 
 ### 2. Run Cluster Version
 In cluster version, you can use task-manager which is a tool help you start all the parties easily.
-> cd your_install_path/examples/task_manager_examples/
+> cd $FATE_install_path/examples/task_manager_examples/
 
 #### load data
 Before starting a cluster version task, you need to load data among all the data-providers.
 
 In role guest:
->  python task_manager_client.py -f upload -c load_file/load_file_intersect_guest.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_intersect_guest.json
 
 In role host:
->  python task_manager_client.py -f upload -c load_file/load_file_intersect_host.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_intersect_host.json
 
 After load data, you can get "table_name" and "namespace", this will be used next step.
 
@@ -36,16 +36,16 @@ You should re-write the configure of  role guest "data_input_table" using "table
 
 After finish editing, you can run the following command to start the task:
 
-> python task_manager_client.py -f workflow -c test_intersect_workflow.json
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c test_intersect_workflow.json
 
-After running this command, a jobid will be generated automatically for you. After intersection, you can not get the intersection results directly because we think print the intersection results like the number of intersection in log file may lead to data leakage. If you want to get the intersection reults, run this:
+After running this command, a jobid will be generated automatically for you. After intersection, you can not get the intersection results directly because we think print the intersection results like the number of intersection in log file may lead to data leakage. If you want to get the intersection results, run this:
 > python get_intersect_output.py
 
 However, before you run this, you should configure the "intersect_data_output_table" and "intersect_data_output_namespace" which you can get form *test_intersect_workflow.json*
 
 ### 3. Check log files
 
-4. Now you can check out the log in the following path: your_install_path/logs/{your jobid}.
+4. Now you can check out the log in the following path: $FATE_install_path/logs/${your jobid}.
 
 ### 4. More functions of task-manager
 
@@ -53,6 +53,6 @@ There are a couple of more functions that task-manager has provided. Please chec
 
 ### 5. Some error you may encounter
 1. While run standalone version, you may get info *"task failed, check nohup in current path"*. please check the nohup files to see if there exists any errors.
-2. While run cluster version, if you find not {jobid} fold in  *your_install_path/logs*, please check  *your_install_path/jobs/{jobid}/upload/std.log* or *your_install_path/jobs/{jobid}/guest/std.log* to find if there exist any error
-3. Check logs/{jobid}/status_tracer_decorator.log file if there exist any error during these task
+2. While run cluster version, if you find not {jobid} fold in  *$FATE_install_path//logs*, please check  *$FATE_install_path//jobs/${jobid}/upload/std.log* or *$FATE_install_path//jobs/${jobid}/guest/std.log* to find if there exist any error
+3. Check logs/${jobid}/status_tracer_decorator.log file if there exist any error during these task
  

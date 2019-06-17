@@ -6,25 +6,25 @@ We supply standalone and cluster mode of running examples for HeteroLogisticRegr
 
 In standalone mode, role host, guest and arbiter are invoked. You can start them through following steps:
 
-> cd your_install_path/examples/hetero_logistic_regression/
+> cd $FATE_install_path/examples/hetero_logistic_regression/
 
 > sh run_logistic_regression_standalone.sh 
 
-After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: your_install_path/logs/hetero_logistic_regression_example_standalone_{timestamp}
+After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: $FATE_install_path/logs/hetero_logistic_regression_example_standalone_${timestamp}
 
 
 ### 2. Run Cluster Version
 In cluster version, you can use task-manager which is a tool help you start all the parties easily.
-> cd your_install_path/examples/task_manager_examples/
+> cd $FATE_install_path/examples/task_manager_examples/
 
 #### load data
 Before starting a cluster version task, you need to load data among all the data-providers.
 
 In role guest:
->  python task_manager_client.py -f upload -c load_file/load_file_hetero_lr_guest.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_hetero_lr_guest.json
 
 In role host:
->  python task_manager_client.py -f upload -c load_file/load_file_hetero_lr_host.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_hetero_lr_host.json
 
 After load data, you can get "table_name" and "namespace", this will be used next step.
 
@@ -39,13 +39,13 @@ If you want to predict, please write the configure of "predict_input_table" and 
 
 After finish editing, you can run the following command to start the task:
 
-> python task_manager_client.py -f workflow -c test_hetero_lr_workflow.json
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c test_hetero_lr_workflow.json
 
 After running this command, a jobid will be generated automatically for you.
 
 ### 3. Check log files
 
-4. Now you can check out the log in the following path: your_install_path/logs/{your jobid}.
+4. Now you can check out the log in the following path: $FATE_install_path/logs/${your jobid}.
 
 ### 4. More functions of task-manager
 
@@ -53,6 +53,6 @@ There are a couple of more functions that task-manager has provided. Please chec
 
 ### 5. Some error you may encounter
 1. While run standalone version, you may get info *"task failed, check nohup in current path"*. please check the nohup files to see if there exists any errors.
-2. While run cluster version, if you find not {jobid} fold in  *your_install_path/logs*, please check  *your_install_path/jobs/{jobid}/upload/std.log* or *your_install_path/jobs/{jobid}/guest/std.log* to find if there exist any error
-3. Check logs/{jobid}/status_tracer_decorator.log file if there exist any error during these task
+2. While run cluster version, if you find not ${jobid} fold in  *$FATE_install_path/logs*, please check  *$FATE_install_path/jobs/${jobid}/upload/std.log* or *$FATE_install_path/jobs/${jobid}/guest/std.log* to find if there exist any error
+3. Check logs/${jobid}/status_tracer_decorator.log file if there exist any error during these task
  
