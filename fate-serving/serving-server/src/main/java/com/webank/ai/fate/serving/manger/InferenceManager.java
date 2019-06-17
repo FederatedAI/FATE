@@ -140,7 +140,7 @@ public class InferenceManager {
         federatedParams.put("feature_id", featureIds);
         predictParams.put("federatedParams", federatedParams);
 
-        Map<String, Object> modelResult = model.predict(inferenceRequest.getFeatureData(), predictParams);
+        Map<String, Object> modelResult = model.predict(featureData, predictParams);
         LOGGER.info(modelResult);
         PostProcessingResult postProcessingResult;
         try {
@@ -153,14 +153,28 @@ public class InferenceManager {
         }
         inferenceResult = postProcessingResult.getProcessingResult();
         inferenceResult.setCaseid(inferenceRequest.getCaseid());
-        LOGGER.info("Inference successfully.");
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
+        ReturnResult federatedResult = (ReturnResult) predictParams.get("federatedResult");
         boolean billing = true;
-        if (fromCache) {
+        if (fromCache || federatedResult.getRetcode() == InferenceRetCode.GET_FEATURE_FAILED) {
             billing = false;
         }
+        int partyInferenceRetcode = 0;
+        if (inferenceResult.getRetcode() != 0){
+            partyInferenceRetcode += 1;
+        }
+        if (federatedResult.getRetcode() != 0){
+            partyInferenceRetcode += 2;
+            inferenceResult.setRetcode(federatedResult.getRetcode());
+        }
+        inferenceResult.setRetcode(inferenceResult.getRetcode() + partyInferenceRetcode * 1000);
         logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, fromCache, billing, rawFeatureData);
-        CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
+        if (inferenceResult.getRetcode() == 0) {
+            CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
+            LOGGER.info("inference successfully.");
+        }else{
+            LOGGER.info("failed inference, retcode is {}.", inferenceResult.getRetcode());
+        }
         return inferenceResult;
     }
 

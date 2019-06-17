@@ -24,6 +24,7 @@ public class HeteroLRGuest extends HeteroLR {
 
         try {
             ReturnResult hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
+            predictParams.put("federatedResult", hostPredictResponse);
             double hostScore = (double) hostPredictResponse.getData().get("score");
             LOGGER.info("host score:{}", hostScore);
             score += hostScore;
