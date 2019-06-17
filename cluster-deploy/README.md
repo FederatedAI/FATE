@@ -1,6 +1,6 @@
  
 
-#                      **Federal Learning FATE-V0.3 Deployment Guide**
+#                      **FATE-V0.3 Deployment Guide**
 
 
 
