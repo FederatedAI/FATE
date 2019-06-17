@@ -18,7 +18,8 @@ public class HeteroLRGuest extends HeteroLR {
     @Override
     public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
         Map<String, Object> result = new HashMap<>();
-        double score = forward(inputData);
+        Map<String, Double> forwardRet = forward(inputData);
+        double score = forwardRet.get("score");
         LOGGER.info("guest score:{}", score);
 
         try {
@@ -34,6 +35,8 @@ public class HeteroLRGuest extends HeteroLR {
 
         double prob = sigmod(score);
         result.put("prob", prob);
+        result.put("guestModelWeightHitRate:{}", forwardRet.get("modelWrightHitRate"));
+        result.put("guestInputDataHitRate:{}", forwardRet.get("inputDataHitRate"));
 
         return result;
     }

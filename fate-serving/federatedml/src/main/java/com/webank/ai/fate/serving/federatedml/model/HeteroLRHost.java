@@ -13,8 +13,8 @@ public class HeteroLRHost extends HeteroLR {
     public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
 
         HashMap<String, Object> result = new HashMap<>();
-        double score = forward(inputData);
-        result.put("score", score);
+        Map<String, Double> ret = forward(inputData);
+        result.put("score", ret.get("score"));
 
         return result;
     }
