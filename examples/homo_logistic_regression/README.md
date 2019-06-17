@@ -43,7 +43,7 @@ You should re-write the configure of role guest "train_input_table" using "table
 
 3. After finish editing, you can run the following command to start the task:
 
-> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c test_hetero_feature_binning_workflow.json
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c conf/test_hetero_feature_binning_workflow.json
 
 After running this command, a jobid will be generated automatically for you.
 
