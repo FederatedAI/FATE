@@ -73,7 +73,7 @@ Now you can check out the log in the following path: $FATE_install_path/logs/$jo
     
 ### 4. More functions of task-manager
 
-There are a couple of more functions that task-manager has provided. Please check [here](../task_manager_examples/README.md)
+There are a couple of more functions that task-manager has provided. Please check [here](../../arch/task_manager/README.md)
 
 ### 5. Some error you may encounter
 1. While run standalone version, you may get info *"task failed, check nohup in current path"*. please check the nohup files to see if there exists any errors.
