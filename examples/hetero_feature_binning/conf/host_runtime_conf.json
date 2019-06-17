@@ -50,6 +50,6 @@
         "display_result": ["iv"]
     },
     "OneHotEncoderParam": {
-        "cols": ["fid20"]
+        "cols": ["fid1"]
     }
 }

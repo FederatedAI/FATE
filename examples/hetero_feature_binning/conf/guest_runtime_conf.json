@@ -51,6 +51,6 @@
     },
 
     "OneHotEncoderParam": {
-        "cols": ["fid10"]
+        "cols": ["fid1"]
     }
 }
