@@ -32,16 +32,15 @@
 
 > Example
 * Add Mini-FederatedML test task example
-* Change submit method for cluster mode of examples to use task-manager
 * Using task manager to submit distributed task for current examples  
 
 ## Bug Fixes and Other Changes
 * fix detect onehot max column overflow bug.
 * fix dataio dense format not reading host data header bug.
 * fix bugs of call of statistics function
-* fix bug for feature selection that at least one feature remains for each party
+* fix bug for federated feature selection that at least one feature remains for each party
 * Not allowing so small batch size in LR module for safety consideration.
-* fix naming error in feature selection module.
+* fix naming error in federated feature selection module.
 * Fix the bug of automated publishing model information in some extreme cases
 * Fixed some overflow bugs in fixed-point data
 * fix many other bugs.
