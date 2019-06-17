@@ -25,11 +25,10 @@
 * Improve the loading of the pre and post processing adapter and data access adapter for host
 
 > EggRoll
-* New computing and storage APIs.
-* Stability optimizations.
-* Performance optimizations.
-* Bug fixes.
-* Storage usage improvements.
+* New computing and storage APIs
+* Stability optimizations
+* Performance optimizations
+* Storage usage improvements
 
 > Example
 * Add Mini-FederatedML test task example
