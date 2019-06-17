@@ -3,24 +3,17 @@
     "module": "HeteroFeatureSelection",
     "role": {
         "guest": [9999],
-        "host": [10000],
-        "arbiter": [10000]
+        "host": [10000]
     },
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_hetero_guest"],
+                "train_input_table": ["hetero_feature_selection_guest"],
                 "train_input_namespace": ["feature_selection"],
-                "data_input_table": ["breast_hetero_guest"],
-                "data_input_namespace": ["feature_selection"],
-                "model_table": ["hetero_lr_guest_model"],
+                "model_table": ["hetero_feature_selection_guest_model_out"],
                 "model_namespace": ["feature_selection"],
-                "predict_input_table": ["breast_hetero_guest"],
-                "predict_input_namespace": ["feature_selection"],
-                "predict_output_table": ["hetero_lr_guest_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
-                "predict_output_namespace": ["feature_selection"],
-                "evaluation_output_table": ["breast_hetero_guest"],
-                "evaluation_output_namespace": ["feature_selection"]
+                "predict_output_table": ["hetero_feature_selection_guest_data_out"],
+                "predict_output_namespace": ["feature_selection"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -34,28 +27,12 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_hetero_host"],
+                "train_input_table": ["hetero_feature_selection_host"],
                 "train_input_namespace": ["hetero_lr"],
-                "data_input_table": ["breast_hetero_host"],
-                "data_input_namespace": ["hetero_lr"],
-                "model_table": ["hetero_lr_host_model"],
+                "model_table": ["hetero_feature_selection_host_model_out"],
                 "model_namespace": ["hetero_lr"],
-                "predict_input_table": ["breast_hetero_host"],
-                "predict_input_namespace": ["hetero_lr"],
-                "predict_output_table": ["hetero_lr_host_predict_output_hetero_logistic_regression_example_standalone_20190402211541"],
+                "predict_output_table": ["hetero_feature_selection_host_data_out"],
                 "predict_output_namespace": ["hetero_lr"]
-            },
-             "DataIOParam":{
-                "with_label": [false],
-                "output_format": ["dense"]
-            }
-        },
-        "arbiter": {
-            "WorkFlowParam": {
-                "train_input_table": [""],
-                "train_input_namespace": ["example_data_namespace"],
-                "data_input_table": [""],
-                "data_input_namespace": ["example_data_namespace"]
             },
              "DataIOParam":{
                 "with_label": [false],

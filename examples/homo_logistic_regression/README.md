@@ -16,11 +16,26 @@ After doing these two steps, you can wait for the result or go to check some log
 ### 2. Run Cluster Version
 In cluster version, you can use task-manager which is a tool help you start all the parties easily. The task manager client is located at : /arch/task_manager/task_manager_client.py.
 
-1. Before starting a cluster version task, you need to load data among all the data-providers. To do that, you need to edit a load_file config. A sample file named "tm_load_file.json" has been provided in the conf folder. Then run the following command:
+1. Before starting a cluster version task, you need to load data among all the data-providers. To do that, you need to edit a load_file config.
 
->  python task_manager_client.py -f upload -c load_file.json
+  Two example files for host and guest are prepared in ./conf folder:
 
-Note, this step should be followed in all parties except "Arbiter".
+        guest: conf/load_file_tm_guest.json.
+
+       "file": $FATE_install_path/examples/data/breast_b.csv
+
+       host: conf/load_file_tm_host.json.
+
+       "file": $FATE_install_path/examples/data/breast_a.csv
+
+ Then run the following command:
+
+   guest:
+   > python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_guest.json
+
+   host:
+   > python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_host.json
+
 
 2. Then, you need to edit a config file for all the parties. A sample config file has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
 
@@ -28,7 +43,7 @@ You should re-write the configure of role guest "train_input_table" using "table
 
 3. After finish editing, you can run the following command to start the task:
 
-> python task_manager_client.py -f workflow -c test_homo_lr_workflow.json
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c test_hetero_feature_binning_workflow.json
 
 After running this command, a jobid will be generated automatically for you.
 

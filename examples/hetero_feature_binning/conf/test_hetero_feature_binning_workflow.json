@@ -8,14 +8,12 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["To Edit"],
+                "train_input_table": ["hetero_feature_binning_guest"],
                 "train_input_namespace": ["hetero_feature_binning"],
-                "predict_input_table": ["To Edit"],
+                "predict_input_table": ["hetero_feature_binning_guest_data_out"],
                 "predict_input_namespace": ["hetero_feature_binning"],
-                "model_table": ["To Edit"],
-                "model_namespace": ["hetero_feature_binning"],
-                "data_input_table": ["To Edit"],
-                "data_input_namespace": ["hetero_feature_binning"]
+                "model_table": ["hetero_feature_binning_model_out"],
+                "model_namespace": ["hetero_feature_binning"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -26,14 +24,12 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["To Edit"],
+                "train_input_table": ["hetero_feature_binning_host"],
                 "train_input_namespace": ["hetero_feature_binning"],
-                "predict_input_table": ["To Edit"],
+                "predict_input_table": ["hetero_feature_binning_host_data_out"],
                 "predict_input_namespace": ["hetero_feature_binning"],
-                "model_table": ["To Edit"],
-                "model_namespace": ["hetero_feature_binning"],
-                "data_input_table": ["To Edit"],
-                "data_input_namespace": ["hetero_feature_binning"]
+                "model_table": ["hetero_feature_binning_host_model_out"],
+                "model_namespace": ["hetero_feature_binning"]
             },
              "DataIOParam":{
                 "with_label": [true],

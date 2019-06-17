@@ -9,13 +9,13 @@
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_guest_201904171524"],
+                "train_input_table": ["homo_lr_guest"],
                 "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_201904171524"],
+                "predict_input_table": ["homo_lr_guest"],
                 "predict_input_namespace": ["homo_lr"],
-                "model_table": ["homo_lr_guest_model"],
+                "model_table": ["homo_lr_guest_model_out"],
                 "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_guest_201904171524"],
+                "data_input_table": ["homo_lr_guest"],
                 "data_input_namespace": ["homo_lr"]
             },
             "DataIOParam":{
@@ -27,13 +27,13 @@
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_host_201904171524"],
+                "train_input_table": ["homo_lr_host"],
                 "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_201904171524"],
+                "predict_input_table": ["homo_lr_host"],
                 "predict_input_namespace": ["homo_lr"],
-                "model_table": ["homo_lr_host_model"],
+                "model_table": ["homo_lr_host_model_out"],
                 "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_host_201904171524"],
+                "data_input_table": ["homo_lr_host"],
                 "data_input_namespace": ["homo_lr"]
             },
              "DataIOParam":{
@@ -46,7 +46,7 @@
                 "train_input_table": [""],
                 "train_input_namespace": ["example_data_namespace"],
                 "data_input_table": [""],
-                "model_table": ["homo_lr_host_model"],
+                "model_table": ["homo_lr_arbiter_model"],
                 "model_namespace": ["homo_lr"],
                 "data_input_namespace": ["example_data_namespace"]
             },
