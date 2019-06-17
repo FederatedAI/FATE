@@ -54,7 +54,7 @@ After running this command, a jobid will be generated automatically for you.
 
 ### 4. More functions of task-manager
 
-There are a couple of more functions that task-manager has provided. Please check [here](../task_manager_examples/README.md)
+There are a couple of more functions that task-manager has provided. Please check [here](../../arch/task_manager/README.md)
 
 ### 5. Some error you may encounter
 While run standalone version, you may get info "task failed, check nohup in current path". please check the nohup files to see if there exists any errors.

@@ -32,7 +32,7 @@
                 "model_namespace": ["hetero_feature_binning"]
             },
              "DataIOParam":{
-                "with_label": [true],
+                "with_label": [false],
                 "output_format": ["dense"]
             }
         }
