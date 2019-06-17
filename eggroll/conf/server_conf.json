@@ -4,21 +4,13 @@
 			"host": "localhost",
 			"port": 8011
 		},
-		"federation": {
+		"clustercomm": {
 			"host": "localhost",
 			"port": 9394
-		},
-		"manager": {
-			"host": "localhost",
-			"grpc.port": 9360,
-			"http.port": 9380
 		},
 		"proxy": {
 			"host": "localhost",
 			"port": 9370
-		},
-		"servings": [
-			"127.0.0.1:8000"
-		]
+		}
 	}
 }

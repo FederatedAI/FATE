@@ -16,6 +16,8 @@
 
 package com.webank.ai.fate.serving.adapter.dataaccess;
 
+import com.webank.ai.fate.core.bean.ReturnResult;
+import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +32,8 @@ public class TestFile implements FeatureData {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> getData(Map<String, Object> featureIds) {
+    public ReturnResult getData(Map<String, Object> featureIds) {
+        ReturnResult returnResult = new ReturnResult();
         Map<String, Object> data = new HashMap<>();
         try {
             List<String> lines = Files.readAllLines(Paths.get(System.getProperty("user.dir"), "host_data.csv"));
@@ -40,9 +43,12 @@ public class TestFile implements FeatureData {
                     data.put(a[0], Double.valueOf(a[1]));
                 }
             });
+            returnResult.setData(data);
+            returnResult.setRetcode(InferenceRetCode.OK);
         } catch (Exception ex) {
             LOGGER.error(ex);
+            returnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
         }
-        return data;
+        return returnResult;
     }
 }

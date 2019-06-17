@@ -42,17 +42,20 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class HttpClientPool {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static PoolingHttpClientConnectionManager poolConnManager;
     private static RequestConfig requestConfig;
     private static CloseableHttpClient httpClient;
 
     private static void config(HttpRequestBase httpRequestBase) {
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(60)
-                .setConnectTimeout(60)
-                .setSocketTimeout(60).build();
+                .setConnectionRequestTimeout(10 * 1000)
+                .setConnectTimeout(10 * 1000)
+                .setSocketTimeout(10 * 1000).build();
         httpRequestBase.addHeader("Content-Type", "application/json;charset=UTF-8");
         httpRequestBase.setConfig(requestConfig);
     }
@@ -67,8 +70,8 @@ public class HttpClientPool {
                     "https", sslsf).build();
             poolConnManager = new PoolingHttpClientConnectionManager(
                     socketFactoryRegistry);
-            poolConnManager.setMaxTotal(200);
-            poolConnManager.setDefaultMaxPerRoute(2);
+            poolConnManager.setMaxTotal(500);
+            poolConnManager.setDefaultMaxPerRoute(200);
             int socketTimeout = 10000;
             int connectTimeout = 10000;
             int connectionRequestTimeout = 10000;
@@ -76,8 +79,8 @@ public class HttpClientPool {
                     connectionRequestTimeout).setSocketTimeout(socketTimeout).setConnectTimeout(
                     connectTimeout).build();
             httpClient = getConnection();
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-            e.printStackTrace();
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
+            LOGGER.error("init http client pool failed:", ex);
         }
     }
 
@@ -115,15 +118,15 @@ public class HttpClientPool {
             String result = EntityUtils.toString(entity, "utf-8");
             EntityUtils.consume(entity);
             return result;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            LOGGER.error("get http response failed:", ex);
             return null;
         } finally {
             try {
                 if (response != null)
                     response.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ex) {
+                LOGGER.error("get http response failed:", ex);
             }
         }
     }

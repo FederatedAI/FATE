@@ -28,7 +28,7 @@
     </parent>
 
     <modules>
-        <module>federation</module>
+        <module>clustercomm</module>
     </modules>
 
     <packaging>pom</packaging>

@@ -26,6 +26,7 @@ public class ReturnResult {
     private static final Logger LOGGER = LogManager.getLogger();
     private int retcode;
     private String retmsg = "";
+    private String caseid = "";
     private Map<String, Object> data;
     private Map<String, Object> log;
     private Map<String, Object> warn;
@@ -74,5 +75,13 @@ public class ReturnResult {
 
     public Map<String, Object> getWarn() {
         return warn;
+    }
+
+    public void setCaseid(String caseid) {
+        this.caseid = caseid;
+    }
+
+    public String getCaseid() {
+        return caseid;
     }
 }

@@ -44,18 +44,18 @@ public class TestKeyValueStore {
     private int port = 7778;
     private String namespace = "api_create_namespace";
     private String name = "api_create_name";
-    private String federationTableName = "__federation__";
+    private String clusterCommTableName = "__clustercomm__";
     private String jobid1 = "jobid1";
 
     public TestKeyValueStore() {
         this.store = new RemoteKeyValueStore(StoreInfo.builder()
                 .type(Stores.LMDB.name())
-                //.nameSpace(federationTableName)
+                //.nameSpace(clusterCommTableName)
                 //.nameSpace(jobId)
                 .nameSpace(jobid1)
                 .tableName(name)
                 //.tableName(name + "_recv")
-                .tableName(federationTableName)
+                .tableName(clusterCommTableName)
                 .fragment(0)
                 .build());
         //this.type = Stores.LMDB;

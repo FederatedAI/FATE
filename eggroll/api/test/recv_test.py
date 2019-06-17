@@ -15,11 +15,11 @@
 #
 
 from eggroll.api import eggroll
-from eggroll.api import federation
+from eggroll.api import clustercomm
 
 if __name__ == '__main__':
     eggroll.init("atest")
-    federation.init("atest", {
+    clustercomm.init("atest", {
 
         "local": {
             "role": "guest",
@@ -39,9 +39,9 @@ if __name__ == '__main__':
         }})
 
     for _tag in range(0, 1000, 2):
-        b = federation.get("RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag), idx=-1)
+        b = clustercomm.get("RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag), idx=-1)
         print(b)
-        c = federation.get("RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag + 1), idx=-1)
+        c = clustercomm.get("RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag + 1), idx=-1)
         print(c)
         print(c[1].count())
         print(list(c[0].collect()))

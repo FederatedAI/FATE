@@ -1,5 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
+import com.webank.ai.fate.core.bean.ReturnResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,14 +24,13 @@ public class HeteroLRGuest extends HeteroLR {
         LOGGER.info("guest score:{}", score);
 
         try {
-            Map<String, Object> hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
-            double hostScore = (double) hostPredictResponse.get("score");
+            ReturnResult hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
+            predictParams.put("federatedResult", hostPredictResponse);
+            double hostScore = (double) hostPredictResponse.getData().get("score");
             LOGGER.info("host score:{}", hostScore);
             score += hostScore;
         } catch (Exception ex) {
-            LOGGER.error(ex.getStackTrace());
-            ex.printStackTrace();
-            LOGGER.error(ex);
+            LOGGER.error("get host predict failed:", ex);
         }
 
         double prob = sigmod(score);
