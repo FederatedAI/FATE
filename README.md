@@ -74,7 +74,7 @@ for more training details.
 
 ## Getting Involved
 
-*  Join us on google groups [Fate-FedAI Group](https://groups.google.com/forum/#!forum/fate-fedai). You can ask questions and participate in the development discussion.
+*  Join our maillist [Fate-FedAI Group IO](Fate-FedAI+subscribe@groups.io). You can ask questions and participate in the development discussion.
 
 *  For any frequently asked questions, you can check in [FAQ](https://github.com/WeBankFinTech/FATE/wiki).  
 
