@@ -60,7 +60,7 @@ public class TestRollKvServiceClient {
     private String name = "api_create_name";
     private String namespace = "api_create_namespace";
     private String jobid1 = "jobid1";
-    private String federationTable = "__federation__";
+    private String clusterCommTable = "__clustercomm__";
     private StoreInfo storeInfo;
 
     @Before

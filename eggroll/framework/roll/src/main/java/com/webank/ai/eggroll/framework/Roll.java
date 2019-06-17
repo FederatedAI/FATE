@@ -17,7 +17,7 @@
 package com.webank.ai.eggroll.framework;
 
 import com.webank.ai.eggroll.core.factory.DefaultGrpcServerFactory;
-import com.webank.ai.eggroll.core.server.BaseFateServer;
+import com.webank.ai.eggroll.core.server.BaseEggRollServer;
 import com.webank.ai.eggroll.core.server.DefaultServerConf;
 import com.webank.ai.eggroll.framework.roll.api.grpc.server.RollKvServiceImpl;
 import com.webank.ai.eggroll.framework.roll.api.grpc.server.RollProcessServiceImpl;
@@ -29,7 +29,7 @@ import org.apache.commons.cli.CommandLine;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class Roll extends BaseFateServer {
+public class Roll extends BaseEggRollServer {
     public static void main(String[] args) throws Exception {
         String confFilePath = null;
         CommandLine cmd = parseArgs(args);

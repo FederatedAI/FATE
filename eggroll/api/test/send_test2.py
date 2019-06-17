@@ -15,11 +15,11 @@
 #
 
 from eggroll.api import eggroll
-from eggroll.api import federation
+from eggroll.api import clustercomm
 
 if __name__ == '__main__':
     eggroll.init("atest")
-    federation.init("atest", {
+    clustercomm.init("atest", {
         "local": {
             "role": "host",
             "party_id": 10002
@@ -41,5 +41,5 @@ if __name__ == '__main__':
         c = eggroll.parallelize(range(_tag), partition=3, persistent=True).map(lambda k, v: (v, k+1))
         print(c)
         a = _tag
-        federation.remote(a, "RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag))
-        federation.remote(c, "RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag + 1))
+        clustercomm.remote(a, "RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag))
+        clustercomm.remote(c, "RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag + 1))
