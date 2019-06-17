@@ -15,18 +15,20 @@ After doing these two steps, you can wait for the result or go to check some log
 
 ### 2. Run Cluster Version
 In cluster version, you can use task-manager which is a tool help you start all the parties easily.
-> cd $FATE_install_path/examples/task_manager_examples/
+> cd $FATE_install_path/examples/hetero_logistic_regression/
 
 #### load data
-Before starting a cluster version task, you need to load data among all the data-providers.
+Before starting a cluster version task, you need to load data among all the data-providers. We have prepared some example data for hetero-lr. You should edit the file conf/load_file_tm_guest and conf/load_file_tm_host to make sure the data file path is right. 
+Then upload data using:
 
 In role guest:
->  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_hetero_lr_guest.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_guest.json
 
 In role host:
->  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c load_file/load_file_hetero_lr_host.json
+>  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_host.json
 
-After load data, you can get "table_name" and "namespace", this will be used next step.
+After load data, you can get "table_name" and "namespace" which have been edit in the configure file and please be attention to that the "table_name" should be different for each upload.
+
 
 #### run task
 Then, you need to edit a config file for role guest. A sample config file like *test_hetero_lr_workflow.json* has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
@@ -34,12 +36,12 @@ Then, you need to edit a config file for role guest. A sample config file like *
 
 You should re-write the configure of  role guest "train_input_table" using "table_name" you have got in guest's load data, and "train_input_namespace" using "namespace" you have got. The same as the configure of  role host using "table_name" and "namespace" you got after host load data.
 
-If you want to predict, please write the configure of "predict_input_table" and "predict_input_namespace".
+If you want to predict, please write the configure of "predict_input_table" and "predict_input_namespace". The configure of "model_table", "predict_output_table" and "evaluation_output_table" in role guest or host should be different for each task.
 
 
 After finish editing, you can run the following command to start the task:
 
-> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c test_hetero_lr_workflow.json
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c conf/test_hetero_lr_workflow.json
 
 After running this command, a jobid will be generated automatically for you.
 
@@ -49,7 +51,7 @@ After running this command, a jobid will be generated automatically for you.
 
 ### 4. More functions of task-manager
 
-There are a couple of more functions that task-manager has provided. Please check [here](../task_manager_examples/README.md)
+There are a couple of more functions that task-manager has provided. Please check [here](../../arch/task_manager/README.md)
 
 ### 5. Some error you may encounter
 1. While run standalone version, you may get info *"task failed, check nohup in current path"*. please check the nohup files to see if there exists any errors.
