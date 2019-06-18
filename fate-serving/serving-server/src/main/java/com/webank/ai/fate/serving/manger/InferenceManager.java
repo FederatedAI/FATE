@@ -156,14 +156,16 @@ public class InferenceManager {
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
         ReturnResult federatedResult = (ReturnResult) predictParams.get("federatedResult");
         boolean billing = true;
-        if (fromCache || federatedResult.getRetcode() == InferenceRetCode.GET_FEATURE_FAILED) {
+        if (fromCache) {
+            billing = false;
+        } else if (federatedResult.getRetcode() == InferenceRetCode.GET_FEATURE_FAILED || federatedResult.getRetcode() == InferenceRetCode.INVALID_FEATURE || federatedResult.getRetcode() == InferenceRetCode.NO_FEATURE) {
             billing = false;
         }
         int partyInferenceRetcode = 0;
-        if (inferenceResult.getRetcode() != 0){
+        if (inferenceResult.getRetcode() != 0) {
             partyInferenceRetcode += 1;
         }
-        if (federatedResult.getRetcode() != 0){
+        if (federatedResult.getRetcode() != 0) {
             partyInferenceRetcode += 2;
             inferenceResult.setRetcode(federatedResult.getRetcode());
         }
@@ -172,7 +174,7 @@ public class InferenceManager {
         if (inferenceResult.getRetcode() == 0) {
             CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
             LOGGER.info("inference successfully.");
-        }else{
+        } else {
             LOGGER.info("failed inference, retcode is {}.", inferenceResult.getRetcode());
         }
         return inferenceResult;

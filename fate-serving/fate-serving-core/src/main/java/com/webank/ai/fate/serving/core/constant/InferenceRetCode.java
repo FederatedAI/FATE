@@ -31,4 +31,5 @@ public class InferenceRetCode {
     public static final int SYSTEM_ERROR = 110;
     public static final int ADAPTER_ERROR = 111;
     public static final int DEAL_FEATURE_FAILED = 103;
+    public static final int NO_FEATURE = 104;
 }
