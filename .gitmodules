@@ -43,5 +43,5 @@
 	url = https://github.com/grpc/grpc.git
     branch = v1.19.1
 [submodule "eggroll/storage/storage-service-cxx/third_party/lmdb-safe"]
-	path = arch/eggroll/storage-service-cxx/third_party/lmdb-safe
+	path = eggroll/storage/storage-service-cxx/third_party/lmdb-safe
 	url = https://github.com/ahupowerdns/lmdb-safe.git
