@@ -15,7 +15,7 @@ public class StandardScale {
             try {
                 StandardScaleParam standardScale = standardScalesMap.get(key);
 
-                double value = (double) inputData.get(key);
+                double value = Double.parseDouble(inputData.get(key).toString());
                 double scale = standardScale.getScale();
                 if (scale == 0)
                     scale = 1;
