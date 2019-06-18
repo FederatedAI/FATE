@@ -57,7 +57,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ###  Start Programs
 
-Fate also provides several sample programs in the **examples** directory for each algorithm. You can check out for 
+FATE also provides several sample programs in the **examples** directory for each algorithm. You can check out for 
 the detailed documentation in each specific algorithm directory. Here, we take heterogeneous LR as an example. In **conf** directory, we have provided several json file as configuration templates. The load_file.json is used for loading data into distributed database. The three runtime_conf.json are configuration files for arbiter, guest and hosts respectively.
 Please check out the meaning of each parameter in out documentation. 
 
