@@ -10,6 +10,7 @@ FATE can be installed on Linux or Mac. Now, FATE can support standalone and clus
 ```
 git clone https://github.com/WeBankFinTech/FATE.git
 ```
+Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
 
 #### Standalone
 ##### Docker version
@@ -97,7 +98,7 @@ for more training details.
 
 ## Getting Involved
 
-*  Join us on google groups [Fate-FedAI Group](https://groups.google.com/forum/#!forum/fate-fedai). You can ask questions and participate in the development discussion.
+*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
 
 *  For any frequently asked questions, you can check in [FAQ](https://github.com/WeBankFinTech/FATE/wiki).  
 
