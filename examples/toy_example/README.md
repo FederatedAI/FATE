@@ -21,7 +21,7 @@ In standalone mode, a host and a guest are invoked. You cdan start the two throu
 jobid is a string which host and guest should have the same jobid, please remember that jobid should be different for different task,
 host_runtime_conf or guest_runtime_conf template is under example/toy_example/conf/host(guest)_runtime_conf.json.
 
-Or you can simply execute run_secureboosting_standalone.sh, which will run host and guest in the background and print out some infomation, like logfiles path.
+Or you can simply execute run_toy_example_standalone.sh, which will run host and guest in the background and print out some infomation, like logfiles path.
 
 > sh run_toy_example_standalone.sh
 
