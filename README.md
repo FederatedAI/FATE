@@ -41,7 +41,7 @@ FATE (venv) $ export PYTHONPATH=`pwd -P`
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 
-To deploy FATE on a cluster, please refer to cluster deploy guide at [`cluster-deploy`](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy). 
+To deploy FATE on a cluster, please refer to cluster deploy guide at [cluster-deploy](cluster-deploy). 
 
 ## Running Tests
 
