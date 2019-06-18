@@ -86,7 +86,7 @@ public class InferenceManager {
             modelNamespace = ModelManager.getModelNamespaceByPartyId(inferenceRequest.getAppid());
         }
         if (StringUtils.isEmpty(modelNamespace)) {
-            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
+            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED + 1000);
             return inferenceResult;
         }
         ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
@@ -98,14 +98,14 @@ public class InferenceManager {
             model = ModelManager.getModel(modelName, modelNamespace);
         }
         if (model == null) {
-            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
+            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED + 1000);
             return inferenceResult;
         }
         LOGGER.info("use model to inference for {}, id: {}, version: {}", inferenceRequest.getAppid(), modelNamespace, modelName);
         Map<String, Object> rawFeatureData = inferenceRequest.getFeatureData();
 
         if (rawFeatureData == null) {
-            inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA);
+            inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA + 1000);
             inferenceResult.setRetmsg("Can not parse data json.");
             logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
@@ -116,14 +116,14 @@ public class InferenceManager {
             preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
         } catch (Exception ex) {
             LOGGER.error("feature data preprocessing failed", ex);
-            inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE);
+            inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE + 1000);
             inferenceResult.setRetmsg(ex.getMessage());
             return inferenceResult;
         }
         Map<String, Object> featureData = preProcessingResult.getProcessingResult();
         Map<String, Object> featureIds = preProcessingResult.getFeatureIds();
         if (featureData == null) {
-            inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR);
+            inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR + 1000);
             inferenceResult.setRetmsg("Can not preprocessing data");
             logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
@@ -156,14 +156,16 @@ public class InferenceManager {
         boolean fromCache = (boolean) federatedParams.getOrDefault("is_cache", false);
         ReturnResult federatedResult = (ReturnResult) predictParams.get("federatedResult");
         boolean billing = true;
-        if (fromCache || federatedResult.getRetcode() == InferenceRetCode.GET_FEATURE_FAILED) {
+        if (fromCache) {
+            billing = false;
+        } else if (federatedResult.getRetcode() == InferenceRetCode.GET_FEATURE_FAILED || federatedResult.getRetcode() == InferenceRetCode.INVALID_FEATURE || federatedResult.getRetcode() == InferenceRetCode.NO_FEATURE) {
             billing = false;
         }
         int partyInferenceRetcode = 0;
-        if (inferenceResult.getRetcode() != 0){
+        if (inferenceResult.getRetcode() != 0) {
             partyInferenceRetcode += 1;
         }
-        if (federatedResult.getRetcode() != 0){
+        if (federatedResult.getRetcode() != 0) {
             partyInferenceRetcode += 2;
             inferenceResult.setRetcode(federatedResult.getRetcode());
         }
@@ -172,7 +174,7 @@ public class InferenceManager {
         if (inferenceResult.getRetcode() == 0) {
             CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
             LOGGER.info("inference successfully.");
-        }else{
+        } else {
             LOGGER.info("failed inference, retcode is {}.", inferenceResult.getRetcode());
         }
         return inferenceResult;
