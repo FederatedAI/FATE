@@ -1,6 +1,6 @@
  
 
-#                      **Federal Learning FATE-V0.2 Deployment Guide**
+#                      **FATE-V0.3 Deployment Guide**
 
 
 
@@ -97,7 +97,7 @@ Check whether the above software environment is reasonable in the corresponding 
 
 ### **3.3. Package Preparation**
 
-List of software involved:mysql-8.0、jdk1.8、python virtualenv surroundings  、Python3.6 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
+List of software involved:mysql-8.0、jdk1.8、python virtualenv surroundings  、Python3.6、redis-5.0.2 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
 The script directory structure is as follows:
 
 ```
@@ -278,7 +278,7 @@ The configuration file configurations.sh instructions:
 | serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
 | exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
 
-*<u>Note: tmipList and serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
+*<u>Note: serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
 
 ### **4.4. For Example**
 
