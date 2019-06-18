@@ -21,5 +21,5 @@ cur_dir=$(pwd)
 nohup python ${cur_dir}/run_feature_selection.py 0 ${jobid} guest 9999 10000 > nohup.guest 2>&1 &
 nohup python ${cur_dir}/run_feature_selection.py 0 ${jobid} host 9999 10000 > nohup.host 2>&1 &
 
-log_path=${cur_dir}/../../logs/${jobid}/feature_selection_guest.log
+log_path=${cur_dir}/../../logs/${jobid}/hetero_feature_selection_guest.log
 echo "Please check log in " ${log_path}
