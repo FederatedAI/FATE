@@ -1,3 +1,51 @@
+# Release 0.3
+
+## Major Features and Improvements
+
+> FederatedML
+* Support OneVsALL for multi-label classification task
+* Add trash-recycle in Hetero Logistic Regression
+* Add numeric stable for sigmoid and log_logistic function.
+* Support different calculation mode in Hetero Logistic Regression and Hetero SecureBoost
+* Decouple Federated Feature Binning and Federated Feature Selection
+* Add feature importance calculation in Hetero SecureBoost
+* Add multi-host in Hetero SecureBoost
+* Support tag:value sparse format input data 
+* Support output intersect-id with feature-instance in Intersection
+* Support OneHot encoding module.
+* Support bucket binning for Federated Feature Binning.
+* Support add, sub, mul, div ,gt, lt ,eq, etc mathematical operator on Fixed-Point data
+* Add authority validation for parameter setting
+
+> FATE-Serving
+* Add multi-level cache for multi-party inference result
+* Add startInferceJob and getInferenceResult interfaces to support the inference process asynchronization
+* Normalized inference return code
+* Real-time logging of inference summary logs and inferential detail logs
+* Improve the loading of the pre and post processing adapter and data access adapter for host
+
+> EggRoll
+* New computing and storage APIs
+* Stability optimizations
+* Performance optimizations
+* Storage usage improvements
+
+> Example
+* Add Mini-FederatedML test task example
+* Using task manager to submit distributed task for current examples  
+
+## Bug Fixes and Other Changes
+* fix detect onehot max column overflow bug.
+* fix dataio dense format not reading host data header bug.
+* fix bugs of call of statistics function
+* fix bug for federated feature selection that at least one feature remains for each party
+* Not allowing so small batch size in LR module for safety consideration.
+* fix naming error in federated feature selection module.
+* Fix the bug of automated publishing model information in some extreme cases
+* Fixed some overflow bugs in fixed-point data
+* fix many other bugs.
+
+
 # Release 0.2
 
 ## Major Features and Improvements
