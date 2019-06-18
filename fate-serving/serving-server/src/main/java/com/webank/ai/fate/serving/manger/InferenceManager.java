@@ -86,7 +86,7 @@ public class InferenceManager {
             modelNamespace = ModelManager.getModelNamespaceByPartyId(inferenceRequest.getAppid());
         }
         if (StringUtils.isEmpty(modelNamespace)) {
-            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
+            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED + 1000);
             return inferenceResult;
         }
         ModelNamespaceData modelNamespaceData = ModelManager.getModelNamespaceData(modelNamespace);
@@ -98,14 +98,14 @@ public class InferenceManager {
             model = ModelManager.getModel(modelName, modelNamespace);
         }
         if (model == null) {
-            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
+            inferenceResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED + 1000);
             return inferenceResult;
         }
         LOGGER.info("use model to inference for {}, id: {}, version: {}", inferenceRequest.getAppid(), modelNamespace, modelName);
         Map<String, Object> rawFeatureData = inferenceRequest.getFeatureData();
 
         if (rawFeatureData == null) {
-            inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA);
+            inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA + 1000);
             inferenceResult.setRetmsg("Can not parse data json.");
             logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
@@ -116,14 +116,14 @@ public class InferenceManager {
             preProcessingResult = getPreProcessingFeatureData(rawFeatureData);
         } catch (Exception ex) {
             LOGGER.error("feature data preprocessing failed", ex);
-            inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE);
+            inferenceResult.setRetcode(InferenceRetCode.INVALID_FEATURE + 1000);
             inferenceResult.setRetmsg(ex.getMessage());
             return inferenceResult;
         }
         Map<String, Object> featureData = preProcessingResult.getProcessingResult();
         Map<String, Object> featureIds = preProcessingResult.getFeatureIds();
         if (featureData == null) {
-            inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR);
+            inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR + 1000);
             inferenceResult.setRetmsg("Can not preprocessing data");
             logInferenceAudited(inferenceRequest, modelNamespaceData, inferenceResult, false, false, rawFeatureData);
             return inferenceResult;
