@@ -56,7 +56,7 @@ tweedie-loss、fair-loss、 log-cosh-loss
 max_split_nodes nodes instead of using all nodes of each level of the tree.
 * Support feature importance calculation
 * Support Multi-host and single guest to build model
-* Support different encrypt-level to balance speed and security
+* Support different encrypt-mode to balance speed and security
  
 
 
