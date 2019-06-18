@@ -76,7 +76,7 @@ public class PutAllProcessorListenableFutureCallback implements ListenableFuture
 
     @Override
     public void onSuccess(BasicMeta.ReturnStatus result) {
-        LOGGER.error("[ROLL][KV][PUTALL][ONSUCCESS] put all success. storeInfo: {}, latch count: {}, address: {}:{}",
+        LOGGER.info("[ROLL][KV][PUTALL][ONSUCCESS] put all success. storeInfo: {}, latch count: {}, address: {}:{}",
                 storeInfoWithFragment, finishLatch.getCount(), ip, port);
         results.add(result);
 

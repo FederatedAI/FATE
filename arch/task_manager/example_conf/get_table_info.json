@@ -1,6 +1,5 @@
 {
   "partition": 10,
-  "scene_id": 50000,
   "gen_table_info": true,
   "local": {
     "party_id": 9999,

@@ -26,6 +26,7 @@ from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
 from federatedml.param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.statistic import data_overview
 from federatedml.util import LogisticParamChecker
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
@@ -42,6 +43,8 @@ class BaseLogisticRegression(object):
         self.init_param_obj = logistic_params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept
         self.learning_rate = logistic_params.learning_rate
+        self.encrypted_mode_calculator_param = logistic_params.encrypted_mode_calculator_param
+        self.encrypted_calculator = None
 
         if logistic_params.penalty == consts.L1_PENALTY:
             self.updater = L1Updater(self.alpha, self.learning_rate)
@@ -64,7 +67,7 @@ class BaseLogisticRegression(object):
         self.coef_ = None
         self.intercept_ = 0
         self.classes_ = None
-        self.data_shape = None
+        self.feature_shape = None
 
         self.gradient_operator = None
         self.initializer = Initializer()
@@ -75,11 +78,21 @@ class BaseLogisticRegression(object):
         self.header = None
         self.class_name = self.__class__.__name__
 
-    def set_data_shape(self, data_shape):
-        self.data_shape = data_shape
+    def set_feature_shape(self, feature_shape):
+        self.feature_shape = feature_shape
 
-    def get_data_shape(self):
-        return self.data_shape
+    def set_header(self, header):
+        self.header = header
+
+    def get_features_shape(self, data_instances):
+        if self.feature_shape is not None:
+            return self.feature_shape
+        return data_overview.get_features_shape(data_instances)
+
+    def get_header(self, data_instances):
+        if self.header is not None:
+            return self.header
+        return data_instances.schema.get("header")
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
@@ -165,7 +178,7 @@ class BaseLogisticRegression(object):
                                  namespace=namespace)
         return buffer_type
 
-    def save_model(self, name, namespace, job_id=None, model_name=None):
+    def save_model(self, name, namespace):
         meta_buffer_type = self._save_meta(name, namespace)
         # In case arbiter has no header
         header = self.header

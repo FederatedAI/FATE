@@ -17,30 +17,15 @@
 package com.webank.ai.fate.core.utils;
 
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.*;
 
+import com.webank.ai.fate.core.bean.FederatedRoles;
+
 public class SceneUtils {
-    private static final String sceneKeySeparator = "_";
+    private static final String sceneKeySeparator = "#";
 
-    public static String joinAllParty(Map<String, List<Integer>> allParty){
-        if(allParty == null){
-            return "all";
-        }else{
-            Object[] roleName = allParty.keySet().toArray();
-            Arrays.sort(roleName);
-            System.out.print(roleName);
-            List<String> allPartyTmp = new ArrayList<>();
-            for(int i=0;i<roleName.length;i++){
-                Object[] partys = (new ArrayList<>(new HashSet<>(allParty.get(roleName[i])))).toArray();
-                Arrays.sort(partys);
-                System.out.print(partys);
-                allPartyTmp.add(StringUtils.join(partys, "|"));
-            }
-            return StringUtils.join(allPartyTmp, "-");
-        }
-    }
-
-    public static String genSceneKey(int sceneId, String role, int partyId, Map<String, List<Integer>> allParty){
-        return StringUtils.join(Arrays.asList(sceneId, role, partyId, joinAllParty(allParty)), sceneKeySeparator);
+    public static String genSceneKey(String role, String partyId, FederatedRoles federatedRoles) {
+        return StringUtils.join(Arrays.asList(role, partyId, FederatedUtils.federatedRolesIdentificationString(federatedRoles)), sceneKeySeparator);
     }
 }

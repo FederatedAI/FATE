@@ -19,12 +19,17 @@ import unittest
 import numpy as np
 
 from arch.api.eggroll import init
-from federatedml.ftl.eggroll_computation.helper import encrypt_matrix, decrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matrix, distribute_decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class TestEncryption(unittest.TestCase):
+
+    def test_encrypt_1_dim(self):
+        matrix = np.array([1, 2, 3, 4, 5], dtype=np.float64)
+
+        self.__test(matrix)
 
     def test_encrypt_2_dim(self):
         matrix = np.array([[1, 2, 3],
@@ -61,7 +66,7 @@ class TestEncryption(unittest.TestCase):
 
         self.__test(matrix)
 
-    def test_encrypt_1_dim(self):
+    def test_encrypt_3_dim_3(self):
         matrix = np.ones((8, 50, 50))
         self.__test(matrix)
 
@@ -71,8 +76,8 @@ class TestEncryption(unittest.TestCase):
         publickey = paillierEncrypt.get_public_key()
         privatekey = paillierEncrypt.get_privacy_key()
 
-        result = encrypt_matrix(publickey, matrix)
-        decrypted_result = decrypt_matrix(privatekey, result)
+        result = distribute_encrypt_matrix(publickey, matrix)
+        decrypted_result = distribute_decrypt_matrix(privatekey, result)
         assert_matrix(matrix, decrypted_result)
 
 

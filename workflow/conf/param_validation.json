@@ -1,0 +1,21 @@
+{
+    "LogisticParam": {
+        "batch_size": {
+            "ge": 320,
+            "range": [[-1, -1]]
+        }
+    },
+    "EncryptParam": {
+        "key_length": {
+            "ge": 1024
+        }
+    },
+    "EncryptedModeCalculatorParam": {
+        "mode": {
+            "in": ["strict", "balance"]
+        },
+        "re_encrypted_rate": {
+            "range": [[0.1, 1]]
+        }
+    }
+}

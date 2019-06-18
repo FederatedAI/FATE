@@ -105,10 +105,9 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # table(sid, hash(guest_ids_process/r)))
         table_sid_guest_ids_process_final = table_sid_guest_ids_process.join(table_random_value,
-                                                                             lambda g, r: hashlib.sha256(bytes(
-                                                                                 str(
+                                                                             lambda g, r: RsaIntersectionGuest.hash(
                                                                                      gmpy2.divm(int(g), int(r), self.n)
-                                                                                 ), encoding="utf-8")).hexdigest()
+                                                                                 )
                                                                              )
 
         # table(hash(guest_ids_process/r), sid)
@@ -135,6 +134,10 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # intersect table(sid, "intersect_id")
         intersect_ids = table_encrypt_intersect_ids.map(lambda k, v: (v, "intersect_id"))
+
+        if not self.only_output_key:
+            intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
         return intersect_ids
 
 

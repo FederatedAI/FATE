@@ -17,7 +17,7 @@
 import time
 
 from arch.api.utils import log_utils
-from federatedml.ftl.eggroll_computation.helper import decrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from federatedml.ftl.encryption.encryption import decrypt_scalar, decrypt_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.optim.convergence import AbsConverge
@@ -125,8 +125,8 @@ class HeteroFTLArbiter(HeteroFTLParty):
         LOGGER.info("@ running time: " + str(end_time - start_time))
 
     def __decrypt_gradients(self, encrypt_gradients):
-        return decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
-                                                                                     encrypt_gradients[1])
+        return distribute_decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
+                                                                                                encrypt_gradients[1])
 
     def __decrypt_loss(self, encrypt_loss):
         return decrypt_scalar(self.private_key, encrypt_loss)

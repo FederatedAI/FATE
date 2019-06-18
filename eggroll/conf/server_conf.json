@@ -1,0 +1,16 @@
+{
+	"servers": {
+		"roll": {
+			"host": "localhost",
+			"port": 8011
+		},
+		"clustercomm": {
+			"host": "localhost",
+			"port": 9394
+		},
+		"proxy": {
+			"host": "localhost",
+			"port": 9370
+		}
+	}
+}

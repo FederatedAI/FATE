@@ -16,10 +16,17 @@ message DecisionTreeModelParam {
     map<int32, double> split_maskdict = 2;
 }
 
+message FeatureImportanceInfo {
+	string sitename = 1;
+	int32 fid = 2;
+	double importance = 3;
+}
+
 message BoostingTreeModelParam {
 	int32 tree_num = 1;
     repeated DecisionTreeModelParam trees_ = 2;
     repeated double init_score = 3;
     repeated double losses = 4;
+	repeated FeatureImportanceInfo feature_importances = 5;
 }
 

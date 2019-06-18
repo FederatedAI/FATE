@@ -27,7 +27,6 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-import model_service_pb2 as model__service__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -35,140 +34,29 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.serving',
   syntax='proto3',
   serialized_options=_b('B\025InferenceServiceProto'),
-  serialized_pb=_b('\n\x17inference_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\x1a\x13model_service.proto\"\xdb\x02\n\x10InferenceRequest\x12@\n\x05local\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.LocalInfo\x12H\n\x04role\x18\x02 \x03(\x0b\x32:.com.webank.ai.fate.api.serving.InferenceRequest.RoleEntry\x12@\n\x05model\x18\x03 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.ModelInfo\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x12\x0f\n\x07sceneId\x18\x05 \x01(\x05\x1aZ\n\tRoleEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12<\n\x05value\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.mlmodel.manager.Party:\x02\x38\x01\"U\n\x11InferenceResponse\x12\x12\n\nstatusCode\x18\x02 \x01(\x05\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\r\n\x05\x65rror\x18\x04 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x05 \x01(\x0c\x32\x82\x01\n\x10InferenceService\x12n\n\x07predict\x12\x30.com.webank.ai.fate.api.serving.InferenceRequest\x1a\x31.com.webank.ai.fate.api.serving.InferenceResponseB\x17\x42\x15InferenceServiceProtob\x06proto3')
-  ,
-  dependencies=[model__service__pb2.DESCRIPTOR,])
-
-
-
-
-_INFERENCEREQUEST_ROLEENTRY = _descriptor.Descriptor(
-  name='RoleEntry',
-  full_name='com.webank.ai.fate.api.serving.InferenceRequest.RoleEntry',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.api.serving.InferenceRequest.RoleEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.api.serving.InferenceRequest.RoleEntry.value', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=_b('8\001'),
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=338,
-  serialized_end=428,
+  serialized_pb=_b('\n\x17inference_service.proto\x12\x1e\x63om.webank.ai.fate.api.serving\"0\n\x10InferenceMessage\x12\x0e\n\x06header\x18\x01 \x01(\x0c\x12\x0c\n\x04\x62ody\x18\x02 \x01(\x0c\x32\xf6\x02\n\x10InferenceService\x12o\n\tinference\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessage\x12w\n\x11startInferenceJob\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessage\x12x\n\x12getInferenceResult\x12\x30.com.webank.ai.fate.api.serving.InferenceMessage\x1a\x30.com.webank.ai.fate.api.serving.InferenceMessageB\x17\x42\x15InferenceServiceProtob\x06proto3')
 )
 
-_INFERENCEREQUEST = _descriptor.Descriptor(
-  name='InferenceRequest',
-  full_name='com.webank.ai.fate.api.serving.InferenceRequest',
+
+
+
+_INFERENCEMESSAGE = _descriptor.Descriptor(
+  name='InferenceMessage',
+  full_name='com.webank.ai.fate.api.serving.InferenceMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='local', full_name='com.webank.ai.fate.api.serving.InferenceRequest.local', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='role', full_name='com.webank.ai.fate.api.serving.InferenceRequest.role', index=1,
-      number=2, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='model', full_name='com.webank.ai.fate.api.serving.InferenceRequest.model', index=2,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='data', full_name='com.webank.ai.fate.api.serving.InferenceRequest.data', index=3,
-      number=4, type=12, cpp_type=9, label=1,
+      name='header', full_name='com.webank.ai.fate.api.serving.InferenceMessage.header', index=0,
+      number=1, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='sceneId', full_name='com.webank.ai.fate.api.serving.InferenceRequest.sceneId', index=4,
-      number=5, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[_INFERENCEREQUEST_ROLEENTRY, ],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=81,
-  serialized_end=428,
-)
-
-
-_INFERENCERESPONSE = _descriptor.Descriptor(
-  name='InferenceResponse',
-  full_name='com.webank.ai.fate.api.serving.InferenceResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='statusCode', full_name='com.webank.ai.fate.api.serving.InferenceResponse.statusCode', index=0,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='message', full_name='com.webank.ai.fate.api.serving.InferenceResponse.message', index=1,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='error', full_name='com.webank.ai.fate.api.serving.InferenceResponse.error', index=2,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='data', full_name='com.webank.ai.fate.api.serving.InferenceResponse.data', index=3,
-      number=5, type=12, cpp_type=9, label=1,
+      name='body', full_name='com.webank.ai.fate.api.serving.InferenceMessage.body', index=1,
+      number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -185,44 +73,22 @@ _INFERENCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=430,
-  serialized_end=515,
+  serialized_start=59,
+  serialized_end=107,
 )
 
-_INFERENCEREQUEST_ROLEENTRY.fields_by_name['value'].message_type = model__service__pb2._PARTY
-_INFERENCEREQUEST_ROLEENTRY.containing_type = _INFERENCEREQUEST
-_INFERENCEREQUEST.fields_by_name['local'].message_type = model__service__pb2._LOCALINFO
-_INFERENCEREQUEST.fields_by_name['role'].message_type = _INFERENCEREQUEST_ROLEENTRY
-_INFERENCEREQUEST.fields_by_name['model'].message_type = model__service__pb2._MODELINFO
-DESCRIPTOR.message_types_by_name['InferenceRequest'] = _INFERENCEREQUEST
-DESCRIPTOR.message_types_by_name['InferenceResponse'] = _INFERENCERESPONSE
+DESCRIPTOR.message_types_by_name['InferenceMessage'] = _INFERENCEMESSAGE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-InferenceRequest = _reflection.GeneratedProtocolMessageType('InferenceRequest', (_message.Message,), dict(
-
-  RoleEntry = _reflection.GeneratedProtocolMessageType('RoleEntry', (_message.Message,), dict(
-    DESCRIPTOR = _INFERENCEREQUEST_ROLEENTRY,
-    __module__ = 'inference_service_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.serving.InferenceRequest.RoleEntry)
-    ))
-  ,
-  DESCRIPTOR = _INFERENCEREQUEST,
+InferenceMessage = _reflection.GeneratedProtocolMessageType('InferenceMessage', (_message.Message,), dict(
+  DESCRIPTOR = _INFERENCEMESSAGE,
   __module__ = 'inference_service_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.serving.InferenceRequest)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.serving.InferenceMessage)
   ))
-_sym_db.RegisterMessage(InferenceRequest)
-_sym_db.RegisterMessage(InferenceRequest.RoleEntry)
-
-InferenceResponse = _reflection.GeneratedProtocolMessageType('InferenceResponse', (_message.Message,), dict(
-  DESCRIPTOR = _INFERENCERESPONSE,
-  __module__ = 'inference_service_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.serving.InferenceResponse)
-  ))
-_sym_db.RegisterMessage(InferenceResponse)
+_sym_db.RegisterMessage(InferenceMessage)
 
 
 DESCRIPTOR._options = None
-_INFERENCEREQUEST_ROLEENTRY._options = None
 
 _INFERENCESERVICE = _descriptor.ServiceDescriptor(
   name='InferenceService',
@@ -230,16 +96,34 @@ _INFERENCESERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=518,
-  serialized_end=648,
+  serialized_start=110,
+  serialized_end=484,
   methods=[
   _descriptor.MethodDescriptor(
-    name='predict',
-    full_name='com.webank.ai.fate.api.serving.InferenceService.predict',
+    name='inference',
+    full_name='com.webank.ai.fate.api.serving.InferenceService.inference',
     index=0,
     containing_service=None,
-    input_type=_INFERENCEREQUEST,
-    output_type=_INFERENCERESPONSE,
+    input_type=_INFERENCEMESSAGE,
+    output_type=_INFERENCEMESSAGE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='startInferenceJob',
+    full_name='com.webank.ai.fate.api.serving.InferenceService.startInferenceJob',
+    index=1,
+    containing_service=None,
+    input_type=_INFERENCEMESSAGE,
+    output_type=_INFERENCEMESSAGE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='getInferenceResult',
+    full_name='com.webank.ai.fate.api.serving.InferenceService.getInferenceResult',
+    index=2,
+    containing_service=None,
+    input_type=_INFERENCEMESSAGE,
+    output_type=_INFERENCEMESSAGE,
     serialized_options=None,
   ),
 ])

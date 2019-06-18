@@ -20,11 +20,10 @@ Local party configuration.
 ```
 ### Automatically generate table information
 ```json
-"scene_id": 50000,
 "gen_table_info": true,
 "data_type": "train_input"
 ```
-If `table_name` and `namespace` is null, as the same time, `scene_id` is not null and `gen_table_info` is true and `data_type` is not null.TM will use `local`,`role`,`scene_id` and `data_type` configuration to generate table_name and namespace. 
+If `table_name` and `namespace` is null, as the same time, `gen_table_info` is true and `data_type` is not null.TM will use `local`,`role`,`scene_id` and `data_type` configuration to generate table_name and namespace. 
 ## Examples
 
 We have list several example config files and the TM client script here so that you can easily start to find out the usage of TM. To start task with TM, configuration is (maybe the only) important steps. More example config files has been list in : **arch/task_manager/example_conf**. You use -f represent for function to indicate the function you want.

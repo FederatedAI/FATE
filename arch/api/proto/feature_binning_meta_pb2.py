@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-binning-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1a\x66\x65\x61ture-binning-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xac\x01\n\x12\x46\x65\x61tureBinningMeta\x12\x0e\n\x06method\x18\x01 \x01(\t\x12\x16\n\x0e\x63ompress_thres\x18\x02 \x01(\x03\x12\x11\n\thead_size\x18\x03 \x01(\x03\x12\r\n\x05\x65rror\x18\x04 \x01(\x01\x12\x0f\n\x07\x62in_num\x18\x05 \x01(\x03\x12\x0c\n\x04\x63ols\x18\x06 \x03(\x03\x12\x19\n\x11\x61\x64justment_factor\x18\x07 \x01(\x01\x12\x12\n\nlocal_only\x18\x08 \x01(\x08\x42\x19\x42\x17\x46\x65\x61tureBinningMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x1a\x66\x65\x61ture-binning-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xac\x01\n\x12\x46\x65\x61tureBinningMeta\x12\x0e\n\x06method\x18\x01 \x01(\t\x12\x16\n\x0e\x63ompress_thres\x18\x02 \x01(\x03\x12\x11\n\thead_size\x18\x03 \x01(\x03\x12\r\n\x05\x65rror\x18\x04 \x01(\x01\x12\x0f\n\x07\x62in_num\x18\x05 \x01(\x03\x12\x0c\n\x04\x63ols\x18\x06 \x03(\t\x12\x19\n\x11\x61\x64justment_factor\x18\x07 \x01(\x01\x12\x12\n\nlocal_only\x18\x08 \x01(\x08\x42\x19\x42\x17\x46\x65\x61tureBinningMetaProtob\x06proto3')
 )
 
 
@@ -69,7 +69,7 @@ _FEATUREBINNINGMETA = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='cols', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningMeta.cols', index=5,
-      number=6, type=3, cpp_type=2, label=3,
+      number=6, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,

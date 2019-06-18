@@ -1,6 +1,5 @@
 {
   "output_path": "./download_host_file.txt",
-  "scene_id": 50000,
   "gen_table_info": true,
   "local": {
     "party_id": 10000,

@@ -15,5 +15,6 @@
 #
 
 from federatedml.secureprotol.encrypt import RsaEncrypt, PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 
-__all__ = ['RsaEncrypt', 'PaillierEncrypt', 'FakeEncrypt']
+__all__ = ['RsaEncrypt', 'PaillierEncrypt', 'FakeEncrypt', 'EncryptModeCalculator']

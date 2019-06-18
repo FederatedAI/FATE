@@ -16,6 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import inspect
+import json
 import numpy as np
 import random
 import unittest
@@ -29,6 +31,13 @@ class TestParameterChecker(unittest.TestCase):
     def setUp(self):
         home_dir = os.path.split(os.path.realpath(__file__))[0]
         self.config_path = home_dir + '/../../../workflow/conf/default_runtime_conf.json'
+        validation_path = home_dir + '/../../../workflow/conf/param_validation.json'
+        with open(validation_path, "r") as fin:
+            self.validation_json = json.loads(fin.read())
+
+        self.all_checker = param_checker.AllChecker(self.config_path)
+
+        self.param_classes = [class_info[0] for class_info in inspect.getmembers(param, inspect.isclass)]
 
     def test_checker(self):
 
@@ -48,14 +57,15 @@ class TestParameterChecker(unittest.TestCase):
         self._check(param.LocalModelParam, param_checker.LocalModelParamChecker)
         self._check(param.FTLDataParam, param_checker.FTLDataParamChecker)
         self._check(param.FTLValidDataParam, param_checker.FTLValidDataParamChecker)
-        self._check(param.FeatureBinningParam, param_checker.FeatureBinningParamChecker)
-        self._check(param.FeatureSelectionParam, param_checker.FeatureSelectionParamChecker)
-
+        # self._check(param.FeatureBinningParam, param_checker.FeatureBinningParamChecker)
+        # self._check(param.FeatureSelectionParam, param_checker.FeatureSelectionParamChecker)
 
     def _check(self, Param, Checker):
         param_obj = Param()
         param_obj = ParamExtract.parse_param_from_config(param_obj, self.config_path)
         Checker.check_param(param_obj)
+
+        self.all_checker.validate_restricted_param(param_obj, self.validation_json, self.param_classes) 
 
 
 if __name__ == '__main__':

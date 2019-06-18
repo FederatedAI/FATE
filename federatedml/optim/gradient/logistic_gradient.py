@@ -19,9 +19,9 @@ import functools
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
 from federatedml.optim.gradient.base_gradient import Gradient
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -82,11 +82,33 @@ class TaylorLogisticGradient(Gradient):
 
 
 class HeteroLogisticGradient(object):
+    """
+    Class for compute hetero-lr gradient and loss
+    """
+
     def __init__(self, encrypt_method=None):
+        """
+        Parameters
+        ----------
+        encrypt_obj: Object, encrypt object set in hetero-lr, like Paillier, it should be inited before.
+        """
         self.encrypt_operator = encrypt_method
 
     @staticmethod
     def __compute_gradient(data, fit_intercept=True):
+        """
+        Compute hetero-lr gradient for:
+        gradient = ∑(1/2*ywx-1)*1/2yx, where fore_gradient = (1/2*ywx-1)*1/2y has been computed, x is features
+        Parameters
+        ----------
+        data: DTable, include fore_gradient and features
+        fit_intercept: bool, if hetero-lr has interception or not. Default True
+
+        Returns
+        ----------
+        numpy.ndarray
+            hetero-lr gradient
+        """
         feature = []
         fore_gradient = []
 
@@ -112,6 +134,16 @@ class HeteroLogisticGradient(object):
 
     @staticmethod
     def __compute_loss(values):
+        """
+        Compute hetero-lr loss for:
+        loss = log2 - 1/2*ywx + 1/8*(wx)^2, where y is label, w is model weight and x is features
+        Parameters
+        ----------
+        values: DTable, include 1/2*ywx and (wx)^2
+
+        numpy.ndarray
+            hetero-lr loss
+        """
         half_ywx = []
         encrypted_wx_square = []
         bias = np.log(2)
@@ -134,10 +166,35 @@ class HeteroLogisticGradient(object):
         return np.array([loss, len(half_ywx)])
 
     def compute_fore_gradient(self, data_instance, encrypted_wx):
+        """
+        Compute fore_gradient = (1/2*ywx-1)*1/2y
+        Parameters
+        ----------
+        data_instance: DTable, input data
+        encrypted_wx: DTable, encrypted wx
+
+        Returns
+        ----------
+        DTable
+            fore_gradient
+        """
         fore_gradient = encrypted_wx.join(data_instance, lambda wx, d: 0.25 * wx - 0.5 * d.label)
         return fore_gradient
 
     def compute_gradient(self, data_instance, fore_gradient, fit_intercept):
+        """
+        Compute hetero-lr gradient
+        Parameters
+        ----------
+        data_instance: DTable, input data
+        fore_gradient: DTable, fore_gradient = (1/2*ywx-1)*1/2y
+        fit_intercept: bool, if hetero-lr has interception or not
+
+        Returns
+        ----------
+        DTable
+            the hetero-lr's gradient
+        """
         feat_join_grad = data_instance.join(fore_gradient, lambda d, g: (d.features, g))
         f = functools.partial(self.__compute_gradient, fit_intercept=fit_intercept)
 
@@ -148,10 +205,28 @@ class HeteroLogisticGradient(object):
             if not isinstance(gradient[i], PaillierEncryptedNumber):
                 gradient[i] = self.encrypt_operator.encrypt(gradient[i])
 
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [feat_join_grad]
+        rubbish_clear(rubbish_list)
 
         return gradient
 
     def compute_gradient_and_loss(self, data_instance, fore_gradient, encrypted_wx, en_sum_wx_square, fit_intercept):
+        """
+        Compute gradient and loss
+        Parameters
+        ----------
+        data_instance: DTable, input data
+        fore_gradient: DTable, fore_gradient = (1/2*ywx-1)*1/2y
+        encrypted_wx: DTable, encrypted wx
+        en_sum_wx_square: DTable, encrypted wx^2
+        fit_intercept: bool, if hetero-lr has interception or not
+
+        Returns
+        ----------
+        DTable
+            the hetero-lr gradient and loss
+        """
         # compute gradient
         gradient = self.compute_gradient(data_instance, fore_gradient, fit_intercept)
 
@@ -161,5 +236,9 @@ class HeteroLogisticGradient(object):
         f = functools.partial(self.__compute_loss)
         loss_partition = half_ywx_join_en_sum_wx_square.mapPartitions(f).reduce(lambda x, y: x + y)
         loss = loss_partition[0] / loss_partition[1]
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [half_ywx, half_ywx_join_en_sum_wx_square]
+        rubbish_clear(rubbish_list)
 
         return gradient, loss

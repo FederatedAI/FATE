@@ -20,18 +20,19 @@ import com.webank.ai.fate.core.utils.Configuration;
 import org.fusesource.lmdbjni.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StandaloneDTable implements DTable{
+public class StandaloneDTable implements DTable {
     private static final Logger LOGGER = LogManager.getLogger();
     //private String dataDir = Paths.get(System.getProperty("user.dir"), "data").toString();
     private String dataDir = Configuration.getProperty("standaloneStoragePath");
     private Database db;
     private Env env;
 
-    public StandaloneDTable(String name, String namespace, int partition){
+    public StandaloneDTable(String name, String namespace, int partition) {
         String path = Paths.get(this.dataDir, "LMDB", namespace, name, Integer.toString(0)).toString();
         LOGGER.info(path);
         this.env = new Env(path);
@@ -39,7 +40,7 @@ public class StandaloneDTable implements DTable{
     }
 
     @Override
-    public byte[] get(String key){
+    public byte[] get(String key) {
         return db.get(key.getBytes());
     }
 
@@ -49,9 +50,9 @@ public class StandaloneDTable implements DTable{
     }
 
     @Override
-    public Map<String, byte[]> collect(){
+    public Map<String, byte[]> collect() {
         Map<String, byte[]> kvData = new HashMap<>();
-        for(Entry next: db.iterate(this.env.createReadTransaction()).iterable()){
+        for (Entry next : db.iterate(this.env.createReadTransaction()).iterable()) {
             kvData.put(new String(next.getKey()), next.getValue());
         }
         return kvData;

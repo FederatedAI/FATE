@@ -22,7 +22,8 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
-from federatedml.statistic import data_overview
+from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroLRTransferVariable
 
@@ -31,36 +32,79 @@ LOGGER = log_utils.getLogger()
 
 class HeteroLRGuest(BaseLogisticRegression):
     def __init__(self, logistic_params):
-        # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRGuest, self).__init__(logistic_params)
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []
 
-        self.wx = None
+        self.encrypted_calculator = None
+
         self.guest_forward = None
 
-    def compute_forward(self, data_instances, coef_, intercept_):
-        self.wx = self.compute_wx(data_instances, coef_, intercept_)
-        encrypt_operator = self.encrypt_operator
-        self.guest_forward = self.wx.mapValues(
-            lambda v: (encrypt_operator.encrypt(v), encrypt_operator.encrypt(np.square(v)), v))
+    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
+        wx = self.compute_wx(data_instances, coef_, intercept_)
+
+        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
+
+        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [wx, en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
+        rubbish_clear(rubbish_list)
 
     def aggregate_forward(self, host_forward):
+        """
+        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h , where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
+        and en_wx_h is the encrypted W * X + b of host.
+        Parameters
+        ----------
+        host_forward: DTable, include encrypted W * X and (W * X)^2
+
+        Returns
+        ----------
+        aggregate_forward_res
+        list
+            include W * X and (W * X)^2 federate with guest and host
+        """
         aggregate_forward_res = self.guest_forward.join(host_forward,
                                                         lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
         return aggregate_forward_res
 
     @staticmethod
     def load_data(data_instance):
+        """
+        set the negative label to -1
+        Parameters
+        ----------
+        data_instance: DTable of Instance, input data
+        """
         if data_instance.label != 1:
             data_instance.label = -1
         return data_instance
 
     def fit(self, data_instances):
+        """
+        Train lr model of role guest
+        Parameters
+        ----------
+        data_instances: DTable of Instance, input data
+        """
+
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
 
-        self.header = data_instances.schema.get("header")
+        self.header = self.get_header(data_instances)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
@@ -92,9 +136,14 @@ class HeteroLRGuest(BaseLogisticRegression):
                           idx=0)
         LOGGER.info("Remote batch_info to Arbiter")
 
+        self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+                                     in range(batch_num)]
+
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
-        model_shape = data_overview.get_features_shape(data_instances)
+        model_shape = self.get_features_shape(data_instances)
         weight = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         if self.init_param_obj.fit_intercept is True:
             self.coef_ = weight[:-1]
@@ -108,7 +157,7 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
+            # each iter will get the same batch_data_generator
             batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
 
             batch_index = 0
@@ -138,7 +187,7 @@ class HeteroLRGuest(BaseLogisticRegression):
                 batch_feat_inst = self.transform(batch_data_inst)
 
                 # guest/host forward
-                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_)
+                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)
                 host_forward = federation.get(name=self.transfer_variable.host_forward_dict.name,
                                               tag=self.transfer_variable.generate_transferid(
                                                   self.transfer_variable.host_forward_dict, self.n_iter_, batch_index),
@@ -219,6 +268,16 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # is converge of loss in arbiter
                 batch_index += 1
 
+                # temporary resource recovery and will be removed in the future
+                rubbish_list = [host_forward,
+                                aggregate_forward_res,
+                                en_aggregate_wx,
+                                en_aggregate_wx_square,
+                                fore_gradient,
+                                self.guest_forward
+                                ]
+                rubbish_clear(rubbish_list)
+
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(
                                             self.transfer_variable.is_stopped, self.n_iter_, batch_index),
@@ -233,6 +292,18 @@ class HeteroLRGuest(BaseLogisticRegression):
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances, predict_param):
+        """
+        Prediction of lr
+        Parameters
+        ----------
+        data_instance:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction.
+
+        Returns
+        ----------
+        DTable
+            include input data label, predict probably, label
+        """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)

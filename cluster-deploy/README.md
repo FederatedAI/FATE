@@ -1,6 +1,6 @@
  
 
-#                      **Federal Learning FATE-V0.2 Deployment Guide**
+#                      **FATE-V0.3 Deployment Guide**
 
 
 
@@ -10,7 +10,7 @@
 
 In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, including 7 offline related modules and 1 online related module. The specific module information is as follows:
 
-**1.1. Offline Module**
+### **1.1. Offline Module**
 
 | Module Name         | Port of module | Method of deployment                                | Module function                                              |
 | ------------------- | -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
@@ -87,17 +87,17 @@ c).Other Modules: The node where other modules are installed.
 
 *<u>Note: The above nodes can be the same node, but to distinguish the description, the following is explained in the case of full distribution.</u>*
 
-| node           | Node description                                  | Software configuration                              | Software installation path                                   | Network Configuration                                        |
-| -------------- | ------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Execution node | The operation node that executes the script       | Git tool   Maven3.5 and above                       | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
-| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0 | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3       /data/projects/fate/venv                            /data/projects/common/mysql/mysql-8.0 | In the same area or under the same VPC as other nodes        |
-| Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv               | /data/projects/common/jdk/jdk1.8             /data/projects/common/miniconda3        /data/projects/fate/venv | In the same area or under the same VPC as other nodes        |
+| node           | Node description                                  | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Execution node | The operation node that executes the script       | Git tool   Maven3.5 and above                                | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
+| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0      redis5.0.2 | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes        |
+| Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2             | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes        |
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
 
 ### **3.3. Package Preparation**
 
-List of software involved:mysql-8.0、jdk1.8、python virtualenv surroundings  、Python3.6 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
+List of software involved:mysql-8.0、jdk1.8、python virtualenv surroundings  、Python3.6、redis-5.0.2 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
 The script directory structure is as follows:
 
 ```
@@ -106,10 +106,12 @@ fate-base
 |   `-- my.cnf
 |-- env.sh
 |-- install_java.sh
+|-- install_redis.sh
 |-- install_mysql.sh
 |-- install_py3.sh
 |-- packages
 |   |-- jdk-8u172-linux-x64.tar.gz
+|   |-- redis-5.0.2.tar.gz
 |   |-- Miniconda3-4.5.4-Linux-x86_64.sh
 |   `-- mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
 |-- pip-dependencies
@@ -155,6 +157,14 @@ Check if jdk1.8 is installed. If the install_java.sh script is not installed, in
 ```
 sh install_java.sh 
 ```
+
+If you need to install the online module, check whether redis 5.0.2 is installed or not, and if not, execute the install_redis.sh script to install it:
+
+```
+sh install_redis.sh
+```
+
+*<u>Note:Using this script installation will initialize redis password to fate1234, which can be configured manually according to the actual situation.</u>*
 
 Check Python 3.6 and the virtualized environment. If it is not installed, execute the install_py3.sh script to install it:
 
@@ -213,6 +223,8 @@ Go into the project's arch directory and do dependency packaging:
 ```
 cd FATE/arch
 mvn clean package -DskipTests
+cd FATE/fate-serving
+mvn clean package -DskipTests
 ```
 
 ```
@@ -252,6 +264,8 @@ The configuration file configurations.sh instructions:
 | dir                | Fate installation path                               | Default is  /data/projects/fate                              | Use the default value                                        |
 | mysqldir           | Mysql installation directory                         | Default is  /data/projects/common/mysql/mysql-8.0            | Mysql installation path can use the default value            |
 | javadir            | JAVA_HOME                                            | Default is  /data/projects/common/jdk/jdk1.8                 | Jdk installation path can use the default value              |
+| venvdir            | Python virtualenv installation directory             | Default is /data/projects/fate/venv                          | Use the default value                                        |
+| redispass          | The password of redis                                | Default is fate1234                                          | Use the default value                                        |
 | partylist          | Party.id array                                       | Each array element represents a partyid                      | Modify according to partyid                                  |
 | JDBC0              | Corresponding to the jdbc configuration of the party | The corresponding jdbc configuration for each party: from left to right is ip dbname username password (this user needs to have create database permission) | If there are multiple parties, the order is JDBC0, JDBC1...the order corresponds to the partid order. |
 | iplist             | A servers list of each party                         | Represents a list of server IPS contained in each party (except exchange roles) | All parties involved in the IP are placed in this list, repeat the IP once.All parties involved in the IP are placed in this list, repeat the IP once. |
@@ -260,11 +274,11 @@ The configuration file configurations.sh instructions:
 | proxy0             | Proxy role IP list                                   | Represents a list of servers with Proxy roles in the party (only one in the current version) | If there are more than one party, the order is proxy0, proxy1... Sequence corresponds to partyid |
 | roll0              | Roll role IP list                                    | Represents a list of servers with Roll roles in the part (only one in the current version) | If there are more than one party, the order is roll0, roll1... Sequence corresponds to partyid |
 | egglist0           | Egg role list                                        | Represents a list of servers included in each party          | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partyid |
-| exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
 | tmlist0            | The ip list of the Task-manager role                 | Represents a list of servers with Roll roles in the party (only one in the current version) | If there are more than one party, the order is tmlist0, tmlist1... Sequence corresponds to partyid |
 | serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
+| exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
 
-*<u>Note: tmipList and serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
+*<u>Note: serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
 
 ### **4.4. For Example**
 
@@ -293,6 +307,8 @@ user=app
 dir=/data/projects/fate 
 mysqldir=/data/projects/common/mysql/mysql-8.0 
 javadir=/data/projects/common/jdk/jdk1.8 
+venvdir=/data/projects/eggroll/venv
+redispass=fate1234
 partylist=(partyA.id partyB.id) 
 JDBC0=(A.MS-ip A.dbname A.user A.password) 
 JDBC1=(B.MS-ip B.dbname B.user B.password) 
@@ -541,7 +557,7 @@ Start the virtualized environment Run run_toy_examples_standalone.sh under /data
 export PYTHONPATH=/data/projects/fate/python 
 source /data/projects/fate/venv/bin/activate
 cd /data/projects/fate/python/examples/toy_example/
-sh run_toy_examples_standalone.sh
+sh run_toy_example_standalone.sh
 ```
 
 See the "OK" field to indicate that the operation is successful.In other cases, if FAILED or stuck, it means failure, the program should produce results within one minute.
@@ -572,13 +588,12 @@ In other cases, if FAILED or stuck, it means failure, the program should produce
 
 ### 7.3. Minimization testing
 
-Start the virtualization environment in host and guest respectively and run run under / data / projects / fate / Python / examples / min_test_task,the min_test_task folder needs to be downloaded from [examples /min_test_task](https://github.com/WeBankFinTech/FATE/tree/feature-0.3-min_test_task/examples/min_test_task) :
+Start the virtualization environment in host and guest respectively and run run under / data / projects / fate / Python / examples / min_test_task:
 
 ```
 export PYTHONPATH=/data/projects/fate/python
 source/data/projects/fate/venv/bin/activate
 cd/data/projects/fate/python/examples/min_test_task/
-mkdir test
 ```
 
 **Fast mode**

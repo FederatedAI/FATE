@@ -13,15 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-scene_key_separator = '_'
+scene_key_separator = '#'
 
 
-def check_scene_info(scene_id, role, party_id, all_party):
-    return scene_id and role and party_id
+def check_scene_info(role, party_id, all_party):
+    return role and party_id
 
 
-def gen_scene_key(scene_id, role, party_id, all_party):
-    return scene_key_separator.join([str(scene_id), role if role else 'all', str(party_id), join_all_party(all_party)])
+def gen_scene_key(role, party_id, all_party):
+    return scene_key_separator.join([role if role else 'all', str(party_id), join_all_party(all_party)])
 
 
 def join_all_party(all_party):
@@ -39,11 +39,12 @@ def join_all_party(all_party):
         all_party_key = 'all'
     elif isinstance(all_party, dict):
         sorted_role_name = sorted(all_party.keys())
-        all_party_key = '-'.join(['|'.join([str(p) for p in sorted(set(all_party[role_name]))])
-                                  for role_name in sorted_role_name])
+        all_party_key = scene_key_separator.join([
+            ('%s-%s' % (
+                role_name,
+                '_'.join([str(p) for p in sorted(set(all_party[role_name]))]))
+             )
+            for role_name in sorted_role_name])
     else:
         all_party_key = None
     return all_party_key
-
-
-

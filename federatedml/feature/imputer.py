@@ -10,7 +10,18 @@ LOGGER = log_utils.getLogger()
 
 
 class Imputer(object):
+    """
+    This class provides basic strategies for values replacement. It can be used as missing filled or outlier replace.
+    You can use the statistics such as mean, median or max of each column to fill the missing value or replace outlier.
+    """
+
     def __init__(self, imputer_value_list=None):
+        """
+        Parameters
+        ----------
+        imputer_value_list: list of str, the value to be replaced. Default None, if is None, it will be set to list of blank, none, null and na,
+                            which regarded as missing filled. If not, it can be outlier replace, and imputer_value_list includes the outlier values
+        """
         if imputer_value_list is None:
             self.imputer_value_list = ['', 'none', 'null', 'na']
         else:
@@ -286,7 +297,7 @@ class Imputer(object):
                                       replace_value=transform_value, missing_value_list=self.imputer_value_list,
                                       output_format=output_format)
             else:
-                f = functools.partial(Imputer.__replace_missing_value_with_replace_value, 
+                f = functools.partial(Imputer.__replace_missing_value_with_replace_value,
                                       replace_value=transform_value, missing_value_list=self.imputer_value_list)
         elif replace_area == 'col':
             if output_format is not None:
@@ -303,6 +314,20 @@ class Imputer(object):
         return transform_data
 
     def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN):
+        """
+        Apply imputer for input data
+        Parameters
+        ----------
+        data: data_instance, input data
+        replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
+        replace_value: str, if replace_method is designated, you should assign the replace_value which will be used to replace the value in imputer_value_list
+        output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
+
+        Returns
+        ----------
+        fit_data:data_instance, data after imputer
+        cols_transform_value: list, the replace value in each column
+        """
         if output_format not in self.support_output_format:
             raise ValueError("Unsupport output_format:{}".format(output_format))
 
@@ -323,6 +348,18 @@ class Imputer(object):
             raise ValueError("parameter replace_method should be str or None only")
 
     def transform(self, data, replace_method=None, transform_value=None, output_format=consts.ORIGIN):
+        """
+        Transform input data using imputer with fit results
+        Parameters
+        ----------
+        data: data_instance, input data
+        replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
+        output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
+
+        Returns
+        ----------
+        transform_data:data_instance, data after transform
+        """
         if output_format not in self.support_output_format:
             raise ValueError("Unsupport output_format:{}".format(output_format))
 
@@ -333,22 +370,5 @@ class Imputer(object):
         # replace_area = self.support_replace_area[replace_method]
         replace_area = "col"
         process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
-
-        # if isinstance(replace_method, str):
-        #     replace_method = replace_method.lower()
-        #     if replace_method not in self.support_replace_method:
-        #         raise ValueError("Unknown replace method {} in Imputer".format(replace_method))
-        #
-        #     if replace_method not in self.support_replace_area:
-        #         raise ValueError("Unknown replace area of method {} in Imputer".format(replace_method))
-        #
-        #     replace_area = self.support_replace_area[replace_method]
-        #     process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
-        # elif replace_method is None:
-        #     replace_area = 'all'
-        #     process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
-        #     return process_data
-        # else:
-        #     raise ValueError("parameter replace_method should be str or None only")
 
         return process_data

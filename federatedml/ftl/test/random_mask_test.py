@@ -21,7 +21,7 @@ import numpy as np
 from arch.api.eggroll import init
 from federatedml.ftl.data_util.common_data_util import add_random_mask_for_list_of_values, add_random_mask, \
     remove_random_mask_from_list_of_values, remove_random_mask
-from federatedml.ftl.eggroll_computation.helper import encrypt_matrix, decrypt_matrix
+from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matrix, distribute_decrypt_matrix
 from federatedml.ftl.test.util import assert_matrix
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 
@@ -112,11 +112,11 @@ class TestRandomMask(unittest.TestCase):
         publickey = paillierEncrypt.get_public_key()
         privatekey = paillierEncrypt.get_privacy_key()
 
-        enc_matrix = encrypt_matrix(publickey, matrix)
+        enc_matrix = distribute_encrypt_matrix(publickey, matrix)
         masked_enc_matrix, mask = add_random_mask(enc_matrix)
 
         cleared_enc_matrix = remove_random_mask(masked_enc_matrix, mask)
-        cleared_matrix = decrypt_matrix(privatekey, cleared_enc_matrix)
+        cleared_matrix = distribute_decrypt_matrix(privatekey, cleared_enc_matrix)
         assert_matrix(matrix, cleared_matrix)
 
     def __test_scalar(self, value):

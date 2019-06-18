@@ -74,6 +74,8 @@ class DenseFeatureReader(object):
             if self.with_label:
                 self.header = self.header.split(self.delimitor, -1)[: self.label_idx] + \
                               self.header.split(self.delimitor, -1)[self.label_idx + 1:]
+            else:
+                self.header = self.header.split(self.delimitor, -1)
 
     def read_data(self, table_name, namespace, mode="fit"):
         input_data = storage.get_data_table(table_name, namespace)
@@ -239,17 +241,17 @@ class DenseFeatureReader(object):
             LOGGER.info("data io model-meta can't save, it will not reuse in transform stage")
             return []
 
-        save_data_io_model("dense",
-                           self.delimitor,
-                           self.data_type,
-                           self.with_label,
-                           self.label_idx,
-                           self.label_type,
-                           self.output_format,
-                           self.header,
-                           "DenseFeatureReader",
-                           model_table,
-                           model_namespace)
+        save_data_io_model(input_format="dense",
+                           delimitor=self.delimitor,
+                           data_type=self.data_type,
+                           with_label=self.with_label,
+                           label_idx=self.label_idx,
+                           label_type=self.label_type,
+                           output_format=self.output_format,
+                           header=self.header,
+                           model_name="DenseFeatureReader",
+                           model_table=model_table,
+                           model_namespace=model_namespace)
         model_types.append(("DenseFeatureReader.meta", "DenseFeatureReader.param"))
 
         save_missing_imputer_model(self.missing_fill,
@@ -279,7 +281,7 @@ class DenseFeatureReader(object):
             LOGGER.info("data io model-meta can't reuse, model table name or namespace is null")
             return
         
-        self.delimitor, self.data_type, self.with_label, \
+        self.delimitor, self.data_type, _1, _2, self.with_label, \
         self.label_idx, self.label_type, self.output_format, self.header = load_data_io_model("DenseFeatureReader",
                                                                                               model_table,
                                                                                               model_namespace)
@@ -447,8 +449,8 @@ class SparseFeatureReader(object):
         return model_types
 
     def load_model(self, model_table, model_namespace):
-        self.delimitor, self.data_type, _1, \
-        _2, self.label_type, self.output_format, self.header = load_data_io_model("SparseFeatureReader",
+        self.delimitor, self.data_type, _1, _2, _3, _4, \
+        self.label_type, self.output_format, self.header = load_data_io_model("SparseFeatureReader",
                                                                                   model_table,
                                                                                   model_namespace)
 
@@ -461,20 +463,28 @@ class SparseTagReader(object):
         DataIOParamChecker.check_param(data_io_param)
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
+        self.tag_with_value = data_io_param.tag_with_value
+        self.tag_value_delimitor = data_io_param.tag_value_delimitor
         self.with_label = data_io_param.with_label
         self.label_type = data_io_param.label_type
         self.output_format = data_io_param.output_format
         self.header = None
 
-    def agg_tag(self, kvs, delimitor=' '):
+    @staticmethod
+    def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):
         tags_set = set()
         for key, value in kvs:
-            if self.with_label:
+            if with_label:
                 cols = value.split(delimitor, -1)[1 : ]
             else:
                 cols = value.split(delimitor, -1)[0:]
 
-            tags_set |= set(cols)
+            if tag_with_value is False:
+                tags = cols
+            else:
+                tags = [fea_value.split(tag_value_delimitor, -1)[0] for fea_value in cols]
+
+            tags_set |= set(tags)
 
         return tags_set
 
@@ -496,7 +506,11 @@ class SparseTagReader(object):
         return data_instance
 
     def fit(self, input_data):
-        tag_aggregator = functools.partial(self.agg_tag, delimitor=self.delimitor)
+        tag_aggregator = functools.partial(SparseTagReader.agg_tag, 
+                                           delimitor=self.delimitor,
+                                           with_label=self.with_label,
+                                           tag_with_value=self.tag_with_value, 
+                                           tag_value_delimitor=self.tag_value_delimitor)
         tags_set_list = list(input_data.mapPartitions(tag_aggregator).collect())
         tags_set = set()
         for _, _tags_set in tags_set_list:
@@ -520,6 +534,8 @@ class SparseTagReader(object):
     def gen_data_instance(self, input_data, tags_dict):
         params = [self.delimitor,
                   self.data_type,
+                  self.tag_with_value,
+                  self.tag_value_delimitor,
                   self.with_label,
                   self.label_type,
                   self.output_format,
@@ -534,10 +550,12 @@ class SparseTagReader(object):
     def to_instance(param_list, value):
         delimitor = param_list[0]
         data_type = param_list[1]
-        with_label = param_list[2]
-        label_type = param_list[3]
-        output_format = param_list[4]
-        tags_dict = param_list[5]
+        tag_with_value = param_list[2]
+        tag_value_delimitor = param_list[3]
+        with_label = param_list[4]
+        label_type = param_list[5]
+        output_format = param_list[6]
+        tags_dict = param_list[7]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
@@ -556,19 +574,32 @@ class SparseTagReader(object):
 
         if output_format == "dense":
             features = [0 for i in range(len(tags_dict))]
-            for tag in cols[start_pos:]:
-                features[tags_dict.get(tag)] = 1
+            for fea in cols[start_pos:]:
+                if tag_with_value:
+                    _tag, _val = fea.split(tag_value_delimitor, -1)
+                    features[tags_dict.get(_tag)] = _val
+                else:
+                    features[tags_dict.get(fea)] = 1
 
             features = np.asarray(features, dtype=data_type)
         else:
             indices = []
             data = []
-            for tag in cols[start_pos:]:
-                indices.append(tags_dict.get(tag))
-                _data = 1
+            for fea in cols[start_pos:]:
+                if tag_with_value:
+                    _tag, _val = fea.split(tag_value_delimitor, -1)
+                else:
+                    _tag = fea
+                    _val = 1
+                indices.append(tags_dict.get(_tag))
                 if data_type in ["float", "float64"]:
-                    _data = float(1)
-                data.append(_data)
+                    _val = float(_val)
+                elif data_type in ["int", "int64", "long"]:
+                    _val = int(_val)
+                elif data_type == "str":
+                    _val = str(_val)
+
+                data.append(_val)
 
             features = SparseVector(indices, data, len(tags_dict))
 
@@ -582,6 +613,8 @@ class SparseTagReader(object):
         save_data_io_model(input_format="tag",
                            delimitor=self.delimitor,
                            data_type=self.data_type,
+                           tag_with_value=self.tag_with_value,
+                           tag_value_delimitor=self.tag_value_delimitor,
                            with_label=self.with_label,
                            label_type=self.label_type,
                            output_format=self.output_format,
@@ -606,10 +639,10 @@ class SparseTagReader(object):
         return model_types
 
     def load_model(self, model_table, model_namespace):
-        self.delimitor, self.data_type, self.with_label, \
-        _, self.label_type, self.output_format, self.header = load_data_io_model("SparseTagReader",
-                                                                                 model_table,
-                                                                                 model_namespace)
+        self.delimitor, self.data_type, self.tag_with_value, self.tag_value_delimitor, self.with_label, \
+        _1, self.label_type, self.output_format, self.header = load_data_io_model("SparseTagReader",
+                                                                                  model_table,
+                                                                                  model_namespace)
 
 
 def set_schema(data_instance, header):
@@ -619,6 +652,8 @@ def set_schema(data_instance, header):
 def save_data_io_model(input_format="dense",
                        delimitor=",",
                        data_type="str",
+                       tag_with_value=False,
+                       tag_value_delimitor=":",
                        with_label=False,
                        label_idx=0,
                        label_type="int",
@@ -633,6 +668,8 @@ def save_data_io_model(input_format="dense",
     model_meta.input_format = input_format
     model_meta.delimitor = delimitor
     model_meta.data_type = data_type
+    model_meta.tag_with_value = tag_with_value
+    model_meta.tag_value_delimitor = tag_value_delimitor
     model_meta.with_label = with_label
     model_meta.label_idx = label_idx
     model_meta.label_type = label_type
@@ -670,6 +707,8 @@ def load_data_io_model(model_name="DataIO",
 
     delimitor = model_meta.delimitor
     data_type = model_meta.data_type
+    tag_with_value = model_meta.tag_with_value
+    tag_value_delimitor = model_meta.tag_value_delimitor
     with_label = model_meta.with_label
     label_idx = model_meta.label_idx
     label_type = model_meta.label_type
@@ -677,7 +716,7 @@ def load_data_io_model(model_name="DataIO",
 
     header = list(model_param.header)
 
-    return delimitor, data_type, with_label, label_idx, label_type, output_format, header
+    return delimitor, data_type, tag_with_value, tag_value_delimitor, with_label, label_idx, label_type, output_format, header
 
 
 def save_missing_imputer_model(missing_fill=False,
@@ -822,6 +861,7 @@ def load_outlier_model(header=None,
             outlier_value = None
         else:
             outlier_value = list(outlier_value)
+        
 
         if outlier_replace_value:
             outlier_replace_value = [outlier_replace_value.get(head) for head in header]

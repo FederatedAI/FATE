@@ -1,0 +1,50 @@
+{
+    "task": "intersect",
+    "module": "Intersect",
+    "role": {
+        "guest": [9999],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "WorkFlowParam": {
+                "data_input_table": ["7b5640568ea011e98170525400fea046"],
+                "data_input_namespace": ["guest#9999#arbiter-10000#guest-9999#host-10000#train_input"],
+                "intersect_data_output_table": ["guest_intersect_output_table_name"],
+                "intersect_data_output_namespace": ["guest_intersect_output_namespace"]
+            },
+             "DataIOParam":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "WorkFlowParam": {
+                "data_input_table": ["f2e66b228ea111e9bc265254001a8f32"],
+                "data_input_namespace": ["host#10000#arbiter-10000#guest-9999#host-10000#train_input"],
+                "intersect_data_output_table": ["host_intersect_output_table_name"],
+                "intersect_data_output_namespace": ["host_intersect_output_namespace"]
+            },
+             "DataIOParam":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "WorkFlowParam": {
+            "work_mode": 1
+        },
+        "IntersectParam": {
+            "intersect_method": "rsa",
+            "is_send_intersect_ids": true,
+            "join_role": "guest",
+            "with_encode": true
+        },
+         "EncodeParam": {
+             "encode_method": "sha256",
+             "salt": "12345",
+             "base64": false
+         }
+    }
+}

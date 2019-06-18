@@ -1,43 +1,40 @@
 {
-
-    "local": {
-        "role": "guest",
-        "party_id": _guest_party_id
-    },
-
-    "role": {
-        "host": [
-            _host_party_id
-        ],
-        "guest": [
-            _guest_party_id
-        ]
-    },
-
-    "DataIOParam": {
-        "with_label": false,
-        "partition": 10
-    },
-    "WorkFlowParam": {
-        "method": "_workflow_method",
-        "data_input_table": "_intersect_table_name",
-        "data_input_namespace": "example_data_namespace",
-        "intersect_data_output_table": "guest__intersect_output_table_name",
-        "intersect_data_output_namespace": "guest__intersect_output_namespace",
-        "work_mode": _work_mode
-    },
-    "IntersectParam": {
-        "intersect_method": "rsa",
-        "random_bit": 128,
-        "is_send_intersect_ids": true,
-        "is_get_intersect_ids": true,
-        "join_role": "host",
-        "with_encode": true
-    },
-    "EncodeParam": {
-        "encode_method": "sha256",
-        "salt": "12345",
-        "base64": false
-    }
-
+  "local": {
+    "role": "guest",
+    "party_id": _guest_party_id
+  },
+  "role": {
+    "host": [
+      _host_party_id
+    ],
+    "guest": [
+      _guest_party_id
+    ]
+  },
+  "DataIOParam": {
+    "with_label": false,
+    "partition": 10
+  },
+  "WorkFlowParam": {
+    "method": "_workflow_method",
+    "data_input_table": "_intersect_table_name",
+    "data_input_namespace": "example_data_namespace",
+    "intersect_data_output_table": "guest__intersect_output_table_name",
+    "intersect_data_output_namespace": "guest__intersect_output_namespace",
+    "work_mode": _work_mode
+  },
+  "IntersectParam": {
+    "intersect_method": "rsa",
+    "random_bit": 128,
+    "is_send_intersect_ids": true,
+    "is_get_intersect_ids": true,
+    "join_role": "host",
+    "with_encode": true,
+    "only_output_key": true
+  },
+  "EncodeParam": {
+    "encode_method": "sha256",
+    "salt": "12345",
+    "base64": false
+  }
 }

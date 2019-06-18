@@ -35,6 +35,7 @@ from federatedml.util import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from numpy import random
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
 from federatedml.loss import LeastSquaredErrorLoss
@@ -50,11 +51,12 @@ from arch.api.model_manager import manager
 from arch.api.proto.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 import numpy as np
-from arch.api.utils import log_utils
-
 import functools
+from operator import itemgetter
+from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -83,6 +85,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.history_loss = []
         self.bin_split_points = None
         self.bin_sparse_points = None
+        self.encrypted_mode_calculator = None
+        self.runtime_idx = 0
+        self.feature_importances_ = {}
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
 
@@ -133,6 +138,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.flowid = flowid
 
+    def set_runtime_idx(self, runtime_idx):
+        self.runtime_idx = runtime_idx
+
     def generate_flowid(self, round_num, tree_num):
         LOGGER.info("generate flowid")
         return ".".join(map(str, [self.flowid, round_num, tree_num]))
@@ -174,10 +182,19 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         else:
             raise NotImplementedError("encrypt method not supported yes!!!")
 
+        self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
+
     @staticmethod
     def accumulate_f(f_val, new_f_val, lr=0.1, idx=0):
         f_val[idx] += lr * new_f_val
         return f_val
+
+    def update_feature_importance(self, tree_feature_importance):
+        for fid in tree_feature_importance:
+            if fid not in self.feature_importances_:
+                self.feature_importances_[fid] = 0
+
+            self.feature_importances_[fid] += tree_feature_importance[fid]
 
     def update_f_value(self, new_f=None, tidx=-1):
         LOGGER.info("update tree f value, tree idx is {}".format(tidx))
@@ -255,7 +272,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                           name=self.transfer_inst.tree_dim.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree_dim),
                           role=consts.HOST,
-                          idx=0)
+                          idx=-1)
 
     def sync_stop_flag(self, stop_flag, num_round):
         LOGGER.info("sync stop flag to host, boosting round is {}".format(num_round))
@@ -263,7 +280,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                           name=self.transfer_inst.stop_flag.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.stop_flag, num_round),
                           role=consts.HOST,
-                          idx=0)
+                          idx=-1)
 
     def fit(self, data_inst):
         LOGGER.info("begin to train secureboosting guest model")
@@ -287,6 +304,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 valid_features = self.sample_valid_features()
                 tree_inst.set_valid_features(valid_features)
                 tree_inst.set_encrypter(self.encrypter)
+                tree_inst.set_encrypted_mode_calculator(self.encrypted_calculator)
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
 
                 tree_inst.fit()
@@ -297,6 +315,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                     self.tree_meta = tree_meta
                 # n_tree.append(tree_inst.get_tree_model())
                 self.update_f_value(new_f=tree_inst.predict_weights, tidx=tidx)
+                self.update_feature_importance(tree_inst.get_feature_importance())
 
             # self.trees_.append(n_tree)
             loss = self.compute_loss()
@@ -367,6 +386,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         return predict_result
 
+    def get_feature_importance(self):
+        return self.feature_importances_
+        
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
         model_meta.tree_meta.CopyFrom(self.tree_meta)
@@ -415,6 +437,15 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_param.trees_.extend(self.trees_)
         model_param.init_score.extend(self.init_score)
         model_param.losses.extend(self.history_loss)
+
+        feature_importances = list(self.get_feature_importance().items())
+        feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
+        feature_importance_param = []
+        for (sitename, fid), _importance in feature_importances:
+            feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
+                                                                  fid=fid,
+                                                                  importance=_importance))
+        model_param.feature_importances.extend(feature_importance_param)
 
         param_name = "HeteroSecureBoostingTreeGuest.param"
 

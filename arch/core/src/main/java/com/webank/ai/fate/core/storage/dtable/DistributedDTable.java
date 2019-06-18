@@ -28,18 +28,19 @@ import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class DistributedDTable implements DTable{
+public class DistributedDTable implements DTable {
     private static final Logger LOGGER = LogManager.getLogger();
     private ManagedChannel channel;
     private String name;
     private String nameSpace;
     private int partition;
 
-    public DistributedDTable(String name, String nameSpace, int partition){
+    public DistributedDTable(String name, String nameSpace, int partition) {
         this.channel = ClientPool.getChannel(Configuration.getProperty("roll"));
         this.name = name;
         this.nameSpace = nameSpace;
@@ -52,16 +53,15 @@ public class DistributedDTable implements DTable{
         requestOperand.setKey(ByteString.copyFrom(key.getBytes()));
         KVServiceGrpc.KVServiceBlockingStub kvServiceBlockingStub = KVServiceGrpc.newBlockingStub(this.channel);
         Kv.Operand resultOperand = MetadataUtils.attachHeaders(kvServiceBlockingStub, this.genHeader()).get(requestOperand.build());
-        if (resultOperand.getValue() != null){
+        if (resultOperand.getValue() != null) {
             return resultOperand.getValue().toByteArray();
-        }
-        else{
+        } else {
             return null;
         }
     }
 
     @Override
-    public void put(String key, byte[] value){
+    public void put(String key, byte[] value) {
         StorageBasic.StorageLocator.Builder storageLocator = StorageBasic.StorageLocator.newBuilder();
         storageLocator.setType(StorageBasic.StorageType.LMDB)
                 .setNamespace(this.nameSpace)
@@ -80,19 +80,19 @@ public class DistributedDTable implements DTable{
     }
 
     @Override
-    public Map<String, byte[]> collect(){
+    public Map<String, byte[]> collect() {
         Map<String, byte[]> result = new HashMap<>();
         Kv.Range.Builder rangeOrBuilder = Kv.Range.newBuilder();
         KVServiceGrpc.KVServiceBlockingStub kvServiceBlockingStub = KVServiceGrpc.newBlockingStub(this.channel);
         Iterator<Kv.Operand> item = MetadataUtils.attachHeaders(kvServiceBlockingStub, this.genHeader()).iterate(rangeOrBuilder.build());
-        while (item.hasNext()){
+        while (item.hasNext()) {
             Kv.Operand tmp = item.next();
             result.put(tmp.getKey().toStringUtf8(), tmp.getValue().toByteArray());
         }
         return result;
     }
 
-    private Metadata genHeader(){
+    private Metadata genHeader() {
         Metadata header = new Metadata();
         header.put(CompositeHeaderKey.from("table_name").asMetaKey(), this.name);
         header.put(CompositeHeaderKey.from("name_space").asMetaKey(), this.nameSpace);

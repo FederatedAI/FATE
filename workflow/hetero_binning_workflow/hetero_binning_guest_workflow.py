@@ -21,16 +21,14 @@
 #
 ################################################################################
 
-from arch.api import eggroll
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.param import FeatureBinningParam
 from federatedml.util import FeatureBinningParamChecker
 from federatedml.util import ParamExtract
 from federatedml.util import consts
-from workflow.workflow import WorkFlow
 from workflow import status_tracer_decorator
-
+from workflow.workflow import WorkFlow
 
 LOGGER = log_utils.getLogger()
 
@@ -70,26 +68,42 @@ class HeteroBinningGuestWorkflow(WorkFlow):
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,
                                                              mode='fit')
+                LOGGER.debug("After dataio, header is : {}".format(train_data_instance.schema))
                 if self.binning_param.local_only:
                     self.model.fit_local(train_data_instance)
                 else:
+                    LOGGER.debug("Start model fit")
                     self.model.fit(train_data_instance)
-                self.save_binning_result()
+                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+                train_data_instance = self.one_hot_encoder_fit_transform(train_data_instance)
+
             else:
                 train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
                                                              self.workflow_param.train_input_namespace,
                                                              mode='transform')
-                self.load_model()
-
+                LOGGER.debug("After dataio, header is : {}".format(train_data_instance.schema))
+                self.model.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
                 if self.binning_param.local_only:
                     self.model.transform_local(train_data_instance)
                 else:
                     self.model.transform(train_data_instance)
                 self.save_binning_result()
+                train_data_instance = self.one_hot_encoder_transform(train_data_instance)
+            self._show_data(train_data_instance)
         else:
             raise TypeError("method %s is not support yet" % (self.workflow_param.method))
 
         LOGGER.info("Task end")
+
+    def _show_data(self, data_instances):
+        local_data = data_instances.collect()
+        LOGGER.debug("data header: {}".format(data_instances.schema))
+        n = 0
+        for k, v in local_data:
+            LOGGER.debug("new data is :{}".format(v.features))
+            n += 1
+            if n >= 20:
+                break
 
 
 if __name__ == "__main__":

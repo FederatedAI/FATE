@@ -39,9 +39,14 @@
         "n_split": 5,
         "need_intersect": true,
         "need_feature_selection": false,
-        "need_scale": false
+        "need_scale": false,
+        "need_one_hot": false,
+        "one_vs_rest": false
         },
 
+    "OneHotEncoderParam": {
+        "cols": ["fid0"]
+    },
     "EncryptParam": {
         "method": "Paillier",
         "key_length": 1024
@@ -63,7 +68,7 @@
         "alpha": 0.01,
         "max_iter": 10,
         "converge_func": "diff",
-        "batch_size": 3200,
+        "batch_size": -1,
         "learning_rate": 0.15
     },
     "IntersectParam": {
@@ -127,5 +132,12 @@
     "OutlierColsSelectionParam": {
         "percentile": 0.9,
         "upper_threshold": 1000
+    },
+    "EncryptedModeCalculatorParam":{
+        "mode": "strict",
+        "re_encrypted_rate": 1
+    },
+    "OneVsRestParam":{
+        "has_arbiter":true
     }
 }

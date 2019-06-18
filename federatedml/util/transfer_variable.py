@@ -179,7 +179,14 @@ class HeteroFeatureBinningTransferVariable(BaseTransferVariable):
 class HeteroFeatureSelectionTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.result_left_cols = Variable(name="HeteroFeatureSelectionTransferVariable.result_left_cols", auth={'src': "guest", 'dst': ['host']})
-        self.host_iv_threshold = Variable(name="HeteroFeatureSelectionTransferVariable.host_iv_threshold", auth={'src': "host", 'dst': ['guest']})
+        self.host_select_cols = Variable(name="HeteroFeatureSelectionTransferVariable.host_select_cols", auth={'src': "host", 'dst': ['guest']})
+        pass
+
+
+class HeteroCorrelationTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.encrypted_data = Variable(name="HeteroCorrelationTransferVariable.encrypted_data", auth={'src': "guest", 'dst': ['host']})
+        self.inner_product = Variable(name="HeteroCorrelationTransferVariable.inner_product", auth={'src': "host", 'dst': ['guest']})
         pass
 
 
@@ -194,4 +201,11 @@ class SecureAddExampleTransferVariable(BaseTransferVariable):
 class SampleTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.sample_ids = Variable(name="SampleTransferVariable.sample_ids", auth={'src': "guest", 'dst': ['host']})
+        pass
+
+
+class OneVsRestTransferVariable(BaseTransferVariable):
+    def define_transfer_variable(self):
+        self.host_classes = Variable(name="OneVsRestTransferVariable.host_classes", auth={'src': "host", 'dst': ['guest']})
+        self.aggregate_classes = Variable(name="OneVsRestTransferVariable.aggregate_classes", auth={'src': "guest", 'dst': ['host', 'arbiter']})
         pass

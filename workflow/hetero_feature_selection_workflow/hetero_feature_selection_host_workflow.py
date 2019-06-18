@@ -36,66 +36,60 @@ LOGGER = log_utils.getLogger()
 class HeteroFeatureSelectHostWorkflow(WorkFlow):
     def _initialize(self, config_path):
         self._initialize_role_and_mode()
-        self._initialize_model(config_path)
         self._initialize_workflow_param(config_path)
+        self._initialize_model(config_path)
 
     def _initialize_role_and_mode(self):
         self.role = consts.HOST
         self.mode = consts.HETERO
 
-    def _initialize_intersect(self, config):
-        pass
-
     def _initialize_model(self, runtime_conf_path):
         feature_param = FeatureSelectionParam()
         self.feature_param = ParamExtract.parse_param_from_config(feature_param, runtime_conf_path)
         FeatureSelectionParamChecker.check_param(self.feature_param)
-        self.model = HeteroFeatureSelectionHost(self.feature_param)
-        LOGGER.debug("Guest model started")
+        # self.model = HeteroFeatureSelectionHost(self.feature_param)
+        # LOGGER.debug("Host model started")
 
     @status_tracer_decorator.status_trace
     def run(self):
         self._init_argument()
 
-        if self.workflow_param.method == "feature_select":
-            if self.feature_param.method == 'fit':
-                train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
-                                                             self.workflow_param.train_input_namespace)
-                if self.feature_param.local_only:
-                    self.model.fit_local(train_data_instance)
-                else:
-                    self.model.fit(train_data_instance)
-                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
-
-            elif self.feature_param.method == 'fit_transform':
-                train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
-                                                             self.workflow_param.train_input_namespace)
-                if self.feature_param.local_only:
-                    result_table = self.model.fit_local_transform(train_data_instance)
-                else:
-                    result_table = self.model.fit_transform(train_data_instance)
-                self.model.save_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
-                self.save_predict_result(result_table)
-                LOGGER.info(
-                    "Predict result saved, table: {},"
-                    " namespace: {}".format(self.workflow_param.predict_output_table,
-                                            self.workflow_param.predict_output_namespace))
-
-            elif self.feature_param.method == 'transform':
-                train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
-                                                             self.workflow_param.train_input_namespace,
-                                                             mode='transform')
-                self.load_model()
-                result_table = self.model.transform(train_data_instance)
-                self.save_predict_result(result_table)
-                LOGGER.info(
-                    "Predict result saved, table: {},"
-                    " namespace: {}".format(self.workflow_param.predict_output_table,
-                                            self.workflow_param.predict_output_namespace))
+        # Step 1: Data io
+        if self.feature_param.method in ['fit', 'fit_transform']:
+            train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
+                                                         self.workflow_param.train_input_namespace)
         else:
-            raise TypeError("method %s is not support yet" % (self.workflow_param.method))
+            train_data_instance = self.gen_data_instance(self.workflow_param.train_input_table,
+                                                         self.workflow_param.train_input_namespace,
+                                                         mode='transform')
+        filter_methods = self.feature_param.filter_method
 
-        LOGGER.info("Finish host party feature selection")
+        # Step 2: intersect
+        LOGGER.debug("Star intersection before train")
+        intersect_flowid = "train_0"
+        train_data = self.intersect(train_data_instance, intersect_flowid)
+        LOGGER.debug("End intersection before train")
+
+        # Step 3: sample
+        sample_flowid = "train_sample_0"
+        train_data = self.sample(train_data, sample_flowid)
+
+        # Step 4: binning
+        if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
+            binning_flowid = 'feature_binning'
+            train_data = self.feature_binning(data_instances=train_data, flow_id=binning_flowid)
+
+        # Step 5: feature selection
+        feature_selection_id = 'feature_selection'
+        if self.feature_param.method == 'fit':
+            self.feature_selection_fit(data_instance=train_data, flow_id=feature_selection_id, without_transform=True)
+        elif self.feature_param.method == 'fit_transform':
+            self.feature_selection_fit(data_instance=train_data, flow_id=feature_selection_id)
+        else:
+            result_table = self.feature_selection_transform(data_instance=train_data, flow_id=feature_selection_id)
+            self.save_predict_result(result_table)
+
+        LOGGER.info("Finish guest party feature selection")
 
 
 if __name__ == "__main__":

@@ -203,6 +203,7 @@ public class RollKvPutAllServerRequestStreamObserver extends BaseCalleeRequestSt
 
         boolean awaitResult = false;
         try {
+            // todo: do not use dead loop
             while (!awaitResult) {
                 awaitResult = eggPutAllFinishLatch.await(RuntimeConstants.DEFAULT_WAIT_TIME, TimeUnit.SECONDS);
 

@@ -205,8 +205,22 @@ get_log_result() {
     log_path=$1
     keyword=$2
     sleep 5s
+    time_pass=0
     while true
     do
+        if [ ! -f $log_path ];then
+            echo "task is prepraring, please wait"
+            sleep 5s
+            time_pass=$(($time_pass+10))
+
+            if [ $time_pass -gt 120 ]; then
+                echo "task failed, check nohup in current path"
+                break
+            fi
+
+            continue
+        fi
+
         num=$(cat $log_path | grep $keyword | wc -l)
         if [ $num -ge 1 ]; then
             cat $log_path | grep $keyword
@@ -321,7 +335,7 @@ elif [ $mode = 'predict' ]; then
         get_log_result ${workflow_log} predict
 
     elif [[ $role == 'host' ]]; then
-        load_file $predict_table_host host predict
+        load_file $predict_data_host host predict
         predict_table_host=$data_table
         echo "cv table host is:"$predict_table_host
         predict host $predict_table_host

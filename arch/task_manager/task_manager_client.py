@@ -73,7 +73,6 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
     parser.add_argument('-p', '--party_id', required=False, type=str, help="party id")
     parser.add_argument('-r', '--role', required=False, type=str, help="role")
-    parser.add_argument('-s', '--scene_id', required=False, type=str, help="scene id")
     parser.add_argument('-n', '--namespace', required=False, type=str, help="namespace")
     parser.add_argument('-t', '--table_name', required=False, type=str, help="table name")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
