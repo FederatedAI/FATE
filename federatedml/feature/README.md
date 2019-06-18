@@ -43,3 +43,6 @@ Feature scale is a process that scale each feature along column. Now it supports
 
 # Feature impute
 Feature impute is a transformer for missing value imputation. The datasets may contain missing value such as blanks, NaN, None or Null, which is incompatible with some algorithm like logistic regression. To get the better effect, We can replace the missing value with mean value of each column, as well as minimum value, maximum value or any other value you want. You can also regard some values in dataset as outlier values, and replace them.
+
+# OneHot Encoder
+OneHot encoding is a process by which category variables are converted to binary values. The detailed info could be found in [OneHot wiki](https://en.wikipedia.org/wiki/One-hot)
