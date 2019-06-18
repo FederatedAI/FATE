@@ -4,6 +4,16 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 <https://www.fedai.org/>
 
+## Getting Involved
+
+*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
+
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/WeBankFinTech/FATE/wiki).  
+
+*  Please report bugs by submitting [issues](https://github.com/WeBankFinTech/FATE/issues). 
+
+*  Submit contributions using [pull requests](https://github.com/WeBankFinTech/FATE/pulls)
+
 ## Install
 FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.FATE can be installed on Linux by using:
 
@@ -95,17 +105,6 @@ After running this command, a jobid will be generated automatically for you.
 The logs are provided in the **logs** directory. A sub-directory will be generated with the name of jobid. All the log files are
 listed in this directory. The trained and validation result are shown in workflow.log. Feel free to check out each log file 
 for more training details. 
-
-## Getting Involved
-
-*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
-
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/WeBankFinTech/FATE/wiki).  
-
-*  Please report bugs by submitting [issues](https://github.com/WeBankFinTech/FATE/issues). 
-
-*  Submit contributions using [pull requests](https://github.com/WeBankFinTech/FATE/pulls)
-
 
 ## License
 [Apache License 2.0](LICENSE)
