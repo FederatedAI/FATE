@@ -29,10 +29,11 @@ config_path = home_dir + '/conf'
 data_path = home_dir + '/../data'
 load_file_program = home_dir + '/../load_file/load_file.py'
 
-# data_set = 'breast'
+data_set = 'breast'
 # data_set = 'default_credit'
 # data_set = 'give_credit'
-data_set = 'breast_onehot'
+# data_set = 'breast_onehot'
+# data_set = 'student-mat'
 
 mode = 'fit'
 

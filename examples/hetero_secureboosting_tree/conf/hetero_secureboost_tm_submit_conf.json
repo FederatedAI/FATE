@@ -2,14 +2,14 @@
     "task": "cross_validation",
     "module": "HeteroSecureBoostingTree",
     "role": {
-        "guest": [10000],
-        "host": [9999]
+        "guest": [9999],
+        "host": [10000]
     },
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "data_input_table": ["breast_guest_cross_validation_secureboosting_example_standalone_20190402213440"],
-                "data_input_namespace": ["example_data_namespace"]
+                "data_input_table": ["hetero_secure_boost_guest_data"], 
+                "data_input_namespace": ["hetero_secure_boost"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -23,8 +23,8 @@
         },
         "host": {
             "WorkFlowParam": {
-                "data_input_table": ["breast_host_cross_validation_secureboosting_example_standalone_20190402213440"],
-                "data_input_namespace": ["example_data_namespace"]
+                "data_input_table": ["hetero_secure_boost_host_data"],
+                "data_input_namespace": ["hetero_secure_boost"]
             },
              "DataIOParam":{
                 "with_label": [false],
@@ -34,7 +34,7 @@
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0,
+            "work_mode": 1,
             "n_splits": 5
         },
         "EvaluateParam": {
