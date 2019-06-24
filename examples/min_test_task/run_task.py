@@ -584,6 +584,7 @@ if __name__ == "__main__":
 
         else:
             print("train task is failed")
+            TEST_TASK["TEST_INTERSECT"] = 1
 
         test_success = 0
         test_failed = 0
@@ -593,6 +594,6 @@ if __name__ == "__main__":
                 test_success += 1
             else:
                 print("{} is failed".format(key))
-                test_success += 1
+                test_failed += 1
 
         print("Test success:{}, failed:{}".format(test_success, test_failed))

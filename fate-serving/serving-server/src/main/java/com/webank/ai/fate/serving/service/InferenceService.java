@@ -23,14 +23,17 @@ import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
 import com.webank.ai.fate.serving.core.bean.InferenceActionType;
+import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
 public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplBase {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger accessLOGGER = LogManager.getLogger("access");
 
     @Override
     public void inference(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver) {
@@ -49,8 +52,26 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
 
     private void inferenceServiceAction(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver, InferenceActionType actionType) {
         InferenceMessage.Builder response = InferenceMessage.newBuilder();
-        InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
-        ReturnResult returnResult = InferenceManager.inference(inferenceRequest, actionType);
+        ReturnResult returnResult;
+        try{
+            if (accessLOGGER.isDebugEnabled()){
+                accessLOGGER.debug(req.getBody().toStringUtf8());
+            }
+            InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
+            if (inferenceRequest != null){
+                returnResult = InferenceManager.inference(inferenceRequest, actionType);
+                if (returnResult.getRetcode() != InferenceRetCode.OK){
+                    LOGGER.warn("inference {} failed: \n{}", actionType, req.getBody().toStringUtf8());
+                }
+            }else{
+                returnResult = new ReturnResult();
+                returnResult.setRetcode(InferenceRetCode.EMPTY_DATA);
+            }
+        }catch (Exception e){
+            returnResult = new ReturnResult();
+            returnResult.setRetcode(InferenceRetCode.SYSTEM_ERROR);
+            LOGGER.error(String.format("inference system error:\n%s", req.getBody().toStringUtf8()), e);
+        }
         response.setBody(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult).getBytes()));
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();

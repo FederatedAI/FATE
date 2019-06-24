@@ -25,7 +25,7 @@ def do_export_file(job_id, _data):
                 if not value:
                     fout.write(key + "\n")
                 else:
-                    fout.write(key + delimitor + value + "\n")
+                    fout.write(key + delimitor + str(value) + "\n")
                 
                 lines += 1
                 if lines % 2000 == 0:

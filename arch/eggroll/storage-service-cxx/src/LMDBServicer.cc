@@ -37,12 +37,15 @@ Status defaultStatus = Status::OK;
 Status LMDBServicer::put(ServerContext *context, const Operand *request, Empty *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "put request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[PUT] request" << endl;
+        cout << "[PUT] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         lmdbStore.put(request);
 
-        LOG(INFO) << "put finished" << endl;
+        LOG(INFO) << "[PUT] finished" << endl;
+        cout << "[PUT] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -55,17 +58,18 @@ Status LMDBServicer::put(ServerContext *context, const Operand *request, Empty *
 Status LMDBServicer::putIfAbsent(ServerContext *context, const Operand *request, Operand *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "putIfAbsent request" << endl;
-        cout << "putIfAbsent request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[PUTIFABSENT] request" << endl;
+        cout << "[PUTIFABSENT] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         string_view oldValue = lmdbStore.putIfAbsent(request);
 
         response->set_key(request->key());
         response->set_value(oldValue.data(), oldValue.size());
 
-        LOG(INFO) << "putIfAbsent finished" << endl;
-        cout << "putIfAbsent finished" << endl;
+        LOG(INFO) << "[PUTIFABSENT] finished" << endl;
+        cout << "[PUTIFABSENT] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -78,14 +82,15 @@ Status LMDBServicer::putIfAbsent(ServerContext *context, const Operand *request,
 Status LMDBServicer::putAll(ServerContext *context, ServerReader<Operand> *reader, Empty *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "putAll request" << endl;
-        cout << "putAll request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[PUTALL] request" << endl;
+        cout << "[PUTALL] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
-        lmdbStore.putAll(reader);
+        long i = lmdbStore.putAll(reader);
 
-        LOG(INFO) << "putAllFinished" << endl;
-        cout << "putAllFinished" << endl;
+        LOG(INFO) << "[PUTALL] Finished. total: " << i << endl;
+        cout << "[PUTALL] Finished. total: " << i << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -98,17 +103,18 @@ Status LMDBServicer::putAll(ServerContext *context, ServerReader<Operand> *reade
 Status LMDBServicer::delOne(ServerContext *context, const Operand *request, Operand *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "delOne request" << endl;
-        cout << "delOne request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[DELONE] request" << endl;
+        cout << "[DELONE] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         string_view oldValue = lmdbStore.delOne(request);
 
         response->set_key(request->key());
         response->set_value(oldValue.data(), oldValue.size());
 
-        LOG(INFO) << "delOne finished" << endl;
-        cout << "delOne finished" << endl;
+        LOG(INFO) << "[DELONE] finished" << endl;
+        cout << "[DELONE] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -121,18 +127,19 @@ Status LMDBServicer::delOne(ServerContext *context, const Operand *request, Oper
 Status LMDBServicer::get(ServerContext *context, const Operand *request, Operand *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "get request" << endl;
-        cout << "get request" << endl;
+        LOG(INFO) << "[GET] request" << endl;
+        cout << "[GET] request" << endl;
 
-        LMDBStore lmdbStore = getStore(context);
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         string_view value = lmdbStore.get(request);
 
         response->set_key(request->key());
         response->set_value(value.data(), value.size());
 
-        LOG(INFO) << "get finished" << endl;
-        cout << "get finished" << endl;
+        LOG(INFO) << "[GET] finished" << endl;
+        cout << "[GET] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -145,14 +152,15 @@ Status LMDBServicer::get(ServerContext *context, const Operand *request, Operand
 Status LMDBServicer::iterate(ServerContext *context, const Range *request, ServerWriter<Operand> *writer) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "iterate request" << endl;
-        cout << "iterate request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[ITERATE] request" << endl;
+        cout << "[ITERATE] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         lmdbStore.iterate(request, writer);
 
-        LOG(INFO) << "iterate finished" << endl;
-        cout << "iterate finished" << endl;
+        LOG(INFO) << "[ITERATE] finished" << endl;
+        cout << "[ITERATE] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -164,15 +172,18 @@ Status LMDBServicer::iterate(ServerContext *context, const Range *request, Serve
 // destroy a table
 Status LMDBServicer::destroy(ServerContext *context, const Empty *request, Empty *response) {
     std::exception_ptr eptr;
+
+    bool result = false;
     try {
-        LOG(INFO) << "destroy request" << endl;
-        cout << "destroy request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[DESTROY] request" << endl;
+        cout << "[DESTROY] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
-        lmdbStore.destroy();
+        result = lmdbStore.destroy();
 
-        LOG(INFO) << "destroy finished" << endl;
-        cout << "destroy finished" << endl;
+        LOG(INFO) << "[DESTROY] finished. result:" << result << endl;
+        cout << "[DESTROY] finished. result: " << result << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -184,8 +195,8 @@ Status LMDBServicer::destroy(ServerContext *context, const Empty *request, Empty
 Status LMDBServicer::destroyAll(ServerContext *context, const Empty *request, Empty *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "destroyAll request" << endl;
-        cout << "destroyAll request" << endl;
+        LOG(INFO) << "[DESTROYALL] request" << endl;
+        cout << "[DESTROYALL] request" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -198,14 +209,15 @@ Status LMDBServicer::destroyAll(ServerContext *context, const Empty *request, Em
 Status LMDBServicer::count(ServerContext *context, const Empty *request, Count *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "count request" << endl;
-        cout << "count request" << endl;
-        LMDBStore lmdbStore = getStore(context);
+        LOG(INFO) << "[COUNT] request" << endl;
+        cout << "[COUNT] request" << endl;
+        LMDBStore lmdbStore;
+        getStore(context, lmdbStore);
 
         response->set_value(lmdbStore.count());
 
-        LOG(INFO) << "count finished" << endl;
-        cout << "count finished" << endl;
+        LOG(INFO) << "[COUNT] finished" << endl;
+        cout << "[COUNT] finished" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -217,7 +229,7 @@ Status LMDBServicer::count(ServerContext *context, const Empty *request, Count *
 Status LMDBServicer::createIfAbsent(ServerContext *context, const CreateTableInfo *request, CreateTableInfo *response) {
     std::exception_ptr eptr;
     try {
-        LOG(INFO) << "createIfAbsent request" << endl;
+        LOG(INFO) << "[CREATEIFABSENT] request" << endl;
     } catch (...) {
         eptr = std::current_exception();
     }
@@ -230,8 +242,7 @@ void LMDBServicer::sayHello() {
     LOG(INFO) << "saying hello" << endl;
 }
 
-LMDBStore LMDBServicer::getStore(ServerContext *context) {
-    LMDBStore lmdbStore;
+void LMDBServicer::getStore(ServerContext* context, LMDBStore &lmdbStore) {
     std::exception_ptr eptr;
     try {
         std::multimap <grpc::string_ref, grpc::string_ref> metadata = context->client_metadata();
@@ -249,6 +260,4 @@ LMDBStore LMDBServicer::getStore(ServerContext *context) {
         eptr = std::current_exception();
     }
     handle_eptr(eptr, __FILE__, __LINE__, "LMDBServicer::getStore");
-
-    return lmdbStore;
 }

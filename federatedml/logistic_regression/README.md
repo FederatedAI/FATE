@@ -49,3 +49,7 @@ Both Homo-LR and Hetero-LR supports the following features:
 5. Two converge function.
     a)	diff： Use difference of loss between two iterations to judge whether converge.
     b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+6. Support OneVeRest
+
+Only Hetero-LR support:
+1. Support different encrypt-mode to balance speed and security

@@ -1,5 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
+import com.webank.ai.fate.core.bean.ReturnResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,22 +19,24 @@ public class HeteroLRGuest extends HeteroLR {
     @Override
     public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
         Map<String, Object> result = new HashMap<>();
-        double score = forward(inputData);
+        Map<String, Double> forwardRet = forward(inputData);
+        double score = forwardRet.get("score");
         LOGGER.info("guest score:{}", score);
 
         try {
-            Map<String, Object> hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
-            double hostScore = (double) hostPredictResponse.get("score");
+            ReturnResult hostPredictResponse = this.getFederatedPredict((Map<String, Object>) predictParams.get("federatedParams"));
+            predictParams.put("federatedResult", hostPredictResponse);
+            double hostScore = (double) hostPredictResponse.getData().get("score");
             LOGGER.info("host score:{}", hostScore);
             score += hostScore;
         } catch (Exception ex) {
-            LOGGER.error(ex.getStackTrace());
-            ex.printStackTrace();
-            LOGGER.error(ex);
+            LOGGER.error("get host predict failed:", ex);
         }
 
         double prob = sigmod(score);
         result.put("prob", prob);
+        result.put("guestModelWeightHitRate:{}", forwardRet.get("modelWrightHitRate"));
+        result.put("guestInputDataHitRate:{}", forwardRet.get("inputDataHitRate"));
 
         return result;
     }

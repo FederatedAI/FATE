@@ -1,0 +1,58 @@
+{
+    "task": "binning",
+    "module": "HeteroFeatureBinning",
+    "role": {
+        "guest": [9999],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "WorkFlowParam": {
+                "train_input_table": ["hetero_feature_binning_guest"],
+                "train_input_namespace": ["hetero_feature_binning"],
+                "predict_input_table": ["hetero_feature_binning_guest_data_out"],
+                "predict_input_namespace": ["hetero_feature_binning"],
+                "model_table": ["hetero_feature_binning_model_out"],
+                "model_namespace": ["hetero_feature_binning"]
+            },
+            "DataIOParam":{
+                "with_label": [true],
+                "label_idx": [0],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "WorkFlowParam": {
+                "train_input_table": ["hetero_feature_binning_host"],
+                "train_input_namespace": ["hetero_feature_binning"],
+                "predict_input_table": ["hetero_feature_binning_host_data_out"],
+                "predict_input_namespace": ["hetero_feature_binning"],
+                "model_table": ["hetero_feature_binning_host_model_out"],
+                "model_namespace": ["hetero_feature_binning"]
+            },
+             "DataIOParam":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "WorkFlowParam": {
+            "method": "binning",
+            "work_mode": 1
+        },
+        "FeatureBinningParam": {
+            "process_method": "fit",
+            "method": "quantile",
+            "compress_thres": 10000,
+            "head_size": 10000,
+            "error": 0.001,
+            "adjustment_factor": 0.5,
+            "bin_num": 10,
+            "cols": -1,
+            "local_only": false,
+            "display_result": ["iv"]
+        }
+    }
+}

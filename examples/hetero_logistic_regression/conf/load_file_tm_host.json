@@ -1,0 +1,8 @@
+{
+  "file": "{modify_this_to_FATE_install_path}/examples/data/breast_a.csv", 
+  "head": 1,
+  "partition": 10,
+  "table_name": "hetero_logistic_regression_host_data",
+  "namespace": "hetero_logistic_regression",
+  "work_mode": 1
+}

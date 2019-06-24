@@ -29,7 +29,7 @@
         "work_mode": "TO SET",
         "model_table": "feature_binning_host_table",
         "model_namespace": "example_data_namespace",
-        "need_one_hot": true
+        "need_one_hot": false
         },
 
     "EncryptParam": {
@@ -50,6 +50,6 @@
         "display_result": ["iv"]
     },
     "OneHotEncoderParam": {
-        "cols": ["fid20"]
+        "cols": ["fid1"]
     }
 }

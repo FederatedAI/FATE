@@ -12,7 +12,12 @@ Data IO module accepts the following input data format and transforms them to de
     (e.g. value is "1 1:0.5 2:0.6")
 * tag input format, the input DTable's value is a list of tag, data io module first aggregates all tags occurred in 
 input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order
-    (e.g. assume values is "a c", "a b d", after processing, the new values became "1 0 1 0", "1 1 0 1".
+    (e.g. assume values is "a c", "a b d", after processing, the new values became "1 0 1 0", "1 1 0 1".)
+* tag:value input format, the input DTable's value is a list of tag:value, like a mixed svm-light and tag input-format. 
+data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in 
+sorting the occurred tags by lexicographic order, then fill the occur item with value.
+    (e.g. assume values is "a:0.2 c:1.5", "a:0.3 b:0.6 d:0.7", after processing, the new values became "0.2 0 0.5 0", "0.3 0.6 0 0.7".)
+    
 
 #### Other Features of DataIO
 

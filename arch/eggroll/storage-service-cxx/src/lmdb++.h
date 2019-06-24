@@ -22,24 +22,38 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <lmdb.h>      /* for MDB_*, mdb_*() */
+#include <lmdb.h>       /* for MDB_*, mdb_*() */
 
 #ifdef LMDBXX_DEBUG
-#include <cassert>     /* for assert() */
+#include <cassert>      /* for assert() */
 #endif
-#include <cstddef>     /* for std::size_t */
-#include <cstdio>      /* for std::snprintf() */
-#include <cstring>     /* for std::strlen() */
-#include <stdexcept>   /* for std::runtime_error */
-#include <string>      /* for std::string */
-#include <type_traits> /* for std::is_pod<> */
+#include <cstddef>      /* for std::size_t */
+#include <cstdio>       /* for std::snprintf() */
+#include <cstring>      /* for std::strlen() */
+#include <map>          /* for std::map */
+#include <memory>       /* for std::shared_ptr */
+#include <mutex>        /* for std::mutex */
+#include <stdexcept>    /* for std::runtime_error */
+#include <string>       /* for std::string */
+#include <type_traits>  /* for std::is_pod<> */
 
 #include <iostream>
-#include <boost/utility/string_view.hpp> /* remove for c++ distribution with std::string_view */
+
+#if __cplusplus < 201703L && !defined(__APPLE__)
+#include <boost/version.hpp>
+#if BOOST_VERSION > 105400
+#include <boost/utility/string_view.hpp>
+using boost::string_view;
+#else
+#include <boost/utility/string_ref.hpp>
+using string_view = boost::string_ref;
+#endif
+#else // C++17
+using std::string_view;
+#endif
 
 namespace lmdb {
     using mode = mdb_mode_t;
-    using boost::string_view;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1125,6 +1139,10 @@ public:
             }
         }
         return env{handle};
+    }
+
+    static env create_empty() noexcept {
+        return env{nullptr};
     }
 
     /**

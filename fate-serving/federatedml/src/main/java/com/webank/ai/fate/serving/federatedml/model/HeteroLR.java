@@ -5,6 +5,7 @@ import com.webank.ai.fate.core.mlmodel.buffer.LRModelParamProto.LRModelParam;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HeteroLR extends BaseModel {
@@ -28,16 +29,42 @@ public abstract class HeteroLR extends BaseModel {
         return StatusCode.OK;
     }
 
-    double forward(Map<String, Object> inputData) {
+    Map<String, Double> forward(Map<String, Object> inputData) {
         double score = 0;
+        int modelWeightHitCount = 0;
+        int inputDataHitCount = 0;
+        int weightNum = this.weight.size();
+        int inputFeaturesNum = inputData.size();
+        LOGGER.info("model weight number:{}", weightNum);
+        LOGGER.info("input data features number:{}", inputFeaturesNum);
+
         for (String key : inputData.keySet()) {
             if (this.weight.containsKey(key)) {
-                score += (double) inputData.get(key) * this.weight.get(key);
+                score += Double.parseDouble(inputData.get(key).toString()) * this.weight.get(key);
+                modelWeightHitCount += 1;
+                inputDataHitCount += 1;
+                LOGGER.info("key {} weight is {}, value is {}", key, this.weight.get(key), inputData.get(key));
             }
         }
         score += this.intercept;
 
-        return score;
+        double modelWeightHitRate = -1.0;
+        double inputDataHitRate = -1.0;
+        try {
+            modelWeightHitRate = (double) modelWeightHitCount / weightNum;
+            inputDataHitRate = (double) inputDataHitCount / inputFeaturesNum;
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+
+        LOGGER.info("model weight hit rate:{}", modelWeightHitRate);
+        LOGGER.info("input data features hit rate:{}", inputDataHitRate);
+
+        Map<String, Double> ret = new HashMap<>();
+        ret.put("score", score);
+        ret.put("modelWrightHitRate", modelWeightHitRate);
+        ret.put("inputDataHitRate", inputDataHitRate);
+        return ret;
     }
 
     @Override

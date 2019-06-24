@@ -4,7 +4,10 @@
 .iml
 .pyc
 __pycache__
+.jar
+.class
 
+# excluded paths
 /arch/core/target/
 /arch/driver/federation/target/
 /arch/eggroll/egg/target/
