@@ -20,7 +20,6 @@ from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
-from federatedml.param.param import FeatureBinningParam
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 
@@ -51,7 +50,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
 
-        self._make_iv_obj(split_points)    # Save split points
+        self._make_iv_obj(split_points)  # Save split points
 
         data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
 
@@ -127,11 +126,9 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
         f = functools.partial(self.binning_obj.add_label_in_partition,
-                              total_bin=self.bin_param.bin_num,
+                              total_bin=self.model_param.bin_num,
                               cols_dict=cols_dict,
                               encryptor=self.encryptor)
         result_sum = data_bin_with_label.mapPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
         return encrypted_bin_sum
-
-

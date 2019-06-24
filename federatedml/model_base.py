@@ -16,31 +16,96 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.util.param_exact import ParamExtract
+from federatedml.util.param_extract import ParamExtract
 
 
 class ModelBase(object):
     def __init__(self):
-        self.model_param = None
-        self.data_dict = {}
-        self.model_dict = {}
-        pass
+        self.model_output = None
+        self.mode = None
+        self.data_out = None
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
-        param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        # param.check()
+        self._init_model(param)
 
     def _init_model(self):
         pass
 
-    def run(self, component_parameters={}, args={}):
+    def _load_model(self):
+        pass
+
+    def _run_data(self, data_sets=None, stage=None):
+        train_data = None
+        eval_data = None
+        data = None
+
+        for data_key in data_sets:
+            if data_sets[data_key].get("train_data", None):
+                train_data = data_sets[data_key]["train_data"]
+
+            if data_sets[data_key].get("eval_data", None):
+                eval_data = data_sets[data_key]["eval_data"]
+
+            if data_sets[data_key].get("data", None):
+                data = data_sets[data_key]["data"]
+
+        if train_data:
+            self.fit(train_data)
+            self.data_output = self.predict(train_data)
+            self.data_output = self.data_output.mapValues(lambda value: (value, "train"))
+ 
+            if eval_data:
+                eval_data_output = self.predict(eval_data)
+                eval_data_output = eval_data_output.mapValues(lambda value: (value, "predict"))
+
+                self.data_output.union(eval_data_output)
+
+        elif eval_data:
+            self.data_output = self.predict(eval_data)
+            self.data_output = self.data_output.mapValues(lambda value: (value, "predict"))
+
+        else:
+            if stage == "fit":
+                self.data_output = self.fit(data)
+            else:
+                self.data_output = self.transform(data)
+
+    def run(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)
 
+        stage = None
         if "model" in args:
-            self._init_model()
+            self._load_model(args["model"])
+            stage = "transform"
+        elif "isometric_model" in args:
+            self._load_mode(args["isometric_model"])
+            stage = "fit"
+        else:
+            stage = "fit"
+
+        if args.get("data", None) is None:
+            return
+
+        self._run_data(args["data"], stage)
+
+    def predict(self, data_inst):
+        pass
+
+    def fit(self, data_inst):
+        pass
+
+    def transform(self, data_inst):
+        pass
 
     def save_data(self):
-        return self.data_dict
+        return self.data_output
+
+    def export_model(self):
+        self.model_output = {"XXXMeta": "model_meta",
+                             "XXXParam": "model_param"}
 
     def save_model(self):
-        return self.model_dict
+        return self.export_model()

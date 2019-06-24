@@ -30,6 +30,9 @@ from federatedml.feature.binning.base_binning import IVAttributes
 
 LOGGER = log_utils.getLogger()
 
+MODEL_PARAM_NAME = 'FeatureBinningParam'
+MODEL_META_NAME = 'FeatureBinningMeta'
+MODEL_NAME = 'HeteroFeatureBinning'
 
 class BaseHeteroFeatureBinning(ModelBase):
     """
@@ -76,7 +79,6 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.binning_result = {}  # dict of iv_attr
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
-        self.output_data = None
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
@@ -159,16 +161,16 @@ class BaseHeteroFeatureBinning(ModelBase):
         param_obj = self._get_param()
         result = {
             "model": {
-                "FeatureBinning": {
-                    "BinningMeta": meta_obj,
-                    "BinningParam": param_obj
+                MODEL_NAME: {
+                    MODEL_META_NAME: meta_obj,
+                    MODEL_PARAM_NAME: param_obj
                 }
             }
         }
         return result
 
     def save_data(self):
-        pass
+        return self.data_out
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
@@ -212,3 +214,8 @@ class BaseHeteroFeatureBinning(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+
+
+
+
+

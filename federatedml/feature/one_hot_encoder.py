@@ -23,17 +23,23 @@ from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
+from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
 
-class OneHotEncoder(object):
-    def __init__(self, param):
-        self.cols_index = param.cols
+class OneHotEncoder(ModelBase):
+    def __init__(self):
+        super(OneHotEncoder, self).__init__()
         self.cols = []
         self.header = []
         self.col_maps = {}
         self.cols_dict = {}
+        self.output_data = None
+
+    def _init_param(self, model_param):
+        self.model_param = model_param
+        self.cols_index = model_param.col
 
     def fit(self, data_instances):
         self._init_cols(data_instances)
@@ -49,6 +55,8 @@ class OneHotEncoder(object):
         self._detect_overflow(col_maps)
         self.col_maps = col_maps
         self.set_schema(data_instances)
+        data_instances = self.transform(data_instances)
+
         return data_instances
 
     def _detect_overflow(self, col_maps):
@@ -67,11 +75,6 @@ class OneHotEncoder(object):
                               transformed_header=self.header)
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
-        return new_data
-
-    def fit_transform(self, data_instances):
-        self.fit(data_instances)
-        new_data = self.transform(data_instances)
         return new_data
 
     def _transform_schema(self, data_instances):
@@ -189,39 +192,31 @@ class OneHotEncoder(object):
     def set_schema(self, data_instance):
         data_instance.schema = {"header": self.header}
 
-    def _save_meta(self, name, namespace):
+    def _get_meta(self):
         meta_protobuf_obj = onehot_meta_pb2.OneHotMeta(cols=self.cols)
-        buffer_type = "OneHotEncoder.meta"
+        return meta_protobuf_obj
 
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
-
-    def save_model(self, name, namespace):
-
-        meta_buffer_type = self._save_meta(name, namespace)
-
+    def _get_param(self):
         pb_dict = {}
         for col_name, value_dict in self.col_maps.items():
             value_dict_obj = onehot_param_pb2.ColDict(encode_map=value_dict)
             pb_dict[col_name] = value_dict_obj
 
         result_obj = onehot_param_pb2.OneHotParam(col_map=pb_dict)
+        return result_obj
 
-        param_buffer_type = "OneHotEncoder.param"
-
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
-
-        from google.protobuf import json_format
-        json_result = json_format.MessageToJson(result_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
-
-        return [(meta_buffer_type, param_buffer_type)]
+    def save_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            "model": {
+                "OneHotEncoder": {
+                    "OneHotMeta": meta_obj,
+                    "OneHotParam": param_obj
+                }
+            }
+        }
+        return result
 
     def load_model(self, name, namespace):
 

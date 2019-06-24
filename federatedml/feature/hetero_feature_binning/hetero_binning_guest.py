@@ -206,23 +206,3 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         if data_instance.label != 1:
             data_instance.label = 0
         return data_instance
-
-    def run(self, component_parameters={}, args={}):
-        super(HeteroFeatureBinningGuest, self).run(component_parameters, args)
-        if self.model_param.process_method == 'fit':
-            data_instances = args.get('data').get('train_data')
-            data_out = self.fit(data_instances)
-
-        elif self.model_param.process_method == 'transform':
-
-
-            self.load_model()
-            data_instances = args.get('data').get('eval_data')
-            data_out = self.transform(data_instances)
-
-        else:
-            data_instances = args.get('data').get('train_data')
-            data_instances = self.fit(data_instances)
-            data_out = self.transform(data_instances)
-
-        self.output_data = data_out
