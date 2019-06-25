@@ -18,15 +18,15 @@
 
 from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
+from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.param_exact import ParamExtract
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
-from federatedml.feature.binning.base_binning import IVAttributes
+from federatedml.param.param_feature_binning import FeatureBinningParam
 
 LOGGER = log_utils.getLogger()
 
@@ -34,14 +34,10 @@ MODEL_PARAM_NAME = 'FeatureBinningParam'
 MODEL_META_NAME = 'FeatureBinningMeta'
 MODEL_NAME = 'HeteroFeatureBinning'
 
+
 class BaseHeteroFeatureBinning(ModelBase):
     """
     Do binning method through guest and host
-
-    Parameters
-    ----------
-    params : FeatureBinningParam
-        Binning parameters set by users
 
     Attributes
     ----------
@@ -79,14 +75,11 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.binning_result = {}  # dict of iv_attr
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
+        self.model_param = FeatureBinningParam()
 
-    def _init_runtime_parameters(self, component_parameters):
-        param_extracter = ParamExtract()
-        params = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+    def _init_model(self, params):
         self.model_param = params
         self.cols_index = params.cols
-
-    def _init_binning_obj(self):
         if self.model_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.model_param, self.party_name)
         elif self.model_param.method == consts.BUCKET:
@@ -135,9 +128,11 @@ class BaseHeteroFeatureBinning(ModelBase):
 
         return result_obj
 
-    def load_model(self, meta_obj, param_obj):
-        binning_result_obj = dict(param_obj.binning_result.binning_result)
-        host_params = dict(param_obj.host_results)
+    def _load_model(self, model_dict):
+        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+
+        binning_result_obj = dict(model_param.binning_result.binning_result)
+        host_params = dict(model_param.host_results)
 
         self.binning_result = {}
         self.host_results = {}
@@ -160,17 +155,13 @@ class BaseHeteroFeatureBinning(ModelBase):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
-            "model": {
-                MODEL_NAME: {
-                    MODEL_META_NAME: meta_obj,
-                    MODEL_PARAM_NAME: param_obj
-                }
-            }
+            MODEL_META_NAME: meta_obj,
+            MODEL_PARAM_NAME: param_obj
         }
         return result
 
     def save_data(self):
-        return self.data_out
+        return self.data_output
 
     def set_flowid(self, flowid="samole"):
         self.flowid = flowid
@@ -214,8 +205,3 @@ class BaseHeteroFeatureBinning(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
-
-
-
-
-

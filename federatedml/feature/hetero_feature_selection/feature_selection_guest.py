@@ -36,7 +36,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         self.flowid = ''
         self.party_name = consts.GUEST
 
-    def fit_transform(self, data_instances):
+    def fit(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_cols(data_instances)
 
@@ -62,23 +62,10 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         return new_data
 
-    def fit(self, data_instances):
-
-        self._abnormal_detection(data_instances)
-
-        self._init_cols(data_instances)
-
-        for method in self.filter_method:
-            self.filter_one_method(data_instances, method)
-            self._renew_left_col_names()
-
-        data_instances.schema['header'] = self.header
-        return data_instances
-
     def filter_one_method(self, data_instances, method):
 
         if method == consts.IV_VALUE_THRES:
-            iv_param = self.params.iv_value_param
+            iv_param = self.model_param.iv_value_param
             iv_filter = feature_selection.IVValueSelectFilter(iv_param,
                                                               self.left_col_names,
                                                               self.binning_model)
@@ -116,7 +103,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         if method == consts.IV_PERCENTILE:
 
-            iv_param = self.params.iv_percentile_param
+            iv_param = self.model_param.iv_percentile_param
             if self.local_only:
                 iv_filter = feature_selection.IVPercentileFilter(iv_param,
                                                                  self.left_col_names,
@@ -162,7 +149,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             self._renew_left_col_names()
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
-            coe_param = self.params.coe_param
+            coe_param = self.model_param.coe_param
             coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_col_names, self.static_obj)
             new_left_cols = coe_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
@@ -177,7 +164,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                     self.left_cols))
 
         if method == consts.UNIQUE_VALUE:
-            unique_param = self.params.unique_param
+            unique_param = self.model_param.unique_param
             unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_col_names, self.static_obj)
             new_left_cols = unique_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
@@ -191,7 +178,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 self.left_cols))
 
         if method == consts.OUTLIER_COLS:
-            outlier_param = self.params.outlier_param
+            outlier_param = self.model_param.outlier_param
             outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_col_names)
             new_left_cols = outlier_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)

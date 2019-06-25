@@ -21,11 +21,16 @@ import numpy as np
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
+from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
-from federatedml.model_base import ModelBase
+from federatedml.param.param_one_hot import OneHotEncoderParam
 
 LOGGER = log_utils.getLogger()
+
+MODEL_PARAM_NAME = 'OneHotParam'
+MODEL_META_NAME = 'OneHotMeta'
+MODEL_NAME = 'OneHotEncoder'
 
 
 class OneHotEncoder(ModelBase):
@@ -36,10 +41,11 @@ class OneHotEncoder(ModelBase):
         self.col_maps = {}
         self.cols_dict = {}
         self.output_data = None
+        self.model_param = OneHotEncoderParam()
 
-    def _init_param(self, model_param):
+    def _init_model(self, model_param):
         self.model_param = model_param
-        self.cols_index = model_param.col
+        self.cols_index = model_param.cols
 
     def fit(self, data_instances):
         self._init_cols(data_instances)
@@ -68,7 +74,7 @@ class OneHotEncoder(ModelBase):
     def transform(self, data_instances):
         self._init_cols(data_instances)
         ori_header = self.header.copy()
-        self._transform_schema(data_instances)
+        self._transform_schema()
         f = functools.partial(self.transfer_one_instance,
                               col_maps=self.col_maps,
                               ori_header=ori_header,
@@ -77,9 +83,7 @@ class OneHotEncoder(ModelBase):
         self.set_schema(new_data)
         return new_data
 
-    def _transform_schema(self, data_instances):
-        if not self.header:
-            self._init_cols(data_instances)
+    def _transform_schema(self):
 
         header = self.header
         LOGGER.info("[Result][OneHotEncoder]Before one-hot, data_instances schema is : {}".format(header))
@@ -124,6 +128,13 @@ class OneHotEncoder(ModelBase):
 
     @staticmethod
     def record_new_header(data, cols, cols_dict):
+        """
+        Generate a new schema based on data value. Each new value will generate a new header.
+
+        Returns
+        -------
+        col_maps: a dict in which keys are original header, values are dicts. The dicts in value
+        """
         col_maps = {}
         for col_name in cols:
             col_maps[col_name] = {}
@@ -209,24 +220,15 @@ class OneHotEncoder(ModelBase):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
-            "model": {
-                "OneHotEncoder": {
-                    "OneHotMeta": meta_obj,
-                    "OneHotParam": param_obj
-                }
-            }
+            MODEL_META_NAME: meta_obj,
+            MODEL_PARAM_NAME: param_obj
         }
         return result
 
-    def load_model(self, name, namespace):
+    def _load_model(self, model_dict):
+        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        # model_meta = model_dict.get(MODEL_NAME).get(MODEL_META_NAME)
 
-        result_obj = onehot_param_pb2.OneHotParam()
-        return_code = model_manager.read_model(buffer_type='OneHotEncoder.param',
-                                               proto_buffer=result_obj,
-                                               name=name,
-                                               namespace=namespace)
-        self.col_maps = dict(result_obj.col_map)
+        self.col_maps = dict(model_param.col_map)
         for k, v in self.col_maps.items():
             self.col_maps[k] = dict(v.encode_map)
-
-        return return_code

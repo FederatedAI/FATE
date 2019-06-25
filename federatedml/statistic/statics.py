@@ -31,9 +31,9 @@ LOGGER = log_utils.getLogger()
 class SummaryStatistics(object):
     def __init__(self, abnormal_list=None):
         if abnormal_list is None:
-            self.abnormal_list = abnormal_list
-        else:
             self.abnormal_list = []
+        else:
+            self.abnormal_list = abnormal_list
 
         self.sum = 0
         self.sum_square = 0

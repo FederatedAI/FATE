@@ -412,7 +412,7 @@ class Binning(object):
 
         # For dense data
         for col_name, col_index in cols_dict.items():
-            col_split_points = split_points[col_index]
+            col_split_points = split_points[col_name]
 
             value = instance.features[col_index]
             col_bin_num = Binning.get_bin_num(value, col_split_points)

@@ -23,18 +23,18 @@ class ModelBase(object):
     def __init__(self):
         self.model_output = None
         self.mode = None
-        self.data_out = None
+        self.data_output = None
+        self.model_param = None
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
-        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
-        # param.check()
-        self._init_model(param)
+        param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        self._init_model(self.model_param)
 
-    def _init_model(self):
+    def _init_model(self, param):
         pass
 
-    def _load_model(self):
+    def _load_model(self, model_dict):
         pass
 
     def _run_data(self, data_sets=None, stage=None):
@@ -56,10 +56,10 @@ class ModelBase(object):
             self.fit(train_data)
             self.data_output = self.predict(train_data)
             self.data_output = self.data_output.mapValues(lambda value: (value, "train"))
- 
+
             if eval_data:
                 eval_data_output = self.predict(eval_data)
-                eval_data_output = eval_data_output.mapValues(lambda value: (value, "predict"))
+                eval_data_outputput = eval_data_output.mapValues(lambda value: (value, "predict"))
 
                 self.data_output.union(eval_data_output)
 
@@ -81,7 +81,7 @@ class ModelBase(object):
             self._load_model(args["model"])
             stage = "transform"
         elif "isometric_model" in args:
-            self._load_mode(args["isometric_model"])
+            self._load_model(args["isometric_model"])
             stage = "fit"
         else:
             stage = "fit"
@@ -92,7 +92,7 @@ class ModelBase(object):
         self._run_data(args["data"], stage)
 
     def predict(self, data_inst):
-        pass
+        return data_inst
 
     def fit(self, data_inst):
         pass

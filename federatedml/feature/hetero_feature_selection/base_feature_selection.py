@@ -20,16 +20,16 @@ import functools
 
 import numpy as np
 
-from arch.api.model_manager import manager as model_manager
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
-from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
-from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.model_base import ModelBase
-from federatedml.param.param import FeatureBinningParam
+from federatedml.param.param_feature_selection import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
-from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
+
+MODEL_PARAM_NAME = 'FeatureSelectionParam'
+MODEL_META_NAME = 'FeatureSelectionMeta'
+MODEL_NAME = 'HeteroFeatureSelection'
 
 
 class BaseHeteroFeatureSelection(ModelBase):
@@ -48,6 +48,7 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         # Possible previous model
         self.binning_model = None
+        self.model_param = FeatureSelectionParam()
 
         # All possible meta
         self.unique_meta = None
@@ -59,7 +60,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         # Use to save each model's result
         self.results = []
 
-    def _init_param(self, params):
+    def _init_model(self, params):
         self.model_param = params
         self.cols_index = params.select_cols
         self.filter_method = params.filter_method
@@ -84,30 +85,21 @@ class BaseHeteroFeatureSelection(ModelBase):
         return result_obj
 
     def save_data(self):
-        return self.data_out
+        return self.data_output
 
     def save_model(self):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
-            "model": {
-                "FeatureSelection": {
-                    "FeatureSelectionMeta": meta_obj,
-                    "FeatureSelectionParam": param_obj
-                }
-            }
+            MODEL_META_NAME: meta_obj,
+            MODEL_PARAM_NAME: param_obj
         }
         return result
 
-    def load_model(self, name, namespace):
-        result_obj = feature_selection_param_pb2.FeatureSelectionParam()
-        model_manager.read_model(buffer_type="HeteroFeatureSelection{}.param".format(self.party_name),
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
-
-        self.results = list(result_obj.results)
-        left_col_obj = result_obj.final_left_cols
+    def _load_model(self, model_dict):
+        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        self.results = list(model_param.results)
+        left_col_obj = model_param.final_left_cols
         self.cols = list(left_col_obj.original_cols)
         self.left_cols = dict(left_col_obj.left_cols)
 
@@ -198,4 +190,3 @@ class BaseHeteroFeatureSelection(ModelBase):
         for col in self.cols:
             col_index = header.index(col)
             self.cols_dict[col] = col_index
-

@@ -33,7 +33,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.encryptor = PaillierEncrypt()
         self.iv_attrs = []
         self.party_name = consts.HOST
-        self._init_binning_obj()
+        # self._init_binning_obj()
 
     def fit(self, data_instances):
         """
@@ -72,6 +72,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         LOGGER.info("Sent encrypted_bin_sum to guest")
         self.set_schema(data_instances)
+        self.data_output = data_instances
         return data_instances
 
     def transform(self, data_instances):
@@ -104,6 +105,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                           idx=0)
         LOGGER.info("Sent encrypted_bin_sum to guest")
         self.set_schema(data_instances)
+        self.data_output = data_instances
         return data_instances
 
     def _make_iv_obj(self, split_points):
