@@ -1,0 +1,2 @@
+# OneVsRest
+We have support OneVsRest for logistic regression, including hetero_lr and homo_lr. The detailed OneVsRest could be found in [OneVsRest wiki](https://en.wikipedia.org/wiki/Multiclass_classification#One-vs.-rest)

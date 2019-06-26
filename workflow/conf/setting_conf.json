@@ -133,7 +133,7 @@
 				"host":
 				{
 					"program": "hetero_feature_selection_host_workflow.py",
-					"tasklist": ["binning"]
+					"tasklist": ["feature_select"]
 				}
 			}
 		},

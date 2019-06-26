@@ -1,69 +1,74 @@
 {
-    "task": "cross_validation",
-    "module": "HomoLR",
+    "task": "feature_select",
+    "module": "HeteroFeatureSelection",
     "role": {
         "guest": [9999],
-        "host": [10000],
-        "arbiter": [9999]
+        "host": [10000]
     },
     "role_parameters": {
         "guest": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_guest_201904171524"],
-                "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_201904171524"],
-                "predict_input_namespace": ["homo_lr"],
-                "model_table": ["homo_lr_guest_model"],
-                "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_guest_201904171524"],
-                "data_input_namespace": ["homo_lr"]
+                "train_input_table": ["hetero_feature_selection_guest"],
+                "train_input_namespace": ["hetero_feature_selection"],
+                "model_table": ["hetero_feature_selection_guest_model_out"],
+                "model_namespace": ["hetero_feature_selection"],
+                "predict_output_table": ["hetero_feature_selection_guest_data_out"],
+                "predict_output_namespace": ["hetero_feature_selection"]
             },
             "DataIOParam":{
                 "with_label": [true],
                 "label_idx": [0],
                 "label_type": ["int"],
                 "output_format": ["dense"]
+            },
+            "OneHotEncoderParam": {
+                "cols": [["fid10"]]
             }
         },
         "host": {
             "WorkFlowParam": {
-                "train_input_table": ["breast_homo_host_201904171524"],
-                "train_input_namespace": ["homo_lr"],
-                "predict_input_table": ["breast_homo_test_201904171524"],
-                "predict_input_namespace": ["homo_lr"],
-                "model_table": ["homo_lr_host_model"],
-                "model_namespace": ["homo_lr"],
-                "data_input_table": ["breast_homo_host_201904171524"],
-                "data_input_namespace": ["homo_lr"]
+                "train_input_table": ["hetero_feature_selection_host"],
+                "train_input_namespace": ["hetero_feature_selection"],
+                "model_table": ["hetero_feature_selection_host_model_out"],
+                "model_namespace": ["hetero_feature_selection"],
+                "predict_output_table": ["hetero_feature_selection_host_data_out"],
+                "predict_output_namespace": ["hetero_feature_selection"]
             },
              "DataIOParam":{
-                "with_label": [true],
-                "output_format": ["dense"]
-            }
-        },
-        "arbiter": {
-            "WorkFlowParam": {
-                "train_input_table": [""],
-                "train_input_namespace": ["example_data_namespace"],
-                "data_input_table": [""],
-                "model_table": ["homo_lr_host_model"],
-                "model_namespace": ["homo_lr"],
-                "data_input_namespace": ["example_data_namespace"]
-            },
-             "DataIOParam":{
-                "with_label": [true],
+                "with_label": [false],
                 "output_format": ["dense"]
             }
         }
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "method": "cross_validation",
+            "method": "feature_select",
             "work_mode": 1,
-            "need_sample": true,
-            "need_feature_selection": false,
+            "need_sample": false,
+            "need_feature_selection": true,
+            "need_intersect": true,
+            "need_one_hot": false,
             "n_splits": 5
         },
+        "IntersectParam": {
+            "intersect_method": "raw",
+            "is_send_intersect_ids": true,
+            "join_role": "guest",
+            "with_encode": true
+        },
+        "EncryptParam": {
+            "method": "Paillier",
+            "key_length": 1024
+        },
+        "InitParam": {
+            "init_method": "random_uniform",
+            "fit_intercept": true
+        },
+         "EncodeParam": {
+             "encode_method": "sha256",
+             "salt": "12345",
+             "base64": false
+         },
         "EvaluateParam": {
             "metrics": ["auc", "precision"],
             "classi_type": "binary",
@@ -77,13 +82,13 @@
             "alpha": 0.01,
             "max_iter": 10,
             "converge_func": "diff",
-            "batch_size": 320,
-            "learning_rate": 0.01
+            "batch_size": 3200,
+            "learning_rate": 0.15
         },
-            "PredictParam":{
-        "with_proba": true,
-        "threshold": 0.5
-    },
+        "PredictParam": {
+            "with_proba": true,
+            "threshold": 0.5
+        },
         "ScaleParam":{
             "method": "min_max_scale",
             "mode": "normal",
@@ -102,8 +107,6 @@
             "bin_num": 10,
             "cols": -1,
             "local_only": false,
-            "result_table": "TO SET",
-            "result_namespace": "TO SET",
             "display_result": ["iv"]
         },
         "FeatureSelectionParam": {

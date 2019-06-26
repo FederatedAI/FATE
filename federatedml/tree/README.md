@@ -54,5 +54,9 @@ tweedie-loss、fair-loss、 log-cosh-loss
 * Column sub-sample
 * Allow use max_split_nodes setting to avoid memory limit exceed, by finding splits of at most number of 
 max_split_nodes nodes instead of using all nodes of each level of the tree.
+* Support feature importance calculation
+* Support Multi-host and single guest to build model
+* Support different encrypt-mode to balance speed and security
+ 
 
 

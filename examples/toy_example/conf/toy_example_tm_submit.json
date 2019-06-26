@@ -2,14 +2,14 @@
     "task": "secure_add",
     "module": "ToyExample",
     "role": {
-        "guest": [10000],
-        "host": [9999]
+        "guest": [9999],
+        "host": [10000]
     },
     "role_parameters": {
     },
     "algorithm_parameters": {
         "WorkFlowParam": {
-            "work_mode": 0
+            "work_mode": 1
         }
     }
 }

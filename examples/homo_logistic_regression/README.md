@@ -4,59 +4,61 @@ We supply standalone and cluster mode of running examples for HomoLogisticRegres
 
 ### 1. Run Standalone Version
 
-In standalone mode, a host and a guest are invoked. You cdan start the two through following step
+In standalone mode, role host, guest and arbiter are invoked. You can start them through following steps:
+
+cd your_install_path/examples/homo_logistic_regression/
+
+sh run_logistic_regression_standalone.sh
+
+After doing these two steps, you can wait for the result or go to check some logs for this task. The log files is: your_install_path/logs/homo_logistic_regression_example_standalone_{timestamp}
 
 
-1. Open two terminal(or two session)
+### 2. Run Cluster Version
+In cluster version, you can use task-manager which is a tool help you start all the parties easily. The task manager client is located at : /arch/task_manager/task_manager_client.py.
 
-2. In each of the two terminal. go to examples/homo_logistic_regression/
+1. Before starting a cluster version task, you need to load data among all the data-providers. To do that, you need to edit a load_file config.
 
-3. Start host by 
-   > sh run_host.sh host_runtime_conf jobid
+  Two example files for host and guest are prepared in ./conf folder:
 
-4. Start guest by
-   > sh run_guest.sh guest_runtime_conf jobid
+        guest: conf/load_file_tm_guest.json.
 
-5. Start arbiter by
-   > sh run_arbiter.sh arbiter_runtime_conf jobid
+       "file": $FATE_install_path/examples/data/breast_b.csv
 
-jobid is a string which host and guest should have the same jobid, please remember that jobid should be different for different task,
-host_runtime_conf or guest_runtime_conf template is under example/homo_logistc_regression/host(guest)_runtime_conf.json.
+       host: conf/load_file_tm_host.json.
 
-Or you can simply run_secureboosting_standalone.sh, which will run host and guest in the background and print out some infomation, like logfiles path.
+       "file": $FATE_install_path/examples/data/breast_a.csv
 
-> sh run_logistic_regression_standalone.sh
+ Then run the following command:
+
+   guest:
+   > python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_guest.json
+
+   host:
+   > python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_host.json
 
 
-###2. Run Cluster Version
-In cluster version, you can follow similar steps as decribed in 'Run Standalone Version'
+2. Then, you need to edit a config file for all the parties. A sample config file has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
 
-1. Open two terminal(or two session)
+You should re-write the configure of role guest "train_input_table" using "table_name" you have got in guest's load data, and "train_input_namespace" using "namespace" you have got. The same as the configure of role host using "table_name" and "namespace" you got after host load data.
 
-2. In each of the two terminal. go to examples/homo_logistic_regression/
+3. After finish editing, you can run the following command to start the task:
 
-3. Start host by 
-   > sh run_host.sh host_runtime_conf jobid
+> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c conf/test_hetero_feature_binning_workflow.json
 
-4. Start guest by
-   > sh run_guest.sh guest_runtime_conf jobid
+After running this command, a jobid will be generated automatically for you.
 
-5. Start arbiter by
-   > sh run_arbiter.sh arbiter_runtime_conf jobid
-
-Again the job id should be the same for host and guest.
-
-Or you can simply run the following instructions, whicn you don't need to modify the config template automatically.
-
-> sh run_secureboosting_cluster.sh host jobid guest_paryid host_partyid
-
-> sh run_secureboosting_cluster.sh guest jobid guest_partyid host_partyid
-
-guest_partyid is the role id of guest party, which is set during the installation of FATe. host_partyid has similar 
-meaning of guest_partyid
 
 ### 3. Check log files
 
-The logs are provided in the **logs** directory. A sub-directory will be generated with the name of jobid. All the log files are
-listed in this directory. The trained and validation result are shown in workflow.log. Feel free to check out each log file 
-for more training details. 
+4. Now you can check out the log in the following path: your_install_path/logs/{your jobid}.
+
+### 4. More functions of task-manager
+
+There are a couple of more functions that task-manager has provided. Please check [here](../../arch/task_manager/README.md)
+
+### 5. Some error you may encounter
+While run standalone version, you may get info "task failed, check nohup in current path". please check the nohup files to see if there exists any errors.
+
+While run cluster version, if you find not {jobid} fold in your_install_path/logs, please check your_install_path/jobs/{jobid}/upload/std.log or your_install_path/jobs/{jobid}/guest/std.log to find if there exist any error
+
+Check logs/{jobid}/status_tracer_decorator.log file if there exist any error during these task

@@ -22,3 +22,26 @@
 	path = arch/eggroll/storage-service-cxx/third_party/lmdb-safe
 	url = https://github.com/ahupowerdns/lmdb-safe.git
 
+[submodule "eggroll/storage/storage-service-cxx/third_party/lmdb"]
+	path = eggroll/storage/storage-service-cxx/third_party/lmdb
+	url = https://github.com/LMDB/lmdb.git
+    branch = LMDB_0.9.23
+[submodule "eggroll/storage/storage-service-cxx/third_party/glog"]
+	path = eggroll/storage/storage-service-cxx/third_party/glog
+	url = https://github.com/google/glog.git
+    branch = v0.4.0
+[submodule "eggroll/storage/storage-service-cxx/third_party/protobuf"]
+	path = eggroll/storage/storage-service-cxx/third_party/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+    branch = 3.0.x
+[submodule "eggroll/storage/storage-service-cxx/third_party/boost"]
+	path = eggroll/storage/storage-service-cxx/third_party/boost
+	url = https://github.com/boostorg/boost.git
+    branch = boost-1.70.0
+[submodule "eggroll/storage/storage-service-cxx/third_party/grpc"]
+	path = eggroll/storage/storage-service-cxx/third_party/grpc
+	url = https://github.com/grpc/grpc.git
+    branch = v1.19.1
+[submodule "eggroll/storage/storage-service-cxx/third_party/lmdb-safe"]
+	path = eggroll/storage/storage-service-cxx/third_party/lmdb-safe
+	url = https://github.com/ahupowerdns/lmdb-safe.git
