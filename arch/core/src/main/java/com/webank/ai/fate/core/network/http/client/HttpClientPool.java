@@ -51,12 +51,17 @@ public class HttpClientPool {
     private static RequestConfig requestConfig;
     private static CloseableHttpClient httpClient;
 
-    private static void config(HttpRequestBase httpRequestBase) {
+    private static void config(HttpRequestBase httpRequestBase, Map<String, String> headers) {
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectionRequestTimeout(10 * 1000)
                 .setConnectTimeout(10 * 1000)
                 .setSocketTimeout(10 * 1000).build();
         httpRequestBase.addHeader("Content-Type", "application/json;charset=UTF-8");
+        if (headers != null){
+            headers.forEach((key, value) -> {
+                httpRequestBase.addHeader(key, value);
+            });
+        }
         httpRequestBase.setConfig(requestConfig);
     }
 
@@ -93,19 +98,34 @@ public class HttpClientPool {
         return httpClient;
     }
 
-
     public static String post(String url, Map<String, Object> requestData){
+        return sendPost(url, requestData, null);
+    }
+
+    public static String post(String url, Map<String, Object> requestData, Map<String, String> headers){
+        return sendPost(url, requestData, headers);
+    }
+
+    public static String sendPost(String url, Map<String, Object> requestData, Map<String, String> headers){
         HttpPost httpPost = new HttpPost(url);
-        config(httpPost);
+        config(httpPost, headers);
         StringEntity stringEntity = new StringEntity(ObjectTransform.bean2Json(requestData), "UTF-8");
         stringEntity.setContentEncoding("UTF-8");
         httpPost.setEntity(stringEntity);
         return getResponse(httpPost);
     }
 
+    public static String get(String url, Map<String, String> headers) {
+        return sendGet(url, headers);
+    }
+
     public static String get(String url) {
+        return sendGet(url, null);
+    }
+
+    public static String sendGet(String url, Map<String, String> headers) {
         HttpGet httpGet = new HttpGet(url);
-        config(httpGet);
+        config(httpGet, headers);
         return getResponse(httpGet);
     }
 
