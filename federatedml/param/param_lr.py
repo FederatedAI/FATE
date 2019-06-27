@@ -21,6 +21,83 @@ import copy
 from federatedml.util import consts
 
 
+class EncryptedModeCalculatorParam(object):
+    """
+    Define the encrypted_mode_calulator parameters.
+
+    Parameters
+    ----------
+    mode: str, support 'strict', 'fast', 'balance' only, default: strict
+
+    re_encrypted_rate: float or int, numeric number, use when mode equals to 'strict', defualt: 1
+
+    """
+
+    def __init__(self, mode="strict", re_encrypted_rate=1):
+        self.mode = mode
+        self.re_encrypted_rate = re_encrypted_rate
+
+
+class EncryptParam(object):
+    """
+    Define encryption method that used in federated ml.
+
+    Parameters
+    ----------
+    method : str, default: 'Paillier'
+        If method is 'Paillier', Paillier encryption will be used for federated ml.
+        To use non-encryption version in HomoLR, just set this parameter to be any other str.
+        For detail of Paillier encryption, please check out the paper mentioned in README file.
+
+    key_length : int, default: 1024
+        Used to specify the length of key in this encryption method. Only needed when method is 'Paillier'
+
+    """
+
+    def __init__(self, method=consts.PAILLIER, key_length=1024):
+        self.method = method
+        self.key_length = key_length
+
+
+class InitParam(object):
+    """
+    Initialize Parameters used in initializing a model.
+
+    Parameters
+    ----------
+    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
+        Initial method.
+
+    init_const : int or float, default: 1
+        Required when init_method is 'const'. Specify the constant.
+
+    fit_intercept : bool, default: True
+        Whether to initialize the intercept or not.
+
+    """
+
+    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
+        self.init_method = init_method
+        self.init_const = init_const
+        self.fit_intercept = fit_intercept
+
+
+class PredictParam(object):
+    """
+    Define the predict method of HomoLR, HeteroLR, SecureBoosting
+
+    Parameters
+    ----------
+    with_proba: bool, Specify whether the result contains probability
+
+    threshold: float or int, The threshold use to separate positive and negative class. Normally, it should be (0,1)
+    """
+
+    def __init__(self, with_proba=True, threshold=0.5):
+        self.with_proba = with_proba
+        self.threshold = threshold
+
+
 class LogisticParam(object):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
@@ -74,7 +151,8 @@ class LogisticParam(object):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model'):
+                 model_path='lr_model', encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 need_run=True, predict_param=PredictParam()):
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -87,50 +165,7 @@ class LogisticParam(object):
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.model_path = model_path
-        self.table_name = table_name
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-
-
-class EncryptParam(object):
-    """
-    Define encryption method that used in federated ml.
-
-    Parameters
-    ----------
-    method : str, default: 'Paillier'
-        If method is 'Paillier', Paillier encryption will be used for federated ml.
-        To use non-encryption version in HomoLR, just set this parameter to be any other str.
-        For detail of Paillier encryption, please check out the paper mentioned in README file.
-
-    key_length : int, default: 1024
-        Used to specify the length of key in this encryption method. Only needed when method is 'Paillier'
-
-    """
-
-    def __init__(self, method=consts.PAILLIER, key_length=1024):
-        self.method = method
-        self.key_length = key_length
-
-
-class InitParam(object):
-    """
-    Initialize Parameters used in initializing a model.
-
-    Parameters
-    ----------
-    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
-        Initial method.
-
-    init_const : int or float, default: 1
-        Required when init_method is 'const'. Specify the constant.
-
-    fit_intercept : bool, default: True
-        Whether to initialize the intercept or not.
-
-    """
-
-    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True):
-        self.init_method = init_method
-        self.init_const = init_const
-        self.fit_intercept = fit_intercept
+        self.need_run = need_run
+        self.predict_param = copy.deepcopy(predict_param)

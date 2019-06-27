@@ -21,7 +21,7 @@ import numpy as np
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import Initializer
 from federatedml.optim import Optimizer
@@ -36,22 +36,18 @@ from federatedml.statistic import data_overview
 LOGGER = log_utils.getLogger()
 
 
-class HomoLRGuest(BaseLogisticRegression):
-    def __init__(self, params: LogisticParam):
-        super(HomoLRGuest, self).__init__(params)
-        self.learning_rate = params.learning_rate
+class HomoLRGuest(HomoLRBase):
+    def __init__(self):
+        super(HomoLRGuest, self).__init__()
         self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
-        self.party_weight = params.party_weight
 
-        self.optimizer = Optimizer(learning_rate=self.learning_rate, opt_method_name=params.optimizer)
         self.transfer_variable = HomoLRTransferVariable()
         self.initializer = Initializer()
         self.classes_ = [0, 1]
 
         self.evaluator = Evaluation()
         self.header = []
-        self.penalty = params.penalty
         self.loss_history = []
         self.is_converged = False
 
@@ -144,8 +140,10 @@ class HomoLRGuest(BaseLogisticRegression):
                 break
 
         self.show_meta()
-        self.show_model()
+        # self.show_model()
         LOGGER.debug("in fit self coef: {}".format(self.coef_))
+        data_instances.schema['header'] = self.header
+        self.data_output = data_instances
         return data_instances
 
     def __init_parameters(self):
@@ -178,18 +176,18 @@ class HomoLRGuest(BaseLogisticRegression):
         # LOGGER.debug("Initialed model")
         return w
 
-    def predict(self, data_instances, predict_param):
+    def predict(self, data_instances):
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
-        pred_label = self.classified(pred_prob, predict_param.threshold)
+        pred_label = self.classified(pred_prob, self.predict_param.threshold)
 
-        if predict_param.with_proba:
+        if self.predict_param.with_proba:
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
         else:
             predict_result = data_instances.mapValues(lambda x: (x.label, None))
 
-        predict_result = predict_result.join(pred_label, lambda x, y: (x[0], x[1], y))
+        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], x[1], y])
         return predict_result
 
     def set_flowid(self, flowid=0):

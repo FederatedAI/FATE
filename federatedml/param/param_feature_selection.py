@@ -21,74 +21,6 @@ import copy
 from federatedml.util import consts
 
 
-class FeatureSelectionParam(object):
-    """
-    Define the feature selection parameters.
-
-    Parameters
-    ----------
-    method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
-        Decide what process to do.
-        fit_transform: fit select models and transfer data instance
-
-        transform: use fit models to transform data
-
-        fit:  fit the model only without transforming the data.
-
-    select_cols: list or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns.
-
-    filter_method: list, ["unique_value", "iv_value_thres", "iv_percentile",
-                "coefficient_of_variation_value_thres", "outlier_cols"],
-                 default: ["unique_value", "iv_value_thres",
-                "coefficient_of_variation_value_thres", "outlier_cols"]
-
-        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
-        Please be notified that, if a percentile method is used after some certain filter method,
-        the percentile represent for the ratio of rest features.
-
-        e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
-        top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
-
-        unique_value: filter the columns if all values in this feature is the same
-
-        iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
-            Filter those columns whose iv is smaller than threshold.
-
-        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
-            need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
-            the threshold are same, all those columns will be keep.
-
-        coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
-
-        outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
-
-        Note: iv_value_thres and iv_percentile should not exist at the same times
-
-    """
-
-    def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
-                 unique_param=UniqueValueParam(),
-                 iv_value_param=IVValueSelectionParam(),
-                 iv_percentile_param=IVPercentileSelectionParam(),
-                 coe_param=CoeffOfVarSelectionParam(),
-                 outlier_param=OutlierColsSelectionParam()
-                 ):
-        self.method = method
-        self.select_cols = select_cols
-        if filter_method is None:
-            self.filter_method = [consts.UNIQUE_VALUE]
-        else:
-            self.filter_method = filter_method
-
-        self.local_only = local_only
-        self.unique_param = copy.deepcopy(unique_param)
-        self.iv_value_param = copy.deepcopy(iv_value_param)
-        self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
-        self.coe_param = copy.deepcopy(coe_param)
-        self.outlier_param = copy.deepcopy(outlier_param)
-
-
 class UniqueValueParam(object):
     """
     Use the difference between max-value and min-value to judge.
@@ -166,3 +98,71 @@ class OutlierColsSelectionParam(object):
     def __init__(self, percentile=1.0, upper_threshold=1.0):
         self.percentile = percentile
         self.upper_threshold = upper_threshold
+
+
+class FeatureSelectionParam(object):
+    """
+    Define the feature selection parameters.
+
+    Parameters
+    ----------
+    method : str, 'fit', 'transform' or 'fit_transform', default: 'fit'
+        Decide what process to do.
+        fit_transform: fit select models and transfer data instance
+
+        transform: use fit models to transform data
+
+        fit:  fit the model only without transforming the data.
+
+    select_cols: list or int, default: -1
+        Specify which columns need to calculated. -1 represent for all columns.
+
+    filter_method: list, ["unique_value", "iv_value_thres", "iv_percentile",
+                "coefficient_of_variation_value_thres", "outlier_cols"],
+                 default: ["unique_value", "iv_value_thres",
+                "coefficient_of_variation_value_thres", "outlier_cols"]
+
+        Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
+        Please be notified that, if a percentile method is used after some certain filter method,
+        the percentile represent for the ratio of rest features.
+
+        e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
+        top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
+
+        unique_value: filter the columns if all values in this feature is the same
+
+        iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+            Filter those columns whose iv is smaller than threshold.
+
+        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+            need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
+            the threshold are same, all those columns will be keep.
+
+        coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
+
+        outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+
+        Note: iv_value_thres and iv_percentile should not exist at the same times
+
+    """
+
+    def __init__(self, method='fit', select_cols=-1, filter_method=None, local_only=False,
+                 unique_param=UniqueValueParam(),
+                 iv_value_param=IVValueSelectionParam(),
+                 iv_percentile_param=IVPercentileSelectionParam(),
+                 coe_param=CoeffOfVarSelectionParam(),
+                 outlier_param=OutlierColsSelectionParam()
+                 ):
+        self.method = method
+        self.select_cols = select_cols
+        if filter_method is None:
+            self.filter_method = [consts.UNIQUE_VALUE]
+        else:
+            self.filter_method = filter_method
+
+        self.local_only = local_only
+        self.unique_param = copy.deepcopy(unique_param)
+        self.iv_value_param = copy.deepcopy(iv_value_param)
+        self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
+        self.coe_param = copy.deepcopy(coe_param)
+        self.outlier_param = copy.deepcopy(outlier_param)

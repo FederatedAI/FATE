@@ -20,11 +20,11 @@
 import unittest
 
 import numpy as np
-
 from arch.api import eggroll
 from arch.api import federation
-from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
+from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.feature.instance import Instance
+np.random.seed(1)
 
 
 class TestHeteroFeatureBinning(unittest.TestCase):
@@ -47,33 +47,34 @@ class TestHeteroFeatureBinning(unittest.TestCase):
                                     include_key=True,
                                     partition=10)
         table.schema = {"header": self.header}
-        self.model_name = 'HeteroFeatureBinning'
+        self.model_name = 'HeteroFeatureSelection'
 
         self.table = table
         self.args = {"data": {self.model_name: {"data": table}}}
 
     def _make_param_dict(self, type='fit'):
         host_componet_param = {
-            "FeatureBinningParam": {
+            "FeatureSelectionParam": {
                 "process_method": type,
+                "filter_method": ["unique_value", "coefficient_of_variation_value_thres", "outlier_cols"]
             }
         }
         return host_componet_param
 
     def test_feature_binning(self):
-        binning_host = HeteroFeatureBinningHost()
+        selection_host = HeteroFeatureSelectionHost()
 
         host_param = self._make_param_dict('fit')
+        print("host params: {}".format(host_param))
+        selection_host.run(host_param, self.args)
 
-        binning_host.run(host_param, self.args)
-
-        result_data = binning_host.save_data()
+        result_data = selection_host.save_data()
         local_data = result_data.collect()
         print("data in fit")
         for k, v in local_data:
             print("k: {}, v: {}".format(k, v.features))
 
-        host_model = {self.model_name: binning_host.save_model()}
+        host_model = {self.model_name: selection_host.save_model()}
 
         host_args = {
             'data': {
@@ -84,13 +85,13 @@ class TestHeteroFeatureBinning(unittest.TestCase):
             'model': host_model
         }
 
-        binning_host = HeteroFeatureBinningHost()
+        selection_host = HeteroFeatureSelectionHost()
 
         host_param = self._make_param_dict('transform')
 
-        binning_host.run(host_param, host_args)
+        selection_host.run(host_param, host_args)
 
-        result_data = binning_host.save_data()
+        result_data = selection_host.save_data()
         local_data = result_data.collect()
         print("data in transform")
         for k, v in local_data:

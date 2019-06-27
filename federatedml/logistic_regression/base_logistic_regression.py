@@ -18,49 +18,26 @@ import numpy as np
 
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
+from federatedml.optim import DiffConverge, AbsConverge
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.logistic_regression.logistic_regression_modelmeta import LogisticRegressionModelMeta
+from federatedml.model_base import ModelBase
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
-from federatedml.param import LogisticParam
+from federatedml.param.param_lr import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
-from google.protobuf import json_format
 
 LOGGER = log_utils.getLogger()
 
 
-class BaseLogisticRegression(object):
-    def __init__(self, logistic_params: LogisticParam):
-        self.param = logistic_params
-        # set params
-        self.alpha = logistic_params.alpha
-        self.init_param_obj = logistic_params.init_param
-        self.fit_intercept = self.init_param_obj.fit_intercept
-        self.learning_rate = logistic_params.learning_rate
-        self.encrypted_mode_calculator_param = logistic_params.encrypted_mode_calculator_param
-        self.encrypted_calculator = None
-
-        if logistic_params.penalty == consts.L1_PENALTY:
-            self.updater = L1Updater(self.alpha, self.learning_rate)
-        elif logistic_params.penalty == consts.L2_PENALTY:
-            self.updater = L2Updater(self.alpha, self.learning_rate)
-        else:
-            self.updater = None
-
-        self.eps = logistic_params.eps
-        self.batch_size = logistic_params.batch_size
-        self.max_iter = logistic_params.max_iter
-
-        if logistic_params.encrypt_param.method == consts.PAILLIER:
-            self.encrypt_operator = PaillierEncrypt()
-        else:
-            self.encrypt_operator = FakeEncrypt()
-
+class BaseLogisticRegression(ModelBase):
+    def __init__(self):
+        super(BaseLogisticRegression, self).__init__()
+        self.model_param = LogisticParam()
         # attribute:
         self.n_iter_ = 0
         self.coef_ = None
@@ -71,11 +48,48 @@ class BaseLogisticRegression(object):
         self.gradient_operator = None
         self.initializer = Initializer()
         self.transfer_variable = None
-        self.model_meta = LogisticRegressionModelMeta()
         self.loss_history = []
         self.is_converged = False
         self.header = None
         self.class_name = self.__class__.__name__
+        self.model_name = 'LogisticRegression'
+        self.model_param_name = 'LogisticRegressionParam'
+        self.model_meta_name = 'LogisticRegressionMeta'
+
+    def _init_model(self, params):
+        self.model_param = params
+        self.alpha = params.alpha
+        self.init_param_obj = params.init_param
+        self.fit_intercept = self.init_param_obj.fit_intercept
+        self.learning_rate = params.learning_rate
+        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
+        self.encrypted_calculator = None
+
+        if params.penalty == consts.L1_PENALTY:
+            self.updater = L1Updater(self.alpha, self.learning_rate)
+        elif params.penalty == consts.L2_PENALTY:
+            self.updater = L2Updater(self.alpha, self.learning_rate)
+        else:
+            self.updater = None
+
+        self.eps = params.eps
+        self.batch_size = params.batch_size
+        self.max_iter = params.max_iter
+        self.learning_rate = params.learning_rate
+        self.party_weight = params.party_weight
+        self.penalty = params.penalty
+
+        if params.encrypt_param.method == consts.PAILLIER:
+            self.encrypt_operator = PaillierEncrypt()
+        else:
+            self.encrypt_operator = FakeEncrypt()
+
+        if params.converge_func == 'diff':
+            self.converge_func = DiffConverge(eps=self.eps)
+        else:
+            self.converge_func = AbsConverge(eps=self.eps)
+        self.re_encrypt_batches = params.re_encrypt_batches
+        self.predict_param = params.predict_param
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -142,9 +156,6 @@ class BaseLogisticRegression(object):
     def fit(self, data_instance):
         pass
 
-    def predict(self, data_instance, predict_param):
-        pass
-
     def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
         predict_res = None
         if evaluate_param.classi_type == consts.BINARY:
@@ -158,30 +169,21 @@ class BaseLogisticRegression(object):
         return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
                           evaluate_param.pos_label)
 
-    def _save_meta(self, name, namespace):
-        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.param.penalty,
+    def _get_meta(self):
+        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
                                                           eps=self.eps,
                                                           alpha=self.alpha,
-                                                          optimizer=self.param.optimizer,
-                                                          party_weight=self.param.party_weight,
+                                                          optimizer=self.model_param.optimizer,
+                                                          party_weight=self.model_param.party_weight,
                                                           batch_size=self.batch_size,
                                                           learning_rate=self.learning_rate,
                                                           max_iter=self.max_iter,
-                                                          converge_func=self.param.converge_func,
-                                                          re_encrypt_batches=self.param.re_encrypt_batches)
-        buffer_type = "{}.meta".format(self.class_name)
+                                                          converge_func=self.model_param.converge_func,
+                                                          re_encrypt_batches=self.re_encrypt_batches)
+        return meta_protobuf_obj
 
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
-
-    def save_model(self, name, namespace):
-        meta_buffer_type = self._save_meta(name, namespace)
-        # In case arbiter has no header
+    def _get_param(self):
         header = self.header
-
         weight_dict = {}
         for idx, header_name in enumerate(header):
             coef_i = self.coef_[idx]
@@ -193,29 +195,22 @@ class BaseLogisticRegression(object):
                                                              weight=weight_dict,
                                                              intercept=self.intercept_,
                                                              header=header)
-
-        buffer_type = "{}.param".format(self.class_name)
-
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=param_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-
         from google.protobuf import json_format
         json_result = json_format.MessageToJson(param_protobuf_obj)
         LOGGER.debug("json_result: {}".format(json_result))
-        return [(meta_buffer_type, buffer_type)]
+        return param_protobuf_obj
 
-    def load_model(self, name, namespace):
+    def save_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
 
-        result_obj = lr_model_param_pb2.LRModelParam()
-        buffer_type = "{}.param".format(self.class_name)
-
-        model_manager.read_model(buffer_type=buffer_type,
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
-
+    def _load_model(self, model_dict):
+        result_obj = model_dict.get('model').get(self.model_name).get(self.model_param_name)
         self.header = list(result_obj.header)
         feature_shape = len(self.header)
         self.coef_ = np.zeros(feature_shape)
@@ -234,33 +229,20 @@ class BaseLogisticRegression(object):
 
     def show_meta(self):
         meta_dict = {
-            'penalty': self.param.penalty,
+            'penalty': self.model_param.penalty,
             'eps': self.eps,
             'alpha': self.alpha,
-            'optimizer': self.param.optimizer,
-            'party_weight': self.param.party_weight,
+            'optimizer': self.model_param.optimizer,
+            'party_weight': self.model_param.party_weight,
             'batch_size': self.batch_size,
             'learning_rate': self.learning_rate,
             'max_iter': self.max_iter,
-            'converge_func': self.param.converge_func,
-            're_encrypt_batches': self.param.re_encrypt_batches
+            'converge_func': self.model_param.converge_func,
+            're_encrypt_batches': self.model_param.re_encrypt_batches
         }
 
         LOGGER.info("Showing meta information:")
         for k, v in meta_dict.items():
-            LOGGER.info("{} is {}".format(k, v))
-
-    def show_model(self):
-        model_dict = {
-            'iters': self.n_iter_,
-            'loss_history': self.loss_history,
-            'is_converged': self.is_converged,
-            'weight': self.coef_,
-            'intercept': self.intercept_,
-            'header': self.header
-        }
-        LOGGER.info("Showing model information:")
-        for k, v in model_dict.items():
             LOGGER.info("{} is {}".format(k, v))
 
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):

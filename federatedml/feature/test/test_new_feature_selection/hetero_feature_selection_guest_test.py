@@ -23,8 +23,9 @@ import numpy as np
 
 from arch.api import eggroll
 from arch.api import federation
-from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
+from federatedml.feature.hetero_feature_selection.feature_selection_guest import HeteroFeatureSelectionGuest
 from federatedml.feature.instance import Instance
+np.random.seed(1)
 
 
 class TestHeteroFeatureSelection(unittest.TestCase):
@@ -56,24 +57,26 @@ class TestHeteroFeatureSelection(unittest.TestCase):
         guest_componet_param = {
             "FeatureSelectionParam": {
                 "method": type,
+                "filter_method": ["unique_value", "coefficient_of_variation_value_thres", "outlier_cols"]
             }
         }
 
         return guest_componet_param
 
     def test_feature_binning(self):
-        binning_guest = HeteroFeatureBinningGuest()
+        selection_guest = HeteroFeatureSelectionGuest()
 
         guest_param = self._make_param_dict('fit')
 
-        binning_guest.run(guest_param, self.args)
-
-        result_data = binning_guest.save_data()
+        selection_guest.run(guest_param, self.args)
+        print("In test, data header: {}".format(selection_guest.header))
+        result_data = selection_guest.save_data()
         local_data = result_data.collect()
         print("data in fit")
         for k, v in local_data:
             print("k: {}, v: {}".format(k, v.features))
-        guest_model = {self.model_name: binning_guest.save_model()}
+
+        guest_model = {self.model_name: selection_guest.save_model()}
 
         guest_args = {
             'data': {
@@ -84,13 +87,14 @@ class TestHeteroFeatureSelection(unittest.TestCase):
             'model': guest_model
         }
 
-        binning_guest = HeteroFeatureBinningGuest()
+        selection_guest = HeteroFeatureSelectionGuest()
 
         guest_param = self._make_param_dict('transform')
 
-        binning_guest.run(guest_param, guest_args)
+        selection_guest.run(guest_param, guest_args)
+        print("In transform, left_cols: {}".format(selection_guest.left_cols))
 
-        result_data = binning_guest.save_data()
+        result_data = selection_guest.save_data()
         local_data = result_data.collect()
         print("data in transform")
         for k, v in local_data:

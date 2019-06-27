@@ -26,6 +26,10 @@ from federatedml.param.param_feature_selection import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
+from federatedml.feature.hetero_feature_binning import base_feature_binning
+from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
+from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
+from federatedml.util import consts
 
 MODEL_PARAM_NAME = 'FeatureSelectionParam'
 MODEL_META_NAME = 'FeatureSelectionMeta'
@@ -36,10 +40,12 @@ class BaseHeteroFeatureSelection(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureSelection, self).__init__()
         self.transfer_variable = HeteroFeatureSelectionTransferVariable()
-        self.cols = []
-        self.left_col_names = []  # temp result
+        self.cols = []      # Current cols index to do selection
+        # self.left_col_names = []
         self.left_cols = {}  # final result
-        self.cols_dict = {}
+        self.original_col_index = []
+        self.left_cols_index = []
+        # self.cols_dict = {}
         self.header = []
         self.party_name = 'Base'
 
@@ -64,11 +70,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.model_param = params
         self.cols_index = params.select_cols
         self.filter_method = params.filter_method
+        self.local_only = params.local_only
 
     def _get_meta(self):
+        cols = [str(i) for i in self.cols]
         meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_method,
                                                                             local_only=self.model_param.local_only,
-                                                                            cols=self.cols,
+                                                                            cols=cols,
                                                                             unique_meta=self.unique_meta,
                                                                             iv_value_meta=self.iv_value_meta,
                                                                             iv_percentile_meta=self.iv_percentile_meta,
@@ -77,8 +85,12 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = {}
+        for col_idx, is_left in self.left_cols.items():
+            col_name = self.header[col_idx]
+            left_col_name_dict[col_name] = is_left
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.header,
+                                                            left_cols=left_col_name_dict)
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results,
                                                                        final_left_cols=left_col_obj)
@@ -97,17 +109,36 @@ class BaseHeteroFeatureSelection(ModelBase):
         return result
 
     def _load_model(self, model_dict):
-        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
-        self.results = list(model_param.results)
-        left_col_obj = model_param.final_left_cols
-        self.cols = list(left_col_obj.original_cols)
-        self.left_cols = dict(left_col_obj.left_cols)
+        if MODEL_NAME in model_dict:
+            model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+            self.results = list(model_param.results)
+            left_col_obj = model_param.final_left_cols
+
+            original_headers = list(left_col_obj.original_cols)
+            self.header = original_headers
+            self.cols = [int(i) for i in self.cols]
+            left_col_name_dict = dict(left_col_obj.left_cols)
+            print("In load model, left_col_name_dict: {}, original_headers: {}".format(left_col_name_dict,
+                                                                                       original_headers))
+            for col_name, is_left in left_col_name_dict.items():
+                col_idx = original_headers.index(col_name)
+                self.left_cols[col_idx] = is_left
+
+        if base_feature_binning.MODEL_NAME in model_dict:
+            if self.party_name == consts.GUEST:
+                self.binning_model = HeteroFeatureBinningGuest()
+            else:
+                self.binning_model = HeteroFeatureBinningHost()
+            self.binning_model._load_model(model_dict)
 
     @staticmethod
     def select_cols(instance, left_cols, header):
+        """
+        Replace filtered columns to original data
+        """
         new_feature = []
         for col_idx, col_name in enumerate(header):
-            is_left = left_cols.get(col_name)
+            is_left = left_cols.get(col_idx)
             if is_left is None:
                 continue
             if not is_left:
@@ -123,11 +154,11 @@ class BaseHeteroFeatureSelection(ModelBase):
         between left_cols and cols.
         """
         new_header = []
-        for col_name in self.header:
-            is_left = self.left_cols.get(col_name)
+        for col_idx, col_name in enumerate(self.header):
+            is_left = self.left_cols.get(col_idx)
             if is_left:
                 new_header.append(col_name)
-        self.header = new_header
+        return new_header
 
     def _transfer_data(self, data_instances):
 
@@ -138,7 +169,8 @@ class BaseHeteroFeatureSelection(ModelBase):
                               header=self.header)
 
         new_data = data_instances.mapValues(f)
-        self._reset_header()
+        new_header = self._reset_header()
+        new_data.schema['header'] = new_header
         return new_data
 
     def _abnormal_detection(self, data_instances):
@@ -152,27 +184,29 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.flowid = flowid
         self.transfer_variable.set_flowid(self.flowid)
 
-    def _renew_left_col_names(self):
-        left_col_names = []
-        for col_name, is_left in self.left_cols.items():
-            if is_left:
-                left_col_names.append(col_name)
-        self.left_col_names = left_col_names
+    # def _renew_left_col_names(self):
+    #     left_col_names = []
+    #     for col_name, is_left in self.left_cols.items():
+    #         if is_left:
+    #             left_col_names.append(col_name)
+    #     self.left_col_names = left_col_names
 
     def _renew_final_left_cols(self, new_left_cols):
         """
         As for all columns including those not specified in user params, record which columns left.
         """
-        for col_name, is_left in new_left_cols.items():
+        for col_idx, is_left in new_left_cols.items():
             if not is_left:
-                self.left_cols[col_name] = False
+                self.left_cols[col_idx] = False
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
         if self.cols_index == -1:
-            self.cols = header
+            self.cols = [i for i in range(len(header))]
+            self.original_col_index = [i for i in range(len(header))]
         else:
             cols = []
+            self.original_col_index = self.cols_index
             for idx in self.cols_index:
                 try:
                     idx = int(idx)
@@ -182,11 +216,23 @@ class BaseHeteroFeatureSelection(ModelBase):
                 if idx >= len(header):
                     raise ValueError(
                         "In binning module, selected index: {} exceed length of data dimension".format(idx))
-                cols.append(header[idx])
+                cols.append(idx)
             self.cols = cols
 
-        self.left_col_names = self.cols.copy()
+        # self.left_col_names = self.cols.copy()
+
+        # Set all columns are left at the beginning.
+        self.left_cols_index = [i for i in range(len(header))]
+        for col_idx in self.cols:
+            self.left_cols[col_idx] = True
         self.header = header
-        for col in self.cols:
-            col_index = header.index(col)
-            self.cols_dict[col] = col_index
+
+    def _generate_result_idx(self):
+        self.left_col_names = []
+        for col_idx, col_name in enumerate(self.header):
+            if col_idx in self.left_cols_index:
+                # self.left_col_names.append(self.header[col_idx])
+                self.left_cols[col_name] = True
+            else:
+                self.left_cols[col_name] = False
+

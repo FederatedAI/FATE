@@ -28,10 +28,11 @@ class ModelBase(object):
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
-        param_extracter.parse_param_from_config(self.model_param, component_parameters)
-        self._init_model(self.model_param)
+        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        # param.check()
+        self._init_model(param)
 
-    def _init_model(self, param):
+    def _init_model(self, model):
         pass
 
     def _load_model(self, model_dict):
@@ -55,17 +56,26 @@ class ModelBase(object):
         if train_data:
             self.fit(train_data)
             self.data_output = self.predict(train_data)
-            self.data_output = self.data_output.mapValues(lambda value: (value, "train"))
+
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda value: value + ["train"])
 
             if eval_data:
                 eval_data_output = self.predict(eval_data)
-                eval_data_outputput = eval_data_output.mapValues(lambda value: (value, "predict"))
 
-                self.data_output.union(eval_data_output)
+                if eval_data_output:
+                    eval_data_output = eval_data_output.mapValues(lambda value: value + ["predict"])
+
+                if self.data_output and eval_data_output:
+                    self.data_output.union(eval_data_output)
+                elif not self.data_output and eval_data_output:
+                    self.data_output = eval_data_output
 
         elif eval_data:
             self.data_output = self.predict(eval_data)
-            self.data_output = self.data_output.mapValues(lambda value: (value, "predict"))
+
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda value: value + ["predict"])
 
         else:
             if stage == "fit":
@@ -78,10 +88,10 @@ class ModelBase(object):
 
         stage = None
         if "model" in args:
-            self._load_model(args["model"])
+            self._load_model(args)
             stage = "transform"
         elif "isometric_model" in args:
-            self._load_model(args["isometric_model"])
+            self._load_model(args)
             stage = "fit"
         else:
             stage = "fit"
@@ -92,7 +102,7 @@ class ModelBase(object):
         self._run_data(args["data"], stage)
 
     def predict(self, data_inst):
-        return data_inst
+        pass
 
     def fit(self, data_inst):
         pass

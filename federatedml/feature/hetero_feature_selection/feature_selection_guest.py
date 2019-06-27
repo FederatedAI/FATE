@@ -27,10 +27,9 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
-    def __init__(self, params):
-        super(HeteroFeatureSelectionGuest, self).__init__(params)
+    def __init__(self):
+        super(HeteroFeatureSelectionGuest, self).__init__()
         self.host_left_cols = {}
-        self.local_only = params.local_only
         self.static_obj = None
         self.binning_model = None
         self.flowid = ''
@@ -42,17 +41,16 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         for method in self.filter_method:
             self.filter_one_method(data_instances, method)
-            self._renew_left_col_names()
+            print("After method: {}, left_cols: {}".format(method, self.left_cols))
+            # self._renew_left_col_names()
 
         new_data = self._transfer_data(data_instances)
-        self._reset_header()
-        new_data.schema['header'] = self.header
-        return data_instances
+        return new_data
 
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
 
-        self._init_cols(data_instances)
+        # self._init_cols(data_instances)
         LOGGER.info("[Result][FeatureSelection][Guest]In transform, Self left cols are: {}".format(
             self.left_cols
         ))
@@ -67,7 +65,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         if method == consts.IV_VALUE_THRES:
             iv_param = self.model_param.iv_value_param
             iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                              self.left_col_names,
+                                                              self.cols,
                                                               self.binning_model)
             new_left_cols = iv_filter.fit(data_instances)
 
@@ -99,14 +97,14 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                     self.left_cols))
             self.iv_value_meta = iv_filter.get_meta_obj()
             self.results.append(iv_filter.get_param_obj())
-            self._renew_left_col_names()
+            # self._renew_left_col_names()
 
         if method == consts.IV_PERCENTILE:
 
             iv_param = self.model_param.iv_percentile_param
             if self.local_only:
                 iv_filter = feature_selection.IVPercentileFilter(iv_param,
-                                                                 self.left_col_names,
+                                                                 self.cols,
                                                                  {},
                                                                  self.binning_model)
                 new_left_cols = iv_filter.fit(data_instances)
@@ -117,7 +115,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 host_select_cols = self._get_host_select_cols(consts.IV_PERCENTILE)
                 host_cols = {consts.HOST: host_select_cols}
                 iv_filter = feature_selection.IVPercentileFilter(iv_param,
-                                                                 self.left_col_names,
+                                                                 self.cols,
                                                                  host_cols,
                                                                  self.binning_model)
                 new_left_cols = iv_filter.fit(data_instances)
@@ -146,46 +144,47 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                     self.left_cols))
             self.iv_percentile_meta = iv_filter.get_meta_obj()
             self.results.append(iv_filter.get_param_obj())
-            self._renew_left_col_names()
+            # self._renew_left_col_names()
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             coe_param = self.model_param.coe_param
-            coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.left_col_names, self.static_obj)
+            coe_filter = feature_selection.CoeffOfVarValueFilter(coe_param, self.cols, self.static_obj)
             new_left_cols = coe_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
             self.static_obj = coe_filter.statics_obj
             self.coe_meta = coe_filter.get_meta_obj()
             self.results.append(coe_filter.get_param_obj())
-            self._renew_left_col_names()
+            # self._renew_left_col_names()
             coe_filter.display_feature_result(self.party_name)
             LOGGER.info(
                 "[Result][FeatureSelection][Guest] Finish coefficient threshold filter. Self left cols are: {}".format(
                     self.left_cols))
 
         if method == consts.UNIQUE_VALUE:
+
             unique_param = self.model_param.unique_param
-            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_col_names, self.static_obj)
+            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.cols, self.static_obj)
             new_left_cols = unique_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
             self.static_obj = unique_filter.statics_obj
             self.unique_meta = unique_filter.get_meta_obj()
             self.results.append(unique_filter.get_param_obj())
-            self._renew_left_col_names()
             unique_filter.display_feature_result(self.party_name)
+
             LOGGER.info("[Result][FeatureSelection][Guest]Finish unique value filter. Current left cols are: {}".format(
                 self.left_cols))
 
         if method == consts.OUTLIER_COLS:
             outlier_param = self.model_param.outlier_param
-            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_col_names)
+            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.cols)
             new_left_cols = outlier_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
-            self._renew_left_col_names()
+            # self._renew_left_col_names()
             outlier_filter.display_feature_result(self.party_name)
             LOGGER.info("[Result][FeatureSelection][Guest]Finish outlier cols filter. Current left cols are: {}".format(
                 self.left_cols))
