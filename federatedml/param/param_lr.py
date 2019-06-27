@@ -98,6 +98,67 @@ class PredictParam(object):
         self.threshold = threshold
 
 
+class EvaluateParam(object):
+    """
+    Define the evaluation method of binary/multiple classification and regression
+
+    Parameters
+    ----------
+    metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy', 'explain_variance',
+            'mean_absolute_error', 'mean_squared_error', 'mean_squared_log_error','median_absolute_error','r2_score','root_mean_squared_error'.
+            For example, metrics can be set as ['auc', 'precision', 'recall'], then the results of these indexes will be output.
+
+    classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
+
+    pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
+
+    thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
+    """
+
+    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+        if metrics is None:
+            metrics = []
+        self.metrics = metrics
+        self.classi_type = classi_type
+        self.pos_label = pos_label
+        if thresholds is None:
+            thresholds = [0.5]
+
+        self.thresholds = thresholds
+
+
+class CrossValidationParam(object):
+    """
+    Define cross validation params
+
+    Parameters
+    ----------
+    n_splits: int, default: 5
+        Specify how many splits used in KFold
+
+    mode: str, default: 'Hetero'
+        Indicate what mode is current task
+
+    role: str, default: 'Guest'
+        Indicate what role is current party
+
+    shuffle: bool, default: True
+        Define whether do shuffle before KFold or not.
+
+    random_seed: int, default: 1
+        Specify the random seed for numpy shuffle
+
+    """
+
+    def __init__(self, n_splits=5, shuffle=True, random_seed=1,
+                 evaluate_param=EvaluateParam(), need_cv=False):
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.random_seed = random_seed
+        self.evaluate_param = copy.deepcopy(evaluate_param)
+        self.need_cv = need_cv
+
+
 class LogisticParam(object):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
@@ -152,7 +213,7 @@ class LogisticParam(object):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  model_path='lr_model', encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, predict_param=PredictParam()):
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -169,3 +230,4 @@ class LogisticParam(object):
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.need_run = need_run
         self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)

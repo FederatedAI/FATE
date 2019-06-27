@@ -29,7 +29,7 @@ np.random.seed(1)
 class TestHomoLR(object):
 
     def __init__(self):
-        self.data_num = 10
+        self.data_num = 1000
         self.feature_num = 3
         self.header = ['x' + str(i) for i in range(self.feature_num)]
         final_result = []
@@ -55,10 +55,16 @@ class TestHomoLR(object):
     def _make_param_dict(self):
         arbiter_componet_param = {
             "LogisticParam": {
-                "need_run": True
+                "need_run": True,
+                "cv_param": {
+                    "need_cv": True,
+                    "evaluate_param": {
+                        "metrics": ["auc", "ks"]
+                    }
+                },
+                "max_iter": 5
             }
         }
-
         return arbiter_componet_param
 
     def test_homo_lr(self):
@@ -89,6 +95,12 @@ class TestHomoLR(object):
 
         homo_lr.run(arbiter_param, arbiter_args)
         self.show_model(lr_model)
+
+    def test_cv(self):
+        homo_lr = HomoLRArbiter()
+        guest_param = self._make_param_dict()
+        homo_lr.run(guest_param, self.args)
+
 
     def show_model(self, model):
         meta_obj = model.get('HomoLogisticRegressionMeta')
@@ -124,4 +136,5 @@ if __name__ == '__main__':
                         }
                     })
     homo_obj = TestHomoLR()
-    homo_obj.test_homo_lr()
+    # homo_obj.test_homo_lr()
+    homo_obj.test_cv()

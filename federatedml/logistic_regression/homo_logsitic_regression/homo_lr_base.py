@@ -18,7 +18,7 @@
 
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import Optimizer
-
+from federatedml.util import consts
 
 class HomoLRBase(BaseLogisticRegression):
     def __init__(self):
@@ -26,6 +26,7 @@ class HomoLRBase(BaseLogisticRegression):
         self.model_name = 'HomoLogisticRegression'
         self.model_param_name = 'HomoLogisticRegressionParam'
         self.model_meta_name = 'HomoLogisticRegressionMeta'
+        self.mode = consts.HOMO
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)

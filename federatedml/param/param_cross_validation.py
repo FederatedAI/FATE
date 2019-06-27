@@ -21,6 +21,35 @@ import copy
 from federatedml.util import consts
 
 
+class EvaluateParam(object):
+    """
+    Define the evaluation method of binary/multiple classification and regression
+
+    Parameters
+    ----------
+    metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy', 'explain_variance',
+            'mean_absolute_error', 'mean_squared_error', 'mean_squared_log_error','median_absolute_error','r2_score','root_mean_squared_error'.
+            For example, metrics can be set as ['auc', 'precision', 'recall'], then the results of these indexes will be output.
+
+    classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
+
+    pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
+
+    thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
+    """
+
+    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+        if metrics is None:
+            metrics = []
+        self.metrics = metrics
+        self.classi_type = classi_type
+        self.pos_label = pos_label
+        if thresholds is None:
+            thresholds = [0.5]
+
+        self.thresholds = thresholds
+
+
 class CrossValidationParam(object):
     """
     Define cross validation params
@@ -54,30 +83,3 @@ class CrossValidationParam(object):
         self.evaluate_param = copy.deepcopy(evaluate_param)
 
 
-class EvaluateParam(object):
-    """
-    Define the evaluation method of binary/multiple classification and regression
-
-    Parameters
-    ----------
-    metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy', 'explain_variance',
-            'mean_absolute_error', 'mean_squared_error', 'mean_squared_log_error','median_absolute_error','r2_score','root_mean_squared_error'.
-            For example, metrics can be set as ['auc', 'precision', 'recall'], then the results of these indexes will be output.
-
-    classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
-
-    pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
-
-    thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
-    """
-
-    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
-        if metrics is None:
-            metrics = []
-        self.metrics = metrics
-        self.classi_type = classi_type
-        self.pos_label = pos_label
-        if thresholds is None:
-            thresholds = [0.5]
-
-        self.thresholds = thresholds

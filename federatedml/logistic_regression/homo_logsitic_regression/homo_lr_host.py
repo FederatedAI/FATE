@@ -45,6 +45,7 @@ class HomoLRHost(HomoLRBase):
         self.mini_batch_obj = None
         self.classes_ = [0, 1]
         self.has_sychronized_encryption = False
+        self.role = consts.HOST
 
     def _init_model(self, params):
         super(HomoLRHost, self)._init_model(params)
@@ -266,6 +267,9 @@ class HomoLRHost(HomoLRBase):
                 predict_result = data_instances.mapValues(lambda x: (x.label, None))
             predict_result_table = predict_result.join(pred_label, lambda x, y: [x[0], x[1], y])
         return predict_result_table
+
+    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
+        return {}
 
     def __init_model(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)

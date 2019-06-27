@@ -45,6 +45,7 @@ class HomoLRArbiter(HomoLRBase):
         self.loss_history = []
         self.is_converged = False
         self.header = []
+        self.role = consts.ARBITER
 
     def _init_model(self, params):
         super(HomoLRArbiter, self)._init_model(params)

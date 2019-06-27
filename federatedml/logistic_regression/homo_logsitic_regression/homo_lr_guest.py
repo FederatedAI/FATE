@@ -50,6 +50,7 @@ class HomoLRGuest(HomoLRBase):
         self.header = []
         self.loss_history = []
         self.is_converged = False
+        self.role = consts.GUEST
 
     def fit(self, data_instances):
         self._abnormal_detection(data_instances)

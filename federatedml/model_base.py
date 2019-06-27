@@ -31,6 +31,13 @@ class ModelBase(object):
         param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
         # param.check()
         self._init_model(param)
+        try:
+            print(self.model_param.__dict__)
+            need_cv = param.cv_param.need_cv
+        except AttributeError:
+            print("In exception")
+            need_cv = False
+        return need_cv
 
     def _init_model(self, model):
         pass
@@ -53,7 +60,10 @@ class ModelBase(object):
             if data_sets[data_key].get("data", None):
                 data = data_sets[data_key]["data"]
 
-        if train_data:
+        if stage == 'cross_validation':
+            self.cross_validation(train_data)
+
+        elif train_data:
             self.fit(train_data)
             self.data_output = self.predict(train_data)
 
@@ -84,10 +94,13 @@ class ModelBase(object):
                 self.data_output = self.transform(data)
 
     def run(self, component_parameters=None, args=None):
-        self._init_runtime_parameters(component_parameters)
+        need_cv = self._init_runtime_parameters(component_parameters)
+        print("component_parameter: {}".format(component_parameters))
 
-        stage = None
-        if "model" in args:
+        print('need_cv : {}'.format(need_cv))
+        if need_cv:
+            stage = 'cross_validation'
+        elif "model" in args:
             self._load_model(args)
             stage = "transform"
         elif "isometric_model" in args:
@@ -108,6 +121,9 @@ class ModelBase(object):
         pass
 
     def transform(self, data_inst):
+        pass
+
+    def cross_validation(self, data_inst):
         pass
 
     def save_data(self):

@@ -16,7 +16,6 @@
 
 import numpy as np
 
-from arch.api.model_manager import manager as model_manager
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from federatedml.optim import DiffConverge, AbsConverge
 from arch.api.utils import log_utils
@@ -30,6 +29,9 @@ from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
+
+from federatedml.model_selection.KFold import KFold
+from federatedml.param.param_cross_validation import CrossValidationParam
 
 LOGGER = log_utils.getLogger()
 
@@ -55,6 +57,8 @@ class BaseLogisticRegression(ModelBase):
         self.model_name = 'LogisticRegression'
         self.model_param_name = 'LogisticRegressionParam'
         self.model_meta_name = 'LogisticRegressionMeta'
+        self.role = ''
+        self.mode = ''
 
     def _init_model(self, params):
         self.model_param = params
@@ -287,3 +291,18 @@ class BaseLogisticRegression(ModelBase):
         :return: a table holding instances with transformed features
         """
         return data_inst
+
+    def cross_validation(self, data_instances):
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self)
+
+    def _get_cv_param(self):
+        cv_param = CrossValidationParam()
+        cv_param.n_splits = self.model_param.cv_param.n_splits
+        cv_param.shuffle = self.model_param.cv_param.shuffle
+        cv_param.random_seed = self.model_param.cv_param.random_seed
+        cv_param.role = self.role
+        cv_param.mode = self.mode
+        cv_param.evaluate_param = self.model_param.cv_param.evaluate_param
+        return cv_param

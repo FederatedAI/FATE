@@ -16,7 +16,7 @@
 
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
-
+import copy
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.utils import log_utils
@@ -69,7 +69,7 @@ class KFold(BaseCrossValidator):
             test_data.schema['header'] = header
             yield train_data, test_data
 
-    def run(self, component_parameters, data_inst, model):
+    def run(self, component_parameters, data_inst, original_model):
         self._init_model(component_parameters)
 
         data_generator = self.split(data_inst)
@@ -82,7 +82,7 @@ class KFold(BaseCrossValidator):
                 LOGGER.info("Train data Synchronized")
                 self._synchronize_data(test_data, flowid, consts.TEST_DATA)
                 LOGGER.info("Test data Synchronized")
-
+            model = copy.deepcopy(original_model)
             model.set_flowid(flowid)
             model.fit(train_data)
             pred_res = model.predict(test_data)
@@ -91,7 +91,6 @@ class KFold(BaseCrossValidator):
             cv_results.append(evaluation_results)
             flowid += 1
             LOGGER.info("cv" + str(flowid) + " evaluation:" + str(evaluation_results))
-            model.reset()
         self.display_cv_result(cv_results)
         return cv_results
 
