@@ -24,11 +24,11 @@ from federatedml.evaluation import Evaluation
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import Initializer
-from federatedml.optim import Optimizer
 from federatedml.optim import activation
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from federatedml.optim.gradient import LogisticGradient
-from federatedml.param import LogisticParam
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric, MetricType
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
 from federatedml.statistic import data_overview
@@ -93,6 +93,16 @@ class HomoLRGuest(HomoLRBase):
 
             total_loss /= batch_num
             w = self.merge_model()
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "homo_lr"
+                                     })
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name='loss',
+                                 metric_namespace='train',
+                                 metric_data=[Metric(iter_num, total_loss)])
+
             self.loss_history.append(total_loss)
             LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
             # send model

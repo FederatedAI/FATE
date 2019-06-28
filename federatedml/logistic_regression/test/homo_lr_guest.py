@@ -121,7 +121,9 @@ class TestHomoLR(object):
 
 
 if __name__ == '__main__':
-    from federatedml.logistic_regression.test.job_id import job_id
+    import sys
+    job_id = str(sys.argv[1])
+
     eggroll.init(job_id)
     federation.init(job_id,
                     {"local": {

@@ -17,6 +17,10 @@
 import numpy as np
 
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric
+from fate_flow.manager.tracking import Tracking
+
 from federatedml.optim import DiffConverge, AbsConverge
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
@@ -306,3 +310,15 @@ class BaseLogisticRegression(ModelBase):
         cv_param.mode = self.mode
         cv_param.evaluate_param = self.model_param.cv_param.evaluate_param
         return cv_param
+
+    def callback_meta(self, metric_name, metric_namespace, metric_meta):
+        tracker = Tracking('123', 'abc')
+        tracker.set_metric_meta(metric_name=metric_name,
+                                metric_namespace=metric_namespace,
+                                metric_meta=metric_meta)
+
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
+        tracker = Tracking('123', 'abc')
+        tracker.log_metric_data(metric_name=metric_name,
+                                metric_namespace=metric_namespace,
+                                metrics=metric_data)

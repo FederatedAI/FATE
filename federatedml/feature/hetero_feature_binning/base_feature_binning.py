@@ -129,7 +129,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         return result_obj
 
     def _load_model(self, model_dict):
-        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        model_param = model_dict.get('model').get(MODEL_NAME).get(MODEL_PARAM_NAME)
 
         binning_result_obj = dict(model_param.binning_result.binning_result)
         host_params = dict(model_param.host_results)

@@ -22,6 +22,7 @@ import math
 from arch.api.utils import log_utils
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -254,7 +255,15 @@ class Binning(object):
             new_data = data_instances.mapValues(f)
         new_data.schema = {"header": self.header}
         bin_sparse = self.get_sparse_bin(transform_cols_idx, split_points)
-        return new_data, self.split_points, bin_sparse
+        split_points_result = []
+        for idx, col_name in enumerate(self.header):
+            if col_name not in self.split_points:
+                continue
+            s_ps = self.split_points[col_name]
+            s_ps = np.array(s_ps)
+            split_points_result.append(s_ps)
+        split_points_result = np.array(split_points_result)
+        return new_data, split_points_result, bin_sparse
 
     @staticmethod
     def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header):
@@ -262,6 +271,9 @@ class Binning(object):
         data_shape = instances.features.get_shape()
         indice = []
         sparse_value = []
+        # print("In _convert_sparse_data, transform_cols_idx: {}, header: {}, split_points_dict: {}".format(
+        #     transform_cols_idx, header, split_points_dict
+        # ))
         for col_idx, col_value in all_data:
             if col_idx in transform_cols_idx:
                 col_name = header[col_idx]

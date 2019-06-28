@@ -103,4 +103,4 @@ class JobQueue(DataBaseModel):
         primary_key = CompositeKey('job_id', 'role', 'party_id')
 
 
-init_tables()
+# init_tables()

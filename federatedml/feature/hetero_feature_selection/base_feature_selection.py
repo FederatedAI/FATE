@@ -109,8 +109,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         return result
 
     def _load_model(self, model_dict):
-        if MODEL_NAME in model_dict:
-            model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        if 'model' in model_dict:
+            model_param = model_dict.get('model').get(MODEL_NAME).get(MODEL_PARAM_NAME)
             self.results = list(model_param.results)
             left_col_obj = model_param.final_left_cols
 
@@ -124,12 +124,14 @@ class BaseHeteroFeatureSelection(ModelBase):
                 col_idx = original_headers.index(col_name)
                 self.left_cols[col_idx] = is_left
 
-        if base_feature_binning.MODEL_NAME in model_dict:
+        if 'isometric_model' in model_dict:
             if self.party_name == consts.GUEST:
                 self.binning_model = HeteroFeatureBinningGuest()
             else:
                 self.binning_model = HeteroFeatureBinningHost()
-            self.binning_model._load_model(model_dict)
+
+            new_model_dict = {'model': model_dict['isometric_model']}
+            self.binning_model._load_model(new_model_dict)
 
     @staticmethod
     def select_cols(instance, left_cols, header):
