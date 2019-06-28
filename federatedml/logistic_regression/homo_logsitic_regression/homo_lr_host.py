@@ -28,6 +28,8 @@ from federatedml.optim.federated_aggregator.homo_federated_aggregator import Hom
 from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.statistic import data_overview
 from federatedml.util import consts
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric
 from federatedml.util.transfer_variable import HomoLRTransferVariable
 from arch.api.proto import lr_model_param_pb2
 
@@ -97,6 +99,17 @@ class HomoLRHost(HomoLRBase):
                     if self.updater is not None:
                         loss_norm = self.updater.loss_norm(self.coef_)
                         total_loss += loss + loss_norm
+
+                    metric_meta = MetricMeta(name='train',
+                                             metric_type="LOSS",
+                                             extra_metas={
+                                                 "unit_name": "homo_lr"
+                                             })
+                    self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+                    self.callback_metric(metric_name='loss',
+                                         metric_namespace='train',
+                                         metric_data=[Metric(iter_num, total_loss)])
+
                 else:
                     grad, _ = grad_loss.reduce(self.aggregator.aggregate_grad)
                     grad = np.array(grad)

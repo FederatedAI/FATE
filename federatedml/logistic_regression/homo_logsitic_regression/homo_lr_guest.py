@@ -28,7 +28,7 @@ from federatedml.optim import activation
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from federatedml.optim.gradient import LogisticGradient
 from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric, MetricType
+from fate_flow.entity.metric import Metric
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
 from federatedml.statistic import data_overview

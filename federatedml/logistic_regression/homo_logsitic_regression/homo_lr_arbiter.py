@@ -22,6 +22,8 @@ from federatedml.optim.federated_aggregator import HomoFederatedAggregator
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HomoLRTransferVariable
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric
 
 LOGGER = log_utils.getLogger()
 
@@ -72,6 +74,17 @@ class HomoLRArbiter(HomoLRBase):
                                                         party_weights=self.party_weights,
                                                         host_use_encryption=self.host_use_encryption)
             self.loss_history.append(total_loss)
+            
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "homo_lr"
+                                     })
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name='loss',
+                                 metric_namespace='train',
+                                 metric_data=[Metric(iter_num, total_loss)])
+
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
