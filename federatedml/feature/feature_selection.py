@@ -24,7 +24,6 @@ import random
 from arch.api.proto import feature_selection_meta_pb2
 from arch.api.proto import feature_selection_param_pb2
 from arch.api.utils import log_utils
-from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.param import FeatureBinningParam, UniqueValueParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
@@ -164,6 +163,7 @@ class FilterMethod(object):
             col_name = self.header[col_idx]
             left_col_name_dict[col_name] = is_left
         return left_col_name_dict
+
 
 class UnionPercentileFilter(FilterMethod):
     """
@@ -593,4 +593,3 @@ class OutlierFilter(FilterMethod):
         result = feature_selection_meta_pb2.OutlierColsSelectionMeta(percentile=self.percentile,
                                                                      upper_threshold=self.upper_threshold)
         return result
-

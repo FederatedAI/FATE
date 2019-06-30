@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from federatedml.statistic import intersect
-
-__all__ = ['intersect']
+# from federatedml.statistic import intersect
+#
+# __all__ = ['intersect']

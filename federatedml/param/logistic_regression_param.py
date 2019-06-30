@@ -219,11 +219,6 @@ class LogisticParam(BaseParam):
                 "logistic_param's model_path {} not supported, should be str type".format(
                     self.model_path))
 
-        if type(self.table_name).__name__ != "str":
-            raise ValueError(
-                "logistic_param's table_name {} not supported, should be str type".format(
-                    self.table_name))
-
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(
                 "logistic_param's party_weight {} not supported, should be 'int' or 'float'".format(

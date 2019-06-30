@@ -218,6 +218,4 @@ class FeatureSelectionParam(BaseParam):
         self.iv_percentile_param.check()
         self.coe_param.check()
         self.outlier_param.check()
-        self.bin_param.check()
-        return True
 

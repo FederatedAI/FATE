@@ -17,14 +17,12 @@
 import numpy as np
 
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
-from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric
-from fate_flow.manager.tracking import Tracking
-
-from federatedml.optim import DiffConverge, AbsConverge
 from arch.api.utils import log_utils
+from fate_flow.manager.tracking import Tracking
 from federatedml.evaluation import Evaluation
 from federatedml.model_base import ModelBase
+from federatedml.model_selection.KFold import KFold
+from federatedml.optim import DiffConverge, AbsConverge
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
@@ -33,9 +31,6 @@ from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
-
-from federatedml.model_selection.KFold import KFold
-from federatedml.param.cross_validation_param import CrossValidationParam
 
 LOGGER = log_utils.getLogger()
 

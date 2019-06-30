@@ -25,7 +25,7 @@ from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
+from federatedml.util.transfer_variable.hetero_feature_binning_transfer_variable import HeteroFeatureBinningTransferVariable
 from federatedml.param.feature_binning_param import FeatureBinningParam
 
 LOGGER = log_utils.getLogger()

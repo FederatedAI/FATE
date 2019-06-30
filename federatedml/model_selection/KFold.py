@@ -23,7 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.model_selection.cross_validate import BaseCrossValidator
 from federatedml.model_selection.indices import collect_index
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.util.transfer_variable.hetero_workflow_transfer_variable import HeteroWorkFlowTransferVariable
 
 LOGGER = log_utils.getLogger()
 

@@ -30,7 +30,7 @@ from federatedml.optim.gradient import LogisticGradient
 from fate_flow.entity.metric import MetricMeta
 from fate_flow.entity.metric import Metric
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HomoLRTransferVariable
+from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()

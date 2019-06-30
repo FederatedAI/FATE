@@ -21,7 +21,7 @@ from federatedml.optim import activation
 from federatedml.optim.federated_aggregator import HomoFederatedAggregator
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HomoLRTransferVariable
+from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
 from fate_flow.entity.metric import MetricMeta
 from fate_flow.entity.metric import Metric
 

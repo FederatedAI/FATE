@@ -15,7 +15,6 @@
 #
 
 import numpy as np
-from federatedml.model_base import ModelBase
 from federatedml.util import consts
 from arch.api.utils import log_utils
 

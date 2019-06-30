@@ -25,7 +25,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
-from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
+from federatedml.util.transfer_variable.hetero_feature_selection_transfer_variable import HeteroFeatureSelectionTransferVariable
 from federatedml.feature.hetero_feature_binning import base_feature_binning
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest

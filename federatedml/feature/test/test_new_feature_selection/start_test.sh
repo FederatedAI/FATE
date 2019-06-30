@@ -19,7 +19,7 @@
 cd $(dirname "$0")
 curtime=$(date +%Y%m%d%H%M%S)
 work_mode=0
-jobid="feature_binning_example_standalone_"$curtime
+jobid="feature_selection_example_standalone_"$curtime
 
 echo current_dir is $(dirname "$0")
 nohup python hetero_feature_selection_guest_test.py ${jobid} > nohup.guest &

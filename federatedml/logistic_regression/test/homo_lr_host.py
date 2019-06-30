@@ -56,7 +56,7 @@ class TestHomoLR(object):
     def _make_param_dict(self):
         host_componet_param = {
             "LogisticParam": {
-                "need_run": False,
+                "need_run": True,
                 "cv_param": {
                     "need_cv": True,
                     "evaluate_param": {

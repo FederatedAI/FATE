@@ -31,14 +31,7 @@ from federatedml.util.data_io import SparseFeatureReader
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
-from federatedml.util.transfer_variable import BaseTransferVariable
-from federatedml.util.transfer_variable import RawIntersectTransferVariable
-from federatedml.util.transfer_variable import HeteroDecisionTreeTransferVariable
-from federatedml.util.transfer_variable import HeteroLRTransferVariable
-from federatedml.util.transfer_variable import RsaIntersectTransferVariable
-from federatedml.util.transfer_variable import HomoLRTransferVariable
-from federatedml.util.transfer_variable import HeteroSecureBoostingTreeTransferVariable
-from federatedml.util.transfer_variable import SecureAddExampleTransferVariable
+
 
 __all__ = ['consts',
            'fate_operator',
