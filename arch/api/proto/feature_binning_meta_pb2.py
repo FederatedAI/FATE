@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-binning-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1a\x66\x65\x61ture-binning-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"?\n\rTransformMeta\x12\x16\n\x0etransform_cols\x18\x01 \x03(\x03\x12\x16\n\x0etransform_type\x18\x02 \x01(\t\"\xfe\x01\n\x12\x46\x65\x61tureBinningMeta\x12\x0e\n\x06method\x18\x01 \x01(\t\x12\x16\n\x0e\x63ompress_thres\x18\x02 \x01(\x03\x12\x11\n\thead_size\x18\x03 \x01(\x03\x12\r\n\x05\x65rror\x18\x04 \x01(\x01\x12\x0f\n\x07\x62in_num\x18\x05 \x01(\x03\x12\x0c\n\x04\x63ols\x18\x06 \x03(\t\x12\x19\n\x11\x61\x64justment_factor\x18\x07 \x01(\x01\x12\x12\n\nlocal_only\x18\x08 \x01(\x08\x12P\n\x0ftransform_param\x18\t \x01(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.TransformMetaB\x19\x42\x17\x46\x65\x61tureBinningMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x1a\x66\x65\x61ture-binning-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"?\n\rTransformMeta\x12\x16\n\x0etransform_cols\x18\x01 \x03(\x03\x12\x16\n\x0etransform_type\x18\x02 \x01(\t\"\x90\x02\n\x12\x46\x65\x61tureBinningMeta\x12\x0e\n\x06method\x18\x01 \x01(\t\x12\x16\n\x0e\x63ompress_thres\x18\x02 \x01(\x03\x12\x11\n\thead_size\x18\x03 \x01(\x03\x12\r\n\x05\x65rror\x18\x04 \x01(\x01\x12\x0f\n\x07\x62in_num\x18\x05 \x01(\x03\x12\x0c\n\x04\x63ols\x18\x06 \x03(\t\x12\x19\n\x11\x61\x64justment_factor\x18\x07 \x01(\x01\x12\x12\n\nlocal_only\x18\x08 \x01(\x08\x12P\n\x0ftransform_param\x18\t \x01(\x0b\x32\x37.com.webank.ai.fate.common.mlmodel.buffer.TransformMeta\x12\x10\n\x08need_run\x18\n \x01(\x08\x42\x19\x42\x17\x46\x65\x61tureBinningMetaProtob\x06proto3')
 )
 
 
@@ -133,6 +133,13 @@ _FEATUREBINNINGMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningMeta.need_run', index=9,
+      number=10, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -146,7 +153,7 @@ _FEATUREBINNINGMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=138,
-  serialized_end=392,
+  serialized_end=410,
 )
 
 _FEATUREBINNINGMETA.fields_by_name['transform_param'].message_type = _TRANSFORMMETA

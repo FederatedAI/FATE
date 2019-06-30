@@ -28,6 +28,7 @@ message FeatureSelectionMeta {
     IVPercentileSelectionMeta iv_percentile_meta = 6;
     CoeffOfVarSelectionMeta coe_meta = 7;
     OutlierColsSelectionMeta outlier_meta = 8;
+    bool need_run = 9;
 }
 
 message UniqueValueMeta {

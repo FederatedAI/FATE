@@ -67,6 +67,9 @@ class HomoLRHost(HomoLRBase):
             self.gradient_operator = LogisticGradient()
 
     def fit(self, data_instances):
+        if not self.need_run:
+            return data_instances
+
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
 
         self._abnormal_detection(data_instances)
@@ -244,6 +247,9 @@ class HomoLRHost(HomoLRBase):
         self.has_sychronized_encryption = True
 
     def predict(self, data_instances):
+        if not self.need_run:
+            return data_instances
+
         if not self.has_sychronized_encryption:
             self.__synchronize_encryption()
             self.__load_arbiter_model()
@@ -258,6 +264,7 @@ class HomoLRHost(HomoLRBase):
 
         if self.use_encrypt:
             encrypted_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
+            LOGGER.debug("Host encrypted wx id: {}".format(encrypted_wx_id))
             LOGGER.debug("Start to remote wx: {}, transfer_id: {}".format(wx, encrypted_wx_id))
             federation.remote(wx,
                               name=self.transfer_variable.predict_wx.name,
@@ -279,6 +286,7 @@ class HomoLRHost(HomoLRBase):
             else:
                 predict_result = data_instances.mapValues(lambda x: (x.label, None))
             predict_result_table = predict_result.join(pred_label, lambda x, y: [x[0], x[1], y])
+        LOGGER.debug("Finish predict")
         return predict_result_table
 
     def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):

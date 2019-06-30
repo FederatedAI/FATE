@@ -72,6 +72,10 @@ class KFold(BaseCrossValidator):
     def run(self, component_parameters, data_inst, original_model):
         self._init_model(component_parameters)
 
+        if data_inst is None:
+            cv_results = self._arbiter_run(original_model)
+            return cv_results
+
         data_generator = self.split(data_inst)
         cv_results = []
         flowid = 0
@@ -90,9 +94,22 @@ class KFold(BaseCrossValidator):
 
             cv_results.append(evaluation_results)
             flowid += 1
-            LOGGER.info("cv" + str(flowid) + " evaluation:" + str(evaluation_results))
         self.display_cv_result(cv_results)
         return cv_results
+
+    def _arbiter_run(self, original_model):
+        cv_results = []
+        for flowid in range(self.n_splits):
+            LOGGER.info("KFold flowid is: {}".format(flowid))
+            model = copy.deepcopy(original_model)
+            model.set_flowid(flowid)
+            model.fit()
+            pred_res = model.predict()
+            evaluation_results = self.evaluate(pred_res, model)
+            cv_results.append(evaluation_results)
+        return cv_results
+
+
 
     def _init_model(self, param):
         self.model_param = param
@@ -142,7 +159,6 @@ class KFold(BaseCrossValidator):
 
     def evaluate(self, eval_data, model):
         if eval_data is None:
-            LOGGER.info("not eval_data!")
             return None
 
         eval_data_local = eval_data.collect()

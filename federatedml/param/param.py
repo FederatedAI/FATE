@@ -795,6 +795,10 @@ class FeatureBinningParam(object):
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
                  local_only=False,
+                 # meta_table='binning_meta_table',
+                 # param_table='binning_param_table',
+                 # transform_table='binning_transform_table',
+                 # result_namespace='binning_namespace',
                  display_result='simple'):
         self.process_method = process_method
         self.method = method
@@ -941,7 +945,7 @@ class FeatureSelectionParam(object):
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
                  coe_param=CoeffOfVarSelectionParam(),
-                 outlier_param=OutlierColsSelectionParam()
+                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam()
                  ):
         self.method = method
         self.select_cols = select_cols
@@ -956,6 +960,7 @@ class FeatureSelectionParam(object):
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
+        self.bin_param = copy.deepcopy(bin_param)
 
 
 class ScaleParam(object):

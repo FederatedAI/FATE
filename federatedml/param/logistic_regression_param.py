@@ -17,12 +17,16 @@
 #  limitations under the License.
 #
 import copy
+
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.predict_param import PredictParam
+from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.util import consts
 
 
-class InitParam(object):
+class InitParam(BaseParam):
     """
     Initialize Parameters used in initializing a model.
 
@@ -63,7 +67,6 @@ class InitParam(object):
             raise ValueError(
                 "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
 
-        LOGGER.debug("Finish init parameter check!")
         return True
 
 
@@ -109,10 +112,6 @@ class LogisticParam(BaseParam):
         overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
         this parameter. Too large batches may cause training failure.
 
-    model_path : Abandoned
-
-    table_name : Abandoned
-
     """
 
     def __init__(self, penalty='L2',
@@ -120,8 +119,9 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model', table_name='lr_table',
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
+                 model_path='lr_model', encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
+        super(LogisticParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -134,16 +134,18 @@ class LogisticParam(BaseParam):
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.model_path = model_path
-        self.table_name = table_name
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.need_run = need_run
+        self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
         descr = "logistic_param's"
 
         if type(self.penalty).__name__ != "str":
             raise ValueError(
-                "logistic_param's penalty {} not supported, should be str type".format(logistic_param.penalty))
+                "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
             if self.penalty not in ['L1', 'L2', 'NONE']:
@@ -226,8 +228,4 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's party_weight {} not supported, should be 'int' or 'float'".format(
                     self.party_weight))
-
-        LOGGER.debug("Finish logistic parameter check!")
         return True
-
-

@@ -26,13 +26,12 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.transfer_variable import HeteroFeatureBinningTransferVariable
-from federatedml.param.param_feature_binning import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
 LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'FeatureBinningParam'
 MODEL_META_NAME = 'FeatureBinningMeta'
-MODEL_NAME = 'HeteroFeatureBinning'
 
 
 class BaseHeteroFeatureBinning(ModelBase):
@@ -97,7 +96,9 @@ class BaseHeteroFeatureBinning(ModelBase):
             bin_num=self.model_param.bin_num,
             cols=self.cols,
             adjustment_factor=self.model_param.adjustment_factor,
-            local_only=self.model_param.local_only)
+            local_only=self.model_param.local_only,
+            need_run=self.need_run
+        )
         return meta_protobuf_obj
 
     def _get_param(self):
@@ -129,7 +130,8 @@ class BaseHeteroFeatureBinning(ModelBase):
         return result_obj
 
     def _load_model(self, model_dict):
-        model_param = model_dict.get('model').get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
+        self._parse_need_run(model_dict, MODEL_META_NAME)
 
         binning_result_obj = dict(model_param.binning_result.binning_result)
         host_params = dict(model_param.host_results)
@@ -151,13 +153,14 @@ class BaseHeteroFeatureBinning(ModelBase):
                 host_result_obj[col_name] = iv_attr
             self.host_results[host_name] = host_result_obj
 
-    def save_model(self):
+    def export_model(self):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
             MODEL_META_NAME: meta_obj,
             MODEL_PARAM_NAME: param_obj
         }
+        self.model_output = result
         return result
 
     def save_data(self):

@@ -50,7 +50,7 @@ class TestHomoLR(object):
         self.model_name = 'HomoLogisticRegression'
 
         self.table = table
-        self.args = {"data": {self.model_name: {"train_data": table}}}
+        self.args = {"data": {self.model_name: {"train_data": None}}}
 
     def _make_param_dict(self):
         arbiter_componet_param = {
@@ -75,7 +75,7 @@ class TestHomoLR(object):
         homo_lr.run(arbiter_param, self.args)
 
 
-        lr_model = homo_lr.save_model()
+        lr_model = homo_lr.export_model()
         self.show_model(lr_model)
 
         arbiter_model = {self.model_name: lr_model}
@@ -83,7 +83,7 @@ class TestHomoLR(object):
         arbiter_args = {
             'data': {
                 self.model_name: {
-                    'eval_data': self.table
+                    'eval_data': None
                 }
             },
             'model': arbiter_model
@@ -100,7 +100,6 @@ class TestHomoLR(object):
         homo_lr = HomoLRArbiter()
         guest_param = self._make_param_dict()
         homo_lr.run(guest_param, self.args)
-
 
     def show_model(self, model):
         meta_obj = model.get('HomoLogisticRegressionMeta')

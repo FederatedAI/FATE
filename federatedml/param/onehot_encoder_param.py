@@ -22,7 +22,7 @@ from federatedml.param.base_param import BaseParam
 LOGGER = log_utils.getLogger()
 
 
-class OneHotEncoderParam(object):
+class OneHotEncoderParam(BaseParam):
     """
 
     Parameters
@@ -34,6 +34,7 @@ class OneHotEncoderParam(object):
     """
 
     def __init__(self, cols=-1):
+        super(OneHotEncoderParam, self).__init__()
         self.cols = cols
 
     def check(self):

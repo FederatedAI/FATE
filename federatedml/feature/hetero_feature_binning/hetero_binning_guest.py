@@ -19,7 +19,6 @@ import functools
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
-from federatedml.param.param import FeatureBinningParam
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 from federatedml.statistic import data_overview

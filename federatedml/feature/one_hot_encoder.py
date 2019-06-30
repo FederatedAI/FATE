@@ -18,13 +18,12 @@ import functools
 
 import numpy as np
 
-from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
-from federatedml.param.param_one_hot import OneHotEncoderParam
+from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 
 LOGGER = log_utils.getLogger()
 
@@ -226,7 +225,8 @@ class OneHotEncoder(ModelBase):
         return result
 
     def _load_model(self, model_dict):
-        model_param = model_dict.get(MODEL_NAME).get(MODEL_PARAM_NAME)
+        self._parse_need_run(model_dict, MODEL_META_NAME)
+        model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         # model_meta = model_dict.get(MODEL_NAME).get(MODEL_META_NAME)
 
         self.col_maps = dict(model_param.col_map)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,6 +20,33 @@
 #
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
+
+
+class TransformParam(BaseParam):
+    """
+    Define how to transfer the cols
+
+    Parameters
+    ----------
+    transform_cols : list of column index, default: None
+        Specify which columns need to be transform. If column index is None, it will use same columns as cols
+        in binning module.
+
+    transform_type: str, 'bin_num', 'woe' or None default: None
+        Specify which value these columns going to replace. If it is set as None, nothing will be replaced.
+
+    """
+
+    def __init__(self, transform_cols=None, transform_type=None):
+        super(TransformParam, self).__init__()
+        self.transform_cols = transform_cols
+        self.transform_type = transform_type
+
+    def check(self):
+        descr = "Transform Param's "
+        if self.transform_cols is not None:
+            self.check_defined_type(self.transform_cols, descr, ['list'])
+        self.check_defined_type(self.transform_type, descr, ['bin_num', None])
 
 
 class FeatureBinningParam(BaseParam):
@@ -48,9 +77,9 @@ class FeatureBinningParam(BaseParam):
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
 
-    cols : list of string or int, default: -1
+    cols : list of int or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
-        cols, provide a list of header string instead of -1.
+        cols, provide a list of header index instead of -1.
 
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
@@ -72,12 +101,10 @@ class FeatureBinningParam(BaseParam):
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
+                 transform_param=TransformParam(),
                  local_only=False,
-                 # meta_table='binning_meta_table',
-                 # param_table='binning_param_table',
-                 # transform_table='binning_transform_table',
-                 # result_namespace='binning_namespace',
                  display_result='simple'):
+        super(FeatureBinningParam, self).__init__()
         self.process_method = process_method
         self.method = method
         self.compress_thres = compress_thres
@@ -87,7 +114,7 @@ class FeatureBinningParam(BaseParam):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-
+        self.transform_param = copy.deepcopy(transform_param)
         if display_result == 'simple':
             display_result = ['iv']
         self.display_result = display_result

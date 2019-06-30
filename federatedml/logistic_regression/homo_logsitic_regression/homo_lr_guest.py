@@ -53,6 +53,9 @@ class HomoLRGuest(HomoLRBase):
         self.role = consts.GUEST
 
     def fit(self, data_instances):
+        if not self.need_run:
+            return data_instances
+
         self._abnormal_detection(data_instances)
 
         self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
@@ -98,8 +101,9 @@ class HomoLRGuest(HomoLRBase):
                                      extra_metas={
                                          "unit_name": "homo_lr"
                                      })
-            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name='loss',
+            metric_name = 'loss_' + self.flowid
+            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name=metric_name,
                                  metric_namespace='train',
                                  metric_data=[Metric(iter_num, total_loss)])
 
@@ -188,6 +192,9 @@ class HomoLRGuest(HomoLRBase):
         return w
 
     def predict(self, data_instances):
+        if not self.need_run:
+            return data_instances
+
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
         pred_label = self.classified(pred_prob, self.predict_param.threshold)

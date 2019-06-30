@@ -22,7 +22,7 @@ import numpy as np
 
 from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from federatedml.model_base import ModelBase
-from federatedml.param.param_feature_selection import FeatureSelectionParam
+from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util.transfer_variable import HeteroFeatureSelectionTransferVariable
@@ -99,18 +99,21 @@ class BaseHeteroFeatureSelection(ModelBase):
     def save_data(self):
         return self.data_output
 
-    def save_model(self):
+    def export_model(self):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
             MODEL_META_NAME: meta_obj,
             MODEL_PARAM_NAME: param_obj
         }
+        self.model_output = result
         return result
 
     def _load_model(self, model_dict):
+        self._parse_need_run(model_dict, MODEL_META_NAME)
         if 'model' in model_dict:
-            model_param = model_dict.get('model').get(MODEL_NAME).get(MODEL_PARAM_NAME)
+            model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
+
             self.results = list(model_param.results)
             left_col_obj = model_param.final_left_cols
 

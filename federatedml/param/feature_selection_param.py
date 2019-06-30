@@ -178,8 +178,9 @@ class FeatureSelectionParam(BaseParam):
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
                  coe_param=CoeffOfVarSelectionParam(),
-                 outlier_param=OutlierColsSelectionParam(), bin_param=FeatureBinningParam()
+                 outlier_param=OutlierColsSelectionParam()
                  ):
+        super(FeatureSelectionParam, self).__init__()
         self.method = method
         self.select_cols = select_cols
         if filter_method is None:
@@ -193,7 +194,6 @@ class FeatureSelectionParam(BaseParam):
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
         self.coe_param = copy.deepcopy(coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
-        self.bin_param = copy.deepcopy(bin_param)
 
     def check(self):
         descr = "hetero feature selection param's"

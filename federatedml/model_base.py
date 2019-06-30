@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 from federatedml.util.param_extract import ParamExtract
+from fate_flow.manager.tracking import Tracking
 
 
 class ModelBase(object):
@@ -25,6 +26,10 @@ class ModelBase(object):
         self.mode = None
         self.data_output = None
         self.model_param = None
+        self.transfer_variable = None
+        self.flowid = ''
+        self.taskid = ''
+        self.need_run = True
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
@@ -32,11 +37,16 @@ class ModelBase(object):
         # param.check()
         self._init_model(param)
         try:
-            print(self.model_param.__dict__)
             need_cv = param.cv_param.need_cv
         except AttributeError:
-            print("In exception")
             need_cv = False
+
+        try:
+            need_run = param.need_run
+        except AttributeError:
+            need_run = True
+        self.need_run = need_run
+
         return need_cv
 
     def _init_model(self, model):
@@ -44,6 +54,11 @@ class ModelBase(object):
 
     def _load_model(self, model_dict):
         pass
+
+    def _parse_need_run(self, model_dict, model_meta_name):
+        meta_obj = list(model_dict.get('model').values())[0].get(model_meta_name)
+        need_run = meta_obj.need_run
+        self.need_run = need_run
 
     def _run_data(self, data_sets=None, stage=None):
         train_data = None
@@ -132,6 +147,26 @@ class ModelBase(object):
     def export_model(self):
         self.model_output = {"XXXMeta": "model_meta",
                              "XXXParam": "model_param"}
+        return self.model_output
 
-    def save_model(self):
-        return self.export_model()
+    def set_flowid(self, flowid=0):
+        self.flowid = '_'.join([self.flowid, flowid])
+        if self.transfer_variable is not None:
+            self.transfer_variable.set_flowid(self.flowid)
+
+    def set_taskid(self, taskid):
+        self.taskid = taskid
+        if self.transfer_variable is not None:
+            self.transfer_variable.set_taskid(self.taskid)
+
+    def callback_meta(self, metric_name, metric_namespace, metric_meta):
+        tracker = Tracking('123', 'abc')
+        tracker.set_metric_meta(metric_name=metric_name,
+                                metric_namespace=metric_namespace,
+                                metric_meta=metric_meta)
+
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
+        tracker = Tracking('123', 'abc')
+        tracker.log_metric_data(metric_name=metric_name,
+                                metric_namespace=metric_namespace,
+                                metrics=metric_data)

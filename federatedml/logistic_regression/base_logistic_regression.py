@@ -28,14 +28,14 @@ from federatedml.model_base import ModelBase
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
-from federatedml.param.param_lr import LogisticParam
+from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator, abnormal_detection
 
 from federatedml.model_selection.KFold import KFold
-from federatedml.param.param_cross_validation import CrossValidationParam
+from federatedml.param.cross_validation_param import CrossValidationParam
 
 LOGGER = log_utils.getLogger()
 
@@ -208,17 +208,19 @@ class BaseLogisticRegression(ModelBase):
         LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
 
-    def save_model(self):
+    def export_model(self):
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
         }
+        self.model_output = result
         return result
 
     def _load_model(self, model_dict):
-        result_obj = model_dict.get('model').get(self.model_name).get(self.model_param_name)
+        self._parse_need_run(model_dict, self.model_meta_name)
+        result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         self.header = list(result_obj.header)
         feature_shape = len(self.header)
         self.coef_ = np.zeros(feature_shape)
@@ -302,14 +304,9 @@ class BaseLogisticRegression(ModelBase):
         kflod_obj.run(cv_param, data_instances, self)
 
     def _get_cv_param(self):
-        cv_param = CrossValidationParam()
-        cv_param.n_splits = self.model_param.cv_param.n_splits
-        cv_param.shuffle = self.model_param.cv_param.shuffle
-        cv_param.random_seed = self.model_param.cv_param.random_seed
-        cv_param.role = self.role
-        cv_param.mode = self.mode
-        cv_param.evaluate_param = self.model_param.cv_param.evaluate_param
-        return cv_param
+        self.model_param.cv_param.role = self.role
+        self.model_param.cv_param.mode = self.mode
+        return self.model_param.cv_param
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         tracker = Tracking('123', 'abc')

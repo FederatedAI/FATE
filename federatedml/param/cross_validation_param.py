@@ -18,39 +18,12 @@
 
 import copy
 
+from federatedml.param.base_param import BaseParam
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util import consts
 
 
-class EvaluateParam(object):
-    """
-    Define the evaluation method of binary/multiple classification and regression
-
-    Parameters
-    ----------
-    metrics: A list of evaluate index. Support 'auc', 'ks', 'lift', 'precision' ,'recall' and 'accuracy', 'explain_variance',
-            'mean_absolute_error', 'mean_squared_error', 'mean_squared_log_error','median_absolute_error','r2_score','root_mean_squared_error'.
-            For example, metrics can be set as ['auc', 'precision', 'recall'], then the results of these indexes will be output.
-
-    classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
-
-    pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
-
-    thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
-    """
-
-    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
-        if metrics is None:
-            metrics = []
-        self.metrics = metrics
-        self.classi_type = classi_type
-        self.pos_label = pos_label
-        if thresholds is None:
-            thresholds = [0.5]
-
-        self.thresholds = thresholds
-
-
-class CrossValidationParam(object):
+class CrossValidationParam(BaseParam):
     """
     Define cross validation params
 
@@ -74,12 +47,22 @@ class CrossValidationParam(object):
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,
-                 evaluate_param=EvaluateParam()):
+                 evaluate_param=EvaluateParam(), need_cv=False):
+        super(CrossValidationParam, self).__init__()
         self.n_splits = n_splits
         self.mode = mode
         self.role = role
         self.shuffle = shuffle
         self.random_seed = random_seed
         self.evaluate_param = copy.deepcopy(evaluate_param)
+        self.need_cv = need_cv
+
+    def check(self):
+        model_param_descr = "cross validation param's "
+        self.check_positive_integer(self.n_splits, model_param_descr)
+        self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
+        self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
+        self.check_boolean(self.shuffle, model_param_descr)
+        self.check_positive_integer(self.random_seed, model_param_descr)
 
 

@@ -54,6 +54,9 @@ class HomoLRArbiter(HomoLRBase):
         self.encrypt_param = params.encrypt_param
 
     def fit(self, data=None):
+        if not self.need_run:
+            return data
+
         LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
         self.__init_parameters()
         LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
@@ -74,7 +77,7 @@ class HomoLRArbiter(HomoLRBase):
                                                         party_weights=self.party_weights,
                                                         host_use_encryption=self.host_use_encryption)
             self.loss_history.append(total_loss)
-            
+
             metric_meta = MetricMeta(name='train',
                                      metric_type="LOSS",
                                      extra_metas={
@@ -128,6 +131,10 @@ class HomoLRArbiter(HomoLRBase):
         self.data_output = data
 
     def predict(self, data=None):
+        LOGGER.debug("In arbiter's predict, need run: {}".format(self.need_run))
+        if not self.need_run:
+            return data
+
         # synchronize encryption information
         if not self.has_sychronized_encryption:
             print("Has not synchronized yet")
@@ -138,6 +145,8 @@ class HomoLRArbiter(HomoLRBase):
             if use_encrypt:
                 encrypter = self.host_encrypter[idx]
                 predict_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
+                LOGGER.debug("Arbiter encrypted wx id: {}".format(predict_wx_id))
+
                 predict_wx = federation.get(name=self.transfer_variable.predict_wx.name,
                                             tag=predict_wx_id,
                                             idx=idx
@@ -287,3 +296,39 @@ class HomoLRArbiter(HomoLRBase):
 
     def _set_header(self):
         self.header = ['head_' + str(x) for x in range(len(self.coef_))]
+
+    # def cross_validation(self, data_instances=None):
+    #
+
+    def run(self, component_parameters=None, args=None):
+        """
+        Rewrite run function so that it can start fit and predict without input data.
+        """
+        need_cv = self._init_runtime_parameters(component_parameters)
+        data_sets = args["data"]
+
+        need_eval = False
+        for data_key in data_sets:
+
+            if "train_data" in data_sets[data_key]:
+                need_eval = True
+            else:
+                need_eval = False
+
+        if need_cv:
+            self.cross_validation(None)
+
+        elif "model" in args:
+            self._load_model(args)
+            self.predict()
+        else:
+            self.fit()
+            if need_eval:
+                self.predict()
+
+
+
+
+
+
+
