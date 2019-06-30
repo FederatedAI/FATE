@@ -21,6 +21,7 @@
 # Param Exact Class
 # =============================================================================
 import builtins
+from federatedml.util import consts
 
 
 class ParamExtract(object):
@@ -33,19 +34,17 @@ class ParamExtract(object):
 
         default_section = type(param).__name__
         if default_section not in config_json:
-            return
+            return param
 
         param = self.recursive_parse_param_from_config(param, config_json.get(default_section),
                                                        param_parse_depth=0)
+
         return param
 
     def recursive_parse_param_from_config(self, param, config_json, param_parse_depth):
-        if param_parse_depth > 5:
+        if param_parse_depth > consts.PARAM_MAXDEPTH:
             raise ValueError("Param define nesting too deep!!!, can not parse it")
 
-        # from federatedml.param import DataIOParam
-        # param = DataIOParam()
-        # print (dir(param))
         inst_variables = param.__dict__
 
         for variable in inst_variables:
