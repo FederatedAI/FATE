@@ -16,9 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-
-import unittest
-
 import numpy as np
 
 from arch.api import eggroll
@@ -27,8 +24,8 @@ from federatedml.feature.hetero_feature_binning.hetero_binning_guest import Hete
 from federatedml.feature.instance import Instance
 
 
-class TestHeteroFeatureBinning(unittest.TestCase):
-    def setUp(self):
+class TestHeteroFeatureBinning():
+    def __init__(self):
         self.data_num = 10
         self.feature_num = 3
         self.header = ['x' + str(i) for i in range(self.feature_num)]
@@ -73,7 +70,7 @@ class TestHeteroFeatureBinning(unittest.TestCase):
         print("data in fit")
         for k, v in local_data:
             print("k: {}, v: {}".format(k, v.features))
-        guest_model = {self.model_name: binning_guest.save_model()}
+        guest_model = {self.model_name: binning_guest.export_model()}
 
         guest_args = {
             'data': {
@@ -101,7 +98,9 @@ class TestHeteroFeatureBinning(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    job_id = 'test_binning_1'
+    import sys
+    job_id = str(sys.argv[1])
+
     eggroll.init(job_id)
     federation.init(job_id,
                     {"local": {
@@ -117,4 +116,7 @@ if __name__ == '__main__':
                             ]
                         }
                     })
-    unittest.main()
+
+    binning_obj = TestHeteroFeatureBinning()
+    # homo_obj.test_homo_lr()
+    binning_obj.test_feature_binning()

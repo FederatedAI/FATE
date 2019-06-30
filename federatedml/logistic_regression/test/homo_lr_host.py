@@ -56,7 +56,7 @@ class TestHomoLR(object):
     def _make_param_dict(self):
         host_componet_param = {
             "LogisticParam": {
-                "need_run": True,
+                "need_run": False,
                 "cv_param": {
                     "need_cv": True,
                     "evaluate_param": {
@@ -81,7 +81,7 @@ class TestHomoLR(object):
         for k, v in local_data:
             print("k: {}, v: {}".format(k, v))
 
-        lr_model = homo_lr.save_model()
+        lr_model = homo_lr.export_model()
         self.show_model(lr_model)
 
         host_model = {self.model_name: lr_model}

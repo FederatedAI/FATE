@@ -55,7 +55,7 @@ class TestHomoLR(object):
     def _make_param_dict(self):
         arbiter_componet_param = {
             "LogisticParam": {
-                "need_run": True,
+                "need_run": False,
                 "cv_param": {
                     "need_cv": True,
                     "evaluate_param": {
@@ -73,8 +73,6 @@ class TestHomoLR(object):
         arbiter_param = self._make_param_dict()
 
         homo_lr.run(arbiter_param, self.args)
-
-
         lr_model = homo_lr.export_model()
         self.show_model(lr_model)
 

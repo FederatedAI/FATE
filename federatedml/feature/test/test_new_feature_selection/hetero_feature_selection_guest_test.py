@@ -28,8 +28,8 @@ from federatedml.feature.instance import Instance
 np.random.seed(1)
 
 
-class TestHeteroFeatureSelection(unittest.TestCase):
-    def setUp(self):
+class TestHeteroFeatureSelection():
+    def __init__(self):
         self.data_num = 10
         self.feature_num = 3
         self.header = ['x' + str(i) for i in range(self.feature_num)]
@@ -63,7 +63,7 @@ class TestHeteroFeatureSelection(unittest.TestCase):
 
         return guest_componet_param
 
-    def test_feature_binning(self):
+    def test_feature_selection(self):
         selection_guest = HeteroFeatureSelectionGuest()
 
         guest_param = self._make_param_dict('fit')
@@ -76,7 +76,7 @@ class TestHeteroFeatureSelection(unittest.TestCase):
         for k, v in local_data:
             print("k: {}, v: {}".format(k, v.features))
 
-        guest_model = {self.model_name: selection_guest.save_model()}
+        guest_model = {self.model_name: selection_guest.export_model()}
 
         guest_args = {
             'data': {
@@ -105,7 +105,9 @@ class TestHeteroFeatureSelection(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    job_id = 'test_binning_1'
+    import sys
+    job_id = str(sys.argv[1])
+
     eggroll.init(job_id)
     federation.init(job_id,
                     {"local": {
@@ -121,4 +123,5 @@ if __name__ == '__main__':
                             ]
                         }
                     })
-    unittest.main()
+    selection_obj = TestHeteroFeatureSelection()
+    selection_obj.test_feature_selection()

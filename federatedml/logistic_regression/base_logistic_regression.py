@@ -299,9 +299,12 @@ class BaseLogisticRegression(ModelBase):
         return data_inst
 
     def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
         kflod_obj = KFold()
         cv_param = self._get_cv_param()
         kflod_obj.run(cv_param, data_instances, self)
+        return data_instances
 
     def _get_cv_param(self):
         self.model_param.cv_param.role = self.role
