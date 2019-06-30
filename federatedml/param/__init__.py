@@ -27,5 +27,5 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
-__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam", "ObjectiveParam",
+__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
            "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam']

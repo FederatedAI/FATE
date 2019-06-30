@@ -35,7 +35,6 @@ class ModelBase(object):
         param_extracter = ParamExtract()
         param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
         param.check()
-        # param.check()
         self._init_model(param)
         try:
             need_cv = param.cv_param.need_cv

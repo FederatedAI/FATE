@@ -18,26 +18,23 @@ import numpy as np
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroLRTransferVariable
+from federatedml.util.transfer_variable.hetero_lr_transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLRGuest(BaseLogisticRegression):
-    def __init__(self, logistic_params):
-        super(HeteroLRGuest, self).__init__(logistic_params)
+class HeteroLRGuest(HeteroLRBase):
+    def __init__(self):
+        super().__init__()
         self.transfer_variable = HeteroLRTransferVariable()
         self.data_batch_count = []
-
-        self.encrypted_calculator = None
-
+        self.wx = None
         self.guest_forward = None
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
@@ -46,22 +43,18 @@ class HeteroLRGuest(BaseLogisticRegression):
         and b is the interception
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         coef_: list, coefficient of lr
         intercept_: float, the interception of lr
         """
-        wx = self.compute_wx(data_instances, coef_, intercept_)
+        self.wx = self.compute_wx(data_instances, coef_, intercept_)
 
-        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
+        en_wx = self.encrypted_calculator[batch_index].encrypt(self.wx)
+        wx_square = self.wx.mapValues(lambda v: np.square(v))
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [wx, en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
-        rubbish_clear(rubbish_list)
+        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx: (e[0], e[1], wx))
 
     def aggregate_forward(self, host_forward):
         """
@@ -157,7 +150,7 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batch_data_generator
+            # each iter will get the same batach_data_generator
             batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
 
             batch_index = 0
@@ -268,16 +261,6 @@ class HeteroLRGuest(BaseLogisticRegression):
                 # is converge of loss in arbiter
                 batch_index += 1
 
-                # temporary resource recovery and will be removed in the future
-                rubbish_list = [host_forward,
-                                aggregate_forward_res,
-                                en_aggregate_wx,
-                                en_aggregate_wx_square,
-                                fore_gradient,
-                                self.guest_forward
-                                ]
-                rubbish_clear(rubbish_list)
-
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(
                                             self.transfer_variable.is_stopped, self.n_iter_, batch_index),
@@ -291,12 +274,12 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
-    def predict(self, data_instances, predict_param):
+    def predict(self, data_instances):
         """
         Prediction of lr
         Parameters
         ----------
-        data_instance:DTable of Instance, input data
+        data_instances:DTable of Instance, input data
         predict_param: PredictParam, the setting of prediction.
 
         Returns
@@ -317,12 +300,12 @@ class HeteroLRGuest(BaseLogisticRegression):
 
         # guest probability
         pred_prob = prob_guest.join(prob_host, lambda g, h: activation.sigmoid(g + h))
-        pred_label = self.classified(pred_prob, predict_param.threshold)
-        if predict_param.with_proba:
+        pred_label = self.classified(pred_prob, self.predict_param.threshold)
+        if self.predict_param.with_proba:
             labels = data_instances.mapValues(lambda v: v.label)
-            predict_result = labels.join(pred_prob, lambda label, prob: (label, prob))
+            predict_result = labels.join(pred_prob, lambda label, prob: [label, prob])
         else:
-            predict_result = data_instances.mapValues(lambda v: (v.label, None))
+            predict_result = data_instances.mapValues(lambda v: [v.label, None])
 
-        predict_result = predict_result.join(pred_label, lambda r, p: (r[0], r[1], p))
+        predict_result = predict_result.join(pred_label, lambda r, p: [r[0], r[1], p])
         return predict_result

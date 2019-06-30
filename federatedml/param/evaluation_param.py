@@ -33,22 +33,19 @@ class EvaluateParam(BaseParam):
             'mean_absolute_error', 'mean_squared_error', 'mean_squared_log_error','median_absolute_error','r2_score','root_mean_squared_error'.
             For example, metrics can be set as ['auc', 'precision', 'recall'], then the results of these indexes will be output.
 
-    classi_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
+    eval_type: string, support 'binary' for HomoLR, HeteroLR and Secureboosting. support 'regression' for Secureboosting. 'multi' is not support these version
 
     pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
 
     thresholds: A list of threshold. Specify the threshold use to separate positive and negative class. for example [0.1, 0.3,0.5], this parameter effective only for 'binary'
     """
 
-    def __init__(self, metrics=None, classi_type="binary", pos_label=1, thresholds=None):
+    def __init__(self, metrics=None, eval_type="binary", pos_label=1, thresholds=None):
         if metrics is None:
             metrics = []
         self.metrics = metrics
-        self.classi_type = classi_type
+        self.eval_type = eval_type
         self.pos_label = pos_label
-        if thresholds is None:
-            thresholds = [0.5]
-
         self.thresholds = thresholds
 
     def check(self):
@@ -65,11 +62,13 @@ class EvaluateParam(BaseParam):
                                                                  consts.MEAN_SQUARED_ERROR,
                                                                  consts.MEAN_SQUARED_LOG_ERROR,
                                                                  consts.MEDIAN_ABSOLUTE_ERROR,
-                                                                 consts.R2_SCORE, consts.ROOT_MEAN_SQUARED_ERROR],
+                                                                 consts.R2_SCORE, consts.ROOT_MEAN_SQUARED_ERROR,
+                                                                 consts.ROC,
+                                                                 consts.GAIN],
                                                                 descr)
         descr = "evaluate param's "
 
-        self.classi_type = self.check_and_change_lower(self.classi_type,
+        self.eval_type = self.check_and_change_lower(self.eval_type,
                                                        [consts.BINARY, consts.MULTY, consts.REGRESSION],
                                                        descr)
 
@@ -78,15 +77,16 @@ class EvaluateParam(BaseParam):
                 "evaluate param's pos_label {} not supported, should be str or float or int type".format(
                     self.pos_label))
 
-        if type(self.thresholds).__name__ != "list":
-            raise ValueError(
-                "evaluate param's thresholds {} not supported, should be list".format(self.thresholds))
-        else:
-            for threshold in self.thresholds:
-                if type(threshold).__name__ not in ["float", "int"]:
-                    raise ValueError(
-                        "threshold {} in evaluate param's thresholds not supported, should be positive integer".format(
-                            threshold))
+        if self.thresholds is not None:
+            if type(self.thresholds).__name__ != "list":
+                raise ValueError(
+                    "evaluate param's thresholds {} not supported, should be list".format(self.thresholds))
+            else:
+                for threshold in self.thresholds:
+                    if type(threshold).__name__ not in ["float", "int"]:
+                        raise ValueError(
+                            "threshold {} in evaluate param's thresholds not supported, should be positive integer".format(
+                                threshold))
 
         LOGGER.debug("Finish evaluation parameter check!")
         return True

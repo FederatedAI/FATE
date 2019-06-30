@@ -18,20 +18,18 @@ import numpy as np
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroLRTransferVariable
+from federatedml.util.transfer_variable.hetero_lr_transfer_variable import HeteroLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLRHost(BaseLogisticRegression):
-    def __init__(self, logistic_params):
-        # LogisticParamChecker.check_param(logistic_params)
-        super(HeteroLRHost, self).__init__(logistic_params)
+class HeteroLRHost(HeteroLRBase):
+    def __init__(self):
+        super(HeteroLRHost, self).__init__()
         self.transfer_variable = HeteroLRTransferVariable()
         self.batch_num = None
         self.batch_index_list = []
@@ -42,24 +40,17 @@ class HeteroLRHost(BaseLogisticRegression):
         and b is the interception
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         coef_: list, coefficient of lr
         intercept_: float, the interception of lr
         """
         wx = self.compute_wx(data_instances, coef_, intercept_)
+
         en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
         wx_square = wx.mapValues(lambda v: np.square(v))
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [wx,
-                        en_wx,
-                        wx_square,
-                        en_wx_square
-                        ]
-        rubbish_clear(rubbish_list)
 
         return host_forward
 
@@ -201,13 +192,11 @@ class HeteroLRHost(BaseLogisticRegression):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
-                batch_index += 1
+                # is converge
 
-                # temporary resource recovery and will be removed in the future
-                rubbish_list = [host_forward,
-                                fore_gradient
-                                ]
-                rubbish_clear(rubbish_list)
+                batch_index += 1
+                # if is_stopped:
+                #    break
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(
@@ -222,13 +211,12 @@ class HeteroLRHost(BaseLogisticRegression):
 
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
-    def predict(self, data_instances, predict_param=None):
+    def predict(self, data_instances):
         """
         Prediction of lr
         Parameters
         ----------
-        data_instance:DTable of Instance, input data
-        predict_param: PredictParam, the setting of prediction. Host may not have predict_param
+        data_instances:DTable of Instance, input data
         """
         LOGGER.info("Start predict ...")
 

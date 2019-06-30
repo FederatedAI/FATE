@@ -14,15 +14,16 @@
 #  limitations under the License.
 #
 
+from google.protobuf import json_format
 import numpy as np
 
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.manager.tracking import Tracking
-from federatedml.evaluation import Evaluation
+# from federatedml.evaluation import Evaluation
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
-from federatedml.optim import DiffConverge, AbsConverge
+from federatedml.optim import DiffConverge, AbsConverge, Optimizer
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
@@ -93,6 +94,7 @@ class BaseLogisticRegression(ModelBase):
             self.converge_func = AbsConverge(eps=self.eps)
         self.re_encrypt_batches = params.re_encrypt_batches
         self.predict_param = params.predict_param
+        self.optimizer = Optimizer(params.learning_rate, params.optimizer)
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -159,19 +161,6 @@ class BaseLogisticRegression(ModelBase):
     def fit(self, data_instance):
         pass
 
-    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
-        predict_res = None
-        if evaluate_param.classi_type == consts.BINARY:
-            predict_res = pred_prob
-        elif evaluate_param.classi_type == consts.MULTY:
-            predict_res = pred_labels
-        else:
-            LOGGER.warning("unknown classification type, return None as evaluation results")
-
-        eva = Evaluation(evaluate_param.classi_type)
-        return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
-                          evaluate_param.pos_label)
-
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
                                                           eps=self.eps,
@@ -198,7 +187,6 @@ class BaseLogisticRegression(ModelBase):
                                                              weight=weight_dict,
                                                              intercept=self.intercept_,
                                                              header=header)
-        from google.protobuf import json_format
         json_result = json_format.MessageToJson(param_protobuf_obj)
         LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
@@ -210,7 +198,7 @@ class BaseLogisticRegression(ModelBase):
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
         }
-        self.model_output = result
+        # self.model_output = result
         return result
 
     def _load_model(self, model_dict):
