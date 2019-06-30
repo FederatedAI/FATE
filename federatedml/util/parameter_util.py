@@ -17,14 +17,11 @@
 import json
 import os
 import copy
-from arch.api.utils.log_utils import getLogger
-
-LOGGER = getLogger()
 
 
 class ParameterOverride(object):
     @staticmethod
-    def override_parameter(default_runtime_conf_prefix, setting_conf_prefix, submit_conf, module=None,
+    def override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_conf=None, module=None,
                            module_alias=None):
 
         default_runtime_dict = None
@@ -74,16 +71,18 @@ class ParameterOverride(object):
                         runtime_json[key] = value
 
                 if "algorithm_parameters" in submit_dict:
-                    if module_alias in submit_dict:
+                    if module_alias in submit_dict["algorithm_parameters"]:
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
-                        runtime_json = ParameterOverride.merge_common_parameters(runtime_json, common_parameters)
-
+                        merge_json = ParameterOverride.merge_common_parameters(runtime_json[module + "Param"], common_parameters)
+                        runtime_json = {module + "Param": merge_json}
+                
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
                     if module_alias in role_dict:
                         role_parameters = role_dict.get(module_alias)
-                        runtime_json = ParameterOverride.merge_role_parameters(runtime_json, role_parameters, idx)
-
+                        merge_json = ParameterOverride.merge_role_parameters(runtime_json[module + "Param"], role_parameters, idx)
+                        runtime_json = {module + "Param": merge_json}
+                
                 runtime_json['local'] = submit_dict.get('local', {})
                 my_local = {
                     "role": role, "party_id": partyid_list[idx]
@@ -93,7 +92,7 @@ class ParameterOverride(object):
                 runtime_json['module'] = module
 
                 runtime_role_parameters[role].append(runtime_json)
-
+        
         return runtime_role_parameters
 
     @staticmethod
@@ -111,7 +110,7 @@ class ParameterOverride(object):
     @staticmethod
     def merge_role_parameters(runtime_json, role_parameters, idx):
         for key, val_list in role_parameters.items():
-            if len(val_list) > idx:
+            if len(val_list) < idx:
                 continue
 
             val = val_list[idx]
@@ -123,3 +122,44 @@ class ParameterOverride(object):
                 runtime_json[key] = val
 
         return runtime_json
+
+    @staticmethod
+    def get_args_input(submit_conf, module="args"):
+        submit_dict = None
+        with open(submit_conf, "r") as fin:
+            submit_dict = json.loads(fin.read())
+
+        if "role_parameters" not in submit_dict:
+            return {}
+
+        roles = submit_dict["role_parameters"].keys()
+        if not roles:
+            return {}
+
+        args_input = {}
+
+        for role in roles:
+            if not submit_dict["role_parameters"][role].get(module):
+                continue
+
+            args_parameters = submit_dict["role_parameters"][role].get(module)
+            args_input[role] = []
+  
+            if "data" in args_parameters:
+                dataset = args_parameters.get("data")
+                for data_key in dataset:
+                    datalist = dataset[data_key]
+                    for i in range(len(datalist)):
+                        value = datalist[i];
+                        if len(args_input[role]) <= i:
+                            args_input[role].append({module: 
+                                                      {"data": 
+                                                        {}
+                                                      }
+                                                    })
+
+                        args_input[role][i][module]["data"][data_key] = value
+
+        return args_input
+
+                        
