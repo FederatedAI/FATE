@@ -29,13 +29,13 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 #from federatedml.feature.quantile import Quantile
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.param.param_feature_binning import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import ClassifyLabelChecker
 from federatedml.util import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim import DiffConverge
 from federatedml.tree import BoostingTree
-from federatedml.util import HeteroSecureBoostingTreeTransferVariable
+from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from numpy import random
 from federatedml.secureprotol import PaillierEncrypt
