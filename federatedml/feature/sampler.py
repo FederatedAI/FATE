@@ -21,7 +21,7 @@ from fate_flow.manager.tracking import Tracking
 from fate_flow.entity.metric import Metric
 from federatedml.param.sample_param import SampleParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable import SampleTransferVariable
+from federatedml.util.transfer_variable.sample_transfer_variable import SampleTransferVariable
 from federatedml.model_base import ModelBase
 
 
