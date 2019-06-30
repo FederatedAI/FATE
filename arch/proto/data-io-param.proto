@@ -1,5 +1,18 @@
 syntax = "proto3";
-   
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "DataIOParamProto";
+
+message ImputerParam{
+    map<string, string> missing_replace_value = 1;
+}
+
+message OutlierParam{
+    map<string, string> outlier_replace_value = 1;
+}
+
 message DataIOParam {
     repeated string header = 1;
+    ImputerParam imputer_param = 2;
+    OutlierParam outlier_param = 3;
 }
