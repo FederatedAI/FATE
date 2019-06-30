@@ -20,31 +20,41 @@ import random
 import string
 import unittest
 
-from federatedml.util import DenseFeatureReader
-from federatedml.util import SparseFeatureReader
-from federatedml.util import SparseTagReader
-from federatedml.param import DataIOParam
+
+from federatedml.util.data_io import DataIO
+from federatedml.param.dataio_param import DataIOParam
 from arch.api import eggroll
-from arch.api import federation
-from arch.api import storage
 from federatedml.util import consts
 
 
 class TestDenseFeatureReader(unittest.TestCase):
     def setUp(self):
-        self.table = "dataio_dense_table_test"
-        self.namespace = "dataio_test"
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
-        save_data(data1, self.table, self.namespace)        
+        self.table1 = eggroll.parallelize(data1, include_key=True)
 
-        self.table2 = "dataio_dense_table_test2"
         data2 = [("a", '-1,,NA,NULL,null,2')]
-        save_data(data2, self.table2, self.namespace)        
+        self.table2 = eggroll.parallelize(data2, include_key=True)
+        self.args1 = {"data": 
+                       {"data_io_0": {
+                         "data": self.table1
+                         }
+                       }
+                     }
+        self.args2 = {"data": 
+                       {"data_io_1": {
+                         "data": self.table2
+                         }
+                       }
+                     }
 
     def test_dense_output_format(self):
-        dataio_param = DataIOParam()
-        reader = DenseFeatureReader(dataio_param)
-        data = reader.read_data(self.table, self.namespace).collect()
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"input_format": "dense"
+                             }
+                           }
+        reader.run(component_params, self.args1)
+        data = reader.save_data().collect()
         result = dict(data)
         self.assertTrue(type(result['a']).__name__ == "Instance")
         self.assertTrue(type(result['b']).__name__ == "Instance")
@@ -59,10 +69,14 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.assertTrue(features.dtype == "float64")
 
     def test_sparse_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.output_format = "sparse"
-        reader = DenseFeatureReader(dataio_param)
-        data = reader.read_data(self.table, self.namespace).collect()
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "dense"
+                             }
+                           }
+        reader.run(component_params, self.args1)
+        data = reader.save_data().collect()
         result = dict(data)
         vala = result['a']
         features = vala.features
@@ -71,26 +85,35 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.assertTrue(features.shape == 6)
 
     def test_missing_value_fill(self):
-        dataio_param = DataIOParam()
-        dataio_param.missing_fill = True
-        dataio_param.with_label = False
-        dataio_param.output_format = "sparse"
-        dataio_param.default_value = 100
-        dataio_param.missing_fill_method = "designated"
-        dataio_param.data_type = 'int'
-        reader = DenseFeatureReader(dataio_param)
-        data = reader.read_data(self.table2, self.namespace).collect()
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "dense",
+                              "default_value": 100,
+                              "with_label": False,
+                              "missing_fill": True,
+                              "missing_fill_method": "designated",
+                              "data_type": "int"
+                             }
+                           }
+        reader.run(component_params, self.args2)
+        data = reader.save_data().collect()
         result = dict(data)
         features = result['a'].features
         for i in range(1, 5):
             self.assertTrue(features.get_data(i) == 100)
 
     def test_with_label(self):
-        dataio_param = DataIOParam()
-        dataio_param.with_label = True
-        dataio_param.label_idx = 2
-        reader = DenseFeatureReader(dataio_param)
-        data = reader.read_data(self.table, self.namespace).collect()
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "dense",
+                              "input_format": "dense",
+                              "with_label": True,
+                              "label_idx": 2
+                             }
+                           }
+        reader.run(component_params, self.args1)
+        data = reader.save_data().collect()
         result = dict(data)
         vala = result['a']
         label = vala.label
@@ -101,8 +124,6 @@ class TestDenseFeatureReader(unittest.TestCase):
 
 class TestSparseFeatureReader(unittest.TestCase):
     def setUp(self):
-        self.table = "dataio_sparse_table_test"
-        self.namespace = "dataio_test"
         self.data = []
         self.max_feature = -1
         for i in range(100):
@@ -122,17 +143,25 @@ class TestSparseFeatureReader(unittest.TestCase):
              
             self.data.append((i, " ".join(row)))
 
-        save_data(self.data, self.table, self.namespace)        
-
+        self.table = eggroll.parallelize(self.data, include_key=True)
+        self.args = {"data": 
+                      {"data_io_0": {
+                        "data": self.table
+                        }
+                      }
+                    }
     
     def test_sparse_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "sparse"
-        dataio_param.delimitor = ' '
-        dataio_param.default_value = 2**30
-        dataio_param.output_format = "sparse"
-        reader = SparseFeatureReader(dataio_param)
-        insts = list(reader.read_data(self.table, self.namespace).collect()) 
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "sparse",
+                              "delimitor": ' ',
+                              "defualt_value": 2**30
+                             }
+                           }
+        reader.run(component_params, self.args)
+        data = reader.save_data().collect()
         for i in range(100):
             self.assertTrue(insts[i][1].features.get_shape() == self.max_feature + 1)
             self.assertTrue(insts[i][1].label == i % 2)
@@ -145,12 +174,15 @@ class TestSparseFeatureReader(unittest.TestCase):
             self.assertTrue(original_feat == insts[i][1].features.sparse_vec)
 
     def test_dense_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "sparse"
-        dataio_param.delimitor = ' '
-        dataio_param.output_format = "dense"
-        reader = SparseFeatureReader(dataio_param)
-        insts = list(reader.read_data(self.table, self.namespace).collect()) 
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "dense",
+                              "input_format": "sparse",
+                              "delimitor": ' '
+                             }
+                           }
+        reader.run(component_params, self.args)
+        insts = list(reader.save_data().collect()) 
         for i in range(100):
             features = insts[i][1].features
             self.assertTrue(type(features).__name__ == "ndarray")
@@ -163,17 +195,20 @@ class TestSparseFeatureReader(unittest.TestCase):
                 fid, val = row[j].split(":", -1)
                 ori_feat[int(fid)] = float(val)
             
-            ori_feat = np.asarray(ori_feat, dtype=dataio_param.data_type)
+            ori_feat = np.asarray(ori_feat, dtype="float64")
     
             self.assertTrue(np.abs(ori_feat - features).any() < consts.FLOAT_ZERO)
 
-    def test_dense_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "sparse"
-        dataio_param.delimitor = ' '
-        dataio_param.output_format = "sparse"
-        reader = SparseFeatureReader(dataio_param)
-        insts = list(reader.read_data(self.table, self.namespace).collect()) 
+    def test_sparse_output_format(self):
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "sparse",
+                              "delimitor": ' '
+                             }
+                           }
+        reader.run(component_params, self.args)
+        insts = list(reader.save_data().collect())
         for i in range(100):
             features = insts[i][1].features
             self.assertTrue(type(features).__name__ == "SparseVector")
@@ -189,11 +224,6 @@ class TestSparseFeatureReader(unittest.TestCase):
 
 class TestSparseTagReader(unittest.TestCase):
     def setUp(self):
-        self.table = "dataio_sparse_tag_test"
-        self.namespace = "dataio_test"
-       
-        self.table2 = "dataio_sparse_tag_value_test"
-        
         self.data = []
         self.data_with_value = []
         for i in range(100):
@@ -209,18 +239,34 @@ class TestSparseTagReader(unittest.TestCase):
             self.data.append((i, ' '.join(row)))
             self.data_with_value.append((i, ' '.join(row_with_value)))
 
-        save_data(self.data, self.table, self.namespace)       
-        save_data(self.data_with_value, self.table2, self.namespace)
+        self.table1 = eggroll.parallelize(self.data, include_key=True)
+        self.table2 = eggroll.parallelize(self.data_with_value, include_key=True)
+        self.args1 = {"data": 
+                       {"data_io_0": {
+                         "data": self.table1
+                         }
+                       }
+                     }
+        self.args2 = {"data": 
+                       {"data_io_1": {
+                         "data": self.table2
+                         }
+                       }
+                     }
 
     def test_tag_sparse_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "tag"
-        dataio_param.data_type = "int"
-        dataio_param.delimitor = ' '
-        dataio_param.with_label = False
-        dataio_param.output_format = "sparse"
-        reader = SparseTagReader(dataio_param)
-        tag_insts = reader.read_data(self.table, self.namespace)
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "tag",
+                              "delimitor": ' ',
+                              "data_type": "int",
+                              "with_label": False,
+                              "tag_with_value": False
+                             }
+                           }
+        reader.run(component_params, self.args1)
+        tag_insts = reader.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
         tags = set()
@@ -238,16 +284,19 @@ class TestSparseTagReader(unittest.TestCase):
             self.assertTrue(ori_feature == features[i].sparse_vec)
 
     def test_tag_with_value_sparse_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "tag"
-        dataio_param.data_type = "float"
-        dataio_param.tag_with_value = True
-        dataio_param.tag_value_delimitor = ":"
-        dataio_param.delimitor = ' '
-        dataio_param.with_label = False
-        dataio_param.output_format = "sparse"
-        reader = SparseTagReader(dataio_param)
-        tag_insts = reader.read_data(self.table2, self.namespace)
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "sparse",
+                              "input_format": "tag",
+                              "delimitor": ' ',
+                              "data_type": "float",
+                              "with_label": False,
+                              "tag_with_value": True,
+                              "tag_value_delimitor": ":"
+                             }
+                           }
+        reader.run(component_params, self.args2)
+        tag_insts = reader.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
         tags = set()
@@ -270,14 +319,17 @@ class TestSparseTagReader(unittest.TestCase):
                 self.assertTrue(np.abs(val - features[i].get_data(idx)) < consts.FLOAT_ZERO) 
     
     def test_tag_dense_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "tag"
-        dataio_param.data_type = 'int'
-        dataio_param.delimitor = ' '
-        dataio_param.with_label = False
-        dataio_param.output_format = "dense"
-        reader = SparseTagReader(dataio_param)
-        tag_insts = reader.read_data(self.table, self.namespace)
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "dense",
+                              "input_format": "tag",
+                              "delimitor": ' ',
+                              "data_type": "int",
+                              "with_label": False
+                             }
+                           }
+        reader.run(component_params, self.args1)
+        tag_insts = reader.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
         tags = set()
@@ -297,14 +349,18 @@ class TestSparseTagReader(unittest.TestCase):
             self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
 
     def test_tag_with_value_dense_output_format(self):
-        dataio_param = DataIOParam()
-        dataio_param.input_format = "tag"
-        dataio_param.data_type = 'float'
-        dataio_param.delimitor = ' '
-        dataio_param.with_label = False
-        dataio_param.output_format = "dense"
-        reader = SparseTagReader(dataio_param)
-        tag_insts = reader.read_data(self.table2, self.namespace)
+        reader = DataIO()
+        component_params = {"DataIOParam": 
+                             {"output_format": "dense",
+                              "input_format": "tag",
+                              "delimitor": ' ',
+                              "data_type": "float",
+                              "with_label": False,
+                              "tag_with_value": True
+                             }
+                           }
+        reader.run(component_params, self.args2)
+        tag_insts = reader.save_data()
         features = [inst.features for key, inst in tag_insts.collect()]
 
         tags = set()
@@ -330,24 +386,6 @@ class TestSparseTagReader(unittest.TestCase):
             self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
 
 
-def save_data(input_data, table_name, namespace):
-    storage.save_data(input_data, table_name, namespace)
-   
-
 if __name__ == '__main__':
     eggroll.init("test_dataio" + str(int(time.time())))
-    federation.init("test_dataio", 
-                    {"local": {
-                       "role": "guest",
-                       "party_id": 9999
-                    },
-                     "role": {
-                       "host": [
-                           10000
-                       ],
-                       "guest": [
-                           9999
-                       ]
-                     }
-                    })
     unittest.main()

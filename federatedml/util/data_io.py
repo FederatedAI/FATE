@@ -24,19 +24,21 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
+from fate_flow.manager.tracking import Tracking 
+from fate_flow.entity.metric import Metric
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.util import consts
-from federatedml.util.param_checker import DataIOParamChecker
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
+from federatedml.model_base import ModelBase
 from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
-from arch.api.proto.feature_imputer_meta_pb2 import ImputerMeta
-from arch.api.proto.feature_imputer_param_pb2 import ImputerParam
-from arch.api.proto.feature_outlier_meta_pb2 import OutlierMeta
-from arch.api.proto.feature_outlier_param_pb2 import OutlierParam
+from arch.api.proto.data_io_meta_pb2 import ImputerMeta
+from arch.api.proto.data_io_param_pb2 import ImputerParam
+from arch.api.proto.data_io_meta_pb2 import OutlierMeta
+from arch.api.proto.data_io_param_pb2 import OutlierParam
 from arch.api import storage
 
 LOGGER = log_utils.getLogger()
@@ -47,7 +49,6 @@ LOGGER = log_utils.getLogger()
 # =============================================================================
 class DenseFeatureReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.missing_fill = data_io_param.missing_fill
@@ -64,8 +65,9 @@ class DenseFeatureReader(object):
         self.output_format = data_io_param.output_format
         self.header = None
 
-    def generate_header(self, input_data_feature, table_name, namespace):
-        self.header = storage.get_data_table_meta("header", table_name, namespace)
+    def generate_header(self, input_data, input_data_feature):
+        # self.header = storage.get_data_table_meta(input_data)
+        self.header = None
 
         if not self.header:
             feature_shape = data_overview.get_data_shape(input_data_feature)
@@ -77,12 +79,13 @@ class DenseFeatureReader(object):
             else:
                 self.header = self.header.split(self.delimitor, -1)
 
-    def read_data(self, table_name, namespace, mode="fit"):
-        input_data = storage.get_data_table(table_name, namespace)
+        set_schema(input_data_feature, self.header)
+
+    def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read dense data and change data to instance")
-        
+
         abnormal_detection.empty_table_detection(input_data)
-        
+
         input_data_features = None
         input_data_labels = None
 
@@ -95,15 +98,17 @@ class DenseFeatureReader(object):
                 raise ValueError("input data's value is empty, it does not contain a label")
 
             input_data_features = input_data.mapValues(
-                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(self.delimitor, -1)[
-                                                                                 self.label_idx + 1:])
+                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(
+                    self.delimitor, -1)[
+                                                                                                            self.label_idx + 1:])
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
         else:
-            input_data_features = input_data.mapValues(lambda value: [] if not value else value.split(self.delimitor, -1))
+            input_data_features = input_data.mapValues(
+                lambda value: [] if not value else value.split(self.delimitor, -1))
 
         if mode == "fit":
-            data_instance = self.fit(input_data_features, input_data_labels, table_name, namespace)
+            data_instance = self.fit(input_data, input_data_features, input_data_labels)
         else:
             data_instance = self.transform(input_data_features, input_data_labels)
 
@@ -111,17 +116,17 @@ class DenseFeatureReader(object):
 
         return data_instance
 
-    def fit(self, input_data_features, input_data_labels, table_name, namespace):
+    def fit(self, input_data, input_data_features, input_data_labels):
+        self.generate_header(input_data, input_data_features)
         input_data_features = self.fill_missing_value(input_data_features, "fit")
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
-
-        self.generate_header(input_data_features, table_name, namespace)
 
         data_instance = self.gen_data_instance(input_data_features, input_data_labels)
 
         return data_instance
 
     def transform(self, input_data_features, input_data_labels):
+        set_schema(input_data_features, self.header)
         input_data_features = self.fill_missing_value(input_data_features, "transform")
         input_data_features = self.replace_outlier_value(input_data_features, "transform")
 
@@ -146,6 +151,13 @@ class DenseFeatureReader(object):
             if self.missing_impute is None:
                 self.missing_impute = imputer_processor.get_imputer_value_list()
 
+            missing_impute_rate = imputer_processor.get_impute_rate(mode)
+            callback("missing_value_ratio",
+                     missing_impute_rate)
+
+            callback("missing_value_list",
+                     self.missing_impute)
+
         return input_data_features
 
     def replace_outlier_value(self, input_data_features, mode="fit"):
@@ -164,6 +176,13 @@ class DenseFeatureReader(object):
                 input_data_features = imputer_processor.transform(input_data_features,
                                                                   replace_method=self.outlier_replace_method,
                                                                   transform_value=self.outlier_replace_value)
+
+            outlier_replace_rate = imputer_processor.get_impute_rate(mode)
+            callback("outlier_value_ratio",
+                     outlier_replace_rate)
+
+            callback("outlier_value_list",
+                     self.outlier_impute)
 
         return input_data_features
 
@@ -234,69 +253,60 @@ class DenseFeatureReader(object):
 
         return SparseVector(indices, data, column_shape)
 
-    def save_model(self, model_table, model_namespace):
-        model_types = []
+    def save_model(self):
 
-        if model_table is None or model_namespace is None:
-            LOGGER.info("data io model-meta can't save, it will not reuse in transform stage")
-            return []
+        dataio_meta, dataio_param = save_data_io_model(input_format="dense",
+                                                       delimitor=self.delimitor,
+                                                       data_type=self.data_type,
+                                                       with_label=self.with_label,
+                                                       label_idx=self.label_idx,
+                                                       label_type=self.label_type,
+                                                       output_format=self.output_format,
+                                                       header=self.header,
+                                                       model_name="DenseFeatureReader")
 
-        save_data_io_model(input_format="dense",
-                           delimitor=self.delimitor,
-                           data_type=self.data_type,
-                           with_label=self.with_label,
-                           label_idx=self.label_idx,
-                           label_type=self.label_type,
-                           output_format=self.output_format,
-                           header=self.header,
-                           model_name="DenseFeatureReader",
-                           model_table=model_table,
-                           model_namespace=model_namespace)
-        model_types.append(("DenseFeatureReader.meta", "DenseFeatureReader.param"))
 
-        save_missing_imputer_model(self.missing_fill,
-                                   self.missing_fill_method,
-                                   self.missing_impute,
-                                   self.default_value,
-                                   self.header,
-                                   "Imputer",
-                                   model_table,
-                                   model_namespace)
-        model_types.append(("Imputer.meta", "Imputer.param"))
+        missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(self.missing_fill,
+                                                                                 self.missing_fill_method,
+                                                                                 self.missing_impute,
+                                                                                 self.default_value,
+                                                                                 self.header,
+                                                                                 "Imputer")
 
-        save_outlier_model(self.outlier_replace,
-                           self.outlier_replace_method,
-                           self.outlier_impute,
-                           self.outlier_replace_value,
-                           self.header,
-                           "Outlier",
-                           model_table,
-                           model_namespace)
-        model_types.append(("Outlier.meta", "Outlier.param"))
+        dataio_meta.imputer_meta.CopyFrom(missing_imputer_meta)
+        dataio_param.imputer_param.CopyFrom(missing_imputer_param)
 
-        return model_types
+        outlier_meta, outlier_param = save_outlier_model(self.outlier_replace,
+                                                         self.outlier_replace_method,
+                                                         self.outlier_impute,
+                                                         self.outlier_replace_value,
+                                                         self.header,
+                                                         "Outlier")
 
-    def load_model(self, model_table, model_namespace):
-        if model_table is None or model_namespace is None:
-            LOGGER.info("data io model-meta can't reuse, model table name or namespace is null")
-            return
-        
+        dataio_meta.outlier_meta.CopyFrom(outlier_meta)
+        dataio_param.outlier_param.CopyFrom(outlier_param)
+
+        return {"DataIOMeta": dataio_meta,
+                "DataIOParam": dataio_param
+                }
+
+    def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _1, _2, self.with_label, \
         self.label_idx, self.label_type, self.output_format, self.header = load_data_io_model("DenseFeatureReader",
-                                                                                              model_table,
-                                                                                              model_namespace)
+                                                                                              model_meta,
+                                                                                              model_param)
 
         self.missing_fill, self.missing_fill_method, \
         self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
                                                                              "Imputer",
-                                                                             model_table,
-                                                                             model_namespace)
+                                                                             model_meta.imputer_meta,
+                                                                             model_param.imputer_param)
 
         self.outlier_replace, self.outlier_replace_method, \
         self.outlier_impute, self.outlier_replace_value = load_outlier_model(self.header,
                                                                              "Outlier",
-                                                                             model_table,
-                                                                             model_namespace)
+                                                                             model_meta.outlier_meta,
+                                                                             model_param.outlier_param)
 
 
 # =============================================================================
@@ -304,7 +314,6 @@ class DenseFeatureReader(object):
 # =============================================================================
 class SparseFeatureReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.label_type = data_io_param.label_type
@@ -324,15 +333,14 @@ class SparseFeatureReader(object):
     def generate_header(self, max_feature):
         self.header = [str(i) for i in range(max_feature + 1)]
 
-    def read_data(self, table_name, namespace, mode="fit"):
-        input_data = storage.get_data_table(table_name, namespace)
+    def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read sparse data and change data to instance")
 
         abnormal_detection.empty_table_detection(input_data)
-        
+
         if not data_overview.get_data_shape(input_data):
             raise ValueError("input data's value is empty, it does not contain a label")
-        
+
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -420,39 +428,36 @@ class SparseFeatureReader(object):
                         features=features,
                         label=label)
 
-    def save_model(self, model_table, model_namespace):
-        model_types = []
+    def save_model(self):
 
-        save_data_io_model(input_format="sparse",
-                           delimitor=self.delimitor,
-                           data_type=self.data_type,
-                           label_type=self.label_type,
-                           output_format=self.output_format,
-                           header=self.header,
-                           model_name="SparseFeatureReader",
-                           model_table=model_table,
-                           model_namespace=model_namespace)
-        model_types.append(("SparseFeatureReader.meta", "SparseFeatureReader.param"))
+        dataio_meta, dataio_param = save_data_io_model(input_format="sparse",
+                                                       delimitor=self.delimitor,
+                                                       data_type=self.data_type,
+                                                       label_type=self.label_type,
+                                                       output_format=self.output_format,
+                                                       header=self.header,
+                                                       model_name="SparseFeatureReader")
 
-        save_missing_imputer_model(missing_fill=False,
-                                   model_name="Imputer",
-                                   model_table=model_table,
-                                   model_namespace=model_namespace)
-        model_types.append(("Imputer.meta", "Imputer.param"))
+        missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(missing_fill=False,
+                                                                                 model_name="Imputer")
+        dataio_meta.imputer_meta.CopyFrom(missing_imputer_meta)
+        dataio_param.imputer_param.CopyFrom(missing_imputer_param)
 
-        save_outlier_model(outlier_replace=False,
-                           model_name="Outlier",
-                           model_table=model_table,
-                           model_namespace=model_namespace)
-        model_types.append(("Outlier.meta", "Outlier.param"))
+        outlier_meta, outlier_param = save_outlier_model(outlier_replace=False,
+                                                         model_name="Outlier")
 
-        return model_types
+        dataio_meta.outlier_meta.CopyFrom(outlier_meta)
+        dataio_param.outlier_param.CopyFrom(outlier_param)
 
-    def load_model(self, model_table, model_namespace):
+        return {"DataIOMeta": dataio_meta,
+                "DataIOParam": dataio_param
+                }
+
+    def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _1, _2, _3, _4, \
         self.label_type, self.output_format, self.header = load_data_io_model("SparseFeatureReader",
-                                                                                  model_table,
-                                                                                  model_namespace)
+                                                                              model_meta,
+                                                                              model_param)
 
 
 # =============================================================================
@@ -460,7 +465,6 @@ class SparseFeatureReader(object):
 # =============================================================================
 class SparseTagReader(object):
     def __init__(self, data_io_param):
-        DataIOParamChecker.check_param(data_io_param)
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
         self.tag_with_value = data_io_param.tag_with_value
@@ -475,7 +479,7 @@ class SparseTagReader(object):
         tags_set = set()
         for key, value in kvs:
             if with_label:
-                cols = value.split(delimitor, -1)[1 : ]
+                cols = value.split(delimitor, -1)[1:]
             else:
                 cols = value.split(delimitor, -1)[0:]
 
@@ -491,12 +495,11 @@ class SparseTagReader(object):
     def generate_header(self, tags):
         self.header = tags
 
-    def read_data(self, table_name, namespace, mode="fit"):
-        input_data = storage.get_data_table(table_name, namespace)
+    def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read sparse data and change data to instance")
 
         abnormal_detection.empty_table_detection(input_data)
-        
+
         if mode == "fit":
             data_instance = self.fit(input_data)
         else:
@@ -506,10 +509,10 @@ class SparseTagReader(object):
         return data_instance
 
     def fit(self, input_data):
-        tag_aggregator = functools.partial(SparseTagReader.agg_tag, 
+        tag_aggregator = functools.partial(SparseTagReader.agg_tag,
                                            delimitor=self.delimitor,
                                            with_label=self.with_label,
-                                           tag_with_value=self.tag_with_value, 
+                                           tag_with_value=self.tag_with_value,
                                            tag_value_delimitor=self.tag_value_delimitor)
         tags_set_list = list(input_data.mapPartitions(tag_aggregator).collect())
         tags_set = set()
@@ -607,43 +610,100 @@ class SparseTagReader(object):
                         features=features,
                         label=label)
 
-    def save_model(self, model_table, model_namespace):
-        model_types = []
+    def save_model(self):
+        dataio_meta, dataio_param = save_data_io_model(input_format="tag",
+                                                       delimitor=self.delimitor,
+                                                       data_type=self.data_type,
+                                                       tag_with_value=self.tag_with_value,
+                                                       tag_value_delimitor=self.tag_value_delimitor,
+                                                       with_label=self.with_label,
+                                                       label_type=self.label_type,
+                                                       output_format=self.output_format,
+                                                       header=self.header,
+                                                       model_name="Reader")
 
-        save_data_io_model(input_format="tag",
-                           delimitor=self.delimitor,
-                           data_type=self.data_type,
-                           tag_with_value=self.tag_with_value,
-                           tag_value_delimitor=self.tag_value_delimitor,
-                           with_label=self.with_label,
-                           label_type=self.label_type,
-                           output_format=self.output_format,
-                           header=self.header,
-                           model_name="SparseTagReader",
-                           model_table=model_table,
-                           model_namespace=model_namespace)
-        model_types.append(("SparseTagReader.meta", "SparseTagReader.param"))
+        missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(missing_fill=False,
+                                                                                 model_name="Imputer")
 
-        save_missing_imputer_model(missing_fill=False,
-                                   model_name="Imputer",
-                                   model_table=model_table,
-                                   model_namespace=model_namespace)
-        model_types.append(("Imputer.meta", "Imputer.param"))
+        dataio_meta.imputer_meta.CopyFrom(missing_imputer_meta)
+        dataio_param.imputer_param.CopyFrom(missing_imputer_param)
 
-        save_outlier_model(outlier_replace=False,
-                           model_name="Outlier",
-                           model_table=model_table,
-                           model_namespace=model_namespace)
-        model_types.append(("Outlier.meta", "Outlier.param"))
+        outlier_meta, outlier_param = save_outlier_model(outlier_replace=False,
+                                                         model_name="Outlier")
 
-        return model_types
+        dataio_meta.outlier_meta.CopyFrom(outlier_meta)
+        dataio_param.outlier_param.CopyFrom(outlier_param)
 
-    def load_model(self, model_table, model_namespace):
+        return {"DataIOMeta": dataio_meta,
+                "DataIOParam": dataio_param
+                }
+
+    def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, self.tag_with_value, self.tag_value_delimitor, self.with_label, \
         _1, self.label_type, self.output_format, self.header = load_data_io_model("SparseTagReader",
-                                                                                  model_table,
-                                                                                  model_namespace)
+                                                                                  model_meta,
+                                                                                  model_param)
 
+
+class DataIO(ModelBase):
+    def __init__(self):
+        super(DataIO, self).__init__()
+        self.reader = None
+        from federatedml.param.dataio_param import DataIOParam
+        self.model_param = DataIOParam()
+
+    def _init_model(self, model_param):
+        print ("model_param is {}".format(model_param))
+        if model_param.input_format == "dense":
+            self.reader = DenseFeatureReader(self.model_param)
+        elif model_param.input_format == "sparse":
+            self.reader = SparseFeatureReader(self.model_param)
+        elif model_param.input_format == "tag":
+            self.reader = SparseTagReader(self.model_param)
+
+        self.model_param = model_param
+
+    def _load_model(self, model_dict):
+        input_model_param = None
+        input_model_meta = None
+        for _, value in model_dict["model"].items():
+            for model in value:
+                if model.endswith("Meta"):
+                    input_model_meta = value[model]
+                if model.endswith("Param"):
+                    input_model_param = value[model]
+
+        if input_model_meta.input_format == "dense":
+            self.reader = DenseFeatureReader(self.model_param)
+        elif input_model_meta.input_format == "sparse":
+            self.reader = SparseFeatureReader(self.model_param)
+        elif input_model_meta.input_format == "tag":
+            self.reader = SparseTagReader(self.model_param)
+
+        self.reader.load_model(input_model_meta, input_model_param)
+
+    def fit(self, data_inst):
+        return self.reader.read_data(data_inst, "fit")
+    def transform(self, data_inst):
+        return self.reader.read_data(data_inst, "transform")
+
+    def export_model(self):
+        return self.reader.save_model()
+
+    """
+    def run(self, component_parameters, args=None):
+        self._init_runtime_parameters(component_parameters)
+
+        stage = None
+        if "model" in args:
+            self._load_model(args["model"])
+            stage = "transform"
+
+        if args["data"] is None:
+            return
+
+        self._run_data(stage)
+    """
 
 def set_schema(data_instance, header):
     data_instance.schema = {"header": header}
@@ -659,9 +719,7 @@ def save_data_io_model(input_format="dense",
                        label_type="int",
                        output_format="dense",
                        header=None,
-                       model_name="DataIO",
-                       model_table=None,
-                       model_namespace=None):
+                       model_name="DataIO"):
     model_meta = DataIOMeta()
     model_param = DataIOParam()
 
@@ -678,33 +736,12 @@ def save_data_io_model(input_format="dense",
     if header is not None:
         model_param.header.extend(header)
 
-    manager.save_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
+    return model_meta, model_param
 
 
 def load_data_io_model(model_name="DataIO",
-                       model_table=None,
-                       model_namespace=None):
-    model_meta = DataIOMeta()
-    model_param = DataIOParam()
-
-    manager.read_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.read_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
-
+                       model_meta=None,
+                       model_param=None):
     delimitor = model_meta.delimitor
     data_type = model_meta.data_type
     tag_with_value = model_meta.tag_with_value
@@ -724,9 +761,7 @@ def save_missing_imputer_model(missing_fill=False,
                                missing_impute=None,
                                missing_fill_value=None,
                                header=None,
-                               model_name="Imputer",
-                               model_table=None,
-                               model_namespace=None):
+                               model_name="Imputer"):
     model_meta = ImputerMeta()
     model_param = ImputerParam()
 
@@ -744,33 +779,13 @@ def save_missing_imputer_model(missing_fill=False,
 
             model_param.missing_replace_value.update(feature_value_dict)
 
-    manager.save_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
+    return model_meta, model_param
 
 
 def load_missing_imputer_model(header=None,
                                model_name="Imputer",
-                               model_table=None,
-                               model_namespace=None):
-    model_meta = ImputerMeta()
-    model_param = ImputerParam()
-    manager.read_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.read_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
-
+                               model_meta=None,
+                               model_param=None):
     missing_fill = model_meta.is_imputer
     missing_replace_method = model_meta.strategy
     missing_value = model_meta.missing_value
@@ -802,9 +817,7 @@ def save_outlier_model(outlier_replace=False,
                        outlier_impute=None,
                        outlier_replace_value=None,
                        header=None,
-                       model_name="Outlier",
-                       model_table=None,
-                       model_namespace=None):
+                       model_name="Outlier"):
     model_meta = OutlierMeta()
     model_param = OutlierParam()
 
@@ -820,34 +833,13 @@ def save_outlier_model(outlier_replace=False,
             outlier_value_dict = dict(zip(header, map(str, outlier_replace_value)))
             model_param.outlier_replace_value.update(outlier_value_dict)
 
-    manager.save_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.save_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
+    return model_meta, model_param
 
 
 def load_outlier_model(header=None,
                        model_name="Outlier",
-                       model_table=None,
-                       model_namespace=None):
-    model_meta = OutlierMeta()
-    model_param = OutlierParam()
-
-    manager.read_model(buffer_type=model_name + ".meta",
-                       proto_buffer=model_meta,
-                       name=model_table,
-                       namespace=model_namespace)
-
-    manager.read_model(buffer_type=model_name + ".param",
-                       proto_buffer=model_param,
-                       name=model_table,
-                       namespace=model_namespace)
-
+                       model_meta=None,
+                       model_param=None):
     outlier_replace = model_meta.is_outlier
     outlier_replace_method = model_meta.strategy
     outlier_value = model_meta.outlier_value
@@ -861,7 +853,6 @@ def load_outlier_model(header=None,
             outlier_value = None
         else:
             outlier_value = list(outlier_value)
-        
 
         if outlier_replace_value:
             outlier_replace_value = [outlier_replace_value.get(head) for head in header]
@@ -871,6 +862,23 @@ def load_outlier_model(header=None,
         outlier_replace_method = None
         outlier_value = None
         outlier_replace_value = None
-    
+
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
+
+
+def callback(keyword="missing_impute",
+             value_list=None):
+    tracker = Tracking("abc", "123")
+    if keyword.endswith("ratio"):
+        metric_list = []
+        for i in range(len(value_list)):
+            metric_list.append(Metric(i, value_list[i]))
+
+        tracker.log_metric_data(keyword, "DATAIO", metric_list)
+    else:
+        metric_list = []
+        for i in range(len(value_list)):
+            metric_list.append(Metric(value_list[i], i))
+
+        tracker.log_metric_data(keyword, "DATAIO", metric_list)
 
