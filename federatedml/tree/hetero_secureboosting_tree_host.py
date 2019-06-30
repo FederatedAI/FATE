@@ -31,6 +31,7 @@ from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.tree import BoostingTree
 from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
+from federatedml.util import consts
 from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
@@ -47,7 +48,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         super(HeteroSecureBoostingTreeHost, self).__init__()
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
-        self.flowid = 0
+        # self.flowid = 0
         self.tree_dim = None
         self.feature_num = None
         self.trees_ = []
@@ -56,6 +57,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.bin_sparse_points = None
         self.data_bin = None
         self.runtime_idx = 0
+        self.role = consts.HOST
 
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
@@ -173,6 +175,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                                                        bin_gap=self.bin_gap,
                                                        bin_sample_num=self.bin_sample_num))
         model_meta.tree_dim = self.tree_dim
+        model_meta.need_run = self.need_run 
 
         meta_name = "HeteroSecureBoostingTreeHost.meta"
 

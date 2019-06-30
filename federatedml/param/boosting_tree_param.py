@@ -20,6 +20,7 @@
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 import copy
@@ -231,7 +232,7 @@ class BoostingTreeParam(BaseParam):
                  tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
                  bin_num=32, bin_gap=1e-3, bin_sample_num=10000,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam()):
+                 predict_param=PredictParam(), cv_param=CrossValidationParam()):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -246,7 +247,8 @@ class BoostingTreeParam(BaseParam):
         self.bin_gap = bin_gap
         self.bin_sample_num = bin_sample_num
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.predict_param = predict_param
+        self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
         self.tree_param.check()

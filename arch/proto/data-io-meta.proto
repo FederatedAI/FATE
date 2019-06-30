@@ -27,5 +27,6 @@ message DataIOMeta {
    string output_format = 9;
    ImputerMeta imputer_meta = 10;
    OutlierMeta outlier_meta = 11;
+   bool need_run = 12;
 }
 
