@@ -100,6 +100,7 @@ STR = 'str'
 FLOAT = 'float'
 INT = 'int'
 ORIGIN = 'origin'
+MEDIAN = 'median'
 
 # min_max_scaler
 NORMAL = 'normal'
