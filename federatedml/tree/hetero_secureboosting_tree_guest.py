@@ -29,13 +29,13 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 #from federatedml.feature.quantile import Quantile
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.param.param_feature_binning import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import ClassifyLabelChecker
 from federatedml.util import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim import DiffConverge
 from federatedml.tree import BoostingTree
-from federatedml.util import HeteroSecureBoostingTreeTransferVariable
+from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from numpy import random
 from federatedml.secureprotol import PaillierEncrypt
@@ -84,7 +84,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.feature_num = None
         self.encrypter = None
         self.grad_and_hess = None
-        self.flowid = 0
+        # self.flowid = 0
         self.tree_dim = 1
         self.tree_meta = None
         self.trees_ = []
@@ -94,6 +94,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.encrypted_mode_calculator = None
         self.runtime_idx = 0
         self.feature_importances_ = {}
+        self.role = consts.GUEST
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
 
@@ -440,7 +441,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_meta.tol = self.tol
         model_meta.num_classes = self.num_classes
         model_meta.classes_.extend(map(str, self.classes_))
-        
+        model_meta.need_run = self.need_run 
         meta_name = "HeteroSecureBoostingTreeGuest.meta"
           
         return meta_name, model_meta

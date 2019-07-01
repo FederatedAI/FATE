@@ -112,7 +112,6 @@ class ModelBase(object):
         need_cv = self._init_runtime_parameters(component_parameters)
         print("component_parameter: {}".format(component_parameters))
 
-        print('need_cv : {}'.format(need_cv))
         if need_cv:
             stage = 'cross_validation'
         elif "model" in args:
@@ -150,7 +149,7 @@ class ModelBase(object):
         return self.model_output
 
     def set_flowid(self, flowid=0):
-        self.flowid = '_'.join([self.flowid, flowid])
+        self.flowid = '_'.join(map(str, [self.flowid, flowid]))
         if self.transfer_variable is not None:
             self.transfer_variable.set_flowid(self.flowid)
 

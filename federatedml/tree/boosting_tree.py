@@ -29,6 +29,7 @@ from fate_flow.manager.tracking import Tracking
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.param.boosting_tree_param import BoostingTreeParam
+from federatedml.model_selection.KFold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.feature.sparse_vector import SparseVector
@@ -55,7 +56,10 @@ class BoostingTree(ModelBase):
         self.calculated_mode = None
         self.re_encrypted_rate = None
         self.predict_param = None
+        self.cv_param = None
         self.feature_name_fid_mapping = {}
+        self.role = ''
+        self.mode = consts.HETERO
 
         self.model_param = BoostingTreeParam()
 
@@ -76,6 +80,7 @@ class BoostingTree(ModelBase):
         self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
         self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
         self.predict_param = boostingtree_param.predict_param
+        self.cv_param = boostingtree_param.cv_param
 
     @staticmethod
     def data_format_transform(row):
@@ -130,6 +135,19 @@ class BoostingTree(ModelBase):
 
     def predict(self, data_inst):
         pass
+
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self)
+        return data_instances
+
+    def _get_cv_param(self):
+        self.model_param.cv_param.role = self.role
+        self.model_param.cv_param.mode = self.mode
+        return self.model_param.cv_param
 
     def predict_proba(self, data_inst):
         pass

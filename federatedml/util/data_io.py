@@ -688,7 +688,10 @@ class DataIO(ModelBase):
         return self.reader.read_data(data_inst, "transform")
 
     def export_model(self):
-        return self.reader.save_model()
+        model_dict = self.reader.save_model()
+        model_dict["DataIOMeta"].need_run = self.need_run
+        return model_dict
+        # return self.reader.save_model()
 
     """
     def run(self, component_parameters, args=None):
