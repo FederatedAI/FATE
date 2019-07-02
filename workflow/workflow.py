@@ -364,6 +364,12 @@ class WorkFlow(object):
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
 
+            filter_methods = feature_select_param.filter_method
+
+            if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
+                binning_flowid = 'feature_binning'
+                data_instance = self.feature_binning(data_instances=data_instance, flow_id=binning_flowid)
+
             if self.role == consts.HOST:
                 feature_selector = HeteroFeatureSelectionHost(feature_select_param)
             elif self.role == consts.GUEST:
