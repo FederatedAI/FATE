@@ -874,6 +874,13 @@ class ScaleParamChecker(object):
                     raise ValueError(
                         "scale param's out_upper {} not supported, should be float or int type".format(
                             scale_param.out_upper))
+
+        if scale_param.scale_column_idx is not None:
+            if type(scale_param.scale_column_idx).__name__ != 'list':
+                raise ValueError(
+                    "scale param's scale_column_idx {} not supported, should be list".format(
+                        scale_param.scale_column_idx))
+
         elif scale_param.area == consts.COL:
             descr = "scale param's feat_lower"
             check_defined_type(scale_param.feat_lower, descr, ['list'])
