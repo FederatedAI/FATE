@@ -102,7 +102,9 @@ class StandardScaler(object):
             f = functools.partial(self.__scale, mean=mean, std=std, process_cols_list=self.scale_column_idx)
             data = data.mapValues(f)
 
-            return data, mean, std, self.scale_column_idx
+            standard_scale_cols_conf = [mean, std, self.scale_column_idx]
+
+            return data, standard_scale_cols_conf
 
     def transform(self, data, mean, scale, scale_column_idx):
         """

@@ -52,27 +52,23 @@ class Scaler(object):
                                           out_upper=self.scale_param.out_upper, out_lower=self.scale_param.out_lower)
 
             data, cols_scale_value = min_max_scaler.fit(data)
-            scale_value_results.append(cols_scale_value)
             self.cols_scale_res = cols_scale_value
 
         elif self.scale_param.method == consts.STANDARDSCALE:
             standard_scaler = StandardScaler(area=self.scale_param.area,
                                              scale_column_idx=self.scale_param.scale_column_idx,
                                              with_mean=self.scale_param.with_mean, with_std=self.scale_param.with_std)
-            data, mean, std, scale_column_idx = standard_scaler.fit(data)
-            scale_value_results.append(mean)
-            scale_value_results.append(std)
-            scale_value_results.append(scale_column_idx)
-            self.mean = mean
-            self.std = std
-            self.std_scale_column_idx = scale_column_idx
-
+            data, cols_scale_value = standard_scaler.fit(data)
+            self.mean = cols_scale_value[0]
+            self.std = cols_scale_value[1]
+            self.std_scale_column_idx = cols_scale_value[2]
+            self.cols_scale_res = cols_scale_value
         else:
             LOGGER.info("Scale method is {}, do nothing and return!".format(self.scale_param.method))
 
         data.schema['header'] = self.header
         LOGGER.info("End fit data ...")
-        return data, scale_value_results
+        return data, self.cols_scale_res
 
     def transform(self, data, fit_config):
         """
