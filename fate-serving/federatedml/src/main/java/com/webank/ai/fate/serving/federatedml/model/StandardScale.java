@@ -20,7 +20,8 @@ public class StandardScale {
                 if (scale == 0)
                     scale = 1;
 
-                inputData.put(key, (value - standardScale.getMean() / scale));
+                value = (value - standardScale.getMean()) / scale;
+                inputData.put(key, value);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
