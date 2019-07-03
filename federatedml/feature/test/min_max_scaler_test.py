@@ -206,12 +206,12 @@ class TestMinMaxScaler(unittest.TestCase):
         self.assertListEqual(self.get_table_instance_feature(fit_data),
                              transform_data)
 
-        for k, v in list(self.table_instance.collect()):
-            print("src data:{}".format(list(v.features)))
+        # for k, v in list(self.table_instance.collect()):
+        #     print("src data:{}".format(list(v.features)))
 
         transform_data = min_max_scaler.transform(self.table_instance, cols_transform_value)
-        for k, v in list(transform_data.collect()):
-            print("transform data:{}".format(list(v.features)))
+        # for k, v in list(transform_data.collect()):
+        #     print("transform data:{}".format(list(v.features)))
 
 
 

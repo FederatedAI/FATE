@@ -46,6 +46,7 @@ class Scaler(object):
 
         if self.scale_param.method == consts.MINMAXSCALE:
             min_max_scaler = MinMaxScaler(mode=self.scale_param.mode, area=self.scale_param.area,
+                                          scale_column_idx=self.scale_param.scale_column_idx,
                                           feat_upper=self.scale_param.feat_upper,
                                           feat_lower=self.scale_param.feat_lower,
                                           out_upper=self.scale_param.out_upper, out_lower=self.scale_param.out_lower)
@@ -55,10 +56,13 @@ class Scaler(object):
             self.cols_scale_res = cols_scale_value
 
         elif self.scale_param.method == consts.STANDARDSCALE:
-            standard_scaler = StandardScaler(with_mean=self.scale_param.with_mean, with_std=self.scale_param.with_std)
+            standard_scaler = StandardScaler(area=self.scale_param.area,
+                                             scale_column_idx=self.scale_param.scale_column_idx,
+                                             with_mean=self.scale_param.with_mean, with_std=self.scale_param.with_std)
             data, mean, std, scale_column_idx = standard_scaler.fit(data)
             scale_value_results.append(mean)
             scale_value_results.append(std)
+            scale_value_results.append(scale_column_idx)
             self.mean = mean
             self.std = std
             self.std_scale_column_idx = scale_column_idx
@@ -89,10 +93,11 @@ class Scaler(object):
 
         if self.scale_param.method == consts.MINMAXSCALE:
             min_max_scaler = MinMaxScaler()
-            data = min_max_scaler.transform(data, fit_config[0])
+            data = min_max_scaler.transform(data, fit_config)
         elif self.scale_param.method == consts.STANDARDSCALE:
             standard_scaler = StandardScaler()
-            data = standard_scaler.transform(data, mean=fit_config[0], scale=fit_config[1], scale_column_idx=fit_config[2])
+            data = standard_scaler.transform(data, mean=fit_config[0], scale=fit_config[1],
+                                             scale_column_idx=fit_config[2])
         else:
             LOGGER.info("DataTransform method is {}, do nothing and return!".format(self.scale_param.method))
 

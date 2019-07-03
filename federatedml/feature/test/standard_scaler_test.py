@@ -106,7 +106,7 @@ class TestStandardScaler(unittest.TestCase):
                              np.around(scaler.transform(self.test_data), 4).tolist())
         self.assertListEqual(list(np.around(mean, 4)), list(np.around(scaler.mean_, 4)))
         self.assertListEqual(list(np.around(std, 4)), list(np.around(scaler.scale_, 4)))
-        print("scale_column_idx5:{}".format(scale_column_idx))
+        # print("scale_column_idx5:{}".format(scale_column_idx))
 
     # test with (area="col", scale_column_idx=None, with_mean=True, with_std=True):
     def test_fit6(self):
@@ -119,7 +119,7 @@ class TestStandardScaler(unittest.TestCase):
                              np.around(scaler.transform(self.test_data), 4).tolist())
         self.assertListEqual(list(np.around(mean, 4)), list(np.around(scaler.mean_, 4)))
         self.assertListEqual(list(np.around(std, 4)), list(np.around(scaler.scale_, 4)))
-        print("scale_column_idx6:{}".format(scale_column_idx))
+        # print("scale_column_idx6:{}".format(scale_column_idx))
 
     # test with (with_mean=True, with_std=True):
     def test_transform1(self):
@@ -173,8 +173,8 @@ class TestStandardScaler(unittest.TestCase):
         scale_column_idx = [1, 2, 4]
         standard_scaler = StandardScaler(area='col', scale_column_idx=scale_column_idx, with_mean=True, with_std=True)
         fit_data, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
-        for k, v in list(fit_data.collect()):
-            print("fit data:{}".format(list(v.features)))
+        # for k, v in list(fit_data.collect()):
+        #     print("fit data:{}".format(list(v.features)))
 
         scaler = SSL(with_mean=True, with_std=True)
         scaler.fit(self.test_data)
@@ -188,12 +188,12 @@ class TestStandardScaler(unittest.TestCase):
         self.assertListEqual(self.get_table_instance_feature(fit_data),
                              transform_data)
 
-        for k, v in list(self.table_instance.collect()):
-            print("src data:{}".format(list(v.features)))
+        # for k, v in list(self.table_instance.collect()):
+        #     print("src data:{}".format(list(v.features)))
 
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
-        for k, v in list(transform_data.collect()):
-            print("transform data:{}".format(list(v.features)))
+        # for k, v in list(transform_data.collect()):
+        #     print("transform data:{}".format(list(v.features)))
 
 if __name__ == "__main__":
     unittest.main()
