@@ -146,6 +146,9 @@ class WorkFlow(object):
             LOGGER.debug("Star intersection before train")
             intersect_flowid = "train_0"
             train_data = self.intersect(train_data, intersect_flowid)
+            intersect_flowid = "predict_0"
+            validation_data = self.intersect(validation_data, intersect_flowid)
+
             LOGGER.debug("End intersection before train")
 
         sample_flowid = "train_sample_0"
@@ -156,6 +159,7 @@ class WorkFlow(object):
 
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
+            validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
 
         train_data = self.one_hot_encoder_fit_transform(train_data)
         validation_data = self.one_hot_encoder_transform(validation_data)
@@ -181,13 +185,9 @@ class WorkFlow(object):
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
                 self.model.set_flowid("1")
-                if self.mode == consts.HETERO:
-                    LOGGER.debug("Star intersection before predict")
-                    intersect_flowid = "predict_0"
-                    validation_data = self.intersect(validation_data, intersect_flowid)
-                    LOGGER.debug("End intersection before predict")
-
-                    validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
+                # if self.mode == consts.HETERO:
+                    # LOGGER.debug("Star intersection before predict")
+                    # LOGGER.debug("End intersection before predict")
 
                 val_pred = self.model.predict(validation_data,
                                               self.workflow_param.predict_param)
@@ -397,6 +397,8 @@ class WorkFlow(object):
                 data_instance = feature_selector.fit_transform(data_instance)
             save_result = feature_selector.save_model(self.workflow_param.model_table,
                                                       self.workflow_param.model_namespace)
+
+            LOGGER.debug("Role: {}, in fit feature selector left_cols: {}".format(self.role, feature_selector.left_cols))
             # Save model result in pipeline
             for meta_buffer_type, param_buffer_type in save_result:
                 self.pipeline.node_meta.append(meta_buffer_type)
@@ -434,6 +436,9 @@ class WorkFlow(object):
             feature_selector.set_flowid(flow_id)
 
             feature_selector.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+
+            LOGGER.debug("Role: {}, in transform feature selector left_cols: {}".format(self.role, feature_selector.left_cols))
+
             data_instance = feature_selector.transform(data_instance)
 
             LOGGER.info("Finish feature selection")
