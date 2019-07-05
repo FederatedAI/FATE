@@ -95,7 +95,7 @@ class BaseLogisticRegression(object):
         return data_instances.schema.get("header")
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
+        return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
 
     def set_flowid(self, flowid=0):
         if self.transfer_variable is not None:
