@@ -21,7 +21,7 @@ from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
-from federatedml.util import consts
+from federatedml.util import consts, abnormal_detection
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -44,6 +44,8 @@ class RsaIntersectionHost(RsaIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
+
+        abnormal_detection.empty_table_detection(data_instances)
 
         encrypt_operator = RsaEncrypt()
         encrypt_operator.generate_key(rsa_bit=1024)
@@ -112,6 +114,8 @@ class RawIntersectionHost(RawIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start raw intersection")
+
+        abnormal_detection.empty_table_detection(data_instances)
 
         if self.join_role == consts.GUEST:
             intersect_ids = self.intersect_send_id(data_instances)
