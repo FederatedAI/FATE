@@ -59,7 +59,8 @@ class StandardScaler(object):
             mean = [0 for _ in range(shape)]
             std = [1 for _ in range(shape)]
             self.scale_column_idx = [i for i in range(shape)]
-            return data, mean, std, self.scale_column_idx
+            standard_scale_cols_conf = [ mean, std, self.scale_column_idx ]
+            return data, standard_scale_cols_conf
         else:
             data_shape = data_overview.get_features_shape(data)
             if self.area == 'col':
@@ -120,8 +121,6 @@ class StandardScaler(object):
         """
         if isinstance(mean, Iterable) and isinstance(scale, Iterable):
             f = functools.partial(self.__scale, mean=mean, std=scale, process_cols_list=scale_column_idx)
-        # elif not isinstance(mean, Iterable) and not isinstance(scale, Iterable):
-        #     f = functools.partial(self.__scale_with_value, mean=mean, std=scale)
         else:
             raise ValueError("mean and scale should be all Iterable or all not Iterable")
         return data.mapValues(f)
