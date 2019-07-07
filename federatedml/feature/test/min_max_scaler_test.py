@@ -66,7 +66,7 @@ class TestMinMaxScaler(unittest.TestCase):
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_instance),
                              np.around(scaler.transform(self.test_data), 4).tolist())
-        self.assertListEqual(cols_transform_value, self.sklearn_attribute_format(scaler, [0, 1]))
+        self.assertListEqual(cols_transform_value[0], self.sklearn_attribute_format(scaler, [0, 1]))
 
     # test with (mode='normal', area='all', feat_upper=None, feat_lower=None, out_upper=2, out_lower=-1):
     def test_fit_out(self):
@@ -79,7 +79,7 @@ class TestMinMaxScaler(unittest.TestCase):
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_data),
                              np.around(scaler.transform(self.test_data), 4).tolist())
-        self.assertListEqual(cols_transform_value, self.sklearn_attribute_format(scaler, feature_range))
+        self.assertListEqual(cols_transform_value[0], self.sklearn_attribute_format(scaler, feature_range))
 
     def test_fit_feat(self):
         feat_upper = 8
@@ -120,7 +120,7 @@ class TestMinMaxScaler(unittest.TestCase):
                 tmp_res[1] = feat_upper
                 sklearn_res[i] = tuple(tmp_res)
 
-        self.assertListEqual(cols_transform_value, sklearn_res)
+        self.assertListEqual(cols_transform_value[0], sklearn_res)
 
     def test_fit_col_default(self):
         min_max_scaler = MinMaxScaler(mode='normal', area='col', feat_upper=None, feat_lower=None, out_upper=None,
@@ -131,7 +131,7 @@ class TestMinMaxScaler(unittest.TestCase):
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_data),
                              np.around(scaler.transform(self.test_data), 4).tolist())
-        self.assertListEqual(cols_transform_value, self.sklearn_attribute_format(scaler, [0, 1]))
+        self.assertListEqual(cols_transform_value[0], self.sklearn_attribute_format(scaler, [0, 1]))
 
     # test with (mode='normal', area='all', feat_upper=None, feat_lower=None, out_upper=2, out_lower=-1):
     def test_fit_col_out(self):
@@ -144,7 +144,7 @@ class TestMinMaxScaler(unittest.TestCase):
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_data),
                              np.around(scaler.transform(self.test_data), 4).tolist())
-        self.assertListEqual(cols_transform_value, self.sklearn_attribute_format(scaler, feature_range))
+        self.assertListEqual(cols_transform_value[0], self.sklearn_attribute_format(scaler, feature_range))
 
     def test_fit_col_feat(self):
         feat_upper = [0.8, 5, 6, 7, 8, 9]
@@ -186,6 +186,34 @@ class TestMinMaxScaler(unittest.TestCase):
         transform_data = min_max_scaler.transform(self.table_instance, cols_transform_value)
 
         self.assertListEqual(self.get_table_instance_feature(fit_data), self.get_table_instance_feature(transform_data))
+
+    def test_cols_select_fit_and_transform(self):
+        scale_column_idx = [1, 2, 4]
+        min_max_scaler = MinMaxScaler(mode='normal', area='col', scale_column_idx=scale_column_idx, feat_upper=None,
+                                      feat_lower=None, out_upper=None,
+                                      out_lower=None)
+        fit_data, cols_transform_value = min_max_scaler.fit(self.table_instance)
+
+        scaler = MMS()
+        scaler.fit(self.test_data)
+        transform_data = np.around(scaler.transform(self.test_data), 4).tolist()
+
+        for i, line in enumerate(transform_data):
+            for j, cols in enumerate(line):
+                if j not in scale_column_idx:
+                    transform_data[i][j] = self.test_data[i][j]
+
+        self.assertListEqual(self.get_table_instance_feature(fit_data),
+                             transform_data)
+
+        # for k, v in list(self.table_instance.collect()):
+        #     print("src data:{}".format(list(v.features)))
+
+        transform_data = min_max_scaler.transform(self.table_instance, cols_transform_value)
+        # for k, v in list(transform_data.collect()):
+        #     print("transform data:{}".format(list(v.features)))
+
+
 
 
 if __name__ == "__main__":

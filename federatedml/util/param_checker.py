@@ -874,18 +874,28 @@ class ScaleParamChecker(object):
                     raise ValueError(
                         "scale param's out_upper {} not supported, should be float or int type".format(
                             scale_param.out_upper))
-        elif scale_param.area == consts.COL:
+
+        if scale_param.scale_column_idx is not None:
+            if type(scale_param.scale_column_idx).__name__ != 'list':
+                raise ValueError(
+                    "scale param's scale_column_idx {} not supported, should be list".format(
+                        scale_param.scale_column_idx))
+
+        if scale_param.feat_lower is not None:
             descr = "scale param's feat_lower"
             check_defined_type(scale_param.feat_lower, descr, ['list'])
 
+        if scale_param.feat_upper is not None:
             descr = "scale param's feat_upper"
             check_defined_type(scale_param.feat_upper, descr, ['list'])
 
+        if scale_param.out_lower is not None:
             descr = "scale param's out_lower"
-            check_defined_type(scale_param.out_lower, descr, ['list'])
+            check_defined_type(scale_param.out_lower, descr, ["float","int"])
 
+        if scale_param.out_upper is not None:
             descr = "scale param's out_upper"
-            check_defined_type(scale_param.out_upper, descr, ['list'])
+            check_defined_type(scale_param.out_upper, descr, ["float","int"])
 
         check_boolean(scale_param.with_mean, "scale_param with_mean")
         check_boolean(scale_param.with_std, "scale_param with_std")

@@ -76,9 +76,9 @@ class HeteroFeatureSelectGuestWorkflow(WorkFlow):
         train_data = self.sample(train_data, sample_flowid)
 
         # Step 4: binning
-        if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
-            binning_flowid = 'feature_binning'
-            train_data = self.feature_binning(data_instances=train_data, flow_id=binning_flowid)
+        # if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
+        #     binning_flowid = 'feature_binning'
+        #     train_data = self.feature_binning(data_instances=train_data, flow_id=binning_flowid)
 
         # Step 5: feature selection
         feature_selection_id = 'feature_selection'
