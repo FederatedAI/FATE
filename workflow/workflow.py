@@ -339,7 +339,10 @@ class WorkFlow(object):
             raise ValueError("Unknown role of workflow")
 
         feature_binning_obj.set_flowid(flow_id)
-        data_instances = feature_binning_obj.fit(data_instances)
+        if feature_binning_param.local_only:
+            data_instances = feature_binning_obj.fit_local(data_instances)
+        else:
+            data_instances = feature_binning_obj.fit(data_instances)
         save_result = feature_binning_obj.save_model(self.workflow_param.model_table,
                                                      self.workflow_param.model_namespace)
         # Save model result in pipeline

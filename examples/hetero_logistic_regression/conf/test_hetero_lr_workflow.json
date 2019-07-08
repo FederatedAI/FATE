@@ -21,7 +21,7 @@
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["breast_hetero_guest_20190614"],
                 "evaluation_output_namespace": ["hetero_lr"],
-                "need_feature_selection": [false]
+                "need_feature_selection": [true]
 
             },
             "DataIOParam":{
@@ -32,6 +32,15 @@
             },
             "OneHotEncoderParam": {
                 "cols": [["fid10"]]
+            },
+            "FeatureSelectionParam": {
+            "method": ["fit"],
+            "filter_method": [["unique_value", "iv_value_thres",
+                    "coefficient_of_variation_value_thres", "outlier_cols"]],
+            "select_cols": [-1],
+            "local_only": [true],
+            "result_table": ["feature_selection_guest_model_table"],
+            "result_namespace": ["feature_select_namespace"]
             },
             "ScaleParam":{
             "method": ["min_max_scale"],
@@ -58,7 +67,7 @@
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["some_evaluate_output_20190614"],
                 "evaluation_output_namespace": ["hetero_lr"],
-                "need_feature_selection": [true]
+                "need_feature_selection": [false]
             },
              "DataIOParam":{
                 "with_label": [false],
@@ -155,7 +164,7 @@
             "adjustment_factor": 0.5,
             "bin_num": 10,
             "cols": -1,
-            "local_only": false,
+            "local_only": true,
             "result_table": "TO SET",
             "result_namespace": "TO SET",
             "display_result": ["iv"]
