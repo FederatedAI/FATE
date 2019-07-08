@@ -50,8 +50,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=True, with_std=True):
     def test_fit1(self):
         standard_scaler = StandardScaler(with_mean=True, with_std=True)
-        fit_instance, mean, std, _ = standard_scaler.fit(self.table_instance)
-
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std = scale_conf[0], scale_conf[1]
         scaler = SSL()
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_instance),
@@ -62,7 +62,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=False, with_std=True):
     def test_fit2(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=True)
-        fit_instance, mean, std, _ = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std = scale_conf[0], scale_conf[1]
 
         scaler = SSL(with_mean=False)
         scaler.fit(self.test_data)
@@ -74,7 +75,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=True, with_std=False):
     def test_fit3(self):
         standard_scaler = StandardScaler(with_mean=True, with_std=False)
-        fit_instance, mean, std, _ = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std = scale_conf[0], scale_conf[1]
 
         scaler = SSL(with_std=False)
         scaler.fit(self.test_data)
@@ -86,7 +88,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=False, with_std=False):
     def test_fit4(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=False)
-        fit_instance, mean, std, _ = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std = scale_conf[0], scale_conf[1]
 
         scaler = SSL(with_mean=False, with_std=False)
         scaler.fit(self.test_data)
@@ -98,8 +101,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (area="all", scale_column_idx=None, with_mean=True, with_std=True):
     def test_fit5(self):
         standard_scaler = StandardScaler(area='all', scale_column_idx=None, with_mean=True, with_std=True)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
-
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
         scaler = SSL()
         scaler.fit(self.test_data)
         self.assertListEqual(self.get_table_instance_feature(fit_instance),
@@ -111,7 +114,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (area="col", scale_column_idx=None, with_mean=True, with_std=True):
     def test_fit6(self):
         standard_scaler = StandardScaler(area='col', with_mean=True, with_std=True)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
 
         scaler = SSL()
         scaler.fit(self.test_data)
@@ -124,7 +128,9 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=True, with_std=True):
     def test_transform1(self):
         standard_scaler = StandardScaler(with_mean=True, with_std=True)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
+
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
@@ -132,7 +138,9 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=True, with_std=False):
     def test_transform2(self):
         standard_scaler = StandardScaler(with_mean=True, with_std=False)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
+
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
@@ -140,7 +148,9 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=False, with_std=True):
     def test_transform3(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=True)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance,scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
+
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
@@ -148,15 +158,18 @@ class TestStandardScaler(unittest.TestCase):
     # test with (with_mean=False, with_std=False):
     def test_transform4(self):
         standard_scaler = StandardScaler(with_mean=False, with_std=False)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
+
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
 
     # test with (area='all', scale_column_idx=None, with_mean=False, with_std=False):
     def test_transform5(self):
         standard_scaler = StandardScaler(area='all', scale_column_idx=None, with_mean=False, with_std=False)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
@@ -164,7 +177,8 @@ class TestStandardScaler(unittest.TestCase):
     # test with (area='col', with_mean=False, with_std=False):
     def test_transform6(self):
         standard_scaler = StandardScaler(area='col', with_mean=False, with_std=False)
-        fit_instance, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_instance, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
         transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
         self.assertListEqual(self.get_table_instance_feature(transform_data),
                              self.get_table_instance_feature(fit_instance))
@@ -172,7 +186,8 @@ class TestStandardScaler(unittest.TestCase):
     def test_cols_select_fit_and_transform(self):
         scale_column_idx = [1, 2, 4]
         standard_scaler = StandardScaler(area='col', scale_column_idx=scale_column_idx, with_mean=True, with_std=True)
-        fit_data, mean, std, scale_column_idx = standard_scaler.fit(self.table_instance)
+        fit_data, scale_conf = standard_scaler.fit(self.table_instance)
+        mean, std, scale_column_idx = scale_conf[0], scale_conf[1], scale_conf[2]
         # for k, v in list(fit_data.collect()):
         #     print("fit data:{}".format(list(v.features)))
 
@@ -191,7 +206,10 @@ class TestStandardScaler(unittest.TestCase):
         # for k, v in list(self.table_instance.collect()):
         #     print("src data:{}".format(list(v.features)))
 
-        transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
+        std_scale_transform_data = standard_scaler.transform(self.table_instance, mean, std, scale_column_idx)
+        self.assertListEqual(self.get_table_instance_feature(std_scale_transform_data),
+                             transform_data)
+
         # for k, v in list(transform_data.collect()):
         #     print("transform data:{}".format(list(v.features)))
 

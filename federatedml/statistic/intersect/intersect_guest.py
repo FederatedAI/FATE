@@ -22,7 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
-from federatedml.util import consts
+from federatedml.util import consts, abnormal_detection
 # from federatedml.util import IntersectParamChecker
 from federatedml.util.transfer_variable import RsaIntersectTransferVariable
 
@@ -46,6 +46,9 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
+
+        abnormal_detection.empty_table_detection(data_instances)
+
         public_key = get(name=self.transfer_variable.rsa_pubkey.name,
                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
                          idx=0)
@@ -106,8 +109,8 @@ class RsaIntersectionGuest(RsaIntersect):
         # table(sid, hash(guest_ids_process/r)))
         table_sid_guest_ids_process_final = table_sid_guest_ids_process.join(table_random_value,
                                                                              lambda g, r: RsaIntersectionGuest.hash(
-                                                                                     gmpy2.divm(int(g), int(r), self.n)
-                                                                                 )
+                                                                                 gmpy2.divm(int(g), int(r), self.n)
+                                                                             )
                                                                              )
 
         # table(hash(guest_ids_process/r), sid)
@@ -149,6 +152,8 @@ class RawIntersectionGuest(RawIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start raw intersection")
+
+        abnormal_detection.empty_table_detection(data_instances)
 
         if self.join_role == consts.HOST:
             intersect_ids = self.intersect_send_id(data_instances)
