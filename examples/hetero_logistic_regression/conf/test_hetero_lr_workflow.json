@@ -21,8 +21,7 @@
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["breast_hetero_guest_20190614"],
                 "evaluation_output_namespace": ["hetero_lr"],
-                "need_feature_selection": [true]
-
+                "need_feature_selection": [false]
             },
             "DataIOParam":{
                 "with_label": [true],
