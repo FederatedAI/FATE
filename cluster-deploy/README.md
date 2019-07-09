@@ -90,8 +90,8 @@ c).Other Modules: The node where other modules are installed.
 | node           | Node description                                  | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
 | -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Execution node | The operation node that executes the script       | Git tool   Maven3.5 and above                                | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
-| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0      redis5.0.2 | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes        |
-| Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2             | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes        |
+| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0          | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 | In the same area or under the same VPC as other nodes        |
+| Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2(One party only needs to install a redis on the serving-service node.) | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes.       |
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
 
@@ -181,7 +181,7 @@ sh install_mysql.sh
 After installing mysql, **change the mysql password to "Fate123#$" and create database user "fate"** (modified according to actual needs):
 
 ```
-$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
+$/data/projects/common/mysql/mysql-8.0/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0/mysql.sock
 Enter password:(please input the original password)
 >set password='Fate123#$';
 >CREATE USER 'fate'@'localhost' IDENTIFIED BY 'Fate123#$';
@@ -192,7 +192,7 @@ Enter password:(please input the original password)
 After installing mysql, you need to use the following statement on the node where MySQL is installed to empower all IP in the party (replacing IP with actual ip):
 
 ```
-$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate -p –S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
+$/data/projects/common/mysql/mysql-8.0/bin/mysql -ufate -p –S /data/projects/common/mysql/mysql-8.0/mysql.sock
 Enter password: Fate123#$
 >CREATE USER 'fate'@'$ip' IDENTIFIED BY 'Fate123#$';
 >GRANT ALL ON *.* TO 'fate'@'$ip';
@@ -236,7 +236,7 @@ git submodule update --init --recursive
 
 You can also instead of "git submodule update --init --recursive"  by  downloade the list of  [glog-0.4.0](https://github.com/google/glog/tree/96a2f23dca4cc7180821ca5f32e526314395d26a)
 
-、[grpc-1.19.1](https://github.com/grpc/grpc/tree/109c570727c3089fef655edcdd0dd02cc5958010)、[boost-1.68.0](https://github.com/boostorg/boost/tree/8f9a1cf1d15d262e09c16a305034d8bc1e39aca2)、[lmdb-0.9.22](https://github.com/LMDB/lmdb/tree/2a5eaad6919ce6941dec4f0d5cce370707a00ba7)、[protobuf-3.6.1](https://github.com/protocolbuffers/protobuf/tree/ca21b28287871660057a2b8bada2c044b6b3075d) yourself if conditions permit.
+、[grpc-1.19.1](https://github.com/grpc/grpc/tree/109c570727c3089fef655edcdd0dd02cc5958010)、[boost-1.68.0](https://github.com/boostorg/boost/tree/8f9a1cf1d15d262e09c16a305034d8bc1e39aca2)、[lmdb-0.9.22](https://github.com/LMDB/lmdb/tree/2a5eaad6919ce6941dec4f0d5cce370707a00ba7)、[protobuf-3.6.1](https://github.com/protocolbuffers/protobuf/tree/ca21b28287871660057a2b8bada2c044b6b3075d) 、[lmdb-safe](https://github.com/ahupowerdns/lmdb-safe/tree/e02d654dfe9fcb5bd1b79214dda891ae5a481a90)yourself if conditions permit.
 
 nd put them in the corresponding directory as the following directory tree: FATE/arch/eggroll/storage-service-cxx/third_party:
 
@@ -249,6 +249,7 @@ third_party
 |   `- libraries
 |   |  `- liblmdb 
 |--- protobuf
+|--- lmdb-safe
 ```
 
 
@@ -277,6 +278,7 @@ The configuration file configurations.sh instructions:
 | tmlist0            | The ip list of the Task-manager role                 | Represents a list of servers with Roll roles in the party (only one in the current version) | If there are more than one party, the order is tmlist0, tmlist1... Sequence corresponds to partyid |
 | serving0           | Serving-server role ip list                          | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
 | exchangeip         | Exchange role ip                                     | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
+| redisip            | redisip array                                        | Each array element represents a redisip                      | One party only needs to install a redis on the serving-service node, |
 
 *<u>Note: serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
 
@@ -295,6 +297,7 @@ Assume that each configuration is represented by the following code relationship
 | A.S-ip              | Indicates the server ip of the partyA's Serving-server. If there are multiple, the number is incremented. |
 | A.E-ip              | Indicates the server ip of partyA's Egg. If there are more than one, add the number increment. |
 | exchangeip          | Exchange server ip                                           |
+| A.redisip           | Indicates the ip of the node where the redis of partyA is located.One party only needs to install a redis on the serving-service node. |
 
 The role code representation in partyB is similar to the above description.
 
@@ -308,6 +311,7 @@ dir=/data/projects/fate
 mysqldir=/data/projects/common/mysql/mysql-8.0 
 javadir=/data/projects/common/jdk/jdk1.8 
 venvdir=/data/projects/eggroll/venv
+redisip=(A.redisip B.redisip)
 redispass=fate1234
 partylist=(partyA.id partyB.id) 
 JDBC0=(A.MS-ip A.dbname A.user A.password) 
@@ -351,8 +355,8 @@ example-dir-tree
 |    |  |- log4j2.properties
 |    |
 |    |- lib/
-|    |- fate-federation-0.2.jar
-|    |- fate-federation.jar -> fate-fedaration-0.2.jar
+|    |- fate-federation-0.3.jar
+|    |- fate-federation.jar -> fate-fedaration-0.3.jar
 |    |- service.sh
 |
 |--- meta-service
@@ -363,8 +367,8 @@ example-dir-tree
 |    |  |- meta-service.properties
 |    |
 |    |- lib/
-|    |- fate-meta-service-0.2.jar
-|    |- fate-mata-service.jar -> fate-meta-service-0.2.jar
+|    |- fate-meta-service-0.3.jar
+|    |- fate-mata-service.jar -> fate-meta-service-0.3.jar
 |    |- service.sh
 |
 |--- proxy
@@ -375,8 +379,8 @@ example-dir-tree
 |    |  |- route_table.json
 |    |
 |    |- lib/
-|    |- fate-proxy-0.2.jar
-|    |- fate-proxy.jar -> fate-proxy-0.2.jar
+|    |- fate-proxy-0.3.jar
+|    |- fate-proxy.jar -> fate-proxy-0.3.jar
 |    |- service.sh
 |
 |--- python
@@ -400,8 +404,8 @@ example-dir-tree
 |    |  |- roll.properties
 |    |
 |    |- lib/
-|    |- fate-roll-0.2.jar
-|    |- fate-roll.jar -> fate-roll-0.2.jar
+|    |- fate-roll-0.3.jar
+|    |- fate-roll.jar -> fate-roll-0.3.jar
 |    |- service.sh
 |
 |--- storage-service
@@ -409,8 +413,8 @@ example-dir-tree
 |    |  |- log4j2.properties
 |    |
 |    |- lib/
-|    |- fate-storage-service-0.2.jar
-|    |- fate-storage-service.jar -> fate-storage-service-0.2.jar
+|    |- fate-storage-service-0.3.jar
+|    |- fate-storage-service.jar -> fate-storage-service-0.3.jar
 |    |- service.sh
 |
 |--- storage-service-cxx
@@ -435,8 +439,8 @@ example-dir-tree
 |    |  |- serving-server.properties
 |    |
 |    |- lib/
-|    |- fate-serving-server-0.2.jar
-|    |- fate-serving-server.jar -> fate-serving-server-0.2.jar
+|    |- fate-serving-server-0.3.jar
+|    |- fate-serving-server.jar -> fate-serving-server-0.3.jar
 |    |- service.sh
 ```
 
@@ -592,8 +596,8 @@ Start the virtualization environment in host and guest respectively and run run 
 
 ```
 export PYTHONPATH=/data/projects/fate/python
-source/data/projects/fate/venv/bin/activate
-cd/data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/venv/bin/activate
+cd /data/projects/fate/python/examples/min_test_task/
 ```
 
 **Fast mode**
