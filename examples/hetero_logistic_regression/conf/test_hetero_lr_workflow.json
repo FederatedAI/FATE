@@ -20,8 +20,7 @@
                 "predict_output_table": ["hetero_lr_guest_predict_20190614"],
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["breast_hetero_guest_20190614"],
-                "evaluation_output_namespace": ["hetero_lr"],
-                "need_feature_selection": [false]
+                "evaluation_output_namespace": ["hetero_lr"]
             },
             "DataIOParam":{
                 "with_label": [true],
@@ -31,25 +30,6 @@
             },
             "OneHotEncoderParam": {
                 "cols": [["fid10"]]
-            },
-            "FeatureSelectionParam": {
-            "method": ["fit"],
-            "filter_method": [["unique_value", "iv_value_thres",
-                    "coefficient_of_variation_value_thres", "outlier_cols"]],
-            "select_cols": [-1],
-            "local_only": [true],
-            "result_table": ["feature_selection_guest_model_table"],
-            "result_namespace": ["feature_select_namespace"]
-            },
-            "ScaleParam":{
-            "method": ["min_max_scale"],
-            "mode": ["normal"],
-            "area": ["col"],
-            "scale_column_idx": [[1, 3, 5, 9]],
-            "feat_upper": [null],
-            "feat_lower": [null],
-            "out_upper": [null],
-            "out_lower": [null]
             }
         },
         "host": {
@@ -65,8 +45,7 @@
                 "predict_output_table": ["hetero_lr_host_predict_20190614"],
                 "predict_output_namespace": ["hetero_lr"],
                 "evaluation_output_table": ["some_evaluate_output_20190614"],
-                "evaluation_output_namespace": ["hetero_lr"],
-                "need_feature_selection": [false]
+                "evaluation_output_namespace": ["hetero_lr"]
             },
              "DataIOParam":{
                 "with_label": [false],
@@ -74,24 +53,6 @@
             },
             "OneHotEncoderParam": {
                 "cols": [["fid20"]]
-            },
-            "FeatureSelectionParam": {
-            "method": ["fit"],
-            "filter_method": [["unique_value",
-                    "coefficient_of_variation_value_thres", "outlier_cols"]],
-            "select_cols": [-1],
-            "local_only": [true],
-            "result_table": ["feature_selection_guest_model_table"],
-            "result_namespace": ["feature_select_namespace"]
-            },
-            "ScaleParam":{
-            "method": ["min_max_scale"],
-            "mode": ["normal"],
-            "area": ["all"],
-            "feat_upper": [null],
-            "feat_lower": [null],
-            "out_upper": [null],
-            "out_lower": [null]
             }
         },
         "arbiter": {
@@ -111,6 +72,7 @@
         "WorkFlowParam": {
             "work_mode": 1,
             "need_sample": false,
+            "need_feature_selection": false,
             "need_intersect": true,
             "need_one_hot": false,
             "n_splits": 5
@@ -154,7 +116,15 @@
             "with_proba": true,
             "threshold": 0.5
         },
-
+        "ScaleParam":{
+            "method": "min_max_scale",
+            "mode": "normal",
+            "area": "all",
+            "feat_upper": null,
+            "feat_lower": null,
+            "out_upper": null,
+            "out_lower": null
+        },
         "FeatureBinningParam": {
             "method": "quantile",
             "compress_thres": 10000,
@@ -163,12 +133,20 @@
             "adjustment_factor": 0.5,
             "bin_num": 10,
             "cols": -1,
-            "local_only": true,
+            "local_only": false,
             "result_table": "TO SET",
             "result_namespace": "TO SET",
             "display_result": ["iv"]
         },
-
+        "FeatureSelectionParam": {
+            "method": "fit",
+            "filter_method": ["unique_value", "iv_value_thres",
+                    "coefficient_of_variation_value_thres", "outlier_cols"],
+            "select_cols": -1,
+            "local_only": false,
+            "result_table": "feature_selection_guest_model_table",
+            "result_namespace": "feature_select_namespace"
+        },
         "UniqueValueParam": {
             "eps": 1e-5
         },
