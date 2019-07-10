@@ -210,7 +210,9 @@ class UnionPercentileFilter(FilterMethod):
             total_values.extend(list(h_v.values()))
 
         sorted_value = sorted(total_values, reverse=self.pick_high)
-        thres_idx = int(math.floor(self.percentiles * len(sorted_value)))
+        thres_idx = int(math.floor(self.percentiles * len(sorted_value) - consts.FLOAT_ZERO))
+        LOGGER.debug("In get_value_threshold, total_values: {}, self.local_variance: {}, thres_idx: {}."
+                     " sorted_value: {}".format(total_values, self.local_variance, thres_idx, sorted_value))
         self.value_threshold = sorted_value[thres_idx]
 
 

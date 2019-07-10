@@ -163,8 +163,11 @@ class WorkFlow(object):
 
         if validation_data is not None:
             validation_data = self.feature_selection_transform(validation_data)
+            LOGGER.debug("Before scale, validation data header: {}".format(validation_data.schema))
             if self.mode == consts.HETERO and self.role != consts.ARBITER:
                 validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
+            LOGGER.debug("After scale, validation data header: {}".format(validation_data.schema))
+
             validation_data = self.one_hot_encoder_transform(validation_data)
 
         if self.workflow_param.one_vs_rest:
