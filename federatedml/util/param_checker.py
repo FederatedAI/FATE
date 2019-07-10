@@ -883,11 +883,11 @@ class ScaleParamChecker(object):
 
         if scale_param.feat_lower is not None:
             descr = "scale param's feat_lower"
-            check_defined_type(scale_param.feat_lower, descr, ['list'])
+            check_defined_type(scale_param.feat_lower, descr, ['list', "int", "float"])
 
         if scale_param.feat_upper is not None:
             descr = "scale param's feat_upper"
-            check_defined_type(scale_param.feat_upper, descr, ['list'])
+            check_defined_type(scale_param.feat_upper, descr, ['list', "int", "float"])
 
         if scale_param.out_lower is not None:
             descr = "scale param's out_lower"

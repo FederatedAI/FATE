@@ -79,6 +79,8 @@ class StandardScaler(object):
             else:
                 self.scale_column_idx = [i for i in range(data_shape)]
 
+            self.scale_column_idx = list(set(self.scale_column_idx))
+
             summary_obj = MultivariateStatisticalSummary(data, -1)
             mean = None
             std = None
