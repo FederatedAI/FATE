@@ -40,7 +40,6 @@ class Scaler(object):
         scale_value_results: list, the fit results information of scale
         """
         LOGGER.info("Start scale data fit ...")
-        scale_value_results = []
 
         self.header = data.schema.get('header')
 
@@ -83,7 +82,7 @@ class Scaler(object):
         transform_data:data_instance, data after transform
         """
         LOGGER.info("Start scale data transform ...")
-
+        self.header = data.schema.get('header')
         if len(fit_config) == 0:
             LOGGER.warning("length fit_config is 0, can not do transform, do nothing and return")
 
@@ -97,6 +96,7 @@ class Scaler(object):
         else:
             LOGGER.info("DataTransform method is {}, do nothing and return!".format(self.scale_param.method))
 
+        data.schema['header'] = self.header
         LOGGER.info("End transform data ...")
 
         return data
