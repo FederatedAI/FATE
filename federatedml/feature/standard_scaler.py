@@ -1,4 +1,5 @@
 import functools
+import numpy as np
 from collections import Iterable
 
 from arch.api.utils import log_utils
@@ -30,7 +31,10 @@ class StandardScaler(object):
     @staticmethod
     def __scale(data, mean, std, process_cols_list):
         for i in process_cols_list:
-            data.features[i] = (data.features[i] - mean[i]) / std[i]
+            if np.abs(std[i] - 0) < 1e-6:
+                data.features[i] = 0
+            else:
+                data.features[i] = (data.features[i] - mean[i]) / std[i]
 
         return data
 
