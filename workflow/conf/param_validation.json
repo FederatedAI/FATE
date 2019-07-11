@@ -12,7 +12,7 @@
     },
     "EncryptedModeCalculatorParam": {
         "mode": {
-            "in": ["strict", "balance"]
+            "in": ["fast", "strict", "balance"]
         },
         "re_encrypted_rate": {
             "range": [[0.1, 1]]

@@ -196,24 +196,42 @@ class TestMinMaxScaler(unittest.TestCase):
 
         scaler = MMS()
         scaler.fit(self.test_data)
-        transform_data = np.around(scaler.transform(self.test_data), 4).tolist()
+        mms_transform_data = np.around(scaler.transform(self.test_data), 4).tolist()
 
-        for i, line in enumerate(transform_data):
+        for i, line in enumerate(mms_transform_data):
             for j, cols in enumerate(line):
                 if j not in scale_column_idx:
-                    transform_data[i][j] = self.test_data[i][j]
+                    mms_transform_data[i][j] = self.test_data[i][j]
 
         self.assertListEqual(self.get_table_instance_feature(fit_data),
-                             transform_data)
-
-        # for k, v in list(self.table_instance.collect()):
-        #     print("src data:{}".format(list(v.features)))
+                             mms_transform_data)
 
         transform_data = min_max_scaler.transform(self.table_instance, cols_transform_value)
-        # for k, v in list(transform_data.collect()):
-        #     print("transform data:{}".format(list(v.features)))
+        self.assertListEqual(self.get_table_instance_feature(transform_data),
+                             mms_transform_data)
 
+    def test_cols_select_fit_and_transform_repeat(self):
+        scale_column_idx = [1, 1, 2, 2, 4, 5, 5]
+        min_max_scaler = MinMaxScaler(mode='normal', area='col', scale_column_idx=scale_column_idx, feat_upper=None,
+                                      feat_lower=None, out_upper=None,
+                                      out_lower=None)
+        fit_data, cols_transform_value = min_max_scaler.fit(self.table_instance)
 
+        scaler = MMS()
+        scaler.fit(self.test_data)
+        mms_transform_data = np.around(scaler.transform(self.test_data), 4).tolist()
+
+        for i, line in enumerate(mms_transform_data):
+            for j, cols in enumerate(line):
+                if j not in scale_column_idx:
+                    mms_transform_data[i][j] = self.test_data[i][j]
+
+        self.assertListEqual(self.get_table_instance_feature(fit_data),
+                             mms_transform_data)
+
+        transform_data = min_max_scaler.transform(self.table_instance, cols_transform_value)
+        self.assertListEqual(self.get_table_instance_feature(transform_data),
+                             mms_transform_data)
 
 
 if __name__ == "__main__":
