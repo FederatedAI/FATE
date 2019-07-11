@@ -364,7 +364,7 @@ class WorkFlow(object):
             return data_instance
 
         if self.workflow_param.need_feature_selection:
-            LOGGER.info("Start feature selection")
+            LOGGER.info("Start feature selection fit")
             feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
@@ -372,7 +372,8 @@ class WorkFlow(object):
             filter_methods = feature_select_param.filter_method
 
             if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
-                binning_flowid = 'feature_binning'
+                binning_flowid = '_'.join(['feature_binning', str(flow_id)])
+                LOGGER.debug("Current binning flowid: {}".format(binning_flowid))
                 data_instance = self.feature_binning(data_instances=data_instance, flow_id=binning_flowid)
 
             if self.role == consts.HOST:
@@ -424,7 +425,7 @@ class WorkFlow(object):
             return data_instance
 
         if self.workflow_param.need_feature_selection:
-            LOGGER.info("Start feature selection")
+            LOGGER.info("Start feature selection transform")
             feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
