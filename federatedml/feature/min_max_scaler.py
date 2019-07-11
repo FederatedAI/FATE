@@ -134,46 +134,12 @@ class MinMaxScaler(object):
         if self.area not in support_area:
             raise ValueError("Unsupport area:{}".format(self.area))
 
-        check_value_list = [self.feat_upper, self.feat_lower]
-        for check_value in check_value_list:
-            if check_value is not None:
-                if self.area == 'all':
-                    if not isinstance(check_value, int) and not isinstance(check_value, float):
-                        raise ValueError(
-                            "for area is all, {} should be int or float, not {}".format(check_value, type(check_value)))
-
-                elif self.area == 'col':
-                    if not isinstance(check_value, Iterable):
-                        raise ValueError(
-                            "for area is col, {} should be Iterable, not {}".format(check_value, type(check_value)))
-
         check_value_list = [self.out_upper, self.out_lower]
         for check_value in check_value_list:
             if check_value is not None:
                 if not isinstance(check_value, int) and not isinstance(check_value, float):
                     raise ValueError(
                         "for area is all, {} should be int or float, not {}".format(check_value, type(check_value)))
-
-        if self.feat_upper is not None and self.feat_lower is not None:
-            if self.area == 'all':
-                if float(self.feat_upper) < float(self.feat_lower):
-                    raise ValueError("for area is all, feat_upper should not less than feat_lower, but {} < {}".format(
-                        self.feat_upper, self.feat_lower))
-            elif self.area == 'col':
-                if len(list(self.feat_upper)) != len(list(self.feat_lower)):
-                    raise ValueError(
-                        "for area is col, sizeof feat_upper should equal to the sizeof feat_lower, but {} != {}".format(
-                            len(list(self.feat_upper)), len(list(self.feat_lower))))
-
-                for i in range(len(list(self.feat_upper))):
-                    if float(self.feat_upper[i]) < float(self.feat_lower[i]):
-                        raise ValueError(
-                            "for area is col, feat_upper[{}] should not less than feat_lower[{}], but {} < {}".format(i,
-                                                                                                                      i,
-                                                                                                                      self.feat_upper[
-                                                                                                                          i],
-                                                                                                                      self.feat_lower[
-                                                                                                                          i]))
 
         if self.out_upper is not None and self.out_lower is not None:
             if float(self.out_upper) < float(self.out_lower):
@@ -238,13 +204,17 @@ class MinMaxScaler(object):
         else:
             self.scale_column_idx = [i for i in range(data_shape)]
 
+        self.scale_column_idx = list(set(self.scale_column_idx))
+
         cols_transform_value = []
         data_scale = []
 
         for i in range(len(max_value)):
             scale = max_value[i] - min_value[i]
-            if np.abs(scale - 0) < 1e-6 or scale < 0:
+            if scale < 0:
                 raise ValueError("scale value should large than 0")
+            elif np.abs(scale - 0) < 1e-6:
+                scale = 1
             data_scale.append(scale)
             cols_transform_value.append((min_value[i], max_value[i], out_lower, out_upper))
 
@@ -283,8 +253,11 @@ class MinMaxScaler(object):
             out_upper.append(col[3])
 
             scale = col[1] - col[0]
-            if np.abs(scale - 0) < 1e-6 or scale < 0:
+            if scale < 0:
                 raise ValueError("scale value should large than 0")
+            elif np.abs(scale - 0) < 1e-6:
+                scale = 1
+
             data_scale.append(scale)
 
         # check if each value of out_upper or out_lower is same
