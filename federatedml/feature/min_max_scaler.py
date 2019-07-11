@@ -211,8 +211,10 @@ class MinMaxScaler(object):
 
         for i in range(len(max_value)):
             scale = max_value[i] - min_value[i]
-            if np.abs(scale - 0) < 1e-6 or scale < 0:
+            if scale < 0:
                 raise ValueError("scale value should large than 0")
+            elif np.abs(scale - 0) < 1e-6:
+                scale = 1
             data_scale.append(scale)
             cols_transform_value.append((min_value[i], max_value[i], out_lower, out_upper))
 
@@ -251,8 +253,11 @@ class MinMaxScaler(object):
             out_upper.append(col[3])
 
             scale = col[1] - col[0]
-            if np.abs(scale - 0) < 1e-6 or scale < 0:
+            if scale < 0:
                 raise ValueError("scale value should large than 0")
+            elif np.abs(scale - 0) < 1e-6:
+                scale = 1
+
             data_scale.append(scale)
 
         # check if each value of out_upper or out_lower is same
