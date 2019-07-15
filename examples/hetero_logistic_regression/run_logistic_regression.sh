@@ -35,8 +35,8 @@ guest_runtime_conf=$conf_dir/guest_runtime_conf.json
 host_runtime_conf=$conf_dir/host_runtime_conf.json
 arbiter_runtime_conf=$conf_dir/arbiter_runtime_conf.json
 
-#data_set=breast
-data_set=default_credit
+data_set=breast
+#data_set=default_credit
 #data_set=give_credit
 train_data_host=$data_dir/${data_set}_a.csv
 train_data_guest=$data_dir/${data_set}_b.csv

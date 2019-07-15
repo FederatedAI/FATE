@@ -81,3 +81,7 @@ where -n is namespace, -t is table name, -o is downloaded file name and -p is th
 ### Query job queue
 
 > python task_manager_client.py -f queueStatus
+
+### Delete job
+
+> python task_manager_client.py -f delete -j $job_id
