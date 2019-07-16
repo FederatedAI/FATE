@@ -50,7 +50,7 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         new_data = self._transfer_data(data_instances)
         self._reset_header()
         new_data.schema['header'] = self.header
-        return data_instances
+        return new_data
 
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)

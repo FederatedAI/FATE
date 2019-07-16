@@ -1,3 +1,8 @@
+# Release 0.3.1
+## Bug Fixes
+* fix feature scale bugs in v0.3
+* fix federated feature selection bugs in v0.3
+
 # Release 0.3
 
 ## Major Features and Improvements

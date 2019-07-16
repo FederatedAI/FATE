@@ -146,19 +146,27 @@ class WorkFlow(object):
             LOGGER.debug("Star intersection before train")
             intersect_flowid = "train_0"
             train_data = self.intersect(train_data, intersect_flowid)
+            if validation_data is not None:
+                intersect_flowid = "predict_0"
+                LOGGER.debug("Star intersection before predict")
+                validation_data = self.intersect(validation_data, intersect_flowid)
+                LOGGER.debug("End intersection before predict")
+
             LOGGER.debug("End intersection before train")
 
         sample_flowid = "train_sample_0"
         train_data = self.sample(train_data, sample_flowid)
-
         train_data = self.feature_selection_fit(train_data)
-        validation_data = self.feature_selection_transform(validation_data)
-
         if self.mode == consts.HETERO and self.role != consts.ARBITER:
             train_data, cols_scale_value = self.scale(train_data)
-
         train_data = self.one_hot_encoder_fit_transform(train_data)
-        validation_data = self.one_hot_encoder_transform(validation_data)
+
+        if validation_data is not None:
+            validation_data = self.feature_selection_transform(validation_data)
+            if self.mode == consts.HETERO and self.role != consts.ARBITER:
+                validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
+
+            validation_data = self.one_hot_encoder_transform(validation_data)
 
         if self.workflow_param.one_vs_rest:
             one_vs_rest_param = OneVsRestParam()
@@ -181,14 +189,6 @@ class WorkFlow(object):
             eval_result[consts.TRAIN_EVALUATE] = train_eval
             if validation_data is not None:
                 self.model.set_flowid("1")
-                if self.mode == consts.HETERO:
-                    LOGGER.debug("Star intersection before predict")
-                    intersect_flowid = "predict_0"
-                    validation_data = self.intersect(validation_data, intersect_flowid)
-                    LOGGER.debug("End intersection before predict")
-
-                    validation_data, cols_scale_value = self.scale(validation_data, cols_scale_value)
-
                 val_pred = self.model.predict(validation_data,
                                               self.workflow_param.predict_param)
                 val_eval = self.evaluate(val_pred)
@@ -339,7 +339,10 @@ class WorkFlow(object):
             raise ValueError("Unknown role of workflow")
 
         feature_binning_obj.set_flowid(flow_id)
-        data_instances = feature_binning_obj.fit(data_instances)
+        if feature_binning_param.local_only:
+            data_instances = feature_binning_obj.fit_local(data_instances)
+        else:
+            data_instances = feature_binning_obj.fit(data_instances)
         save_result = feature_binning_obj.save_model(self.workflow_param.model_table,
                                                      self.workflow_param.model_namespace)
         # Save model result in pipeline
@@ -359,10 +362,17 @@ class WorkFlow(object):
             return data_instance
 
         if self.workflow_param.need_feature_selection:
-            LOGGER.info("Start feature selection")
+            LOGGER.info("Start feature selection fit")
             feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
+
+            filter_methods = feature_select_param.filter_method
+
+            if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
+                binning_flowid = '_'.join(['feature_binning', str(flow_id)])
+                LOGGER.debug("Current binning flowid: {}".format(binning_flowid))
+                data_instance = self.feature_binning(data_instances=data_instance, flow_id=binning_flowid)
 
             if self.role == consts.HOST:
                 feature_selector = HeteroFeatureSelectionHost(feature_select_param)
@@ -377,7 +387,6 @@ class WorkFlow(object):
             filter_methods = feature_select_param.filter_method
             previous_model = {}
             if 'iv_value_thres' in filter_methods or 'iv_percentile' in filter_methods:
-
                 binning_model = {
                     'name': self.workflow_param.model_table,
                     'namespace': self.workflow_param.model_namespace
@@ -391,6 +400,9 @@ class WorkFlow(object):
                 data_instance = feature_selector.fit_transform(data_instance)
             save_result = feature_selector.save_model(self.workflow_param.model_table,
                                                       self.workflow_param.model_namespace)
+
+            LOGGER.debug(
+                "Role: {}, in fit feature selector left_cols: {}".format(self.role, feature_selector.left_cols))
             # Save model result in pipeline
             for meta_buffer_type, param_buffer_type in save_result:
                 self.pipeline.node_meta.append(meta_buffer_type)
@@ -411,7 +423,7 @@ class WorkFlow(object):
             return data_instance
 
         if self.workflow_param.need_feature_selection:
-            LOGGER.info("Start feature selection")
+            LOGGER.info("Start feature selection transform")
             feature_select_param = param_generator.FeatureSelectionParam()
             feature_select_param = ParamExtract.parse_param_from_config(feature_select_param, self.config_path)
             param_checker.FeatureSelectionParamChecker.check_param(feature_select_param)
@@ -428,6 +440,10 @@ class WorkFlow(object):
             feature_selector.set_flowid(flow_id)
 
             feature_selector.load_model(self.workflow_param.model_table, self.workflow_param.model_namespace)
+
+            LOGGER.debug(
+                "Role: {}, in transform feature selector left_cols: {}".format(self.role, feature_selector.left_cols))
+
             data_instance = feature_selector.transform(data_instance)
 
             LOGGER.info("Finish feature selection")

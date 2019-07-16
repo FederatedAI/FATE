@@ -7,7 +7,7 @@ This module will help two parties to find the same user ids without leaking all 
 to the other. This is illustrated in Figure 1. 
 
 <div style="text-align:center", align=center>
-<img src="./images/sample.png" alt="sample" width="500" height="250" /><br/>
+<img src="./images/RSA_intersection.png" alt="sample" width="500" height="250" /><br/>
 Figure 1 RSA Intersection between party A and party B</div>
 
 In Figure 1,Party A has user id u1,u2,u3,u5, while Party B has u1,u2,u3,u4. After Intersection,
@@ -20,7 +20,7 @@ Each Y<sub>B</sub> includes different random value which binds to each value in 
 Using this module, we can get the intersection ids between two parties in security and efficiently.  
 
 #### RAW Intersection
-This intersection module implements the sample intersection method that A sends all his ids to B, and B will find the sample ids according to B's ids.Then B will send the intersection ids to A .
+This intersection module implements the simple intersection method that A sends all his ids to B, and B will find the sample ids according to B's ids.Then B will send the intersection ids to A .
 
 ### Quick Start
 You can refer to *example/intersect/README.md* to quickly start running intersection in standalone mode and cluster mode. 
