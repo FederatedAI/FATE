@@ -5,6 +5,7 @@ dir=/data/projects/fate
 mysqldir=/data/projects/common/mysql/mysql-8.0
 javadir=/data/projects/common/jdk/jdk1.8
 venvdir=/data/projects/fate/venv
+redisip=(A.redisip B.redisip)
 redispass=fate1234
 partylist=(partyA.id partyB.id) 
 JDBC0=(A.MS-ip A.dbname A.user A.password) 
