@@ -1,0 +1,58 @@
+<assembly xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/assembly-1.0.0.xsd">
+    <id>release</id>
+    <!--这个id会出现在zip包名称的后面，zip的完整名是：pom.xml中的artifactId-version-id.zip -->
+    <formats>
+        <!--支持的打包格式有zip、tar、tar.gz (or tgz)、tar.bz2 (or tbz2)、jar、dir、war-->
+        <format>zip</format>
+    </formats>
+
+
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets><!--这里指定需要包含的其他文件-->
+        <fileSet>
+            <!--管理一组文件的存放位置-->
+            <outputDirectory>/</outputDirectory> <!--放在哪-->
+            <directory>target</directory><!--源目录-->
+            <includes>
+                <include>*.jar</include>  <!--代码的jar包-->
+            </includes>
+        </fileSet>
+
+        <!--<fileSet>-->
+            <!--&lt;!&ndash;管理一组文件的存放位置&ndash;&gt;-->
+            <!--<outputDirectory>/lib</outputDirectory> &lt;!&ndash;放在哪&ndash;&gt;-->
+            <!--<directory>target/lib</directory>&lt;!&ndash;源目录&ndash;&gt;-->
+            <!--<includes>-->
+                <!--<include>*.jar</include>  &lt;!&ndash;代码的jar包&ndash;&gt;-->
+            <!--</includes>-->
+        <!--</fileSet>-->
+
+        <fileSet>
+            <outputDirectory>/bin</outputDirectory>
+            <directory>bin</directory>
+            <includes>
+                <include>*</include>  <!--把shell脚本打进去-->
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <outputDirectory>/ssh</outputDirectory>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>ssh.properties</include>  <!--把shell脚本打进去-->
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <outputDirectory>/config</outputDirectory>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>application.properties</include>
+            </includes>
+        </fileSet>
+
+
+    </fileSets>
+</assembly>
