@@ -537,7 +537,7 @@ class SparseTagReader(object):
 
         if mode == "fit":
             data_instance = self.fit(input_data)
-            if with_label:
+            if self.with_label:
                 self.label_name = "label"
         else:
             data_instance = self.transform(input_data)
