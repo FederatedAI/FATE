@@ -102,10 +102,10 @@ class ModelBase(object):
 
                 if self.data_output and eval_data_output:
                     self.data_output.union(eval_data_output)
-                elif self.data_output and eval_data_output:
+                elif not self.data_output and eval_data_output:
                     self.data_output = eval_data_output
 
-            self.set_predict_data_schema(self.data_output)
+            self.set_predict_data_schema(self.data_output, train_data.schema)
         
         elif eval_data:
             self.data_output = self.predict(eval_data)
