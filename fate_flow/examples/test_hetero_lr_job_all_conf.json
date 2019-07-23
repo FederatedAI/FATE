@@ -1,0 +1,100 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [{"name": "a888071a9be511e99ca800e04c6c66f9", "namespace": "guest#9999#arbiter-10000#guest-9999#host-10000#train_input"}]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_idx": [
+          0
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [{"name": "aa60b8a29be511e9a24e00e04c6c66f9", "namespace": "host#10000#arbiter-10000#guest-9999#host-10000#train_input"}]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "sample_0": {
+        "mode": "random",
+        "method": "downsample",
+        "fractions": 0.9
+    },
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "optimizer": "rmsprop",
+      "eps": 1e-5,
+      "alpha": 0.01,
+      "max_iter": 10,
+      "converge_func": "diff",
+      "batch_size": 320,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
+      }
+    },
+    "evaluation_0": {
+      "metrics": [
+        "auc",
+        "precision",
+        "ks",
+        "lift",
+        "gain",
+        "precision",
+        "recall",
+        "accuracy",
+        "explained_variance",
+        "mean_absolute_error",
+        "mean_squared_error",
+        "mean_squared_log_error",
+        "median_absolute_error",
+        "r2_score",
+        "root_mean_squared_error",
+        "roc"
+      ],
+      "eval_type": "binary",
+      "pos_label": 1,
+      "thresholds": [
+        0.5
+      ]
+    }
+  }
+}

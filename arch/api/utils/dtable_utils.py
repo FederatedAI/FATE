@@ -14,8 +14,8 @@
 #  limitations under the License.
 #
 from arch.api.version_control.control import get_latest_commit, get_id_library_table_name
-from arch.api.utils.scene_utils import gen_scene_key, check_scene_info
 from arch.api.utils.core import get_commit_id
+gen_namespace_separator = '#'
 
 
 def get_table_info(config, create=False):
@@ -28,12 +28,7 @@ def get_table_info(config, create=False):
     if not config.get('gen_table_info', False):
         return table_name, namespace
     if not namespace:
-        if not check_scene_info(role, party_id, all_party) or not data_type:
-            return table_name, namespace
-        namespace = get_scene_namespace(gen_scene_key(role=role,
-                                                      party_id=party_id,
-                                                      all_party=all_party),
-                                        data_type=data_type)
+        namespace = gen_namespace(all_party=all_party, data_type=data_type, role=role, party_id=party_id)
     if not table_name:
         if create:
             table_name = get_commit_id()
@@ -42,5 +37,35 @@ def get_table_info(config, create=False):
     return table_name, namespace
 
 
-def get_scene_namespace(scene_key, data_type):
-    return '#'.join([scene_key, data_type])
+def gen_namespace(all_party, data_type, role, party_id):
+    return gen_namespace_separator.join([role, str(party_id), all_party_key(all_party), data_type])
+
+
+def gen_namespace_by_key(namespace_key, role, party_id):
+    return gen_namespace_separator.join([role, str(party_id), namespace_key])
+
+
+def all_party_key(all_party):
+    """
+    Join all party as party key
+    :param all_party:
+        "role": {
+            "guest": [9999],
+            "host": [10000],
+            "arbiter": [10000]
+         }
+    :return:
+    """
+    if not all_party:
+        all_party_key = 'all'
+    elif isinstance(all_party, dict):
+        sorted_role_name = sorted(all_party.keys())
+        all_party_key = gen_namespace_separator.join([
+            ('%s-%s' % (
+                role_name,
+                '_'.join([str(p) for p in sorted(set(all_party[role_name]))]))
+             )
+            for role_name in sorted_role_name])
+    else:
+        all_party_key = None
+    return all_party_key

@@ -1,0 +1,26 @@
+{
+    "task": "load_model",
+    "initiator": {
+        "party_id": "10000",
+        "role": "guest"
+    },
+    "role": {
+        "guest": ["10000"],
+        "host": ["10000"],
+        "arbiter": ["10000"]
+    },
+    "model": {
+      "guest": {
+        "10000": {
+          "model_id": "online_inference_hetero_lr_test#guest#10000",
+          "model_version": ""
+        }
+      },
+      "host": {
+        "10000": {
+          "model_id": "online_inference_hetero_lr_test#host#10000",
+          "model_version": ""
+        }
+      }
+    }
+}

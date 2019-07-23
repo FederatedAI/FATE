@@ -1,0 +1,17 @@
+{
+  "task": "importId",
+  "module": "upload",
+  "file": "examples/data/breast_b.csv",
+  "head": 1,
+  "partition": 10,
+  "gen_table_info": true,
+  "local": {
+    "party_id": 9999,
+    "role": "guest"
+  },
+  "role": {
+    "guest": [9999],
+    "host": [10000]
+  },
+  "data_type": "data_input"
+}

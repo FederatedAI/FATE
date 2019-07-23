@@ -15,9 +15,10 @@
 #
 # -*- coding: utf-8 -*-
 from arch.api.utils import file_utils
-from arch.api.utils.log_utils import LoggerFactory
-LoggerFactory.set_directory()
-logger = LoggerFactory.get_logger("task_manager")
+from arch.api.utils import log_utils
+stat_logger = log_utils.getLogger("fate_flow_stat")
+schedule_logger = log_utils.getLogger("fate_flow_schedule")
+access_logger = log_utils.getLogger("fate_flow_access")
 
 '''
 Constants
@@ -39,7 +40,6 @@ JOB_SCHEDULER = True
 IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
-PARTY_ID = "9999"
 WORK_MODE = 0
 LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
 
@@ -54,8 +54,16 @@ DATABASE = {
     'stale_timeout': 30,
 }
 
+REDIS = {
+    'host': '127.0.0.1',
+    'port': 6379,
+    'password': 'fate_dev',
+    'max_connections': 50
+}
+
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 SERVINGS = server_conf.get(SERVERS).get('servings')
 JOB_MODULE_CONF = file_utils.load_json_conf("arch/task_manager/job_module_conf.json")
+REDIS_QUEUE_DB_INDEX = 0
