@@ -21,11 +21,12 @@ import math
 import operator
 import random
 
+from google.protobuf import json_format
+
 from arch.api.proto import feature_selection_meta_pb2
 from arch.api.proto import feature_selection_param_pb2
 from arch.api.utils import log_utils
-from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.param.param import FeatureBinningParam, UniqueValueParam
+from federatedml.param.param import UniqueValueParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
@@ -34,6 +35,21 @@ LOGGER = log_utils.getLogger()
 
 
 class FilterMethod(object):
+    """
+    Use for filter columns
+
+    Attributes
+    ----------
+    cols: list of int
+        Col index to do selection
+
+    left_cols: dict,
+        k is col_index, value is bool that indicate whether it is left or not.
+
+    feature_values: dict
+        k is col_name, v is the value that used to judge whether left or not.
+    """
+
     def __init__(self):
         self.feature_values = {}
         self.host_feature_values = {}
@@ -41,6 +57,7 @@ class FilterMethod(object):
         self.left_cols = {}
         self.host_cols = {}
         self.cols_dict = {}
+        self.header = None
 
     def fit(self, data_instances):
         """
@@ -58,13 +75,12 @@ class FilterMethod(object):
         """
         pass
 
-    def display_feature_result(self, party_name='Base'):
-        class_name = self.__class__.__name__
-        for col_name, feature_value in self.feature_values.items():
-            LOGGER.info("[Result][FeatureSelection][{}], in {}, col: {} 's feature value is {}".format(
-                party_name, class_name, col_name, feature_value
-            ))
-
+    # def display_feature_result(self, party_name='Base'):
+    #     class_name = self.__class__.__name__
+    #     for col_name, feature_value in self.feature_values.items():
+    #         LOGGER.info("[Result][FeatureSelection][{}], in {}, col: {} 's feature value is {}".format(
+    #             party_name, class_name, col_name, feature_value
+    #         ))
 
     def _keep_one_feature(self, pick_high=True, left_cols=None, feature_values=None):
         """
@@ -74,7 +90,7 @@ class FilterMethod(object):
         ----------
         pick_high: bool
             Set when none of value left, choose the highest one or lowest one. True means highest one while
-            False mease lowest one.
+            False means lowest one.
 
         Returns
         -------
@@ -86,6 +102,7 @@ class FilterMethod(object):
         if feature_values is None:
             feature_values = self.feature_values
 
+        LOGGER.debug("In _keep_one_feature, left_cols: {}, feature_values: {}".format(left_cols, feature_values))
         for col_name, is_left in left_cols.items():
             if is_left:
                 return left_cols
@@ -99,6 +116,8 @@ class FilterMethod(object):
             left_key = result[0][0]
 
         left_cols[left_key] = True
+        LOGGER.debug("In _keep_one_feature, left_key: {}, left_cols: {}".format(left_key, left_cols))
+
         return left_cols
 
     def get_meta_obj(self):
@@ -108,29 +127,55 @@ class FilterMethod(object):
         pass
 
     def _init_cols(self, data_instances):
+        # Already initialized
+        if self.header is not None:
+            return
+        if data_instances is None:
+            return
+
         header = get_header(data_instances)
+        self.header = header
         if self.cols == -1:
             self.cols = header
 
-        for col in self.cols:
-            col_index = header.index(col)
-            self.cols_dict[col] = col_index
+        for col_index in self.cols:
+            col_name = header[col_index]
+            self.cols_dict[col_name] = col_index
 
     @staticmethod
-    def filter_one_party(party_variances, pick_high, value_threshold):
+    def filter_one_party(party_variances, pick_high, value_threshold, header=None):
         left_cols = {}
-        for col_name, var_value in party_variances.items():
+        for col_info, var_value in party_variances.items():
+            if header is not None:
+                col_idx = header.index(col_info)
+            else:
+                col_idx = col_info
+
             if pick_high:
                 if var_value > value_threshold:
-                    left_cols[col_name] = True
+                    left_cols[col_idx] = True
                 else:
-                    left_cols[col_name] = False
+                    left_cols[col_idx] = False
             else:
                 if var_value < value_threshold:
-                    left_cols[col_name] = True
+                    left_cols[col_idx] = True
                 else:
-                    left_cols[col_name] = False
+                    left_cols[col_idx] = False
         return left_cols
+
+    def _reset_data_instances(self, data_instances):
+        data_instances.schema['header'] = self.header
+
+    def _generate_col_name_dict(self):
+        """
+        Used to adapt proto result.
+        """
+        left_col_name_dict = {}
+        for col_idx, is_left in self.left_cols.items():
+            LOGGER.debug("in _generate_col_name_dict, col_idx: {}, type: {}".format(col_idx, type(col_idx)))
+            col_name = self.header[col_idx]
+            left_col_name_dict[col_name] = is_left
+        return left_col_name_dict
 
 
 class UnionPercentileFilter(FilterMethod):
@@ -150,13 +195,14 @@ class UnionPercentileFilter(FilterMethod):
 
     """
 
-    def __init__(self, local_variance, host_variances, percentile, pick_high=True):
+    def __init__(self, local_variance, host_variances, percentile, pick_high=True, header=None):
         super(UnionPercentileFilter, self).__init__()
         self.local_variance = local_variance  # dict
         self.host_variances = host_variances  # dict of dict
         self.percentiles = percentile
         self.value_threshold = 0.0
         self.pick_high = pick_high
+        self.header = header
 
     def fit(self, data_instances=None):
         """
@@ -166,8 +212,9 @@ class UnionPercentileFilter(FilterMethod):
         ----------
         data_instances : Useless, exist for extension
         """
+        LOGGER.debug("Before get_value_threshold, host_variances: {}".format(self.host_variances))
         self.get_value_threshold()
-        local_left_cols = self.filter_one_party(self.local_variance, self.pick_high, self.value_threshold)
+        local_left_cols = self.filter_one_party(self.local_variance, self.pick_high, self.value_threshold, self.header)
         local_left_cols = self.keep_one(self.local_variance, local_left_cols)
         host_left_cols = {}
         for host_name, host_vaiances in self.host_variances.items():
@@ -180,7 +227,7 @@ class UnionPercentileFilter(FilterMethod):
         if len(variances) == 0:
             return left_cols
 
-        for col_name, is_left in left_cols.items():
+        for col_idx, is_left in left_cols.items():
             if is_left:
                 return left_cols
 
@@ -211,8 +258,8 @@ class UnionPercentileFilter(FilterMethod):
 
         sorted_value = sorted(total_values, reverse=self.pick_high)
         thres_idx = int(math.floor(self.percentiles * len(sorted_value) - consts.FLOAT_ZERO))
-        LOGGER.debug("In get_value_threshold, total_values: {}, self.local_variance: {}, thres_idx: {}."
-                     " sorted_value: {}".format(total_values, self.local_variance, thres_idx, sorted_value))
+        LOGGER.debug(
+            "sorted_value: {}, thres_idx: {}, len_sort_value: {}".format(sorted_value, thres_idx, len(sorted_value)))
         self.value_threshold = sorted_value[thres_idx]
 
 
@@ -252,25 +299,29 @@ class UniqueValueFilter(FilterMethod):
         max_values = self.statics_obj.get_max()
         min_values = self.statics_obj.get_min()
 
-        for col_name in self.cols:
+        for col_idx in self.cols:
+            col_name = self.header[col_idx]
             min_max_diff = math.fabs(max_values[col_name] - min_values[col_name])
             if min_max_diff >= self.eps:
-                left_cols[col_name] = True
+                left_cols[col_idx] = True
             else:
-                left_cols[col_name] = False
+                left_cols[col_idx] = False
             self.feature_values[col_name] = min_max_diff
 
         self.left_cols = left_cols
         self.left_cols = self._keep_one_feature(pick_high=False)
+        self._reset_data_instances(data_instances)
         return left_cols
 
     def get_param_obj(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = self._generate_col_name_dict()
+        cols = [str(i) for i in self.cols]
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=cols,
+                                                            left_cols=left_col_name_dict)
 
         result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=self.feature_values,
                                                                          left_cols=left_col_obj,
-                                                                         filter_name=consts.UNIQUE_VALUE)
+                                                                         filter_name="UNIQUE FILTER")
         return result
 
     def get_meta_obj(self):
@@ -287,7 +338,7 @@ class IVValueSelectFilter(FilterMethod):
     param : IVSelectionParam object,
             Parameters that user set.
 
-    cols : list of string
+    cols : list of int
             Specify header of guest variances.
 
     binning_obj : Binning object
@@ -302,11 +353,15 @@ class IVValueSelectFilter(FilterMethod):
 
     def fit(self, data_instances=None):
         # fit guest
+        self._init_cols(data_instances)
         guest_binning_result = self.binning_obj.binning_result
         for col_name, iv_attr in guest_binning_result.items():
+            col_idx = self.header.index(col_name)
+            if col_idx not in self.cols:
+                continue
             self.feature_values[col_name] = iv_attr.iv
 
-        self.left_cols = self.filter_one_party(self.feature_values, True, self.value_threshold)
+        self.left_cols = self.filter_one_party(self.feature_values, True, self.value_threshold, self.header)
         self.left_cols = self._keep_one_feature()
 
         for host_name, host_bin_result in self.binning_obj.host_results.items():
@@ -321,25 +376,50 @@ class IVValueSelectFilter(FilterMethod):
         return self.left_cols
 
     def get_param_obj(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = self._generate_col_name_dict()
+        cols = [str(i) for i in self.cols]
+
         host_obj = {}
+        LOGGER.debug("In get_param_obj, host_cols: {}".format(self.host_cols))
         for host_name, host_left_cols in self.host_cols.items():
-            host_cols = list(host_left_cols.keys())
-            left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
-                                                                left_cols=host_left_cols)
-            host_obj[host_name] = left_col_obj
+            host_cols = list(map(str, host_left_cols.keys()))
+
+            # new_host_left_cols = {}
+            # for k, v in host_left_cols.items():
+            #     new_host_left_cols[str(k)] = v
+
+            host_left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
+                                                                     left_cols=host_left_cols)
+            host_obj[host_name] = host_left_col_obj
+
+            for host_col, is_left in host_left_cols.items():
+                new_col_name = '.'.join([host_name, str(host_col)])
+                cols.append(new_col_name)
+                left_col_name_dict[new_col_name] = is_left
+
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=cols,
+                                                            left_cols=left_col_name_dict)
 
         host_value_objs = {}
         for host_name, host_feature_values in self.host_feature_values.items():
             host_feature_value_obj = feature_selection_param_pb2.FeatureValue(feature_values=host_feature_values)
             host_value_objs[host_name] = host_feature_value_obj
 
-        result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=self.feature_values,
+        # Combine both guest and host results
+        total_feature_values = {}
+        for col_name, col_value in self.feature_values.items():
+            total_feature_values[col_name] = col_value
+
+        for host_name, host_feature_values in self.host_feature_values.items():
+            for host_col, host_feature_value in host_feature_values.items():
+                new_col_name = '.'.join([host_name, str(host_col)])
+                total_feature_values[new_col_name] = host_feature_value
+
+        result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=total_feature_values,
                                                                          host_feature_values=host_value_objs,
                                                                          left_cols=left_col_obj,
                                                                          host_left_cols=host_obj,
-                                                                         filter_name=consts.IV_VALUE_THRES)
+                                                                         filter_name="IV_VALUE_FILTER")
         return result
 
     def get_meta_obj(self):
@@ -374,55 +454,83 @@ class IVPercentileFilter(FilterMethod):
     def fit(self, data_instances=None):
 
         # fit guest
+        self._init_cols(data_instances)
+
         guest_binning_result = self.binning_obj.binning_result
+        LOGGER.debug("In iv percentile, guest_binning_result: {}".format(guest_binning_result))
         for col_name, iv_attr in guest_binning_result.items():
-            if col_name not in self.cols:
+            col_idx = self.header.index(col_name)
+            if col_idx not in self.cols:
                 continue
             self.feature_values[col_name] = iv_attr.iv
 
+        LOGGER.debug("self.feature_values: {}".format(self.feature_values))
+
         host_feature_values = {}
+
         for host_name, host_bin_result in self.binning_obj.host_results.items():
             if host_name not in self.host_cols:
                 continue
             else:
                 host_to_select_cols = self.host_cols.get(host_name)
             tmp_host_value = {}
-            for host_col_name, host_iv_attr in host_bin_result.items():
-                if host_col_name not in host_to_select_cols:
+            for host_col_idx, host_iv_attr in host_bin_result.items():
+                if int(host_col_idx) not in host_to_select_cols:
                     continue
-                tmp_host_value[host_col_name] = host_iv_attr.iv
+                tmp_host_value[host_col_idx] = host_iv_attr.iv
             host_feature_values[host_name] = tmp_host_value
             self.host_feature_values = host_feature_values
-
         union_filter = UnionPercentileFilter(local_variance=self.feature_values,
                                              host_variances=host_feature_values,
                                              percentile=self.percentile_thres,
-                                             pick_high=True)
+                                             pick_high=True,
+                                             header=self.header)
         local_left_cols, host_left_cols = union_filter.fit(data_instances)
         self.left_cols = local_left_cols
         self.host_cols = host_left_cols
         return self.left_cols
 
     def get_param_obj(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = self._generate_col_name_dict()
+        cols = [str(i) for i in self.cols]
+
         host_obj = {}
         for host_name, host_left_cols in self.host_cols.items():
             host_cols = list(host_left_cols.keys())
-            left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
-                                                                left_cols=host_left_cols)
-            host_obj[host_name] = left_col_obj
+            host_left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
+                                                                     left_cols=host_left_cols)
+            for host_col, is_left in host_left_cols.items():
+                new_col_name = '.'.join([host_name, str(host_col)])
+                cols.append(new_col_name)
+                left_col_name_dict[new_col_name] = is_left
+
+            host_obj[host_name] = host_left_col_obj
+
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=cols,
+                                                            left_cols=left_col_name_dict)
 
         host_value_objs = {}
         for host_name, host_feature_values in self.host_feature_values.items():
             host_feature_value_obj = feature_selection_param_pb2.FeatureValue(feature_values=host_feature_values)
             host_value_objs[host_name] = host_feature_value_obj
 
-        result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=self.feature_values,
+        # Combine both guest and host results
+        total_feature_values = {}
+        for col_name, col_value in self.feature_values.items():
+            total_feature_values[col_name] = col_value
+
+        for host_name, host_feature_values in self.host_feature_values.items():
+            for host_col, host_feature_value in host_feature_values.items():
+                new_col_name = '.'.join([host_name, str(host_col)])
+                total_feature_values[new_col_name] = host_feature_value
+
+        result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=total_feature_values,
                                                                          host_feature_values=host_value_objs,
                                                                          left_cols=left_col_obj,
                                                                          host_left_cols=host_obj,
-                                                                         filter_name=consts.IV_PERCENTILE)
+                                                                         filter_name='IV_PERCENTILE')
+        json_result = json_format.MessageToJson(result, including_default_value_fields=True)
+        LOGGER.debug("json_result: {}".format(json_result))
         return result
 
     def get_meta_obj(self):
@@ -461,30 +569,38 @@ class CoeffOfVarValueFilter(FilterMethod):
         std_var = self.statics_obj.get_std_variance(self.cols_dict)
         mean_value = self.statics_obj.get_mean(self.cols_dict)
         for col_name, s_v in std_var.items():
+            col_idx = self.header.index(col_name)
             mean = mean_value[col_name]
             coeff_of_var = math.fabs(s_v / mean)
+            LOGGER.debug("In var_coe, col_name: {}, col_idx: {}, mean: {}, std: {}, coeff_of_var: {}".format(
+                col_name, col_idx, mean, s_v, coeff_of_var
+            ))
+
             self.feature_values[col_name] = coeff_of_var
             if coeff_of_var >= self.value_threshold:
-                self.left_cols[col_name] = True
+                self.left_cols[col_idx] = True
             else:
-                self.left_cols[col_name] = False
+                self.left_cols[col_idx] = False
 
         self.left_cols = self._keep_one_feature()
-
+        self._reset_data_instances(data_instances)
         return self.left_cols
 
     def get_param_obj(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = self._generate_col_name_dict()
+        cols = [str(i) for i in self.cols]
+
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=cols,
+                                                            left_cols=left_col_name_dict)
 
         result = feature_selection_param_pb2.FeatureSelectionFilterParam(
             feature_values=self.feature_values,
             left_cols=left_col_obj,
-            filter_name=consts.COEFFICIENT_OF_VARIATION_VALUE_THRES)
+            filter_name="COEFFICIENT OF VARIANCE")
         return result
 
     def get_meta_obj(self):
-        result = feature_selection_meta_pb2.CoeffOfVarSelectionMeta(value_threshold=self.value_threshold)
+        result = feature_selection_meta_pb2.VarianceOfCoeSelectionMeta(value_threshold=self.value_threshold)
         return result
 
 
@@ -497,7 +613,7 @@ class OutlierFilter(FilterMethod):
     params : OutlierColsSelectionParam object,
             Parameters that user set.
 
-    cols : int or list of int
+    cols : list of int
             Specify which column(s) need to apply this filter method. -1 means do binning for all columns.
 
     """
@@ -509,32 +625,37 @@ class OutlierFilter(FilterMethod):
         self.cols = cols
 
     def fit(self, data_instances, bin_param=None):
-        if bin_param is None:  # Use default setting
-            bin_param = FeatureBinningParam()
 
-        bin_obj = QuantileBinning(bin_param)
-        query_result = bin_obj.query_quantile_point(data_instances, self.cols, self.percentile)
+        self._init_cols(data_instances)
+        # bin_obj = QuantileBinning(bin_param)
+        summary_obj = MultivariateStatisticalSummary(data_instances, self.cols)
+        query_result = summary_obj.get_quantile_point(self.percentile)
+        # query_result = bin_obj.query_quantile_point(data_instances, self.cols, self.percentile)
         for col_name, feature_value in query_result.items():
+            col_idx = self.header.index(col_name)
             self.feature_values[col_name] = feature_value
             if feature_value < self.upper_threshold:
-                self.left_cols[col_name] = True
+                self.left_cols[col_idx] = True
             else:
-                self.left_cols[col_name] = False
+                self.left_cols[col_idx] = False
 
         self.left_cols = self._keep_one_feature()
+        self._reset_data_instances(data_instances)
         return self.left_cols
 
     def get_param_obj(self):
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.cols,
-                                                            left_cols=self.left_cols)
+        left_col_name_dict = self._generate_col_name_dict()
+        cols = [str(i) for i in self.cols]
+
+        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=cols,
+                                                            left_cols=left_col_name_dict)
 
         result = feature_selection_param_pb2.FeatureSelectionFilterParam(feature_values=self.feature_values,
                                                                          left_cols=left_col_obj,
-                                                                         filter_name=consts.OUTLIER_COLS)
+                                                                         filter_name="OUTLIER")
         return result
 
     def get_meta_obj(self):
         result = feature_selection_meta_pb2.OutlierColsSelectionMeta(percentile=self.percentile,
                                                                      upper_threshold=self.upper_threshold)
         return result
-

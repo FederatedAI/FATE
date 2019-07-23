@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-selection-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x87\x04\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x0c\n\x04\x63ols\x18\x03 \x03(\t\x12N\n\x0bunique_meta\x18\x04 \x01(\x0b\x32\x39.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMeta\x12U\n\riv_value_meta\x18\x05 \x01(\x0b\x32>.com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMeta\x12_\n\x12iv_percentile_meta\x18\x06 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMeta\x12S\n\x08\x63oe_meta\x18\x07 \x01(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMeta\x12X\n\x0coutlier_meta\x18\x08 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMeta\"\x1e\n\x0fUniqueValueMeta\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"/\n\x14IVValueSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"9\n\x19IVPercentileSelectionMeta\x12\x1c\n\x14percentile_threshold\x18\x01 \x01(\x01\"2\n\x17\x43oeffOfVarSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"G\n\x18OutlierColsSelectionMeta\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x1c\x66\x65\x61ture-selection-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xa5\x04\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\x12\x0c\n\x04\x63ols\x18\x03 \x03(\t\x12N\n\x0bunique_meta\x18\x04 \x01(\x0b\x32\x39.com.webank.ai.fate.common.mlmodel.buffer.UniqueValueMeta\x12U\n\riv_value_meta\x18\x05 \x01(\x0b\x32>.com.webank.ai.fate.common.mlmodel.buffer.IVValueSelectionMeta\x12_\n\x12iv_percentile_meta\x18\x06 \x01(\x0b\x32\x43.com.webank.ai.fate.common.mlmodel.buffer.IVPercentileSelectionMeta\x12_\n\x11variance_coe_meta\x18\x07 \x01(\x0b\x32\x44.com.webank.ai.fate.common.mlmodel.buffer.VarianceOfCoeSelectionMeta\x12X\n\x0coutlier_meta\x18\x08 \x01(\x0b\x32\x42.com.webank.ai.fate.common.mlmodel.buffer.OutlierColsSelectionMeta\x12\x10\n\x08need_run\x18\t \x01(\x08\"\x1e\n\x0fUniqueValueMeta\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"/\n\x14IVValueSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"9\n\x19IVPercentileSelectionMeta\x12\x1c\n\x14percentile_threshold\x18\x01 \x01(\x01\"5\n\x1aVarianceOfCoeSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"G\n\x18OutlierColsSelectionMeta\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3')
 )
 
 
@@ -75,7 +75,7 @@ _FEATURESELECTIONMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='coe_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.coe_meta', index=6,
+      name='variance_coe_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.variance_coe_meta', index=6,
       number=7, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -85,6 +85,13 @@ _FEATURESELECTIONMETA = _descriptor.Descriptor(
       name='outlier_meta', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.outlier_meta', index=7,
       number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureSelectionMeta.need_run', index=8,
+      number=9, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -101,7 +108,7 @@ _FEATURESELECTIONMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=75,
-  serialized_end=594,
+  serialized_end=624,
 )
 
 
@@ -131,8 +138,8 @@ _UNIQUEVALUEMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=596,
-  serialized_end=626,
+  serialized_start=626,
+  serialized_end=656,
 )
 
 
@@ -162,8 +169,8 @@ _IVVALUESELECTIONMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=628,
-  serialized_end=675,
+  serialized_start=658,
+  serialized_end=705,
 )
 
 
@@ -193,20 +200,20 @@ _IVPERCENTILESELECTIONMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=677,
-  serialized_end=734,
+  serialized_start=707,
+  serialized_end=764,
 )
 
 
-_COEFFOFVARSELECTIONMETA = _descriptor.Descriptor(
-  name='CoeffOfVarSelectionMeta',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMeta',
+_VARIANCEOFCOESELECTIONMETA = _descriptor.Descriptor(
+  name='VarianceOfCoeSelectionMeta',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.VarianceOfCoeSelectionMeta',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMeta.value_threshold', index=0,
+      name='value_threshold', full_name='com.webank.ai.fate.common.mlmodel.buffer.VarianceOfCoeSelectionMeta.value_threshold', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
@@ -224,8 +231,8 @@ _COEFFOFVARSELECTIONMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=736,
-  serialized_end=786,
+  serialized_start=766,
+  serialized_end=819,
 )
 
 
@@ -262,20 +269,20 @@ _OUTLIERCOLSSELECTIONMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=788,
-  serialized_end=859,
+  serialized_start=821,
+  serialized_end=892,
 )
 
 _FEATURESELECTIONMETA.fields_by_name['unique_meta'].message_type = _UNIQUEVALUEMETA
 _FEATURESELECTIONMETA.fields_by_name['iv_value_meta'].message_type = _IVVALUESELECTIONMETA
 _FEATURESELECTIONMETA.fields_by_name['iv_percentile_meta'].message_type = _IVPERCENTILESELECTIONMETA
-_FEATURESELECTIONMETA.fields_by_name['coe_meta'].message_type = _COEFFOFVARSELECTIONMETA
+_FEATURESELECTIONMETA.fields_by_name['variance_coe_meta'].message_type = _VARIANCEOFCOESELECTIONMETA
 _FEATURESELECTIONMETA.fields_by_name['outlier_meta'].message_type = _OUTLIERCOLSSELECTIONMETA
 DESCRIPTOR.message_types_by_name['FeatureSelectionMeta'] = _FEATURESELECTIONMETA
 DESCRIPTOR.message_types_by_name['UniqueValueMeta'] = _UNIQUEVALUEMETA
 DESCRIPTOR.message_types_by_name['IVValueSelectionMeta'] = _IVVALUESELECTIONMETA
 DESCRIPTOR.message_types_by_name['IVPercentileSelectionMeta'] = _IVPERCENTILESELECTIONMETA
-DESCRIPTOR.message_types_by_name['CoeffOfVarSelectionMeta'] = _COEFFOFVARSELECTIONMETA
+DESCRIPTOR.message_types_by_name['VarianceOfCoeSelectionMeta'] = _VARIANCEOFCOESELECTIONMETA
 DESCRIPTOR.message_types_by_name['OutlierColsSelectionMeta'] = _OUTLIERCOLSSELECTIONMETA
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -307,12 +314,12 @@ IVPercentileSelectionMeta = _reflection.GeneratedProtocolMessageType('IVPercenti
   ))
 _sym_db.RegisterMessage(IVPercentileSelectionMeta)
 
-CoeffOfVarSelectionMeta = _reflection.GeneratedProtocolMessageType('CoeffOfVarSelectionMeta', (_message.Message,), dict(
-  DESCRIPTOR = _COEFFOFVARSELECTIONMETA,
+VarianceOfCoeSelectionMeta = _reflection.GeneratedProtocolMessageType('VarianceOfCoeSelectionMeta', (_message.Message,), dict(
+  DESCRIPTOR = _VARIANCEOFCOESELECTIONMETA,
   __module__ = 'feature_selection_meta_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.CoeffOfVarSelectionMeta)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.VarianceOfCoeSelectionMeta)
   ))
-_sym_db.RegisterMessage(CoeffOfVarSelectionMeta)
+_sym_db.RegisterMessage(VarianceOfCoeSelectionMeta)
 
 OutlierColsSelectionMeta = _reflection.GeneratedProtocolMessageType('OutlierColsSelectionMeta', (_message.Message,), dict(
   DESCRIPTOR = _OUTLIERCOLSSELECTIONMETA,

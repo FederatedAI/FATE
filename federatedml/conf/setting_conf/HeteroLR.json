@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
+    "default_runtime_conf": "logistic_regression_param.json",
+    "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_lr_guest.py/HeteroLRGuest"
+        },
+        "host":
+        {
+            "program": "hetero_lr_host.py/HeteroLRHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_lr_arbiter.py/HeteroLRArbiter"
+        }
+    }
+}

@@ -23,4 +23,5 @@ option java_outer_classname = "OneHotMetaProto";
 
 message OneHotMeta {
     repeated string cols = 1;
+    bool need_run = 2;
 }

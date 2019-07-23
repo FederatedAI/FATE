@@ -1,12 +1,9 @@
 import functools
 import numpy as np
 from collections import Iterable
-from arch.api.utils import log_utils
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic import data_overview
-
-LOGGER = log_utils.getLogger()
 
 
 class MinMaxScaler(object):
@@ -14,9 +11,7 @@ class MinMaxScaler(object):
     Transforms features by scaling each feature to a given range,e.g.between minimum and maximum. The transformation is given by:
             X_scale = (X - X.min) / (X.max - X.min), while X.min is the minimum value of feature, and X.max is the maximum
     """
-
-    def __init__(self, mode='normal', area='all', scale_column_idx=None, feat_upper=None, feat_lower=None,
-                 out_upper=None, out_lower=None):
+    def __init__(self, mode='normal', area='all', feat_upper=None, feat_lower=None, out_upper=None, out_lower=None):
         """
         Parameters
         ----------
@@ -35,19 +30,10 @@ class MinMaxScaler(object):
         """
         self.mode = mode
         self.area = area
-        self.scale_column_idx = scale_column_idx
         self.feat_upper = feat_upper
         self.feat_lower = feat_lower
         self.out_upper = out_upper
         self.out_lower = out_lower
-
-        self.data_shape = None
-
-    def __get_data_shape(self, data):
-        if not self.data_shape:
-            self.data_shape = data_overview.get_features_shape(data)
-
-        return self.data_shape
 
     def __get_min_max_value(self, data):
         """
@@ -66,7 +52,7 @@ class MinMaxScaler(object):
 
         if min_value is None and max_value is not None:
             min_value_dict = summary_obj.get_min()
-            min_value_list = [min_value_dict[key] for key in header]
+            min_value_list = [ min_value_dict[key] for key in header ]
 
             if isinstance(max_value, Iterable):
                 if len(list(max_value)) != len(min_value_list):
@@ -134,12 +120,46 @@ class MinMaxScaler(object):
         if self.area not in support_area:
             raise ValueError("Unsupport area:{}".format(self.area))
 
+        check_value_list = [self.feat_upper, self.feat_lower]
+        for check_value in check_value_list:
+            if check_value is not None:
+                if self.area == 'all':
+                    if not isinstance(check_value, int) and not isinstance(check_value, float):
+                        raise ValueError(
+                            "for area is all, {} should be int or float, not {}".format(check_value, type(check_value)))
+
+                elif self.area == 'col':
+                    if not isinstance(check_value, Iterable):
+                        raise ValueError(
+                            "for area is col, {} should be Iterable, not {}".format(check_value, type(check_value)))
+
         check_value_list = [self.out_upper, self.out_lower]
         for check_value in check_value_list:
             if check_value is not None:
                 if not isinstance(check_value, int) and not isinstance(check_value, float):
                     raise ValueError(
                         "for area is all, {} should be int or float, not {}".format(check_value, type(check_value)))
+
+        if self.feat_upper is not None and self.feat_lower is not None:
+            if self.area == 'all':
+                if float(self.feat_upper) < float(self.feat_lower):
+                    raise ValueError("for area is all, feat_upper should not less than feat_lower, but {} < {}".format(
+                        self.feat_upper, self.feat_lower))
+            elif self.area == 'col':
+                if len(list(self.feat_upper)) != len(list(self.feat_lower)):
+                    raise ValueError(
+                        "for area is col, sizeof feat_upper should equal to the sizeof feat_lower, but {} != {}".format(
+                            len(list(self.feat_upper)), len(list(self.feat_lower))))
+
+                for i in range(len(list(self.feat_upper))):
+                    if float(self.feat_upper[i]) < float(self.feat_lower[i]):
+                        raise ValueError(
+                            "for area is col, feat_upper[{}] should not less than feat_lower[{}], but {} < {}".format(i,
+                                                                                                                      i,
+                                                                                                                      self.feat_upper[
+                                                                                                                          i],
+                                                                                                                      self.feat_lower[
+                                                                                                                          i]))
 
         if self.out_upper is not None and self.out_lower is not None:
             if float(self.out_upper) < float(self.out_lower):
@@ -148,12 +168,11 @@ class MinMaxScaler(object):
                                                                                                     self.out_lower))
 
     @staticmethod
-    def __scale_with_cols_for_instance(data, max_value_list, min_value_list, scale_value_list, out_lower, out_scale,
-                                       process_cols_list):
+    def __scale_with_cols_for_instance(data, max_value_list, min_value_list, scale_value_list, out_lower, out_scale):
         """
         Scale operator for each column. The input data type is data_instance
         """
-        for i in process_cols_list:
+        for i in range(data.features.shape[0]):
             if data.features[i] > max_value_list[i]:
                 value = 1
             elif data.features[i] < min_value_list[i]:
@@ -189,57 +208,34 @@ class MinMaxScaler(object):
         if np.abs(out_scale - 0) < 1e-6 or out_scale < 0:
             raise ValueError("out_scale should large than 0")
 
-        data_shape = self.__get_data_shape(data)
-        if self.area == 'col':
-            if isinstance(self.scale_column_idx, list):
-                max_col_idx = max(self.scale_column_idx)
-                if max_col_idx >= data_shape:
-                    raise ValueError(
-                        "max column index in area is:{}, should less than data shape:{}".format(max_col_idx, data_shape))
-                self.scale_column_idx.sort()
-            else:
-                LOGGER.warning("scale_column_idx should be a list, but not:{}, set scale column to all columns".format(
-                    type(self.scale_column_idx)))
-                self.scale_column_idx = [i for i in range(data_shape)]
-        else:
-            self.scale_column_idx = [i for i in range(data_shape)]
-
-        self.scale_column_idx = list(set(self.scale_column_idx))
-
         cols_transform_value = []
         data_scale = []
 
         for i in range(len(max_value)):
             scale = max_value[i] - min_value[i]
-            if scale < 0:
+            if np.abs(scale - 0) < 1e-6 or scale < 0:
                 raise ValueError("scale value should large than 0")
-            elif np.abs(scale - 0) < 1e-6:
-                scale = 1
             data_scale.append(scale)
             cols_transform_value.append((min_value[i], max_value[i], out_lower, out_upper))
 
         f = functools.partial(MinMaxScaler.__scale_with_cols_for_instance, max_value_list=max_value,
                               min_value_list=min_value, scale_value_list=data_scale, out_lower=out_lower,
-                              out_scale=out_scale, process_cols_list=self.scale_column_idx)
+                              out_scale=out_scale)
         fit_data = data.mapValues(f)
-        min_max_scale_cols_conf = [cols_transform_value, self.scale_column_idx]
 
-        return fit_data, min_max_scale_cols_conf
+        return fit_data, cols_transform_value
 
-    def transform(self, data, scale_cols_conf):
+    def transform(self, data, cols_transform_value):
         """
         Transform input data using min-max scale with fit results
         Parameters
         ----------
         data: data_instance, input data
-        scale_cols_conf: list of tuple, the return of fit function. Each tuple include minimum, maximum, output_minimum, output maximum
+        cols_transform_value: list of tuple, the return of fit function. Each tuple include minimum, maximum, output_minimum, output maximum
         Returns
         ----------
         transform_data:data_instance, data after transform
         """
-        cols_transform_value = scale_cols_conf[0]
-        scale_column_idx = scale_cols_conf[1]
-
         max_value = []
         min_value = []
         out_upper = []
@@ -253,11 +249,8 @@ class MinMaxScaler(object):
             out_upper.append(col[3])
 
             scale = col[1] - col[0]
-            if scale < 0:
+            if np.abs(scale - 0) < 1e-6 or scale < 0:
                 raise ValueError("scale value should large than 0")
-            elif np.abs(scale - 0) < 1e-6:
-                scale = 1
-
             data_scale.append(scale)
 
         # check if each value of out_upper or out_lower is same
@@ -274,7 +267,7 @@ class MinMaxScaler(object):
 
         f = functools.partial(MinMaxScaler.__scale_with_cols_for_instance, max_value_list=max_value,
                               min_value_list=min_value, scale_value_list=data_scale, out_lower=out_lower[0],
-                              out_scale=out_scale, process_cols_list=scale_column_idx)
+                              out_scale=out_scale)
 
         fit_data = data.mapValues(f)
         return fit_data

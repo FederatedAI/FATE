@@ -37,5 +37,6 @@ message BoostingTreeModelMeta {
     double tol = 9;
     int32 num_classes = 10;
     repeated string classes_ = 11;
+    bool need_run = 12;
 }
 

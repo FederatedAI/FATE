@@ -19,29 +19,36 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-param.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x12onehot-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x91\x01\n\x07\x43olDict\x12T\n\nencode_map\x18\x01 \x03(\x0b\x32@.com.webank.ai.fate.common.mlmodel.buffer.ColDict.EncodeMapEntry\x1a\x30\n\x0e\x45ncodeMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xc3\x01\n\x0bOneHotParam\x12R\n\x07\x63ol_map\x18\x01 \x03(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.OneHotParam.ColMapEntry\x1a`\n\x0b\x43olMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.ColDict:\x02\x38\x01\x42\x12\x42\x10OneHotParamProtob\x06proto3')
+  serialized_pb=_b('\n\x12onehot-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"G\n\x07\x43olsMap\x12\x0e\n\x06values\x18\x01 \x03(\t\x12\x19\n\x11\x65ncoded_variables\x18\x02 \x03(\t\x12\x11\n\tdata_type\x18\x03 \x01(\t\"\xc3\x01\n\x0bOneHotParam\x12R\n\x07\x63ol_map\x18\x01 \x03(\x0b\x32\x41.com.webank.ai.fate.common.mlmodel.buffer.OneHotParam.ColMapEntry\x1a`\n\x0b\x43olMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.ColsMap:\x02\x38\x01\x42\x12\x42\x10OneHotParamProtob\x06proto3')
 )
 
 
 
 
-_COLDICT_ENCODEMAPENTRY = _descriptor.Descriptor(
-  name='EncodeMapEntry',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.ColDict.EncodeMapEntry',
+_COLSMAP = _descriptor.Descriptor(
+  name='ColsMap',
+  full_name='com.webank.ai.fate.common.mlmodel.buffer.ColsMap',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColDict.EncodeMapEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='values', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColsMap.values', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColDict.EncodeMapEntry.value', index=1,
-      number=2, type=9, cpp_type=9, label=1,
+      name='encoded_variables', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColsMap.encoded_variables', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='data_type', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColsMap.data_type', index=2,
+      number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -52,44 +59,14 @@ _COLDICT_ENCODEMAPENTRY = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=162,
-  serialized_end=210,
-)
-
-_COLDICT = _descriptor.Descriptor(
-  name='ColDict',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.ColDict',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='encode_map', full_name='com.webank.ai.fate.common.mlmodel.buffer.ColDict.encode_map', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[_COLDICT_ENCODEMAPENTRY, ],
-  enum_types=[
-  ],
   options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=65,
-  serialized_end=210,
+  serialized_start=64,
+  serialized_end=135,
 )
 
 
@@ -126,8 +103,8 @@ _ONEHOTPARAM_COLMAPENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=312,
-  serialized_end=408,
+  serialized_start=237,
+  serialized_end=333,
 )
 
 _ONEHOTPARAM = _descriptor.Descriptor(
@@ -156,33 +133,23 @@ _ONEHOTPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=213,
-  serialized_end=408,
+  serialized_start=138,
+  serialized_end=333,
 )
 
-_COLDICT_ENCODEMAPENTRY.containing_type = _COLDICT
-_COLDICT.fields_by_name['encode_map'].message_type = _COLDICT_ENCODEMAPENTRY
-_ONEHOTPARAM_COLMAPENTRY.fields_by_name['value'].message_type = _COLDICT
+_ONEHOTPARAM_COLMAPENTRY.fields_by_name['value'].message_type = _COLSMAP
 _ONEHOTPARAM_COLMAPENTRY.containing_type = _ONEHOTPARAM
 _ONEHOTPARAM.fields_by_name['col_map'].message_type = _ONEHOTPARAM_COLMAPENTRY
-DESCRIPTOR.message_types_by_name['ColDict'] = _COLDICT
+DESCRIPTOR.message_types_by_name['ColsMap'] = _COLSMAP
 DESCRIPTOR.message_types_by_name['OneHotParam'] = _ONEHOTPARAM
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-ColDict = _reflection.GeneratedProtocolMessageType('ColDict', (_message.Message,), dict(
-
-  EncodeMapEntry = _reflection.GeneratedProtocolMessageType('EncodeMapEntry', (_message.Message,), dict(
-    DESCRIPTOR = _COLDICT_ENCODEMAPENTRY,
-    __module__ = 'onehot_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.ColDict.EncodeMapEntry)
-    ))
-  ,
-  DESCRIPTOR = _COLDICT,
+ColsMap = _reflection.GeneratedProtocolMessageType('ColsMap', (_message.Message,), dict(
+  DESCRIPTOR = _COLSMAP,
   __module__ = 'onehot_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.ColDict)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.ColsMap)
   ))
-_sym_db.RegisterMessage(ColDict)
-_sym_db.RegisterMessage(ColDict.EncodeMapEntry)
+_sym_db.RegisterMessage(ColsMap)
 
 OneHotParam = _reflection.GeneratedProtocolMessageType('OneHotParam', (_message.Message,), dict(
 
@@ -202,8 +169,6 @@ _sym_db.RegisterMessage(OneHotParam.ColMapEntry)
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\020OneHotParamProto'))
-_COLDICT_ENCODEMAPENTRY.has_options = True
-_COLDICT_ENCODEMAPENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 _ONEHOTPARAM_COLMAPENTRY.has_options = True
 _ONEHOTPARAM_COLMAPENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 # @@protoc_insertion_point(module_scope)

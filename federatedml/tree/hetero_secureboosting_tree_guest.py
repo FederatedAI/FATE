@@ -25,13 +25,17 @@
 # HeteroSecureBoostingGuest 
 # =============================================================================
 
-from federatedml.feature.quantile import Quantile
-from federatedml.util import ClassifyLabelChecker
-from federatedml.util import RegressionLabelChecker
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+#from federatedml.feature.quantile import Quantile
+from federatedml.feature.binning.quantile_binning import QuantileBinning
+from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
+from federatedml.util.classfiy_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim import DiffConverge
 from federatedml.tree import BoostingTree
-from federatedml.util import HeteroSecureBoostingTreeTransferVariable
+from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from numpy import random
 from federatedml.secureprotol import PaillierEncrypt
@@ -53,17 +57,19 @@ from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from arch.api.utils import log_utils
 import numpy as np
 import functools
 from operator import itemgetter
-from arch.api.utils import log_utils
+from numpy import random
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroSecureBoostingTreeGuest(BoostingTree):
-    def __init__(self, secureboost_tree_param):
-        super(HeteroSecureBoostingTreeGuest, self).__init__(secureboost_tree_param)
+    def __init__(self):
+        # super(HeteroSecureBoostingTreeGuest, self).__init__(secureboost_tree_param)
+        super(HeteroSecureBoostingTreeGuest, self).__init__()
 
         self.convegence = None
         self.y = None
@@ -78,7 +84,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.feature_num = None
         self.encrypter = None
         self.grad_and_hess = None
-        self.flowid = 0
+        # self.flowid = 0
         self.tree_dim = 1
         self.tree_meta = None
         self.trees_ = []
@@ -88,6 +94,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.encrypted_mode_calculator = None
         self.runtime_idx = 0
         self.feature_importances_ = {}
+        self.role = consts.GUEST
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
 
@@ -123,10 +130,15 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = \
-            Quantile.convert_feature_to_bin(
-                data_instance, self.quantile_method, self.bin_num,
-                self.bin_gap, self.bin_sample_num)
+        param_obj = FeatureBinningParam(bin_num=self.bin_num)
+        binning_obj = QuantileBinning(param_obj)
+        binning_obj.fit_split_points(data_instance)
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = binning_obj.convert_feature_to_bin(data_instance)
+        LOGGER.debug("bin_split_points is {}".format(self.bin_split_points))
+        # self.data_bin, self.bin_split_points, self.bin_sparse_points = \
+        #    Quantile.convert_feature_to_bin(
+        #        data_instance, self.quantile_method, self.bin_num,
+        #        self.bin_gap, self.bin_sample_num)
         LOGGER.info("convert feature to bins over")
 
     def set_y(self):
@@ -134,9 +146,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.y = self.data_bin.mapValues(lambda instance: instance.label)
         self.check_label()
 
+    """
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.flowid = flowid
+    """
 
     def set_runtime_idx(self, runtime_idx):
         self.runtime_idx = runtime_idx
@@ -238,7 +252,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 y_predict = self.F.mapValues(lambda val: loss_method.predict(val))
                 loss = loss_method.compute_loss(self.y, y_predict)
 
-        return loss
+        return float(loss)
 
     def get_grad_and_hess(self, tree_idx):
         LOGGER.info("get grad and hess of tree {}".format(tree_idx))
@@ -249,7 +263,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_convergence(self, loss):
         LOGGER.info("check convergence")
         if self.convegence is None:
-            self.convegence = DiffConverge()
+            self.convegence = DiffConverge(eps=self.tol)
 
         return self.convegence.is_converge(loss)
 
@@ -284,6 +298,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def fit(self, data_inst):
         LOGGER.info("begin to train secureboosting guest model")
+        self.gen_feature_fid_mapping(data_inst.schema)
         data_inst = self.data_alignment(data_inst)
         self.convert_feature_to_bin(data_inst)
         self.set_y()
@@ -291,6 +306,12 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.generate_encrypter()
 
         self.sync_tree_dim()
+
+        self.callback_meta("loss",
+                           "train",
+                           MetricMeta(name="train",
+                                      metric_type="LOSS",
+                                      extra_metas={"unit_name": "iters"}))
 
         for i in range(self.num_trees):
             # n_tree = []
@@ -322,12 +343,24 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(i, loss))
 
+            LOGGER.debug("loss type is {}".format(type(loss)))
+            self.callback_metric("loss",
+                                 "train",
+                                 [Metric(i, loss)])
+
             if self.n_iter_no_change is True:
                 if self.check_convergence(loss):
                     self.sync_stop_flag(True, i)
                     break
                 else:
                     self.sync_stop_flag(False, i)
+        
+        LOGGER.debug("history loss is {}".format(min(self.history_loss)))
+        self.callback_meta("loss",
+                           "train",
+                           MetricMeta(name="train",
+                                      metric_type="LOSS",
+                                      extra_metas={"Best": min(self.history_loss)}))
 
         LOGGER.info("end to train secureboosting guest model")
 
@@ -347,37 +380,36 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 predict_data = tree_inst.predict(data_inst)
                 self.update_f_value(new_f=predict_data, tidx=tidx)
 
-    def predict(self, data_inst, predict_param):
+    def predict(self, data_inst):
         LOGGER.info("start predict")
         data_inst = self.data_alignment(data_inst)
         self.predict_f_value(data_inst)
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
-            predicts = self.F.mapValues(lambda f: loss_method.predict(f))
+            if self.num_classes == 2:
+                predicts = self.F.mapValues(lambda f: float(loss_method.predict(f)))
+            else:
+                predicts = self.F.mapValues(lambda f: loss_method.predict(f).tolist())
+
         elif self.task_type == consts.REGRESSION:
             if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
                 predicts = self.F
             else:
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
+        LOGGER.debug("predict param is {}".format(self.predict_param.__dict__))
         if self.task_type == consts.CLASSIFICATION:
             classes_ = self.classes_
             if self.num_classes == 2:
-                predict_label = predicts.mapValues(
-                    lambda pred: classes_[1] if pred > predict_param.threshold else classes_[0])
+                threshold = self.predict_param.threshold
+                LOGGER.debug("predict result is {}".format(list(predicts.collect())))
+                predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, classes_[1] if pred > threshold else classes_[0], pred, {"0": 1 - pred, "1": pred}])
             else:
                 predict_label = predicts.mapValues(lambda preds: classes_[np.argmax(preds)])
-
-            if predict_param.with_proba:
-                predict_result = data_inst.join(predicts, lambda inst, predict_prob: (inst.label, predict_prob))
-            else:
-                predict_result = data_inst.mapValues(lambda inst: (inst.label, None))
-
-            predict_result = predict_result.join(predict_label,
-                                                 lambda label_prob, predict_label: (
-                                                     label_prob[0], label_prob[1], predict_label))
+                predict_result = data_inst.join(predicts, lambda inst, preds: [inst.label, classes_[np.argmax(preds)], np.max(preds), dict(zip(map(str, classes_), preds))])
+        
         elif self.task_type == consts.REGRESSION:
-            predict_result = data_inst.join(predicts, lambda inst, pred: (inst.label, pred, None))
+            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred), {"label": float(pred)}])
 
         else:
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
@@ -407,8 +439,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_meta.tol = self.tol
         model_meta.num_classes = self.num_classes
         model_meta.classes_.extend(map(str, self.classes_))
-        
-        meta_name = "HeteroSecureBoostingTreeGuest.meta"
+        model_meta.need_run = self.need_run 
+        meta_name = "HeteroSecureBoostingTreeGuestMeta"
           
         return meta_name, model_meta
 
@@ -446,8 +478,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                                                   fid=fid,
                                                                   importance=_importance))
         model_param.feature_importances.extend(feature_importance_param)
+        model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
-        param_name = "HeteroSecureBoostingTreeGuest.param"
+        param_name = "HeteroSecureBoostingTreeGuestParam"
 
         return param_name, model_param
 
@@ -456,38 +489,30 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
 
-    def save_model(self, model_table, model_namespace):
-        LOGGER.info("save model")
+    def export_model(self):
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
-        manager.save_model(buffer_type=meta_name,
-                           proto_buffer=meta_protobuf,
-                           name=model_table,
-                           namespace=model_namespace)
+        self.model_output = {meta_name: meta_protobuf,
+                             param_name: param_protobuf
+                             }
 
-        manager.save_model(buffer_type=param_name,
-                           proto_buffer=param_protobuf,
-                           name=model_table,
-                           namespace=model_namespace)
+        return self.model_output
 
-        return [(meta_name, param_name)]
-
-    def load_model(self, model_table, model_namespace):
+    def _load_model(self, model_dict):
+        model_param = None
+        model_meta = None
+        for _, value in model_dict["model"].items():
+            for model in value:
+                if model.endswith("Meta"):
+                    model_meta = value[model]
+                if model.endswith("Param"):
+                    model_param = value[model]
         LOGGER.info("load model")
-        model_meta = BoostingTreeModelMeta()
-        manager.read_model(buffer_type="HeteroSecureBoostingTreeGuest.meta",
-                           proto_buffer=model_meta,
-                           name=model_table,
-                           namespace=model_namespace)
+
         self.set_model_meta(model_meta)
-
-        model_param = BoostingTreeModelParam()
-        manager.read_model(buffer_type="HeteroSecureBoostingTreeGuest.param",
-                           proto_buffer=model_param,
-                           name=model_table,
-                           namespace=model_namespace)
         self.set_model_param(model_param)
-
+    
+    """
     def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
         LOGGER.info("evaluate data")
         predict_res = None
@@ -507,3 +532,4 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         eva = Evaluation(evaluate_param.classi_type)
         return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
                           evaluate_param.pos_label)
+    """

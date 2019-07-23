@@ -24,9 +24,10 @@ class LeastSquaredErrorLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()
-        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
+        mean = statistics.get_mean()["label"]
+        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     @staticmethod
     def predict(value):
@@ -55,9 +56,10 @@ class LeastAbsoluteErrorLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        median = statistics.get_median()
-        return y.mapValues(lambda x: np.asarray(median)), np.asarray(median)
+        median = statistics.get_median()["label"]
+        return y.mapValues(lambda x: np.asarray([median])), np.asarray([median])
 
     @staticmethod
     def predict(value):
@@ -100,9 +102,10 @@ class HuberLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()
-        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
+        mean = statistics.get_mean()["label"]
+        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     def __init__(self, delta):
         if delta is None:
@@ -136,9 +139,10 @@ class FairLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()
-        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
+        mean = statistics.get_mean()["label"]
+        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     def __init__(self, c):
         if c is None:
@@ -173,9 +177,10 @@ class LogCoshLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
         mean = statistics.get_mean()
-        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
+        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     @staticmethod
     def predict(value):
@@ -201,9 +206,10 @@ class TweedieLoss(object):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
+        y_inst.schema = {"header": ["label"]}
         statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()
-        return y.mapValues(lambda x: np.asarray(mean)), np.asarray(mean)
+        mean = statistics.get_mean()["label"]
+        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     def __init__(self, rho=None):
         if rho is None:

@@ -43,6 +43,7 @@ RSA = "rsa"
 AUC = "auc"
 KS = "ks"
 LIFT = "lift"
+GAIN = "gain"
 PRECISION = "precision"
 RECALL = "recall"
 ACCURACY = "accuracy"
@@ -53,6 +54,7 @@ MEAN_SQUARED_LOG_ERROR = "mean_squared_log_error"
 MEDIAN_ABSOLUTE_ERROR = "median_absolute_error"
 R2_SCORE = "r2_score"
 ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
+ROC = "roc"
 
 # workflow
 TRAIN_DATA = "train_data"
@@ -98,6 +100,7 @@ STR = 'str'
 FLOAT = 'float'
 INT = 'int'
 ORIGIN = 'origin'
+MEDIAN = 'median'
 
 # min_max_scaler
 NORMAL = 'normal'

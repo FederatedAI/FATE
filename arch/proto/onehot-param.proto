@@ -20,10 +20,12 @@ package com.webank.ai.fate.common.mlmodel.buffer;
 option java_outer_classname = "OneHotParamProto";
 
 
-message ColDict {
-    map<string, string> encode_map = 1;
+message ColsMap {
+    repeated string values = 1;
+    repeated string encoded_variables = 2;
+    string data_type = 3;
 }
 
 message OneHotParam {
-    map<string, ColDict> col_map = 1;
+    map<string, ColsMap> col_map = 1;
 }

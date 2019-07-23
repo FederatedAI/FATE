@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/feature/hetero_feature_binning",
+    "default_runtime_conf": "feature_binning_param.json",
+    "param_class" : "federatedml/param/feature_binning_param.py/FeatureBinningParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_binning_guest.py/HeteroFeatureBinningGuest"
+        },
+        "host":
+        {
+            "program": "hetero_binning_host.py/HeteroFeatureBinningHost"
+        }
+    }
+}

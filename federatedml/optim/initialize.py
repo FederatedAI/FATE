@@ -16,9 +16,12 @@
 
 import numpy as np
 
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
+
 
 class Initializer:
-
     def zeros(self, data_shape):
         inits = np.zeros(data_shape)
         return inits
@@ -43,6 +46,9 @@ class Initializer:
     def init_model(self, model_shape, init_params):
         init_method = init_params.init_method
         fit_intercept = init_params.fit_intercept
+
+        random_seed = init_params.random_seed
+        np.random.seed(random_seed)
 
         if fit_intercept:
             if isinstance(model_shape, int):
@@ -73,4 +79,7 @@ class Initializer:
         #     coef_ = w
         #     intercept_ = 0
         # return coef_, intercept_
+
+        LOGGER.debug("Initialed model: {}".format(w))
+
         return w

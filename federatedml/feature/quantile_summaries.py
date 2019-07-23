@@ -32,13 +32,18 @@ class Stats(object):
 class QuantileSummaries(object):
     def __init__(self, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
-                 error=consts.DEFAULT_RELATIVE_ERROR):
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 abnormal_list=None):
         self.compress_thres = compress_thres
         self.head_size = head_size
         self.error = error
         self.head_sampled = []
         self.sampled = []  # list of Stats
         self.count = 0  # Total observations appeared
+        if abnormal_list is None:
+            self.abnormal_list = []
+        else:
+            self.abnormal_list = abnormal_list
 
     # insert a number
     def insert(self, x):
@@ -51,6 +56,14 @@ class QuantileSummaries(object):
             The observation that prepare to insert
 
         """
+        if x in self.abnormal_list:
+            return
+
+        try:
+            x = float(x)
+        except ValueError:
+            return
+
         self.head_sampled.append(x)
         if len(self.head_sampled) >= self.head_size:
             self._insert_head_buffer()
@@ -199,3 +212,62 @@ class QuantileSummaries(object):
         return res
 
 
+class SparseQuantileSummaries(QuantileSummaries):
+    def __init__(self, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+                 head_size=consts.DEFAULT_HEAD_SIZE,
+                 error=consts.DEFAULT_RELATIVE_ERROR,
+                 abnormal_list=None):
+        super(SparseQuantileSummaries, self).__init__(compress_thres, head_size, error, abnormal_list)
+
+        # Compare with the sparse point, static the number of each part.
+        self.smaller_num = 0
+        self.bigger_num = 0
+        self._total_count = 0
+
+    def set_total_count(self, total_count):
+        self._total_count = total_count
+
+    def insert(self, x):
+        if x < consts.FLOAT_ZERO:
+            self.smaller_num += 1
+        elif x >= consts.FLOAT_ZERO:
+            self.bigger_num += 1
+
+        super(SparseQuantileSummaries, self).insert(x)
+
+    def query(self, quantile):
+        if self.zero_lower_bound <= quantile <= self.zero_upper_bound:
+            return 0.0
+
+        non_zero_quantile = self._convert_query_percentile(quantile)
+        result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
+        return result
+
+    def merge(self, other):
+        self.smaller_num += other.smaller_num
+        self.bigger_num += other.bigger_num
+        super(SparseQuantileSummaries, self).merge(other)
+
+    def _convert_query_percentile(self, quantile):
+        zeros_count = self._total_count - self.count
+        if zeros_count == 0:
+            return quantile
+
+        if quantile < self.zero_lower_bound:
+            return (self._total_count / self.count) * quantile
+
+        return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
+        1 - self.zero_upper_bound + self.zero_lower_bound)
+
+    @property
+    def zero_lower_bound(self):
+        if self.smaller_num == 0:
+            return 0.0
+        return self.smaller_num / self._total_count
+
+    @property
+    def zero_upper_bound(self):
+        if self.bigger_num == 0:
+            return self._total_count
+        zeros_num = self._total_count - self.smaller_num - self.bigger_num
+        return (self.smaller_num + zeros_num) / self._total_count

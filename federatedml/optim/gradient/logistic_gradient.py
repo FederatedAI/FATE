@@ -30,18 +30,12 @@ LOGGER = log_utils.getLogger()
 class LogisticGradient(Gradient):
     def compute_loss(self, X, Y, coef, intercept):
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
-        # avg_loss = tot_loss / Y.shape[0]
-        # avg_loss = LogLoss.compute(X, Y, coef)
         return tot_loss
 
     def compute(self, values, coef, intercept, fit_intercept):
 
-        # LOGGER.debug("In logistic gradient compute method")
-        # print("In logistic gradient compute method")
         X, Y = self.load_data(values)
 
-        # print("Data loaded, shape of X : {}, shape of Y: {}, coef shape: {}".format(
-        #     X.shape, Y.shape, np.shape(coef)))
         batch_size = len(X)
 
         if batch_size == 0:

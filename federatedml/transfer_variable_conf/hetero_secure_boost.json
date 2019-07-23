@@ -1,0 +1,16 @@
+{
+  "HeteroSecureBoostingTreeTransferVariable": {
+    "tree_dim": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "stop_flag": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

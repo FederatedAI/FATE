@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/feature/hetero_feature_selection",
+    "default_runtime_conf": "feature_selection_param.json",
+    "param_class" : "federatedml/param/feature_selection_param.py/FeatureSelectionParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "feature_selection_guest.py/HeteroFeatureSelectionGuest"
+        },
+        "host":
+        {
+            "program": "feature_selection_host.py/HeteroFeatureSelectionHost"
+        }
+    }
+}

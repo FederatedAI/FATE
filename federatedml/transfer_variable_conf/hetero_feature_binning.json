@@ -1,0 +1,22 @@
+{
+  "HeteroFeatureBinningTransferVariable": {
+    "paillier_pubkey": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_label": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypted_bin_sum": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

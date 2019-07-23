@@ -1,0 +1,5 @@
+{
+    "OneHotEncoderParam": {
+        "cols": [0, 1]
+    }
+}

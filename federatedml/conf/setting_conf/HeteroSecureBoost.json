@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/tree/",
+    "default_runtime_conf": "boosting_tree_param.json",
+    "param_class" : "federatedml/param/boosting_tree_param.py/BoostingTreeParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_secureboosting_tree_guest.py/HeteroSecureBoostingTreeGuest"
+        },
+        "host":
+        {
+            "program": "hetero_secureboosting_tree_host.py/HeteroSecureBoostingTreeHost"
+        }
+    }
+}

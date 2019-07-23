@@ -16,10 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-################################################################################
-#
-#
-################################################################################
 
 # =============================================================================
 # Transfer Variable Generator.py
@@ -30,34 +26,23 @@ import os
 import sys
 from arch.api.utils import file_utils
 
-header = ["#!/usr/bin/env python\n# -*- coding: utf-8 -*-\n",
-          "################################################################################\n",
-          "#\n# Copyright (c) 2018, WeBank Inc. All Rights Reserved\n#\n",
-          "################################################################################\n",
-          "# =============================================================================\n",
-          "# TransferVariable Class\n# =============================================================================\n"]
-
-base_class = 'class Variable(object):\n    def __init__(self, name, auth):\n        ' + \
-             'self.name = name\n        self.auth = auth\n\nclass BaseTransferVariable(object):\n    ' + \
-             'def __init__(self, flowid=0):\n        self.flowid = flowid\n        ' + \
-             'self.define_transfer_variable()\n\n    def set_flowid(self, flowid):\n        ' + \
-             'self.flowid = flowid\n\n    def generate_transferid(self, transfer_var, *suffix):\n        ' + \
-             'if transfer_var.name.split(".", -1)[-1] not in self.__dict__:\n            ' + \
-             'raise ValueError("transfer variable not in class, please check if!!!")\n\n        ' + \
-             'transferid = transfer_var.name + "." + str(self.flowid)\n        if suffix:\n            ' + \
-             'transferid += "." + ".".join(map(str, suffix))\n        return transferid\n\n' + \
-             '    def define_transfer_variable(self):\n        pass\n'
+BASE_DIR = file_utils.get_project_base_directory()
+TRANSFER_VARIABLE_TEMPLATE = os.path.join(BASE_DIR, "federatedml", 
+                                         "util", "transfer_variable", 
+                                         "transfer_variable_template.py")
 
 
 class TransferVariableGenerator(object):
-    def __init__(self, conf_path=None, out_path=None):
-        self.conf = conf_path
-        self.out_path = out_path
+    def __init__(self):
+        pass
 
-    def write_base_class(self, writer):
-        writer.write(base_class)
+    def write_out_class(self, writer, class_name, transfer_var_dict, with_header=True):
+        if with_header:
+            global TRANSFER_VARIABLE_TEMPLATE
+            
+            with open(TRANSFER_VARIABLE_TEMPLATE, "r") as fin:
+                writer.write(fin.read())
 
-    def write_out_class(self, writer, class_name, transfer_var_dict):
         writer.write("class " + class_name + "(BaseTransferVariable):" + "\n")
 
         tag = '    '
@@ -76,75 +61,89 @@ class TransferVariableGenerator(object):
         writer.write(tag + tag + "pass\n")
         writer.flush()
 
-    def run(self):
-        if self.conf is not None and self.out_path is not None:
-            with open(self.conf, "r") as fin:
-                buf = fin.read()
-                conf_dict = json.loads(buf)
+    def generate_all(self):
+        global BASE_DIR
+        conf_dir = os.path.join(BASE_DIR, "federatedml", "transfer_variable_conf")
+        merge_conf_path = os.path.join(conf_dir, "transfer_conf.json")
+        trans_var_dir = os.path.join(BASE_DIR, "federatedml", "util", "transfer_variable")
+       
+        merge_dict = {}
+        with open(merge_conf_path, "w") as fin:
+            pass
 
-            fout = open(self.out_path, "w")
-            for head in header:
-                fout.write(head.strip() + "\n")
+        for conf in os.listdir(conf_dir):
+            if not conf.endswith(".json"):
+                continue
 
-            fout.write("\n")
-            fout.write("\n")
+            if conf == "transfer_conf.json":
+                continue
+            
+            with open(os.path.join(conf_dir, conf), "r") as fin:
+                var_dict = json.loads(fin.read())
+                merge_dict.update(var_dict)
+       
+            out_path = os.path.join(trans_var_dir, conf.split(".", -1)[0] + "_transfer_variable.py")
+            fout = open(out_path, "w")
+            with_header = True
+            for class_name in var_dict:
+                transfer_var_dict = var_dict[class_name]
+                self.write_out_class(fout, class_name, transfer_var_dict, with_header)
+                with_header = False
 
-            self.write_base_class(fout)
-
-            for class_name in conf_dict:
-                transfer_var_dict = conf_dict[class_name]
-                fout.write("\n\n")
-                self.write_out_class(fout, class_name, transfer_var_dict)
             fout.flush()
             fout.close()
-        else:
-            base_dir = file_utils.get_project_base_directory()
-            conf_dir = os.path.join(base_dir, "federatedml/transfer_variable_conf/")
-            out_file = os.path.join(base_dir, "federatedml/util/transfer_variable.py")
-            merge_conf = os.path.join(conf_dir, "transfer_conf.json")
-           
-            merge_dict = {}
+        
+        with open(merge_conf_path, "w") as fout:
+            jsonDumpsIndentStr = json.dumps(merge_dict, indent=1);
+            buffers = jsonDumpsIndentStr.split("\n", -1)
+            for buf in buffers:
+                fout.write(buf + "\n")
 
-            with open(out_file, "w") as fout:
-                for head in header:
-                    fout.write(head.strip() + "\n")
-                
-                fout.write("\n")
-                fout.write("\n")
-                
-                self.write_base_class(fout)
-                
-                for json_conf in os.listdir(conf_dir):
-                    if not json_conf.endswith(".json"):
-                        continue
+    def generate_transfer_var_class(self, transfer_var_conf_path, out_path):
+        base_dir = file_utils.get_project_base_directory()
+        merge_conf_path = os.path.join(base_dir, "federatedml/transfer_variable_conf/transfer_conf.json")
 
-                    with open(os.path.join(conf_dir, json_conf), "r") as fin:
-                        buf = fin.read()
-                        conf_dict = json.loads(buf)
-            
+        merge_dict = {}
+        if os.path.isfile(merge_conf_path):
+            with open(merge_conf_path, "r") as fin:
+                merge_dict = json.loads(fin.read())
 
-                    for class_name in conf_dict:
-                        if class_name in merge_dict:
-                            continue
+        var_dict = {}
+        with open(transfer_var_conf_path) as fin:
+            var_dict = json.loads(fin.read())
 
-                        transfer_var_dict = conf_dict[class_name]
-                        fout.write("\n\n")
-                        self.write_out_class(fout, class_name, transfer_var_dict)
-           
-                    merge_dict.update(conf_dict)
+        merge_dict.update(var_dict)
 
-                fout.flush()
+        with open(merge_conf_path, "w") as fout:
+            jsonDumpsIndentStr = json.dumps(merge_dict, indent=1);
+            buffers = jsonDumpsIndentStr.split("\n", -1)
+            for buf in buffers:
+                fout.write(buf + "\n")
 
-            with open(merge_conf, "w") as fout:
-                fout.write(json.dumps(merge_dict) + "\n")
+        fout = open(out_path, "w")
+        with_header = True
+        for class_name in var_dict:
+            transfer_var_dict = var_dict[class_name]
+            self.write_out_class(fout, class_name, transfer_var_dict, with_header)
+            with_header = False
+
+        fout.flush()
+        fout.close()
 
 
 if __name__ == "__main__":
-    config_path = None
+
+    conf_path = None
     out_path = None
-    if len(sys.argv) > 2:
-        config_path = sys.argv[1]
+
+    if len(sys.argv) == 2:
+        out_path = sys.argv[1]
+    elif len(sys.argv) == 3:
+        conf_path = sys.argv[1]
         out_path = sys.argv[2]
 
-    transfervar_gen = TransferVariableGenerator(config_path, out_path)
-    transfervar_gen.run()
+    transfer_var_gen = TransferVariableGenerator()
+    if conf_path is None and out_path is None:
+        transfer_var_gen.generate_all()
+    else:
+        transfer_var_gen.generate_transfer_var_class(conf_path, out_path)
