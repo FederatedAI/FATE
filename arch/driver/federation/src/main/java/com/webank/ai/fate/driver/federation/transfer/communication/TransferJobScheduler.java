@@ -26,6 +26,7 @@ import com.webank.ai.fate.driver.federation.transfer.communication.processor.Bas
 import com.webank.ai.fate.driver.federation.transfer.event.TransferJobEvent;
 import com.webank.ai.fate.driver.federation.transfer.manager.TransferMetaHelper;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
+import com.webank.ai.fate.driver.federation.utils.ThreadPoolTaskExecutorUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
+
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -80,10 +82,10 @@ public class TransferJobScheduler implements Runnable {
     @Override
     public void run() {
 
-            boolean latchWaitResult = false;
-            int waitCount = 0;
-            while (System.currentTimeMillis() > 0) {
-                try {
+        boolean latchWaitResult = false;
+        int waitCount = 0;
+        while (System.currentTimeMillis() > 0) {
+            try {
                 while (!latchWaitResult && ++waitCount < 15 && jobQueue.isEmpty()) {
                     latchWaitResult = jobQueueReadyLatch.await(1, TimeUnit.SECONDS);
                 }
@@ -121,7 +123,7 @@ public class TransferJobScheduler implements Runnable {
                             transferMetaId, type.name(), processor.getClass().getSimpleName());
 
                     CountDownLatch countDownLatch = new CountDownLatch(1);
-                    ListenableFuture<?> listenableFuture = transferJobSchedulerExecutor.submitListenable(processor);
+                    ListenableFuture<?> listenableFuture = ThreadPoolTaskExecutorUtil.submitListenable(transferJobSchedulerExecutor,processor, new int[]{500,1000,5000},new int[]{5,5,3});
                     listenableFuture.addCallback(new ListenableFutureCallback<Object>() {
                         @Override
                         public void onFailure(Throwable throwable) {
@@ -159,7 +161,7 @@ public class TransferJobScheduler implements Runnable {
             }
 
 
-            }
+        }
 
 
     }
