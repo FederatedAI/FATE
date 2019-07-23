@@ -18,6 +18,7 @@
 
 from federatedml.feature.binning.base_binning import Binning
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.statistic import data_overview
 
 
 class BucketBinning(Binning):
@@ -29,8 +30,8 @@ class BucketBinning(Binning):
     where k is the index of a bin.
     """
 
-    def __init__(self, params, party_name='Base'):
-        super(BucketBinning, self).__init__(params, party_name)
+    def __init__(self, params, party_name='Base', abnormal_list=None):
+        super(BucketBinning, self).__init__(params, party_name, abnormal_list)
 
     def fit_split_points(self, data_instances):
         """
@@ -52,9 +53,12 @@ class BucketBinning(Binning):
                             ...]                         # Other features
 
         """
+        is_sparse = data_overview.is_sparse_data(data_instances)
+        if is_sparse:
+            raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
         self._init_cols(data_instances)
 
-        statistics = MultivariateStatisticalSummary(data_instances, self.cols)
+        statistics = MultivariateStatisticalSummary(data_instances, self.cols, abnormal_list=self.abnormal_list)
         max_dict = statistics.get_max()
         min_dict = statistics.get_min()
         n = data_instances.count()
@@ -68,5 +72,4 @@ class BucketBinning(Binning):
                 split_point.append(s_p)
             final_split_points[col_name] = split_point
 
-        self._show_split_points(final_split_points)
         return final_split_points

@@ -17,9 +17,14 @@
 from arch.api import eggroll
 from arch.api import federation
 from sklearn.utils import resample
+from fate_flow.manager.tracking import Tracking 
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.param.sample_param import SampleParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable import SampleTransferVariable
-from federatedml.util.param_checker import SampleParamChecker
+from federatedml.util.transfer_variable.sample_transfer_variable import SampleTransferVariable
+from federatedml.model_base import ModelBase
+import random
 
 
 class RandomSampler(object):
@@ -39,6 +44,10 @@ class RandomSampler(object):
         self.fraction = fraction
         self.random_state = random_state
         self.method = method
+        self.tracker = None
+
+    def set_tracker(self, tracker):
+        self.tracker = tracker
 
     def sample(self, data_inst, sample_ids=None):
         """
@@ -116,6 +125,8 @@ class RandomSampler(object):
                                                 partition=data_inst._partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())])
+
             if return_sample_ids:
                 return new_data_inst, sample_ids
             else:
@@ -146,6 +157,8 @@ class RandomSampler(object):
                                                 include_key=True,
                                                 partition=data_inst._partitions)
 
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())])
+
             if return_sample_ids:
                 return new_data_inst, sample_ids
             else:
@@ -171,12 +184,21 @@ class StratifiedSampler(object):
     """
     def __init__(self, fractions=None, random_state=None, method="downsample"):
         self.fractions = fractions
-        self.label_mapping = None
+        self.label_mapping = {}
+        self.labels = []
         if fractions:
-            self.label_mapping = [label for (label, frac) in fractions]
+            for (label, farc) in fractions:
+                self.label_mapping[label] = len(self.labels)
+                self.labels.append(label)
+
+            # self.label_mapping = [label for (label, frac) in fractions]
         
         self.random_state = random_state
         self.method = method
+        self.tracker = None
+
+    def set_tracker(self, tracker):
+        self.tracker = tracker
 
     def sample(self, data_inst, sample_ids=None):
         """
@@ -253,7 +275,12 @@ class StratifiedSampler(object):
                     idset[self.label_mapping[label]].append(key)
 
                 sample_ids = []
+
+                callback_metrics = []
+
                 for i in range(len(idset)):
+                    label_name = self.labels[i]
+
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
 
@@ -262,7 +289,15 @@ class StratifiedSampler(object):
                                                n_samples=sample_num,
                                                random_state=self.random_state)
 
-                    sample_ids.extend(_sample_ids)
+                        sample_ids.extend(_sample_ids)
+
+                        callback_metrics.append(Metric(label_name, len(_sample_ids)))
+                    else:
+                        callback_metrics.append(Metric(label_name, 0))
+
+                random.shuffle(sample_ids)
+
+                callback(self.tracker, "stratified", callback_metrics)
 
             sample_dtable = eggroll.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
@@ -296,7 +331,10 @@ class StratifiedSampler(object):
                 return_sample_ids = True
 
                 sample_ids = []
+                callback_metrics = []
                 for i in range(len(idset)):
+                    label_name = self.labels[i]
+                    
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
 
@@ -306,6 +344,15 @@ class StratifiedSampler(object):
                                                random_state=self.random_state)
 
                         sample_ids.extend(_sample_ids)
+                        
+                        callback_metrics.append(Metric(label_name, len(_sample_ids)))
+                    else:
+                        callback_metrics.append(Metric(label_name, 0))
+
+                
+                random.shuffle(sample_ids)
+                
+                callback(self.tracker, "stratified", callback_metrics)
 
 
             new_data = []
@@ -326,7 +373,7 @@ class StratifiedSampler(object):
             raise ValueError("Stratified sampler not support method {} yet".format(self.method))
 
 
-class Sampler(object):
+class Sampler(ModelBase):
     """
     Sampling Object
 
@@ -336,22 +383,33 @@ class Sampler(object):
         define in federatedml.param.param
 
     """
-    def __init__(self, sample_param):
-        SampleParamChecker.check_param(sample_param)
+    def __init__(self):
+        super(Sampler, self).__init__()
+        self.task_type = None
+        self.task_role = None
+        self.flowid = 0
+        self.model_param = SampleParam()
+
+    def _init_model(self, sample_param):
         if sample_param.mode == "random":
             self.sampler = RandomSampler(sample_param.fractions,
                                          sample_param.random_state,
                                          sample_param.method)
+            self.sampler.set_tracker(self.tracker)
 
         elif sample_param.mode == "stratified":
             self.sampler = StratifiedSampler(sample_param.fractions,
                                              sample_param.random_state,
                                              sample_param.method)
+            self.sampler.set_tracker(self.tracker)
 
         else:
             raise ValueError("{} sampler not support yet".format(sample_param.mde))
 
-        self.flowid = None
+        self.task_type = sample_param.task_type
+
+    def _init_role(self, component_parameters):
+        self.task_role = component_parameters["local"]["role"]
 
     def sample(self, data_inst, sample_ids=None):
         """
@@ -404,7 +462,7 @@ class Sampler(object):
 
         return sample_ids
 
-    def run(self, data_inst, task_type, task_role):
+    def run_sample(self, data_inst, task_type, task_role):
         """
         Sample running entry
 
@@ -450,4 +508,50 @@ class Sampler(object):
                 raise ValueError("{} role not support yet".format(task_role))
 
             return sample_data_inst
+
+    def fit(self, data_inst):
+        return self.run_sample(data_inst, self.task_type, self,task_role)
+
+    def transform(self, data_inst):
+        return self.run_sample(data_inst, self.task_type, self.task_role)
+
+    def run(self, component_parameters, args=None):
+        self._init_runtime_parameters(component_parameters)
+        self._init_role(component_parameters)
+        stage = None
+        if args.get("data", None) is None:
+            return
+
+        self._run_data(args["data"], stage)
+
+    def save_data(self):
+        return self.data_output
+
+
+def callback(tracker, method, callback_metrics):
+    print ("method is {}".format(method))
+    if method == "random":
+        tracker.log_metric_data("sample_count",
+                                "random",
+                                callback_metrics)
+        
+        tracker.set_metric_meta("sample_count",
+                                "random",
+                                MetricMeta(name="sample_count",
+                                            metric_type="SAMPLE_TEXT"))
+
+    else:
+        print ("name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
+        for metric in callback_metrics:
+            print ("metric is {}".format(metric))
+
+        tracker.log_metric_data("sample_count",
+                                "stratified",
+                                callback_metrics)
+
+        tracker.set_metric_meta("sample_count",
+                                "stratified",
+                                MetricMeta(name="sample_count",
+                                            metric_type="SAMPLE_TABLE"))
+
 

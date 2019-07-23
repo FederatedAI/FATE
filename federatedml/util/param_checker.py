@@ -689,16 +689,6 @@ class FeatureBinningParamChecker(object):
         check_positive_integer(binning_param.bin_num, descr)
         check_defined_type(binning_param.cols, descr, ['list', 'int', 'RepeatedScalarContainer'])
         check_open_unit_interval(binning_param.adjustment_factor, descr)
-        # check_string(binning_param.result_table, descr)
-        # check_string(binning_param.result_namespace, descr)
-        check_defined_type(binning_param.display_result, descr, ['list'])
-        for idx, d_s in enumerate(binning_param.display_result):
-            binning_param.display_result[idx] = check_and_change_lower(d_s,
-                                                                       ['iv', 'woe_array', 'iv_array',
-                                                                        'event_count_array', 'non_event_count_array',
-                                                                        'event_rate_array', 'bin_nums', 'split_points',
-                                                                        'non_event_rate_array', 'is_woe_monotonic'],
-                                                                       descr)
 
 
 class FeatureSelectionParamChecker(object):
@@ -726,7 +716,6 @@ class FeatureSelectionParamChecker(object):
         IVPercentileSelectionParamChecker.check_param(feature_param.iv_percentile_param)
         CoeffOfVarSelectionParamChecker.check_param(feature_param.coe_param)
         OutlierColsSelectionParamChecker.check_param(feature_param.outlier_param)
-        FeatureBinningParamChecker.check_param(feature_param.bin_param)
         return True
 
 
@@ -874,28 +863,18 @@ class ScaleParamChecker(object):
                     raise ValueError(
                         "scale param's out_upper {} not supported, should be float or int type".format(
                             scale_param.out_upper))
-
-        if scale_param.scale_column_idx is not None:
-            if type(scale_param.scale_column_idx).__name__ != 'list':
-                raise ValueError(
-                    "scale param's scale_column_idx {} not supported, should be list".format(
-                        scale_param.scale_column_idx))
-
-        if scale_param.feat_lower is not None:
+        elif scale_param.area == consts.COL:
             descr = "scale param's feat_lower"
-            check_defined_type(scale_param.feat_lower, descr, ['list', "int", "float"])
+            check_defined_type(scale_param.feat_lower, descr, ['list'])
 
-        if scale_param.feat_upper is not None:
             descr = "scale param's feat_upper"
-            check_defined_type(scale_param.feat_upper, descr, ['list', "int", "float"])
+            check_defined_type(scale_param.feat_upper, descr, ['list'])
 
-        if scale_param.out_lower is not None:
             descr = "scale param's out_lower"
-            check_defined_type(scale_param.out_lower, descr, ["float","int"])
+            check_defined_type(scale_param.out_lower, descr, ['list'])
 
-        if scale_param.out_upper is not None:
             descr = "scale param's out_upper"
-            check_defined_type(scale_param.out_upper, descr, ["float","int"])
+            check_defined_type(scale_param.out_upper, descr, ['list'])
 
         check_boolean(scale_param.with_mean, "scale_param with_mean")
         check_boolean(scale_param.with_std, "scale_param with_std")

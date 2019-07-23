@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/evaluation",
+    "default_runtime_conf": "evaluation_param.json",
+    "param_class" : "federatedml/param/evaluation_param.py/EvaluateParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "evaluation.py/Evaluation"
+        }
+    }
+}

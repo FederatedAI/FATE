@@ -1,5 +1,20 @@
 syntax = "proto3";
-   
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "DataIOMetaProto";
+
+message ImputerMeta{
+    bool is_imputer = 1;
+    string strategy = 2;
+    repeated string missing_value = 3;
+}
+
+message OutlierMeta{
+    bool is_outlier = 1;
+    string strategy = 2;
+    repeated string outlier_value = 3;
+}
+
 message DataIOMeta {
    string input_format = 1;
    string delimitor = 2;
@@ -10,5 +25,8 @@ message DataIOMeta {
    int32 label_idx = 7;
    string label_type = 8;
    string output_format = 9;
+   ImputerMeta imputer_meta = 10;
+   OutlierMeta outlier_meta = 11;
+   bool need_run = 12;
 }
 

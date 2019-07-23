@@ -24,7 +24,6 @@ from arch.api import eggroll
 eggroll.init("123")
 from federatedml.feature.one_hot_encoder import OneHotEncoder
 from federatedml.feature.instance import Instance
-from federatedml.param.param import OneHotEncoderParam
 import numpy as np
 
 
@@ -48,24 +47,35 @@ class TestOneHotEncoder(unittest.TestCase):
                                     include_key=True,
                                     partition=10)
         table.schema = {"header": self.header}
+        self.model_name = 'OneHotEncoder'
 
         self.table = table
-        self.cols = ['x0']
+
+        self.component_parameters = {
+            "OneHotEncoderParam": {
+                "cols": [0, 1]
+            }
+        }
+        self.args = {"data": {self.model_name: {"data": table}}}
 
     def test_instance(self):
-        param = OneHotEncoderParam(cols=self.cols)
-        one_hot_encoder = OneHotEncoder(param=param)
+        one_hot_encoder = OneHotEncoder()
+        one_hot_encoder.run(self.component_parameters, self.args)
+        print("data in fit: {}".format(one_hot_encoder.save_data()))
+        model = {self.model_name: one_hot_encoder.save_model()}
 
-        one_hot_encoder.fit(self.table)
-        local_data = self.table.collect()
-        print("original data:")
-        for k, v in local_data:
-            print(k, v.features)
-        new_data = one_hot_encoder.transform(data_instances=self.table)
-        local_data = new_data.collect()
-        print("One-hot encoded data:")
-        for k, v in local_data:
-            print(k, v.features)
+        new_args = {
+            'data': {
+                self.model_name: {
+                    'data': self.table
+                }
+            },
+            'model': model
+        }
+
+        new_encoder = OneHotEncoder()
+        new_encoder.run(self.component_parameters, new_args)
+        print("data in transform: {}".format(new_encoder.save_data()))
 
 
 if __name__ == '__main__':

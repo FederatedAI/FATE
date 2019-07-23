@@ -36,7 +36,7 @@ from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 import copy
 import random
-from federatedml.util import HeteroDecisionTreeTransferVariable
+from federatedml.util.transfer_variable.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree

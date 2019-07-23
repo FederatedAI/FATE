@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-meta.proto',
   package='com.webank.ai.fate.common.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x11onehot-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\x1a\n\nOneHotMeta\x12\x0c\n\x04\x63ols\x18\x01 \x03(\tB\x11\x42\x0fOneHotMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x11onehot-meta.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\",\n\nOneHotMeta\x12\x0c\n\x04\x63ols\x18\x01 \x03(\t\x12\x10\n\x08need_run\x18\x02 \x01(\x08\x42\x11\x42\x0fOneHotMetaProtob\x06proto3')
 )
 
 
@@ -39,6 +39,13 @@ _ONEHOTMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.common.mlmodel.buffer.OneHotMeta.need_run', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -52,7 +59,7 @@ _ONEHOTMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=63,
-  serialized_end=89,
+  serialized_end=107,
 )
 
 DESCRIPTOR.message_types_by_name['OneHotMeta'] = _ONEHOTMETA

@@ -76,6 +76,34 @@ def is_empty_feature(data_instances):
         return True
     return False
 
+
+def is_sparse_data(data_instance):
+    first_data = data_instance.first()
+    if type(first_data[1]).__name__ in ['ndarray', 'list']:
+        return False
+
+    data_feature = first_data[1].features
+    if type(data_feature).__name__ == "ndarray":
+        return False
+    else:
+        return True
+
+
+def is_binary_labels(data_instance):
+    def count_labels(instances):
+        labels = set()
+        for idx, instance in instances:
+            label = instance.label
+            labels.add(label)
+        return labels
+
+    label_set = data_instance.mapPartitions(count_labels)
+    label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
+    if len(label_set) != 2:
+        return False
+    return True
+
+
 def rubbish_clear(rubbish_list):
     """
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan

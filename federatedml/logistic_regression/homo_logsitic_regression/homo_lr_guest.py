@@ -21,45 +21,40 @@ import numpy as np
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import Initializer
-from federatedml.optim import Optimizer
 from federatedml.optim import activation
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from federatedml.optim.gradient import LogisticGradient
-from federatedml.param import LogisticParam
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HomoLRTransferVariable
 from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
 
-class HomoLRGuest(BaseLogisticRegression):
-    def __init__(self, params: LogisticParam):
-        super(HomoLRGuest, self).__init__(params)
-        self.learning_rate = params.learning_rate
+class HomoLRGuest(HomoLRBase):
+    def __init__(self):
+        super(HomoLRGuest, self).__init__()
         self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
-        self.party_weight = params.party_weight
 
-        self.optimizer = Optimizer(learning_rate=self.learning_rate, opt_method_name=params.optimizer)
-        self.transfer_variable = HomoLRTransferVariable()
         self.initializer = Initializer()
         self.classes_ = [0, 1]
 
         self.evaluator = Evaluation()
-        self.header = []
-        self.penalty = params.penalty
         self.loss_history = []
         self.is_converged = False
+        self.role = consts.GUEST
 
     def fit(self, data_instances):
+        if not self.need_run:
+            return data_instances
+
         self._abnormal_detection(data_instances)
-
-        self.header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-
+        self.init_schema(data_instances)
         self.__init_parameters()
 
         self.__init_model(data_instances)
@@ -96,11 +91,24 @@ class HomoLRGuest(BaseLogisticRegression):
 
             total_loss /= batch_num
             w = self.merge_model()
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "iters"
+                                     })
+            # metric_name = self.get_metric_name('loss')
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name='loss',
+                                 metric_namespace='train',
+                                 metric_data=[Metric(iter_num, total_loss)])
+
             self.loss_history.append(total_loss)
             LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
             model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
                                                                            iter_num)
+            LOGGER.debug("Start to remote model: {}, transfer_id: {}".format(w, model_transfer_id))
+
             federation.remote(w,
                               name=self.transfer_variable.guest_model.name,
                               tag=model_transfer_id,
@@ -110,6 +118,7 @@ class HomoLRGuest(BaseLogisticRegression):
             # send loss
 
             loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
+            LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
             federation.remote(total_loss,
                               name=self.transfer_variable.guest_loss.name,
                               tag=loss_transfer_id,
@@ -141,14 +150,17 @@ class HomoLRGuest(BaseLogisticRegression):
                 break
 
         self.show_meta()
-        self.show_model()
+        # self.show_model()
         LOGGER.debug("in fit self coef: {}".format(self.coef_))
+        # data_instances.schema['header'] = self.header
+        self.set_schema(data_instances)
         return data_instances
 
     def __init_parameters(self):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
         )
+        LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
         federation.remote(self.party_weight,
                           name=self.transfer_variable.guest_party_weight.name,
                           tag=party_weight_id,
@@ -174,20 +186,21 @@ class HomoLRGuest(BaseLogisticRegression):
         # LOGGER.debug("Initialed model")
         return w
 
-    def predict(self, data_instances, predict_param):
-        LOGGER.debug("coef: {}, intercept: {}".format(self.coef_, self.intercept_))
+    def predict(self, data_instances):
+        LOGGER.debug("Get in predict, data_instance count: {}, need_run: {}".format(data_instances.count(),
+                                                                                    self.need_run))
+
+        if not self.need_run:
+            return data_instances
+        LOGGER.debug("homo_lr guest need run predict, coef: {}, instercept: {}".format(len(self.coef_), self.intercept_))
         wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
         pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
-        pred_label = self.classified(pred_prob, predict_param.threshold)
+        pred_label = self.classified(pred_prob, self.predict_param.threshold)
 
-        if predict_param.with_proba:
-            predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        else:
-            predict_result = data_instances.mapValues(lambda x: (x.label, None))
-
-        predict_result = predict_result.join(pred_label, lambda x, y: (x[0], x[1], y))
+        predict_result = data_instances.mapValues(lambda x: x.label)
+        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
+        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1], {"1": x[1], "0": (1 - x[1])}])
         return predict_result
 
-    def set_flowid(self, flowid=0):
-        self.transfer_variable.set_flowid(flowid)
+    # def set_flowid(self, flowid=0):
+    #     self.transfer_variable.set_flowid(flowid)

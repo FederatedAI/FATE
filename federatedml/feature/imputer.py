@@ -1,10 +1,11 @@
 import functools
 import numpy as np
 
+from arch.api.utils import log_utils
+from federatedml.statistic.data_overview import get_header
+from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
 from federatedml.statistic import data_overview
-
-from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -15,20 +16,19 @@ class Imputer(object):
     You can use the statistics such as mean, median or max of each column to fill the missing value or replace outlier.
     """
 
-    def __init__(self, imputer_value_list=None):
+    def __init__(self, missing_value_list=None):
         """
         Parameters
         ----------
-        imputer_value_list: list of str, the value to be replaced. Default None, if is None, it will be set to list of blank, none, null and na,
-                            which regarded as missing filled. If not, it can be outlier replace, and imputer_value_list includes the outlier values
+        missing_value_list: list of str, the value to be replaced. Default None, if is None, it will be set to list of blank, none, null and na,
+                            which regarded as missing filled. If not, it can be outlier replace, and missing_value_list includes the outlier values
         """
-        if imputer_value_list is None:
-            self.imputer_value_list = ['', 'none', 'null', 'na']
+        if missing_value_list is None:
+            self.missing_value_list = ['', 'none', 'null', 'na']
         else:
-            self.imputer_value_list = imputer_value_list
+            self.missing_value_list = missing_value_list
 
-        self.support_replace_method = ['min', 'max', 'mean', 'designated']
-        # self.support_replace_method = ['min', 'max', 'mean', 'meadian', 'quantile', 'designated' ]
+        self.support_replace_method = ['min', 'max', 'mean', 'median', 'quantile', 'designated']
         self.support_output_format = {
             'str': str,
             'float': float,
@@ -40,235 +40,105 @@ class Imputer(object):
             'min': 'col',
             'max': 'col',
             'mean': 'col',
-            'meadian': 'col',
+            'median': 'col',
             'quantile': 'col',
             'designated': 'col'
         }
 
-    def get_imputer_value_list(self):
-        return self.imputer_value_list
+        self.cols_fit_impute_rate = []
+        self.cols_transform_impute_rate = []
 
-    @staticmethod
-    def __get_min(data):
-        min_list = None
-        for key, value in data:
-            if min_list is None:
-                min_list = [None for _ in range(len(value))]
+    def get_missing_value_list(self):
+        return self.missing_value_list
 
-            for i in range(len(value)):
-                try:
-                    f_value = float(value[i])
-                except:
-                    f_value = None
-
-                if f_value is None:
-                    continue
-
-                if min_list[i] is None or f_value < min_list[i]:
-                    min_list[i] = f_value
-
-        return min_list
-
-    @staticmethod
-    def __get_max(data):
-        max_list = None
-        for key, value in data:
-            if max_list is None:
-                max_list = [None for i in range(len(value))]
-
-            for i in range(len(value)):
-                try:
-                    f_value = float(value[i])
-                except:
-                    f_value = None
-
-                if f_value is None:
-                    continue
-
-                if max_list[i] is None or f_value > max_list[i]:
-                    max_list[i] = f_value
-
-        return max_list
-
-    @staticmethod
-    def __get_mean(data):
-        cols_value_sum = None
-        cols_value_counter = None
-        for key, value in data:
-            if cols_value_sum is None:
-                cols_value_sum = [0 for i in range(len(value))]
-                cols_value_counter = [0 for i in range(len(value))]
-
-            for i in range(len(value)):
-                try:
-                    f_value = float(value[i])
-                except:
-                    f_value = None
-
-                if f_value is None:
-                    continue
-
-                cols_value_sum[i] += f_value
-                cols_value_counter[i] += 1
-
-        return cols_value_sum, cols_value_counter
+    def get_impute_rate(self, mode="fit"):
+        if mode == "fit":
+            return list(self.cols_fit_impute_rate)
+        elif mode == "transform":
+            return list(self.cols_transform_impute_rate)
+        else:
+            raise ValueError("Unknown mode of {}".format(mode))
 
     @staticmethod
     def __replace_missing_value_with_cols_transform_value_format(data, transform_list, missing_value_list,
                                                                  output_format):
-        for i in range(len(data)):
-            if str(data[i]).lower() in missing_value_list:
+        replace_cols_index_list = []
+        for i, v in enumerate(data):
+            if str(v) in missing_value_list:
                 data[i] = output_format(transform_list[i])
+                replace_cols_index_list.append(i)
             else:
-                data[i] = output_format(data[i])
+                data[i] = output_format(v)
 
-        return data
+        return data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_cols_transform_value(data, transform_list, missing_value_list):
-        for i in range(len(data)):
-            if str(data[i]).lower() in missing_value_list:
+        replace_cols_index_list = []
+        for i, v in enumerate(data):
+            if str(v) in missing_value_list:
                 data[i] = str(transform_list[i])
+                replace_cols_index_list.append(i)
 
-        return data
+        return data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_replace_value_format(data, replace_value, missing_value_list, output_format):
-        for i in range(len(data)):
-            if str(data[i]).lower() in missing_value_list:
+        replace_cols_index_list = []
+        for i, v in enumerate(data):
+            if str(v) in missing_value_list:
                 data[i] = output_format(replace_value)
+                replace_cols_index_list.append(i)
             else:
                 data[i] = output_format(data[i])
 
-        return data
+        return data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_replace_value(data, replace_value, missing_value_list):
-        for i in range(len(data)):
-            if str(data[i]).lower() in missing_value_list:
+        replace_cols_index_list = []
+        for i, v in enumerate(data):
+            if str(v) in missing_value_list:
                 data[i] = str(replace_value)
+                replace_cols_index_list.append(i)
 
-        return data
+        return data, replace_cols_index_list
 
-    def __get_cols_transform_min_value(self, data):
-        min_lists = data.mapPartitions(Imputer.__get_min)
-        cols_transform_min_value = None
-        for min_tuple in list(min_lists.collect()):
-            if cols_transform_min_value is None:
-                cols_transform_min_value = min_tuple[1]
-            else:
-                # some return of partition maybe None
-                if min_tuple[1] is None:
-                    continue
+    def __get_cols_transform_value(self, data, replace_method, quantile=None):
+        summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
+        header = get_header(data)
 
-                for i in range(len(min_tuple[1])):
-                    if min_tuple[1][i] is None:
-                        continue
-
-                    if cols_transform_min_value[i] is None:
-                        cols_transform_min_value[i] = min_tuple[1][i]
-                    elif min_tuple[1][i] < cols_transform_min_value[i]:
-                        cols_transform_min_value[i] = min_tuple[1][i]
-        return cols_transform_min_value
-
-    def __get_cols_transform_max_value(self, data):
-        max_lists = data.mapPartitions(Imputer.__get_max)
-        cols_transform_max_value = None
-        for max_tuple in list(max_lists.collect()):
-            if cols_transform_max_value is None:
-                cols_transform_max_value = max_tuple[1]
-            else:
-                # some return of partition maybe None
-                if max_tuple[1] is None:
-                    continue
-
-                for i in range(len(max_tuple[1])):
-                    if max_tuple[1][i] is None:
-                        continue
-
-                    if cols_transform_max_value[i] is None:
-                        cols_transform_max_value[i] = max_tuple[1][i]
-                    elif max_tuple[1][i] > cols_transform_max_value[i]:
-                        cols_transform_max_value[i] = max_tuple[1][i]
-        return cols_transform_max_value
-
-    def __get_cols_transform_mean_value(self, data):
-        get_mean_results = data.mapPartitions(Imputer.__get_mean)
-        cols_sum = None
-        cols_counter = None
-
-        for value_tuple in list(get_mean_results.collect()):
-            if cols_sum is None:
-                cols_sum = [0 for i in range(len(value_tuple[1][0]))]
-            if cols_counter is None:
-                cols_counter = [0 for i in range(len(value_tuple[1][1]))]
-
-            value_sum = value_tuple[1][0]
-            value_counter = value_tuple[1][1]
-            # some return of partition maybe None
-            if value_sum is None and value_counter is None:
-                continue
-
-            for i in range(len(value_sum)):
-                if value_sum[i] is None:
-                    LOGGER.debug("col {} of cols_sum is None, continue".format(i))
-                    continue
-
-                cols_sum[i] += value_sum[i]
-
-            for i in range(len(value_counter)):
-                if value_counter[i] is None:
-                    LOGGER.debug("col {} of cols_counter is None, continue".format(i))
-                    continue
-
-                cols_counter[i] += value_counter[i]
-
-        if cols_sum is None or cols_counter is None:
-            raise ValueError("Something wrong with data")
-
-        cols_transform_mean_value = None
-        for i in range(len(cols_sum)):
-            if cols_sum[i] is None or cols_counter[i] is None:
-                raise ValueError("Something wrong with cols_sum or cols_counter")
-
-            if cols_transform_mean_value is None:
-                cols_transform_mean_value = [None for i in range(len(cols_sum))]
-
-            if cols_counter[i] == 0:
-                cols_transform_mean_value[i] = 0
-            else:
-                cols_transform_mean_value[i] = np.around(cols_sum[i] / cols_counter[i], 6)
-
-        if None in cols_transform_mean_value:
-            raise ValueError("Some of value in cols_transform_mean_value is None, please check it")
-
-        return cols_transform_mean_value
-
-    def __get_cols_transform_value(self, data, replace_method='0'):
         if replace_method == consts.MIN:
-            cols_transform_value = self.__get_cols_transform_min_value(data)
+            cols_transform_value = summary_obj.get_min()
         elif replace_method == consts.MAX:
-            cols_transform_value = self.__get_cols_transform_max_value(data)
+            cols_transform_value = summary_obj.get_max()
         elif replace_method == consts.MEAN:
-            cols_transform_value = self.__get_cols_transform_mean_value(data)
+            cols_transform_value = summary_obj.get_mean()
+        elif replace_method == consts.MEDIAN:
+            cols_transform_value = summary_obj.get_median()
+        elif replace_method == consts.QUANTILE:
+            if quantile > 1 or quantile < 0:
+                raise ValueError("quantile should between 0 and 1, but get:{}".format(quantile))
+            cols_transform_value = summary_obj.get_quantile_point(quantile)
         else:
             raise ValueError("Unknown replace method:{}".format(replace_method))
 
+        cols_transform_value = [round(cols_transform_value[key], 6) for key in header]
         return cols_transform_value
 
-    def __replace(self, data, replace_method, replace_value=None, output_format=None):
+    def __fit_replace(self, data, replace_method, replace_value=None, output_format=None, quantile=None):
         if replace_method is not None and replace_method != consts.DESIGNATED:
-            cols_transform_value = self.__get_cols_transform_value(data, replace_method)
+            cols_transform_value = self.__get_cols_transform_value(data, replace_method, quantile=quantile)
             if output_format is not None:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
-                                      transform_list=cols_transform_value, missing_value_list=self.imputer_value_list,
+                                      transform_list=cols_transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
-                                      transform_list=cols_transform_value, missing_value_list=self.imputer_value_list)
+                                      transform_list=cols_transform_value, missing_value_list=self.missing_value_list)
 
             transform_data = data.mapValues(f)
-            LOGGER.debug(
+            LOGGER.info(
                 "finish replace missing value with cols transform value, replace method is {}".format(replace_method))
             return transform_data, cols_transform_value
         else:
@@ -276,49 +146,73 @@ class Imputer(object):
                 raise ValueError("Replace value should not be None")
             if output_format is not None:
                 f = functools.partial(Imputer.__replace_missing_value_with_replace_value_format,
-                                      replace_value=replace_value, missing_value_list=self.imputer_value_list,
+                                      replace_value=replace_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_replace_value, replace_value=replace_value,
-                                      missing_value_list=self.imputer_value_list)
+                                      missing_value_list=self.missing_value_list)
             transform_data = data.mapValues(f)
-
-            LOGGER.debug("finish replace missing value with replace value {}".format(replace_value))
+            LOGGER.info("finish replace missing value with replace value {}, replace method is:{}".format(replace_value,
+                                                                                                          replace_method))
             shape = data_overview.get_data_shape(data)
             replace_value = [replace_value for _ in range(shape)]
 
             return transform_data, replace_value
 
     def __transform_replace(self, data, transform_value, replace_area, output_format):
-        LOGGER.debug("replace_area:{}".format(replace_area))
         if replace_area == 'all':
             if output_format is not None:
                 f = functools.partial(Imputer.__replace_missing_value_with_replace_value_format,
-                                      replace_value=transform_value, missing_value_list=self.imputer_value_list,
+                                      replace_value=transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_replace_value,
-                                      replace_value=transform_value, missing_value_list=self.imputer_value_list)
+                                      replace_value=transform_value, missing_value_list=self.missing_value_list)
         elif replace_area == 'col':
             if output_format is not None:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value_format,
-                                      transform_list=transform_value, missing_value_list=self.imputer_value_list,
+                                      transform_list=transform_value, missing_value_list=self.missing_value_list,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.__replace_missing_value_with_cols_transform_value,
-                                      transform_list=transform_value, missing_value_list=self.imputer_value_list)
+                                      transform_list=transform_value, missing_value_list=self.missing_value_list)
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))
 
         transform_data = data.mapValues(f)
         return transform_data
 
-    def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN):
+    @staticmethod
+    def __get_impute_number(some_data):
+        impute_num_list = None
+        data_size = None
+
+        for line in some_data:
+            processed_data = line[1][0]
+            index_list = line[1][1]
+            if not data_size:
+                data_size = len(processed_data)
+                # data_size + 1, the last element of impute_num_list used to count the number of "some_data"
+                impute_num_list = [0 for _ in range(data_size + 1)]
+
+            impute_num_list[data_size] += 1
+            for index in index_list:
+                impute_num_list[index] += 1
+
+        return np.array(impute_num_list)
+
+    def __get_impute_rate_from_replace_data(self, data):
+        impute_number_statics = data.mapPartitions(self.__get_impute_number).reduce(lambda x, y: x + y)
+        cols_impute_rate = impute_number_statics[:-1] / impute_number_statics[-1]
+
+        return cols_impute_rate
+
+    def fit(self, data, replace_method=None, replace_value=None, output_format=consts.ORIGIN, quantile=None):
         """
         Apply imputer for input data
         Parameters
         ----------
-        data: data_instance, input data
+        data: DTable, each data's value should be list
         replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
         replace_value: str, if replace_method is designated, you should assign the replace_value which will be used to replace the value in imputer_value_list
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
@@ -336,24 +230,26 @@ class Imputer(object):
         if isinstance(replace_method, str):
             replace_method = replace_method.lower()
             if replace_method not in self.support_replace_method:
-                raise ValueError("Unknown replace method in Imputer")
-
-            process_data, cols_transform_value = self.__replace(data, replace_method, replace_value, output_format)
-            return process_data, cols_transform_value
+                raise ValueError("Unknown replace method:{}".format(replace_method))
         elif replace_method is None:
             replace_value = '0'
-            process_data, replace_value = self.__replace(data, replace_method, replace_value, output_format)
-            return process_data, replace_value
         else:
             raise ValueError("parameter replace_method should be str or None only")
 
-    def transform(self, data, replace_method=None, transform_value=None, output_format=consts.ORIGIN):
+        process_data, cols_transform_value = self.__fit_replace(data, replace_method, replace_value, output_format,
+                                                                quantile=quantile)
+
+        self.cols_fit_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
+        process_data = process_data.mapValues(lambda v:v[0])
+
+        return process_data, cols_transform_value
+
+    def transform(self, data, transform_value, output_format=consts.ORIGIN):
         """
-        Transform input data using imputer with fit results
+        Transform input data using Imputer with fit results
         Parameters
         ----------
-        data: data_instance, input data
-        replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
+        data: DTable, each data's value should be list
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
 
         Returns
@@ -366,9 +262,10 @@ class Imputer(object):
         output_format = self.support_output_format[output_format]
 
         # Now all of replace_method is "col", remain replace_area temporarily
-        LOGGER.debug("replace_method:{}".format(replace_method))
         # replace_area = self.support_replace_area[replace_method]
         replace_area = "col"
         process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
+        self.cols_transform_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
+        process_data = process_data.mapValues(lambda v: v[0])
 
         return process_data

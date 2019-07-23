@@ -28,5 +28,6 @@ message BoostingTreeModelParam {
     repeated double init_score = 3;
     repeated double losses = 4;
 	repeated FeatureImportanceInfo feature_importances = 5;
+	map<string, int32> feature_name_fid_mapping = 6;
 }
 

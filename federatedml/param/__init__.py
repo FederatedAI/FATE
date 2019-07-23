@@ -14,9 +14,18 @@
 #  limitations under the License.
 #
 
-from federatedml.param.param import LogisticParam, InitParam, DecisionTreeParam, ObjectiveParam, DataIOParam, \
-    WorkFlowParam, FeatureBinningParam, FeatureSelectionParam, \
-    EncryptParam, BoostingTreeParam, IntersectParam, EvaluateParam, PredictParam
+from federatedml.param.dataio_param import DataIOParam
+from federatedml.param.encrypt_param import EncryptParam
+from federatedml.param.logistic_regression_param import InitParam
+from federatedml.param.logistic_regression_param import LogisticParam
+from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.boosting_tree_param import ObjectiveParam
+from federatedml.param.boosting_tree_param import DecisionTreeParam
+from federatedml.param.boosting_tree_param import BoostingTreeParam
+from federatedml.param.predict_param import PredictParam
+from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
-__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "IntersectParam", "ObjectiveParam",
-           "WorkFlowParam", "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam']
+
+__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
+           "EncryptParam", "BoostingTreeParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam']

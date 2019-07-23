@@ -30,5 +30,6 @@ message LRModelMeta {
     int64 max_iter = 8;
     string converge_func = 9;
     int64 re_encrypt_batches = 10;
+    bool need_run=11;
 }
 

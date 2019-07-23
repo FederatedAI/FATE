@@ -25,15 +25,45 @@
 # Boostring Tree
 # =============================================================================
 import numpy as np
-from federatedml.util import BoostingTreeParamChecker
+from fate_flow.manager.tracking import Tracking 
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.param.boosting_tree_param import BoostingTreeParam
+from federatedml.model_selection.KFold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.feature.sparse_vector import SparseVector
+from federatedml.model_base import ModelBase
 
 
-class BoostingTree(object):
-    def __init__(self, boostingtree_param):
-        BoostingTreeParamChecker.check_param(boostingtree_param)  
+class BoostingTree(ModelBase):
+    def __init__(self):
+        super(BoostingTree, self).__init__()
+        self.tree_param = None
+        self.task_type=None
+        self.objective_param = None
+        self.learning_rate = None
+        self.learning_rate = None
+        self.num_trees = None
+        self.subsample_feature_rate = None
+        self.n_iter_no_change = None
+        self.encrypt_param = None
+        self.tol = 0.0
+        self.quantile_method = None
+        self.bin_num = None
+        self.bin_gap = None
+        self.bin_sample_num = None
+        self.calculated_mode = None
+        self.re_encrypted_rate = None
+        self.predict_param = None
+        self.cv_param = None
+        self.feature_name_fid_mapping = {}
+        self.role = ''
+        self.mode = consts.HETERO
+
+        self.model_param = BoostingTreeParam()
+
+    def _init_model(self, boostingtree_param):
         self.tree_param = boostingtree_param.tree_param
         self.task_type = boostingtree_param.task_type
         self.objective_param = boostingtree_param.objective_param
@@ -49,6 +79,8 @@ class BoostingTree(object):
         self.bin_sample_num = boostingtree_param.bin_sample_num
         self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
         self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
+        self.predict_param = boostingtree_param.predict_param
+        self.cv_param = boostingtree_param.cv_param
 
     @staticmethod
     def data_format_transform(row):
@@ -72,15 +104,50 @@ class BoostingTree(object):
         abnormal_detection.empty_table_detection(data_inst)
         abnormal_detection.empty_feature_detection(data_inst)
 
+        schema = data_inst.schema
         new_data_inst = data_inst.mapValues(lambda row: BoostingTree.data_format_transform(row))
 
+        new_data_inst.schema = schema
+
         return new_data_inst
+
+    def gen_feature_fid_mapping(self, schema):
+        header = schema.get("header")
+        for i in range(len(header)):
+            self.feature_name_fid_mapping[header[i]] = i
+    
+    """
+    def callback_meta(self, metric_namespace, metric_name, metric_meta):
+        tracker = Tracking("abc", "123")
+        tracker.set_metric_meta(metric_namespace,
+                                metric_name,
+                                metric_meta)
+
+    def callback_metric(self, metric_namespace, metric_name, metric_data):
+        tracker = Tracking("abc", "123")
+        tracker.log_metric_data(metric_namespace,
+                                metric_name,
+                                metric_data)
+    """
 
     def fit(self, data_inst):
         pass
 
-    def predict(self, data_inst, threshold=0.5):
+    def predict(self, data_inst):
         pass
+
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self)
+        return data_instances
+
+    def _get_cv_param(self):
+        self.model_param.cv_param.role = self.role
+        self.model_param.cv_param.mode = self.mode
+        return self.model_param.cv_param
 
     def predict_proba(self, data_inst):
         pass
@@ -88,5 +155,8 @@ class BoostingTree(object):
     def load_model(self):
         pass
 
-    def save_mode(self):
+    def save_data(self):
+        return self.data_output
+
+    def save_model(self):
         pass

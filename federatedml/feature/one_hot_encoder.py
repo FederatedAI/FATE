@@ -18,28 +18,43 @@ import functools
 
 import numpy as np
 
-from arch.api.model_manager import manager as model_manager
 from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
 from arch.api.utils import log_utils
+from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
+from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 
 LOGGER = log_utils.getLogger()
 
+MODEL_PARAM_NAME = 'OneHotParam'
+MODEL_META_NAME = 'OneHotMeta'
+MODEL_NAME = 'OneHotEncoder'
 
-class OneHotEncoder(object):
-    def __init__(self, param):
-        self.cols = param.cols
+
+class OneHotEncoder(ModelBase):
+    def __init__(self):
+        super(OneHotEncoder, self).__init__()
+        self.cols = []
         self.header = []
+        self.schema = {}
         self.col_maps = {}
-        self.cols_dict = {}
+        self.output_data = None
+        self.model_param = OneHotEncoderParam()
+
+    def _init_model(self, model_param):
+        self.model_param = model_param
+        self.cols_index = model_param.cols
 
     def fit(self, data_instances):
         self._init_cols(data_instances)
 
+        one_data = data_instances.first()[1]
+        LOGGER.debug("Input of onehot, data is : {}, header: {}, cols: {}".format(one_data.features, self.header, self.cols))
+
         f1 = functools.partial(self.record_new_header,
                                cols=self.cols,
-                               cols_dict=self.cols_dict)
+                               header=self.header)
 
         col_maps = data_instances.mapPartitions(f1)
 
@@ -47,25 +62,12 @@ class OneHotEncoder(object):
         col_maps = col_maps.reduce(f2)
         self._detect_overflow(col_maps)
         self.col_maps = col_maps
+        LOGGER.debug("Before set_schema in fit, schema is : {}, header: {}".format(self.schema, self.header))
         self.set_schema(data_instances)
+        data_instances = self.transform(data_instances)
+        LOGGER.debug("After transform in fit, schema is : {}, header: {}".format(self.schema, self.header))
+
         return data_instances
-
-    def transform(self, data_instances):
-        self._init_cols(data_instances)
-        ori_header = self.header.copy()
-        self._transform_schema(data_instances)
-        f = functools.partial(self.transfer_one_instance,
-                              col_maps=self.col_maps,
-                              ori_header=ori_header,
-                              transformed_header=self.header)
-        new_data = data_instances.mapValues(f)
-        self.set_schema(new_data)
-        return new_data
-
-    def fit_transform(self, data_instances):
-        self.fit(data_instances)
-        new_data = self.transform(data_instances)
-        return new_data
 
     def _detect_overflow(self, col_maps):
         for col_name, col_value_map in col_maps.items():
@@ -73,40 +75,73 @@ class OneHotEncoder(object):
                 raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
                                  .format(consts.ONE_HOT_LIMIT))
 
-    def _transform_schema(self, data_instances):
-        if not self.header:
-            self._init_cols(data_instances)
+    def transform(self, data_instances):
+        self._init_cols(data_instances)
+        ori_header = self.header.copy()
+        self._transform_schema()
+        LOGGER.debug("In Onehot transform, ori_header: {}, transfered_header: {}, col_maps: {}".format(
+            ori_header, self.header, self.col_maps
+        ))
+        one_data = data_instances.first()[1].features
+        LOGGER.debug("Before transform, data is : {}".format(one_data))
+
+        f = functools.partial(self.transfer_one_instance,
+                              col_maps=self.col_maps,
+                              ori_header=ori_header,
+                              transformed_header=self.header)
+        new_data = data_instances.mapValues(f)
+        self.set_schema(new_data)
+
+        one_data = new_data.first()[1].features
+        LOGGER.debug("transfered data is : {}".format(one_data))
+
+        return new_data
+
+    def _transform_schema(self):
 
         header = self.header
-        LOGGER.info("[Result][OneHotEncoder]Before one-hot, data_instances schema is : {}".format(header))
+        LOGGER.debug("[Result][OneHotEncoder]Before one-hot, data_instances schema is : {}".format(header))
         for col_name, value_map in self.col_maps.items():
             col_idx = header.index(col_name)
             new_headers = list(value_map.values())
+            new_headers = sorted(new_headers)
             if col_idx == 0:
                 header = new_headers + header[1:]
             else:
                 header = header[:col_idx] + new_headers + header[col_idx + 1:]
 
-        self.cols_dict = {}
-        for col in header:
-            col_index = header.index(col)
-            self.cols_dict[col] = col_index
         self.header = header
-        LOGGER.info("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
 
     def _init_cols(self, data_instances):
         header = get_header(data_instances)
+        self.schema = data_instances.schema
         self.header = header
-        if self.cols == -1:
+        if self.cols_index == -1:
             self.cols = header
+        else:
+            cols = []
+            for idx in self.cols_index:
+                try:
+                    idx = int(idx)
+                except ValueError:
+                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
 
-        self.cols_dict = {}
-        for col in self.cols:
-            col_index = header.index(col)
-            self.cols_dict[col] = col_index
+                if idx >= len(header):
+                    raise ValueError(
+                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
+                cols.append(header[idx])
+            self.cols = cols
 
     @staticmethod
-    def record_new_header(data, cols, cols_dict):
+    def record_new_header(data, cols, header):
+        """
+        Generate a new schema based on data value. Each new value will generate a new header.
+
+        Returns
+        -------
+        col_maps: a dict in which keys are original header, values are dicts. The dicts in value
+        """
         col_maps = {}
         for col_name in cols:
             col_maps[col_name] = {}
@@ -115,16 +150,12 @@ class OneHotEncoder(object):
             feature = instance.features
             for col_name in cols:
                 this_col_map = col_maps.get(col_name)
-                col_index = cols_dict.get(col_name)
-                feature_value = feature[col_index]
-                feature_value = str(feature_value)
+                col_index = header.index(col_name)
+                feature_value = int(feature[col_index])
+                # feature_value = str(feature_value)
                 if feature_value not in this_col_map:
-                    new_feature_header = str(col_name) + '_' + str(feature_value)
+                    new_feature_header = str(col_name) + '_' + str(int(feature_value))
                     this_col_map[feature_value] = new_feature_header
-
-                if len(this_col_map) > consts.ONE_HOT_LIMIT:
-                    raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
-                                     .format(consts.ONE_HOT_LIMIT))
 
         return col_maps
 
@@ -163,61 +194,80 @@ class OneHotEncoder(object):
                 feature_dict[col_name] = 0
 
         for col_name, value_dict in col_maps.items():
-            feature_value = feature_dict.get(col_name)
-            feature_value = str(feature_value)
+            feature_value = int(feature_dict.get(col_name))
             header_name = value_dict.get(feature_value)
+            if header_name is None:
+                continue
             feature_dict[header_name] = 1
 
         feature_array = []
         for col_name in transformed_header:
             feature_array.append(feature_dict[col_name])
 
-        feature_array = np.array(feature_array, dtype=float)
+        feature_array = np.array(feature_array)
         instance.features = feature_array
         return instance
 
     def set_schema(self, data_instance):
-        data_instance.schema = {"header": self.header}
+        self.schema['header'] = self.header
+        data_instance.schema = self.schema
 
-    def _save_meta(self, name, namespace):
+    def _get_meta(self):
         meta_protobuf_obj = onehot_meta_pb2.OneHotMeta(cols=self.cols)
-        buffer_type = "OneHotEncoder.meta"
+        return meta_protobuf_obj
 
-        model_manager.save_model(buffer_type=buffer_type,
-                                 proto_buffer=meta_protobuf_obj,
-                                 name=name,
-                                 namespace=namespace)
-        return buffer_type
-
-    def save_model(self, name, namespace):
-
-        meta_buffer_type = self._save_meta(name, namespace)
-
+    def _get_param(self):
         pb_dict = {}
+        LOGGER.debug("in save model, col_maps: {}".format(self.col_maps))
         for col_name, value_dict in self.col_maps.items():
-            value_dict_obj = onehot_param_pb2.ColDict(encode_map=value_dict)
+            values = list(value_dict.keys())
+            values = sorted(values)
+            LOGGER.debug("In _get_param, values: {}".format(values))
+            data_type = type(values[0]).__name__
+            encoded_variables = []
+            for v in values:
+                encoded_variables.append(value_dict[v])
+            values = [str(x) for x in values]
+
+            value_dict_obj = onehot_param_pb2.ColsMap(values=values,
+                                                      encoded_variables=encoded_variables,
+                                                      data_type=data_type)
             pb_dict[col_name] = value_dict_obj
 
         result_obj = onehot_param_pb2.OneHotParam(col_map=pb_dict)
+        return result_obj
 
-        param_buffer_type = "OneHotEncoder.param"
+    def export_model(self):
+        if self.model_output is not None:
+            LOGGER.debug("Model output is : {}".format(self.model_output))
+            return self.model_output
 
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=result_obj,
-                                 name=name,
-                                 namespace=namespace)
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            MODEL_META_NAME: meta_obj,
+            MODEL_PARAM_NAME: param_obj
+        }
+        return result
 
-        return [(meta_buffer_type, param_buffer_type)]
+    def _load_model(self, model_dict):
+        self._parse_need_run(model_dict, MODEL_META_NAME)
+        model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
+        model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
 
-    def load_model(self, name, namespace):
+        self.model_output = {
+            MODEL_META_NAME: model_meta,
+            MODEL_PARAM_NAME: model_param
+        }
 
-        result_obj = onehot_param_pb2.OneHotParam()
-        return_code = model_manager.read_model(buffer_type='OneHotEncoder.param',
-                                               proto_buffer=result_obj,
-                                               name=name,
-                                               namespace=namespace)
-        self.col_maps = dict(result_obj.col_map)
-        for k, v in self.col_maps.items():
-            self.col_maps[k] = dict(v.encode_map)
-
-        return return_code
+        col_maps = dict(model_param.col_map)
+        self.col_maps = {}
+        for k, v in col_maps.items():
+            values = v.values
+            encoded_variables = v.encoded_variables
+            data_type = v.data_type
+            if data_type in ['int', 'int64', 'int32']:
+                values = map(float, values)
+                values = list(map(int, values))
+            one_feature_col_map = dict(zip(values, encoded_variables))
+            self.col_maps[k] = one_feature_col_map

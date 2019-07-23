@@ -19,6 +19,7 @@ import random
 import unittest
 
 from arch.api import eggroll
+from fate_flow.manager.tracking import Tracking 
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler
@@ -35,6 +36,8 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_downsample(self):
         sampler = RandomSampler(fraction=0.3, method="downsample")
+        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         
         self.assertTrue(sample_data.count() > 25 and sample_data.count() < 35)
@@ -47,6 +50,7 @@ class TestRandomSampler(unittest.TestCase):
             self.assertTrue(np.abs(value - data_dict.get(id)) < consts.FLOAT_ZERO)
 
         trans_sampler = RandomSampler(method="downsample")
+        trans_sampler.set_tracker(tracker)
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
         trans_data = list(trans_sample_data.collect())
         trans_sample_ids = [id for (id, value) in trans_data]
@@ -62,6 +66,8 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_upsample(self):
         sampler = RandomSampler(fraction=3, method="upsample")
+        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
 
         self.assertTrue(sample_data.count() > 250 and sample_data.count() < 350)
@@ -72,6 +78,7 @@ class TestRandomSampler(unittest.TestCase):
             self.assertTrue(np.abs(value - data_dict[sample_ids[id]]) < consts.FLOAT_ZERO)
 
         trans_sampler = RandomSampler(method="upsample")
+        trans_sampler.set_tracker(tracker)
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
         trans_data = list(trans_sample_data.collect())
         data_to_trans_dict = dict(self.data_to_trans)
@@ -96,6 +103,8 @@ class TestStratifiedSampler(unittest.TestCase):
     def test_downsample(self):
         fractions = [(0, 0.3), (1, 0.4), (2, 0.5), (3, 0.8)]
         sampler = StratifiedSampler(fractions=fractions, method="downsample")
+        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         count_label = [0 for i in range(4)]
         new_data = list(sample_data.collect())
@@ -111,6 +120,7 @@ class TestStratifiedSampler(unittest.TestCase):
             self.assertTrue(np.abs(count_label[i] - 250 * fractions[i][1]) < 10)
 
         trans_sampler = StratifiedSampler(method="downsample")
+        trans_sampler.set_tracker(tracker)
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
         trans_data = list(trans_sample_data.collect())
         trans_sample_ids = [id for (id, value) in trans_data]
@@ -123,6 +133,8 @@ class TestStratifiedSampler(unittest.TestCase):
     def test_upsample(self):
         fractions = [(0, 1.3), (1, 0.5), (2, 0.8), (3, 9)]
         sampler = StratifiedSampler(fractions=fractions, method="upsample")
+        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         new_data = list(sample_data.collect())
         count_label = [0 for i in range(4)]
@@ -139,6 +151,7 @@ class TestStratifiedSampler(unittest.TestCase):
             self.assertTrue(np.abs(count_label[i] - 250 * fractions[i][1]) < 10)
         
         trans_sampler = StratifiedSampler(method="upsample")
+        trans_sampler.set_tracker(tracker)
         trans_sample_data = trans_sampler.sample(self.table_trans, sample_ids)
         trans_data = (trans_sample_data.collect())
         trans_sample_ids = [id for (id, value) in trans_data]

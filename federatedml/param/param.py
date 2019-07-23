@@ -993,7 +993,7 @@ class ScaleParam(object):
 
     """
 
-    def __init__(self, method=None, mode="normal", area="all", scale_column_idx=None, feat_upper=None, feat_lower=None, out_upper=None,
+    def __init__(self, method=None, mode="normal", area="all", feat_upper=None, feat_lower=None, out_upper=None,
                  out_lower=None, with_mean=True, with_std=True):
         self.method = method
         self.mode = mode
@@ -1002,7 +1002,6 @@ class ScaleParam(object):
         self.feat_lower = feat_lower
         self.out_upper = out_upper
         self.out_lower = out_lower
-        self.scale_column_idx = scale_column_idx
 
         self.with_mean = with_mean
         self.with_std = with_std

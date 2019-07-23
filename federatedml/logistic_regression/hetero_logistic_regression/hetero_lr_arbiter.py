@@ -18,30 +18,22 @@ import numpy as np
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
-from federatedml.optim import Optimizer
-from federatedml.optim.convergence import DiffConverge
+from fate_flow.entity.metric import MetricMeta, Metric
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
-from federatedml.util import HeteroLRTransferVariable
 from federatedml.util import consts
-
-# from federatedml.util import LogisticParamChecker
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLRArbiter(BaseLogisticRegression):
-    def __init__(self, logistic_params):
+class HeteroLRArbiter(HeteroLRBase):
+    def __init__(self):
         # LogisticParamChecker.check_param(logistic_params)
-        super(HeteroLRArbiter, self).__init__(logistic_params)
-        self.converge_func = DiffConverge(logistic_params.eps)
+        super(HeteroLRArbiter, self).__init__()
 
         # attribute
         self.pre_loss = None
         self.batch_num = None
-        self.transfer_variable = HeteroLRTransferVariable()
-        self.optimizer = Optimizer(logistic_params.learning_rate, logistic_params.optimizer)
-        self.key_length = logistic_params.encrypt_param.key_length
 
     def perform_subtasks(self, **training_info):
         """
@@ -59,6 +51,21 @@ class HeteroLRArbiter(BaseLogisticRegression):
         :param training_info: a dictionary holding training information
         """
         pass
+
+    def run(self, component_parameters=None, args=None):
+        need_cv = self._init_runtime_parameters(component_parameters)
+
+        if need_cv:
+            LOGGER.info("Task is cross validation.")
+            self.cross_validation(None)
+            return 
+
+        if not "model" in args:
+            LOGGER.info("Task is fit")
+            self.set_flowid('train')
+            self.fit()
+        else:
+            LOGGER.info("Task is transform")
 
     def fit(self, data_instances=None):
         """
@@ -173,6 +180,16 @@ class HeteroLRArbiter(BaseLogisticRegression):
             # if converge
             loss = iter_loss / self.batch_num
             LOGGER.info("iter loss:{}".format(loss))
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "iters"
+                                     })
+            metric_name = 'loss_' + self.flowid
+            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name=metric_name,
+                                 metric_namespace='train',
+                                 metric_data=[Metric(self.n_iter_, float(loss))])
             if self.converge_func.is_converge(loss):
                 is_stop = True
 
