@@ -111,24 +111,7 @@ class Evaluation(ModelBase):
         else:
             LOGGER.warning("Evaluation has not transform, return")
 
-    def _param_check(self):
-        if self.eval_type == consts.REGRESSION:
-            new_metrics = []
-            for metric in self.metrics:
-                if metric in self.regression_support_func:
-                    new_metrics.append(metric)
-            metrics = new_metrics
-            if len(metrics) == 0:
-                LOGGER.warning("Not metrics can be found in evaluation of regression, return None")
-                return False
-
-        return True
-
     def fit(self, data):
-        if not self._param_check():
-            LOGGER.warning("Evaluation parameter checker may not be right, not evaluate and return None")
-            return None
-
         if len(data) <= 0:
             return
 
@@ -309,6 +292,8 @@ class Evaluation(ModelBase):
                     recall_thresholds = recall_res[1][1]
                     pos_recall_score = recall_res[1][0]
 
+                    unit_name = "class"
+
                     # filter if the number of precision is lager than self.filter_point_num for binary classification
                     if self.eval_type == consts.BINARY:
                         index = self.__filter(precision_thresholds, self.filter_point_num)
@@ -316,22 +301,23 @@ class Evaluation(ModelBase):
                         pos_precision_score = [score[1] for score in pos_precision_score]
                         pos_precision_score = [pos_precision_score[i] for i in index]
 
-
                         recall_thresholds = [recall_thresholds[i] for i in index]
                         pos_recall_score = [score[1] for score in pos_recall_score]
                         pos_recall_score = [pos_recall_score[i] for i in index]
 
+                        unit_name = "threshold"
+
                     self.__save_curve_data(precision_thresholds, pos_precision_score, metric_name_precision,
                                            metric_namespace)
                     self.__save_curve_meta(metric_name_precision, metric_namespace, "_".join([consts.PRECISION.upper(), self.eval_type.upper()]),
-                                           unit_name="threshold", ordinate_name="Precision", curve_name=data_type,
+                                           unit_name=unit_name, ordinate_name="Precision", curve_name=data_type,
                                            pair_type=data_type)
 
                     metric_name_recall = '_'.join([data_type, "recall"])
                     self.__save_curve_data(recall_thresholds, pos_recall_score, metric_name_recall,
                                            metric_namespace)
                     self.__save_curve_meta(metric_name_recall, metric_namespace, "_".join([consts.RECALL.upper(), self.eval_type.upper()]),
-                                           unit_name="threshold", ordinate_name="Recall", curve_name=data_type,
+                                           unit_name=unit_name, ordinate_name="Recall", curve_name=data_type,
                                            pair_type=data_type)
                 else:
                     LOGGER.warning("Unknown metric:{}".format(metric))
