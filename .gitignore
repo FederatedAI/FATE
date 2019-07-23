@@ -1,11 +1,11 @@
 # common file patterns
 .DS_STORE
 .idea
-.iml
-.pyc
+*.iml
+*.pyc
 __pycache__
-.jar
-.class
+*.jar
+*.class
 
 # excluded paths
 /arch/core/target/
