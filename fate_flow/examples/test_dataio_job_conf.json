@@ -1,0 +1,52 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [9999]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "a888071a9be511e99ca800e04c6c66f9", "namespace": "guest#9999#arbiter-10000#guest-9999#host-10000#train_input"}]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_idx": [0],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "aa60b8a29be511e9a24e00e04c6c66f9", "namespace": "host#10000#arbiter-10000#guest-9999#host-10000#train_input"}]
+                }
+            },
+             "dataio_0":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "lr_0": {
+            "penalty": "L2",
+            "optimizer": "rmsprop",
+            "eps": 1e-5,
+            "alpha": 0.01,
+            "max_iter": 10,
+            "converge_func": "diff",
+            "batch_size": 320,
+            "learning_rate": 0.01,
+            "init_param": {
+				"init_method": "test"
+            }
+        }
+    }
+}

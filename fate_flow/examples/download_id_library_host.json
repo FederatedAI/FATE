@@ -1,0 +1,13 @@
+{
+  "output_path": "./download_id_library_host.txt",
+  "gen_table_info": true,
+  "local": {
+    "party_id": 10000,
+    "role": "host"
+  },
+  "role": {
+    "guest": [9999],
+    "host": [10000]
+  },
+  "data_type": "data_input"
+}

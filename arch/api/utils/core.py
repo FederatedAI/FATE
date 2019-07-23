@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-#import ujson
 import json
 import time
 import uuid
+import base64
+import socket
+import os
 
 
 def get_fate_uuid():
@@ -53,3 +54,44 @@ def json_loads(src):
 
 def current_timestamp():
     return int(time.time()*1000)
+
+
+def base64_encode(src):
+    return bytes_to_string(base64.b64encode(src.encode("utf-8")))
+
+
+def base64_decode(src):
+    return bytes_to_string(base64.b64decode(src))
+
+
+def get_lan_ip():
+    if os.name != "nt":
+        import fcntl
+        import struct
+
+        def get_interface_ip(ifname):
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
+
+    #ip = socket.gethostbyname(socket.gethostname())
+    ip = socket.gethostbyname(socket.getfqdn())
+    if ip.startswith("127.") and os.name != "nt":
+        interfaces = [
+            "bond1",
+            "eth0",
+            "eth1",
+            "eth2",
+            "wlan0",
+            "wlan1",
+            "wifi0",
+            "ath0",
+            "ath1",
+            "ppp0",
+        ]
+        for ifname in interfaces:
+            try:
+                ip = get_interface_ip(ifname)
+                break
+            except IOError as e:
+                pass
+    return ip or ''

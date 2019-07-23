@@ -29,9 +29,9 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: Namin
         return
     if job_id is None:
         job_id = str(uuid.uuid1())
-        LoggerFactory.setDirectory()
+        LoggerFactory.set_directory()
     else:
-        LoggerFactory.setDirectory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
+        LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
     RuntimeInstance.MODE = mode
 
     eggroll_context = EggRollContext(naming_policy=naming_policy)

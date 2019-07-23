@@ -20,7 +20,16 @@ from arch.api import eggroll
 import datetime
 
 
-def save_data(kv_data: Iterable, name, namespace, partition=1, create_if_missing=True, error_if_exist=False, version_log=None):
+def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
+          in_place_computing=False):
+    dtable = eggroll.table(name=name, namespace=namespace, partition=partition, persistent=persistent,
+                           create_if_missing=create_if_missing, error_if_exist=error_if_exist,
+                           in_place_computing=in_place_computing)
+    return dtable
+
+
+def save_data(kv_data: Iterable, name, namespace, partition=1, create_if_missing=True, error_if_exist=False,
+              version_log=None):
     """
     save data into data table
     :param kv_data:
@@ -89,21 +98,44 @@ def get_data_table_meta(key, data_table_name, data_table_namespace):
         return None
 
 
+def get_data_table_metas(data_table_name, data_table_namespace):
+    """
+    get data table meta information
+    :param data_table_name: table name of this data table
+    :param data_table_namespace: table name of this data table
+    :return:
+    """
+    data_meta_table = eggroll.table(name="%s.meta" % data_table_name,
+                                    namespace=data_table_namespace,
+                                    create_if_missing=True,
+                                    error_if_exist=False)
+    if data_meta_table:
+        metas = dict()
+        for k, v in data_meta_table.collect(use_serialize=False):
+            metas[k] = json_loads(v)
+        return metas
+    else:
+        return None
+
+
 if __name__ == '__main__':
     from arch.api import eggroll
     import uuid
     import random
+
     job_id = str(uuid.uuid1().hex)
     eggroll.init(job_id=job_id, mode=0)
 
     table_name = "test_example"
     table_namespace = "storage_test_example"
 
+
     def gen_test_data(row_count, column_count):
         for r in range(row_count):
             k = uuid.uuid1().hex
             v = ','.join([str(random.randint(1, 100)) for i in range(column_count - 1)])
             yield k, v
+
 
     data_table = save_data(gen_test_data(5, 10), name=table_name, namespace=table_namespace)
 
@@ -112,5 +144,3 @@ if __name__ == '__main__':
 
     save_data_table_meta({"k1": {"t1": [1, 2]}}, data_table_name=table_name, data_table_namespace=table_namespace)
     print(get_data_table_meta("k1", data_table_name=table_name, data_table_namespace=table_namespace))
-
-

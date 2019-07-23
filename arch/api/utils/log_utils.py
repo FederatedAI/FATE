@@ -164,5 +164,5 @@ def getLogger(className=None, useLevelFile=False):
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         #className = os.path.splitext(os.path.basename(module.__file__))[0]
-        className = 'all_stat'
+        className = 'stat'
     return LoggerFactory.get_logger(className)
