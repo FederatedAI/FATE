@@ -31,6 +31,7 @@ import com.webank.ai.fate.driver.federation.transfer.communication.producer.Dtab
 import com.webank.ai.fate.driver.federation.transfer.communication.producer.ObjectLmdbSendProducer;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.service.ProxySelectionService;
+import com.webank.ai.fate.driver.federation.utils.ThreadPoolTaskExecutorUtil;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
 import org.apache.logging.log4j.LogManager;
@@ -135,11 +136,11 @@ public class SendProcessor extends BaseTransferProcessor {
             broker.addSubscriber(consumer);
 
             // todo: add result tracking and retry mechanism
-            ListenableFuture<BasicMeta.ReturnStatus> producerResult = ioProducerPool.submitListenable(producer);
+            ListenableFuture<BasicMeta.ReturnStatus> producerResult = (ListenableFuture<BasicMeta.ReturnStatus>)ThreadPoolTaskExecutorUtil.submitListenable(ioProducerPool,producer,new int[]{500,1000,5000},new int[]{5,5,3});
             producerResult.addCallback(
                     federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
+            ListenableFuture<?> consumerListenableFuture = ThreadPoolTaskExecutorUtil.submitListenable(ioConsumerPool,consumer,new int[]{500,1000,5000},new int[]{5,5,3});
 
-            ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
             consumerListenableFuture.addCallback(
                     federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
         }
@@ -162,11 +163,14 @@ public class SendProcessor extends BaseTransferProcessor {
         final List<BasicMeta.ReturnStatus> results = Collections.synchronizedList(Lists.newArrayList());
         CountDownLatch finishLatch = new CountDownLatch(1);
 
-        ListenableFuture<BasicMeta.ReturnStatus> producerListenableFuture = ioProducerPool.submitListenable(producer);
+        ListenableFuture<BasicMeta.ReturnStatus> producerListenableFuture = ThreadPoolTaskExecutorUtil.submitListenable(ioProducerPool,producer,new int[]{500,1000,5000},new int[]{5,5,3});
+
         producerListenableFuture.addCallback(
                 federationCallbackFactory.createDtableSendProducerListenableCallback(results, broker, errorContainer, null, -1));
 
-        ListenableFuture<?> consumerListenableFuture = ioConsumerPool.submitListenable(consumer);
+        ListenableFuture<?> consumerListenableFuture = ThreadPoolTaskExecutorUtil.submitListenable(ioConsumerPool,consumer,new int[]{500,1000,5000},new int[]{5,5,3});
+
+
         consumerListenableFuture.addCallback(
                 federationCallbackFactory.createDefaultConsumerListenableCallback(errorContainer, finishLatch, null, -1));
 
