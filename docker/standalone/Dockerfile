@@ -38,7 +38,7 @@ RUN tar -xf fate.tar
 
 RUN rm fate.tar
 
-RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg && apt-get install libmpc-dev -y
+RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr6 && apt-get install libmpc-dev -y
 
 RUN pip install -r requirements.txt
 
