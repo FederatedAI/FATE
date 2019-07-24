@@ -91,7 +91,7 @@ public class Configuration {
                         case "json":
                             byte[] bytes = new byte[(int) confFile.length()];
                             fileInputStream.read(bytes);
-                            JSONObject jsonObject = new JSONObject(new String(bytes));
+                            JSONObject jsonObject = new JSONObject(new String(bytes,"UTF-8"));
                             jsonMapConfigPool.put(confFile.getName(), jsonObject);
                     }
                 } catch (IOException ex) {
