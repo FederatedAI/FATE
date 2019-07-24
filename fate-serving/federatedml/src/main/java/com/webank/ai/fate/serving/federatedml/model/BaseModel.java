@@ -36,7 +36,7 @@ public abstract class BaseModel {
         ReturnResult remoteResultFromCache = CacheManager.getRemoteModelInferenceResult(dstParty, federatedRoles, featureIds);
         if (remoteResultFromCache != null) {
             LOGGER.info("Get remote party model inference result from cache.");
-            federatedParams.put("is_cache", true);
+            federatedParams.put("getRemotePartyResult", false);
             return remoteResultFromCache;
         }
 
@@ -49,6 +49,7 @@ public abstract class BaseModel {
         requestData.put("feature_id", ObjectTransform.bean2Json(federatedParams.get("feature_id")));
         requestData.put("local", ObjectTransform.bean2Json(dstParty));
         requestData.put("role", ObjectTransform.bean2Json(federatedParams.get("role")));
+        federatedParams.put("getRemotePartyResult", true);
         ReturnResult remoteResult = getFederatedPredictFromRemote(srcParty, dstParty, requestData);
         CacheManager.putRemoteModelInferenceResult(dstParty, federatedRoles, featureIds, remoteResult);
         LOGGER.info("Get remote party model inference result from federated request.");
