@@ -794,12 +794,7 @@ class FeatureBinningParam(object):
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
-                 local_only=False,
-                 # meta_table='binning_meta_table',
-                 # param_table='binning_param_table',
-                 # transform_table='binning_transform_table',
-                 # result_namespace='binning_namespace',
-                 display_result='simple'):
+                 local_only=False):
         self.process_method = process_method
         self.method = method
         self.compress_thres = compress_thres
@@ -809,10 +804,6 @@ class FeatureBinningParam(object):
         self.bin_num = bin_num
         self.cols = cols
         self.local_only = local_only
-
-        if display_result == 'simple':
-            display_result = ['iv']
-        self.display_result = display_result
 
 
 class UniqueValueParam(object):

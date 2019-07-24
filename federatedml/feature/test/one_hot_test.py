@@ -29,8 +29,9 @@ import numpy as np
 
 class TestOneHotEncoder(unittest.TestCase):
     def setUp(self):
-        self.data_num = 10
+        self.data_num = 100
         self.feature_num = 3
+        self.cols = [0, 1, 2]
         self.header = ['x' + str(i) for i in range(self.feature_num)]
         final_result = []
 
@@ -51,31 +52,18 @@ class TestOneHotEncoder(unittest.TestCase):
 
         self.table = table
 
-        self.component_parameters = {
-            "OneHotEncoderParam": {
-                "cols": [0, 1]
-            }
-        }
         self.args = {"data": {self.model_name: {"data": table}}}
 
     def test_instance(self):
         one_hot_encoder = OneHotEncoder()
-        one_hot_encoder.run(self.component_parameters, self.args)
-        print("data in fit: {}".format(one_hot_encoder.save_data()))
-        model = {self.model_name: one_hot_encoder.save_model()}
+        one_hot_encoder.cols = self.cols
+        one_hot_encoder.cols_index = self.cols
 
-        new_args = {
-            'data': {
-                self.model_name: {
-                    'data': self.table
-                }
-            },
-            'model': model
-        }
-
-        new_encoder = OneHotEncoder()
-        new_encoder.run(self.component_parameters, new_args)
-        print("data in transform: {}".format(new_encoder.save_data()))
+        result = one_hot_encoder.fit(self.table)
+        local_result = result.collect()
+        for k, v in local_result:
+            new_features = v.features
+            self.assertTrue(len(new_features) == self.feature_num * 3)
 
 
 if __name__ == '__main__':

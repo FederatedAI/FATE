@@ -49,9 +49,6 @@ class OneHotEncoder(ModelBase):
     def fit(self, data_instances):
         self._init_cols(data_instances)
 
-        one_data = data_instances.first()[1]
-        LOGGER.debug("Input of onehot, data is : {}, header: {}, cols: {}".format(one_data.features, self.header, self.cols))
-
         f1 = functools.partial(self.record_new_header,
                                cols=self.cols,
                                header=self.header)

@@ -23,7 +23,7 @@ from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 from federatedml.feature.quantile import Quantile
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.param.param_feature_binning import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
 class TestInstance(unittest.TestCase):

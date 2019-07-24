@@ -20,8 +20,8 @@ import json
 import os
 import unittest
 
-from federatedml.param.param_feature_binning import FeatureBinningParam
-from federatedml.util.param_exact import ParamExtract
+from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.util.param_extract import ParamExtract
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 
@@ -42,7 +42,7 @@ class TestParamExtract(unittest.TestCase):
         param_obj = FeatureBinningParam()
         extractor = ParamExtract()
         param_obj = extractor.parse_param_from_config(param_obj, self.config_json)
-        self.assertTrue(param_obj.process_method == "fit")
+        self.assertTrue(param_obj.method == "quantile")
         self.assertTrue(param_obj.transform_param.transform_type == 'bin_num')
 
 

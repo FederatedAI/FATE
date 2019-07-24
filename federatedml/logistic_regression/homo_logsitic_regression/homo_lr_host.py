@@ -69,7 +69,7 @@ class HomoLRHost(HomoLRBase):
         if not self.need_run:
             return data_instances
 
-        self.set_schema(data_instances)
+        self.init_schema(data_instances)
         LOGGER.debug("Before trainning, self.header: {}".format(self.header))
         self._abnormal_detection(data_instances)
 

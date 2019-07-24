@@ -55,14 +55,14 @@ class TestQuantileBinning(unittest.TestCase):
         self.table = table
         self.table.schema = {'header': header}
         self.numpy_table = np.array(numpy_array)
-        self.cols = ['x1', 'x2']
+        self.cols = [1, 2]
         # self.cols = -1
 
     def test_quantile_binning(self):
-        compress_thres = 10000
-        head_size = 5000
+        compress_thres = 1000
+        head_size = 500
         error = 0.01
-        bin_num = 10000
+        bin_num = 30
         bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
                                         error=error,
                                         cols=self.cols,
@@ -73,8 +73,8 @@ class TestQuantileBinning(unittest.TestCase):
         t1 = time.time()
         print("Split points fitting time: {}".format(t1 - t0))
         for col_name, col_idx in self.col_dict.items():
-            # if col_name not in self.cols:
-            #     continue
+            if col_idx not in self.cols:
+                continue
             bin_percent = [i * (1.0 / bin_num) for i in range(1, bin_num)]
             # feature_idx = self.col_dict.get(col)
             x = self.numpy_table[:, col_idx]
@@ -103,8 +103,8 @@ class TestQuantileBinning(unittest.TestCase):
 class TestQuantileBinningSpeed(unittest.TestCase):
     def setUp(self):
         # eggroll.init("123")
-        self.data_num = 100000
-        self.feature_num = 200
+        self.data_num = 1000
+        self.feature_num = 30
         final_result = []
         numpy_array = []
         for i in range(self.data_num):

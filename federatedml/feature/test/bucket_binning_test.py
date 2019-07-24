@@ -51,7 +51,7 @@ class TestBucketBinning(unittest.TestCase):
         self.table.schema = {'header': header}
 
         self.numpy_table = np.array(numpy_array)
-        self.cols = ['x1', 'x2']
+        self.cols = [1, 2]
 
     def test_bucket_binning(self):
         bin_param = FeatureBinningParam(bin_num=self.bin_num, cols=self.cols)

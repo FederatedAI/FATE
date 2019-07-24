@@ -41,7 +41,6 @@ class KFold(BaseCrossValidator):
         header = data_inst.schema.get('header')
 
         data_sids_iter, data_size = collect_index(data_inst)
-        print("in split, header: {}, data_size: {}, data_sids_iter: {}".format(header, data_size, data_sids_iter))
         data_sids = []
         key_type = None
         for sid, _ in data_sids_iter:
@@ -49,15 +48,21 @@ class KFold(BaseCrossValidator):
                 key_type = type(sid)
             data_sids.append(sid)
         data_sids = np.array(data_sids)
-        print("In split, data_sids: {}".format(data_sids))
         if self.shuffle:
             np.random.shuffle(data_sids)
 
         kf = sk_KFold(n_splits=self.n_splits)
 
+        n = 0
         for train, test in kf.split(data_sids):
+
             train_sids = data_sids[train]
             test_sids = data_sids[test]
+            print("The {}th iter,  train: {}, test: {}".format(
+                n, train_sids[0:10], test_sids[0:10]
+            ))
+            n += 1
+
             train_sids_table = [(key_type(x), 1) for x in train_sids]
             test_sids_table = [(key_type(x), 1) for x in test_sids]
             # print(train_sids_table)
@@ -66,16 +71,6 @@ class KFold(BaseCrossValidator):
                                               partition=data_inst._partitions)
             train_data = data_inst.join(train_table, lambda x, y: x)
 
-            local_data_inst = data_inst.collect()
-            for k, v in local_data_inst:
-                print("local_data_inst, k: {}, v: {}, type of k: {}".format(k, v, type(k)))
-
-            local_train_table = train_table.collect()
-            for k, v in local_train_table:
-                print("local_train_table, k: {}, v: {}, type of k: {}".format(k, v, type(k)))
-
-            print("train_table length: {}, train_data length: {}, train_table count: {}".format(
-                train_table.count(), train_data.count(), train_table.count()))
             test_table = eggroll.parallelize(test_sids_table,
                                              include_key=True,
                                              partition=data_inst._partitions)

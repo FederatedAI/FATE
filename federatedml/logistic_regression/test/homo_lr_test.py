@@ -14,12 +14,9 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-
-import unittest
-
 import numpy as np
 
+from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.optim import Initializer
 from federatedml.optim import L2Updater
@@ -30,8 +27,8 @@ from federatedml.param.param import InitParam
 LOGGER = log_utils.getLogger()
 
 
-class TestHomoLR(unittest.TestCase):
-    def setUp(self):
+class TestHomoLR(object):
+    def __init__(self):
 
         self.guest_X = np.array([[1, 2, 3, 4, 5], [3, 2, 4, 5, 1], [2, 2, 3, 1, 1, ]]) / 10
         self.guest_Y = np.array([[1], [1], [-1]])
@@ -90,7 +87,7 @@ class TestHomoLR(unittest.TestCase):
         ))
         self.assertEqual(self.coef_.shape[0], self.guest_X.shape[1])
         grad, loss = self.gradient_operator.compute(self.values, coef=self.coef_,
-                    intercept=self.intercept_, fit_intercept=self.fit_intercept)
+                                                    intercept=self.intercept_, fit_intercept=self.fit_intercept)
         loss_norm = self.updater.loss_norm(self.coef_)
         loss = loss + loss_norm
         delta_grad = self.optimizer.apply_gradients(grad)
@@ -104,7 +101,7 @@ class TestHomoLR(unittest.TestCase):
         loss_hist = [100]
         for iter_num in range(self.max_iter):
             grad, loss = self.gradient_operator.compute(self.values, coef=self.coef_,
-                        intercept=self.intercept_, fit_intercept=self.fit_intercept)
+                                                        intercept=self.intercept_, fit_intercept=self.fit_intercept)
             loss_norm = self.updater.loss_norm(self.coef_)
             loss = loss + loss_norm
             delta_grad = self.optimizer.apply_gradients(grad)
@@ -145,6 +142,7 @@ class TestHomoLR(unittest.TestCase):
             else:
                 self.coef_ = self.coef_ - gradient
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def assertTrue(self, expres):
+        if expres:
+            return True
+        raise AssertionError("{} is not True".format(expres))
