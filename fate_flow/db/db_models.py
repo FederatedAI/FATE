@@ -145,7 +145,7 @@ class TrackingMetric(DataBaseModel):
         if ModelClass is None:
 
             class Meta:
-                db_table = '%s_%s' % ('tracking_metric', table_index)
+                db_table = '%s_%s' % ('t_tracking_metric', table_index)
 
             attrs = {'__module__': cls.__module__, 'Meta': Meta}
             ModelClass = type("%s_%s" % (cls.__name__, table_index), (cls,),
