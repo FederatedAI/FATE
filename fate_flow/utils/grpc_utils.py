@@ -18,7 +18,7 @@ import json
 from arch.api.proto import proxy_pb2, proxy_pb2_grpc
 from arch.api.proto import basic_meta_pb2
 import grpc
-from fate_flow.settings import ROLE, IP, GRPC_PORT, LOCAL_URL, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
+from fate_flow.settings import ROLE, IP, GRPC_PORT, LOCAL_URL, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, stat_logger
 
 
 def get_proxy_data_channel():
@@ -57,6 +57,7 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
 
         action = getattr(requests, method.lower(), None)
         if action:
+            stat_logger.info("rpc receive: {} {}".format(get_url(_suffix), param))
             resp = action(url=get_url(_suffix), data=param, headers=HEADERS)
         else:
             pass

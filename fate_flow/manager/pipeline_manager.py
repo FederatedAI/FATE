@@ -13,17 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.db.db_models import DB, Job
 from fate_flow.utils import job_utils
+from fate_flow.settings import stat_logger
 
 
-@DB.connection_context()
 def pipeline_dag_dependency(job_id):
-    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_is_initiator == 1)
-    if jobs:
+    try:
         job_dsl_path, job_runtime_conf_path = job_utils.get_job_conf_path(job_id=job_id)
         job_dsl_parser = job_utils.get_job_dsl_parser(job_dsl_path=job_dsl_path,
                                                       job_runtime_conf_path=job_runtime_conf_path)
         return job_dsl_parser.get_dependency()
-    else:
-        return None
+    except Exception as e:
+        stat_logger.exception(e)

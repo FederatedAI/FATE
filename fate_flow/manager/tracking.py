@@ -110,7 +110,7 @@ class Tracking(object):
 
     def save_output_data_table(self, data_table, data_name: str = 'component'):
         if data_table:
-            persistent_table = data_table.save_as(namespace=data_table._namespace, name=data_table._name)
+            persistent_table = data_table.save_as(namespace=data_table._namespace, name='{}_persistent'.format(data_table._name))
             FateStorage.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
                 namespace=persistent_table._namespace, name=persistent_table._name)
@@ -221,6 +221,7 @@ class Tracking(object):
 
     @DB.connection_context()
     def save_job_info(self, role, party_id, job_info, create=False):
+        stat_logger.info('save {} {} job: {}'.format(role, party_id, job_info))
         jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
         is_insert = True
         if jobs:
@@ -250,7 +251,7 @@ class Tracking(object):
         return job
 
     @DB.connection_context()
-    def save_task(self, role, party_id, task_info, create=False):
+    def save_task(self, role, party_id, task_info):
         tasks = Task.select().where(Task.f_job_id == self.job_id,
                                     Task.f_component_name == self.component_name,
                                     Task.f_task_id == self.task_id,
@@ -260,11 +261,9 @@ class Tracking(object):
         if tasks:
             task = tasks[0]
             is_insert = False
-        elif create:
+        else:
             task = Task()
             task.f_create_time = current_timestamp()
-        else:
-            return None
         task.f_job_id = self.job_id
         task.f_component_name = self.component_name
         task.f_task_id = self.task_id
