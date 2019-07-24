@@ -58,7 +58,7 @@ REDIS = {
     'host': '127.0.0.1',
     'port': 6379,
     'password': 'fate_dev',
-    'max_connections': 50
+    'max_connections': 500
 }
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")

@@ -55,9 +55,9 @@ class Tracking(object):
                               job_level=False)
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
-        kv = {}
+        kv = []
         for metric in metrics:
-            kv[metric.key] = metric.value
+            kv.append((metric.key, metric.value))
         self.insert_data_to_db(metric_namespace, metric_name, 1, kv, job_level)
 
     def get_job_metric_data(self, metric_namespace: str, metric_name: str):
@@ -71,13 +71,13 @@ class Tracking(object):
         metrics = []
         for k, v in self.read_data_from_db(metric_namespace, metric_name, 1, job_level):
             metrics.append(Metric(key=k, value=v))
-        metrics.sort(key=lambda x: x.key)
         return metrics
 
     def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                         job_level: bool = False):
-        self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict(), job_level)
+        self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
+    @DB.connection_context()
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):
         kv = dict()
         for k, v in self.read_data_from_db(metric_namespace, metric_name, 0, job_level):
@@ -87,7 +87,7 @@ class Tracking(object):
     @DB.connection_context()
     def get_metric_list(self, job_level: bool = False):
         metrics = dict()
-        query_sql = 'select distinct f_metric_namespace, f_metric_name from tracking_metric_{} where ' \
+        query_sql = 'select distinct f_metric_namespace, f_metric_name from t_tracking_metric_{} where ' \
                     'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}" ' \
                     'and f_task_id = "{}"'.format(
             self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role, self.party_id, self.task_id)
@@ -99,8 +99,9 @@ class Tracking(object):
         return metrics
 
     def log_job_view(self, view_data: dict):
-        self.insert_data_to_db('job', 'job_view', 2, view_data, job_level=True)
+        self.insert_data_to_db('job', 'job_view', 2, view_data.items(), job_level=True)
 
+    @DB.connection_context()
     def get_job_view(self):
         view_data = {}
         for k, v in self.read_data_from_db('job', 'job_view', 2, job_level=True):
@@ -165,7 +166,7 @@ class Tracking(object):
                                             model_id=self.model_id)
 
     @DB.connection_context()
-    def insert_data_to_db(self, metric_namespace, metric_name, data_type, kv, job_level=False):
+    def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         try:
             tracking_metric = TrackingMetric.model(table_index=self.job_id)
             tracking_metric.f_job_id = self.job_id
@@ -178,10 +179,10 @@ class Tracking(object):
             tracking_metric.f_type = data_type
             default_db_source = tracking_metric.to_json()
             tracking_metric_data_source = []
-            for k, v in kv.items():
+            for k, v in kv:
                 db_source = default_db_source.copy()
-                db_source['f_key'] = k
-                db_source['f_value'] = base64.b64encode(pickle.dumps(v))
+                db_source['f_key'] = Tracking.serialize_b64(k)
+                db_source['f_value'] = Tracking.serialize_b64(v)
                 db_source['f_create_time'] = current_timestamp()
                 tracking_metric_data_source.append(db_source)
             self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
@@ -206,14 +207,14 @@ class Tracking(object):
     def read_data_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
         metrics = []
         try:
-            query_sql = 'select f_key, f_value from tracking_metric_{} where ' \
+            query_sql = 'select f_key, f_value from t_tracking_metric_{} where ' \
                         'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}"' \
-                        'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}"'.format(
+                        'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}" order by f_id'.format(
                 self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role, self.party_id, self.task_id, metric_namespace, metric_name, data_type)
             cursor = DB.execute_sql(query_sql)
             stat_logger.info(query_sql)
             for row in cursor.fetchall():
-                yield row[0], pickle.loads(base64.b64decode(row[1]))
+                yield Tracking.deserialize_b64(row[0]), Tracking.deserialize_b64(row[1])
         except Exception as e:
             stat_logger.exception(e)
         return metrics
@@ -314,6 +315,14 @@ class Tracking(object):
     def gen_party_model_id(model_key, role, party_id):
         return dtable_utils.gen_namespace_by_key(namespace_key=model_key, role=role,
                                                  party_id=party_id) if model_key else None
+
+    @staticmethod
+    def serialize_b64(src):
+        return base64.b64encode(pickle.dumps(src))
+
+    @staticmethod
+    def deserialize_b64(src):
+        return pickle.loads(base64.b64decode(src))
 
 
 if __name__ == '__main__':
