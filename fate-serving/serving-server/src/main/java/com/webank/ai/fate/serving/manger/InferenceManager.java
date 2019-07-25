@@ -17,6 +17,7 @@
 package com.webank.ai.fate.serving.manger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.bean.ReturnResult;
@@ -143,9 +144,14 @@ public class InferenceManager {
         predictParams.put("federatedParams", federatedParams);
 
         Map<String, Object> modelResult = model.predict(featureData, predictParams);
+        boolean getRemotePartyResult = (boolean) federatedParams.getOrDefault("getRemotePartyResult", false);
+        ReturnResult federatedResult = (ReturnResult) predictParams.get("federatedResult");
         LOGGER.info(modelResult);
         PostProcessingResult postProcessingResult;
         try {
+            if(federatedResult!=null) {
+                modelResult.put("retcode", federatedResult.getRetcode());
+            }
             postProcessingResult = getPostProcessedResult(featureData, modelResult);
         } catch (Exception ex) {
             LOGGER.error("model result postprocessing failed", ex);
@@ -155,8 +161,7 @@ public class InferenceManager {
         }
         inferenceResult = postProcessingResult.getProcessingResult();
         inferenceResult.setCaseid(inferenceRequest.getCaseid());
-        boolean getRemotePartyResult = (boolean) federatedParams.getOrDefault("getRemotePartyResult", false);
-        ReturnResult federatedResult = (ReturnResult) predictParams.get("federatedResult");
+
         boolean billing = true;
         if (! getRemotePartyResult) {
             billing = false;
@@ -175,12 +180,23 @@ public class InferenceManager {
         long endTime = System.currentTimeMillis();
         long inferenceElapsed = endTime - startTime;
         logInference(inferenceRequest, modelNamespaceData, inferenceResult, inferenceElapsed, getRemotePartyResult, billing);
+        if(inferenceResult.getRetcode() != 0){
+            Map<String,Object>  warnMap = Maps.newHashMap();
+            warnMap.put("preCode",inferenceResult.getRetcode());
+            inferenceResult.setWarn(warnMap);
+            inferenceResult.setRetcode(0);
+        }
+
         if (inferenceResult.getRetcode() == 0) {
             CacheManager.putInferenceResultCache(inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
             LOGGER.info("case {} inference successfully use {} ms.", inferenceRequest.getCaseid(), inferenceElapsed);
         } else {
             LOGGER.info("case {} failed inference, retcode is {}, use {} ms.", inferenceRequest.getCaseid(), inferenceResult.getRetcode(), inferenceElapsed);
         }
+
+
+
+
         return inferenceResult;
     }
 
