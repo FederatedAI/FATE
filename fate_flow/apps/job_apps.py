@@ -40,13 +40,13 @@ def submit_job():
 
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 def create_job(job_id, role, party_id):
-    JobController.job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=True)
+    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=True)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
 def job_status(job_id, role, party_id):
-    JobController.job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=False)
+    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=False)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -72,5 +72,5 @@ def run_task(job_id, component_name, task_id, role, party_id):
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/status', methods=['POST'])
 def task_status(job_id, component_name, task_id, role, party_id):
-    JobController.task_status(job_id, component_name, task_id, role, party_id, request.json)
+    JobController.update_task_status(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')

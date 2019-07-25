@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-from arch.api.proto.model_meta_pb2 import ModelMeta
-from arch.api.proto.model_param_pb2 import ModelParam
 from arch.api.proto.data_transform_server_pb2 import DataTransformServer
 from arch.api.utils.core import json_loads
 from arch.api.utils.format_transform import camel_to_pascal

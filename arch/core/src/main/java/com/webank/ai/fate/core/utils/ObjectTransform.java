@@ -39,6 +39,7 @@ public class ObjectTransform {
         try {
             return new ObjectMapper().writeValueAsString(object);
         } catch (JsonProcessingException ex) {
+            LOGGER.error(ex);
             return "";
         }
     }
@@ -50,6 +51,7 @@ public class ObjectTransform {
         try {
             return new ObjectMapper().readValue(json, objectType);
         } catch (Exception ex) {
+            LOGGER.error(ex);
             return null;
         }
     }
