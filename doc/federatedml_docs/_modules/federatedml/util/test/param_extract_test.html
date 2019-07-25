@@ -1,0 +1,160 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>federatedml.util.test.param_extract_test &#8212; T 1 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for federatedml.util.test.param_extract_test</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1">#  Copyright 2019 The FATE Authors. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1">#  Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1">#  you may not use this file except in compliance with the License.</span>
+<span class="c1">#  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#      http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1">#  Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1">#  distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1">#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1">#  See the License for the specific language governing permissions and</span>
+<span class="c1">#  limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">federatedml.util.param_extract</span> <span class="k">import</span> <span class="n">ParamExtract</span>
+<span class="kn">from</span> <span class="nn">federatedml.param</span> <span class="k">import</span> <span class="n">InitParam</span>
+<span class="kn">from</span> <span class="nn">federatedml.param</span> <span class="k">import</span> <span class="n">BoostingTreeParam</span>
+
+
+<div class="viewcode-block" id="TestParamExtract"><a class="viewcode-back" href="../../../../source/federatedml.util.test.html#federatedml.util.test.param_extract_test.TestParamExtract">[docs]</a><span class="k">class</span> <span class="nc">TestParamExtract</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestParamExtract.setUp"><a class="viewcode-back" href="../../../../source/federatedml.util.test.html#federatedml.util.test.param_extract_test.TestParamExtract.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_param</span> <span class="o">=</span> <span class="n">InitParam</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boosting_tree_param</span> <span class="o">=</span> <span class="n">BoostingTreeParam</span><span class="p">()</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+        <span class="kn">import</span> <span class="nn">time</span>
+        <span class="n">config_dict</span> <span class="o">=</span> \
+            <span class="p">{</span><span class="s2">&quot;InitParam&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;init_method&quot;</span><span class="p">:</span> <span class="s2">&quot;test_init&quot;</span><span class="p">,</span> <span class="s2">&quot;fit_intercept&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+             <span class="s2">&quot;DecisionTreeParam&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;criterion_method&quot;</span><span class="p">:</span> <span class="s2">&quot;test_decisiontree&quot;</span><span class="p">},</span>
+             <span class="s2">&quot;BoostingTreeParam&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;task_type&quot;</span><span class="p">:</span> <span class="s2">&quot;test_boostingtree&quot;</span><span class="p">}}</span>
+        <span class="n">config_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">config_dict</span><span class="p">)</span>
+        <span class="n">timeid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="s2">&quot;param_config_test.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">timeid</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+            <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">config_json</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestParamExtract.tearDown"><a class="viewcode-back" href="../../../../source/federatedml.util.test.html#federatedml.util.test.param_extract_test.TestParamExtract.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;rm -r &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestParamExtract.test_directly_extract"><a class="viewcode-back" href="../../../../source/federatedml.util.test.html#federatedml.util.test.param_extract_test.TestParamExtract.test_directly_extract">[docs]</a>    <span class="k">def</span> <span class="nf">test_directly_extract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">init_param</span> <span class="o">=</span> <span class="n">InitParam</span><span class="p">()</span>
+        <span class="n">extractor</span> <span class="o">=</span> <span class="n">ParamExtract</span><span class="p">()</span>
+        <span class="n">init_param</span> <span class="o">=</span> <span class="n">extractor</span><span class="o">.</span><span class="n">parse_param_from_config</span><span class="p">(</span><span class="n">init_param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">init_param</span><span class="o">.</span><span class="n">init_method</span> <span class="o">==</span> <span class="s2">&quot;test_init&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestParamExtract.test_param_embedding"><a class="viewcode-back" href="../../../../source/federatedml.util.test.html#federatedml.util.test.param_extract_test.TestParamExtract.test_param_embedding">[docs]</a>    <span class="k">def</span> <span class="nf">test_param_embedding</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">boosting_tree_param</span> <span class="o">=</span> <span class="n">BoostingTreeParam</span><span class="p">()</span>
+        <span class="n">extractor</span> <span class="o">=</span> <span class="n">ParamExtract</span><span class="p">()</span>
+        <span class="n">boosting_tree_param</span> <span class="o">=</span> <span class="n">extractor</span><span class="o">.</span><span class="n">parse_param_from_config</span><span class="p">(</span><span class="n">boosting_tree_param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">boosting_tree_param</span><span class="o">.</span><span class="n">tree_param</span><span class="o">.</span><span class="n">criterion_method</span> <span class="o">==</span> <span class="s2">&quot;test_decisiontree&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">boosting_tree_param</span><span class="o">.</span><span class="n">task_type</span> <span class="o">==</span> <span class="s2">&quot;test_boostingtree&quot;</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">T</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, F.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

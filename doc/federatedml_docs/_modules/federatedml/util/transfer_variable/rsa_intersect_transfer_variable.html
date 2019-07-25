@@ -1,0 +1,138 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>federatedml.util.transfer_variable.rsa_intersect_transfer_variable &#8212; T 1 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for federatedml.util.transfer_variable.rsa_intersect_transfer_variable</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#</span>
+<span class="c1">#  Copyright 2019 The FATE Authors. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1">#  Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1">#  you may not use this file except in compliance with the License.</span>
+<span class="c1">#  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#      http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1">#  Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1">#  distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1">#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1">#  See the License for the specific language governing permissions and</span>
+<span class="c1">#  limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># AUTO GENERATED TRANSFER VARIABLE CLASS. DO NOT MODIFY</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+
+<span class="kn">from</span> <span class="nn">federatedml.util.transfer_variable.base_transfer_variable</span> <span class="k">import</span> <span class="n">BaseTransferVariable</span><span class="p">,</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">federatedml.util.transfer_variable.base_transfer_variable</span> <span class="k">import</span> <span class="n">Variable</span>
+
+
+<div class="viewcode-block" id="RsaIntersectTransferVariable"><a class="viewcode-back" href="../../../../source/federatedml.util.transfer_variable.html#federatedml.util.transfer_variable.rsa_intersect_transfer_variable.RsaIntersectTransferVariable">[docs]</a><span class="k">class</span> <span class="nc">RsaIntersectTransferVariable</span><span class="p">(</span><span class="n">BaseTransferVariable</span><span class="p">):</span>
+<div class="viewcode-block" id="RsaIntersectTransferVariable.define_transfer_variable"><a class="viewcode-back" href="../../../../source/federatedml.util.transfer_variable.html#federatedml.util.transfer_variable.rsa_intersect_transfer_variable.RsaIntersectTransferVariable.define_transfer_variable">[docs]</a>    <span class="k">def</span> <span class="nf">define_transfer_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rsa_pubkey</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;RsaIntersectTransferVariable.rsa_pubkey&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s2">&quot;host&quot;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;guest&#39;</span><span class="p">]})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersect_guest_ids</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;RsaIntersectTransferVariable.intersect_guest_ids&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s2">&quot;guest&quot;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersect_host_ids_process</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;RsaIntersectTransferVariable.intersect_host_ids_process&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s2">&quot;host&quot;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;guest&#39;</span><span class="p">]})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersect_guest_ids_process</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;RsaIntersectTransferVariable.intersect_guest_ids_process&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s2">&quot;host&quot;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;guest&#39;</span><span class="p">]})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersect_ids</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;RsaIntersectTransferVariable.intersect_ids&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s2">&quot;guest&quot;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]})</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">T</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, F.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

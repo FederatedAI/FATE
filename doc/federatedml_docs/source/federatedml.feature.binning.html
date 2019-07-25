@@ -1,0 +1,521 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>federatedml.feature.binning package &#8212; T 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="federatedml-feature-binning-package">
+<h1>federatedml.feature.binning package<a class="headerlink" href="#federatedml-feature-binning-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-federatedml.feature.binning.base_binning">
+<span id="federatedml-feature-binning-base-binning-module"></span><h2>federatedml.feature.binning.base_binning module<a class="headerlink" href="#module-federatedml.feature.binning.base_binning" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="federatedml.feature.binning.base_binning.Binning">
+<em class="property">class </em><code class="descclassname">federatedml.feature.binning.base_binning.</code><code class="descname">Binning</code><span class="sig-paren">(</span><em>params</em>, <em>party_name</em>, <em>abnormal_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This is use for discrete data so that can transform data or use information for feature selection.</p>
+<dl class="docutils">
+<dt>params <span class="classifier-delimiter">:</span> <span class="classifier">FeatureBinningParam object,</span></dt>
+<dd>Parameters that user set.</dd>
+</dl>
+<dl class="docutils">
+<dt>cols_dict: dict</dt>
+<dd>Record key, value pairs where key is cols’ name, and value is cols’ index. This is use for obtain correct
+data from a data_instance</dd>
+</dl>
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.add_label_in_partition">
+<em class="property">static </em><code class="descname">add_label_in_partition</code><span class="sig-paren">(</span><em>data_bin_with_table</em>, <em>total_bin</em>, <em>cols_dict</em>, <em>encryptor=None</em>, <em>header=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.add_label_in_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.add_label_in_partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add all label, so that become convenient to calculate woe and iv</p>
+<dl class="docutils">
+<dt>data_bin_with_table <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data, the DTable is like:
+(id, {‘x1’: 1, ‘x2’: 5, ‘x3’: 2}, y, 1 - y)</dd>
+<dt>total_bin <span class="classifier-delimiter">:</span> <span class="classifier">int, &gt; 0</span></dt>
+<dd>Specify the largest bin number</dd>
+<dt>cols_dict: dict</dt>
+<dd>Record key, value pairs where key is cols’ name, and value is cols’ index.</dd>
+<dt>encryptor: Paillier Object</dt>
+<dd>If encryptor is not None, y and 1-y is indicated to be encrypted and will initialize 0 with encryption.</dd>
+</dl>
+<dl class="docutils">
+<dt>result_sum: the result DTable. It is like:</dt>
+<dd><dl class="first docutils">
+<dt>{‘x1’: [[event_count, non_event_count], [event_count, non_event_count] … ],</dt>
+<dd>‘x2’: [[event_count, non_event_count], [event_count, non_event_count] … ],
+…</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.aggregate_partition_label">
+<em class="property">static </em><code class="descname">aggregate_partition_label</code><span class="sig-paren">(</span><em>sum1</em>, <em>sum2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.aggregate_partition_label"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.aggregate_partition_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used in reduce function. Aggregate the result calculate from each partition.</p>
+<dl class="docutils">
+<dt>sum1 <span class="classifier-delimiter">:</span> <span class="classifier">DTable.</span></dt>
+<dd><dl class="first last docutils">
+<dt>It is like:</dt>
+<dd><dl class="first docutils">
+<dt>{‘x1’: [[event_count, non_event_count], [event_count, non_event_count] … ],</dt>
+<dd>‘x2’: [[event_count, non_event_count], [event_count, non_event_count] … ],
+…</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+</dd>
+<dt>sum2 <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>Same as sum1</dd>
+</dl>
+<p>Merged sum. The format is same as sum1.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.bin_data">
+<em class="property">static </em><code class="descname">bin_data</code><span class="sig-paren">(</span><em>instance</em>, <em>split_points</em>, <em>cols_dict</em>, <em>header</em>, <em>is_sparse</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.bin_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.bin_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the binning method</p>
+<dl class="docutils">
+<dt>instance <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+<dt>cols_dict: dict</dt>
+<dd>Record key, value pairs where key is cols’ name, and value is cols’ index.</dd>
+<dt>is_sparse: bool</dt>
+<dd>Specify whether it is sparse data or not</dd>
+</dl>
+<dl class="docutils">
+<dt>result_bin_dict <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each element represent for the corresponding bin number this feature belongs to.
+e.g. it could be:
+[{1: 1, 2: 5, 3: 2}
+…</p>
+<blockquote class="last">
+<div>]  # Each number represent for the bin number it belongs to.</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.cal_iv_woe">
+<em class="property">static </em><code class="descname">cal_iv_woe</code><span class="sig-paren">(</span><em>result_counts</em>, <em>adjustment_factor</em>, <em>split_points=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.cal_iv_woe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.cal_iv_woe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given event count information calculate iv information</p>
+<dl class="docutils">
+<dt>result_counts: DTable.</dt>
+<dd><dl class="first last docutils">
+<dt>It is like:</dt>
+<dd><dl class="first docutils">
+<dt>{‘x1’: [[event_count, non_event_count], [event_count, non_event_count] … ],</dt>
+<dd>‘x2’: [[event_count, non_event_count], [event_count, non_event_count] … ],
+…</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+</dd>
+<dt>adjustment_factor <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The adjustment factor when calculating WOE</dd>
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><dl class="first last docutils">
+<dt>split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</dt>
+<dd>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</dd>
+</dl>
+</dd>
+</dl>
+<dl class="docutils">
+<dt>Dict of IVAttributes object</dt>
+<dd><dl class="first last docutils">
+<dt>{‘x1’: attr_obj,</dt>
+<dd>‘x2’: attr_obj
+…
+}</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.cal_local_iv">
+<code class="descname">cal_local_iv</code><span class="sig-paren">(</span><em>data_instances</em>, <em>split_points=None</em>, <em>label_table=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.cal_local_iv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.cal_local_iv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate iv attributes</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+<dt>label_table <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>id with labels</dd>
+</dl>
+<p>Dict of IVAttributes object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.convert_feature_to_bin">
+<code class="descname">convert_feature_to_bin</code><span class="sig-paren">(</span><em>data_instances</em>, <em>transform_cols_idx=-1</em>, <em>split_points=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.convert_feature_to_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.convert_feature_to_bin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.fit_split_points">
+<code class="descname">fit_split_points</code><span class="sig-paren">(</span><em>data_instances</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.fit_split_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.fit_split_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get split points</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+</dl>
+<dl class="docutils">
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.get_bin_num">
+<em class="property">static </em><code class="descname">get_bin_num</code><span class="sig-paren">(</span><em>value</em>, <em>split_points</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.get_bin_num"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.get_bin_num" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.get_data_bin">
+<code class="descname">get_data_bin</code><span class="sig-paren">(</span><em>data_instances</em>, <em>split_points=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.get_data_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.get_data_bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the binning method</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+</dl>
+<p>data_bin_table : DTable.</p>
+<blockquote>
+<div><p>Each element represent for the corresponding bin number this feature belongs to.
+e.g. it could be:
+[{‘x1’: 1, ‘x2’: 5, ‘x3’: 2}
+…</p>
+<blockquote>
+<div>]</div></blockquote>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.get_sparse_bin">
+<code class="descname">get_sparse_bin</code><span class="sig-paren">(</span><em>transform_cols_idx</em>, <em>split_points_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.get_sparse_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.get_sparse_bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get which bins the 0 located at for each column.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.reconstruct_by_iv_obj">
+<code class="descname">reconstruct_by_iv_obj</code><span class="sig-paren">(</span><em>col_name</em>, <em>iv_attr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.reconstruct_by_iv_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.reconstruct_by_iv_obj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.Binning.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>data_instances</em>, <em>transform_cols_idx</em>, <em>transform_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.base_binning.Binning.woe_1d">
+<em class="property">static </em><code class="descname">woe_1d</code><span class="sig-paren">(</span><em>data_event_count</em>, <em>adjustment_factor</em>, <em>split_points</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#Binning.woe_1d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.Binning.woe_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given event and non-event count in one column, calculate its woe value.</p>
+<dl class="docutils">
+<dt>data_event_count <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>[(event_sum, non-event_sum), (same sum in second_bin), (in third bin) …]</dd>
+<dt>adjustment_factor <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The adjustment factor when calculating WOE</dd>
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>For this specific column, its split_points for each bin.</dd>
+</dl>
+<dl class="docutils">
+<dt>IVAttributes <span class="classifier-delimiter">:</span> <span class="classifier">object</span></dt>
+<dd>Stored information that related iv and woe value</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="federatedml.feature.binning.base_binning.IVAttributes">
+<em class="property">class </em><code class="descclassname">federatedml.feature.binning.base_binning.</code><code class="descname">IVAttributes</code><span class="sig-paren">(</span><em>woe_array</em>, <em>iv_array</em>, <em>event_count_array</em>, <em>non_event_count_array</em>, <em>event_rate_array</em>, <em>non_event_rate_array</em>, <em>split_points=None</em>, <em>iv=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#IVAttributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.IVAttributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="federatedml.feature.binning.base_binning.IVAttributes.bin_nums">
+<code class="descname">bin_nums</code><a class="headerlink" href="#federatedml.feature.binning.base_binning.IVAttributes.bin_nums" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="federatedml.feature.binning.base_binning.IVAttributes.is_woe_monotonic">
+<code class="descname">is_woe_monotonic</code><a class="headerlink" href="#federatedml.feature.binning.base_binning.IVAttributes.is_woe_monotonic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the woe is monotonic or not</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.IVAttributes.reconstruct">
+<code class="descname">reconstruct</code><span class="sig-paren">(</span><em>iv_obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#IVAttributes.reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.IVAttributes.reconstruct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.base_binning.IVAttributes.result_dict">
+<code class="descname">result_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#IVAttributes.result_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.IVAttributes.result_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="federatedml.feature.binning.base_binning.SparseBinningResult">
+<em class="property">class </em><code class="descclassname">federatedml.feature.binning.base_binning.</code><code class="descname">SparseBinningResult</code><span class="sig-paren">(</span><em>split_points</em>, <em>sparse_bin_num</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/base_binning.html#SparseBinningResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.base_binning.SparseBinningResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-federatedml.feature.binning.bucket_binning">
+<span id="federatedml-feature-binning-bucket-binning-module"></span><h2>federatedml.feature.binning.bucket_binning module<a class="headerlink" href="#module-federatedml.feature.binning.bucket_binning" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="federatedml.feature.binning.bucket_binning.BucketBinning">
+<em class="property">class </em><code class="descclassname">federatedml.feature.binning.bucket_binning.</code><code class="descname">BucketBinning</code><span class="sig-paren">(</span><em>params</em>, <em>party_name='Base'</em>, <em>abnormal_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/bucket_binning.html#BucketBinning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.bucket_binning.BucketBinning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#federatedml.feature.binning.base_binning.Binning" title="federatedml.feature.binning.base_binning.Binning"><code class="xref py py-class docutils literal notranslate"><span class="pre">federatedml.feature.binning.base_binning.Binning</span></code></a></p>
+<p>For bucket binning, the length of each bin is the same which is:
+L = [max(x) - min(x)] / n</p>
+<p>The split points are min(x) + L * k
+where k is the index of a bin.</p>
+<dl class="method">
+<dt id="federatedml.feature.binning.bucket_binning.BucketBinning.fit_split_points">
+<code class="descname">fit_split_points</code><span class="sig-paren">(</span><em>data_instances</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/bucket_binning.html#BucketBinning.fit_split_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.bucket_binning.BucketBinning.fit_split_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the binning method</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+</dl>
+<dl class="docutils">
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-federatedml.feature.binning.quantile_binning">
+<span id="federatedml-feature-binning-quantile-binning-module"></span><h2>federatedml.feature.binning.quantile_binning module<a class="headerlink" href="#module-federatedml.feature.binning.quantile_binning" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning">
+<em class="property">class </em><code class="descclassname">federatedml.feature.binning.quantile_binning.</code><code class="descname">QuantileBinning</code><span class="sig-paren">(</span><em>params</em>, <em>party_name='Base'</em>, <em>abnormal_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#federatedml.feature.binning.base_binning.Binning" title="federatedml.feature.binning.base_binning.Binning"><code class="xref py py-class docutils literal notranslate"><span class="pre">federatedml.feature.binning.base_binning.Binning</span></code></a></p>
+<p>After quantile binning, the numbers of elements in each binning are equal.</p>
+<p>The result of this algorithm has the following deterministic bound:
+If the data_instances has N elements and if we request the quantile at probability <cite>p</cite> up to error
+<cite>err</cite>, then the algorithm will return a sample <cite>x</cite> from the data so that the <em>exact</em> rank
+of <cite>x</cite> is close to (p * N).
+More precisely,</p>
+<dl class="docutils">
+<dt>{{{</dt>
+<dd>floor((p - 2 * err) * N) &lt;= rank(x) &lt;= ceil((p + 2 * err) * N)</dd>
+</dl>
+<p>}}}</p>
+<p>This method implements a variation of the Greenwald-Khanna algorithm (with some speed
+optimizations).</p>
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning.approxiQuantile">
+<em class="property">static </em><code class="descname">approxiQuantile</code><span class="sig-paren">(</span><em>data_instances</em>, <em>params</em>, <em>cols_dict</em>, <em>abnormal_list</em>, <em>header</em>, <em>is_sparse</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning.approxiQuantile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning.approxiQuantile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates each quantile information</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+<dt>cols_dict: dict</dt>
+<dd>Record key, value pairs where key is cols’ name, and value is cols’ index.</dd>
+<dt>params <span class="classifier-delimiter">:</span> <span class="classifier">FeatureBinningParam object,</span></dt>
+<dd>Parameters that user set.</dd>
+<dt>abnormal_list: list, default: None</dt>
+<dd>Specify which columns are abnormal so that will not static when traveling.</dd>
+<dt>header: list,</dt>
+<dd>Storing the header information.</dd>
+<dt>is_sparse: bool</dt>
+<dd>Specify whether data_instance is in sparse type</dd>
+</dl>
+<dl class="docutils">
+<dt>summary_dict: dict</dt>
+<dd><dl class="first last docutils">
+<dt>{‘col_name1’: summary1,</dt>
+<dd>‘col_name2’: summary2,
+…
+}</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning.fit_split_points">
+<code class="descname">fit_split_points</code><span class="sig-paren">(</span><em>data_instances</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning.fit_split_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning.fit_split_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the binning method</p>
+<dl class="docutils">
+<dt>data_instances <span class="classifier-delimiter">:</span> <span class="classifier">DTable</span></dt>
+<dd>The input data</dd>
+</dl>
+<dl class="docutils">
+<dt>split_points <span class="classifier-delimiter">:</span> <span class="classifier">dict.</span></dt>
+<dd><p class="first">Each value represent for the split points for a feature. The element in each row represent for
+the corresponding split point.
+e.g.
+split_points = {‘x1’: [0.1, 0.2, 0.3, 0.4 …],    # The first feature</p>
+<blockquote class="last">
+<div>‘x2’: [1, 2, 3, 4, …],           # The second feature
+…]                         # Other features</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning.insert_datas">
+<em class="property">static </em><code class="descname">insert_datas</code><span class="sig-paren">(</span><em>data_instances</em>, <em>summary_dict</em>, <em>cols_dict</em>, <em>header</em>, <em>is_sparse</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning.insert_datas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning.insert_datas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning.merge_summary_dict">
+<em class="property">static </em><code class="descname">merge_summary_dict</code><span class="sig-paren">(</span><em>s_dict1</em>, <em>s_dict2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning.merge_summary_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning.merge_summary_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="federatedml.feature.binning.quantile_binning.QuantileBinning.query_quantile_point">
+<code class="descname">query_quantile_point</code><span class="sig-paren">(</span><em>data_instances</em>, <em>cols</em>, <em>query_points</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/federatedml/feature/binning/quantile_binning.html#QuantileBinning.query_quantile_point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#federatedml.feature.binning.quantile_binning.QuantileBinning.query_quantile_point" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-federatedml.feature.binning">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-federatedml.feature.binning" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">T</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, F.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/source/federatedml.feature.binning.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

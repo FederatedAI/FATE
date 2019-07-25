@@ -1,0 +1,250 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>federatedml.util.transfer_variable_generator &#8212; T 1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for federatedml.util.transfer_variable_generator</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python    </span>
+<span class="c1"># -*- coding: utf-8 -*- </span>
+
+<span class="c1">#</span>
+<span class="c1">#  Copyright 2019 The FATE Authors. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1">#  Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1">#  you may not use this file except in compliance with the License.</span>
+<span class="c1">#  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#      http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1">#  Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1">#  distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1">#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1">#  See the License for the specific language governing permissions and</span>
+<span class="c1">#  limitations under the License.</span>
+<span class="c1">#</span>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Transfer Variable Generator.py</span>
+<span class="c1"># =============================================================================</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">arch.api.utils</span> <span class="k">import</span> <span class="n">file_utils</span>
+
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">file_utils</span><span class="o">.</span><span class="n">get_project_base_directory</span><span class="p">()</span>
+<span class="n">TRANSFER_VARIABLE_TEMPLATE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;federatedml&quot;</span><span class="p">,</span> 
+                                         <span class="s2">&quot;util&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer_variable&quot;</span><span class="p">,</span> 
+                                         <span class="s2">&quot;transfer_variable_template.py&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TransferVariableGenerator"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.transfer_variable_generator.TransferVariableGenerator">[docs]</a><span class="k">class</span> <span class="nc">TransferVariableGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="TransferVariableGenerator.write_out_class"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.transfer_variable_generator.TransferVariableGenerator.write_out_class">[docs]</a>    <span class="k">def</span> <span class="nf">write_out_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">transfer_var_dict</span><span class="p">,</span> <span class="n">with_header</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">with_header</span><span class="p">:</span>
+            <span class="k">global</span> <span class="n">TRANSFER_VARIABLE_TEMPLATE</span>
+            
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">TRANSFER_VARIABLE_TEMPLATE</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;class &quot;</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="s2">&quot;(BaseTransferVariable):&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;    &#39;</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;def define_transfer_variable(self):&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">transfer_var</span><span class="p">,</span> <span class="n">auth_dict</span> <span class="ow">in</span> <span class="n">transfer_var_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="n">tag</span><span class="p">)</span>
+            <span class="n">var_name</span> <span class="o">=</span> <span class="n">class_name</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">transfer_var</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;self.&quot;</span> <span class="o">+</span> <span class="n">transfer_var</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Variable(name=&quot;</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="n">var_name</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;auth=&quot;</span> <span class="o">+</span> <span class="s2">&quot;{&#39;src&#39;: &quot;</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="n">auth_dict</span><span class="p">[</span><span class="s2">&quot;src&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> \
+                         <span class="s2">&quot;&#39;dst&#39;: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">auth_dict</span><span class="p">[</span><span class="s2">&quot;dst&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;})&quot;</span><span class="p">)</span>
+
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;pass</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransferVariableGenerator.generate_all"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.transfer_variable_generator.TransferVariableGenerator.generate_all">[docs]</a>    <span class="k">def</span> <span class="nf">generate_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">global</span> <span class="n">BASE_DIR</span>
+        <span class="n">conf_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;federatedml&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer_variable_conf&quot;</span><span class="p">)</span>
+        <span class="n">merge_conf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conf_dir</span><span class="p">,</span> <span class="s2">&quot;transfer_conf.json&quot;</span><span class="p">)</span>
+        <span class="n">trans_var_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;federatedml&quot;</span><span class="p">,</span> <span class="s2">&quot;util&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer_variable&quot;</span><span class="p">)</span>
+       
+        <span class="n">merge_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">merge_conf_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">for</span> <span class="n">conf</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">conf_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">conf</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">conf</span> <span class="o">==</span> <span class="s2">&quot;transfer_conf.json&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conf_dir</span><span class="p">,</span> <span class="n">conf</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+                <span class="n">var_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                <span class="n">merge_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">var_dict</span><span class="p">)</span>
+       
+            <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trans_var_dir</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;_transfer_variable.py&quot;</span><span class="p">)</span>
+            <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+            <span class="n">with_header</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="n">var_dict</span><span class="p">:</span>
+                <span class="n">transfer_var_dict</span> <span class="o">=</span> <span class="n">var_dict</span><span class="p">[</span><span class="n">class_name</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_out_class</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">transfer_var_dict</span><span class="p">,</span> <span class="n">with_header</span><span class="p">)</span>
+                <span class="n">with_header</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="n">fout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">merge_conf_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+            <span class="n">jsonDumpsIndentStr</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">merge_dict</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+            <span class="n">buffers</span> <span class="o">=</span> <span class="n">jsonDumpsIndentStr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">buf</span> <span class="ow">in</span> <span class="n">buffers</span><span class="p">:</span>
+                <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransferVariableGenerator.generate_transfer_var_class"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.transfer_variable_generator.TransferVariableGenerator.generate_transfer_var_class">[docs]</a>    <span class="k">def</span> <span class="nf">generate_transfer_var_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_var_conf_path</span><span class="p">,</span> <span class="n">out_path</span><span class="p">):</span>
+        <span class="n">base_dir</span> <span class="o">=</span> <span class="n">file_utils</span><span class="o">.</span><span class="n">get_project_base_directory</span><span class="p">()</span>
+        <span class="n">merge_conf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="s2">&quot;federatedml/transfer_variable_conf/transfer_conf.json&quot;</span><span class="p">)</span>
+
+        <span class="n">merge_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">merge_conf_path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">merge_conf_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+                <span class="n">merge_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="n">var_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">transfer_var_conf_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+            <span class="n">var_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="n">merge_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">var_dict</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">merge_conf_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+            <span class="n">jsonDumpsIndentStr</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">merge_dict</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+            <span class="n">buffers</span> <span class="o">=</span> <span class="n">jsonDumpsIndentStr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">buf</span> <span class="ow">in</span> <span class="n">buffers</span><span class="p">:</span>
+                <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="n">with_header</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="n">var_dict</span><span class="p">:</span>
+            <span class="n">transfer_var_dict</span> <span class="o">=</span> <span class="n">var_dict</span><span class="p">[</span><span class="n">class_name</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_out_class</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">transfer_var_dict</span><span class="p">,</span> <span class="n">with_header</span><span class="p">)</span>
+            <span class="n">with_header</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">fout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="n">conf_path</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">out_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">conf_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">out_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">transfer_var_gen</span> <span class="o">=</span> <span class="n">TransferVariableGenerator</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">conf_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">out_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">transfer_var_gen</span><span class="o">.</span><span class="n">generate_all</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">transfer_var_gen</span><span class="o">.</span><span class="n">generate_transfer_var_class</span><span class="p">(</span><span class="n">conf_path</span><span class="p">,</span> <span class="n">out_path</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">T</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, F.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
