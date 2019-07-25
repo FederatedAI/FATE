@@ -27,7 +27,6 @@
 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-#from federatedml.feature.quantile import Quantile
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
@@ -51,7 +50,6 @@ from federatedml.loss import FairLoss
 from federatedml.evaluation import Evaluation
 
 from arch.api import federation
-from arch.api.model_manager import manager
 from arch.api.proto.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta

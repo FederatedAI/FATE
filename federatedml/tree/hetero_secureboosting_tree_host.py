@@ -25,7 +25,6 @@
 # HeteroSecureBoostingHost 
 # =============================================================================
 
-from federatedml.feature.quantile import Quantile
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.param.feature_binning_param import FeatureBinningParam

@@ -33,7 +33,6 @@ from federatedml.util import consts
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
 from federatedml.model_base import ModelBase
-from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
 from arch.api.proto.data_io_meta_pb2 import ImputerMeta
