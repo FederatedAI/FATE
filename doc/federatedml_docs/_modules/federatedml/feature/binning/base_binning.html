@@ -1,36 +1,144 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>federatedml.feature.binning.base_binning &#8212; T 1 documentation</title>
-    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>federatedml.feature.binning.base_binning &mdash; FATE 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../../../index.html" class="icon icon-home"> FATE
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">FATE</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>federatedml.feature.binning.base_binning</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <h1>Source code for federatedml.feature.binning.base_binning</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
@@ -62,7 +170,7 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">log_utils</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="IVAttributes"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes">[docs]</a><span class="k">class</span> <span class="nc">IVAttributes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IVAttributes"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes">[docs]</a><span class="k">class</span> <span class="nc">IVAttributes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">woe_array</span><span class="p">,</span> <span class="n">iv_array</span><span class="p">,</span> <span class="n">event_count_array</span><span class="p">,</span> <span class="n">non_event_count_array</span><span class="p">,</span>
                  <span class="n">event_rate_array</span><span class="p">,</span> <span class="n">non_event_rate_array</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">woe_array</span> <span class="o">=</span> <span class="n">woe_array</span>
@@ -101,13 +209,13 @@
     <span class="k">def</span> <span class="nf">bin_nums</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">woe_array</span><span class="p">)</span>
 
-<div class="viewcode-block" id="IVAttributes.result_dict"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes.result_dict">[docs]</a>    <span class="k">def</span> <span class="nf">result_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IVAttributes.result_dict"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes.result_dict">[docs]</a>    <span class="k">def</span> <span class="nf">result_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">save_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span>
         <span class="n">save_dict</span><span class="p">[</span><span class="s1">&#39;is_woe_monotonic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_woe_monotonic</span>
         <span class="n">save_dict</span><span class="p">[</span><span class="s1">&#39;bin_nums&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_nums</span>
         <span class="k">return</span> <span class="n">save_dict</span></div>
 
-<div class="viewcode-block" id="IVAttributes.reconstruct"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes.reconstruct">[docs]</a>    <span class="k">def</span> <span class="nf">reconstruct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iv_obj</span><span class="p">):</span>
+<div class="viewcode-block" id="IVAttributes.reconstruct"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.IVAttributes.reconstruct">[docs]</a>    <span class="k">def</span> <span class="nf">reconstruct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iv_obj</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">woe_array</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv_obj</span><span class="o">.</span><span class="n">woe_array</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">iv_array</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv_obj</span><span class="o">.</span><span class="n">iv_array</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">event_count_array</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv_obj</span><span class="o">.</span><span class="n">event_count_array</span><span class="p">)</span>
@@ -118,13 +226,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">iv</span> <span class="o">=</span> <span class="n">iv_obj</span><span class="o">.</span><span class="n">iv</span></div></div>
 
 
-<div class="viewcode-block" id="SparseBinningResult"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.SparseBinningResult">[docs]</a><span class="k">class</span> <span class="nc">SparseBinningResult</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="SparseBinningResult"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.SparseBinningResult">[docs]</a><span class="k">class</span> <span class="nc">SparseBinningResult</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split_points</span><span class="p">,</span> <span class="n">sparse_bin_num</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split_points</span> <span class="o">=</span> <span class="n">split_points</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sparse_bin_num</span> <span class="o">=</span> <span class="n">sparse_bin_num</span></div>
 
 
-<div class="viewcode-block" id="Binning"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning">[docs]</a><span class="k">class</span> <span class="nc">Binning</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning">[docs]</a><span class="k">class</span> <span class="nc">Binning</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is use for discrete data so that can transform data or use information for feature selection.</span>
 
@@ -156,7 +264,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">iv_result</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split_points</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="Binning.fit_split_points"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.fit_split_points">[docs]</a>    <span class="k">def</span> <span class="nf">fit_split_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.fit_split_points"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.fit_split_points">[docs]</a>    <span class="k">def</span> <span class="nf">fit_split_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get split points</span>
 
@@ -209,7 +317,7 @@
             <span class="n">col_index</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cols_dict</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_index</span>
 
-<div class="viewcode-block" id="Binning.transform"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.transform"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="n">before</span> <span class="o">=</span> <span class="n">data_instances</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">features</span>
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="s1">&#39;bin_num&#39;</span><span class="p">:</span>
@@ -220,7 +328,7 @@
 
         <span class="k">return</span> <span class="n">data_instances</span></div>
 
-<div class="viewcode-block" id="Binning.get_data_bin"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_data_bin">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.get_data_bin"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_data_bin">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Apply the binning method</span>
 
@@ -260,7 +368,7 @@
         <span class="n">data_bin_dict</span> <span class="o">=</span> <span class="n">data_instances</span><span class="o">.</span><span class="n">mapValues</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data_bin_dict</span></div>
 
-<div class="viewcode-block" id="Binning.convert_feature_to_bin"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.convert_feature_to_bin">[docs]</a>    <span class="k">def</span> <span class="nf">convert_feature_to_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.convert_feature_to_bin"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.convert_feature_to_bin">[docs]</a>    <span class="k">def</span> <span class="nf">convert_feature_to_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">transform_cols_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data_instances</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
@@ -326,7 +434,7 @@
         <span class="n">instances</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">sparse_vector</span>
         <span class="k">return</span> <span class="n">instances</span>
 
-<div class="viewcode-block" id="Binning.get_sparse_bin"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_sparse_bin">[docs]</a>    <span class="k">def</span> <span class="nf">get_sparse_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="p">,</span> <span class="n">split_points_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.get_sparse_bin"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_sparse_bin">[docs]</a>    <span class="k">def</span> <span class="nf">get_sparse_bin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_cols_idx</span><span class="p">,</span> <span class="n">split_points_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get which bins the 0 located at for each column.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -351,7 +459,7 @@
         <span class="n">instances</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">features</span>
         <span class="k">return</span> <span class="n">instances</span>
 
-<div class="viewcode-block" id="Binning.cal_local_iv"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.cal_local_iv">[docs]</a>    <span class="k">def</span> <span class="nf">cal_local_iv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_table</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.cal_local_iv"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.cal_local_iv">[docs]</a>    <span class="k">def</span> <span class="nf">cal_local_iv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_table</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate iv attributes</span>
 
@@ -411,12 +519,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">iv_result</span> <span class="o">=</span> <span class="n">iv_attrs</span>
         <span class="k">return</span> <span class="n">iv_attrs</span></div>
 
-<div class="viewcode-block" id="Binning.reconstruct_by_iv_obj"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.reconstruct_by_iv_obj">[docs]</a>    <span class="k">def</span> <span class="nf">reconstruct_by_iv_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">iv_attr</span><span class="p">):</span>
+<div class="viewcode-block" id="Binning.reconstruct_by_iv_obj"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.reconstruct_by_iv_obj">[docs]</a>    <span class="k">def</span> <span class="nf">reconstruct_by_iv_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">iv_attr</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">split_points</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split_points</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv_attr</span><span class="o">.</span><span class="n">split_points</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Binning.bin_data"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.bin_data">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.bin_data"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.bin_data">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">bin_data</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">split_points</span><span class="p">,</span> <span class="n">cols_dict</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">is_sparse</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Apply the binning method</span>
@@ -472,7 +580,7 @@
 
         <span class="k">return</span> <span class="n">result_bin_nums</span></div>
 
-<div class="viewcode-block" id="Binning.get_bin_num"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_bin_num">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.get_bin_num"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.get_bin_num">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_bin_num</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">split_points</span><span class="p">):</span>
         <span class="n">col_bin_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_points</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">bin_num</span><span class="p">,</span> <span class="n">split_point</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_points</span><span class="p">):</span>
@@ -482,7 +590,7 @@
         <span class="n">col_bin_num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">col_bin_num</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">col_bin_num</span></div>
 
-<div class="viewcode-block" id="Binning.woe_1d"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.woe_1d">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.woe_1d"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.woe_1d">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">woe_1d</span><span class="p">(</span><span class="n">data_event_count</span><span class="p">,</span> <span class="n">adjustment_factor</span><span class="p">,</span> <span class="n">split_points</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given event and non-event count in one column, calculate its woe value.</span>
@@ -545,7 +653,7 @@
                             <span class="n">non_event_count_array</span><span class="o">=</span><span class="n">non_event_count_array</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="n">split_points</span><span class="p">,</span>
                             <span class="n">event_rate_array</span><span class="o">=</span><span class="n">event_rate_array</span><span class="p">,</span> <span class="n">non_event_rate_array</span><span class="o">=</span><span class="n">non_event_rate_array</span><span class="p">,</span> <span class="n">iv</span><span class="o">=</span><span class="n">iv</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Binning.cal_iv_woe"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.cal_iv_woe">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.cal_iv_woe"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.cal_iv_woe">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">cal_iv_woe</span><span class="p">(</span><span class="n">result_counts</span><span class="p">,</span> <span class="n">adjustment_factor</span><span class="p">,</span> <span class="n">split_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given event count information calculate iv information</span>
@@ -584,7 +692,7 @@
             <span class="n">result_ivs</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Binning</span><span class="o">.</span><span class="n">woe_1d</span><span class="p">(</span><span class="n">data_event_count</span><span class="p">,</span> <span class="n">adjustment_factor</span><span class="p">,</span> <span class="n">feature_split_point</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result_ivs</span></div>
 
-<div class="viewcode-block" id="Binning.add_label_in_partition"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.add_label_in_partition">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.add_label_in_partition"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.add_label_in_partition">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_label_in_partition</span><span class="p">(</span><span class="n">data_bin_with_table</span><span class="p">,</span> <span class="n">total_bin</span><span class="p">,</span> <span class="n">cols_dict</span><span class="p">,</span> <span class="n">encryptor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add all label, so that become convenient to calculate woe and iv</span>
@@ -647,7 +755,7 @@
 
         <span class="k">return</span> <span class="n">result_sum</span></div>
 
-<div class="viewcode-block" id="Binning.aggregate_partition_label"><a class="viewcode-back" href="../../../../source/federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.aggregate_partition_label">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Binning.aggregate_partition_label"><a class="viewcode-back" href="../../../../federatedml.feature.binning.html#federatedml.feature.binning.base_binning.Binning.aggregate_partition_label">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">aggregate_partition_label</span><span class="p">(</span><span class="n">sum1</span><span class="p">,</span> <span class="n">sum2</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Used in reduce function. Aggregate the result calculate from each partition.</span>
@@ -689,67 +797,43 @@
         <span class="k">return</span> <span class="n">new_result</span></div></div>
 </pre></div>
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../../index.html">T</a></h1>
+          <footer>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FATE_TEAM
 
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
-
-<h3>Navigation</h3>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2019, F.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

@@ -1,36 +1,144 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>federatedml.util.param_checker &#8212; T 1 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>federatedml.util.param_checker &mdash; FATE 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../../index.html" class="icon icon-home"> FATE
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FATE</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>federatedml.util.param_checker</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <h1>Source code for federatedml.util.param_checker</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python    </span>
@@ -64,8 +172,8 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">log_utils</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="DataIOParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.DataIOParamChecker">[docs]</a><span class="k">class</span> <span class="nc">DataIOParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="DataIOParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.DataIOParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DataIOParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.DataIOParamChecker">[docs]</a><span class="k">class</span> <span class="nc">DataIOParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DataIOParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.DataIOParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">dataio_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">dataio_param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;DataIOParam&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataio_param </span><span class="si">{}</span><span class="s2"> not supported, should be DataIOParam object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataio_param</span><span class="p">))</span>
@@ -110,8 +218,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="ObjectiveParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.ObjectiveParamChecker">[docs]</a><span class="k">class</span> <span class="nc">ObjectiveParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="ObjectiveParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.ObjectiveParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ObjectiveParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.ObjectiveParamChecker">[docs]</a><span class="k">class</span> <span class="nc">ObjectiveParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ObjectiveParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.ObjectiveParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">objective_param</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">objective_param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;ObjectiveParam&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;objective param </span><span class="si">{}</span><span class="s2"> not supportd, should be ObjectiveParam object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">objective_param</span><span class="p">))</span>
@@ -156,8 +264,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="EncryptParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncryptParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncryptParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="EncryptParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncryptParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="EncryptParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncryptParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncryptParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncryptParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncryptParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">encrypt_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">encrypt_param</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -179,8 +287,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="EncryptedModeCalculatorParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncryptedModeCalculatorParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncryptedModeCalculatorParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="EncryptedModeCalculatorParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncryptedModeCalculatorParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="EncryptedModeCalculatorParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncryptedModeCalculatorParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncryptedModeCalculatorParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncryptedModeCalculatorParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncryptedModeCalculatorParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">encrypted_mode_calculator</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">encrypted_mode_calculator</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;EncryptedModeCalculatorParam&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;param class not match EncryptedModeCalculatorParam&quot;</span><span class="p">)</span>
@@ -197,8 +305,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="SampleParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.SampleParamChecker">[docs]</a><span class="k">class</span> <span class="nc">SampleParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="SampleParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.SampleParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SampleParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.SampleParamChecker">[docs]</a><span class="k">class</span> <span class="nc">SampleParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="SampleParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.SampleParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">sample_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">sample_param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;SampleParam&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sample param </span><span class="si">{}</span><span class="s2"> not supported, should be SampleParam object&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sample_param</span><span class="p">))</span>
@@ -215,8 +323,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="DecisionTreeParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.DecisionTreeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">DecisionTreeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="DecisionTreeParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.DecisionTreeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DecisionTreeParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.DecisionTreeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">DecisionTreeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DecisionTreeParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.DecisionTreeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">tree_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tree_param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;DecisionTreeParam&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -276,8 +384,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="BoostingTreeParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.BoostingTreeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">BoostingTreeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="BoostingTreeParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.BoostingTreeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="BoostingTreeParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.BoostingTreeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">BoostingTreeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="BoostingTreeParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.BoostingTreeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">boost_param</span><span class="p">):</span>
         <span class="n">DecisionTreeParamChecker</span><span class="o">.</span><span class="n">check_param</span><span class="p">(</span><span class="n">boost_param</span><span class="o">.</span><span class="n">tree_param</span><span class="p">)</span>
 
@@ -331,8 +439,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="EncodeParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncodeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncodeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="EncodeParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EncodeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="EncodeParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncodeParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EncodeParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncodeParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EncodeParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">encode_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">encode_param</span><span class="o">.</span><span class="n">salt</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -354,8 +462,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="IntersectParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IntersectParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IntersectParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="IntersectParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IntersectParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="IntersectParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IntersectParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IntersectParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IntersectParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IntersectParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">intersect_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;intersect param&#39;s&quot;</span>
 
@@ -396,8 +504,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="PredictParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.PredictParamChecker">[docs]</a><span class="k">class</span> <span class="nc">PredictParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="PredictParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.PredictParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="PredictParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.PredictParamChecker">[docs]</a><span class="k">class</span> <span class="nc">PredictParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="PredictParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.PredictParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">predict_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">predict_param</span><span class="o">.</span><span class="n">with_proba</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -411,8 +519,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="OneVsRestChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OneVsRestChecker">[docs]</a><span class="k">class</span> <span class="nc">OneVsRestChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="OneVsRestChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OneVsRestChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="OneVsRestChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OneVsRestChecker">[docs]</a><span class="k">class</span> <span class="nc">OneVsRestChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OneVsRestChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OneVsRestChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">one_vs_rest_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">one_vs_rest_param</span><span class="o">.</span><span class="n">has_arbiter</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -423,8 +531,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="EvaluateParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EvaluateParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EvaluateParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="EvaluateParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.EvaluateParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="EvaluateParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EvaluateParamChecker">[docs]</a><span class="k">class</span> <span class="nc">EvaluateParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EvaluateParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.EvaluateParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">evaluate_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">evaluate_param</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;evaluate param&#39;s metrics </span><span class="si">{}</span><span class="s2"> not supported, should be list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">evaluate_param</span><span class="o">.</span><span class="n">metrics</span><span class="p">))</span>
@@ -466,8 +574,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="WorkFlowParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.WorkFlowParamChecker">[docs]</a><span class="k">class</span> <span class="nc">WorkFlowParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="WorkFlowParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.WorkFlowParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="WorkFlowParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.WorkFlowParamChecker">[docs]</a><span class="k">class</span> <span class="nc">WorkFlowParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="WorkFlowParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.WorkFlowParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">workflow_param</span><span class="p">):</span>
 
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;workflow param&#39;s &quot;</span>
@@ -591,8 +699,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="InitParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.InitParamChecker">[docs]</a><span class="k">class</span> <span class="nc">InitParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="InitParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.InitParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="InitParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.InitParamChecker">[docs]</a><span class="k">class</span> <span class="nc">InitParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="InitParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.InitParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">init_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">init_param</span><span class="o">.</span><span class="n">init_method</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -616,8 +724,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="LogisticParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.LogisticParamChecker">[docs]</a><span class="k">class</span> <span class="nc">LogisticParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="LogisticParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.LogisticParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="LogisticParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.LogisticParamChecker">[docs]</a><span class="k">class</span> <span class="nc">LogisticParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="LogisticParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.LogisticParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">logistic_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;logistic_param&#39;s&quot;</span>
 
@@ -711,8 +819,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="FeatureBinningParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FeatureBinningParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FeatureBinningParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="FeatureBinningParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FeatureBinningParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FeatureBinningParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FeatureBinningParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FeatureBinningParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FeatureBinningParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FeatureBinningParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">binning_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;hetero binning param&#39;s&quot;</span>
         <span class="n">check_string</span><span class="p">(</span><span class="n">binning_param</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
@@ -726,8 +834,8 @@
         <span class="n">check_open_unit_interval</span><span class="p">(</span><span class="n">binning_param</span><span class="o">.</span><span class="n">adjustment_factor</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="FeatureSelectionParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FeatureSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="FeatureSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FeatureSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FeatureSelectionParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FeatureSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FeatureSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FeatureSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;hetero feature selection param&#39;s&quot;</span>
         <span class="n">feature_param</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">check_and_change_lower</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
@@ -754,40 +862,40 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="UniqueValueParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.UniqueValueParamChecker">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="UniqueValueParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.UniqueValueParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="UniqueValueParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.UniqueValueParamChecker">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.UniqueValueParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;Unique value param&#39;s&quot;</span>
         <span class="n">check_positive_number</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="IVValueSelectionParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IVValueSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="IVValueSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IVValueSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="IVValueSelectionParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IVValueSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IVValueSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;IV selection param&#39;s&quot;</span>
         <span class="n">check_positive_number</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">value_threshold</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="IVPercentileSelectionParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IVPercentileSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="IVPercentileSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.IVPercentileSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="IVPercentileSelectionParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IVPercentileSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.IVPercentileSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;IV selection param&#39;s&quot;</span>
         <span class="n">check_decimal_float</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">percentile_threshold</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="CoeffOfVarSelectionParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.CoeffOfVarSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="CoeffOfVarSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.CoeffOfVarSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="CoeffOfVarSelectionParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.CoeffOfVarSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.CoeffOfVarSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;Coff of Variances param&#39;s&quot;</span>
         <span class="n">check_positive_number</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">value_threshold</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="OutlierColsSelectionParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OutlierColsSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">OutlierColsSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="OutlierColsSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OutlierColsSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="OutlierColsSelectionParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OutlierColsSelectionParamChecker">[docs]</a><span class="k">class</span> <span class="nc">OutlierColsSelectionParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierColsSelectionParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OutlierColsSelectionParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">feature_param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;Outlier Filter param&#39;s&quot;</span>
         <span class="n">check_decimal_float</span><span class="p">(</span><span class="n">feature_param</span><span class="o">.</span><span class="n">percentile</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
@@ -795,16 +903,16 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="OneHotEncoderParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OneHotEncoderParamChecker">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoderParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="OneHotEncoderParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.OneHotEncoderParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="OneHotEncoderParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OneHotEncoderParamChecker">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoderParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OneHotEncoderParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.OneHotEncoderParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">param</span><span class="p">):</span>
         <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;One-hot encoder param&#39;s&quot;</span>
         <span class="n">check_defined_type</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">descr</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="s1">&#39;int&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="FTLModelParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLModelParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLModelParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="FTLModelParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLModelParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FTLModelParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLModelParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLModelParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLModelParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLModelParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">ftl_model_param</span><span class="p">):</span>
         <span class="n">model_param_descr</span> <span class="o">=</span> <span class="s2">&quot;ftl model param&#39;s &quot;</span>
         <span class="n">check_positive_integer</span><span class="p">(</span><span class="n">ftl_model_param</span><span class="o">.</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">model_param_descr</span> <span class="o">+</span> <span class="s2">&quot;max_iter&quot;</span><span class="p">)</span>
@@ -814,8 +922,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="LocalModelParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.LocalModelParamChecker">[docs]</a><span class="k">class</span> <span class="nc">LocalModelParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="LocalModelParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.LocalModelParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="LocalModelParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.LocalModelParamChecker">[docs]</a><span class="k">class</span> <span class="nc">LocalModelParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="LocalModelParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.LocalModelParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">local_model_param</span><span class="p">):</span>
         <span class="n">model_param_descr</span> <span class="o">=</span> <span class="s2">&quot;local model param&#39;s &quot;</span>
         <span class="k">if</span> <span class="n">local_model_param</span><span class="o">.</span><span class="n">input_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -825,8 +933,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="FTLDataParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLDataParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLDataParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="FTLDataParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLDataParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FTLDataParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLDataParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLDataParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLDataParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLDataParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">ftl_data_param</span><span class="p">):</span>
         <span class="n">model_param_descr</span> <span class="o">=</span> <span class="s2">&quot;ftl data model param&#39;s &quot;</span>
         <span class="k">if</span> <span class="n">ftl_data_param</span><span class="o">.</span><span class="n">file_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -843,8 +951,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="FTLValidDataParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLValidDataParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLValidDataParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="FTLValidDataParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.FTLValidDataParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FTLValidDataParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLValidDataParamChecker">[docs]</a><span class="k">class</span> <span class="nc">FTLValidDataParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLValidDataParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.FTLValidDataParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">ftl_valid_data_param</span><span class="p">):</span>
         <span class="n">model_param_descr</span> <span class="o">=</span> <span class="s2">&quot;ftl validation data model param&#39;s &quot;</span>
         <span class="k">if</span> <span class="n">ftl_valid_data_param</span><span class="o">.</span><span class="n">file_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -856,8 +964,8 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="ScaleParamChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.ScaleParamChecker">[docs]</a><span class="k">class</span> <span class="nc">ScaleParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<div class="viewcode-block" id="ScaleParamChecker.check_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.ScaleParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ScaleParamChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.ScaleParamChecker">[docs]</a><span class="k">class</span> <span class="nc">ScaleParamChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ScaleParamChecker.check_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.ScaleParamChecker.check_param">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">check_param</span><span class="p">(</span><span class="n">scale_param</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">scale_param</span><span class="o">.</span><span class="n">method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">descr</span> <span class="o">=</span> <span class="s2">&quot;scale param&#39;s method&quot;</span>
@@ -918,48 +1026,48 @@
         <span class="k">return</span> <span class="kc">True</span></div></div>
 
 
-<div class="viewcode-block" id="check_string"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_string">[docs]</a><span class="k">def</span> <span class="nf">check_string</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_string"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_string">[docs]</a><span class="k">def</span> <span class="nf">check_string</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;str&quot;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be string type&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_positive_integer"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_positive_integer">[docs]</a><span class="k">def</span> <span class="nf">check_positive_integer</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_positive_integer"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_positive_integer">[docs]</a><span class="k">def</span> <span class="nf">check_positive_integer</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be positive integer&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_positive_number"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_positive_number">[docs]</a><span class="k">def</span> <span class="nf">check_positive_number</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_positive_number"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_positive_number">[docs]</a><span class="k">def</span> <span class="nf">check_positive_number</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;long&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be positive numeric&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_decimal_float"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_decimal_float">[docs]</a><span class="k">def</span> <span class="nf">check_decimal_float</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_decimal_float"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_decimal_float">[docs]</a><span class="k">def</span> <span class="nf">check_decimal_float</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;float&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be a float number in range [0, 1]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_boolean"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_boolean">[docs]</a><span class="k">def</span> <span class="nf">check_boolean</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_boolean"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_boolean">[docs]</a><span class="k">def</span> <span class="nf">check_boolean</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be bool type&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_open_unit_interval"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_open_unit_interval">[docs]</a><span class="k">def</span> <span class="nf">check_open_unit_interval</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
+<div class="viewcode-block" id="check_open_unit_interval"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_open_unit_interval">[docs]</a><span class="k">def</span> <span class="nf">check_open_unit_interval</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;float&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">param</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; should be a numeric number between 0 and 1 exclusively&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_valid_value"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_valid_value">[docs]</a><span class="k">def</span> <span class="nf">check_valid_value</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">,</span> <span class="n">valid_values</span><span class="p">):</span>
+<div class="viewcode-block" id="check_valid_value"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_valid_value">[docs]</a><span class="k">def</span> <span class="nf">check_valid_value</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">,</span> <span class="n">valid_values</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">param</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_values</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> is not supported, it should be in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">valid_values</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="check_defined_type"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_defined_type">[docs]</a><span class="k">def</span> <span class="nf">check_defined_type</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
+<div class="viewcode-block" id="check_defined_type"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_defined_type">[docs]</a><span class="k">def</span> <span class="nf">check_defined_type</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">descr</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be one of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">types</span><span class="p">))</span></div>
 
 
 <span class="c1"># Used when param is a string.</span>
-<div class="viewcode-block" id="check_and_change_lower"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.check_and_change_lower">[docs]</a><span class="k">def</span> <span class="nf">check_and_change_lower</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="check_and_change_lower"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.check_and_change_lower">[docs]</a><span class="k">def</span> <span class="nf">check_and_change_lower</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s1">&#39;str&#39;</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be one of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">))</span>
 
@@ -970,7 +1078,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">descr</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{}</span><span class="s2"> not supported, should be one of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="AllChecker"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.AllChecker">[docs]</a><span class="k">class</span> <span class="nc">AllChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="AllChecker"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.AllChecker">[docs]</a><span class="k">class</span> <span class="nc">AllChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="n">param_restricted_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">param_restricted_path</span> <span class="o">=</span> <span class="n">param_restricted_path</span>
@@ -981,7 +1089,7 @@
                      <span class="s2">&quot;range&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_range</span>
                      <span class="p">}</span>
 
-<div class="viewcode-block" id="AllChecker.check_all"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.AllChecker.check_all">[docs]</a>    <span class="k">def</span> <span class="nf">check_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="AllChecker.check_all"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.AllChecker.check_all">[docs]</a>    <span class="k">def</span> <span class="nf">check_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">DataIOParam</span><span class="p">,</span> <span class="n">DataIOParamChecker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">EncryptParam</span><span class="p">,</span> <span class="n">EncryptParamChecker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">EncryptedModeCalculatorParam</span><span class="p">,</span> <span class="n">EncryptedModeCalculatorParamChecker</span><span class="p">)</span>
@@ -1031,7 +1139,7 @@
             <span class="n">param_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">class_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">class_info</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">)]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">validate_restricted_param</span><span class="p">(</span><span class="n">param_obj</span><span class="p">,</span> <span class="n">validation_json</span><span class="p">,</span> <span class="n">param_classes</span><span class="p">)</span>
 
-<div class="viewcode-block" id="AllChecker.validate_restricted_param"><a class="viewcode-back" href="../../../source/federatedml.util.html#federatedml.util.param_checker.AllChecker.validate_restricted_param">[docs]</a>    <span class="k">def</span> <span class="nf">validate_restricted_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_obj</span><span class="p">,</span> <span class="n">validation_json</span><span class="p">,</span> <span class="n">param_classes</span><span class="p">):</span>
+<div class="viewcode-block" id="AllChecker.validate_restricted_param"><a class="viewcode-back" href="../../../federatedml.util.html#federatedml.util.param_checker.AllChecker.validate_restricted_param">[docs]</a>    <span class="k">def</span> <span class="nf">validate_restricted_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_obj</span><span class="p">,</span> <span class="n">validation_json</span><span class="p">,</span> <span class="n">param_classes</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validate the param restriction of user definition recursively.</span>
 <span class="sd">            It will only validation parameters define both in param_obj and validation_json</span>
@@ -1091,67 +1199,43 @@
         <span class="k">return</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">wrong_value_list</span></div>
 </pre></div>
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">T</a></h1>
+          <footer>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FATE_TEAM
 
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
-
-<h3>Navigation</h3>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2019, F.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

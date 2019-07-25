@@ -1,36 +1,144 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>federatedml.statistic.data_overview &#8212; T 1 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>federatedml.statistic.data_overview &mdash; FATE 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../../index.html" class="icon icon-home"> FATE
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FATE</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>federatedml.statistic.data_overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <h1>Source code for federatedml.statistic.data_overview</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
@@ -59,7 +167,7 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">log_utils</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="get_features_shape"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.get_features_shape">[docs]</a><span class="k">def</span> <span class="nf">get_features_shape</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="get_features_shape"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.get_features_shape">[docs]</a><span class="k">def</span> <span class="nf">get_features_shape</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_instances</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">):</span>
         <span class="n">features</span> <span class="o">=</span> <span class="n">data_instances</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -83,7 +191,7 @@
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="get_data_shape"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.get_data_shape">[docs]</a><span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="get_data_shape"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.get_data_shape">[docs]</a><span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">):</span>
         <span class="n">features</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -100,19 +208,19 @@
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="get_header"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.get_header">[docs]</a><span class="k">def</span> <span class="nf">get_header</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="get_header"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.get_header">[docs]</a><span class="k">def</span> <span class="nf">get_header</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
     <span class="n">header</span> <span class="o">=</span> <span class="n">data_instances</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;header&#39;</span><span class="p">)</span>  <span class="c1"># [&#39;x1&#39;, &#39;x2&#39;, &#39;x3&#39; ... ]</span>
     <span class="k">return</span> <span class="n">header</span></div>
 
 
-<div class="viewcode-block" id="is_empty_feature"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.is_empty_feature">[docs]</a><span class="k">def</span> <span class="nf">is_empty_feature</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="is_empty_feature"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.is_empty_feature">[docs]</a><span class="k">def</span> <span class="nf">is_empty_feature</span><span class="p">(</span><span class="n">data_instances</span><span class="p">):</span>
     <span class="n">shape_of_feature</span> <span class="o">=</span> <span class="n">get_features_shape</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">shape_of_feature</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">shape_of_feature</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="is_sparse_data"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.is_sparse_data">[docs]</a><span class="k">def</span> <span class="nf">is_sparse_data</span><span class="p">(</span><span class="n">data_instance</span><span class="p">):</span>
+<div class="viewcode-block" id="is_sparse_data"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.is_sparse_data">[docs]</a><span class="k">def</span> <span class="nf">is_sparse_data</span><span class="p">(</span><span class="n">data_instance</span><span class="p">):</span>
     <span class="n">first_data</span> <span class="o">=</span> <span class="n">data_instance</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">first_data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ndarray&#39;</span><span class="p">,</span> <span class="s1">&#39;list&#39;</span><span class="p">]:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -124,7 +232,7 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
-<div class="viewcode-block" id="is_binary_labels"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.is_binary_labels">[docs]</a><span class="k">def</span> <span class="nf">is_binary_labels</span><span class="p">(</span><span class="n">data_instance</span><span class="p">):</span>
+<div class="viewcode-block" id="is_binary_labels"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.is_binary_labels">[docs]</a><span class="k">def</span> <span class="nf">is_binary_labels</span><span class="p">(</span><span class="n">data_instance</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">count_labels</span><span class="p">(</span><span class="n">instances</span><span class="p">):</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
@@ -139,7 +247,7 @@
     <span class="k">return</span> <span class="kc">True</span></div>
 
 
-<div class="viewcode-block" id="rubbish_clear"><a class="viewcode-back" href="../../../source/federatedml.statistic.html#federatedml.statistic.data_overview.rubbish_clear">[docs]</a><span class="k">def</span> <span class="nf">rubbish_clear</span><span class="p">(</span><span class="n">rubbish_list</span><span class="p">):</span>
+<div class="viewcode-block" id="rubbish_clear"><a class="viewcode-back" href="../../../federatedml.statistic.html#federatedml.statistic.data_overview.rubbish_clear">[docs]</a><span class="k">def</span> <span class="nf">rubbish_clear</span><span class="p">(</span><span class="n">rubbish_list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan</span>
 <span class="sd">    Parameter</span>
@@ -153,67 +261,43 @@
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;destroy Dtable error,:</span><span class="si">{}</span><span class="s2">, but this can be ignored sometimes&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
 </pre></div>
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">T</a></h1>
+          <footer>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FATE_TEAM
 
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
-
-<h3>Navigation</h3>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2019, F.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

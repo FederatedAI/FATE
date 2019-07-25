@@ -1,18 +1,20 @@
-.. T documentation master file, created by
-   sphinx-quickstart on Thu Jul 25 11:22:59 2019.
+.. FATE documentation master file, created by
+   sphinx-quickstart on Thu Jul 25 14:40:12 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to T's documentation!
-=============================
+Welcome to FATE's documentation!
+================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+Please go to "model index" to check out the api docs for FATE algorithm.
+
 API
 ===
-.. automodule:: ./federatedml
+.. automodule:: C:/Users/Mingc/Documents/GitHub/Mingc/FATE_develop/FATE/federatedml
    :members:
 
 Indices and tables

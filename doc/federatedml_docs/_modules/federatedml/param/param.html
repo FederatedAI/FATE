@@ -1,36 +1,144 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>federatedml.param.param &#8212; T 1 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>federatedml.param.param &mdash; FATE 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../../index.html" class="icon icon-home"> FATE
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FATE</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>federatedml.param.param</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <h1>Source code for federatedml.param.param</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python    </span>
@@ -59,7 +167,7 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 
 
-<div class="viewcode-block" id="DataIOParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.DataIOParam">[docs]</a><span class="k">class</span> <span class="nc">DataIOParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DataIOParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.DataIOParam">[docs]</a><span class="k">class</span> <span class="nc">DataIOParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define dataio parameters that used in federated ml.</span>
 
@@ -141,7 +249,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output_format</span> <span class="o">=</span> <span class="n">output_format</span></div>
 
 
-<div class="viewcode-block" id="EncryptParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.EncryptParam">[docs]</a><span class="k">class</span> <span class="nc">EncryptParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncryptParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.EncryptParam">[docs]</a><span class="k">class</span> <span class="nc">EncryptParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define encryption method that used in federated ml.</span>
 
@@ -162,7 +270,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">key_length</span> <span class="o">=</span> <span class="n">key_length</span></div>
 
 
-<div class="viewcode-block" id="EncryptedModeCalculatorParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.EncryptedModeCalculatorParam">[docs]</a><span class="k">class</span> <span class="nc">EncryptedModeCalculatorParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncryptedModeCalculatorParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.EncryptedModeCalculatorParam">[docs]</a><span class="k">class</span> <span class="nc">EncryptedModeCalculatorParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the encrypted_mode_calulator parameters.</span>
 
@@ -179,7 +287,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">re_encrypted_rate</span> <span class="o">=</span> <span class="n">re_encrypted_rate</span></div>
 
 
-<div class="viewcode-block" id="EvaluateParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.EvaluateParam">[docs]</a><span class="k">class</span> <span class="nc">EvaluateParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EvaluateParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.EvaluateParam">[docs]</a><span class="k">class</span> <span class="nc">EvaluateParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the evaluation method of binary/multiple classification and regression</span>
 
@@ -208,7 +316,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">thresholds</span></div>
 
 
-<div class="viewcode-block" id="ObjectiveParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.ObjectiveParam">[docs]</a><span class="k">class</span> <span class="nc">ObjectiveParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ObjectiveParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.ObjectiveParam">[docs]</a><span class="k">class</span> <span class="nc">ObjectiveParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define objective parameters that used in federated ml.</span>
 
@@ -229,7 +337,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span></div>
 
 
-<div class="viewcode-block" id="PredictParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.PredictParam">[docs]</a><span class="k">class</span> <span class="nc">PredictParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="PredictParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.PredictParam">[docs]</a><span class="k">class</span> <span class="nc">PredictParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the predict method of HomoLR, HeteroLR, SecureBoosting</span>
 
@@ -245,7 +353,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span></div>
 
 
-<div class="viewcode-block" id="SampleParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.SampleParam">[docs]</a><span class="k">class</span> <span class="nc">SampleParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="SampleParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.SampleParam">[docs]</a><span class="k">class</span> <span class="nc">SampleParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the sample method</span>
 
@@ -267,7 +375,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span></div>
 
 
-<div class="viewcode-block" id="WorkFlowParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.WorkFlowParam">[docs]</a><span class="k">class</span> <span class="nc">WorkFlowParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="WorkFlowParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.WorkFlowParam">[docs]</a><span class="k">class</span> <span class="nc">WorkFlowParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define Workflow parameters used in federated ml.</span>
 
@@ -388,7 +496,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">one_vs_rest</span> <span class="o">=</span> <span class="n">one_vs_rest</span></div>
 
 
-<div class="viewcode-block" id="InitParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.InitParam">[docs]</a><span class="k">class</span> <span class="nc">InitParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="InitParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.InitParam">[docs]</a><span class="k">class</span> <span class="nc">InitParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize Parameters used in initializing a model.</span>
 
@@ -411,7 +519,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fit_intercept</span> <span class="o">=</span> <span class="n">fit_intercept</span></div>
 
 
-<div class="viewcode-block" id="EncodeParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.EncodeParam">[docs]</a><span class="k">class</span> <span class="nc">EncodeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="EncodeParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.EncodeParam">[docs]</a><span class="k">class</span> <span class="nc">EncodeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the encode method</span>
 
@@ -430,7 +538,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">base64</span> <span class="o">=</span> <span class="n">base64</span></div>
 
 
-<div class="viewcode-block" id="IntersectParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.IntersectParam">[docs]</a><span class="k">class</span> <span class="nc">IntersectParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IntersectParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.IntersectParam">[docs]</a><span class="k">class</span> <span class="nc">IntersectParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the intersect method</span>
 
@@ -470,7 +578,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">only_output_key</span> <span class="o">=</span> <span class="n">only_output_key</span></div>
 
 
-<div class="viewcode-block" id="LogisticParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.LogisticParam">[docs]</a><span class="k">class</span> <span class="nc">LogisticParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="LogisticParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.LogisticParam">[docs]</a><span class="k">class</span> <span class="nc">LogisticParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters used for Logistic Regression both for Homo mode or Hetero mode.</span>
 
@@ -542,7 +650,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">encrypted_mode_calculator_param</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">encrypted_mode_calculator_param</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DecisionTreeParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.DecisionTreeParam">[docs]</a><span class="k">class</span> <span class="nc">DecisionTreeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DecisionTreeParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.DecisionTreeParam">[docs]</a><span class="k">class</span> <span class="nc">DecisionTreeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define decision tree parameters that used in federated ml.</span>
 
@@ -590,7 +698,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span></div>
 
 
-<div class="viewcode-block" id="BoostingTreeParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.BoostingTreeParam">[docs]</a><span class="k">class</span> <span class="nc">BoostingTreeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="BoostingTreeParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.BoostingTreeParam">[docs]</a><span class="k">class</span> <span class="nc">BoostingTreeParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define boosting tree parameters that used in federated ml.</span>
 
@@ -649,7 +757,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">encrypted_mode_calculator_param</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">EncryptedModeCalculatorParam</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="FTLModelParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.FTLModelParam">[docs]</a><span class="k">class</span> <span class="nc">FTLModelParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLModelParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.FTLModelParam">[docs]</a><span class="k">class</span> <span class="nc">FTLModelParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines parameters for FTL model</span>
 
@@ -684,7 +792,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">enc_ftl</span> <span class="o">=</span> <span class="n">enc_ftl</span></div>
 
 
-<div class="viewcode-block" id="LocalModelParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.LocalModelParam">[docs]</a><span class="k">class</span> <span class="nc">LocalModelParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="LocalModelParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.LocalModelParam">[docs]</a><span class="k">class</span> <span class="nc">LocalModelParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines parameters for FTL model</span>
 
@@ -708,7 +816,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span></div>
 
 
-<div class="viewcode-block" id="FTLDataParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.FTLDataParam">[docs]</a><span class="k">class</span> <span class="nc">FTLDataParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLDataParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.FTLDataParam">[docs]</a><span class="k">class</span> <span class="nc">FTLDataParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines parameters for FTL data model</span>
 
@@ -753,7 +861,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_read_table</span> <span class="o">=</span> <span class="n">is_read_table</span></div>
 
 
-<div class="viewcode-block" id="FTLValidDataParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.FTLValidDataParam">[docs]</a><span class="k">class</span> <span class="nc">FTLValidDataParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FTLValidDataParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.FTLValidDataParam">[docs]</a><span class="k">class</span> <span class="nc">FTLValidDataParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines parameters for FTL validation data model</span>
 
@@ -777,7 +885,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_read_table</span> <span class="o">=</span> <span class="n">is_read_table</span></div>
 
 
-<div class="viewcode-block" id="FeatureBinningParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.FeatureBinningParam">[docs]</a><span class="k">class</span> <span class="nc">FeatureBinningParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FeatureBinningParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.FeatureBinningParam">[docs]</a><span class="k">class</span> <span class="nc">FeatureBinningParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the feature binning method</span>
 
@@ -841,7 +949,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">local_only</span> <span class="o">=</span> <span class="n">local_only</span></div>
 
 
-<div class="viewcode-block" id="UniqueValueParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.UniqueValueParam">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.UniqueValueParam">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use the difference between max-value and min-value to judge.</span>
 
@@ -855,7 +963,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span></div>
 
 
-<div class="viewcode-block" id="IVValueSelectionParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.IVValueSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectionParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.IVValueSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use information values to select features.</span>
 
@@ -870,7 +978,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">value_threshold</span> <span class="o">=</span> <span class="n">value_threshold</span></div>
 
 
-<div class="viewcode-block" id="IVPercentileSelectionParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.IVPercentileSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileSelectionParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.IVPercentileSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use information values to select features.</span>
 
@@ -886,7 +994,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">percentile_threshold</span> <span class="o">=</span> <span class="n">percentile_threshold</span></div>
 
 
-<div class="viewcode-block" id="CoeffOfVarSelectionParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.CoeffOfVarSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarSelectionParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.CoeffOfVarSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use coefficient of variation to select features. When judging, the absolute value will be used.</span>
 
@@ -901,7 +1009,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">value_threshold</span> <span class="o">=</span> <span class="n">value_threshold</span></div>
 
 
-<div class="viewcode-block" id="OutlierColsSelectionParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.OutlierColsSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">OutlierColsSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierColsSelectionParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.OutlierColsSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">OutlierColsSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.</span>
 
@@ -920,7 +1028,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">upper_threshold</span> <span class="o">=</span> <span class="n">upper_threshold</span></div>
 
 
-<div class="viewcode-block" id="FeatureSelectionParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.FeatureSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FeatureSelectionParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.FeatureSelectionParam">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelectionParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the feature selection parameters.</span>
 
@@ -989,7 +1097,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bin_param</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">bin_param</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ScaleParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.ScaleParam">[docs]</a><span class="k">class</span> <span class="nc">ScaleParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ScaleParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.ScaleParam">[docs]</a><span class="k">class</span> <span class="nc">ScaleParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the feature scale parameters.</span>
 
@@ -1033,7 +1141,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">with_std</span> <span class="o">=</span> <span class="n">with_std</span></div>
 
 
-<div class="viewcode-block" id="OneHotEncoderParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.OneHotEncoderParam">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoderParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OneHotEncoderParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.OneHotEncoderParam">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoderParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameters</span>
@@ -1048,7 +1156,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span></div>
 
 
-<div class="viewcode-block" id="OneVsRestParam"><a class="viewcode-back" href="../../../source/federatedml.param.html#federatedml.param.param.OneVsRestParam">[docs]</a><span class="k">class</span> <span class="nc">OneVsRestParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OneVsRestParam"><a class="viewcode-back" href="../../../federatedml.param.html#federatedml.param.param.OneVsRestParam">[docs]</a><span class="k">class</span> <span class="nc">OneVsRestParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Define the one_vs_rest parameters.</span>
 
@@ -1062,67 +1170,43 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">has_arbiter</span> <span class="o">=</span> <span class="n">has_arbiter</span></div>
 </pre></div>
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">T</a></h1>
+          <footer>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FATE_TEAM
 
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
-
-<h3>Navigation</h3>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2019, F.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

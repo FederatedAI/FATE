@@ -1,36 +1,144 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>federatedml.feature.feature_selection &#8212; T 1 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>federatedml.feature.feature_selection &mdash; FATE 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../../index.html" class="icon icon-home"> FATE
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FATE</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>federatedml.feature.feature_selection</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <h1>Source code for federatedml.feature.feature_selection</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
@@ -69,7 +177,7 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">log_utils</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="FilterMethod"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod">[docs]</a><span class="k">class</span> <span class="nc">FilterMethod</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FilterMethod"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod">[docs]</a><span class="k">class</span> <span class="nc">FilterMethod</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use for filter columns</span>
 
@@ -94,7 +202,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cols_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="FilterMethod.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="FilterMethod.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter data_instances for the specified columns</span>
 
@@ -155,10 +263,10 @@
 
         <span class="k">return</span> <span class="n">left_cols</span>
 
-<div class="viewcode-block" id="FilterMethod.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FilterMethod.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="FilterMethod.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FilterMethod.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span></div>
 
     <span class="k">def</span> <span class="nf">_init_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
@@ -177,7 +285,7 @@
             <span class="n">col_name</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="n">col_index</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cols_dict</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_index</span>
 
-<div class="viewcode-block" id="FilterMethod.filter_one_party"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.filter_one_party">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FilterMethod.filter_one_party"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.FilterMethod.filter_one_party">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">filter_one_party</span><span class="p">(</span><span class="n">party_variances</span><span class="p">,</span> <span class="n">pick_high</span><span class="p">,</span> <span class="n">value_threshold</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">left_cols</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">col_info</span><span class="p">,</span> <span class="n">var_value</span> <span class="ow">in</span> <span class="n">party_variances</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -213,7 +321,7 @@
         <span class="k">return</span> <span class="n">left_col_name_dict</span></div>
 
 
-<div class="viewcode-block" id="UnionPercentileFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter">[docs]</a><span class="k">class</span> <span class="nc">UnionPercentileFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="UnionPercentileFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter">[docs]</a><span class="k">class</span> <span class="nc">UnionPercentileFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use for all union percentile filter methods</span>
 
@@ -239,7 +347,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pick_high</span> <span class="o">=</span> <span class="n">pick_high</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="n">header</span>
 
-<div class="viewcode-block" id="UnionPercentileFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="UnionPercentileFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit local variances and each host vaiances</span>
 
@@ -258,7 +366,7 @@
             <span class="n">host_left_cols</span><span class="p">[</span><span class="n">host_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">left_col</span>
         <span class="k">return</span> <span class="n">local_left_cols</span><span class="p">,</span> <span class="n">host_left_cols</span></div>
 
-<div class="viewcode-block" id="UnionPercentileFilter.keep_one"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.keep_one">[docs]</a>    <span class="k">def</span> <span class="nf">keep_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variances</span><span class="p">,</span> <span class="n">left_cols</span><span class="p">):</span>
+<div class="viewcode-block" id="UnionPercentileFilter.keep_one"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.keep_one">[docs]</a>    <span class="k">def</span> <span class="nf">keep_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variances</span><span class="p">,</span> <span class="n">left_cols</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">variances</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">left_cols</span>
 
@@ -284,7 +392,7 @@
             <span class="n">left_cols</span><span class="p">[</span><span class="n">min_key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="UnionPercentileFilter.get_value_threshold"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.get_value_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">get_value_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="UnionPercentileFilter.get_value_threshold"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UnionPercentileFilter.get_value_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">get_value_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">total_values</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">total_values</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_variance</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
 
@@ -298,7 +406,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">value_threshold</span> <span class="o">=</span> <span class="n">sorted_value</span><span class="p">[</span><span class="n">thres_idx</span><span class="p">]</span></div></div>
 
 
-<div class="viewcode-block" id="UniqueValueFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter">[docs]</a><span class="k">class</span> <span class="nc">UniqueValueFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    filter the columns if all values in this feature is the same</span>
 
@@ -324,7 +432,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">statics_obj</span> <span class="o">=</span> <span class="n">statics_obj</span>
 
-<div class="viewcode-block" id="UniqueValueFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">statics_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -348,7 +456,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_data_instances</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="UniqueValueFilter.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueFilter.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">left_col_name_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_col_name_dict</span><span class="p">()</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]</span>
         <span class="n">left_col_obj</span> <span class="o">=</span> <span class="n">feature_selection_param_pb2</span><span class="o">.</span><span class="n">LeftCols</span><span class="p">(</span><span class="n">original_cols</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span>
@@ -359,12 +467,12 @@
                                                                          <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;UNIQUE FILTER&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="UniqueValueFilter.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueValueFilter.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.UniqueValueFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">feature_selection_meta_pb2</span><span class="o">.</span><span class="n">UniqueValueMeta</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="IVValueSelectFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter">[docs]</a><span class="k">class</span> <span class="nc">IVValueSelectFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Drop the columns if their iv is smaller than a threshold</span>
 
@@ -386,7 +494,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">binning_obj</span> <span class="o">=</span> <span class="n">binning_obj</span>
 
-<div class="viewcode-block" id="IVValueSelectFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># fit guest</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="n">guest_binning_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binning_obj</span><span class="o">.</span><span class="n">binning_result</span>
@@ -410,7 +518,7 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="IVValueSelectFilter.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectFilter.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">left_col_name_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_col_name_dict</span><span class="p">()</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]</span>
 
@@ -457,12 +565,12 @@
                                                                          <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;IV_VALUE_FILTER&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="IVValueSelectFilter.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IVValueSelectFilter.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVValueSelectFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">feature_selection_meta_pb2</span><span class="o">.</span><span class="n">IVValueSelectionMeta</span><span class="p">(</span><span class="n">value_threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value_threshold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="IVPercentileFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter">[docs]</a><span class="k">class</span> <span class="nc">IVPercentileFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Drop the columns if their iv is smaller than a threshold of percentile.</span>
 
@@ -486,7 +594,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">host_cols</span> <span class="o">=</span> <span class="n">host_cols</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">binning_obj</span> <span class="o">=</span> <span class="n">binning_obj</span>
 
-<div class="viewcode-block" id="IVPercentileFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="c1"># fit guest</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
@@ -525,7 +633,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">host_cols</span> <span class="o">=</span> <span class="n">host_left_cols</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="IVPercentileFilter.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileFilter.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">left_col_name_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_col_name_dict</span><span class="p">()</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]</span>
 
@@ -568,12 +676,12 @@
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;json_result: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">json_result</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="IVPercentileFilter.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IVPercentileFilter.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.IVPercentileFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">feature_selection_meta_pb2</span><span class="o">.</span><span class="n">IVPercentileSelectionMeta</span><span class="p">(</span><span class="n">percentile_threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">percentile_thres</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="CoeffOfVarValueFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarValueFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarValueFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter">[docs]</a><span class="k">class</span> <span class="nc">CoeffOfVarValueFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Drop the columns if their coefficient of varaiance is smaller than a threshold.</span>
 
@@ -596,7 +704,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">statics_obj</span> <span class="o">=</span> <span class="n">statics_obj</span>
 
-<div class="viewcode-block" id="CoeffOfVarValueFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarValueFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">statics_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">statics_obj</span> <span class="o">=</span> <span class="n">MultivariateStatisticalSummary</span><span class="p">(</span><span class="n">data_instances</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">)</span>
@@ -621,7 +729,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_data_instances</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="CoeffOfVarValueFilter.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarValueFilter.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">left_col_name_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_col_name_dict</span><span class="p">()</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]</span>
 
@@ -634,12 +742,12 @@
             <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;COEFFICIENT OF VARIANCE&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="CoeffOfVarValueFilter.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CoeffOfVarValueFilter.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.CoeffOfVarValueFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">feature_selection_meta_pb2</span><span class="o">.</span><span class="n">VarianceOfCoeSelectionMeta</span><span class="p">(</span><span class="n">value_threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value_threshold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="OutlierFilter"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter">[docs]</a><span class="k">class</span> <span class="nc">OutlierFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierFilter"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter">[docs]</a><span class="k">class</span> <span class="nc">OutlierFilter</span><span class="p">(</span><span class="n">FilterMethod</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given percentile and threshold. Judge if this quantile point is larger than threshold. Filter those larger ones.</span>
 
@@ -659,7 +767,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">upper_threshold</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">upper_threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span>
 
-<div class="viewcode-block" id="OutlierFilter.fit"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">bin_param</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierFilter.fit"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_instances</span><span class="p">,</span> <span class="n">bin_param</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_cols</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="c1"># bin_obj = QuantileBinning(bin_param)</span>
@@ -678,7 +786,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset_data_instances</span><span class="p">(</span><span class="n">data_instances</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_cols</span></div>
 
-<div class="viewcode-block" id="OutlierFilter.get_param_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierFilter.get_param_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.get_param_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_param_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">left_col_name_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_col_name_dict</span><span class="p">()</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]</span>
 
@@ -690,73 +798,49 @@
                                                                          <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;OUTLIER&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="OutlierFilter.get_meta_obj"><a class="viewcode-back" href="../../../source/federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="OutlierFilter.get_meta_obj"><a class="viewcode-back" href="../../../federatedml.feature.html#federatedml.feature.feature_selection.OutlierFilter.get_meta_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">feature_selection_meta_pb2</span><span class="o">.</span><span class="n">OutlierColsSelectionMeta</span><span class="p">(</span><span class="n">percentile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">percentile</span><span class="p">,</span>
                                                                      <span class="n">upper_threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_threshold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div></div>
 </pre></div>
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">T</a></h1>
+          <footer>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FATE_TEAM
 
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
-
-<h3>Navigation</h3>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2019, F.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>
