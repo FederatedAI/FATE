@@ -38,6 +38,8 @@ class KFold(BaseCrossValidator):
         self.random_seed = 1
 
     def split(self, data_inst):
+        np.random.seed(self.random_seed)
+
         header = data_inst.schema.get('header')
 
         data_sids_iter, data_size = collect_index(data_inst)
@@ -58,9 +60,7 @@ class KFold(BaseCrossValidator):
 
             train_sids = data_sids[train]
             test_sids = data_sids[test]
-            print("The {}th iter,  train: {}, test: {}".format(
-                n, train_sids[0:10], test_sids[0:10]
-            ))
+
             n += 1
 
             train_sids_table = [(key_type(x), 1) for x in train_sids]

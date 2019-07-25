@@ -44,7 +44,6 @@ class TestKFlod(unittest.TestCase):
         kfold_obj = KFold()
         kfold_obj.n_splits = 10
         kfold_obj.random_seed = 32
-        np.random.seed(kfold_obj.random_seed)
 
         # print(self.table, self.table.count())
         data_generator = kfold_obj.split(self.table)
@@ -68,11 +67,10 @@ class TestKFlod(unittest.TestCase):
 
         data_generator = kfold_obj.split(self.table)
         n = 0
-        print('key_list is : {}'.format(key_list))
         for train_data, test_data in data_generator:
             second_key = train_data.first()[0]
             first_key = key_list[n]
-            # self.assertTrue(first_key == second_key)
+            self.assertTrue(first_key == second_key)
             n += 1
 
 

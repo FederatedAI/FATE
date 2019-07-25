@@ -82,25 +82,26 @@ class TestHeteroLR(object):
 
 
 if __name__ == '__main__':
-    from federatedml.logistic_regression.test.job_id import job_id
-
-    eggroll.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": "arbiter",
-                        "party_id": 10000
-                    },
-                        "role": {
-                            "host": [
-                                10000
-                            ],
-                            "guest": [
-                                9999
-                            ],
-                            "arbiter": [
-                                10000
-                            ]
-                        }
-                    })
-    test_obj = TestHeteroLR()
-    test_obj.test_hetero_lr()
+    pass
+    # from federatedml.logistic_regression.test.job_id import job_id
+    #
+    # eggroll.init(job_id)
+    # federation.init(job_id,
+    #                 {"local": {
+    #                     "role": "arbiter",
+    #                     "party_id": 10000
+    #                 },
+    #                     "role": {
+    #                         "host": [
+    #                             10000
+    #                         ],
+    #                         "guest": [
+    #                             9999
+    #                         ],
+    #                         "arbiter": [
+    #                             10000
+    #                         ]
+    #                     }
+    #                 })
+    # test_obj = TestHeteroLR()
+    # test_obj.test_hetero_lr()

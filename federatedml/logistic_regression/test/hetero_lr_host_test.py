@@ -18,6 +18,7 @@
 
 
 import numpy as np
+import os
 
 from arch.api import eggroll
 from arch.api import federation
@@ -32,7 +33,8 @@ np.random.seed(1)
 class TestHeteroLR(object):
 
     def __init__(self):
-        host_data_file = "../../../examples/data/breast_a.csv"
+        home_dir = os.path.split(os.path.realpath(__file__))[0]
+        host_data_file = home_dir + "/../../../examples/data/breast_a.csv"
         self.model_name = 'HeteroLogisticRegression'
         self.table = None
         self.args = self.generate_args(host_data_file)
@@ -119,25 +121,26 @@ class TestHeteroLR(object):
 
 
 if __name__ == '__main__':
-    from federatedml.logistic_regression.test.job_id import job_id
-
-    eggroll.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": "host",
-                        "party_id": 10000
-                    },
-                        "role": {
-                            "host": [
-                                10000
-                            ],
-                            "guest": [
-                                9999
-                            ],
-                            "arbiter": [
-                                10000
-                            ]
-                        }
-                    })
-    test_obj = TestHeteroLR()
-    test_obj.test_hetero_lr()
+    pass
+    # from federatedml.logistic_regression.test.job_id import job_id
+    #
+    # eggroll.init(job_id)
+    # federation.init(job_id,
+    #                 {"local": {
+    #                     "role": "host",
+    #                     "party_id": 10000
+    #                 },
+    #                     "role": {
+    #                         "host": [
+    #                             10000
+    #                         ],
+    #                         "guest": [
+    #                             9999
+    #                         ],
+    #                         "arbiter": [
+    #                             10000
+    #                         ]
+    #                     }
+    #                 })
+    # test_obj = TestHeteroLR()
+    # test_obj.test_hetero_lr()
