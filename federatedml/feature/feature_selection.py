@@ -571,6 +571,8 @@ class CoeffOfVarValueFilter(FilterMethod):
         for col_name, s_v in std_var.items():
             col_idx = self.header.index(col_name)
             mean = mean_value[col_name]
+            if mean == 0:
+                mean = consts.FLOAT_ZERO
             coeff_of_var = math.fabs(s_v / mean)
             LOGGER.debug("In var_coe, col_name: {}, col_idx: {}, mean: {}, std: {}, coeff_of_var: {}".format(
                 col_name, col_idx, mean, s_v, coeff_of_var
