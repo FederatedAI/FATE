@@ -21,6 +21,5 @@ option java_outer_classname = "PipelineProto";
 
 
 message Pipeline {
-    repeated string node_meta = 1;
-    repeated string node_param = 2;
+    bytes inference_dsl = 1;
 }
