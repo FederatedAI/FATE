@@ -25,18 +25,18 @@ from arch.api import federation
 from fate_flow.manager.tracking import Tracking 
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.tree.hetero_secureboosting_tree_guest import HeteroSecureBoostingTreeGuest
+from federatedml.tree.hetero_secureboosting_tree_host import HeteroSecureBoostingTreeHost
 
 
-class TestHeteroSecureBoostGuest(unittest.TestCase):
+class TestHeteroSecureBoostHost(unittest.TestCase):
     def setUp(self):
         self.data = []
         for i in range(100):
             dict = {}
             indices = []
             data = []
-            for j in range(40):
-                idx = random.randint(0, 49)
+            for j in range(20):
+                idx = random.randint(0, 29)
                 if idx in dict:
                     continue
                 dict[idx] = 1
@@ -45,10 +45,11 @@ class TestHeteroSecureBoostGuest(unittest.TestCase):
                 data.append(val)
 
             sparse_vec = SparseVector(indices, data, 50)
-            self.data.append((i, Instance(features=sparse_vec, label=i % 2)))
+            self.data.append((i, Instance(features=sparse_vec)))
 
         self.table = eggroll.parallelize(self.data, include_key=True)
-        self.table.schema = {"header": ["fid" + str(i) for i in range(50)]}
+        self.table.schema = {"header": ["fid" + str(i) for i in range(30)]}
+
         self.args = {"data": 
                       {"hetero_secure_boost_0": {
                        "train_data": self.table,
@@ -63,42 +64,49 @@ class TestHeteroSecureBoostGuest(unittest.TestCase):
                               {"max_depth": 3,
                                "min_leaf_node": 10
                               },
-                             "task_type": "classification",
-                             "objective_param":
-                              {"objective": "cross_entropy"
-                              },
                              "num_trees": 3,
-                             "cv_param":{
+                             "cv_param": {
                                  "n_splits": 3,
                                  "mode": "hetero",
                                  "role": "guest",
                                  "need_cv": True
                              }
-                            }
+                            },
+                            "local": {
+                             "role": "host",
+                             "party_id": 10000
+                            },
+                           "role": {
+                             "host": [
+                               10000
+                             ],
+                             "guest": [
+                               9999
+                             ]
+                           }
                           }
        
-        tree_guest = HeteroSecureBoostingTreeGuest()
-        tracker = Tracking("jobid", "host", 10000, "abc", "123")
-        tree_guest.set_tracker(tracker)
-        tree_guest.run(component_param, self.args)
-        tree_guest.save_model()
+        tree_host = HeteroSecureBoostingTreeHost()
+        tracker = Tracking("test_hetero_secureboost_1564066689723", "guest", 9999, "abc", "123")
+        tree_host.set_tracker(tracker)
+        tree_host.run(component_param, self.args)
+        tree_host.save_model()
 
 
 if __name__ == '__main__':
-    eggroll.init("jobid")
-    federation.init("jobid", 
+    eggroll.init("test_hetero_secureboost_1564066689723")
+    federation.init("test_hetero_secureboost_1564066689723", 
                     {"local": {
-                       "role": "guest",
-                       "party_id": 9999
+                       "role": "host",
+                       "party_id": 10000
                     },
                      "role": {
                        "host": [
                            10000
                        ],
                        "guest": [
-                           9999 
-                        ]
+                           9999
+                       ]
                      }
                     })
- 
     unittest.main()
