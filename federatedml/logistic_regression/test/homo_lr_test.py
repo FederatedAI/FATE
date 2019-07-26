@@ -22,7 +22,7 @@ from federatedml.optim import Initializer
 from federatedml.optim import L2Updater
 from federatedml.optim import Optimizer
 from federatedml.optim.gradient import LogisticGradient
-from federatedml.param.param import InitParam
+from federatedml.param.logistic_regression_param import InitParam
 
 LOGGER = log_utils.getLogger()
 

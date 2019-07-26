@@ -24,7 +24,7 @@ eggroll.init("123")
 
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.instance import Instance
-from federatedml.param.param import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
 class TestBucketBinning(unittest.TestCase):

@@ -30,9 +30,9 @@ from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, 
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
-from federatedml.param.param import FTLModelParam
+from federatedml.param.ftl_param import FTLModelParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 

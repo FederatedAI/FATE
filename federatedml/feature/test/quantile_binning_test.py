@@ -26,7 +26,7 @@ eggroll.init("123")
 
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
-from federatedml.param.param import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 import time
 
 
