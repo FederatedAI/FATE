@@ -56,6 +56,7 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         method = header.operator
 
         action = getattr(requests, method.lower(), None)
+        stat_logger.info('rpc receive: {}'.format(packet))
         if action:
             stat_logger.info("rpc receive: {} {}".format(get_url(_suffix), param))
             resp = action(url=get_url(_suffix), data=param, headers=HEADERS)

@@ -29,7 +29,7 @@ class Scheduler(threading.Thread):
 
     def run(self):
         if not self.queue.is_ready():
-            print("queue is not ready")
+            schedule_logger.error('queue is not ready')
             return False
         all_jobs = []
         while True:
@@ -38,6 +38,7 @@ class Scheduler(threading.Thread):
                     all_jobs.remove(future)
                     break
             job_event = self.queue.get_event()
+            schedule_logger.info('schedule job {}'.format(job_event))
             future = self.job_executor_pool.submit(Scheduler.handle_event, job_event)
             future.add_done_callback(Scheduler.get_result)
             all_jobs.append(future)

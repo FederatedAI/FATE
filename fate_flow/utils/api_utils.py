@@ -31,6 +31,7 @@ def federated_api(job_id, method, url, src_party_id, dest_party_id, json_body={}
     _packet = wrap_grpc_packet(json_body, method, url, src_party_id, dest_party_id, job_id, overall_timeout=overall_timeout)
     try:
         channel, stub = get_proxy_data_channel()
+        stat_logger.info("grpc unary request: {}".format(_packet))
         _return = stub.unaryCall(_packet)
         stat_logger.info("grpc unary response: {}".format(_return))
         channel.close()

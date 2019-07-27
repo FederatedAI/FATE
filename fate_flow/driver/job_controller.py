@@ -283,6 +283,8 @@ class JobController(object):
 
     @staticmethod
     def start_task(job_id, component_name, task_id, role, party_id, task_config):
+        schedule_logger.info(
+            'ready to start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
         task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
         os.makedirs(task_dir, exist_ok=True)
         task_config_path = os.path.join(task_dir, 'task_config.json')
