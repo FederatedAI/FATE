@@ -1,7 +1,7 @@
-#FATE Script#
+# FATE Script
 **FATE Script** is a language which compiles to Python. FATE Script's Syntax is based on the Python language. Hence, FATE Script is an interpreted, high-level, general-purpose programming language based on FATE project.FATE Script's design philosophy emphasizes the simplification of FATE(Federation AI Technology Enabler) algorithms based on homomorphic encryption and multi-party computation (MPC).
 
-##Base module fate_script##
+## Base module fate_script
 While using FATE Script for programming, module `fate_script` must be specified. Module `fate_script` defines the internal functions for developers. For instance, if developer wants to define a function to convert input data to a datastructure called TensorInEgg, function defined by the developer might be as follow:
 
     def get_lr_x_table(file_path):
@@ -22,11 +22,11 @@ This function must be contained in the file:
    
 
 
-##Syntax##
+## Syntax
 
 FATE Script adds Site statement and Encrypt statement based on the Python language. Site statement simplifies the data transfer programming to facilitate the programming of algorithm based on FATE project, and Encrypt statement simplifies the  encryption/decryption of data represented in `Tensor`.
 
-####Site statement####
+#### Site statement
 
 
 **site assignment statement:**
@@ -65,7 +65,7 @@ The code above can be translated as follow:
      if __site__ == 'A':
     	print('Test simple statement')
 
-####Encrypt statement####
+#### Encrypt statement
 
 **Encrypt statement**
 
@@ -97,7 +97,7 @@ Different from federation algorithm of FATE project, Fate Script supports mulitp
 
 In this way, party A calls the function `init_public_key()` of module `fate_script` to generate the paillier public key, then party H party D, party G and party E can get the public key from A. It should be noted that FATE Script only support on source but multiple destinations.
 
-##Datastructure##
+## Datastructure
 
 **Tensor datastructure**
 
@@ -135,7 +135,7 @@ Tensor multiplication might be as follow:
     forward =X @ W
 
 
-## Quick Start##
+## Quick Start
 
 We  supply the standalone and cluster mode of running examples for HeteroLogisticRegression algorithm implemented by FATE Script.
 
@@ -282,9 +282,7 @@ If developers want to make this piece of code work, route.json must be configure
     {
     	"cluster_a": {
     		"ip":[
-    			"123.12.234.14",
-    			"123.12.234.19",
-    			"123.12.234.23"
+    			
     		]
     		"role": [
     			"H",
@@ -296,9 +294,7 @@ If developers want to make this piece of code work, route.json must be configure
     	},
     	"cluster_b": {
     		"ip":[
-    			"123.12.234.25",
-    			"123.12.234.32",
-    			"123.12.234.33
+    			
     		]
     		"role": [
     			"A",
@@ -335,7 +331,7 @@ Start the FATE Script job through following steps:
 > `sh run_fateScript_cluster.sh $role $job_id script/HeteLR.fml`
 
 More specifically, commands of executing FATE Script job of all parties are as follow:
-In any of the three hosts:`123.12.234.14`， `123.12.234.19` and `123.12.234.23`, execute any of the following command:
+In any of the three hosts of cluster_a, execute any of the following command:
 
 > `sh run_fateScript_cluster.sh H $job_id script/HeteLR.fml`
 > 
@@ -343,7 +339,7 @@ In any of the three hosts:`123.12.234.14`， `123.12.234.19` and `123.12.234.23`
 > 
 > `sh run_fateScript_cluster.sh R $job_id script/HeteLR.fml`
 
-In any of the three hosts:`123.12.234.25`， `123.12.234.32` and `123.12.234.33`, execute any of the following command:
+In any of the three hosts of cluster_b, execute any of the following command:
 
 > `sh run_fateScript_cluster.sh A $job_id script/HeteLR.fml`
 > 
