@@ -187,7 +187,6 @@ class HomoLRHost(HomoLRBase):
             if converge_flag:
                 break
                 # self.save_model()
-        self.set_schema(data_instances)
 
     def __init_parameters(self, data_instances):
 

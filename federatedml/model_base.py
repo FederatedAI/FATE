@@ -108,6 +108,7 @@ class ModelBase(object):
             self.set_predict_data_schema(self.data_output, train_data.schema)
         
         elif eval_data:
+            self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
 
             if self.data_output:
@@ -117,13 +118,14 @@ class ModelBase(object):
         
         else:
             if stage == "fit":
+                self.set_flowid('fit')
                 self.data_output = self.fit(data)
             else:
+                self.set_flowid('transform')
                 self.data_output = self.transform(data)
 
         if self.data_output:
             # LOGGER.debug("data is {}".format(self.data_output.first()[1].features))
-
             LOGGER.debug("In model base, data_output schema: {}".format(self.data_output.schema))
 
     def run(self, component_parameters=None, args=None):
