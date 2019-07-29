@@ -248,8 +248,7 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
     p = subprocess.Popen(process_cmd,
                          stdout=std_log,
                          stderr=std_log,
-                         startupinfo=startupinfo,
-                         start_new_session=True
+                         startupinfo=startupinfo
                          )
     with open(pid_path, 'w') as f:
         f.truncate()
