@@ -13,20 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import file_utils
-from arch.api.utils.core import json_loads, json_dumps
-import subprocess
-import os
-import uuid
-from fate_flow.settings import stat_logger
-from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.manager.queue_manager import JOB_QUEUE
-import errno
 import datetime
+import errno
 import json
+import os
+import subprocess
 import threading
-from fate_flow.driver.dsl_parser import DSLParser
+import uuid
+import signal
+
+import psutil
+
+from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
+from arch.api.utils.core import json_loads, json_dumps
+from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.driver.dsl_parser import DSLParser
+from fate_flow.manager.queue_manager import JOB_QUEUE
+from fate_flow.settings import stat_logger
 
 
 class IdCounter:
@@ -133,8 +137,9 @@ def set_job_failed(job_id, role, party_id):
 
 
 @DB.connection_context()
-def query_job_by_id(job_id):
-    jobs = Job.select().where(Job.f_job_id == job_id)
+def query_job_by_id(job_id, is_initiator=None):
+    jobs = Job.select().where(Job.f_job_id == job_id) if not is_initiator else Job.select().where(
+        Job.f_job_id == job_id, Job.f_is_initiator == is_initiator)
     return [job for job in jobs]
 
 
@@ -155,12 +160,17 @@ def running_job_amount():
 
 
 @DB.connection_context()
-def query_tasks(job_id, task_id, role=None, party_id=None):
-    if role and party_id:
-        tasks = Task.select().where(Task.f_job_id == job_id, Task.f_task_id == task_id, Task.f_role == role,
-                                    Task.f_party_id == party_id)
-    else:
-        tasks = Task.select().where(Task.f_job_id == job_id, Task.f_task_id == task_id)
+def query_tasks(job_id, task_id=None, role=None, party_id=None):
+    filters = [Task.f_job_id == job_id]
+    if task_id:
+        filters.append(Task.f_task_id == task_id)
+    if role:
+        filters.append(Task.f_role == role)
+    if party_id:
+        filters.append(Task.f_party_id == party_id)
+    tasks = Task.select().where(*filters)
+    if not task_id:
+        print(tasks.sql())
     return tasks
 
 
@@ -238,13 +248,30 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
     p = subprocess.Popen(process_cmd,
                          stdout=std_log,
                          stderr=std_log,
-                         startupinfo=startupinfo
+                         startupinfo=startupinfo,
+                         start_new_session=True
                          )
     with open(pid_path, 'w') as f:
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
     return p
+
+
+def kill_process(pid):
+    try:
+        if not pid:
+            return False
+        stat_logger.info("terminating process pid:{}".format(pid))
+        #os.killpg(pid, signal.SIGKILL)
+        p = psutil.Process(int(pid))
+        for child in p.children(recursive=True):
+            child.kill()
+        p.kill()
+        return True
+    except Exception as e:
+        stat_logger.exception(e)
+        raise e
 
 
 def gen_all_party_key(all_party):

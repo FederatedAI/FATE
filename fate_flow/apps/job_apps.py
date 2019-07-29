@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.utils.api_utils import get_json_result
-from arch.api.utils.core import base64_decode
 from flask import Flask, request
-from fate_flow.settings import stat_logger
+
+from arch.api.utils.core import base64_decode
 from fate_flow.driver.job_controller import JobController
+from fate_flow.settings import stat_logger
+from fate_flow.utils.api_utils import get_json_result
 
 manager = Flask(__name__)
 
@@ -40,19 +41,34 @@ def submit_job():
 
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 def create_job(job_id, role, party_id):
-    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=True)
+    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
+                                    create=True)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
 def job_status(job_id, role, party_id):
-    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json, create=False)
+    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
+                                    create=False)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/<model_id>/save/pipeline', methods=['POST'])
 def save_pipeline(job_id, role, party_id, model_id):
     JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_key=base64_decode(model_id))
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/stop', methods=['POST'])
+def stop_job(job_id):
+    JobController.stop_job(job_id=job_id)
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
+def kill_job(job_id, role, party_id):
+    JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
+                           job_initiator=request.json.get('job_initiator', {}))
     return get_json_result(retcode=0, retmsg='success')
 
 

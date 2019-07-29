@@ -81,7 +81,7 @@ def component_metric_data():
                                           metric_name=request_data['metric_name'])
     metric_meta = tracker.get_metric_meta(metric_namespace=request_data['metric_namespace'],
                                           metric_name=request_data['metric_name'])
-    if metric_data:
+    if metric_data or metric_meta:
         metric_data_list = [(metric.key, metric.value) for metric in metric_data]
         metric_data_list.sort(key=lambda x: x[0])
         return get_json_result(retcode=0, retmsg='success', data=metric_data_list,

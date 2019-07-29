@@ -21,7 +21,7 @@ import threading
 
 
 class Scheduler(threading.Thread):
-    def __init__(self, queue: BaseQueue, concurrent_num=1):
+    def __init__(self, queue: BaseQueue, concurrent_num: int = 1):
         super(Scheduler, self).__init__()
         self.concurrent_num = concurrent_num
         self.queue = queue
@@ -33,6 +33,7 @@ class Scheduler(threading.Thread):
             return False
         all_jobs = []
         while True:
+            self.queue.qsize()
             if len(all_jobs) == self.concurrent_num:
                 for future in as_completed(all_jobs):
                     all_jobs.remove(future)
