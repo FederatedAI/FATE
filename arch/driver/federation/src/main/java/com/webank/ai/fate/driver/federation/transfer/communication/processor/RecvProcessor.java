@@ -22,6 +22,7 @@ import com.webank.ai.fate.driver.federation.transfer.communication.action.Transf
 import com.webank.ai.fate.driver.federation.transfer.communication.consumer.TransferBrokerConsumer;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
+import com.webank.ai.fate.driver.federation.utils.ThreadPoolTaskExecutorUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,8 +101,9 @@ public class RecvProcessor extends BaseTransferProcessor {
 
             TransferBrokerConsumer consumer = transferServiceFactory.createTransferBrokerConsumer();
             transferBroker.addSubscriber(consumer);
+            ThreadPoolTaskExecutorUtil.submitListenable(ioConsumerPool,consumer,new int[]{500,1000,5000},new int[]{5,5,3});
 
-            ioConsumerPool.submit(consumer);
+            //ioConsumerPool.submit(consumer);
 
             consumer.onListenerChange(transferBroker);
 

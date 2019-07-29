@@ -32,6 +32,7 @@ import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.PrintUtils;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
 import com.webank.ai.fate.driver.federation.utils.FederationServerUtils;
+import com.webank.ai.fate.driver.federation.utils.ThreadPoolTaskExecutorUtil;
 import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
 import com.webank.ai.fate.eggroll.roll.api.grpc.client.RollKvServiceClient;
 import com.webank.ai.fate.eggroll.roll.factory.RollModelFactory;
@@ -147,9 +148,12 @@ public class DtableRecvConsumeAction extends BaseRecvConsumeAction {
         // storeInfo.setFragment(fragmentCount);
 
         // todo: consider if this should be pulled up and be monitored
-        putallListenableFuture = ioConsumerPool.submitListenable(() -> {
+        putallListenableFuture= ThreadPoolTaskExecutorUtil.submitListenable(ioConsumerPool,() -> {
             rollKvServiceClient.putAll(operandBroker, storeInfo);
-        });
+        },new int[]{500,1000,5000},new int[]{5,5,3});
+//        putallListenableFuture = ioConsumerPool.submitListenable(() -> {
+//            rollKvServiceClient.putAll(operandBroker, storeInfo);
+//        });
         putallListenableFuture.addCallback(new ListenableFutureCallback<Object>() {
             @Override
             public void onFailure(Throwable throwable) {
