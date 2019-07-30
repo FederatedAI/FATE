@@ -18,6 +18,7 @@ from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 stat_logger = log_utils.getLogger("fate_flow_stat")
 schedule_logger = log_utils.getLogger("fate_flow_schedule")
+detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
 
 '''

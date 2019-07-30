@@ -30,7 +30,7 @@ from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_tasks, get_job_dsl_parser, run_subprocess
+from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_task, get_job_dsl_parser, run_subprocess
 
 
 class JobController(object):
@@ -264,7 +264,7 @@ class JobController(object):
                 for _role, _partys_parameters in parameters.items():
                     for _party_parameters in _partys_parameters:
                         _party_id = _party_parameters.get('local', {}).get('party_id')
-                        tasks = query_tasks(job_id=job_id, task_id=task_id, role=_role, party_id=_party_id)
+                        tasks = query_task(job_id=job_id, task_id=task_id, role=_role, party_id=_party_id)
                         if tasks:
                             task_status = tasks[0].f_status
                         else:
@@ -379,6 +379,7 @@ class JobController(object):
                                                             input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
+            run_object.set_taskid(taskid=task_id)
             task.f_status = 'running'
             JobController.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                            party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
@@ -453,7 +454,7 @@ class JobController(object):
 
     @staticmethod
     def stop_job(job_id):
-        jobs = job_utils.query_job_by_id(job_id=job_id, is_initiator=1)
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if jobs:
             initiator_job = jobs[0]
             job_info = {'f_job_id': job_id, 'f_status': 'failed'}
@@ -481,7 +482,7 @@ class JobController(object):
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator):
-        tasks = job_utils.query_tasks(job_id=job_id, role=role, party_id=party_id)
+        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False
             try:
@@ -490,8 +491,9 @@ class JobController(object):
                 schedule_logger.exception(e)
             finally:
                 schedule_logger.info(
-                    'job {} component {} process {} kill {}'.format(job_id, task.f_component_name, task.f_run_pid,
-                                                                    'success' if kill_status else 'failed'))
+                    'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
+                                                                             task.f_party_id, task.f_run_pid,
+                                                                             'success' if kill_status else 'failed'))
             task.f_status = 'failed'
             JobController.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
                                            role=role,

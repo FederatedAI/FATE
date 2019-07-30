@@ -137,9 +137,13 @@ def set_job_failed(job_id, role, party_id):
 
 
 @DB.connection_context()
-def query_job_by_id(job_id, is_initiator=None):
-    jobs = Job.select().where(Job.f_job_id == job_id) if not is_initiator else Job.select().where(
-        Job.f_job_id == job_id, Job.f_is_initiator == is_initiator)
+def query_job(job_id=None, is_initiator=None):
+    filters = []
+    if job_id:
+        filters.append(Job.f_job_id == job_id)
+    if is_initiator:
+        filters.append(Job.f_is_initiator == is_initiator)
+    jobs = Job.select().where(*filters)
     return [job for job in jobs]
 
 
@@ -160,17 +164,19 @@ def running_job_amount():
 
 
 @DB.connection_context()
-def query_tasks(job_id, task_id=None, role=None, party_id=None):
-    filters = [Task.f_job_id == job_id]
+def query_task(job_id=None, task_id=None, role=None, party_id=None, status=None):
+    filters = []
+    if job_id:
+        filters.append(Task.f_job_id == job_id)
     if task_id:
         filters.append(Task.f_task_id == task_id)
     if role:
         filters.append(Task.f_role == role)
     if party_id:
         filters.append(Task.f_party_id == party_id)
+    if status:
+        filters.append(Task.f_status == status)
     tasks = Task.select().where(*filters)
-    if not task_id:
-        print(tasks.sql())
     return tasks
 
 
@@ -207,7 +213,7 @@ def gen_status_id():
     return uuid.uuid1().hex
 
 
-def check_job_process(pid):
+def check_job_process(pid, keywords=None):
     if pid < 0:
         return False
     if pid == 0:
@@ -220,13 +226,22 @@ def check_job_process(pid):
             return False
         elif err.errno == errno.EPERM:
             # EPERM clearly means there's a process to deny access to
-            return True
+            return check_process_by_keyword(keywords=keywords)
         else:
             # According to "man 2 kill" possible error values are
             # (EINVAL, EPERM, ESRCH)
             raise
     else:
+        return check_process_by_keyword(keywords=keywords)
+
+
+def check_process_by_keyword(keywords):
+    if not keywords:
         return True
+    keyword_filter_cmd = ' |'.join(['grep %s' % keyword for keyword in keywords])
+    ret = os.system('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
+    print('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
+    return ret == 0
 
 
 def run_subprocess(config_dir, process_cmd, log_dir=None):
@@ -262,14 +277,17 @@ def kill_process(pid):
         if not pid:
             return False
         stat_logger.info("terminating process pid:{}".format(pid))
+        if not check_job_process(pid):
+            return True
         #os.killpg(pid, signal.SIGKILL)
         p = psutil.Process(int(pid))
         for child in p.children(recursive=True):
-            child.kill()
-        p.kill()
+            if check_job_process(child.pid):
+                child.kill()
+        if check_job_process(p.pid):
+            p.kill()
         return True
     except Exception as e:
-        stat_logger.exception(e)
         raise e
 
 

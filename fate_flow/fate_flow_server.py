@@ -14,10 +14,9 @@ from fate_flow.apps.job_apps import manager as job_app_manager
 from fate_flow.apps.data_table_app import manager as data_table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
-from fate_flow.driver.scheduler import Scheduler
 from fate_flow.manager.queue_manager import JOB_QUEUE
 from fate_flow.storage.fate_storage import FateStorage
-from fate_flow.driver.job_controller import JobController
+from fate_flow.driver import scheduler, job_controller, job_detector
 
 '''
 Initialize the manager
@@ -53,9 +52,10 @@ if __name__ == '__main__':
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
         }
     )
-    scheduler = Scheduler(queue=JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
+    job_controller.JobController.init()
+    job_detector.JobDetector(interval=10*1000).start()
+    scheduler = scheduler.Scheduler(queue=JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
     scheduler.start()
-    JobController.init()
     run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
 
     try:
