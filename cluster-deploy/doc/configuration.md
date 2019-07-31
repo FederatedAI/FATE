@@ -279,8 +279,7 @@ APIs are interfaces exposed by the whole running architecture. Algorithm enginee
        "port": 9370         # port address of proxy module
     },
     "servings": [
-        "172.153.16.1:8000",
-        "172.153.16.2:8000"
+        ""        
     ]
   }
 }
