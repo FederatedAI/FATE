@@ -1,0 +1,9 @@
+{
+  "output_path": "./download.txt",
+  "local": {
+    "party_id": 0,
+    "role": ""
+  },
+  "table_name": "hetero_feature_selection_host",
+  "namespace": "hetero_feature_selection"
+}

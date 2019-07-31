@@ -44,6 +44,10 @@
             "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.01,
+            "predict_param": {
+                "with_proba": true,
+                "threshold": 0.5
+            },
             "init_param": {
 				"init_method": "random_uniform"
             },
@@ -52,14 +56,7 @@
                 "shuffle": true,
                 "random_seed": 33,
                 "need_cv": false,
-                "evaluate_param": {
-                    "thresholds": [0.3, 0.5, 0.7],
-                    "metrics": ["auc", "ks"]
-                }
             }
-        },
-        "evaluation_0": {
-            "metrics": ["auc", "ks", "lift", "precision" ,"recall", "accuracy"]
         }
     }
 }

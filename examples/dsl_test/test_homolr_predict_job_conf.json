@@ -47,6 +47,10 @@
             "init_param": {
 				"init_method": "random_uniform"
             },
+            "encrypt_param": {
+                "method": "Paillier",
+                "key_length": 1024
+            },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,
