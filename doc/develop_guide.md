@@ -29,30 +29,56 @@ b. __init__ of your parameter class should specify all parameters that the modul
 
 c. Override the check interface of BaseParam, without which will cause not implemented error. Check method is use to validate the parameter variables.
 
-Take toy example's parameter object as example, the python file is federatedml/param/secure_add_example_param.py.
+Take hetero lr's parameter object as example, the python file is federatedml/param/logistic_regression_param.py.
 
 firstly, it inherits BaseParam:
 
-    class SecureAddExampleParam(BaseParam) 
+    class LogisticParam(BaseParam):
     
 secondly, define all parameter variable in __init__ method:
     
-    def __init__(self, seed=None, partition=1, data_num=1000):
-        self.seed = seed
-        self.partition = partition
-        self.data_num = data_num
+    def __init__(self, penalty='L2',
+                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, converge_func='diff',
+                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
+        super(LogisticParam, self).__init__()
+        self.penalty = penalty
+        self.eps = eps
+        self.alpha = alpha
+        self.optimizer = optimizer
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.init_param = copy.deepcopy(init_param)
+        self.max_iter = max_iter
+        self.converge_func = converge_func
+        self.encrypt_param = copy.deepcopy(encrypt_param)
+        self.re_encrypt_batches = re_encrypt_batches
+        self.party_weight = party_weight
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.need_run = need_run
+        self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
         
 thirdly, override the check interface:
 
     def check(self):
-        if self.seed is not None and type(self.seed).__name__ != "int":
-            raise ValueError("random seed should be None or integers")
+        descr = "logistic_param's"
 
-        if type(self.partition).__name__ != "int" or self.partition < 1:
-            raise ValueError("partition should be an integer large than 0")
+        if type(self.penalty).__name__ != "str":
+            raise ValueError(
+                "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
+        else:
+            self.penalty = self.penalty.upper()
+            if self.penalty not in ['L1', 'L2', 'NONE']:
+                raise ValueError(
+                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.data_num).__name__ != "int" or self.data_num < 1:
-            raise ValueError("data_num should be an integer large than 0")
+        if type(self.eps).__name__ != "float":
+            raise ValueError(
+                "logistic_param's eps {} not supported, should be float type".format(self.eps))
 
     
 ### Step 2. Define the setting conf of the new module.
@@ -74,7 +100,7 @@ b. Field Specification of setting conf json.
    }. 
         What's more, if this module does not need federation, which means all parties start a same program file, "guest|host|arbiter" is another way to define the role keys.
         
-Take toy_examples to explain too, users can find it in federatedml/conf/setting/_conf/SecureAddExample.json
+Take hetero-lr to explain too, users can find it in federatedml/conf/setting_conf/HeteroLR.json
 
 If users want to use toy_example using fate_flow, it should use module "SecureAddExample"
 
