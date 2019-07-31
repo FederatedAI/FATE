@@ -102,30 +102,33 @@ b. Field Specification of setting conf json.
         
 Take hetero-lr to explain too, users can find it in federatedml/conf/setting_conf/HeteroLR.json
 
-If users want to use toy_example using fate_flow, it should use module "SecureAddExample"
-
     {
-        "module_path":  "federatedml/toy_example",
-        "default_runtime_conf": "secure_add_example_param.json",
-        "param_class" : "federatedml/param/secure_add_example_param.py/SecureAddExampleParam",
+        "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
+        "default_runtime_conf": "logistic_regression_param.json",
+        "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
         "role":
         {
             "guest":
             {
-                "program": "secure_add_guest.py/SecureAddGuest"
+                "program": "hetero_lr_guest.py/HeteroLRGuest"
             },
             "host":
             {
-                "program": "secure_add_host.py/SecureAddHost"
+                "program": "hetero_lr_host.py/HeteroLRHost"
+            },
+            "arbiter":
+            {
+                "program": "hetero_lr_arbiter.py/HeteroLRArbiter"
             }
         }
     }
     
-Have a look at the above content in SecureAddExample.json, SecureAddExample is a federation module,
-its' guest program is define in federatedml/toy_example/secure_add_guest.py and SecureAddGuest is the guest class object.
-The same rules holds in host class too. Fate_flow combine's module_path and role's program to run this module.
-"param_class" indicates that the parameter class object of SecureAddExample is define in "federatedml/param/secure_add_example_param.py", and the class name is SecureAddExampleParam.
-Besides, default runtime conf is in federatedml/param/secure_add_example_param.py/SecureAddExampleParam.
+Have a look at the above content in HeteroLR.json, HeteroLR is a federation module,
+its' guest program is define in federatedml/logistic_regression/hetero_logistic_regression/hetero_lr_guest.py and HeteroLRGuest is the guest class object.
+The same rules holds in host and arbiter class too. Fate_flow combine's module_path and role's program to run this module.
+"param_class" indicates that the parameter class object of HeteroLR is defined in "federatedml/param/logistic_regression_param.py", and the class name is LogisticParam
+.
+And default runtime conf is in federatedml/param/logistic_regression_param.py.
 
 ### Step 3. Define the default runtime conf of this module (Optional)
 
@@ -133,12 +136,23 @@ Default runtime conf set default values for variables defined in parameter class
 
 It should be put in federatedml/conf/default_runtime_conf(match the setting_conf's "default_runtime_conf" field, it's an optional choice to writing such an json file.
 
-For example, in "federatedml/conf/default_runtime_conf/secure_add_example_param.json", default variables of SecureAddExampleParam are writing in it.
+For example, in "federatedml/conf/default_runtime_conf/logistic_regression_param.json", default variables of HeteroLR are writing in it.
 
     {
-        "data_num": 1000,
-        "partition": 1,
-        "seed": 123
+    "penalty": "L2",
+    "optimizer": "sgd",
+    "eps": 1e-5,
+    "alpha": 0.01,
+    "max_iter": 100,
+    "converge_func": "diff",
+    "re_encrypt_batches": 2,
+    "party_weight": 1,
+    "batch_size": 320,
+    "learning_rate": 0.01,
+    "init_param": {
+        "init_method": "random_normal"
+    },
+    ...
     }
     
 
@@ -146,38 +160,33 @@ For example, in "federatedml/conf/default_runtime_conf/secure_add_example_param.
 
 This step is needed only when this module is federated, which means there exist information interaction between different parties.
 Note that this json file should be put under the fold federatedml/transfer_variable_conf.
-In the json file, first thing you need to do is to define the name of the transfer_variable object, for example, like "SecureAddExampleTransferVariable".
+In the json file, first thing you need to do is to define the name of the transfer_variable object, for example, like "HeteroLRTransferVariable".
 Secondly, define the transfer_variables. The transfer_variable include three fields: 
 
 a. variable name.
 b. src: should be one of "guest", "host", "arbiter", it stands for where interactive information is sending from.
 c. "dst": list, should be some combinations of "guest", "host", "arbiter", defines where the interactive information is sending to.
 
-The following is the content of "secure_add_example.json".
+The following is the content of "hetero_lr.json".
 
     {
-      "SecureAddExampleTransferVariable": {
-        "guest_share": {
+      "HeteroLRTransferVariable": {
+        "paillier_pubkey": {
+          "src": "arbiter",
+          "dst": [
+            "host",
+            "guest"
+          ]
+        },
+        "batch_data_index": {
           "src": "guest",
           "dst": [
             "host"
           ]
         },
-        "host_share": {
-          "src": "host",
-            "dst": [
-              "guest"
-           ]
-        },
-        "host_sum": {
-           "src": "host",
-           "dst": [
-             "guest"
-           ]
-        }
+        ...
       }
     }
-    
  After finish writing this json file, run the python program of federatedml/util/transfer_variable_generator.py, 
  you will get a transfer_variable python class object, in federatedml/util/transfer_variable/xxx_transfer_variable.py, xxx is the file name of this json file.
  
