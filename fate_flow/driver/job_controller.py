@@ -88,14 +88,8 @@ class JobController(object):
                               dest_party_id=party_id,
                               json_body=job.to_json())
 
-        # generate model id
         model_version = job_id
-        all_role_model_id = {}
-        for _role, role_partys in job_runtime_conf['role'].items():
-            all_role_model_id[_role] = []
-            for _party_id in role_partys:
-                all_role_model_id[_role].append(
-                    Tracking.gen_party_model_id(job_parameters['model_key'], role=_role, party_id=_party_id))
+        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_key'], model_version)
         # push into queue
         JOB_QUEUE.put_event({
             'job_id': job_id,
@@ -105,7 +99,16 @@ class JobController(object):
         )
         schedule_logger.info(
             'submit job successfully, job id is {}, model key is {}'.format(job.f_job_id, job_parameters['model_key']))
-        return job_id, job_dsl_path, job_runtime_conf_path, all_role_model_id, model_version
+        return job_id, job_dsl_path, job_runtime_conf_path, model_info
+
+    @staticmethod
+    def gen_model_info(roles, model_key, model_version):
+        model_id = {}
+        for _role, role_partys in roles.items():
+            model_id[_role] = {}
+            for _party_id in role_partys:
+                model_id[_role][_party_id] = Tracking.gen_party_model_id(model_key, role=_role, party_id=_party_id)
+        return {'model_id': model_id, 'model_version': model_version}
 
     @staticmethod
     def run_job(job_id, job_dsl_path, job_runtime_conf_path):
@@ -454,6 +457,7 @@ class JobController(object):
 
     @staticmethod
     def stop_job(job_id):
+        schedule_logger.info('get stop job {} command'.format(job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if jobs:
             initiator_job = jobs[0]
@@ -477,7 +481,9 @@ class JobController(object):
                                   dest_party_id=party_id,
                                   json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
                                                                'role': initiator_job.f_role}})
+            schedule_logger.info('send stop job {} command successfully'.format(job_id))
         else:
+            schedule_logger.info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
 
     @staticmethod

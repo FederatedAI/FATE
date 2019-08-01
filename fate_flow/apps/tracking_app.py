@@ -56,6 +56,29 @@ def job_view():
         return get_json_result(retcode=101, retmsg='error')
 
 
+@manager.route('/component/metric/all', methods=['post'])
+def component_metric_all():
+    request_data = request.json
+    check_request_parameters(request_data)
+    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                       task_id=job_utils.generate_task_id(request_data['job_id'], request_data['component_name']),
+                       role=request_data['role'], party_id=request_data['party_id'])
+    metrics = tracker.get_metric_list()
+    all_metric_data = {}
+    if metrics:
+        for metric_namespace, metric_names in metrics.items():
+            all_metric_data[metric_namespace] = all_metric_data.get(metric_namespace, {})
+            for metric_name in metric_names:
+                all_metric_data[metric_namespace][metric_name] = all_metric_data[metric_namespace].get(metric_name, {})
+                metric_data, metric_meta = get_metric_all_data(tracker=tracker, metric_namespace=metric_namespace,
+                                                               metric_name=metric_name)
+                all_metric_data[metric_namespace][metric_name]['data'] = metric_data
+                all_metric_data[metric_namespace][metric_name]['meta'] = metric_meta
+        return get_json_result(retcode=0, retmsg='success', data=all_metric_data)
+    else:
+        return get_json_result(retcode=0, retmsg='no data', data={})
+
+
 @manager.route('/component/metrics', methods=['post'])
 def component_metrics():
     request_data = request.json
@@ -77,17 +100,26 @@ def component_metric_data():
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
                        task_id=job_utils.generate_task_id(request_data['job_id'], request_data['component_name']),
                        role=request_data['role'], party_id=request_data['party_id'])
-    metric_data = tracker.get_metric_data(metric_namespace=request_data['metric_namespace'],
-                                          metric_name=request_data['metric_name'])
-    metric_meta = tracker.get_metric_meta(metric_namespace=request_data['metric_namespace'],
-                                          metric_name=request_data['metric_name'])
+    metric_data, metric_meta = get_metric_all_data(tracker=tracker, metric_namespace=request_data['metric_namespace'],
+                                                   metric_name=request_data['metric_name'])
+    if metric_data or metric_meta:
+        return get_json_result(retcode=0, retmsg='success', data=metric_data,
+                               meta=metric_meta)
+    else:
+        return get_json_result(retcode=0, retmsg='no data', data=[], meta={})
+
+
+def get_metric_all_data(tracker, metric_namespace, metric_name):
+    metric_data = tracker.get_metric_data(metric_namespace=metric_namespace,
+                                          metric_name=metric_name)
+    metric_meta = tracker.get_metric_meta(metric_namespace=metric_namespace,
+                                          metric_name=metric_name)
     if metric_data or metric_meta:
         metric_data_list = [(metric.key, metric.value) for metric in metric_data]
         metric_data_list.sort(key=lambda x: x[0])
-        return get_json_result(retcode=0, retmsg='success', data=metric_data_list,
-                               meta=metric_meta.to_dict() if metric_meta else {})
+        return metric_data_list, metric_meta.to_dict() if metric_meta else {}
     else:
-        return get_json_result(retcode=0, retmsg='no data', data=[])
+        return [], {}
 
 
 @manager.route('/component/parameters', methods=['post'])

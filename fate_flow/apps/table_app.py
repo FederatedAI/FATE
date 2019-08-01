@@ -31,7 +31,7 @@ def internal_server_error(e):
 @manager.route('/<table_func>', methods=['post'])
 def dtable(table_func):
     config = request.json
-    if table_func == 'tableInfo':
+    if table_func == 'table_info':
         table_name, namespace = get_table_info(config=config, create=config.get('create', False))
         if config.get('create', False):
             table_key_count = 0

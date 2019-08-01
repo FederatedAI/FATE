@@ -20,14 +20,12 @@ import os
 import subprocess
 import threading
 import uuid
-import signal
-
 import psutil
-
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
 from fate_flow.db.db_models import DB, Job, Task
+import operator
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.manager.queue_manager import JOB_QUEUE
 from fate_flow.settings import stat_logger
@@ -128,23 +126,18 @@ def get_job_runtime_conf(job_id, role, party_id):
 
 
 @DB.connection_context()
-def set_job_failed(job_id, role, party_id):
-    sql = Job.update(f_status='failed').where(Job.f_job_id == job_id,
-                                              Job.f_role == role,
-                                              Job.f_party_id == party_id,
-                                              Job.f_status != 'success')
-    return sql.execute() > 0
-
-
-@DB.connection_context()
-def query_job(job_id=None, is_initiator=None):
+def query_job(**kwargs):
     filters = []
-    if job_id:
-        filters.append(Job.f_job_id == job_id)
-    if is_initiator:
-        filters.append(Job.f_is_initiator == is_initiator)
-    jobs = Job.select().where(*filters)
-    return [job for job in jobs]
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(Job, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
+    if filters:
+        jobs = Job.select().where(*filters)
+        return [job for job in jobs]
+    else:
+        # not allow query all job
+        return []
 
 
 @DB.connection_context()
@@ -159,36 +152,22 @@ def show_job_queue():
 
 
 @DB.connection_context()
-def running_job_amount():
-    return Job.select().where(Job.f_status == "running").distinct().count()
-
-
-@DB.connection_context()
-def query_task(job_id=None, task_id=None, role=None, party_id=None, status=None):
+def query_task(**kwargs):
     filters = []
-    if job_id:
-        filters.append(Task.f_job_id == job_id)
-    if task_id:
-        filters.append(Task.f_task_id == task_id)
-    if role:
-        filters.append(Task.f_role == role)
-    if party_id:
-        filters.append(Task.f_party_id == party_id)
-    if status:
-        filters.append(Task.f_status == status)
-    tasks = Task.select().where(*filters)
-    return tasks
-
-
-@DB.connection_context()
-def get_success_tasks(job_id):
-    tasks = Task.select().where(Task.f_job_id == job_id)
-    return tasks
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(Task, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
+    if filters:
+        tasks = Task.select().where(*filters)
+    else:
+        tasks = Task.select()
+    return [task for task in tasks]
 
 
 def success_task_count(job_id):
     count = 0
-    tasks = get_success_tasks(job_id=job_id)
+    tasks = query_task(job_id=job_id)
     job_component_status = {}
     for task in tasks:
         job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())

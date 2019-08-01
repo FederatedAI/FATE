@@ -166,6 +166,3 @@ class TrackingMetric(DataBaseModel):
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
-
-
-init_tables()

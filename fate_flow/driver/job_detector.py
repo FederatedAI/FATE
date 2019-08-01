@@ -28,12 +28,11 @@ class JobDetector(cron.Cron):
                     initiator_party_id = jobs[0].f_initiator_party_id
                 api_utils.federated_api(job_id=job_id,
                                         method='POST',
-                                        url='/{}/job/{}/stop'.format(
-                                            API_VERSION,
-                                            job_id),
+                                        url='/{}/job/stop'.format(
+                                            API_VERSION),
                                         src_party_id=my_party_id,
                                         dest_party_id=initiator_party_id,
-                                        json_body={})
+                                        json_body={'job_id': job_id})
                 detect_logger.info('detect job {} to stop'.format(job_id))
         detect_logger.info('finish detect running job')
 
