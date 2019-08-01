@@ -20,18 +20,13 @@ package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "ScaleParamProto";
 
 message ScaleParam{
-    map<string, MinMaxScaleParam> minmax_scale_param = 1;
-    map<string, StandardScaleParam> standard_scale_param = 2;
+    map<string, ColumnScaleParam> column_scale_param = 1;
+    repeated string header = 2;
 }
 
-message MinMaxScaleParam{
-    double feat_upper = 5;
-    double feat_lower = 6;
-    double out_upper = 7;
-    double out_lower = 8;
-}
-
-message StandardScaleParam{
-    double mean = 9;
-    double scale = 10;
+message ColumnScaleParam{
+    double column_upper = 3;
+    double column_lower = 4;
+    double mean = 5;
+    double std = 6;
 }
