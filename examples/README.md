@@ -10,8 +10,7 @@ To make FATE be able to use your data, you need to upload them. Thus, a upload-d
 1. file: file path
 2. head: Specify whether your data file include a header or not
 3. partition: Specify how many partitions used to store the data
-4. local: Specify your current party info
-5. table_name & namespace: Indicators for stored data table.
+4. table_name & namespace: Indicators for stored data table.
 
 ### Step2: Define your modeling task structure
 
@@ -25,19 +24,34 @@ We have provided several example dsl files in **dsl_test** folder. Here is some 
 
 #### Field Specification
 1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
-2. module: Specify which component use. This field should be strictly same with file name in federatedml/conf/setting_conf except the .json suffix.
+2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
+   FATE-1.0 supports 11 usable algorithm module.
+
+   > DataIO: transform input-data into Instance Object for later components
+   > Intersection: find the intersection of data-set different parties, mainly used in hetero scene modeling.
+   > FederatedSample: sample module for making data-set balance, supports both federated and standalone mode.
+   > FeatureScale: module for feature scaling and standardization.
+   > HeteroFeatureBinning: With binning input data, calculates each column's iv and woe and transform data according to the binned information.
+   > HeteroFeatureSelection: feature selection module, supports both federated and standalone.
+   > OneHotEncoder: feature encoding module, mostly used to encode the binning result.
+   > HeteroLR: hetero logistic regression module.
+   > HomoLR: homo logistic regression module.
+   > HeteroSecureBoost: hetero secure-boost module.
+   > Evaluation: evaluation module. support metrics for binary, multi-class and regression.
 
 3. input: There are two type of input, data and model.
-    1. Data: There are three possible data_input type:
+    1. data: There are three possible data_input type:
         1. data: typically used in data_io, feature_engineering modules and evaluation.
         2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
         3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
-    2. Model: There are two possible model-input type:
-        1. model: This is a model input by same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
-        2. isometric_model: This is used to specify the model input from upstream components.
+    2. model: There are two possible model-input type:
+        1. model: This is a model input by same type of component, used in prediction\transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
+        2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.0. HeteroFeatureSelection can take the model output of HetereFeatureBinning and
 4. output: Same as input, two type of output may occur which are data and model.
-    1. Data: Specify the output data name
-    2. Model: Specify the output model name
+    1. data: Specify the output data name
+    2. model: Specify the output model name
+
+5. need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
 
 ### Step3: Define configuration for each specific component.
 This config file is used to config parameters for all components among every party.

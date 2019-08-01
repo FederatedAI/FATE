@@ -57,56 +57,41 @@ All the unittests shall pass if FATE is installed properly.
 
 ###  Start Programs
 
-FATE also provides several sample programs in the [examples/](./examples) directory for each algorithm. You can check out for 
-the detailed documentation in each specific algorithm directory. Here, we take heterogeneous LR as an example. In **conf** directory, we have provided several json file as configuration templates. The load_file.json is used for loading data into distributed database. The three runtime_conf.json are configuration files for arbiter, guest and hosts respectively.
-Please check out the meaning of each parameter in out documentation. 
+FATE also provides several sample programs in the [examples/](./examples) directory for each algorithm. Here, we take heterogeneous LR as an example.
+In **dsl_example** directory, FATE provides heterogeneous LR running dsl in test_hetero_lr_job_dsl.json. Users only have to do the following several steps to start and heterogeneous LR example. For more details, please refer to the README in example folder.
 
-For quick start our program, we provide a standalone version which simulate three party in one machine. To start standalone version, please run the prepared shell file like:
+#### Step1: Define upload data config file and upload data
 
-> cd $FATE_install_path/examples/hetero_logistic_regression/
+To make FATE be able to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in **dsl_example** folder. For more detail information please check out [upload doc](./doc/upload_data_guide.md)
 
-> sh run_logistic_regression_standalone.sh
+##### Field Specification
+1. file: file path
+2. head: Specify whether your data file include a header or not
+3. partition: Specify how many partitions used to store the data
+4. table_name & namespace: Indicators for stored data table.
+##### Upload data
+Before starting a task, you need to load data among all the data-providers. To do that, a load_file config is needed to be prepared.  Then run the following command:
 
- Boom, a HeteroLR program has been started up. This program will use the setting in configuration files. Please note that the parameters in algorithm part (LogsiticParam for HeteroLR, for example) are supposed to be identity among three parties.
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_examples/upload_data.json
 
-### Run Cluster Version
-In cluster version, you can use task-manager which is a tool help you start all the parties easily.
-> cd $FATE_install_path/examples/hetero_logistic_regression/
+After uploaded data, you can get "table_name" and "namespace" which have been edit in the configure file and
+please be attention to that the "table_name" should be different for each upload.
 
-#### load data
-Before starting a cluster version task, you need to load data among all the data-providers. We have prepared some example data for hetero-lr. You should edit the file conf/load_file_tm_guest and conf/load_file_tm_host to make sure the data file path is right.
-Then upload data using:
+##### Step2: Define configuration for each specific component and running the example.
+This test_hetero_lr_job_conf.json config file is used to config parameters for all components among every party.
+1. initiator: Specify the initiator's role and party id
+2. role: Indicate all the party ids for all roles.
+3. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
+4. algorithm_parameters: Those parameters are same among all parties are here.
 
-In role guest:
->  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_guest.json
+To make things easily, FATE provides many default runtime parameters setting, users only need to modify the parties guest and host uploaded dataset' name & namespace.
+After configuration,  execute the following command and a heterogeneous LR running example is started!
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f submitJob -d dsl_examples/test_hetero_lr_job_dsl.json -c dsl_example/test_hetero_lr_job_conf.json
 
-
-In role host:
->  python $FATE_install_path/arch/task_manager/task_manager_client.py -f upload -c conf/load_file_tm_host.json
-
-
-After load data, you can get "table_name" and "namespace" which have been edit in the configure file and please be attention to that the "table_name" should be different for each upload.
-
-#### run task
-Then, you need to edit a config file for role guest. A sample config file like *test_hetero_lr_workflow.json* has been provided in this folder. As the sample file shows, the parameters that are different among all the parties should be set in role_parameters respectively. On the other hand, those parameters that are same should be put in algorithm_parameters.
-
-
-You should re-write the configure of  role guest "train_input_table" using "table_name" you have got in guest's load data, and "train_input_namespace" using "namespace" you have got. The same as the configure of  role host using "table_name" and "namespace" you got after host load data.
-
-If you want to predict, please write the configure of "predict_input_table" and "predict_input_namespace". The configure of "model_table", "predict_output_table" and "evaluation_output_table" in role guest or host should be different for each task.
-
-
-After finish editing, you can run the following command to start the task:
-
-> python $FATE_install_path/arch/task_manager/task_manager_client.py -f workflow -c conf/test_hetero_lr_workflow.json
-
-After running this command, a jobid will be generated automatically for you.
+For more details about DSL config and submit runtime conf, please refer to [this doc](./doc/dsl_conf_setting_guide.md)
 
 ### Check log files
-
-The logs are provided in the **logs** directory. A sub-directory will be generated with the name of jobid. All the log files are
-listed in this directory. The trained and validation result are shown in workflow.log. Feel free to check out each log file 
-for more training details. 
+Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}, All the log files are listed in this directory. Feel free to check out each log file for more training details.
 
 ## License
 [Apache License 2.0](LICENSE)
