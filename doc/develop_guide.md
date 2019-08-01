@@ -61,7 +61,11 @@ secondly, define all parameter variable in __init__ method:
         self.need_run = need_run
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        
+
+As the example shown above, the parameter can also be a Param class that inherit the BaseParam. The default setting of this kind of parameter is an instance of this class. Then allocated a deepcopy version of this instance to the class attribution. The deepcopy function is used to avoid same pointer risk during the task running.
+
+Once the class defined properly, a provided parameter parser can parse the value of each attribute recursively.
+
 thirdly, override the check interface:
 
     def check(self):
@@ -214,8 +218,40 @@ On the other hand, "component_parameters" is the parameter variables of this mod
 
 b. Define your save_data interface so that fate-flow can obtain output data through it when needed.
 
+    def save_data(self):
+        return self.data_output
+
 c. Similar with part b, define your export_model interface so that fate-flow can obtain output model when needed.
    The format should be a dict contains both "Meta" and "Param" proto buffer generated.
 
+   Here is an example showing how to export model.
 
-        
+    def export_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
+
+## Start a modeling task
+
+After finished developing, here is a simple example for starting a modeling task.
+
+#### 1. Upload data
+Before starting a task, you need to load data among all the data-providers. To do that, a load_file config is needed to be prepared.  Then run the following command:
+
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+
+Note: This step is needed for every data-provide node(i.e. Guest and Host).
+
+#### 2. Start your modeling task
+In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf. should be Then run the following command:
+
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f submitJob -d dsl_test/test_homolr_job_dsl.json -c dsl_test/${your_component_conf_json}
+
+#### 3. Check log files
+Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
+
+For more detail information about dsl configure file and parameter configure files, please check out [example doc here](../example)

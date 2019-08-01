@@ -160,8 +160,6 @@ class ModelBase(object):
         pass
 
     def save_data(self):
-        if self.data_output is not None:
-            LOGGER.debug("data output is {}".format(list(self.data_output.collect())))
         return self.data_output
 
     def export_model(self):

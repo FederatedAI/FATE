@@ -213,7 +213,6 @@ class BaseLogisticRegression(ModelBase):
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
         }
-        # self.model_output = result
         return result
 
     def _load_model(self, model_dict):
