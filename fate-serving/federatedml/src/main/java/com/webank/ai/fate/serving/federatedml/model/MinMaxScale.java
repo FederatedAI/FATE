@@ -13,26 +13,33 @@ public class MinMaxScale {
         LOGGER.info("Start MinMaxScale transform");
         for (String key : inputData.keySet()) {
             try {
-                MinMaxScaleParam scale = scales.get(key);
-                double value = Double.parseDouble(inputData.get(key).toString());
-                if (value > scale.getFeatUpper())
-                    value = 1;
-                else if (value < scale.getFeatLower())
-                    value = 0;
-                else {
-                    double range = scale.getFeatUpper() - scale.getFeatLower();
-                    if (range <= 0) {
+                if (scales.containsKey(key)) {
+                    MinMaxScaleParam scale = scales.get(key);
+                    double value = Double.parseDouble(inputData.get(key).toString());
+                    if (value > scale.getFeatUpper())
+                        value = 1;
+                    else if (value < scale.getFeatLower())
                         value = 0;
-                    } else {
-                        value = (value - scale.getFeatLower()) / range;
+                    else {
+                        double range = scale.getFeatUpper() - scale.getFeatLower();
+                        if (range < 0) {
+                            LOGGER.warn("min_max_scale range may be error, it should be larger than 0, but is {}, set value to 0 ", range);
+                            value = 0;
+                        } else {
+                            if (Math.abs(range - 0) < 1e-6) {
+                                range = 1;
+                            }
+                            value = (value - scale.getFeatLower()) / range;
+                        }
                     }
+
+                    double outLower = scale.getOutLower();
+                    double out_range = scale.getOutUpper() - outLower;
+                    value = value * out_range + outLower;
+                    inputData.put(key, value);
+                } else {
+                    LOGGER.warn("feature {} is not in scale, maybe missing or do not need to be scaled");
                 }
-
-                double outLower = scale.getOutLower();
-                double out_range = scale.getOutUpper() - outLower;
-                value = value * out_range + outLower;
-                inputData.put(key, value);
-
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
