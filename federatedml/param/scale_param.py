@@ -54,7 +54,7 @@ class ScaleParam(BaseParam):
     """
 
     def __init__(self, method=None, mode="normal", area="all", scale_column_idx=None, feat_upper=None, feat_lower=None,
-                 with_mean=True, with_std=True):
+                 with_mean=True, with_std=True, need_run=True):
         super().__init__()
         self.method = method
         self.mode = mode
@@ -65,6 +65,8 @@ class ScaleParam(BaseParam):
 
         self.with_mean = with_mean
         self.with_std = with_std
+
+        self.need_run = need_run
 
     def check(self):
         if self.method is not None:
