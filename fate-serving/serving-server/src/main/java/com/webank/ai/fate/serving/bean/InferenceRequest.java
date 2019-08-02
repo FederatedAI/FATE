@@ -16,13 +16,14 @@
 
 package com.webank.ai.fate.serving.bean;
 
+import com.webank.ai.fate.serving.core.bean.Request;
 import com.webank.ai.fate.serving.utils.InferenceUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class InferenceRequest {
+public class InferenceRequest implements Request{
     private String appid;
     private String partyId;
     private String modelVersion;
@@ -37,30 +38,37 @@ public class InferenceRequest {
         featureData = new HashMap<>();
     }
 
+    @Override
     public String getSeqno() {
         return seqno;
     }
 
+    @Override
     public String getAppid() {
         return appid;
     }
 
+    @Override
     public String getCaseid() {
         return caseid;
     }
 
+    @Override
     public String getPartyId() {
         return partyId;
     }
 
+    @Override
     public String getModelVersion() {
         return modelVersion;
     }
 
+    @Override
     public String getModelId() {
         return modelId;
     }
 
+    @Override
     public Map<String, Object> getFeatureData() {
         return featureData;
     }
@@ -78,4 +86,6 @@ public class InferenceRequest {
     public boolean haveAppId() {
         return (!StringUtils.isEmpty(appid) || !StringUtils.isEmpty(partyId));
     }
+
+
 }

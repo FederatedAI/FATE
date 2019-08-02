@@ -3,6 +3,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.ImputerMetaProto.ImputerMeta;
 import com.webank.ai.fate.core.mlmodel.buffer.ImputerParamProto.ImputerParam;
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +32,7 @@ public class Imputer extends BaseModel {
     }
 
     @Override
-    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
+    public Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams) {
         if (this.isImputer) {
             List<String> missingValues = this.imputerMetaProto.getMissingValueList();
             Map<String, String> missingReplaceValues = this.imputerParamProto.getMissingReplaceValueMap();

@@ -3,6 +3,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.OutlierMetaProto.OutlierMeta;
 import com.webank.ai.fate.core.mlmodel.buffer.OutlierParamProto.OutlierParam;
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +32,7 @@ public class Outlier extends BaseModel {
     }
 
     @Override
-    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
+    public Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams) {
         if (this.isOutlier) {
             List<String> outlierValues = this.outlierMetaProto.getOutlierValueList();
             Map<String, String> outlierReplaceValues = this.outlierParamProto.getOutlierReplaceValueMap();

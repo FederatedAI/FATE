@@ -27,6 +27,7 @@ import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.FederatedUtils;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.core.bean.CacheValueConfig;
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,12 +81,23 @@ public class CacheManager {
         canCacheRetcode = initializeCanCacheRetcode();
     }
 
-    public static void putInferenceResultCache(String partyId, String caseid, ReturnResult returnResult) {
-        String inferenceResultCacheKey = generateInferenceResultCacheKey(partyId, caseid);
-        boolean putCacheSuccess = putIntoCache(inferenceResultCacheKey, CacheType.INFERENCE_RESULT, returnResult);
-        if (putCacheSuccess) {
-            LOGGER.info("Put {} inference result into cache.", inferenceResultCacheKey);
+    public static void putInferenceResultCache(Context context , String partyId, String caseid, ReturnResult returnResult) {
+
+        long  beginTime =System.currentTimeMillis();
+        try {
+
+            String inferenceResultCacheKey = generateInferenceResultCacheKey(partyId, caseid);
+            boolean putCacheSuccess = putIntoCache(inferenceResultCacheKey, CacheType.INFERENCE_RESULT, returnResult);
+            if (putCacheSuccess) {
+                LOGGER.info("Put {} inference result into cache", inferenceResultCacheKey);
+            }
+        }finally {
+            long  end =System.currentTimeMillis();
+            LOGGER.info("caseid {} putInferenceResultCache cost {}",context.getCaseId(),end - beginTime);
+
         }
+
+
     }
 
     public static ReturnResult getInferenceResultCache(String partyId, String caseid) {
@@ -151,15 +163,18 @@ public class CacheManager {
             ReturnResult returnResultFromExternalCache = (ReturnResult) ObjectTransform.json2Bean(cacheValueString, ReturnResult.class);
             return returnResultFromExternalCache;
         }
+
     }
 
     private static void putIntoRedisCache(String cacheKey, CacheValueConfig cacheValueConfig, ReturnResult returnResult) {
         try (Jedis jedis = jedisPool.getResource()) {
-            Pipeline redisPipeline = jedis.pipelined();
-            redisPipeline.select(cacheValueConfig.getDbIndex());
-            redisPipeline.set(cacheKey, ObjectTransform.bean2Json(returnResult));
-            redisPipeline.expire(cacheKey, cacheValueConfig.getTtl());
-            redisPipeline.sync();
+                Pipeline redisPipeline = jedis.pipelined();
+                redisPipeline.select(cacheValueConfig.getDbIndex());
+                redisPipeline.set(cacheKey, ObjectTransform.bean2Json(returnResult));
+                redisPipeline.expire(cacheKey, cacheValueConfig.getTtl());
+                redisPipeline.sync();
+
+
         }
     }
 
