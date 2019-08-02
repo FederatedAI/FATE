@@ -16,8 +16,7 @@
 
 package com.webank.ai.fate.serving;
 
-
-import com.webank.ai.fate.serving.core.bean.GrpcConnectionPool;
+import com.webank.ai.fate.core.network.grpc.client.ClientPool;
 import com.webank.ai.fate.serving.utils.HttpClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.serving.manger.InferenceWorkerManager;
@@ -89,23 +88,23 @@ public class ServingServer {
     private void initialize() {
         new Configuration(this.confPath).load();
         new ModelManager();
-    //    this.initializeClientPool();
+        this.initializeClientPool();
         HttpClientPool.initPool();
         InferenceWorkerManager.prestartAllCoreThreads();
     }
 
-//    private void initializeClientPool() {
-//        ArrayList<String> serverAddress = new ArrayList<>();
-//        serverAddress.add(Configuration.getProperty("proxy"));
-//        serverAddress.add(Configuration.getProperty("roll"));
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                GrpcConnectionPool.(serverAddress);
-//            }
-//        }).start();
-//        LOGGER.info("Finish init client pool");
-//    }
+    private void initializeClientPool() {
+        ArrayList<String> serverAddress = new ArrayList<>();
+        serverAddress.add(Configuration.getProperty("proxy"));
+        serverAddress.add(Configuration.getProperty("roll"));
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ClientPool.init_pool(serverAddress);
+            }
+        }).start();
+        LOGGER.info("Finish init client pool");
+    }
 
     public static void main(String[] args) {
         try {
