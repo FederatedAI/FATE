@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+
 class AffineEncoder(object):
     def __init__(self, mult=2 ** 23, trans=0):
         self.mult = mult
