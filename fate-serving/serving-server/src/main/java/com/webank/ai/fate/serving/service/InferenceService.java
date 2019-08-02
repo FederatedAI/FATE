@@ -22,8 +22,12 @@ import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceMessage;
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
+import com.webank.ai.fate.serving.core.bean.BaseContext;
+import com.webank.ai.fate.serving.core.bean.Context;
+import com.webank.ai.fate.serving.core.bean.Dict;
 import com.webank.ai.fate.serving.core.bean.InferenceActionType;
 import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
+import com.webank.ai.fate.serving.core.monitor.WatchDog;
 import com.webank.ai.fate.serving.manger.InferenceManager;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
@@ -52,28 +56,40 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
 
     private void inferenceServiceAction(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver, InferenceActionType actionType) {
         InferenceMessage.Builder response = InferenceMessage.newBuilder();
-        ReturnResult returnResult;
+        ReturnResult returnResult = new ReturnResult();
+
+        InferenceRequest inferenceRequest =null;
+        Context context = new BaseContext();
+        context.preProcess();
+        WatchDog.enter(context);
         try{
-            if (accessLOGGER.isDebugEnabled()){
-                accessLOGGER.debug(req.getBody().toStringUtf8());
-            }
-            InferenceRequest inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
-            if (inferenceRequest != null){
-                returnResult = InferenceManager.inference(inferenceRequest, actionType);
-                if (returnResult.getRetcode() != InferenceRetCode.OK){
-                    LOGGER.warn("inference {} failed: \n{}", actionType, req.getBody().toStringUtf8());
+        try {
+            context.putData(Dict.ORIGIN_REQUEST,req.getBody().toStringUtf8());
+            inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
+
+            if (inferenceRequest != null) {
+                context.setCaseId(inferenceRequest.getCaseid());
+                context.setActionType(actionType.name());
+                returnResult = InferenceManager.inference(context,inferenceRequest, actionType);
+                if (returnResult.getRetcode() != InferenceRetCode.OK) {
+                    LOGGER.error("caseid {} inference {} failed: \n{}",context.getCaseId(), actionType, req.getBody().toStringUtf8());
                 }
-            }else{
-                returnResult = new ReturnResult();
+            } else {
+
                 returnResult.setRetcode(InferenceRetCode.EMPTY_DATA);
             }
-        }catch (Exception e){
-            returnResult = new ReturnResult();
+        } catch (Throwable e) {
+
             returnResult.setRetcode(InferenceRetCode.SYSTEM_ERROR);
             LOGGER.error(String.format("inference system error:\n%s", req.getBody().toStringUtf8()), e);
         }
+
         response.setBody(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult).getBytes()));
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
+        }finally {
+            WatchDog.quit(context);
+            context.postProcess(inferenceRequest,returnResult);
+        }
     }
 }

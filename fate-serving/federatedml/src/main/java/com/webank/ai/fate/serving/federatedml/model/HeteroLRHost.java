@@ -1,5 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,7 +11,7 @@ public class HeteroLRHost extends HeteroLR {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
+    public Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams) {
 
         HashMap<String, Object> result = new HashMap<>();
         Map<String, Double> ret = forward(inputData);

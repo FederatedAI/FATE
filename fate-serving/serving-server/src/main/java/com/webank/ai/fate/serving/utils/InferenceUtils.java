@@ -44,12 +44,12 @@ public class InferenceUtils {
     }
 
     public static void logInference(Enum<FederatedInferenceType> inferenceType, FederatedParty federatedParty, FederatedRoles federatedRoles, String caseid, String seqno, int retcode, long elapsed, boolean getRemotePartyResult, boolean billing, Map<String, Object> inferenceRequest, ReturnResult inferenceResult) {
-        inferenceAuditLogger.info(" {} {} {} {} {} {} {} {} {} {}", inferenceType, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, seqno, retcode, elapsed, getRemotePartyResult ? 1 : 0, billing ? 1 : 0);
+        inferenceAuditLogger.info("{}|{}|{}|{}|{}|{}|{}|{}|{}|{}", inferenceType, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, seqno, retcode, elapsed, getRemotePartyResult ? 1 : 0, billing ? 1 : 0);
         Map<String, Object> inferenceLog = new HashMap<>();
         inferenceLog.put("inferenceRequest", inferenceRequest);
         inferenceLog.put("inferenceResult", ObjectTransform.bean2Json(inferenceResult));
         String inferenceLogBase64String = Base64.getEncoder().encodeToString(ObjectTransform.bean2Json(inferenceLog).getBytes());
-        inferenceLogger.info(" {} {} {} {} {} {} {} {} {} {} {}", inferenceType, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, seqno, retcode, elapsed, getRemotePartyResult ? 1 : 0, billing ? 1 : 0, inferenceLogBase64String);
+        inferenceLogger.info("{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}", inferenceType, federatedParty.getRole(), federatedParty.getPartyId(), FederatedUtils.federatedRolesIdentificationString(federatedRoles), caseid, seqno, retcode, elapsed, getRemotePartyResult ? 1 : 0, billing ? 1 : 0, inferenceLogBase64String);
     }
 
     public static Object getClassByName(String classPath) {
