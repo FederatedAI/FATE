@@ -53,15 +53,15 @@ class ScaleParam(BaseParam):
 
     """
 
-    def __init__(self, method=None, mode="normal", area="all", feat_upper=None, feat_lower=None, out_upper=None,
-                 out_lower=None, with_mean=True, with_std=True):
+    def __init__(self, method=None, mode="normal", area="all", scale_column_idx=None, feat_upper=None, feat_lower=None,
+                 with_mean=True, with_std=True):
+        super().__init__()
         self.method = method
         self.mode = mode
         self.area = area
         self.feat_upper = feat_upper
         self.feat_lower = feat_lower
-        self.out_upper = out_upper
-        self.out_lower = out_lower
+        self.scale_column_idx = scale_column_idx
 
         self.with_mean = with_mean
         self.with_std = with_std
@@ -70,59 +70,41 @@ class ScaleParam(BaseParam):
         if self.method is not None:
             descr = "scale param's method"
             self.method = self.check_and_change_lower(self.method,
-                                                        [consts.MINMAXSCALE, consts.STANDARDSCALE],
-                                                        descr)
+                                                      [consts.MINMAXSCALE, consts.STANDARDSCALE],
+                                                      descr)
 
         descr = "scale param's mode"
         self.mode = self.check_and_change_lower(self.mode,
-                                                  [consts.NORMAL, consts.CAP],
-                                                  descr)
+                                                [consts.NORMAL, consts.CAP],
+                                                descr)
 
         descr = "scale param's area"
         self.area = self.check_and_change_lower(self.area,
-                                                  [consts.ALL, consts.COL],
-                                                  descr)
-        if self.area == consts.ALL:
-            if self.feat_lower is not None:
-                if type(self.feat_lower).__name__ not in ["float", "int"]:
-                    raise ValueError(
-                        "scale param's feat_lower {} not supported, should be float or int type".format(
-                            self.feat_lower))
+                                                [consts.ALL, consts.COL],
+                                                descr)
+        # if self.area == consts.ALL:
+        #     if self.feat_lower is not None:
+        #         if type(self.feat_lower).__name__ not in ["float", "int"]:
+        #             raise ValueError(
+        #                 "scale param's feat_lower {} not supported, should be float or int type".format(
+        #                     self.feat_lower))
+        #
+        #     if self.feat_upper is not None:
+        #         if type(self.feat_upper).__name__ not in ["float", "int"]:
+        #             raise ValueError(
+        #                 "scale param's feat_upper {} not supported, should be float or int type".format(
+        #                     self.feat_upper))
+        #
+        # elif self.area == consts.COL:
+        #     descr = "scale param's feat_lower"
+        #     self.check_defined_type(self.feat_lower, descr, ['list'])
+        #
+        #     descr = "scale param's feat_upper"
+        #     self.check_defined_type(self.feat_upper, descr, ['list'])
 
-            if self.feat_upper is not None:
-                if type(self.feat_upper).__name__ not in ["float", "int"]:
-                    raise ValueError(
-                        "scale param's feat_upper {} not supported, should be float or int type".format(
-                            self.feat_upper))
-
-            if self.out_lower is not None:
-                if type(self.out_lower).__name__ not in ["float", "int"]:
-                    raise ValueError(
-                        "scale param's out_lower {} not supported, should be float or int type".format(
-                            self.out_lower))
-
-            if self.out_upper is not None:
-                if type(self.out_upper).__name__ not in ["float", "int"]:
-                    raise ValueError(
-                        "scale param's out_upper {} not supported, should be float or int type".format(
-                            self.out_upper))
-        elif self.area == consts.COL:
-            descr = "scale param's feat_lower"
-            self.check_defined_type(self.feat_lower, descr, ['list'])
-
-            descr = "scale param's feat_upper"
-            self.check_defined_type(self.feat_upper, descr, ['list'])
-
-            descr = "scale param's out_lower"
-            self.check_defined_type(self.out_lower, descr, ['list'])
-
-            descr = "scale param's out_upper"
-            self.check_defined_type(self.out_upper, descr, ['list'])
 
         self.check_boolean(self.with_mean, "scale_param with_mean")
         self.check_boolean(self.with_std, "scale_param with_std")
 
         LOGGER.debug("Finish scale parameter check!")
         return True
-
-
