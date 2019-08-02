@@ -20,6 +20,7 @@ from Cryptodome.PublicKey import RSA
 
 # from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
+from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 
 
@@ -200,3 +201,31 @@ class FakeEncrypt(Encrypt):
 
     def decrypt(self, value):
         return value
+
+
+class SymmetricEncrypt(object):
+    def __init__(self):
+        self.key = None
+
+    def encrypt(self, plaintext):
+        pass
+
+
+class AffineEncrypt(SymmetricEncrypt):
+    def __init__(self):
+        super(AffineEncrypt, self).__init__()
+
+    def generate_key(self, key_size=1024):
+        self.key = AffineCipher.generate_keypair(key_size=key_size)
+
+    def encrypt(self, plaintext):
+        if self.key is not None:
+            return self.key.encrypt(plaintext)
+        else:
+            return None
+
+    def decrypt(self, ciphertext):
+        if self.key is not None:
+            return self.key.decrypt(ciphertext)
+        else:
+            return None
