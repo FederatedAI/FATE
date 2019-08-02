@@ -13,20 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import file_utils
-from arch.api.utils.core import json_loads, json_dumps
-import subprocess
-import os
-import uuid
-from fate_flow.settings import stat_logger
-from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.manager.queue_manager import JOB_QUEUE
-import errno
 import datetime
+import errno
 import json
+import os
+import subprocess
+import sys
 import threading
-from fate_flow.driver.dsl_parser import DSLParser
+import uuid
+from multiprocessing import Process
+import psutil
+from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
+from arch.api.utils.core import json_loads, json_dumps
+from fate_flow.db.db_models import DB, Job, Task
+import operator
+from fate_flow.driver.dsl_parser import DSLParser
+from fate_flow.manager.queue_manager import JOB_QUEUE
+from fate_flow.settings import stat_logger
 
 
 class IdCounter:
@@ -124,18 +128,18 @@ def get_job_runtime_conf(job_id, role, party_id):
 
 
 @DB.connection_context()
-def set_job_failed(job_id, role, party_id):
-    sql = Job.update(f_status='failed').where(Job.f_job_id == job_id,
-                                              Job.f_role == role,
-                                              Job.f_party_id == party_id,
-                                              Job.f_status != 'success')
-    return sql.execute() > 0
-
-
-@DB.connection_context()
-def query_job_by_id(job_id):
-    jobs = Job.select().where(Job.f_job_id == job_id)
-    return [job for job in jobs]
+def query_job(**kwargs):
+    filters = []
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(Job, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
+    if filters:
+        jobs = Job.select().where(*filters)
+        return [job for job in jobs]
+    else:
+        # not allow query all job
+        return []
 
 
 @DB.connection_context()
@@ -150,29 +154,22 @@ def show_job_queue():
 
 
 @DB.connection_context()
-def running_job_amount():
-    return Job.select().where(Job.f_status == "running").distinct().count()
-
-
-@DB.connection_context()
-def query_tasks(job_id, task_id, role=None, party_id=None):
-    if role and party_id:
-        tasks = Task.select().where(Task.f_job_id == job_id, Task.f_task_id == task_id, Task.f_role == role,
-                                    Task.f_party_id == party_id)
+def query_task(**kwargs):
+    filters = []
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(Task, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
+    if filters:
+        tasks = Task.select().where(*filters)
     else:
-        tasks = Task.select().where(Task.f_job_id == job_id, Task.f_task_id == task_id)
-    return tasks
-
-
-@DB.connection_context()
-def get_success_tasks(job_id):
-    tasks = Task.select().where(Task.f_job_id == job_id)
-    return tasks
+        tasks = Task.select()
+    return [task for task in tasks]
 
 
 def success_task_count(job_id):
     count = 0
-    tasks = get_success_tasks(job_id=job_id)
+    tasks = query_task(job_id=job_id)
     job_component_status = {}
     for task in tasks:
         job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
@@ -197,7 +194,7 @@ def gen_status_id():
     return uuid.uuid1().hex
 
 
-def check_job_process(pid):
+def check_job_process(pid, keywords=None):
     if pid < 0:
         return False
     if pid == 0:
@@ -210,13 +207,29 @@ def check_job_process(pid):
             return False
         elif err.errno == errno.EPERM:
             # EPERM clearly means there's a process to deny access to
-            return True
+            return check_process_by_keyword(keywords=keywords)
         else:
             # According to "man 2 kill" possible error values are
             # (EINVAL, EPERM, ESRCH)
             raise
     else:
+        return check_process_by_keyword(keywords=keywords)
+
+
+def check_process_by_keyword(keywords):
+    if not keywords:
         return True
+    keyword_filter_cmd = ' |'.join(['grep %s' % keyword for keyword in keywords])
+    ret = os.system('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
+    print('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
+    return ret == 0
+
+
+def start_subprocess(config_dir, process_cmd, log_dir=None):
+    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir, ))
+    task.start()
+    task.join()
+    return task.exitcode
 
 
 def run_subprocess(config_dir, process_cmd, log_dir=None):
@@ -244,7 +257,28 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
-    return p
+    if p:
+        sys.exit(-1)
+    else:
+        sys.exit(0)
+
+
+def kill_process(pid):
+    try:
+        if not pid:
+            return False
+        stat_logger.info("terminating process pid:{}".format(pid))
+        if not check_job_process(pid):
+            return True
+        p = psutil.Process(int(pid))
+        for child in p.children(recursive=True):
+            if check_job_process(child.pid):
+                child.kill()
+        if check_job_process(p.pid):
+            p.kill()
+        return True
+    except Exception as e:
+        raise e
 
 
 def gen_all_party_key(all_party):

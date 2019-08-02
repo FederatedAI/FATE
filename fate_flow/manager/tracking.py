@@ -248,7 +248,6 @@ class Tracking(object):
             job.save(force_insert=True)
         else:
             job.save()
-        return job
 
     @DB.connection_context()
     def save_task(self, role, party_id, task_info):

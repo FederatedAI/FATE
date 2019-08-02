@@ -21,7 +21,7 @@ import threading
 
 
 class Scheduler(threading.Thread):
-    def __init__(self, queue: BaseQueue, concurrent_num=1):
+    def __init__(self, queue: BaseQueue, concurrent_num: int = 1):
         super(Scheduler, self).__init__()
         self.concurrent_num = concurrent_num
         self.queue = queue
@@ -29,18 +29,22 @@ class Scheduler(threading.Thread):
 
     def run(self):
         if not self.queue.is_ready():
-            print("queue is not ready")
+            schedule_logger.error('queue is not ready')
             return False
         all_jobs = []
         while True:
-            if len(all_jobs) == self.concurrent_num:
-                for future in as_completed(all_jobs):
-                    all_jobs.remove(future)
-                    break
-            job_event = self.queue.get_event()
-            future = self.job_executor_pool.submit(Scheduler.handle_event, job_event)
-            future.add_done_callback(Scheduler.get_result)
-            all_jobs.append(future)
+            try:
+                if len(all_jobs) == self.concurrent_num:
+                    for future in as_completed(all_jobs):
+                        all_jobs.remove(future)
+                        break
+                job_event = self.queue.get_event()
+                schedule_logger.info('schedule job {}'.format(job_event))
+                future = self.job_executor_pool.submit(Scheduler.handle_event, job_event)
+                future.add_done_callback(Scheduler.get_result)
+                all_jobs.append(future)
+            except Exception as e:
+                schedule_logger.exception(e)
 
     def stop(self):
         self.job_executor_pool.shutdown(True)

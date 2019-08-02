@@ -30,7 +30,7 @@ from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_tasks, get_job_dsl_parser, run_subprocess
+from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_task, get_job_dsl_parser, run_subprocess
 
 
 class JobController(object):
@@ -88,14 +88,8 @@ class JobController(object):
                               dest_party_id=party_id,
                               json_body=job.to_json())
 
-        # generate model id
         model_version = job_id
-        all_role_model_id = {}
-        for _role, role_partys in job_runtime_conf['role'].items():
-            all_role_model_id[_role] = []
-            for _party_id in role_partys:
-                all_role_model_id[_role].append(
-                    Tracking.gen_party_model_id(job_parameters['model_key'], role=_role, party_id=_party_id))
+        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_key'], model_version)
         # push into queue
         JOB_QUEUE.put_event({
             'job_id': job_id,
@@ -105,7 +99,16 @@ class JobController(object):
         )
         schedule_logger.info(
             'submit job successfully, job id is {}, model key is {}'.format(job.f_job_id, job_parameters['model_key']))
-        return job_id, job_dsl_path, job_runtime_conf_path, all_role_model_id, model_version
+        return job_id, job_dsl_path, job_runtime_conf_path, model_info
+
+    @staticmethod
+    def gen_model_info(roles, model_key, model_version):
+        model_id = {}
+        for _role, role_partys in roles.items():
+            model_id[_role] = {}
+            for _party_id in role_partys:
+                model_id[_role][_party_id] = Tracking.gen_party_model_id(model_key, role=_role, party_id=_party_id)
+        return {'model_id': model_id, 'model_version': model_version}
 
     @staticmethod
     def run_job(job_id, job_dsl_path, job_runtime_conf_path):
@@ -129,7 +132,8 @@ class JobController(object):
         top_level_task_status = set()
         components = dag.get_next_components(None)
         schedule_logger.info(
-            '{} root components is {}'.format(job.f_job_id, [component.get_name() for component in components], None))
+            'job {} root components is {}'.format(job.f_job_id, [component.get_name() for component in components],
+                                                  None))
         for component in components:
             try:
                 # run a component as task
@@ -164,7 +168,7 @@ class JobController(object):
         component_name = component.get_name()
         module_name = component.get_module()
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
-        schedule_logger.info('run {} component {}'.format(job_id, component_name))
+        schedule_logger.info('job {} run component {}'.format(job_id, component_name))
         for role, partys_parameters in parameters.items():
             for party_index in range(len(partys_parameters)):
                 party_parameters = partys_parameters[party_index]
@@ -197,26 +201,27 @@ class JobController(object):
         else:
             task_success = False
         schedule_logger.info(
-            '{} component {} run {}'.format(job_id, component_name, 'success' if task_success else 'failed'))
+            'job {} component {} run {}'.format(job_id, component_name, 'success' if task_success else 'failed'))
         # update progress
         JobController.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       initiator_party_id=job_initiator['party_id'],
                                       job_info=job_utils.update_job_progress(job_id=job_id, dag=dag,
-                                                                                         current_task_id=task_id).to_json())
+                                                                             current_task_id=task_id).to_json())
         if task_success:
             next_components = dag.get_next_components(component_name)
-            schedule_logger.info('{} component {} next components is {}'.format(job_id, component_name,
-                                                                                [next_component.get_name() for
-                                                                                 next_component in next_components]))
+            schedule_logger.info('job {} component {} next components is {}'.format(job_id, component_name,
+                                                                                    [next_component.get_name() for
+                                                                                     next_component in
+                                                                                     next_components]))
             for next_component in next_components:
                 try:
                     schedule_logger.info(
-                        '{} check component {} dependencies status'.format(job_id, next_component.get_name()))
+                        'job {} check component {} dependencies status'.format(job_id, next_component.get_name()))
                     dependencies_status = JobController.check_dependencies(job_id=job_id, dag=dag,
                                                                            component=next_component)
                     schedule_logger.info(
-                        '{} component {} dependencies status is {}'.format(job_id, next_component.get_name(),
-                                                                           dependencies_status))
+                        'job {} component {} dependencies status is {}'.format(job_id, next_component.get_name(),
+                                                                               dependencies_status))
                     if dependencies_status:
                         run_status = JobController.run_component(job_id, job_runtime_conf, job_parameters,
                                                                  job_initiator, job_args, dag,
@@ -238,14 +243,14 @@ class JobController(object):
         if not dependencies:
             return False
         dependent_component_names = dependencies.get(component.get_name(), [])
-        schedule_logger.info('{} component {} all dependent component: {}'.format(job_id, component.get_name(),
-                                                                                  dependent_component_names))
+        schedule_logger.info('job {} component {} all dependent component: {}'.format(job_id, component.get_name(),
+                                                                                      dependent_component_names))
         for dependent_component_name in dependent_component_names:
             dependent_component = dag.get_component_info(dependent_component_name)
             dependent_component_task_status = JobController.check_task_status(job_id, dependent_component)
-            schedule_logger.info('{} component {} dependency {} status is {}'.format(job_id, component.get_name(),
-                                                                                     dependent_component_name,
-                                                                                     dependent_component_task_status))
+            schedule_logger.info('job {} component {} dependency {} status is {}'.format(job_id, component.get_name(),
+                                                                                         dependent_component_name,
+                                                                                         dependent_component_task_status))
             if not dependent_component_task_status:
                 # dependency component run failed, break
                 return False
@@ -262,14 +267,14 @@ class JobController(object):
                 for _role, _partys_parameters in parameters.items():
                     for _party_parameters in _partys_parameters:
                         _party_id = _party_parameters.get('local', {}).get('party_id')
-                        tasks = query_tasks(job_id=job_id, task_id=task_id, role=_role, party_id=_party_id)
+                        tasks = query_task(job_id=job_id, task_id=task_id, role=_role, party_id=_party_id)
                         if tasks:
                             task_status = tasks[0].f_status
                         else:
                             task_status = 'notRunning'
                         schedule_logger.info(
-                            '{} component {} run on {} {} status is {}'.format(job_id, component.get_name(), _role,
-                                                                               _party_id, task_status))
+                            'job {} component {} run on {} {} status is {}'.format(job_id, component.get_name(), _role,
+                                                                                   _party_id, task_status))
                         status_collect.add(task_status)
                 if 'failed' in status_collect:
                     return False
@@ -283,6 +288,8 @@ class JobController(object):
 
     @staticmethod
     def start_task(job_id, component_name, task_id, role, party_id, task_config):
+        schedule_logger.info(
+            'ready to start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
         task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
         os.makedirs(task_dir, exist_ok=True)
         task_config_path = os.path.join(task_dir, 'task_config.json')
@@ -298,14 +305,22 @@ class JobController(object):
             '-c', task_config_path
         ]
         task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
-        p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
-        schedule_logger.info(
-            'start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
+        task_process_start_status = False
+        try:
+            retcode = job_utils.start_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
+            if not retcode:
+                task_process_start_status = True
+        except Exception as e:
+            schedule_logger.exception(e)
+        finally:
+            schedule_logger.info(
+                'job {} component {} on {} {} start task subprocess {}'.format(job_id, component_name, role, party_id,
+                                                                               task_config,
+                                                                               'success' if task_process_start_status else 'failed'))
 
     @staticmethod
     def run_task():
         task = Task()
-        tracker = None
         try:
             parser = argparse.ArgumentParser()
             parser.add_argument('-j', '--job_id', required=True, type=str, help="Specify a config json file path")
@@ -367,6 +382,7 @@ class JobController(object):
                                                             input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
+            run_object.set_taskid(taskid=task_id)
             task.f_status = 'running'
             JobController.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                            party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
@@ -394,7 +410,8 @@ class JobController(object):
                 task.f_elapsed = task.f_end_time - task.f_start_time
                 task.f_update_time = current_timestamp()
                 JobController.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
-                                               party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                               party_id=party_id,
+                                               initiator_party_id=job_initiator.get('party_id', None),
                                                task_info=task.to_json())
             except Exception as e:
                 schedule_logger.exception(e)
@@ -439,32 +456,86 @@ class JobController(object):
         return task_run_args
 
     @staticmethod
+    def stop_job(job_id):
+        schedule_logger.info('get stop job {} command'.format(job_id))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if jobs:
+            initiator_job = jobs[0]
+            job_info = {'f_job_id': job_id, 'f_status': 'failed'}
+            roles = json_loads(initiator_job.f_roles)
+            initiator_party_id = initiator_job.f_party_id
+
+            # set status first
+            JobController.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
+                                          job_info=job_info)
+            for role, partys in roles.items():
+                for party_id in partys:
+                    federated_api(job_id=job_id,
+                                  method='POST',
+                                  url='/{}/job/{}/{}/{}/kill'.format(
+                                      API_VERSION,
+                                      job_id,
+                                      role,
+                                      party_id),
+                                  src_party_id=initiator_party_id,
+                                  dest_party_id=party_id,
+                                  json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
+                                                               'role': initiator_job.f_role}})
+            schedule_logger.info('send stop job {} command successfully'.format(job_id))
+        else:
+            schedule_logger.info('send stop job {} command failed'.format(job_id))
+            raise Exception('can not found job: {}'.format(job_id))
+
+    @staticmethod
+    def kill_job(job_id, role, party_id, job_initiator):
+        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
+        for task in tasks:
+            kill_status = False
+            try:
+                kill_status = job_utils.kill_process(int(task.f_run_pid))
+            except Exception as e:
+                schedule_logger.exception(e)
+            finally:
+                schedule_logger.info(
+                    'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
+                                                                             task.f_party_id, task.f_run_pid,
+                                                                             'success' if kill_status else 'failed'))
+            if task.f_status != 'success':
+                task.f_status = 'failed'
+            JobController.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
+                                           role=role,
+                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                           task_info=task.to_json())
+
+    @staticmethod
     def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, task_info):
-        for dest_party_id in [party_id, initiator_party_id]:
-            federated_api(job_id=job_id,
-                          method='POST',
-                          url='/{}/job/{}/{}/{}/{}/{}/status'.format(
-                              API_VERSION,
-                              job_id,
-                              component_name,
-                              task_id,
-                              role,
-                              party_id),
-                          src_party_id=party_id,
-                          dest_party_id=dest_party_id,
-                          json_body=task_info)
+        try:
+            for dest_party_id in {party_id, initiator_party_id}:
+                if party_id != initiator_party_id and dest_party_id == initiator_party_id:
+                    # do not pass the process id to the initiator
+                    task_info['f_run_ip'] = ''
+                federated_api(job_id=job_id,
+                              method='POST',
+                              url='/{}/job/{}/{}/{}/{}/{}/status'.format(
+                                  API_VERSION,
+                                  job_id,
+                                  component_name,
+                                  task_id,
+                                  role,
+                                  party_id),
+                              src_party_id=party_id,
+                              dest_party_id=dest_party_id,
+                              json_body=task_info)
+        except Exception as e:
+            schedule_logger.exception(e)
 
     @staticmethod
     def update_task_status(job_id, component_name, task_id, role, party_id, task_info):
         tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name, task_id=task_id)
         tracker.save_task(role=role, party_id=party_id, task_info=task_info)
         schedule_logger.info(
-            '{} component {} {} {} status {}'.format(job_id, component_name, role, party_id,
-                                                     task_info.get('f_status', '')))
-
-    @staticmethod
-    def kill_job(job_id):
-        pass
+            'job {} component {} {} {} status {}'.format(job_id, component_name, role, party_id,
+                                                         task_info.get('f_status', '')))
 
     @staticmethod
     def sync_job_status(job_id, roles, initiator_party_id, job_info):
@@ -570,7 +641,9 @@ class JobController(object):
 
     @staticmethod
     def clean_job(job_id, role, party_id):
-        Tracking(job_id=job_id, role=role, party_id=party_id)
+        schedule_logger.info('job {} on {} {} start to clean'.format(job_id, role, party_id))
+        Tracking(job_id=job_id, role=role, party_id=party_id).clean_job()
+        schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
 
 if __name__ == '__main__':

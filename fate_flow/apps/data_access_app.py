@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils import file_utils, dtable_utils
-from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, run_subprocess
+from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, start_subprocess
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from flask import Flask, request
@@ -63,8 +63,12 @@ def download_upload(data_func):
                      os.path.join(file_utils.get_project_base_directory(), JOB_MODULE_CONF[module]["module_path"]),
                      "-c", conf_file_path
                      ]
-        p = run_subprocess(config_dir=_job_dir, process_cmd=progs)
-        return get_json_result(job_id=_job_id, data={'pid': p.pid, 'table_name': request_config['table_name'], 'namespace': request_config['namespace']})
+        try:
+            retcode = start_subprocess(config_dir=_job_dir, process_cmd=progs)
+        except Exception as e:
+            stat_logger.exception(e)
+            retcode = 101
+        return get_json_result(retcode=retcode, job_id=_job_id, data={'table_name': request_config['table_name'], 'namespace': request_config['namespace']})
     except Exception as e:
         stat_logger.exception(e)
         return get_json_result(retcode=-104, retmsg="failed", job_id=_job_id)

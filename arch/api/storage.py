@@ -76,6 +76,10 @@ def save_data_table_meta(kv, data_table_name, data_table_namespace):
         data_meta_table.put(k, json_dumps(v), use_serialize=False)
 
 
+def get_data_table_meta_by_instance(key, data_table):
+    return get_data_table_meta(key, data_table._name, data_table._namespce)
+
+
 def get_data_table_meta(key, data_table_name, data_table_namespace):
     """
     get data table meta information
@@ -96,6 +100,10 @@ def get_data_table_meta(key, data_table_name, data_table_namespace):
             return None
     else:
         return None
+
+
+def get_data_table_metas_by_instance(data_table):
+    return get_data_table_metas(data_table._name, data_table._namespace)
 
 
 def get_data_table_metas(data_table_name, data_table_namespace):
