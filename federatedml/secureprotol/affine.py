@@ -1,7 +1,24 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import random
 import math
 
 from federatedml.secureprotol.affine_encoder import AffineEncoder
+from federatedml.secureprotol.gmpy_math import invert
 
 
 class AffineCipher(object):
@@ -10,16 +27,16 @@ class AffineCipher(object):
 
     @staticmethod
     def generate_keypair(key_size=1024, a_ratio=None, b_ratio=None):
-        n = random.getrandbits(key_size)
+        n = random.SystemRandom().getrandbits(key_size)
         if a_ratio is None:
-            a_ratio = random.random()
+            a_ratio = random.SystemRandom().random()
         if b_ratio is None:
-            b_ratio = random.random()
+            b_ratio = random.SystemRandom().random()
         while True:
-            a = random.getrandbits(int(key_size * a_ratio))
+            a = random.SystemRandom().getrandbits(int(key_size * a_ratio))
             if math.gcd(n, a) == 1:
                 break
-        b = random.getrandbits(int(key_size * b_ratio))
+        b = random.SystemRandom().getrandbits(int(key_size * b_ratio))
         return AffineCipherKey(a, b, n)
 
 
@@ -46,28 +63,8 @@ class AffineCipherKey(object):
             return plaintext - self.n
         return plaintext
 
-    def mod_inverse_brutal(self):
-        div = self.a % self.n
-        for x in range(1, self.n):
-            if (div * x) % self.n == 1:
-                return x
-        return 1
-
     def mod_inverse(self):
-        """return x such that (x * a) % b == 1"""
-        g, x, _ = self.xgcd(self.a, self.n)
-        if g == 1:
-            return x % self.n
-        return None
-
-    def xgcd(self, a, b):
-        """return (g, x, y) such that a*x + b*y = g = gcd(a, b)"""
-        x0, x1, y0, y1 = 0, 1, 1, 0
-        while a != 0:
-            q, b, a = b // a, a, b % a
-            y0, y1 = y1, y0 - q * y1
-            x0, x1 = x1, x0 - q * x1
-        return b, x0, y0
+        return invert(self.a, self.n)
 
 
 class AffineCiphertext(object):
