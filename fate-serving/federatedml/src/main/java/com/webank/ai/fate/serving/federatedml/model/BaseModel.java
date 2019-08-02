@@ -6,7 +6,6 @@ import com.webank.ai.fate.api.networking.proxy.Proxy;
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.FederatedRoles;
 import com.webank.ai.fate.core.bean.ReturnResult;
-import com.webank.ai.fate.core.network.grpc.client.GrpcClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.core.bean.Context;
