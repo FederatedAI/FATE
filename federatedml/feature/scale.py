@@ -127,7 +127,7 @@ class Scale(ModelBase):
         self.mean = [0 for _ in range(shape)]
         self.std = [0 for _ in range(shape)]
         self.scale_column_idx = []
-        scale_param_dict = dict(model_obj.column_scale_param)
+        scale_param_dict = dict(model_obj.col_scale_param)
         for key, column_scale_param in scale_param_dict.items():
             index = self.header.index(key)
             self.scale_column_idx.append(index)
@@ -140,7 +140,7 @@ class Scale(ModelBase):
         self.scale_column_idx.sort()
 
     def export_model(self):
-        return self.scale_obj.export_model()
+        return self.scale_obj.export_model(self.need_run)
 
 
 

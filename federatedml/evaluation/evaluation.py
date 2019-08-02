@@ -187,6 +187,8 @@ class Evaluation(ModelBase):
         for key in key_list:
             value = locals()[key]
             if value:
+                if key == "thresholds":
+                    value = np.round(value, self.round_num).tolist()
                 extra_metas[key] = value
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,

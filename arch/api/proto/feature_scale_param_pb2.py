@@ -19,28 +19,28 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\017ScaleParamProto'),
-  serialized_pb=_b('\n\x19\x66\x65\x61ture-scale-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xf5\x01\n\nScaleParam\x12\x64\n\x12\x63olumn_scale_param\x18\x01 \x03(\x0b\x32H.com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColumnScaleParamEntry\x12\x0e\n\x06header\x18\x02 \x03(\t\x1aq\n\x15\x43olumnScaleParamEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12G\n\x05value\x18\x02 \x01(\x0b\x32\x38.com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam:\x02\x38\x01\"Y\n\x10\x43olumnScaleParam\x12\x14\n\x0c\x63olumn_upper\x18\x03 \x01(\x01\x12\x14\n\x0c\x63olumn_lower\x18\x04 \x01(\x01\x12\x0c\n\x04mean\x18\x05 \x01(\x01\x12\x0b\n\x03std\x18\x06 \x01(\x01\x42\x11\x42\x0fScaleParamProtob\x06proto3')
+  serialized_pb=_b('\n\x19\x66\x65\x61ture-scale-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xfe\x01\n\nScaleParam\x12^\n\x0f\x63ol_scale_param\x18\x01 \x03(\x0b\x32\x45.com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColScaleParamEntry\x12\x0e\n\x06header\x18\x02 \x03(\t\x12\x10\n\x08need_run\x18\x03 \x01(\x08\x1an\n\x12\x43olScaleParamEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12G\n\x05value\x18\x02 \x01(\x0b\x32\x38.com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam:\x02\x38\x01\"Y\n\x10\x43olumnScaleParam\x12\x14\n\x0c\x63olumn_upper\x18\x04 \x01(\x01\x12\x14\n\x0c\x63olumn_lower\x18\x05 \x01(\x01\x12\x0c\n\x04mean\x18\x06 \x01(\x01\x12\x0b\n\x03std\x18\x07 \x01(\x01\x42\x11\x42\x0fScaleParamProtob\x06proto3')
 )
 
 
 
 
-_SCALEPARAM_COLUMNSCALEPARAMENTRY = _descriptor.Descriptor(
-  name='ColumnScaleParamEntry',
-  full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColumnScaleParamEntry',
+_SCALEPARAM_COLSCALEPARAMENTRY = _descriptor.Descriptor(
+  name='ColScaleParamEntry',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColScaleParamEntry',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColumnScaleParamEntry.key', index=0,
+      name='key', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColScaleParamEntry.key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColumnScaleParamEntry.value', index=1,
+      name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColScaleParamEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -58,8 +58,8 @@ _SCALEPARAM_COLUMNSCALEPARAMENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=202,
-  serialized_end=315,
+  serialized_start=214,
+  serialized_end=324,
 )
 
 _SCALEPARAM = _descriptor.Descriptor(
@@ -70,7 +70,7 @@ _SCALEPARAM = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='column_scale_param', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.column_scale_param', index=0,
+      name='col_scale_param', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.col_scale_param', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -83,10 +83,17 @@ _SCALEPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.need_run', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
-  nested_types=[_SCALEPARAM_COLUMNSCALEPARAMENTRY, ],
+  nested_types=[_SCALEPARAM_COLSCALEPARAMENTRY, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -96,7 +103,7 @@ _SCALEPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=70,
-  serialized_end=315,
+  serialized_end=324,
 )
 
 
@@ -109,28 +116,28 @@ _COLUMNSCALEPARAM = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='column_upper', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.column_upper', index=0,
-      number=3, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='column_lower', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.column_lower', index=1,
       number=4, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='mean', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.mean', index=2,
+      name='column_lower', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.column_lower', index=1,
       number=5, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='std', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.std', index=3,
+      name='mean', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.mean', index=2,
       number=6, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='std', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnScaleParam.std', index=3,
+      number=7, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -147,23 +154,23 @@ _COLUMNSCALEPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=317,
-  serialized_end=406,
+  serialized_start=326,
+  serialized_end=415,
 )
 
-_SCALEPARAM_COLUMNSCALEPARAMENTRY.fields_by_name['value'].message_type = _COLUMNSCALEPARAM
-_SCALEPARAM_COLUMNSCALEPARAMENTRY.containing_type = _SCALEPARAM
-_SCALEPARAM.fields_by_name['column_scale_param'].message_type = _SCALEPARAM_COLUMNSCALEPARAMENTRY
+_SCALEPARAM_COLSCALEPARAMENTRY.fields_by_name['value'].message_type = _COLUMNSCALEPARAM
+_SCALEPARAM_COLSCALEPARAMENTRY.containing_type = _SCALEPARAM
+_SCALEPARAM.fields_by_name['col_scale_param'].message_type = _SCALEPARAM_COLSCALEPARAMENTRY
 DESCRIPTOR.message_types_by_name['ScaleParam'] = _SCALEPARAM
 DESCRIPTOR.message_types_by_name['ColumnScaleParam'] = _COLUMNSCALEPARAM
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 ScaleParam = _reflection.GeneratedProtocolMessageType('ScaleParam', (_message.Message,), dict(
 
-  ColumnScaleParamEntry = _reflection.GeneratedProtocolMessageType('ColumnScaleParamEntry', (_message.Message,), dict(
-    DESCRIPTOR = _SCALEPARAM_COLUMNSCALEPARAMENTRY,
+  ColScaleParamEntry = _reflection.GeneratedProtocolMessageType('ColScaleParamEntry', (_message.Message,), dict(
+    DESCRIPTOR = _SCALEPARAM_COLSCALEPARAMENTRY,
     __module__ = 'feature_scale_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColumnScaleParamEntry)
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.ScaleParam.ColScaleParamEntry)
     ))
   ,
   DESCRIPTOR = _SCALEPARAM,
@@ -171,7 +178,7 @@ ScaleParam = _reflection.GeneratedProtocolMessageType('ScaleParam', (_message.Me
   # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.ScaleParam)
   ))
 _sym_db.RegisterMessage(ScaleParam)
-_sym_db.RegisterMessage(ScaleParam.ColumnScaleParamEntry)
+_sym_db.RegisterMessage(ScaleParam.ColScaleParamEntry)
 
 ColumnScaleParam = _reflection.GeneratedProtocolMessageType('ColumnScaleParam', (_message.Message,), dict(
   DESCRIPTOR = _COLUMNSCALEPARAM,
@@ -182,5 +189,5 @@ _sym_db.RegisterMessage(ColumnScaleParam)
 
 
 DESCRIPTOR._options = None
-_SCALEPARAM_COLUMNSCALEPARAMENTRY._options = None
+_SCALEPARAM_COLSCALEPARAMENTRY._options = None
 # @@protoc_insertion_point(module_scope)
