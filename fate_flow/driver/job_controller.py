@@ -500,7 +500,8 @@ class JobController(object):
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
-            task.f_status = 'failed'
+            if task.f_status != 'success':
+                task.f_status = 'failed'
             JobController.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
                                            role=role,
                                            party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
@@ -510,6 +511,9 @@ class JobController(object):
     def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, task_info):
         try:
             for dest_party_id in {party_id, initiator_party_id}:
+                if party_id != initiator_party_id and dest_party_id == initiator_party_id:
+                    # do not pass the process id to the initiator
+                    task_info['f_run_ip'] = ''
                 federated_api(job_id=job_id,
                               method='POST',
                               url='/{}/job/{}/{}/{}/{}/{}/status'.format(

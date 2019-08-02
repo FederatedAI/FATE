@@ -55,7 +55,7 @@ if __name__ == '__main__':
     )
     init_tables()
     job_controller.JobController.init()
-    # job_detector.JobDetector(interval=10*1000).start()
+    job_detector.JobDetector(interval=5*1000).start()
     scheduler = scheduler.Scheduler(queue=JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
     scheduler.start()
     run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
