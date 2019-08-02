@@ -26,7 +26,7 @@ class AffineCipher(object):
         pass
 
     @staticmethod
-    def generate_keypair(key_size=1024, a_ratio=None, b_ratio=None):
+    def generate_keypair(key_size=1024, encode_precision=2 ** 23, a_ratio=None, b_ratio=None):
         n = random.SystemRandom().getrandbits(key_size)
         if a_ratio is None:
             a_ratio = random.SystemRandom().random()
@@ -37,16 +37,16 @@ class AffineCipher(object):
             if math.gcd(n, a) == 1:
                 break
         b = random.SystemRandom().getrandbits(int(key_size * b_ratio))
-        return AffineCipherKey(a, b, n)
+        return AffineCipherKey(a, b, n, encode_precision)
 
 
 class AffineCipherKey(object):
-    def __init__(self, a, b, n):
+    def __init__(self, a, b, n, encode_precision=2 ** 23):
         self.a = a
         self.b = b
         self.n = n
         self.a_inv = self.mod_inverse()
-        self.affine_encoder = AffineEncoder()
+        self.affine_encoder = AffineEncoder(mult=encode_precision)
 
     def encrypt(self, plaintext):
         return self.raw_encrypt(self.affine_encoder.encode(plaintext))
@@ -75,16 +75,16 @@ class AffineCiphertext(object):
     def __add__(self, other):
         if isinstance(other, AffineCiphertext):
             return AffineCiphertext(self.cipher + other.cipher, self.multiplier + other.multiplier)
-        elif type(other) is int or type(other) is float:
-            return AffineCiphertext(self.cipher + other, self.multiplier)
+        elif type(other) is int and other == 0:
+            return self
         else:
-            raise TypeError("Addition only supports int and AffineCiphertext")
+            raise TypeError("Addition only supports AffineCiphertext and initialization with int zero")
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __mul__(self, other):
-        if type(other) is int or type(other) is float:
+        if type(other) is int:
             return AffineCiphertext(self.cipher * other, self.multiplier * other)
         else:
             raise TypeError("Multiplication only supports int.")
