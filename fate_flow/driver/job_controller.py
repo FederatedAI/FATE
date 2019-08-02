@@ -307,8 +307,8 @@ class JobController(object):
         task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
         task_process_start_status = False
         try:
-            p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
-            if p:
+            retcode = job_utils.start_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
+            if not retcode:
                 task_process_start_status = True
         except Exception as e:
             schedule_logger.exception(e)

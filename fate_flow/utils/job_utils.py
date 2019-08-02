@@ -18,8 +18,10 @@ import errno
 import json
 import os
 import subprocess
+import sys
 import threading
 import uuid
+from multiprocessing import Process
 import psutil
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
@@ -223,6 +225,13 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
+def start_subprocess(config_dir, process_cmd, log_dir=None):
+    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir, ))
+    task.start()
+    task.join()
+    return task.exitcode
+
+
 def run_subprocess(config_dir, process_cmd, log_dir=None):
     stat_logger.info('Starting process command: {}'.format(process_cmd))
     stat_logger.info(' '.join(process_cmd))
@@ -248,7 +257,10 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
-    return p
+    if p:
+        sys.exit(-1)
+    else:
+        sys.exit(0)
 
 
 def kill_process(pid):
@@ -258,7 +270,6 @@ def kill_process(pid):
         stat_logger.info("terminating process pid:{}".format(pid))
         if not check_job_process(pid):
             return True
-        #os.killpg(pid, signal.SIGKILL)
         p = psutil.Process(int(pid))
         for child in p.children(recursive=True):
             if check_job_process(child.pid):
