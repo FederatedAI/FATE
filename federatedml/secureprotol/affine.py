@@ -71,7 +71,6 @@ class AffineCiphertext(object):
     def __init__(self, cipher, multiplier=1):
         self.cipher = cipher
         self.multiplier = multiplier
-#         print(self.cipher)
 
     def __add__(self, other):
         if isinstance(other, AffineCiphertext):
