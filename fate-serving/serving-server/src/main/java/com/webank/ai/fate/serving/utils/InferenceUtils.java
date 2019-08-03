@@ -22,6 +22,7 @@ import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.FederatedUtils;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.core.bean.FederatedInferenceType;
+import com.webank.ai.fate.serving.core.utils.GetSystemInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
