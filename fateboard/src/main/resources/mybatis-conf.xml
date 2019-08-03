@@ -4,7 +4,6 @@
 <configuration>
 
     <settings>
-        <!--         <setting name="cacheEnabled" value="true" /> -->
         <setting name="useColumnLabel" value="true"/>
         <setting name="useGeneratedKeys" value="true"/>
     </settings>

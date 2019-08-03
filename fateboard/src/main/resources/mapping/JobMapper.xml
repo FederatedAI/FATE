@@ -93,7 +93,7 @@
     <sql id="Blob_Column_List">
     f_description, f_roles, f_dsl, f_runtime_conf
   </sql>
-<!--    分页-->
+
     <select id="selectByPage" resultMap="ResultMapWithBLOBs">
         select * from t_job  ORDER  BY  f_create_time  desc limit #{startIndex},#{pageSize}
     </select>
