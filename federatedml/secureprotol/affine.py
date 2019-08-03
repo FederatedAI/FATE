@@ -26,7 +26,7 @@ class AffineCipher(object):
         pass
 
     @staticmethod
-    def generate_keypair(key_size=1024, encode_precision=2 ** 23, a_ratio=None, b_ratio=None):
+    def generate_keypair(key_size=2048, encode_precision=2 ** 100, a_ratio=None, b_ratio=None):
         n = random.SystemRandom().getrandbits(key_size)
         if a_ratio is None:
             a_ratio = random.SystemRandom().random()
@@ -41,7 +41,7 @@ class AffineCipher(object):
 
 
 class AffineCipherKey(object):
-    def __init__(self, a, b, n, encode_precision=2 ** 23):
+    def __init__(self, a, b, n, encode_precision=2 ** 100):
         self.a = a
         self.b = b
         self.n = n
@@ -71,6 +71,7 @@ class AffineCiphertext(object):
     def __init__(self, cipher, multiplier=1):
         self.cipher = cipher
         self.multiplier = multiplier
+#         print(self.cipher)
 
     def __add__(self, other):
         if isinstance(other, AffineCiphertext):
@@ -100,3 +101,5 @@ class AffineCiphertext(object):
 
     def __truediv__(self, other):
         return self.__mul__(1 / other)
+    
+    

@@ -16,7 +16,7 @@
 
 
 class AffineEncoder(object):
-    def __init__(self, mult=2 ** 23, trans=0):
+    def __init__(self, mult=2 ** 100, trans=0):
         self.mult = mult
         self.trans = trans
 

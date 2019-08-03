@@ -22,7 +22,7 @@ from federatedml.secureprotol.affine import AffineCipher
 
 class TestAffine(unittest.TestCase):
     def setUp(self):
-        self.key = AffineCipher.generate_keypair(encode_precision=2 ** 52)
+        self.key = AffineCipher.generate_keypair()
          
     def tearDown(self):
         unittest.TestCase.tearDown(self)
