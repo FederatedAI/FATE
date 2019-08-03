@@ -1,4 +1,4 @@
-package com.webank.ai.fate.serving.utils;
+package com.webank.ai.fate.serving.core.utils;
 
 
 
@@ -18,17 +18,23 @@ public class GetSystemInfo {
     private static final Logger LOGGER = LogManager.getLogger();
 
 
+    public static  String  localIp;
+
+    static  {
+        localIp = getLocalIp();
+    }
+
     public static String getLocalIp() {
 
         String sysType = System.getProperties().getProperty("os.name");
         String ip;
+
+        try {
         if (sysType.toLowerCase().startsWith("win")) {
             String localIP = null;
-            try {
+
                 localIP = InetAddress.getLocalHost().getHostAddress();
-            } catch (UnknownHostException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+
             if (localIP != null) {
                 return localIP;
             }
@@ -36,7 +42,12 @@ public class GetSystemInfo {
             ip = getIpByEthNum("eth0");
             if (ip != null) {
                 return ip;
+
+
             }
+        }
+        } catch (Throwable  e) {
+            LOGGER.error(e.getMessage(), e);
         }
         return "";
     }

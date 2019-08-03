@@ -16,6 +16,7 @@
 
 package com.webank.ai.fate.serving.bean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webank.ai.fate.serving.core.bean.Request;
 import com.webank.ai.fate.serving.utils.InferenceUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -87,5 +88,21 @@ public class InferenceRequest implements Request{
         return (!StringUtils.isEmpty(appid) || !StringUtils.isEmpty(partyId));
     }
 
+    @Override
+    public String toString(){
+        String  result = "";
+        try
+        {
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            result = objectMapper.writeValueAsString(this);
+
+        }catch(Throwable e){
+
+        }
+        return  result;
+
+    }
 
 }

@@ -3,8 +3,10 @@ package com.webank.ai.fate.serving.core.bean;
 import com.google.common.collect.Maps;
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.serving.core.monitor.WatchDog;
+import com.webank.ai.fate.serving.core.utils.GetSystemInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 
 import java.util.Map;
 
@@ -12,11 +14,21 @@ import java.util.Map;
 public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,Resp> {
 
 
+    long   timestamp;
+
+    public  BaseContext  (){
+        timestamp =  System.currentTimeMillis();
+    }
+    private  BaseContext(long  timestamp,Map  dataMap){
+        this.timestamp = timestamp;
+        this.dataMap = dataMap;
+    }
+
+
     private static final Logger LOGGER = LogManager.getLogger(LOGGER_NAME);
 
     String actionType;
 
-    final long  timestamp = System.currentTimeMillis();
 
     Map dataMap = Maps.newHashMap();
 
@@ -69,16 +81,15 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
         try {
             long now = System.currentTimeMillis();
             String reqData = this.dataMap.get(Dict.ORIGIN_REQUEST) != null ? this.dataMap.get(Dict.ORIGIN_REQUEST).toString() : "";
-            reqData = "";
             if (req instanceof Request) {
-                LOGGER.info("{}|{}|{}|{}|{}|{}|{}", req != null ? ((Request) req).getCaseid() : "NONE", actionType, now - timestamp,
-                        resp != null ? resp.getRetcode() : "NONE", reqData, WatchDog.get(),resp
+                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}", GetSystemInfo.getLocalIp(), req != null ? ((Request) req).getCaseid() : "NONE", actionType, now - timestamp,
+                        resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
                 );
             }
             if (req instanceof Map) {
-                LOGGER.info("{}|{}|{}|{}|{}|{}|{}",
-                        req != null ? ((Map) req).get(Dict.CASEID) : "NONE", actionType, now - timestamp,
-                        resp != null ? resp.getRetcode() : "NONE", reqData,WatchDog.get(),resp
+                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}",
+                        GetSystemInfo.getLocalIp(),  req != null ? ((Map) req).get(Dict.CASEID) : "NONE", actionType, now - timestamp,
+                        resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
                 );
             }
 
@@ -112,5 +123,13 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
     @Override
     public void hitCache(boolean hitCache) {
         dataMap.put(Dict.HIT_CACHE,hitCache);
+    }
+
+    @Override
+    public Context subContext() {
+
+        Map newDataMap = Maps.newHashMap(dataMap);
+
+       return  new BaseContext(this.timestamp,dataMap);
     }
 }

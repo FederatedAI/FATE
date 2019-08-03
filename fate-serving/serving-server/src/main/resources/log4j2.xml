@@ -19,7 +19,7 @@
                      fileName="${logdir}/${project}-${module}-inference.log"
                      filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-inference.log.%d{yyyy-MM-dd}">
             <PatternLayout charset="UTF-8"
-                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|[%-5p] %c{1.}(%F:%L) - %m%n"/>
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|%m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
             </Policies>
@@ -91,7 +91,7 @@
                      fileName="${logdir}/flow.log"
                      filePattern="${logdir}/%d{yyyy-MM-dd}/flow.log.%d{yyyy-MM-dd}.log">
             <PatternLayout charset="UTF-8"
-                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|%m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
             </Policies>

@@ -90,19 +90,22 @@ public class InferenceManager {
             case ASYNC_RUN:
                 long  beginTime= System.currentTimeMillis();
                 InferenceWorkerManager.exetute(new Runnable() {
+
                     @Override
                     public void run() {
                         ReturnResult inferenceResult=null;
-                        try {
-                             WatchDog.enter(context);
+                        Context subContext = context.subContext();
 
-                             inferenceResult=   runInference(context,inferenceRequest);
-                            if (inferenceResult!=null&&inferenceResult.getRetcode() == 0) {
-                                CacheManager.putInferenceResultCache(context ,inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
-                            }
+                        try {
+                             WatchDog.enter(subContext);
+                             subContext.setActionType("ASYNC_EXECUTE");
+                             inferenceResult=   runInference(subContext,inferenceRequest);
+                             if (inferenceResult!=null&&inferenceResult.getRetcode() == 0) {
+                                CacheManager.putInferenceResultCache(subContext ,inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
+                             }
                         }finally {
-                            WatchDog.quit(context);
-                            context.postProcess(inferenceRequest,inferenceResult);
+                            WatchDog.quit(subContext);
+                            subContext.postProcess(inferenceRequest,inferenceResult);
                         }
                         }
 

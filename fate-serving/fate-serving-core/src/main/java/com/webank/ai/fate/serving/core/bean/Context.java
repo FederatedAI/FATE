@@ -19,6 +19,7 @@ public interface Context <Req,Resp>{
     public void  setFederatedResult(ReturnResult  returnResult);
     public boolean  isHitCache();
     public void  hitCache(boolean   hitCache);
+    public Context  subContext();
 
 
 }
