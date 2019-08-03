@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.webank.ai.fate.board.controller;
 
 import com.alibaba.fastjson.JSON;
@@ -41,12 +56,7 @@ public class JobDetailController {
     String fateUrl;
 
 
-    /**
-     * get running parameters
-     *
-     * @param param
-     * @return
-     */
+
     @ResponseBody
     @RequestMapping(value = "/tracking/component/metrics", method = RequestMethod.POST)
     public ResponseResult getMetaInfo(@RequestBody String param) {
@@ -63,12 +73,7 @@ public class JobDetailController {
 
     ;
 
-    /**
-     * get index parameters
-     *
-     * @param param
-     * @return
-     */
+
     @RequestMapping(value = "/tracking/component/metric_data", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getMetricInfo(@RequestBody String param) {
@@ -86,12 +91,7 @@ public class JobDetailController {
         return ResponseUtil.buildResponse(result, null);
     }
 
-    /**
-     * get graph/table parameters
-     *
-     * @param param
-     * @return
-     */
+
     @RequestMapping(value = "/tracking/component/parameters", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getDetailInfo(@RequestBody String param) {
@@ -108,12 +108,7 @@ public class JobDetailController {
 
     }
 
-    /**
-     * get dag dependencies
-     *
-     * @param param
-     * @return
-     */
+
     @RequestMapping(value = "/pipeline/dag/dependencies", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getDagDependencies(@RequestBody String param) {
