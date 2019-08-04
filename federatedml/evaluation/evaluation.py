@@ -161,6 +161,8 @@ class Evaluation(ModelBase):
 
             self.eval_results[data_type] = eval_result
 
+        self.callback_metric_data()
+
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
         self.tracker.log_metric_data(metric_namespace, metric_name,
                                      [Metric(eval_name, np.round(result, self.round_num))])
@@ -202,7 +204,7 @@ class Evaluation(ModelBase):
                                metric_type="ROC", unit_name="fpr", ordinate_name="tpr",
                                curve_name=data_type, thresholds=thresholds)
 
-    def save_data(self):
+    def callback_metric_data(self):
         for (data_type, eval_res) in self.eval_results.items():
             precision_recall = {}
             for (metric, metric_res) in eval_res.items():
@@ -267,11 +269,18 @@ class Evaluation(ModelBase):
 
                     pos_precision_score = precision_res[1][0]
                     precision_cuts = precision_res[1][1]
-                    precision_thresholds = precision_res[1][2]
-
+                    if len(precision_res) >= 3:
+                        precision_thresholds = precision_res[1][2]
+                    else:
+                        precision_thresholds = None
+          
                     pos_recall_score = recall_res[1][0]
                     recall_cuts = recall_res[1][1]
-                    recall_thresholds = recall_res[1][2]
+
+                    if len(recall_res) >= 3:
+                        recall_thresholds = recall_res[1][2]
+                    else:
+                        recall_thresholds = None
 
                     if self.eval_type == consts.BINARY:
                         pos_precision_score = [score[1] for score in pos_precision_score]
