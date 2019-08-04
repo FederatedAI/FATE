@@ -47,10 +47,6 @@
             "init_param": {
 				"init_method": "random_uniform"
             },
-            "encrypt_param": {
-                "method": "Paillier",
-                "key_length": 1024
-            },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,
@@ -63,7 +59,10 @@
             }
         },
         "evaluation_0": {
-            "metrics": ["auc", "ks", "lift", "precision" ,"recall", "accuracy"]
+            "eval_type": "binary"
+        },
+        "evaluation_1": {
+            "eval_type": "binary"
         }
     }
 }

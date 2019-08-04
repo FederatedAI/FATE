@@ -57,9 +57,6 @@
                     "metrics": ["auc", "ks"]
                 }
             }
-        },
-        "evaluation_0": {
-            "metrics": ["auc", "ks", "lift", "precision" ,"recall", "accuracy"]
         }
     }
 }

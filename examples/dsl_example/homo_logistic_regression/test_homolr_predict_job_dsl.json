@@ -12,57 +12,73 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
-         },
-        "hetero_feature_binning_0": {
-            "module": "HeteroFeatureBinning",
-            "input": {
-                "data": {
-                    "data": [
-                        "dataio_0.train"
-                    ]
-                }
-            },
-            "output": {
-                "data": ["transform_data"],
-                "model": ["binning_model"]
             }
-        },
-        "hetero_feature_selection_0": {
-            "module": "HeteroFeatureSelection",
+         },
+        "dataio_1": {
+            "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "args.train_data"
                     ]
                 },
-                "isometric_model": [
-                    "hetero_feature_binning_0.binning_model"
+                "model": [
+                    "dataio_0.dataio"
                 ]
             },
             "output": {
-                "data": ["train"],
-                "model": ["selected"]
+                "data": ["eval_data"]
             }
         },
-        "hetero_lr_0": {
-            "module": "HeteroLR",
+        "homo_lr_0": {
+            "module": "HomoLR",
             "input": {
                 "data": {
-                    "train_data": ["hetero_feature_selection_0.train"]
+                    "train_data": [
+                        "dataio_0.train"
+                    ]
                 }
             },
             "output": {
                 "data": ["train"],
-                "model": ["hetero_lr"]
+                "model": ["homolr"]
+            }
+        },
+        "homo_lr_1": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "eval_data": [
+                        "dataio_0.train"
+                    ]
+                },
+                "model": [
+                    "homo_lr_0.homolr"
+                ]
+            },
+            "output": {
+                "data": ["predict"],
+                "model": ["homolr"]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_lr_0.train"]
+                    "data": [
+                        "homo_lr_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["evaluate"]
+            }
+        },
+        "evaluation_1": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["homo_lr_1.predict"]
                 }
             },
             "output": {

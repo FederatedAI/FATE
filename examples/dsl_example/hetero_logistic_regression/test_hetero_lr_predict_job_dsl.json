@@ -12,8 +12,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
         "dataio_1": {
             "module": "DataIO",
