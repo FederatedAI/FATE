@@ -47,10 +47,12 @@ class Tracking(object):
         self.model_version = self.job_id
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
+        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
         self.save_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
                               job_level=True)
 
     def log_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
+        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
         stat_logger.info(
             'log job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
                                                                         self.party_id, metric_namespace, metric_name))
@@ -78,6 +80,7 @@ class Tracking(object):
 
     def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                         job_level: bool = False):
+        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
         stat_logger.info(
             'set job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
                                                                         self.party_id, metric_namespace, metric_name))
