@@ -16,13 +16,13 @@
 from arch.api.proto import pipeline_pb2
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads, get_lan_ip
 from fate_flow.db.db_models import Job
-from fate_flow.manager.queue_manager import JOB_QUEUE
+from fate_flow.driver.task_executor import TaskExecutor
+from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
-from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.driver.task_executor import TaskExecutor
 
 
 class JobController(object):
@@ -64,7 +64,7 @@ class JobController(object):
         model_version = job_id
         model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_key'], model_version)
         # push into queue
-        JOB_QUEUE.put_event({
+        RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
             "job_dsl_path": job_dsl_path,
             "job_runtime_conf_path": job_runtime_conf_path
@@ -101,9 +101,9 @@ class JobController(object):
             if task.f_status != 'success':
                 task.f_status = 'failed'
             TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
-                                           role=role,
-                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
-                                           task_info=task.to_json())
+                                          role=role,
+                                          party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                          task_info=task.to_json())
 
     @staticmethod
     def update_task_status(job_id, component_name, task_id, role, party_id, task_info):

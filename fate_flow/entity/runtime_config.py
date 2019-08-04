@@ -17,6 +17,7 @@
 
 class RuntimeConfig(object):
     WORK_MODE = None
+    JOB_QUEUE = None
 
     @staticmethod
     def init_config(runtime_config):

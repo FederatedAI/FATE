@@ -16,21 +16,23 @@
 import datetime
 import errno
 import json
+import operator
 import os
 import subprocess
 import sys
 import threading
+import typing
 import uuid
 from multiprocessing import Process
+
 import psutil
-import typing
+
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
 from fate_flow.db.db_models import DB, Job, Task
-import operator
 from fate_flow.driver.dsl_parser import DSLParser
-from fate_flow.manager.queue_manager import JOB_QUEUE
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
 
 
@@ -134,7 +136,8 @@ def get_job_dsl_parser(job_dsl_path, job_runtime_conf_path):
 
 def get_job_runtime_conf(job_id, role, party_id):
     with DB.connection_context():
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role, Job.f_party_id == party_id)
+        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role,
+                                                    Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
             return json_loads(job.f_runtime_conf)
@@ -158,7 +161,7 @@ def query_job(**kwargs):
 
 
 def job_queue_size():
-    return JOB_QUEUE.qsize()
+    return RuntimeConfig.JOB_QUEUE.qsize()
 
 
 def show_job_queue():
@@ -238,7 +241,7 @@ def check_process_by_keyword(keywords):
 
 
 def start_subprocess(config_dir, process_cmd, log_dir=None):
-    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir, ))
+    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir,))
     task.start()
     task.join()
     return task.exitcode

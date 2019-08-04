@@ -12,12 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
-from fate_flow.manager.queue_manager import BaseQueue
+
 from fate_flow.driver.job_controller import TaskScheduler
+from fate_flow.manager.queue_manager import BaseQueue
 from fate_flow.settings import schedule_logger
-import threading
 
 
 class DAGScheduler(threading.Thread):

@@ -13,18 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask, request, send_file
-import os
 import io
+import os
 import tarfile
 
+from flask import Flask, request, send_file
+
 from arch.api.utils.core import base64_decode
+from arch.api.utils.core import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger
-from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import job_utils
-from arch.api.utils.core import json_loads
+from fate_flow.utils.api_utils import get_json_result
 
 manager = Flask(__name__)
 
@@ -70,7 +71,9 @@ def job_config():
         response_data['job_id'] = job.f_job_id
         response_data['dsl'] = json_loads(job.f_dsl)
         response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
-        response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'], response_data['runtime_conf']['job_parameters']['model_key'], job.f_job_id)
+        response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'],
+                                                                   response_data['runtime_conf']['job_parameters'][
+                                                                       'model_key'], job.f_job_id)
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 
@@ -96,6 +99,7 @@ def query_task():
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
 
 # Scheduling interface
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])

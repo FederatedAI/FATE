@@ -13,20 +13,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
-import os
-import time
 import json
+import os
+import sys
+import time
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
 from fate_flow.db.db_models import Task, Job
+from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
-from fate_flow.driver.task_executor import TaskExecutor
 
 
 class TaskScheduler(object):
