@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/feature",
+    "default_runtime_conf": "scale_param.json",
+    "param_class" : "federatedml/param/scale_param.py/ScaleParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "scale.py/Scale"
+        }
+    }
+}

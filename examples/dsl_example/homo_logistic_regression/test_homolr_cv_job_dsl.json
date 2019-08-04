@@ -12,21 +12,20 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
-        "hetero_feature_binning_0": {
-            "module": "HeteroFeatureBinning",
+        "homo_lr_0": {
+            "module": "HomoLR",
             "input": {
                 "data": {
-                    "data": [
+                    "train_data": [
                         "dataio_0.train"
                     ]
                 }
             },
             "output": {
-                "data": ["transform_data"],
-                "model": ["binning_model"]
+                "data": ["train"],
+                "model": ["homolr"]
             }
         }
     }

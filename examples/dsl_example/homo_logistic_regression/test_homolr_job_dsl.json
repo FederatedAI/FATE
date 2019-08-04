@@ -12,8 +12,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
         "homo_lr_0": {
             "module": "HomoLR",

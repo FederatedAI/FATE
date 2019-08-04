@@ -12,8 +12,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
         "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
@@ -25,8 +24,8 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["hetero_feature_binning"]
+                "data": ["transform_data"],
+                "model": ["binning_model"]
             }
         },
         "hetero_feature_selection_0": {
@@ -34,11 +33,11 @@
             "input": {
                 "data": {
                     "data": [
-                        "hetero_feature_binning_0.train"
+                        "dataio_0.train"
                     ]
                 },
                 "isometric_model": [
-                    "hetero_feature_binning_0.hetero_feature_binning"
+                    "hetero_feature_binning_0.binning_model"
                 ]
             },
             "output": {

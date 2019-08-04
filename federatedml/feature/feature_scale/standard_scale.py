@@ -148,7 +148,7 @@ class StandardScale(BaseScale):
                                    )
         return meta_proto_obj
 
-    def __get_param(self):
+    def __get_param(self, need_run):
         column_scale_param_dict = {}
         for i, header in enumerate(self.header):
             if i in self.scale_column_idx:
@@ -158,13 +158,14 @@ class StandardScale(BaseScale):
                                              std=self.std[i])
                 column_scale_param_dict[header] = param_obj
 
-        param_proto_obj = ScaleParam(column_scale_param=column_scale_param_dict,
-                                     header=self.header)
+        param_proto_obj = ScaleParam(col_scale_param=column_scale_param_dict,
+                                     header=self.header,
+                                     need_run=need_run)
         return param_proto_obj
 
-    def export_model(self):
+    def export_model(self, need_run):
         meta_obj = self.__get_meta()
-        param_obj = self.__get_param()
+        param_obj = self.__get_param(need_run)
         result = {
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
