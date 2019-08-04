@@ -308,14 +308,13 @@ class JobController(object):
         task_process_start_status = False
         try:
             retcode = job_utils.start_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
-            if not retcode:
+            if retcode == 0:
                 task_process_start_status = True
         except Exception as e:
             schedule_logger.exception(e)
         finally:
             schedule_logger.info(
                 'job {} component {} on {} {} start task subprocess {}'.format(job_id, component_name, role, party_id,
-                                                                               task_config,
                                                                                'success' if task_process_start_status else 'failed'))
 
     @staticmethod
@@ -470,24 +469,28 @@ class JobController(object):
                                           job_info=job_info)
             for role, partys in roles.items():
                 for party_id in partys:
-                    federated_api(job_id=job_id,
-                                  method='POST',
-                                  url='/{}/job/{}/{}/{}/kill'.format(
-                                      API_VERSION,
-                                      job_id,
-                                      role,
-                                      party_id),
-                                  src_party_id=initiator_party_id,
-                                  dest_party_id=party_id,
-                                  json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
-                                                               'role': initiator_job.f_role}})
-            schedule_logger.info('send stop job {} command successfully'.format(job_id))
+                    retcode, msg = federated_api(job_id=job_id,
+                                                 method='POST',
+                                                 url='/{}/job/{}/{}/{}/kill'.format(
+                                                     API_VERSION,
+                                                     job_id,
+                                                     role,
+                                                     party_id),
+                                                 src_party_id=initiator_party_id,
+                                                 dest_party_id=party_id,
+                                                 json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
+                                                                              'role': initiator_job.f_role}})
+                    if retcode == 0:
+                        schedule_logger.info('send {} {} kill job {} command successfully'.format(role, party_id, job_id))
+                    else:
+                        schedule_logger.info('send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, msg))
         else:
             schedule_logger.info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator):
+        schedule_logger.info('{} {} get kill job {} command'.format(role, party_id, job_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False

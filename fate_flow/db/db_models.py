@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 import datetime
+import os
+import __main__
 from arch.api.utils import log_utils
 from playhouse.pool import PooledMySQLDatabase
 from fate_flow.settings import DATABASE
@@ -23,23 +25,47 @@ import inspect
 import sys
 
 LOGGER = log_utils.getLogger()
-data_base_config = DATABASE.copy()
-# TODO: create instance according to the engine
-engine = data_base_config.pop("engine")
-db_name = data_base_config.pop("name")
-DB = PooledMySQLDatabase(db_name, **data_base_config)
 
 
-def close_db(db):
+def singleton(cls, *args, **kw):
+    instances = {}
+
+    def _singleton():
+        key = str(cls) + str(os.getpid())
+        if key not in instances:
+            instances[key] = cls(*args, **kw)
+        return instances[key]
+
+    return _singleton
+
+
+@singleton
+class BaseDataBase(object):
+    def __init__(self):
+        database_config = DATABASE.copy()
+        # TODO: create instance according to the engine
+        engine = database_config.pop("engine")
+        db_name = database_config.pop("name")
+        self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+
+
+if __main__.__file__ == 'fate_flow_server.py':
+    DB = BaseDataBase().database_connection
+else:
+    DB = BaseDataBase().database_connection
+
+
+def close_connection(db_connection):
     try:
-        if db:
-            db.close()
+        if db_connection:
+            db_connection.close()
     except Exception as e:
         LOGGER.exception(e)
 
 
 class DataBaseModel(Model):
     class Meta:
+        print(DB)
         database = DB
 
     def to_json(self):
@@ -53,14 +79,14 @@ class DataBaseModel(Model):
         super(DataBaseModel, self).save(*args, **kwargs)
 
 
-@DB.connection_context()
 def init_tables():
-    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    table_objs = []
-    for name, obj in members:
-        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-            table_objs.append(obj)
-    DB.create_tables(table_objs)
+    with DB.connection_context():
+        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+        table_objs = []
+        for name, obj in members:
+            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+                table_objs.append(obj)
+        DB.create_tables(table_objs)
 
 
 class Job(DataBaseModel):

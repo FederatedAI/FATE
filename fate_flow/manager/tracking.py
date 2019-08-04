@@ -51,6 +51,9 @@ class Tracking(object):
                               job_level=True)
 
     def log_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
+        stat_logger.info(
+            'log job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
+                                                                        self.party_id, metric_namespace, metric_name))
         self.save_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
                               job_level=False)
 
@@ -66,51 +69,56 @@ class Tracking(object):
     def get_metric_data(self, metric_namespace: str, metric_name: str):
         return self.read_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, job_level=False)
 
-    @DB.connection_context()
     def read_metric_data(self, metric_namespace: str, metric_name: str, job_level=False):
-        metrics = []
-        for k, v in self.read_data_from_db(metric_namespace, metric_name, 1, job_level):
-            metrics.append(Metric(key=k, value=v))
-        return metrics
+        with DB.connection_context():
+            metrics = []
+            for k, v in self.read_data_from_db(metric_namespace, metric_name, 1, job_level):
+                metrics.append(Metric(key=k, value=v))
+            return metrics
 
     def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                         job_level: bool = False):
+        stat_logger.info(
+            'set job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
+                                                                        self.party_id, metric_namespace, metric_name))
         self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
-    @DB.connection_context()
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):
-        kv = dict()
-        for k, v in self.read_data_from_db(metric_namespace, metric_name, 0, job_level):
-            kv[k] = v
-        return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
+        with DB.connection_context():
+            kv = dict()
+            for k, v in self.read_data_from_db(metric_namespace, metric_name, 0, job_level):
+                kv[k] = v
+            return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
 
-    @DB.connection_context()
     def get_metric_list(self, job_level: bool = False):
-        metrics = dict()
-        query_sql = 'select distinct f_metric_namespace, f_metric_name from t_tracking_metric_{} where ' \
-                    'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}" ' \
-                    'and f_task_id = "{}"'.format(
-            self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role, self.party_id, self.task_id)
-        stat_logger.info(query_sql)
-        cursor = DB.execute_sql(query_sql)
-        for row in cursor.fetchall():
-            metrics[row[0]] = metrics.get(row[0], [])
-            metrics[row[0]].append(row[1])
-        return metrics
+        with DB.connection_context():
+            metrics = dict()
+            query_sql = 'select distinct f_metric_namespace, f_metric_name from t_tracking_metric_{} where ' \
+                        'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}" ' \
+                        'and f_task_id = "{}"'.format(
+                self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
+                self.party_id, self.task_id)
+            stat_logger.info(query_sql)
+            cursor = DB.execute_sql(query_sql)
+            for row in cursor.fetchall():
+                metrics[row[0]] = metrics.get(row[0], [])
+                metrics[row[0]].append(row[1])
+            return metrics
 
     def log_job_view(self, view_data: dict):
         self.insert_data_to_db('job', 'job_view', 2, view_data.items(), job_level=True)
 
-    @DB.connection_context()
     def get_job_view(self):
-        view_data = {}
-        for k, v in self.read_data_from_db('job', 'job_view', 2, job_level=True):
-            view_data[k] = v
-        return view_data
+        with DB.connection_context():
+            view_data = {}
+            for k, v in self.read_data_from_db('job', 'job_view', 2, job_level=True):
+                view_data[k] = v
+            return view_data
 
     def save_output_data_table(self, data_table, data_name: str = 'component'):
         if data_table:
-            persistent_table = data_table.save_as(namespace=data_table._namespace, name='{}_persistent'.format(data_table._name))
+            persistent_table = data_table.save_as(namespace=data_table._namespace,
+                                                  name='{}_persistent'.format(data_table._name))
             FateStorage.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
                 namespace=persistent_table._namespace, name=persistent_table._name)
@@ -165,124 +173,125 @@ class Tracking(object):
         return model_manager.get_model_meta(model_version=self.model_version,
                                             model_id=self.model_id)
 
-    @DB.connection_context()
     def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
-        try:
-            tracking_metric = TrackingMetric.model(table_index=self.job_id)
-            tracking_metric.f_job_id = self.job_id
-            tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
-            tracking_metric.f_task_id = self.task_id
-            tracking_metric.f_role = self.role
-            tracking_metric.f_party_id = self.party_id
-            tracking_metric.f_metric_namespace = metric_namespace
-            tracking_metric.f_metric_name = metric_name
-            tracking_metric.f_type = data_type
-            default_db_source = tracking_metric.to_json()
-            tracking_metric_data_source = []
-            for k, v in kv:
-                db_source = default_db_source.copy()
-                db_source['f_key'] = Tracking.serialize_b64(k)
-                db_source['f_value'] = Tracking.serialize_b64(v)
-                db_source['f_create_time'] = current_timestamp()
-                tracking_metric_data_source.append(db_source)
-            self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
-                                        tracking_metric_data_source)
-        except Exception as e:
-            print(e)
-            stat_logger.exception(e)
+        with DB.connection_context():
+            try:
+                tracking_metric = TrackingMetric.model(table_index=self.job_id)
+                tracking_metric.f_job_id = self.job_id
+                tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
+                tracking_metric.f_task_id = self.task_id
+                tracking_metric.f_role = self.role
+                tracking_metric.f_party_id = self.party_id
+                tracking_metric.f_metric_namespace = metric_namespace
+                tracking_metric.f_metric_name = metric_name
+                tracking_metric.f_type = data_type
+                default_db_source = tracking_metric.to_json()
+                tracking_metric_data_source = []
+                for k, v in kv:
+                    db_source = default_db_source.copy()
+                    db_source['f_key'] = Tracking.serialize_b64(k)
+                    db_source['f_value'] = Tracking.serialize_b64(v)
+                    db_source['f_create_time'] = current_timestamp()
+                    tracking_metric_data_source.append(db_source)
+                self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
+                                            tracking_metric_data_source)
+            except Exception as e:
+                print(e)
+                stat_logger.exception(e)
 
-    @DB.connection_context()
     def bulk_insert_model_data(self, model, data_source):
-        try:
-            DB.create_tables([model])
-            with DB.atomic():
-                model.insert_many(data_source).execute()
-            return len(data_source)
-        except Exception as e:
-            print(e)
-            stat_logger.exception(e)
-            return 0
+        with DB.connection_context():
+            try:
+                DB.create_tables([model])
+                with DB.atomic():
+                    model.insert_many(data_source).execute()
+                return len(data_source)
+            except Exception as e:
+                print(e)
+                stat_logger.exception(e)
+                return 0
 
-    @DB.connection_context()
     def read_data_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
-        metrics = []
-        try:
-            query_sql = 'select f_key, f_value from t_tracking_metric_{} where ' \
-                        'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}"' \
-                        'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}" order by f_id'.format(
-                self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role, self.party_id, self.task_id, metric_namespace, metric_name, data_type)
-            cursor = DB.execute_sql(query_sql)
-            stat_logger.info(query_sql)
-            for row in cursor.fetchall():
-                yield Tracking.deserialize_b64(row[0]), Tracking.deserialize_b64(row[1])
-        except Exception as e:
-            stat_logger.exception(e)
-        return metrics
+        with DB.connection_context():
+            metrics = []
+            try:
+                query_sql = 'select f_key, f_value from t_tracking_metric_{} where ' \
+                            'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}"' \
+                            'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}" order by f_id'.format(
+                    self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
+                    self.party_id, self.task_id, metric_namespace, metric_name, data_type)
+                cursor = DB.execute_sql(query_sql)
+                stat_logger.info(query_sql)
+                for row in cursor.fetchall():
+                    yield Tracking.deserialize_b64(row[0]), Tracking.deserialize_b64(row[1])
+            except Exception as e:
+                stat_logger.exception(e)
+            return metrics
 
-    @DB.connection_context()
     def save_job_info(self, role, party_id, job_info, create=False):
-        stat_logger.info('save {} {} job: {}'.format(role, party_id, job_info))
-        jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
-        is_insert = True
-        if jobs:
-            job = jobs[0]
-            is_insert = False
-        elif create:
-            job = Job()
-            job.f_create_time = current_timestamp()
-        else:
-            return None
-        job.f_job_id = self.job_id
-        job.f_role = role
-        job.f_party_id = party_id
-        if 'f_status' in job_info:
-            if job.f_status in ['success', 'failed', 'partial', 'deleted']:
-                # Termination status cannot be updated
-                # TODO:
-                pass
-        for k, v in job_info.items():
-            if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
-                continue
-            setattr(job, k, v)
-        if is_insert:
-            job.save(force_insert=True)
-        else:
-            job.save()
+        with DB.connection_context():
+            stat_logger.info('save {} {} job: {}'.format(role, party_id, job_info))
+            jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
+            is_insert = True
+            if jobs:
+                job = jobs[0]
+                is_insert = False
+            elif create:
+                job = Job()
+                job.f_create_time = current_timestamp()
+            else:
+                return None
+            job.f_job_id = self.job_id
+            job.f_role = role
+            job.f_party_id = party_id
+            if 'f_status' in job_info:
+                if job.f_status in ['success', 'failed', 'partial', 'deleted']:
+                    # Termination status cannot be updated
+                    # TODO:
+                    pass
+            for k, v in job_info.items():
+                if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
+                    continue
+                setattr(job, k, v)
+            if is_insert:
+                job.save(force_insert=True)
+            else:
+                job.save()
 
-    @DB.connection_context()
     def save_task(self, role, party_id, task_info):
-        tasks = Task.select().where(Task.f_job_id == self.job_id,
-                                    Task.f_component_name == self.component_name,
-                                    Task.f_task_id == self.task_id,
-                                    Task.f_role == role,
-                                    Task.f_party_id == party_id)
-        is_insert = True
-        if tasks:
-            task = tasks[0]
-            is_insert = False
-        else:
-            task = Task()
-            task.f_create_time = current_timestamp()
-        task.f_job_id = self.job_id
-        task.f_component_name = self.component_name
-        task.f_task_id = self.task_id
-        task.f_role = role
-        task.f_party_id = party_id
-        if 'f_status' in task_info:
-            if task.f_status in ['success', 'failed', 'partial', 'deleted']:
-                # Termination status cannot be updated
-                # TODO:
-                pass
-        for k, v in task_info.items():
-            if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
-                                                                                                          k).default:
-                continue
-            setattr(task, k, v)
-        if is_insert:
-            task.save(force_insert=True)
-        else:
-            task.save()
-        return task
+        with DB.connection_context():
+            tasks = Task.select().where(Task.f_job_id == self.job_id,
+                                        Task.f_component_name == self.component_name,
+                                        Task.f_task_id == self.task_id,
+                                        Task.f_role == role,
+                                        Task.f_party_id == party_id)
+            is_insert = True
+            if tasks:
+                task = tasks[0]
+                is_insert = False
+            else:
+                task = Task()
+                task.f_create_time = current_timestamp()
+            task.f_job_id = self.job_id
+            task.f_component_name = self.component_name
+            task.f_task_id = self.task_id
+            task.f_role = role
+            task.f_party_id = party_id
+            if 'f_status' in task_info:
+                if task.f_status in ['success', 'failed', 'partial', 'deleted']:
+                    # Termination status cannot be updated
+                    # TODO:
+                    pass
+            for k, v in task_info.items():
+                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
+                                                                                                              k).default:
+                    continue
+                setattr(task, k, v)
+            if is_insert:
+                task.save(force_insert=True)
+            else:
+                task.save()
+            return task
 
     def clean_job(self):
         FateStorage.clean_job(namespace=self.job_id, regex_string='*')

@@ -113,7 +113,12 @@ def call_fun(func, dsl_data, config_data):
         response = requests.post("/".join([LOCAL_URL, "datatable", func]), json=config_data)
     elif func in MODEL_FUNC:
         response = requests.post("/".join([LOCAL_URL, "model", func]), json=config_data)
-    return response.json() if isinstance(response, requests.models.Response) else response
+    try:
+        return response.json() if isinstance(response, requests.models.Response) else response
+    except Exception as e:
+        print(response.text)
+        traceback.print_exc()
+        return {'retcode': 500, 'msg': str(e)}
 
 
 if __name__ == "__main__":
