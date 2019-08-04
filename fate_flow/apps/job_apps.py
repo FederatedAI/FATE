@@ -20,6 +20,7 @@ import tarfile
 
 from arch.api.utils.core import base64_decode
 from fate_flow.driver.job_controller import JobController
+from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import job_utils
@@ -46,7 +47,7 @@ def submit_job():
 
 @manager.route('/stop', methods=['POST'])
 def stop_job():
-    JobController.stop_job(job_id=request.json.get('job_id', ''))
+    TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -132,9 +133,7 @@ def clean(job_id, role, party_id):
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run', methods=['POST'])
 def run_task(job_id, component_name, task_id, role, party_id):
-    task_data = request.json
-    task_data['request_url_without_host'] = request.url.lstrip(request.host_url)
-    JobController.start_task(job_id, component_name, task_id, role, party_id, request.json)
+    TaskScheduler.start_task(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -16,7 +16,7 @@ from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.manager.queue_manager import JOB_QUEUE
 from fate_flow.storage.fate_storage import FateStorage
-from fate_flow.driver import scheduler, job_controller, job_detector
+from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.db.db_models import init_tables
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     init_tables()
     job_controller.JobController.init()
     job_detector.JobDetector(interval=5*1000).start()
-    scheduler = scheduler.Scheduler(queue=JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
+    scheduler = dag_scheduler.DAGScheduler(queue=JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
     scheduler.start()
     run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
 

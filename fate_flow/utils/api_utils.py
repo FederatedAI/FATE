@@ -31,7 +31,6 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
 
 def federated_api(job_id, method, url_without_host, src_party_id, dest_party_id, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
-    stat_logger.info(work_mode)
     if work_mode == WorkMode.STANDALONE:
         try:
             stat_logger.info('local api request: {} {}'.format(url_without_host, json_body))

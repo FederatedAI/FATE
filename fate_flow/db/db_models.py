@@ -126,7 +126,7 @@ class Task(DataBaseModel):
     f_party_id = CharField(max_length=50, index=True)
     f_operator = CharField(max_length=100)
     f_run_ip = CharField(max_length=100)
-    f_run_pid = IntegerField()
+    f_run_pid = IntegerField(null=True)
     f_status = CharField(max_length=50)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
