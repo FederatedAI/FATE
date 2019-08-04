@@ -23,6 +23,7 @@ import threading
 import uuid
 from multiprocessing import Process
 import psutil
+import typing
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
@@ -65,6 +66,20 @@ def get_job_directory(job_id):
 
 def get_job_log_directory(job_id):
     return os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
+
+
+def check_config(config: typing.Dict, required_parameters: typing.List):
+    for parameter in required_parameters:
+        if parameter not in config:
+            return False, 'configuration no {} parameter'.format(parameter)
+    else:
+        return True, 'ok'
+
+
+def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
+    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode', 'model_key'])
+    if not check_status:
+        raise Exception('check job_parameters failed: {}'.format(check_msg))
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):

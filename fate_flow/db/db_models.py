@@ -66,7 +66,6 @@ def close_connection(db_connection):
 
 class DataBaseModel(Model):
     class Meta:
-        print(DB)
         database = DB
 
     def to_json(self):
@@ -98,12 +97,13 @@ class Job(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=50, index=True)
     f_roles = TextField()
+    f_work_mode = IntegerField()
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
     f_dsl = TextField()
     f_runtime_conf = TextField()
     f_run_ip = CharField(max_length=100)
-    f_status = CharField(max_length=50)  # waiting/ready/start/running/success/failed/partial/setFailed
+    f_status = CharField(max_length=50)
     f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL
     f_current_tasks = CharField(max_length=500, null=True)  # record task id
     f_progress = IntegerField(null=True, default=0)
@@ -127,7 +127,7 @@ class Task(DataBaseModel):
     f_operator = CharField(max_length=100)
     f_run_ip = CharField(max_length=100)
     f_run_pid = IntegerField()
-    f_status = CharField(max_length=50)  # running/success/failed
+    f_status = CharField(max_length=50)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)

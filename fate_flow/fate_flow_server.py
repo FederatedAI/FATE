@@ -4,7 +4,7 @@ from fate_flow.utils.api_utils import get_json_result
 from flask import Flask
 import grpc, time, sys
 from concurrent import futures
-from fate_flow.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
+from fate_flow.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION, WORK_MODE
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from fate_flow.utils.grpc_utils import UnaryServicer
@@ -19,6 +19,7 @@ from fate_flow.manager.queue_manager import JOB_QUEUE
 from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.driver import scheduler, job_controller, job_detector
 from fate_flow.db.db_models import init_tables
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 '''
 Initialize the manager
@@ -34,7 +35,6 @@ def internal_server_error(e):
 
 
 if __name__ == '__main__':
-    FateStorage.init_storage()
     manager.url_map.strict_slashes = False
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
@@ -55,6 +55,8 @@ if __name__ == '__main__':
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
         }
     )
+    RuntimeConfig.init_config({'WORK_MODE': WORK_MODE})
+    FateStorage.init_storage()
     init_tables()
     job_controller.JobController.init()
     job_detector.JobDetector(interval=5*1000).start()

@@ -21,16 +21,17 @@ import time
 
 from arch.api import federation
 from arch.api.proto import pipeline_pb2
-from arch.api.utils import file_utils, log_utils, dtable_utils
+from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, json_dumps, base64_encode, json_loads, get_lan_ip
 from fate_flow.db.db_models import Task, Job
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.queue_manager import JOB_QUEUE
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_task, get_job_dsl_parser, run_subprocess
+from fate_flow.utils.job_utils import generate_job_id, save_job_conf, query_task, get_job_dsl_parser
 
 
 class JobController(object):
@@ -46,11 +47,8 @@ class JobController(object):
         schedule_logger.info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_dsl = job_data.get('job_dsl', {})
+        job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf.get('job_parameters', {})
-        if not job_parameters.get('model_key', None):
-            model_key = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
-            job_parameters['model_key'] = model_key
-        job_runtime_conf['job_parameters'] = job_parameters
         job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
                                                             job_dsl=job_dsl,
                                                             job_runtime_conf=job_runtime_conf)
@@ -60,6 +58,7 @@ class JobController(object):
         job = Job()
         job.f_job_id = job_id
         job.f_roles = json_dumps(job_runtime_conf['role'])
+        job.f_work_mode = job_parameters['work_mode']
         job.f_initiator_party_id = initiator_party_id
         job.f_dsl = json_dumps(job_dsl)
         job.f_runtime_conf = json_dumps(job_runtime_conf)
@@ -79,14 +78,15 @@ class JobController(object):
                     job.f_is_initiator = 0
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/create'.format(
+                              url_without_host='/{}/job/{}/{}/{}/create'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
                                   party_id),
                               src_party_id=initiator_party_id,
                               dest_party_id=party_id,
-                              json_body=job.to_json())
+                              json_body=job.to_json(),
+                              work_mode=job.f_work_mode)
 
         model_version = job_id
         model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_key'], model_version)
@@ -127,6 +127,7 @@ class JobController(object):
         job.f_status = 'running'
         job.f_update_time = current_timestamp()
         JobController.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                      work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
 
         top_level_task_status = set()
@@ -158,6 +159,7 @@ class JobController(object):
             job.f_progress = 100
         job.f_update_time = current_timestamp()
         JobController.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                      work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
         JobController.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
         schedule_logger.info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
@@ -179,7 +181,7 @@ class JobController(object):
                 dest_party_id = party_parameters.get('local', {}).get('party_id')
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/{}/{}/run'.format(
+                              url_without_host='/{}/job/{}/{}/{}/{}/{}/run'.format(
                                   API_VERSION,
                                   job_id,
                                   component_name,
@@ -194,7 +196,8 @@ class JobController(object):
                                          'parameters': party_parameters,
                                          'module_name': module_name,
                                          'input': component.get_input(),
-                                         'output': component.get_output()})
+                                         'output': component.get_output()},
+                              work_mode=job_parameters['work_mode'])
         component_task_status = JobController.check_task_status(job_id=job_id, component=component)
         if component_task_status:
             task_success = True
@@ -204,6 +207,7 @@ class JobController(object):
             'job {} component {} run {}'.format(job_id, component_name, 'success' if task_success else 'failed'))
         # update progress
         JobController.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                      work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'],
                                       job_info=job_utils.update_job_progress(job_id=job_id, dag=dag,
                                                                              current_task_id=task_id).to_json())
@@ -353,6 +357,7 @@ class JobController(object):
             return
         try:
             # init environment
+            RuntimeConfig.init_config({'WORK_MODE': job_parameters['work_mode']})
             FateStorage.init_storage(job_id=job_id)
             federation.init(job_id=job_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
@@ -462,28 +467,33 @@ class JobController(object):
             initiator_job = jobs[0]
             job_info = {'f_job_id': job_id, 'f_status': 'failed'}
             roles = json_loads(initiator_job.f_roles)
+            job_work_mode = initiator_job.f_work_mode
             initiator_party_id = initiator_job.f_party_id
 
             # set status first
             JobController.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
+                                          work_mode=job_work_mode,
                                           job_info=job_info)
             for role, partys in roles.items():
                 for party_id in partys:
-                    retcode, msg = federated_api(job_id=job_id,
-                                                 method='POST',
-                                                 url='/{}/job/{}/{}/{}/kill'.format(
-                                                     API_VERSION,
-                                                     job_id,
-                                                     role,
-                                                     party_id),
-                                                 src_party_id=initiator_party_id,
-                                                 dest_party_id=party_id,
-                                                 json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
-                                                                              'role': initiator_job.f_role}})
-                    if retcode == 0:
-                        schedule_logger.info('send {} {} kill job {} command successfully'.format(role, party_id, job_id))
+                    response = federated_api(job_id=job_id,
+                                             method='POST',
+                                             url_without_host='/{}/job/{}/{}/{}/kill'.format(
+                                                 API_VERSION,
+                                                 job_id,
+                                                 role,
+                                                 party_id),
+                                             src_party_id=initiator_party_id,
+                                             dest_party_id=party_id,
+                                             json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
+                                                                          'role': initiator_job.f_role}},
+                                             work_mode=job_work_mode)
+                    if response['retcode'] == 0:
+                        schedule_logger.info(
+                            'send {} {} kill job {} command successfully'.format(role, party_id, job_id))
                     else:
-                        schedule_logger.info('send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, msg))
+                        schedule_logger.info(
+                            'send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, msg))
         else:
             schedule_logger.info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
@@ -519,7 +529,7 @@ class JobController(object):
                     task_info['f_run_ip'] = ''
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/{}/{}/status'.format(
+                              url_without_host='/{}/job/{}/{}/{}/{}/{}/status'.format(
                                   API_VERSION,
                                   job_id,
                                   component_name,
@@ -528,7 +538,8 @@ class JobController(object):
                                   party_id),
                               src_party_id=party_id,
                               dest_party_id=dest_party_id,
-                              json_body=task_info)
+                              json_body=task_info,
+                              work_mode=RuntimeConfig.WORK_MODE)
         except Exception as e:
             schedule_logger.exception(e)
 
@@ -541,21 +552,22 @@ class JobController(object):
                                                          task_info.get('f_status', '')))
 
     @staticmethod
-    def sync_job_status(job_id, roles, initiator_party_id, job_info):
+    def sync_job_status(job_id, roles, work_mode, initiator_party_id, job_info):
         for role, partys in roles.items():
             job_info['f_role'] = role
             for party_id in partys:
                 job_info['f_party_id'] = party_id
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/status'.format(
+                              url_without_host='/{}/job/{}/{}/{}/status'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
                                   party_id),
                               src_party_id=initiator_party_id,
                               dest_party_id=party_id,
-                              json_body=job_info)
+                              json_body=job_info,
+                              work_mode=work_mode)
 
     @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
@@ -612,7 +624,7 @@ class JobController(object):
                 # save pipeline
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/{}/save/pipeline'.format(
+                              url_without_host='/{}/job/{}/{}/{}/{}/save/pipeline'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
@@ -620,18 +632,20 @@ class JobController(object):
                                   model_key_base64),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
-                              json_body={})
+                              json_body={},
+                              work_mode=job_parameters['work_mode'])
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',
-                              url='/{}/job/{}/{}/{}/clean'.format(
+                              url_without_host='/{}/job/{}/{}/{}/clean'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
                                   party_id),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
-                              json_body={})
+                              json_body={},
+                              work_mode=job_parameters['work_mode'])
 
     @staticmethod
     def save_pipeline(job_id, role, party_id, model_key):
