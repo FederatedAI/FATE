@@ -88,6 +88,14 @@ def job_log():
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
 
+
+@manager.route('/task/query', methods=['POST'])
+def query_task():
+    tasks = job_utils.query_task(**request.json)
+    if not tasks:
+        return get_json_result(retcode=101, retmsg='find task failed')
+    return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
 # Scheduling interface
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 def create_job(job_id, role, party_id):

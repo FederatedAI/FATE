@@ -94,7 +94,7 @@ def call_fun(func, dsl_data, config_data):
                 traceback.print_exc(e)
                 response = {'retcode': 101, 'retmsg': str(e)}
     elif func in TASK_OPERATE_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "task", func.rstrip('_task')]), json=config_data)
+        response = requests.post("/".join([LOCAL_URL, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
         response = requests.post("/".join([LOCAL_URL, "tracking", func.replace('_', '/')]), json=config_data)
         if response.json().get('retcode', 100) == 0:
