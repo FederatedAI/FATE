@@ -11,6 +11,7 @@ from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.machine_learning_model_app import manager as model_app_manager
 from fate_flow.apps.job_apps import manager as job_app_manager
+from fate_flow.apps.task_apps import manager as task_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
@@ -48,6 +49,7 @@ if __name__ == '__main__':
             '/{}/data'.format(API_VERSION): data_access_app_manager,
             '/{}/model'.format(API_VERSION): model_app_manager,
             '/{}/job'.format(API_VERSION): job_app_manager,
+            '/{}/task'.format(API_VERSION): task_app_manager,
             '/{}/table'.format(API_VERSION): table_app_manager,
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
