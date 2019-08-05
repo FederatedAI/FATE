@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.proto import pipeline_pb2
+from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads, get_lan_ip
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
@@ -40,6 +41,9 @@ class JobController(object):
         job_dsl = job_data.get('job_dsl', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf.get('job_parameters', {})
+        if not job_parameters.get('model_key', None):
+            model_key = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
+            job_parameters['model_key'] = model_key
         job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
                                                             job_dsl=job_dsl,
                                                             job_runtime_conf=job_runtime_conf)

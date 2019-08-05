@@ -79,7 +79,7 @@ def check_config(config: typing.Dict, required_parameters: typing.List):
 
 
 def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
-    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode', 'model_key'])
+    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
     if not check_status:
         raise Exception('check job_parameters failed: {}'.format(check_msg))
 

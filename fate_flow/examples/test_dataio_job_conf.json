@@ -3,6 +3,9 @@
         "role": "guest",
         "party_id": 9999
     },
+    "job_parameters": {
+        "work_mode": 0
+    },
     "role": {
         "guest": [9999],
         "host": [10000],

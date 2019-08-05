@@ -3,6 +3,9 @@
     "role": "guest",
     "party_id": 10000
   },
+  "job_parameters": {
+    "work_mode": 0
+  },
   "role": {
     "guest": [
       10000
@@ -18,7 +21,12 @@
     "guest": {
       "args": {
         "data": {
-          "train_data": [{"name": "a888071a9be511e99ca800e04c6c66f9", "namespace": "guest#9999#arbiter-10000#guest-9999#host-10000#train_input"}]
+          "train_data": [
+            {
+              "name": "a888071a9be511e99ca800e04c6c66f9",
+              "namespace": "guest#9999#arbiter-10000#guest-9999#host-10000#train_input"
+            }
+          ]
         }
       },
       "dataio_0": {
@@ -39,7 +47,12 @@
     "host": {
       "args": {
         "data": {
-          "train_data": [{"name": "aa60b8a29be511e9a24e00e04c6c66f9", "namespace": "host#10000#arbiter-10000#guest-9999#host-10000#train_input"}]
+          "train_data": [
+            {
+              "name": "aa60b8a29be511e9a24e00e04c6c66f9",
+              "namespace": "host#10000#arbiter-10000#guest-9999#host-10000#train_input"
+            }
+          ]
         }
       },
       "dataio_0": {
@@ -54,9 +67,9 @@
   },
   "algorithm_parameters": {
     "sample_0": {
-        "mode": "random",
-        "method": "downsample",
-        "fractions": 0.9
+      "mode": "random",
+      "method": "downsample",
+      "fractions": 0.9
     },
     "hetero_lr_0": {
       "penalty": "L2",
