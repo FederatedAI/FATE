@@ -30,6 +30,7 @@ from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, 
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLHostModel
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.ftl_param import FTLModelParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
@@ -73,22 +74,24 @@ class HeteroFTLHost(HeteroFTLParty):
         predict_table = prob_table.mapValues(lambda x: 1 if x > threshold else 0)
         return predict_table
 
-    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
+    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param: EvaluateParam):
         LOGGER.info("@ start host evaluate")
+        eva = Evaluation()
         predict_res = None
-        if evaluate_param.classi_type == consts.BINARY:
+        if evaluate_param.eval_type == consts.BINARY:
+            eva.eval_type = consts.BINARY
             predict_res = pred_prob
-        elif evaluate_param.classi_type == consts.MULTY:
+        elif evaluate_param.eval_type == consts.MULTY:
+            eva.eval_type = consts.MULTY
             predict_res = pred_labels
         else:
             LOGGER.warning("unknown classification type, return None as evaluation results")
 
-        eva = Evaluation(evaluate_param.classi_type)
-        eva_report = eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
-                          evaluate_param.pos_label)
+        eva.pos_label = evaluate_param.pos_label
+        precision_res, cuts, thresholds = eva.precision(labels=labels, pred_scores=predict_res)
 
-        LOGGER.info("@ evaluation report:" + str(eva_report))
-        return eva_report
+        LOGGER.info("@ evaluation report:" + str(precision_res))
+        return precision_res
 
     def predict(self, host_data, predict_param):
         LOGGER.info("@ start host predict")

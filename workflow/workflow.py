@@ -87,13 +87,6 @@ class WorkFlow(object):
 
     def _initialize_model(self, config):
         raise NotImplementedError("method init must be define")
-        """
-        use case
-
-        secureboost_param = SecureboostTreeParam()
-        self.secureboost_param = param_extract.ParamExtract.parse_param_from_config(secureboost_param, config_path)
-        self.model = SecureBoostTreeModel(self.secureboost_param)
-        """
 
     def _synchronize_data(self, data_instance, flowid, data_application=None):
         header = data_instance.schema.get('header')
