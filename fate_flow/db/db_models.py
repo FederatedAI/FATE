@@ -17,8 +17,9 @@ import datetime
 import os
 import __main__
 from arch.api.utils import log_utils
-from playhouse.pool import PooledMySQLDatabase
-from fate_flow.settings import DATABASE
+from playhouse.pool import PooledMySQLDatabase, PooledSqliteDatabase
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
+from fate_flow.entity.service_support_config import WorkMode
 from arch.api.utils.core import current_timestamp
 from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
 import inspect
@@ -46,7 +47,19 @@ class BaseDataBase(object):
         # TODO: create instance according to the engine
         engine = database_config.pop("engine")
         db_name = database_config.pop("name")
-        self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+        if WORK_MODE == WorkMode.STANDALONE:
+            # TODO: use sqlite on standalone mode
+            """
+            self.database_connection = PooledSqliteDatabase('fate_flow_sqlite.db')
+            stat_logger.info('init sqlite database from standalone mode successfully')
+            """
+            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+            stat_logger.info('init mysql database from standalone mode successfully')
+        elif WORK_MODE == WorkMode.CLUSTER:
+            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+            stat_logger.info('init mysql database from standalone mode successfully')
+        else:
+            raise Exception('can not init database')
 
 
 if __main__.__file__ == 'fate_flow_server.py':
