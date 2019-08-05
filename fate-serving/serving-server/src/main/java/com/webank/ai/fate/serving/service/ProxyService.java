@@ -24,9 +24,7 @@ import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.utils.ObjectTransform;
-import com.webank.ai.fate.serving.core.bean.BaseContext;
-import com.webank.ai.fate.serving.core.bean.Context;
-import com.webank.ai.fate.serving.core.bean.Dict;
+import com.webank.ai.fate.serving.core.bean.*;
 import com.webank.ai.fate.serving.core.bean.BaseContext;
 import com.webank.ai.fate.serving.core.monitor.WatchDog;
 import com.webank.ai.fate.serving.manger.InferenceManager;
@@ -43,7 +41,8 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
     @Override
     public void unaryCall(Proxy.Packet req, StreamObserver<Proxy.Packet> responseObserver) {
         ReturnResult responseResult=null;
-        Context context = new BaseContext();
+        Context context = new BaseContext(new HostInferenceLoggerPrinter());
+        context.setActionType(req.getHeader().getCommand().getName());
         context.preProcess();
         WatchDog.enter(context);
         Map<String, Object> requestData=null;
@@ -51,6 +50,7 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
         try {
             requestData = (Map<String, Object>) ObjectTransform.json2Bean(req.getBody().getValue().toStringUtf8(), HashMap.class);
             context.setCaseId(requestData.get(Dict.CASEID)!=null?requestData.get(Dict.CASEID).toString():Dict.NONE);
+
             switch (req.getHeader().getCommand().getName()) {
                 case "federatedInference":
                     responseResult = InferenceManager.federatedInference(context, requestData);

@@ -39,6 +39,9 @@ public class InferenceRequest implements Request{
         featureData = new HashMap<>();
     }
 
+    public  void  setCaseId(String  caseId){
+        this.caseid = caseId;
+    }
     @Override
     public String getSeqno() {
         return seqno;

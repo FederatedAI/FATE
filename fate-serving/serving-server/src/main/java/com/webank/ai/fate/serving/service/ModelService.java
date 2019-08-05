@@ -23,6 +23,7 @@ import com.webank.ai.fate.api.mlmodel.manager.ModelServiceProto.PublishResponse;
 import com.webank.ai.fate.core.bean.FederatedParty;
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
+import com.webank.ai.fate.serving.core.bean.*;
 import com.webank.ai.fate.serving.manger.ModelManager;
 import com.webank.ai.fate.serving.manger.ModelUtils;
 import io.grpc.stub.StreamObserver;
@@ -34,8 +35,13 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
 
     @Override
     public void publishLoad(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
+
+        Context context =  new BaseContext(new BaseLoggerPrinter());
+        context.setActionType(ModelActionType.MODEL_LOAD.name());
+        ReturnResult returnResult =null;
+        try{
         PublishResponse.Builder builder = PublishResponse.newBuilder();
-        ReturnResult returnResult = ModelManager.publishLoadModel(
+        returnResult = ModelManager.publishLoadModel(
                 new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
                 ModelUtils.getFederatedRoles(req.getRoleMap()),
                 ModelUtils.getFederatedRolesModel(req.getModelMap()));
@@ -44,21 +50,31 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
                 .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
         builder.setStatusCode(returnResult.getRetcode());
         responseStreamObserver.onNext(builder.build());
-        responseStreamObserver.onCompleted();
+        responseStreamObserver.onCompleted();}
+        finally {
+            context.postProcess(req,returnResult);
+        }
     }
 
     @Override
     public void publishOnline(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
-        PublishResponse.Builder builder = PublishResponse.newBuilder();
-        ReturnResult returnResult = ModelManager.publishOnlineModel(
-                new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
-                ModelUtils.getFederatedRoles(req.getRoleMap()),
-                ModelUtils.getFederatedRolesModel(req.getModelMap())
-        );
-        builder.setStatusCode(returnResult.getRetcode())
-                .setMessage(returnResult.getRetmsg())
-                .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
-        responseStreamObserver.onNext(builder.build());
-        responseStreamObserver.onCompleted();
+        Context context =  new BaseContext(new BaseLoggerPrinter());
+        context.setActionType(ModelActionType.MODEL_PUBLISH_ONLINE.name());
+        ReturnResult returnResult =null;
+        try {
+            PublishResponse.Builder builder = PublishResponse.newBuilder();
+             returnResult = ModelManager.publishOnlineModel(
+                    new FederatedParty(req.getLocal().getRole(), req.getLocal().getPartyId()),
+                    ModelUtils.getFederatedRoles(req.getRoleMap()),
+                    ModelUtils.getFederatedRolesModel(req.getModelMap())
+            );
+            builder.setStatusCode(returnResult.getRetcode())
+                    .setMessage(returnResult.getRetmsg())
+                    .setData(ByteString.copyFrom(ObjectTransform.bean2Json(returnResult.getData()).getBytes()));
+            responseStreamObserver.onNext(builder.build());
+            responseStreamObserver.onCompleted();
+        }finally {
+            context.postProcess(req,returnResult);
+        }
     }
 }

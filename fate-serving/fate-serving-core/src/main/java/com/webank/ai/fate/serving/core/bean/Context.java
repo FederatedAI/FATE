@@ -20,7 +20,9 @@ public interface Context <Req,Resp>{
     public boolean  isHitCache();
     public void  hitCache(boolean   hitCache);
     public Context  subContext();
+    public String getActionType();
     public String getSeqNo();
+    public long  getCostTime();
 
 
 }

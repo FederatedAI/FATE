@@ -22,15 +22,12 @@ import com.webank.ai.fate.api.serving.InferenceServiceProto.InferenceMessage;
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.bean.InferenceRequest;
-import com.webank.ai.fate.serving.core.bean.BaseContext;
-import com.webank.ai.fate.serving.core.bean.Context;
-import com.webank.ai.fate.serving.core.bean.Dict;
-import com.webank.ai.fate.serving.core.bean.InferenceActionType;
+import com.webank.ai.fate.serving.core.bean.*;
 import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
 import com.webank.ai.fate.serving.core.monitor.WatchDog;
 import com.webank.ai.fate.serving.manger.InferenceManager;
+import com.webank.ai.fate.serving.utils.InferenceUtils;
 import io.grpc.stub.StreamObserver;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,7 +56,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
         ReturnResult returnResult = new ReturnResult();
 
         InferenceRequest inferenceRequest =null;
-        Context context = new BaseContext();
+        Context context = new BaseContext(new GuestInferenceLoggerPrinter());
         context.preProcess();
         WatchDog.enter(context);
         try{
@@ -68,6 +65,9 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
             inferenceRequest = (InferenceRequest) ObjectTransform.json2Bean(req.getBody().toStringUtf8(), InferenceRequest.class);
 
             if (inferenceRequest != null) {
+                if(inferenceRequest.getCaseid().length()==0){
+                    inferenceRequest.setCaseId(InferenceUtils.generateCaseid());
+                }
                 context.setCaseId(inferenceRequest.getCaseid());
                 context.setActionType(actionType.name());
                 returnResult = InferenceManager.inference(context,inferenceRequest, actionType);

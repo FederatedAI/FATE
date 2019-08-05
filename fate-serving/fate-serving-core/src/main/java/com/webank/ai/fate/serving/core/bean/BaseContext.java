@@ -16,18 +16,25 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
 
     long   timestamp;
 
+    LoggerPrinter loggerPrinter ;
 
-
-    public  BaseContext  (){
+    public  BaseContext  (LoggerPrinter loggerPrinter){
         timestamp =  System.currentTimeMillis();
     }
-    private  BaseContext(long  timestamp,Map  dataMap){
+    private  BaseContext(LoggerPrinter loggerPrinter,long  timestamp,Map  dataMap){
         this.timestamp = timestamp;
         this.dataMap = dataMap;
+        this.loggerPrinter =loggerPrinter;
     }
+
 
 
     private static final Logger LOGGER = LogManager.getLogger(LOGGER_NAME);
+
+    @Override
+    public String getActionType() {
+        return actionType;
+    }
 
     String actionType;
 
@@ -39,11 +46,6 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
 
 
     }
-
-
-
-
-
 
     @Override
     public Object getData(Object key) {
@@ -86,20 +88,10 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
     @Override
     public void postProcess(Req  req,Resp  resp) {
         try {
-            long now = System.currentTimeMillis();
-            String reqData = this.dataMap.get(Dict.ORIGIN_REQUEST) != null ? this.dataMap.get(Dict.ORIGIN_REQUEST).toString() : "";
-            if (req instanceof Request) {
-                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}", GetSystemInfo.getLocalIp(),this.getSeqNo(), req != null ? ((Request) req).getCaseid() : "NONE", actionType, now - timestamp,
-                        resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
-                );
-            }
-            if (req instanceof Map) {
-                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}",
-                        GetSystemInfo.getLocalIp(),  this.getSeqNo(),req != null ? ((Map) req).get(Dict.CASEID) : "NONE", actionType, now - timestamp,
-                        resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
-                );
-            }
 
+            if(loggerPrinter!=null){
+                loggerPrinter.printLog(this,req,resp);
+            }
 
         }catch(Throwable  e){
 
@@ -137,11 +129,16 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
 
         Map newDataMap = Maps.newHashMap(dataMap);
 
-       return  new BaseContext(this.timestamp,dataMap);
+       return  new BaseContext(this.loggerPrinter,this.timestamp,dataMap);
     }
 
     @Override
     public String getSeqNo() {
         return (String) this.dataMap.getOrDefault(Dict.REQUEST_SEQNO,"");
+    }
+
+    @Override
+    public long getCostTime() {
+        return System.currentTimeMillis()-timestamp;
     }
 }
