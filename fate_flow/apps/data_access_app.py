@@ -13,13 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import file_utils, dtable_utils
-from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, start_subprocess
-from fate_flow.utils.api_utils import get_json_result
-from fate_flow.settings import stat_logger
-from flask import Flask, request
 import os
+
+from flask import Flask, request
+
+from arch.api.utils import file_utils, dtable_utils
 from fate_flow.settings import WORK_MODE, JOB_MODULE_CONF
+from fate_flow.settings import stat_logger
+from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, run_subprocess
 
 manager = Flask(__name__)
 
@@ -43,7 +45,8 @@ def download_upload(data_func):
             request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])
     try:
         request_config["work_mode"] = request_config.get('work_mode', WORK_MODE)
-        table_name, namespace = dtable_utils.get_table_info(config=request_config, create=(True if module == 'upload' else False))
+        table_name, namespace = dtable_utils.get_table_info(config=request_config,
+                                                            create=(True if module == 'upload' else False))
         if not table_name or not namespace:
             return get_json_result(retcode=102, retmsg='no table name and namespace')
         request_config['table_name'] = table_name
@@ -64,11 +67,13 @@ def download_upload(data_func):
                      "-c", conf_file_path
                      ]
         try:
-            retcode = start_subprocess(config_dir=_job_dir, process_cmd=progs)
+            p = run_subprocess(config_dir=_job_dir, process_cmd=progs)
         except Exception as e:
             stat_logger.exception(e)
-            retcode = 101
-        return get_json_result(retcode=retcode, job_id=_job_id, data={'table_name': request_config['table_name'], 'namespace': request_config['namespace']})
+            p = None
+        return get_json_result(retcode=(0 if p else 101), job_id=_job_id,
+                               data={'table_name': request_config['table_name'],
+                                     'namespace': request_config['namespace'], 'pid': p.pid if p else ''})
     except Exception as e:
         stat_logger.exception(e)
         return get_json_result(retcode=-104, retmsg="failed", job_id=_job_id)

@@ -21,5 +21,4 @@ def handle_event(event):
     callable = getattr(importlib.import_module(event.get('module_path')), event.get('function'))
     operator = PythonOperator(callable, event.get('args', []), event.get('kwargs', {}))
     execute_result = operator.execute()
-    print('execute done.')
     return execute_result

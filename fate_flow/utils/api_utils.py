@@ -29,20 +29,20 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
     return jsonify({"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta})
 
 
-def federated_api(job_id, method, url_without_host, src_party_id, dest_party_id, json_body, work_mode,
+def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if work_mode == WorkMode.STANDALONE:
         try:
-            stat_logger.info('local api request: {} {}'.format(url_without_host, json_body))
-            response = local_api(method=method, url_with_host=url_without_host, json_body=json_body)
+            stat_logger.info('local api request: {} {}'.format(endpoint, json_body))
+            response = local_api(method=method, endpoint=endpoint, json_body=json_body)
             response_json_body = response.json()
-            stat_logger.info('local api response: {} {}'.format(url_without_host, response_json_body))
+            stat_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
             return response_json_body
         except Exception as e:
             stat_logger.exception(e)
             return {'retcode': 104, 'msg': 'local api request error: {}'.format(e)}
     elif work_mode == WorkMode.CLUSTER:
-        _packet = wrap_grpc_packet(json_body, method, url_without_host, src_party_id, dest_party_id, job_id,
+        _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                    overall_timeout=overall_timeout)
         try:
             channel, stub = get_proxy_data_channel()
@@ -62,8 +62,8 @@ def federated_api(job_id, method, url_without_host, src_party_id, dest_party_id,
         return {'retcode': 103, 'msg': '{} work mode is not supported'.format(work_mode)}
 
 
-def local_api(method, url_with_host, json_body):
-    url = "{}{}".format(SERVER_HOST_URL, url_with_host)
+def local_api(method, endpoint, json_body):
+    url = "{}{}".format(SERVER_HOST_URL, endpoint)
     action = getattr(requests, method.lower(), None)
     resp = action(url=url, json=json_body, headers=HEADERS)
     return resp

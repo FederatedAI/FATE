@@ -19,8 +19,8 @@ import sys
 import time
 
 from arch.api.utils import file_utils
-from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
-from fate_flow.db.db_models import Task, Job
+from arch.api.utils.core import current_timestamp, base64_encode, json_loads
+from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.storage.fate_storage import FateStorage
@@ -42,7 +42,7 @@ class TaskScheduler(object):
                     job.f_is_initiator = 0
                 federated_api(job_id=job.f_job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/create'.format(
+                              endpoint='/{}/job/{}/{}/{}/create'.format(
                                   API_VERSION,
                                   job.f_job_id,
                                   role,
@@ -123,7 +123,7 @@ class TaskScheduler(object):
                 dest_party_id = party_parameters.get('local', {}).get('party_id')
                 federated_api(job_id=job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/{}/{}/run'.format(
+                              endpoint='/{}/job/{}/{}/{}/{}/{}/run'.format(
                                   API_VERSION,
                                   job_id,
                                   component_name,
@@ -253,26 +253,14 @@ class TaskScheduler(object):
                 '-c', task_config_path
             ]
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
-            retcode = job_utils.start_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
-            if retcode == 0:
+            schedule_logger.info(
+                'try to start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
+            p = job_utils.run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
+            if p:
                 task_process_start_status = True
         except Exception as e:
             schedule_logger.exception(e)
         finally:
-            task = Task()
-            task.f_job_id = job_id
-            task.f_component_name = component_name
-            task.f_task_id = task_id
-            task.f_role = role
-            task.f_party_id = party_id
-            task.f_operator = 'python_operator'
-            task.f_run_ip = get_lan_ip()
-            task.f_create_time = current_timestamp()
-            task.f_status = 'start' if task_process_start_status else 'failed'
-            TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
-                                          party_id=party_id,
-                                          initiator_party_id=task_config['job_initiator']['party_id'],
-                                          task_info=task.to_json())
             schedule_logger.info(
                 'job {} component {} on {} {} start task subprocess {}'.format(job_id, component_name, role, party_id,
                                                                                'success' if task_process_start_status else 'failed'))
@@ -285,7 +273,7 @@ class TaskScheduler(object):
                 job_info['f_party_id'] = party_id
                 federated_api(job_id=job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/status'.format(
+                              endpoint='/{}/job/{}/{}/{}/status'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
@@ -305,7 +293,7 @@ class TaskScheduler(object):
                 # save pipeline
                 federated_api(job_id=job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/{}/save/pipeline'.format(
+                              endpoint='/{}/job/{}/{}/{}/{}/save/pipeline'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
@@ -318,7 +306,7 @@ class TaskScheduler(object):
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/clean'.format(
+                              endpoint='/{}/job/{}/{}/{}/clean'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
@@ -347,7 +335,7 @@ class TaskScheduler(object):
                 for party_id in partys:
                     response = federated_api(job_id=job_id,
                                              method='POST',
-                                             url_without_host='/{}/job/{}/{}/{}/kill'.format(
+                                             endpoint='/{}/job/{}/{}/{}/kill'.format(
                                                  API_VERSION,
                                                  job_id,
                                                  role,

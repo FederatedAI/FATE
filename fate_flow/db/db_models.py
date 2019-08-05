@@ -14,16 +14,19 @@
 #  limitations under the License.
 #
 import datetime
-import os
-import __main__
-from arch.api.utils import log_utils
-from playhouse.pool import PooledMySQLDatabase, PooledSqliteDatabase
-from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
-from fate_flow.entity.service_support_config import WorkMode
-from arch.api.utils.core import current_timestamp
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
 import inspect
+import os
 import sys
+
+import __main__
+from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
+from playhouse.pool import PooledMySQLDatabase
+from playhouse.apsw_ext import APSWDatabase
+
+from arch.api.utils import log_utils
+from arch.api.utils.core import current_timestamp
+from fate_flow.entity.service_support_config import WorkMode
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 
 LOGGER = log_utils.getLogger()
 
@@ -44,20 +47,13 @@ def singleton(cls, *args, **kw):
 class BaseDataBase(object):
     def __init__(self):
         database_config = DATABASE.copy()
-        # TODO: create instance according to the engine
-        engine = database_config.pop("engine")
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            # TODO: use sqlite on standalone mode
-            """
-            self.database_connection = PooledSqliteDatabase('fate_flow_sqlite.db')
-            stat_logger.info('init sqlite database from standalone mode successfully')
-            """
-            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            stat_logger.info('init mysql database from standalone mode successfully')
+            self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+            stat_logger.info('init sqlite database on standalone mode successfully')
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            stat_logger.info('init mysql database from standalone mode successfully')
+            stat_logger.info('init mysql database on cluster mode successfully')
         else:
             raise Exception('can not init database')
 
@@ -92,7 +88,7 @@ class DataBaseModel(Model):
         super(DataBaseModel, self).save(*args, **kwargs)
 
 
-def init_tables():
+def init_database_tables():
     with DB.connection_context():
         members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
         table_objs = []
@@ -137,8 +133,8 @@ class Task(DataBaseModel):
     f_task_id = CharField(max_length=100)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=50, index=True)
-    f_operator = CharField(max_length=100)
-    f_run_ip = CharField(max_length=100)
+    f_operator = CharField(max_length=100, null=True)
+    f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_status = CharField(max_length=50)
     f_create_time = BigIntegerField()
@@ -183,7 +179,6 @@ class TrackingMetric(DataBaseModel):
 
         ModelClass = TrackingMetric._mapper.get(class_name, None)
         if ModelClass is None:
-
             class Meta:
                 db_table = '%s_%s' % ('t_tracking_metric', table_index)
 

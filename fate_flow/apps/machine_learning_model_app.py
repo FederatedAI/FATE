@@ -50,7 +50,7 @@ def load_model():
             request_config['local'] = {'role': role_name, 'party_id': _party_id}
             response = federated_api(job_id=_job_id,
                                      method='POST',
-                                     url_without_host='{}/model/load/do'.format(API_VERSION),
+                                     endpoint='{}/model/load/do'.format(API_VERSION),
                                      src_party_id=initiator_party_id,
                                      dest_party_id=_party_id,
                                      json_body=request_config,

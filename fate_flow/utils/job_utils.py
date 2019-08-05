@@ -210,7 +210,7 @@ def gen_status_id():
     return uuid.uuid1().hex
 
 
-def check_job_process(pid, keywords=None):
+def check_job_process(pid):
     if pid < 0:
         return False
     if pid == 0:
@@ -223,13 +223,13 @@ def check_job_process(pid, keywords=None):
             return False
         elif err.errno == errno.EPERM:
             # EPERM clearly means there's a process to deny access to
-            return check_process_by_keyword(keywords=keywords)
+            return True
         else:
             # According to "man 2 kill" possible error values are
             # (EINVAL, EPERM, ESRCH)
             raise
     else:
-        return check_process_by_keyword(keywords=keywords)
+        return True
 
 
 def check_process_by_keyword(keywords):
@@ -238,13 +238,6 @@ def check_process_by_keyword(keywords):
     keyword_filter_cmd = ' |'.join(['grep %s' % keyword for keyword in keywords])
     ret = os.system('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
     return ret == 0
-
-
-def start_subprocess(config_dir, process_cmd, log_dir=None):
-    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir,))
-    task.start()
-    task.join()
-    return task.exitcode
 
 
 def run_subprocess(config_dir, process_cmd, log_dir=None):
@@ -272,10 +265,25 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
-    if p:
-        sys.exit(0)
-    else:
-        sys.exit(-1)
+    return p
+
+
+def wait_child_process(signum, frame):
+    child_pid = None
+    try:
+        while True:
+            child_pid, status = os.waitpid(-1, os.WNOHANG)
+            if child_pid == 0:
+                stat_logger.info('no child process was immediately available')
+                break
+            exitcode = status >> 8
+            stat_logger.info('child process %s exit with exitcode %s', child_pid, exitcode)
+    except OSError as e:
+        if e.errno == errno.ECHILD:
+            stat_logger.info(child_pid)
+            stat_logger.warning('current process has no existing unwaited-for child processes.')
+        else:
+            raise
 
 
 def kill_process(pid):
