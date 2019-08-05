@@ -478,48 +478,49 @@ class DSLParser(object):
                     if "input" not in self.predict_dsl["components"][name]:
                         self.predict_dsl["components"][name]["input"] = {}
                     if "data" in self.dsl["components"][name]["input"]:
+                        self.predict_dsl["components"][name]["input"]["data"] = {}
                         if "data" in self.dsl["components"][name]["input"]["data"]:
                             data_set = self.dsl["components"][name]["input"]["data"].get("data")
-                            self.predict_dsl["components"][name]["input"]["data"] = []
+                            self.predict_dsl["components"][name]["input"]["data"]["data"] = []
                             for input_data in data_set:
                                 if input_data.split(".")[0] == "args":
-                                    self.predict_dsl["components"][name]["input"]["data"].append(input_data)
+                                    self.predict_dsl["components"][name]["input"]["data"]["data"].append(input_data)
                                 else:
                                     pre_name = input_data.split(".")[0]
                                     data_suffix = input_data.split(".")[1]
                                     pre_idx = mapping_list.get(pre_name)
                                     if self.dsl["components"][pre_name].get("need_deploy", None):
-                                        self.predict_dsl["components"][name]["input"]["data"].append(input_data)
+                                        self.predict_dsl["components"][name]["input"]["data"]["data"].append(input_data)
                                     else:
-                                        self.predict_dsl["components"][name]["input"]["data"].append(output_data_maps[
+                                        self.predict_dsl["components"][name]["input"]["data"]["data"].append(output_data_maps[
                                             pre_name][data_suffix])
 
                         elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
                             input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
                             if input_data.split(".")[0] == "args":
-                                self.predict_dsl["components"][name]["input"]["eval_data"] = [input_data]
+                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
                             else:
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
                                 pre_idx = mapping_list.get(pre_name)
                                 if self.dsl["components"][pre_name].get("need_deploy", None):
-                                    self.predict_dsl["components"][name]["input"]["eval_data"] = [input_data]
+                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
                                 else:
-                                    self.predict_dsl["components"][name]["input"]["eval_data"] = output_data_maps[
+                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = output_data_maps[
                                         pre_name][data_suffix]
 
                         elif "train_data" in self.dsl["components"][name]["input"]["data"]:
                             input_data = self.dsl["components"][name]["input"]["data"].get("train_data")[0]
                             if input_data.split(".")[0] == "args":
-                                self.predict_dsl["components"][name]["input"]["eval_data"] = input_data
+                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = input_data
                             else:
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
                                 pre_idx = mapping_list.get(pre_name)
                                 if self.dsl["components"][pre_name].get("need_deploy", None):
-                                    self.predict_dsl["components"][name]["input"]["eval_data"] = [input_data]
+                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
                                 else:
-                                    self.predict_dsl["components"][name]["input"]["eval_data"] = output_data_maps[
+                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = output_data_maps[
                                         pre_name].get(data_suffix)
 
             else:
