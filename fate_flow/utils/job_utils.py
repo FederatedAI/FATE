@@ -16,20 +16,23 @@
 import datetime
 import errno
 import json
+import operator
 import os
 import subprocess
 import sys
 import threading
+import typing
 import uuid
 from multiprocessing import Process
+
 import psutil
+
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
 from fate_flow.db.db_models import DB, Job, Task
-import operator
 from fate_flow.driver.dsl_parser import DSLParser
-from fate_flow.manager.queue_manager import JOB_QUEUE
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
 
 
@@ -67,6 +70,20 @@ def get_job_log_directory(job_id):
     return os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
 
 
+def check_config(config: typing.Dict, required_parameters: typing.List):
+    for parameter in required_parameters:
+        if parameter not in config:
+            return False, 'configuration no {} parameter'.format(parameter)
+    else:
+        return True, 'ok'
+
+
+def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
+    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
+    if not check_status:
+        raise Exception('check job_parameters failed: {}'.format(check_msg))
+
+
 def new_runtime_conf(job_dir, method, module, role, party_id):
     if role:
         conf_path_dir = os.path.join(job_dir, method, module, role, str(party_id))
@@ -94,15 +111,15 @@ def get_job_conf_path(job_id):
     return job_dsl_path, job_runtime_conf_path
 
 
-@DB.connection_context()
 def get_job_dsl_parser_by_job_id(job_id):
-    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id)
-    if jobs:
-        job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
-        job_dsl_parser = get_job_dsl_parser(job_dsl_path=job_dsl_path, job_runtime_conf_path=job_runtime_conf_path)
-        return job_dsl_parser
-    else:
-        return None
+    with DB.connection_context():
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id)
+        if jobs:
+            job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
+            job_dsl_parser = get_job_dsl_parser(job_dsl_path=job_dsl_path, job_runtime_conf_path=job_runtime_conf_path)
+            return job_dsl_parser
+        else:
+            return None
 
 
 def get_job_dsl_parser(job_dsl_path, job_runtime_conf_path):
@@ -117,54 +134,53 @@ def get_job_dsl_parser(job_dsl_path, job_runtime_conf_path):
     return dsl_parser
 
 
-@DB.connection_context()
 def get_job_runtime_conf(job_id, role, party_id):
-    jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role, Job.f_party_id == party_id)
-    if jobs:
-        job = jobs[0]
-        return json_loads(job.f_runtime_conf)
-    else:
-        return {}
+    with DB.connection_context():
+        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role,
+                                                    Job.f_party_id == party_id)
+        if jobs:
+            job = jobs[0]
+            return json_loads(job.f_runtime_conf)
+        else:
+            return {}
 
 
-@DB.connection_context()
 def query_job(**kwargs):
-    filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(Job, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
-    if filters:
-        jobs = Job.select().where(*filters)
-        return [job for job in jobs]
-    else:
-        # not allow query all job
-        return []
+    with DB.connection_context():
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(Job, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
+        if filters:
+            jobs = Job.select().where(*filters)
+            return [job for job in jobs]
+        else:
+            # not allow query all job
+            return []
 
 
-@DB.connection_context()
 def job_queue_size():
-    return JOB_QUEUE.qsize()
+    return RuntimeConfig.JOB_QUEUE.qsize()
 
 
-@DB.connection_context()
 def show_job_queue():
     # TODO
     pass
 
 
-@DB.connection_context()
 def query_task(**kwargs):
-    filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(Task, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
-    if filters:
-        tasks = Task.select().where(*filters)
-    else:
-        tasks = Task.select()
-    return [task for task in tasks]
+    with DB.connection_context():
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(Task, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
+        if filters:
+            tasks = Task.select().where(*filters)
+        else:
+            tasks = Task.select()
+        return [task for task in tasks]
 
 
 def success_task_count(job_id):
@@ -221,12 +237,11 @@ def check_process_by_keyword(keywords):
         return True
     keyword_filter_cmd = ' |'.join(['grep %s' % keyword for keyword in keywords])
     ret = os.system('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
-    print('ps aux | {} | grep -v grep | grep -v "ps aux "'.format(keyword_filter_cmd))
     return ret == 0
 
 
 def start_subprocess(config_dir, process_cmd, log_dir=None):
-    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir, ))
+    task = Process(target=run_subprocess, args=(config_dir, process_cmd, log_dir,))
     task.start()
     task.join()
     return task.exitcode
@@ -258,9 +273,9 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.write(str(p.pid) + "\n")
         f.flush()
     if p:
-        sys.exit(-1)
-    else:
         sys.exit(0)
+    else:
+        sys.exit(-1)
 
 
 def kill_process(pid):

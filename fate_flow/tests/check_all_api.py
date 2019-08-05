@@ -20,8 +20,8 @@ from fate_flow.settings import API_VERSION, HTTP_PORT
 
 fate_flow_server_host = 'http://127.0.0.1:{}/{}'.format(HTTP_PORT, API_VERSION)
 job_id = sys.argv[1]
-role = 'guest'
-party_id = 10000
+role = sys.argv[2]
+party_id = int(sys.argv[3])
 base_request_data = {'job_id': job_id, 'role': role, 'party_id': party_id}
 print('job id is {}'.format(job_id))
 # data view
@@ -44,12 +44,16 @@ for component_name in dependency_response['data']['component_list']:
     print('metrics retcode {}'.format(response.json()['retcode']))
     if response.json()['retcode'] == 0:
         for metric_namespace, metric_names in response.json()['data'].items():
-            print(metric_namespace)
             base_request_data['metric_namespace'] = metric_namespace
             for metric_name in metric_names:
                 base_request_data['metric_name'] = metric_name
                 response = requests.post('{}/tracking/component/metric_data'.format(fate_flow_server_host), json=base_request_data)
-                print('{} {} metric data recode {}'.format(metric_namespace, metric_name, response.json()['retcode']))
+                if response.json()['retcode'] == 0:
+                    print('{} {} metric data:'.format(metric_namespace, metric_name))
+                    print(response.json()['data'])
+                else:
+                    print('{} {} no metric data!'.format(metric_namespace, metric_name))
+                print()
 
     # parameters
     print('parameters')

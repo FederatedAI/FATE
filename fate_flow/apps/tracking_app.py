@@ -220,16 +220,16 @@ def component_output_data():
         return get_json_result(retcode=0, retmsg='no data', data=[])
 
 
-@DB.connection_context()
 def check_request_parameters(request_data):
-    if 'role' not in request_data and 'party_id' not in request_data:
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                    Job.f_is_initiator == 1)
-        if jobs:
-            job = jobs[0]
-            job_runtime_conf = json_loads(job.f_runtime_conf)
-            job_initiator = job_runtime_conf.get('initiator', {})
-            role = job_initiator.get('role', '')
-            party_id = job_initiator.get('party_id', 0)
-            request_data['role'] = role
-            request_data['party_id'] = party_id
+    with DB.connection_context():
+        if 'role' not in request_data and 'party_id' not in request_data:
+            jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
+                                                        Job.f_is_initiator == 1)
+            if jobs:
+                job = jobs[0]
+                job_runtime_conf = json_loads(job.f_runtime_conf)
+                job_initiator = job_runtime_conf.get('initiator', {})
+                role = job_initiator.get('role', '')
+                party_id = job_initiator.get('party_id', 0)
+                request_data['role'] = role
+                request_data['party_id'] = party_id
