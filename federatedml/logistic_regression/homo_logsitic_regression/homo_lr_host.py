@@ -15,7 +15,6 @@
 #
 
 import functools
-
 import numpy as np
 
 from arch.api import federation
@@ -69,7 +68,7 @@ class HomoLRHost(HomoLRBase):
         if not self.need_run:
             return data_instances
 
-        self.set_schema(data_instances)
+        self.init_schema(data_instances)
         LOGGER.debug("Before trainning, self.header: {}".format(self.header))
         self._abnormal_detection(data_instances)
 
@@ -187,7 +186,6 @@ class HomoLRHost(HomoLRBase):
             if converge_flag:
                 break
                 # self.save_model()
-        self.set_schema(data_instances)
 
     def __init_parameters(self, data_instances):
 
@@ -284,19 +282,7 @@ class HomoLRHost(HomoLRBase):
 
             predict_result_table = predict_result.join(data_instances, lambda p, d: [d.label, None, p,
                                                                                      {"0": None, "1": None}])
-            test_join_table1 = wx.join(data_instances, lambda x, y: [x, y])
 
-            local_predict_result = predict_result.collect()
-            local_data_instance = data_instances.collect()
-
-            for k, v in local_predict_result:
-                LOGGER.debug("local_predict_result key: {}, key_type: {}".format(k, type(k)))
-
-            for k, v in local_data_instance:
-                LOGGER.debug("local_data_instance key: {}, key_type: {}".format(k, type(k)))
-
-            LOGGER.debug("After join, predict_result_table count: {}, test_join_table1 count: {}".format(
-                predict_result_table.count(), test_join_table1.count()))
         else:
             pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
             pred_label = self.classified(pred_prob, self.predict_param.threshold)

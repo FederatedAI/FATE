@@ -1,14 +1,9 @@
 {
   "output_path": "./download.txt",
-  "gen_table_info": true,
   "local": {
     "party_id": 0,
     "role": ""
   },
-  "role": {
-    "guest": [],
-    "host": [],
-    "arbiter": []
-  },
-  "data_type": ""
+  "table_name": "hetero_feature_selection_host",
+  "namespace": "hetero_feature_selection"
 }

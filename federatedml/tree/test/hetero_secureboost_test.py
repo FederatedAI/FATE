@@ -20,6 +20,9 @@ import subprocess
 import threading
 
 
+home_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+
+
 def set_jobid(path, jobid):
     fin = open(path, "r")
     with open(path + "_bak", "w") as fout:
@@ -31,25 +34,27 @@ def set_jobid(path, jobid):
 
 
 def run_secureboost_host_test(jobid):
-    set_jobid("./hetero_secure_boost_host_test.py", jobid)
-    cmd = ["python", "./hetero_secure_boost_host_test.py_bak"]
+    global home_dir
+    set_jobid(home_dir + "/test_hetero_secure_boost_host.py", jobid)
+    cmd = ["python", home_dir + "/test_hetero_secure_boost_host.py_bak"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     stderr = stderr.decode("utf-8")
     print (stderr)
     process.wait()
-    os.system("rm hetero_secure_boost_host_test.py_bak")
+    os.system("rm " + home_dir + "/test_hetero_secure_boost_host.py")
 
 
 def run_secureboost_guest_test(jobid):
-    set_jobid("./hetero_secure_boost_guest_test.py", jobid)
-    cmd = ["python", "./hetero_secure_boost_guest_test.py_bak"]
+    global home_dir
+    set_jobid(home_dir + "/test_hetero_secure_boost_guest.py", jobid)
+    cmd = ["python", home_dir + "/test_hetero_secure_boost_guest.py_bak"]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     stderr = stderr.decode("utf-8")
     print (stderr)
     process.wait()
-    os.system("rm hetero_secure_boost_guest_test.py_bak")
+    os.system("rm " + home_dir + "/test_hetero_secure_boost_guest.py_bak")
 
 
 if __name__ == "__main__":

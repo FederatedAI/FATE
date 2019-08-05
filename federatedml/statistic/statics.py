@@ -22,7 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
-from federatedml.param.param import FeatureBinningParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()

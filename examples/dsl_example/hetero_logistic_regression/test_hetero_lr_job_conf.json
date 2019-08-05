@@ -1,0 +1,89 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "090ff6089cb111e9bddf5254005e961b",
+              "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_idx": [
+          0
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "090ff6089cb111e9bddf5254005e961b",
+              "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "optimizer": "rmsprop",
+      "eps": 1e-5,
+      "alpha": 0.01,
+      "max_iter": 10,
+      "converge_func": "diff",
+      "batch_size": 320,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
+      },
+      "cv_param": {
+        "n_splits": 5,
+        "shuffle": true,
+        "random_seed": 103,
+        "need_cv": false,
+        "evaluate_param": {
+          "eval_type": "binary"
+        }
+      }
+    }
+  }
+}

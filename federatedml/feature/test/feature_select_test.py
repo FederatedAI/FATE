@@ -24,7 +24,7 @@ import unittest
 # eggroll.init("123")
 
 from federatedml.feature.feature_selection import UniqueValueFilter
-from federatedml.param.param import UniqueValueParam
+from federatedml.param.feature_selection_param import UniqueValueParam
 
 
 class TestFeatureSelect(unittest.TestCase):

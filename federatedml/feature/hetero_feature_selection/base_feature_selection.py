@@ -228,17 +228,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    def set_flowid(self, flowid="samole"):
-        self.flowid = flowid
-        self.transfer_variable.set_flowid(self.flowid)
-
-    # def _renew_left_col_names(self):
-    #     left_col_names = []
-    #     for col_name, is_left in self.left_cols.items():
-    #         if is_left:
-    #             left_col_names.append(col_name)
-    #     self.left_col_names = left_col_names
-
     def _renew_final_left_cols(self, new_left_cols):
         """
         As for all columns including those not specified in user params, record which columns left.

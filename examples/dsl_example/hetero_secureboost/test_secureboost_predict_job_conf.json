@@ -1,0 +1,87 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [
+                    {
+                       "name": "ecc0bbd8a7c611e9988c5254005e961b",
+                       "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"
+                    }
+                    ]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_idx": [0],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            },
+            "dataio_1":{
+                "with_label": [false],
+                "label_idx": [0],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                  "train_data": [
+                  {
+                    "name": "6634ca90a7c711e9822c5254005e961b",
+                    "namespace": "host#10000#arbiter-10000#guest-10000#host-10000#train_input"
+                  }
+                  ]
+                }
+            },
+             "dataio_0":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            },
+             "dataio_1":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "sample_0": {
+            "mode": "random",
+            "method": "downsample",
+            "fractions": 0.9,
+            "need_run": true
+        },
+        "secureboost_0": {
+            "task_type": "classification",
+            "learning_rate": 0.1, 
+            "num_trees": 2,
+            "subsample_feature_rate": 1,
+            "n_iter_no_change": false,
+            "tol": 0.0001,
+            "quantile_method": "bin_by_sample_data",
+            "bin_num": 50,
+            "bin_gap": 0.000001,
+            "bin_sample_num": 150000,
+            "objective_param": { 
+                "objective": "cross_entropy"
+            },
+            "encrypt_param": {
+                "method": "paillier" 
+            },
+            "predict_param": {
+                "with_proba": true,
+                "threshold": 0.5 
+            }
+        }
+    }
+}

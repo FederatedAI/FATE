@@ -1,0 +1,79 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "vehicle_scale_b", "namespace": "multi_class"}]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_idx": [0],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "vehicle_scale_a", "namespace": "multi_class"}]
+                }
+            },
+             "dataio_0":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "federated_sample_0": {
+            "mode": "random",
+            "method": "upsample",
+            "fractions": 1.5
+        },
+        "federated_sample_backup": {
+            "mode": "stratified",
+            "method": "upsample",
+            "fractions": [[0, 1.5], [1, 2.5]]
+        },
+        "secureboost_0": {
+            "task_type": "regression",
+            "learning_rate": 0.1, 
+            "num_trees": 5,
+            "subsample_feature_rate": 1,
+            "n_iter_no_change": false,
+            "tol": 0.0001,
+            "quantile_method": "bin_by_sample_data",
+            "bin_num": 50,
+            "bin_gap": 0.000001,
+            "bin_sample_num": 150000,
+            "objective_param": { 
+                "objective": "lse"
+            },
+            "encrypt_param": {
+                "method": "paillier" 
+            },
+            "predict_param": {
+                "with_proba": true,
+                "threshold": 0.5 
+            },
+      "cv_param": {
+        "n_splits": 5,
+        "shuffle": false,
+        "random_seed": 103,
+        "need_cv": true,
+        "evaluate_param": {
+            "eval_type": "regression"
+        }
+      }
+        }
+    }
+}

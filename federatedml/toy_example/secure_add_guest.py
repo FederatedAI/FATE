@@ -17,19 +17,38 @@
 #  limitations under the License.
 #
 
+from arch.api import eggroll
 from arch.api import federation
-from federatedml.util.transfer_variable import SecureAddExampleTransferVariable
+from arch.api.utils import log_utils
+from federatedml.util.transfer_variable.secure_add_example_transfer_variable import SecureAddExampleTransferVariable
+from federatedml.param.secure_add_example_param import SecureAddExampleParam
+from federatedml.model_base import ModelBase
 import numpy as np
 
+LOGGER = log_utils.getLogger()
 
-class SecureAddGuest(object):
-    def __init__(self, x):
-        self.x = x
+
+class SecureAddGuest(ModelBase):
+    def __init__(self):
+        self.x = None
         self.x1 = None
         self.x2 = None
         self.y1 = None
         self.x1_plus_y1 = None
+        self.data_num = None
+        self.partition = None
+        self.seed = None
         self.transfer_inst = SecureAddExampleTransferVariable()
+        self.model_param = SecureAddExampleParam()
+
+    def _init_model(self, model_param):
+        self.data_num = model_param.data_num
+        self.partition = model_param.partition
+        self.seed = model_param.seed
+
+    def _init_data(self):
+        kvs = [(i, 1) for i in range(self.data_num)]
+        self.x = eggroll.parallelize(kvs, include_key=True, partition=self.partition)
 
     def share(self, x):
         first = np.random.uniform(x, -x)
@@ -73,15 +92,30 @@ class SecureAddGuest(object):
 
         return host_sum
 
-    def run(self):
+    def run(self, component_parameters=None, args=None):
+        LOGGER.info("begin to init parameters of secure add example guest")
+        self._init_runtime_parameters(component_parameters)
+
+        LOGGER.info("begin to make guest data")
+        self._init_data()
+
+        LOGGER.info("split data into two random parts")
         self.secure()
+
+        LOGGER.info("share one random part data to host")
         self.sync_share_to_host()
+
+        LOGGER.info("get share of one random part data from host")
         self.recv_share_from_host()
-        
+
+        LOGGER.info("begin to get sum of guest and host")
         guest_sum = self.add()
+
+        LOGGER.info("receive host sum from guest")
         host_sum = self.recv_host_sum_from_host()
+
         secure_sum = self.reconstruct(guest_sum, host_sum)
 
-        return secure_sum
+        assert (np.abs(secure_sum - self.data_num * 2) < 1e-6)
 
-
+        LOGGER.info("success to calculate secure_sum, it is {}".format(secure_sum))

@@ -25,7 +25,6 @@
 # Boostring Tree
 # =============================================================================
 import numpy as np
-from fate_flow.manager.tracking import Tracking 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.param.boosting_tree_param import BoostingTreeParam

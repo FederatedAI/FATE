@@ -18,7 +18,7 @@ import unittest
 import random
 
 from arch.api import eggroll
-from federatedml.util import ClassifyLabelChecker, RegressionLabelChecker
+from federatedml.util.classfiy_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
 
 class TeskClassifyLabelChecker(unittest.TestCase):

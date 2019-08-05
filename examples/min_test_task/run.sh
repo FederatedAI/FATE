@@ -3,6 +3,8 @@ task=${2}
 if [ ${role} == "guest" ];then
     echo "role is guest"
     party='b'
+    host_name=${3}
+    host_namespace=${4}
 elif [ ${role} == "host" ];then
     echo "role is host"
     party='a'
@@ -22,19 +24,15 @@ else
     echo "Not support "${task}", please user 'fast' or 'normal'"
 fi
 
-cd ../../arch/task_manager/
-python $basepath/run_task.py upload $role ${data} intersect
-sleep 2
-echo "finish upload intersect data"
-python $basepath/run_task.py upload $role ${data} train
-sleep 2
-echo "finish upload train data"
-python $basepath/run_task.py upload $role ${data} predict
-sleep 2
-echo "finish upload predict data"
+if [ ${role} == "host" ];then
+    cd ../../arch/task_manager/
+    python $basepath/run_task.py upload $role ${data}
+    sleep 2
+    echo "finish upload intersect data"
+fi
 
 if [ ${role} == "guest" ];then
-    python $basepath/run_task.py all ${task}
+    python $basepath/run_task.py all ${task} ${data} ${host_name} ${host_namespace}
 fi
 
 echo "*********************"
