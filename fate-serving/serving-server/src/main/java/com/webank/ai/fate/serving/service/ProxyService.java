@@ -44,7 +44,6 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
         Context context = new BaseContext(new HostInferenceLoggerPrinter());
         context.setActionType(req.getHeader().getCommand().getName());
         context.preProcess();
-        WatchDog.enter(context);
         Map<String, Object> requestData=null;
 
         try {
@@ -85,7 +84,6 @@ public class ProxyService extends DataTransferServiceGrpc.DataTransferServiceImp
             responseObserver.onNext(packetBuilder.build());
             responseObserver.onCompleted();
         }finally {
-            WatchDog.quit(context);
             context.postProcess(requestData,responseResult);
 
         }

@@ -93,16 +93,17 @@ public class InferenceManager {
                     public void run() {
                         ReturnResult inferenceResult=null;
                         Context subContext = context.subContext();
+                        subContext.preProcess();
 
                         try {
-                             WatchDog.enter(subContext);
+
                              subContext.setActionType("ASYNC_EXECUTE");
                              inferenceResult=   runInference(subContext,inferenceRequest);
                              if (inferenceResult!=null&&inferenceResult.getRetcode() == 0) {
                                 CacheManager.putInferenceResultCache(subContext ,inferenceRequest.getAppid(), inferenceRequest.getCaseid(), inferenceResult);
                              }
                         }finally {
-                            WatchDog.quit(subContext);
+
                             subContext.postProcess(inferenceRequest,inferenceResult);
                         }
                         }

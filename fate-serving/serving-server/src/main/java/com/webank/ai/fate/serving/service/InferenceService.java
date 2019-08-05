@@ -58,7 +58,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
         InferenceRequest inferenceRequest =null;
         Context context = new BaseContext(new GuestInferenceLoggerPrinter());
         context.preProcess();
-        WatchDog.enter(context);
+
         try{
         try {
             context.putData(Dict.ORIGIN_REQUEST,req.getBody().toStringUtf8());
@@ -88,7 +88,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
         }finally {
-            WatchDog.quit(context);
+
             context.postProcess(inferenceRequest,returnResult);
         }
     }
