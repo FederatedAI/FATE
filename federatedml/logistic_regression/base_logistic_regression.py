@@ -213,7 +213,6 @@ class BaseLogisticRegression(ModelBase):
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj
         }
-        # self.model_output = result
         return result
 
     def _load_model(self, model_dict):
@@ -244,24 +243,6 @@ class BaseLogisticRegression(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
-
-    def show_meta(self):
-        meta_dict = {
-            'penalty': self.model_param.penalty,
-            'eps': self.eps,
-            'alpha': self.alpha,
-            'optimizer': self.model_param.optimizer,
-            'party_weight': self.model_param.party_weight,
-            'batch_size': self.batch_size,
-            'learning_rate': self.learning_rate,
-            'max_iter': self.max_iter,
-            'converge_func': self.model_param.converge_func,
-            're_encrypt_batches': self.model_param.re_encrypt_batches
-        }
-
-        LOGGER.info("Showing meta information:")
-        for k, v in meta_dict.items():
-            LOGGER.info("{} is {}".format(k, v))
 
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
         """

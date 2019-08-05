@@ -3,59 +3,6 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-
-    <!--<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">-->
-    <!--<property name="url" value="${db.url}" />-->
-    <!--<property name="username" value="${db.username}" />-->
-    <!--<property name="password" value="${db.password}" />-->
-
-    <!--<property name="maxActive" value="20" />-->
-    <!--<property name="initialSize" value="1" />-->
-    <!--<property name="maxWait" value="60000" />-->
-    <!--<property name="minIdle" value="1" />-->
-
-    <!--<property name="timeBetweenEvictionRunsMillis" value="3000" />-->
-    <!--<property name="minEvictableIdleTimeMillis" value="300000" />-->
-
-    <!--&lt;!&ndash;         <property name="validationQuery" value="SELECT 'x' FROM DUAL" />   &ndash;&gt;-->
-    <!--<property name="testWhileIdle" value="false" />-->
-    <!--<property name="testOnBorrow" value="false" />-->
-    <!--<property name="testOnReturn" value="false" />-->
-    <!--&lt;!&ndash; mysql 不支持 poolPreparedStatements&ndash;&gt;-->
-    <!--&lt;!&ndash;<property name="poolPreparedStatements" value="true" />&ndash;&gt;-->
-    <!--&lt;!&ndash;<property name="maxPoolPreparedStatementPerConnectionSize" value="20" />&ndash;&gt;-->
-
-    <!--&lt;!&ndash; 开启Druid的监控统计功能 &ndash;&gt;-->
-    <!--&lt;!&ndash;          <property name="filters" value="stat" />   &ndash;&gt;-->
-
-    <!--</bean>-->
-
-    <!--     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" -->
-    <!--         destroy-method="close"> -->
-    <!--         <property name="driverClass" value="${db.driverClassName}" /> -->
-    <!--         <property name="jdbcUrl" value="${db.url}" /> -->
-    <!--         <property name="user" value="${db.username}" /> -->
-    <!--         <property name="password" value="${db.password}" /> -->
-    <!--         <property name="minPoolSize" value="${db.minPoolSize}" /> -->
-    <!--         <property name="maxPoolSize" value="${db.maxPoolSize}" /> -->
-    <!--         <property name="initialPoolSize" value="${db.initialPoolSize}" /> -->
-    <!--         <property name="maxIdleTime" value="${db.maxIdleTime}" /> -->
-    <!--         <property name="acquireIncrement" value="${db.acquireIncrement}" /> -->
-    <!--         <property name="maxStatements" value="${db.maxStatements}" /> -->
-    <!--         <property name="preferredTestQuery" value="select * from dual" /> -->
-    <!--         <property name="idleConnectionTestPeriod" value="${db.idleConnectionTestPeriod}" /> -->
-    <!--         <property name="acquireRetryAttempts" value="${db.acquireRetryAttempts}" /> -->
-    <!--         <property name="acquireRetryDelay" value="${db.acquireRetryDelay}" /> -->
-    <!--         <property name="breakAfterAcquireFailure" value="false" /> -->
-    <!--         <property name="testConnectionOnCheckout" value="false" /> -->
-    <!--         <property name="testConnectionOnCheckin" value="false" /> -->
-    <!--     </bean> -->
-
-    <!--     <bean id="wrappedDataSource" -->
-    <!--         class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy"> -->
-    <!--         <property name="targetDataSource" ref="dataSource" /> -->
-    <!--     </bean> -->
-
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
@@ -68,27 +15,12 @@
 
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        <!--<property name="configLocation" value="classpath:mybatis-conf.xml"/>-->
+
         <property name="mapperLocations">
             <list>
                 <value>classpath*:mapping/JobMapper.xml</value>
                 <value>classpath*:mapping/TaskMapper.xml</value>
-                <!--<value>classpath*:mapping/ExperimentMapper.xml</value>-->
-                <!--<value>classpath*:mapping/ProjectMapper.xml</value>-->
-                <!--<value>classpath*:mapping/AuthMapper.xml</value>-->
-                <!--<value>classpath*:mapping/ClientMapper.xml</value>-->
-                <!--<value>classpath*:mapping/DepartmentMapper.xml</value>-->
-                <!--<value>classpath*:mapping/FollowMapper.xml</value>-->
-                <!--<value>classpath*:mapping/GroupMapper.xml</value>-->
-                <!--<value>classpath*:mapping/JobMapper.xml</value>-->
-                <!--<value>classpath*:mapping/OrderMapper.xml</value>-->
-                <!--<value>classpath*:mapping/RightMapper.xml</value>-->
-                <!--<value>classpath*:mapping/RoleMapper.xml</value>-->
-                <!--<value>classpath*:mapping/SalerClientMapper.xml</value>-->
-                <!--<value>classpath*:mapping/SourceMapper.xml</value>-->
-                <!--<value>classpath*:mapping/UserMapper.xml</value>-->
-                <!--<value>classpath*:mapping/QiDianCustomTickPushMapper.xml</value>-->
-                <!--<value>classpath*:mapping/QiDianStatusPushMapper.xml</value>-->
+
 
             </list>
         </property>

@@ -56,9 +56,10 @@ class BucketBinning(Binning):
         is_sparse = data_overview.is_sparse_data(data_instances)
         if is_sparse:
             raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
+
         self._init_cols(data_instances)
 
-        statistics = MultivariateStatisticalSummary(data_instances, self.cols, abnormal_list=self.abnormal_list)
+        statistics = MultivariateStatisticalSummary(data_instances, self.cols_index, abnormal_list=self.abnormal_list)
         max_dict = statistics.get_max()
         min_dict = statistics.get_min()
         n = data_instances.count()

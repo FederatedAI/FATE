@@ -241,6 +241,7 @@ class Imputer(object):
 
         self.cols_fit_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
         process_data = process_data.mapValues(lambda v:v[0])
+        process_data.schema = data.schema
 
         return process_data, cols_transform_value
 
@@ -250,6 +251,7 @@ class Imputer(object):
         Parameters
         ----------
         data: DTable, each data's value should be list
+        transform_value:
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
 
         Returns
@@ -267,5 +269,6 @@ class Imputer(object):
         process_data = self.__transform_replace(data, transform_value, replace_area, output_format)
         self.cols_transform_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
         process_data = process_data.mapValues(lambda v: v[0])
+        process_data.schema = data.schema
 
         return process_data

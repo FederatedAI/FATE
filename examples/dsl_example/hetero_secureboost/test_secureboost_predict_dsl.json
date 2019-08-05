@@ -1,0 +1,81 @@
+{
+    "components": {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            },
+			"need_deploy": true
+         },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval_data"]
+            }
+         },
+        "sample_0": {
+            "module": "FederatedSample",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["sample"]
+            }
+        },
+        "secureboost_0": {
+            "module": "HeteroSecureBoost",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "sample_0.sample"
+                    ],
+                    "eval_data": [
+                        "dataio_1.eval_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_secureboost"]
+            }
+        },
+        "secureboost_1": {
+            "module": "HeteroSecureBoost",
+            "input": {
+                "data": {
+                    "eval_data": [
+                        "dataio_1.eval_data"
+                    ]
+                },
+                "model": [
+                    "secureboost_0.hetero_secureboost"
+                ]
+            },
+            "output": {
+                "data": ["eval"]
+            }
+        }
+    }
+}

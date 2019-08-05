@@ -62,18 +62,7 @@ class TestHeteroSecureBoostGuest(unittest.TestCase):
                                           include_key=True,
                                           partition=table1._partitions)
 
-        print("table1 count: {}, table2 count: {}".format(table1.count(), table2.count()))
-
-        local_table1 = table1.collect()
-        for k, v in local_table1:
-            print("local_table1, k: {}, v: {}".format(k, v))
-
-        local_table2 = table2.collect()
-        for k, v in local_table2:
-            print("local_table2, k: {}, v: {}".format(k, v))
-
         table3 = table1.join(table2, lambda x, y: x)
-        print("table3 count: {}".format(table3.count()))
         self.assertTrue(table3.count() == table1.count())
 
 

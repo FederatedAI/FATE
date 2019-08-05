@@ -33,7 +33,6 @@ from federatedml.util import consts
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
 from federatedml.model_base import ModelBase
-from arch.api.model_manager import manager
 from arch.api.proto.data_io_meta_pb2 import DataIOMeta
 from arch.api.proto.data_io_param_pb2 import DataIOParam
 from arch.api.proto.data_io_meta_pb2 import ImputerMeta
@@ -618,9 +617,11 @@ class SparseTagReader(object):
             for fea in cols[start_pos:]:
                 if tag_with_value:
                     _tag, _val = fea.split(tag_value_delimitor, -1)
-                    features[tags_dict.get(_tag)] = _val
+                    if _tag in tags_dict:
+                        features[tags_dict.get(_tag)] = _val
                 else:
-                    features[tags_dict.get(fea)] = 1
+                    if fea in tags_dict:
+                        features[tags_dict.get(fea)] = 1
 
             features = np.asarray(features, dtype=data_type)
         else:
@@ -632,6 +633,10 @@ class SparseTagReader(object):
                 else:
                     _tag = fea
                     _val = 1
+                
+                if _tag not in tags_dict:
+                    continue
+                
                 indices.append(tags_dict.get(_tag))
                 if data_type in ["float", "float64"]:
                     _val = float(_val)

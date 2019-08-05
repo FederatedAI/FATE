@@ -301,9 +301,6 @@ class HomoLRArbiter(HomoLRBase):
     def _set_header(self):
         self.header = ['head_' + str(x) for x in range(len(self.coef_))]
 
-    # def cross_validation(self, data_instances=None):
-    #
-
     def run(self, component_parameters=None, args=None):
         """
         Rewrite run function so that it can start fit and predict without input data.
@@ -314,7 +311,7 @@ class HomoLRArbiter(HomoLRBase):
         need_eval = False
         for data_key in data_sets:
 
-            if "train_data" in data_sets[data_key]:
+            if "eval_data" in data_sets[data_key]:
                 need_eval = True
             else:
                 need_eval = False
@@ -326,8 +323,13 @@ class HomoLRArbiter(HomoLRBase):
             self._load_model(args)
             self.predict()
         else:
+            self.set_flowid('train')
             self.fit()
+            self.set_flowid('predict')
+            self.data_output = self.predict()
+
             if need_eval:
+                self.set_flowid('validate')
                 self.predict()
 
 

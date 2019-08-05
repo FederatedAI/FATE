@@ -198,10 +198,6 @@ class BaseHeteroFeatureBinning(ModelBase):
     def save_data(self):
         return self.data_output
 
-    def set_flowid(self, flowid="samole"):
-        self.flowid = flowid
-        self.transfer_variable.set_flowid(self.flowid)
-
     def _parse_cols(self, data_instances):
         if self.header is not None and len(self.header) != 0:
             return

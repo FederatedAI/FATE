@@ -21,6 +21,7 @@ import numpy as np
 from arch.api import eggroll
 from federatedml.feature.instance import Instance
 from federatedml.model_selection import KFold
+from federatedml.param.cross_validation_param import CrossValidationParam
 
 
 class TestKFlod(unittest.TestCase):
@@ -40,22 +41,37 @@ class TestKFlod(unittest.TestCase):
         self.table = table
 
     def test_split(self):
-        n_splits = 10
-        kfold_obj = KFold(n_splits)
+        kfold_obj = KFold()
+        kfold_obj.n_splits = 10
+        kfold_obj.random_seed = 32
 
-        print(self.table, self.table.count())
+        # print(self.table, self.table.count())
         data_generator = kfold_obj.split(self.table)
         expect_test_data_num = self.data_num / 10
         expect_train_data_num = self.data_num - expect_test_data_num
-        print("expect_train_data_num: {}, expect_test_data_num: {}".format(
-            expect_train_data_num, expect_test_data_num
-        ))
+
+        key_list = []
         for train_data, test_data in data_generator:
             train_num = train_data.count()
             test_num = test_data.count()
-            print("train_num: {}, test_num: {}".format(train_num, test_num))
+            # print("train_num: {}, test_num: {}".format(train_num, test_num))
             self.assertTrue(0.9 * expect_train_data_num < train_num < 1.1 * expect_train_data_num)
             self.assertTrue(0.9 * expect_test_data_num < test_num < 1.1 * expect_test_data_num)
+            first_key = train_data.first()[0]
+            key_list.append(first_key)
+
+        # Test random seed work
+        kfold_obj2 = KFold()
+        kfold_obj2.n_splits = 10
+        kfold_obj2.random_seed = 32
+
+        data_generator = kfold_obj.split(self.table)
+        n = 0
+        for train_data, test_data in data_generator:
+            second_key = train_data.first()[0]
+            first_key = key_list[n]
+            self.assertTrue(first_key == second_key)
+            n += 1
 
 
 if __name__ == '__main__':

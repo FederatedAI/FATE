@@ -97,9 +97,14 @@ class HomoLRGuest(HomoLRBase):
                                          "unit_name": "iters"
                                      })
             # metric_name = self.get_metric_name('loss')
-            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            flow_id_list = self.flowid.split('.')
+            if len(flow_id_list) == 0:
+                metric_namespace = 'train'
+            else:
+                metric_namespace = '.'.join(flow_id_list[1:])
+            self.callback_meta(metric_name='loss', metric_namespace=metric_namespace, metric_meta=metric_meta)
             self.callback_metric(metric_name='loss',
-                                 metric_namespace='train',
+                                 metric_namespace=metric_namespace,
                                  metric_data=[Metric(iter_num, total_loss)])
 
             self.loss_history.append(total_loss)
@@ -149,13 +154,6 @@ class HomoLRGuest(HomoLRBase):
                 self.is_converged = True
                 break
 
-        self.show_meta()
-        # self.show_model()
-        LOGGER.debug("in fit self coef: {}".format(self.coef_))
-        # data_instances.schema['header'] = self.header
-        self.set_schema(data_instances)
-        return data_instances
-
     def __init_parameters(self):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
@@ -201,6 +199,3 @@ class HomoLRGuest(HomoLRBase):
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
         predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1], {"1": x[1], "0": (1 - x[1])}])
         return predict_result
-
-    # def set_flowid(self, flowid=0):
-    #     self.transfer_variable.set_flowid(flowid)

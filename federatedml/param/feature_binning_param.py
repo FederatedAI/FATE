@@ -28,11 +28,11 @@ class TransformParam(BaseParam):
 
     Parameters
     ----------
-    transform_cols : list of column index, default: None
+    transform_cols : list of column index, default: -1
         Specify which columns need to be transform. If column index is None, None of columns will be transformed.
         If it is -1, it will use same columns as cols in binning module.
 
-    transform_type: str, 'bin_num', 'woe' or None default: None
+    transform_type: str, 'bin_num'or None default: None
         Specify which value these columns going to replace. If it is set as None, nothing will be replaced.
 
     """
@@ -55,7 +55,7 @@ class FeatureBinningParam(BaseParam):
 
     Parameters
     ----------
-    method : str, 'quantile', default: 'quantile'
+    method : str, 'quantile' or 'bucket', default: 'quantile'
         Binning method.
 
     compress_thres: int, default: 10000
