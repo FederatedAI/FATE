@@ -13,4 +13,6 @@ public class Dict {
     public  static  final String FEDERATED_RESULT = "federatedResult";
 
     public  static  final String HIT_CACHE = "hitCache";
+
+    public  static  final String REQUEST_SEQNO="REQUEST_SEQNO";
 }

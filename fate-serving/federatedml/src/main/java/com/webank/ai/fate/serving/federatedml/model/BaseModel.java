@@ -56,6 +56,7 @@ public abstract class BaseModel {
             LOGGER.info("caseid {} get remote party model inference result from cache.",context.getCaseId());
             federatedParams.put("getRemotePartyResult", false);
             context.putData(Dict.GET_REMOTE_PARTY_RESULT,false);
+            context.hitCache(true);
             return remoteResultFromCache;
         }
 

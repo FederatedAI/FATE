@@ -61,8 +61,6 @@ public class InferenceManager {
             LOGGER.error("load post/pre processing error",e);
         }
 
-
-
     }
 
 
@@ -155,7 +153,7 @@ public class InferenceManager {
         if (rawFeatureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.EMPTY_DATA + 1000);
             inferenceResult.setRetmsg("Can not parse data json.");
-            logInference(inferenceRequest, modelNamespaceData, inferenceResult, 0, false, false);
+            logInference(context ,inferenceRequest, modelNamespaceData, inferenceResult, 0, false, false);
             return inferenceResult;
         }
 
@@ -174,7 +172,7 @@ public class InferenceManager {
         if (featureData == null) {
             inferenceResult.setRetcode(InferenceRetCode.NUMERICAL_ERROR + 1000);
             inferenceResult.setRetmsg("Can not preprocessing data");
-            logInference(inferenceRequest, modelNamespaceData, inferenceResult, 0, false, false);
+            logInference(context,inferenceRequest, modelNamespaceData, inferenceResult, 0, false, false);
             return inferenceResult;
         }
 
@@ -229,7 +227,7 @@ public class InferenceManager {
         inferenceResult.setRetcode(inferenceResult.getRetcode() + partyInferenceRetcode * 1000);
         long endTime = System.currentTimeMillis();
         long inferenceElapsed = endTime - startTime;
-        logInference(inferenceRequest, modelNamespaceData, inferenceResult, inferenceElapsed, getRemotePartyResult, billing);
+        logInference(context,inferenceRequest, modelNamespaceData, inferenceResult, inferenceElapsed, getRemotePartyResult, billing);
 
         inferenceResult=postProcessing.handleResult(context,inferenceResult);
 
@@ -251,14 +249,14 @@ public class InferenceManager {
         if (modelInfo == null) {
             returnResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
             returnResult.setRetmsg("Can not found model.");
-            logInference(federatedParams, party, federatedRoles, returnResult, 0, false, false);
+            logInference(context,federatedParams, party, federatedRoles, returnResult, 0, false, false);
             return returnResult;
         }
         PipelineTask model = ModelManager.getModel(modelInfo.getName(), modelInfo.getNamespace());
         if (model == null) {
             returnResult.setRetcode(InferenceRetCode.LOAD_MODEL_FAILED);
             returnResult.setRetmsg("Can not found model.");
-            logInference(federatedParams, party, federatedRoles, returnResult, 0, false, false);
+            logInference(context ,federatedParams, party, federatedRoles, returnResult, 0, false, false);
             return returnResult;
         }
         LOGGER.info("use model to inference on {} {}, id: {}, version: {}", party.getRole(), party.getPartyId(), modelInfo.getNamespace(), modelInfo.getName());
@@ -271,7 +269,7 @@ public class InferenceManager {
                 if (getFeatureDataResult.getData() == null || getFeatureDataResult.getData().size() < 1) {
                     returnResult.setRetcode(InferenceRetCode.GET_FEATURE_FAILED);
                     returnResult.setRetmsg("Can not get feature data.");
-                    logInference(federatedParams, party, federatedRoles, returnResult, 0, false, false);
+                    logInference(context,federatedParams, party, federatedRoles, returnResult, 0, false, false);
                     return returnResult;
                 }
                 Map<String, Object> result = model.predict(context,getFeatureDataResult.getData(), predictParams);
@@ -288,7 +286,7 @@ public class InferenceManager {
         }
         long endTime = System.currentTimeMillis();
         long federatedInferenceElapsed = endTime - startTime;
-        logInference(federatedParams, party, federatedRoles, returnResult, federatedInferenceElapsed, false, billing);
+        logInference(context ,federatedParams, party, federatedRoles, returnResult, federatedInferenceElapsed, false, billing);
         LOGGER.info(returnResult.getData());
         return returnResult;
     }
@@ -330,11 +328,11 @@ public class InferenceManager {
         }
     }
 
-    private static void logInference(InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult inferenceResult, long elapsed, boolean getRemotePartyResult, boolean billing) {
-        InferenceUtils.logInference(FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), inferenceRequest.getSeqno(), inferenceResult.getRetcode(), elapsed, getRemotePartyResult, billing, new ObjectMapper().convertValue(inferenceRequest, HashMap.class), inferenceResult);
+    private static void logInference(Context  context ,InferenceRequest inferenceRequest, ModelNamespaceData modelNamespaceData, ReturnResult inferenceResult, long elapsed, boolean getRemotePartyResult, boolean billing) {
+        InferenceUtils.logInference(  context,FederatedInferenceType.INITIATED, modelNamespaceData.getLocal(), modelNamespaceData.getRole(), inferenceRequest.getCaseid(), inferenceRequest.getSeqno(), inferenceResult.getRetcode(), elapsed, getRemotePartyResult, billing, new ObjectMapper().convertValue(inferenceRequest, HashMap.class), inferenceResult);
     }
 
-    private static void logInference(Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult inferenceResult, long elapsed, boolean getRemotePartyResult, boolean billing) {
-        InferenceUtils.logInference(FederatedInferenceType.FEDERATED, federatedParty, federatedRoles, federatedParams.get("caseid").toString(), federatedParams.get("seqno").toString(), inferenceResult.getRetcode(), elapsed, getRemotePartyResult, billing, federatedParams, inferenceResult);
+    private static void logInference(Context  context,Map<String, Object> federatedParams, FederatedParty federatedParty, FederatedRoles federatedRoles, ReturnResult inferenceResult, long elapsed, boolean getRemotePartyResult, boolean billing) {
+        InferenceUtils.logInference(context ,FederatedInferenceType.FEDERATED, federatedParty, federatedRoles, federatedParams.get("caseid").toString(), federatedParams.get("seqno").toString(), inferenceResult.getRetcode(), elapsed, getRemotePartyResult, billing, federatedParams, inferenceResult);
     }
 }

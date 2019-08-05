@@ -16,6 +16,8 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
 
     long   timestamp;
 
+
+
     public  BaseContext  (){
         timestamp =  System.currentTimeMillis();
     }
@@ -37,6 +39,11 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
 
 
     }
+
+
+
+
+
 
     @Override
     public Object getData(Object key) {
@@ -82,13 +89,13 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
             long now = System.currentTimeMillis();
             String reqData = this.dataMap.get(Dict.ORIGIN_REQUEST) != null ? this.dataMap.get(Dict.ORIGIN_REQUEST).toString() : "";
             if (req instanceof Request) {
-                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}", GetSystemInfo.getLocalIp(), req != null ? ((Request) req).getCaseid() : "NONE", actionType, now - timestamp,
+                LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}", GetSystemInfo.getLocalIp(),this.getSeqNo(), req != null ? ((Request) req).getCaseid() : "NONE", actionType, now - timestamp,
                         resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
                 );
             }
             if (req instanceof Map) {
                 LOGGER.info("{}|{}|{}|{}|{}|{}|{}|{}|{}",
-                        GetSystemInfo.getLocalIp(),  req != null ? ((Map) req).get(Dict.CASEID) : "NONE", actionType, now - timestamp,
+                        GetSystemInfo.getLocalIp(),  this.getSeqNo(),req != null ? ((Map) req).get(Dict.CASEID) : "NONE", actionType, now - timestamp,
                         resp != null ? resp.getRetcode() : "NONE",WatchDog.get(), req,resp
                 );
             }
@@ -131,5 +138,10 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
         Map newDataMap = Maps.newHashMap(dataMap);
 
        return  new BaseContext(this.timestamp,dataMap);
+    }
+
+    @Override
+    public String getSeqNo() {
+        return (String) this.dataMap.getOrDefault(Dict.REQUEST_SEQNO,"");
     }
 }
