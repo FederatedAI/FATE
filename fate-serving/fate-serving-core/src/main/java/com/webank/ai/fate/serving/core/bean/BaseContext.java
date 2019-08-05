@@ -19,6 +19,7 @@ public class BaseContext<Req ,Resp extends ReturnResult> implements Context<Req,
     LoggerPrinter loggerPrinter ;
 
     public  BaseContext  (LoggerPrinter loggerPrinter){
+        this.loggerPrinter =  loggerPrinter;
         timestamp =  System.currentTimeMillis();
     }
     private  BaseContext(LoggerPrinter loggerPrinter,long  timestamp,Map  dataMap){
