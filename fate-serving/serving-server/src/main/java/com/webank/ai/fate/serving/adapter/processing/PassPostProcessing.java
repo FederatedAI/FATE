@@ -18,12 +18,13 @@ package com.webank.ai.fate.serving.adapter.processing;
 
 import com.webank.ai.fate.core.bean.ReturnResult;
 import com.webank.ai.fate.serving.bean.PostProcessingResult;
+import com.webank.ai.fate.serving.core.bean.Context;
 
 import java.util.Map;
 
 public class PassPostProcessing implements PostProcessing {
     @Override
-    public PostProcessingResult getResult(Map<String, Object> featureData, Map<String, Object> modelResult) {
+    public PostProcessingResult getResult(Context context, Map<String, Object> featureData, Map<String, Object> modelResult) {
         ReturnResult returnResult = new ReturnResult();
         PostProcessingResult postProcessingResult = new PostProcessingResult();
         returnResult.setRetcode(0);
