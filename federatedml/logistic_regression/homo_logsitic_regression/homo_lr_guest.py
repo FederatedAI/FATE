@@ -97,14 +97,10 @@ class HomoLRGuest(HomoLRBase):
                                          "unit_name": "iters"
                                      })
             # metric_name = self.get_metric_name('loss')
-            flow_id_list = self.flowid.split('.')
-            if len(flow_id_list) == 0:
-                metric_namespace = 'train'
-            else:
-                metric_namespace = '.'.join(flow_id_list[1:])
-            self.callback_meta(metric_name='loss', metric_namespace=metric_namespace, metric_meta=metric_meta)
+
+            self.callback_meta(metric_name='loss', metric_namespace=self.flowid, metric_meta=metric_meta)
             self.callback_metric(metric_name='loss',
-                                 metric_namespace=metric_namespace,
+                                 metric_namespace=self.flowid,
                                  metric_data=[Metric(iter_num, total_loss)])
 
             self.loss_history.append(total_loss)

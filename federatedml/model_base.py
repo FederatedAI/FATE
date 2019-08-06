@@ -196,8 +196,10 @@ class ModelBase(object):
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         # tracker = Tracking('123', 'abc')
-        if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+        # if self.need_cv:
+        flow_id_list = self.flowid.split('.')
+        if len(flow_id_list) > 1:
+            metric_namespace = '.'.join(flow_id_list[1:])
 
         self.tracker.set_metric_meta(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
@@ -205,8 +207,12 @@ class ModelBase(object):
 
     def callback_metric(self, metric_name, metric_namespace, metric_data):
         # tracker = Tracking('123', 'abc')
-        if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+        # if self.need_cv:
+        #     metric_name = '.'.join([metric_name, str(self.cv_fold)])
+
+        flow_id_list = self.flowid.split('.')
+        if len(flow_id_list) > 1:
+            metric_namespace = '.'.join(flow_id_list[1:])
 
         self.tracker.log_metric_data(metric_name=metric_name,
                                      metric_namespace=metric_namespace,

@@ -91,7 +91,8 @@ class QuantileSummaries(object):
                                            ops_idx == len(sorted_head) - 1):
                 delta = 0
             else:
-                delta = math.floor(2 * self.error * current_count) - 1
+                # delta = math.floor(2 * self.error * current_count) - 1
+                delta = math.floor(2 * self.error * current_count)
 
             new_stats = Stats(current_sample, 1, delta)
             new_sampled.append(new_stats)
@@ -102,7 +103,8 @@ class QuantileSummaries(object):
 
     def compress(self):
         self._insert_head_buffer()
-        merge_threshold = math.floor(2 * self.error * self.count) - 1
+        # merge_threshold = math.floor(2 * self.error * self.count) - 1
+        merge_threshold = 2 * self.error * self.count
         compressed = self._compress_immut(merge_threshold)
         self.sampled = compressed
 
@@ -115,10 +117,12 @@ class QuantileSummaries(object):
             The summaries to be merged
         """
         if other.head_sampled:
-            other._insert_head_buffer()
+            # other._insert_head_buffer()
+            other.compress()
 
         if self.head_sampled:
-            self._insert_head_buffer()
+            # self._insert_head_buffer()
+            self.compress()
 
         if other.count == 0:
             return self
@@ -141,7 +145,9 @@ class QuantileSummaries(object):
 
         self.sampled = new_sample
         self.count += other.count
-        merge_threshold = math.floor(2 * self.error * self.count) - 1
+        # merge_threshold = math.floor(2 * self.error * self.count) - 1
+        merge_threshold = 2 * self.error * self.count
+
         self.sampled = self._compress_immut(merge_threshold)
 
     def query(self, quantile):
@@ -157,7 +163,8 @@ class QuantileSummaries(object):
         float, the corresponding value result.
         """
         if self.head_sampled:
-            self._insert_head_buffer()
+            # self._insert_head_buffer()
+            self.compress()
 
         if quantile < 0 or quantile > 1:
             raise ValueError("Quantile should be in range [0.0, 1.0]")
@@ -257,7 +264,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return (self._total_count / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-        1 - self.zero_upper_bound + self.zero_lower_bound)
+            1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):
