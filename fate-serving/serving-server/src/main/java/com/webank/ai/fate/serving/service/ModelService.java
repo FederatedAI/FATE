@@ -38,6 +38,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
 
         Context context =  new BaseContext(new BaseLoggerPrinter());
         context.setActionType(ModelActionType.MODEL_LOAD.name());
+        context.preProcess();
         ReturnResult returnResult =null;
         try{
         PublishResponse.Builder builder = PublishResponse.newBuilder();
@@ -60,6 +61,7 @@ public class ModelService extends ModelServiceGrpc.ModelServiceImplBase {
     public void publishOnline(PublishRequest req, StreamObserver<PublishResponse> responseStreamObserver) {
         Context context =  new BaseContext(new BaseLoggerPrinter());
         context.setActionType(ModelActionType.MODEL_PUBLISH_ONLINE.name());
+        context.preProcess();
         ReturnResult returnResult =null;
         try {
             PublishResponse.Builder builder = PublishResponse.newBuilder();
