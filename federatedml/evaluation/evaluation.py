@@ -196,8 +196,33 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric_type, extra_metas=extra_metas))
 
+    def __filt_override_unit_ordinate_coordinate(self, x_sets, y_sets):
+        max_y_dict = {}
+        for idx, x_value in enumerate(x_sets):
+            if x_value not in max_y_dict:
+                max_y_dict[x_value] = {"max_y": y_sets[idx], "idx": idx}
+            else:
+                max_y = max_y_dict[x_value]["max_y"]
+                if max_y < y_sets[idx]:
+                    max_y_dict[x_value] = {"max_y": y_sets[idx], "idx": idx}
+
+        x = []
+        y = []
+        idx_list = []
+        for key, value in max_y_dict.items():
+            x.append(key)
+            y.append(value["max_y"])
+            idx_list.append(value["idx"])
+
+        return x, y, idx_list
+
     def __save_roc(self, data_type, metric_name, metric_namespace, metric_res):
-        fpr, tpr, thresholds, cuts = metric_res
+        fpr, tpr, thresholds, _ = metric_res
+
+        fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
+        # fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(np.round(fpr, self.round_num),
+        # np.round(self, tpr))
+        thresholds = [thresholds[idx] for idx in idx_list]
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
@@ -246,6 +271,8 @@ class Evaluation(ModelBase):
                     if metric in [consts.LIFT, consts.GAIN]:
                         score = [float(s[1]) for s in score]
                         cuts = [float(c[1]) for c in cuts]
+                        score.append(1.0)
+                        cuts.append(1.0)
 
                     self.__save_curve_data(cuts, score, metric_name, metric_namespace)
                     self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
@@ -269,15 +296,15 @@ class Evaluation(ModelBase):
 
                     pos_precision_score = precision_res[1][0]
                     precision_cuts = precision_res[1][1]
-                    if len(precision_res) >= 3:
+                    if len(precision_res[1]) >= 3:
                         precision_thresholds = precision_res[1][2]
                     else:
                         precision_thresholds = None
-          
+
                     pos_recall_score = recall_res[1][0]
                     recall_cuts = recall_res[1][1]
 
-                    if len(recall_res) >= 3:
+                    if len(recall_res[1]) >= 3:
                         recall_thresholds = recall_res[1][2]
                     else:
                         recall_thresholds = None
@@ -285,6 +312,13 @@ class Evaluation(ModelBase):
                     if self.eval_type == consts.BINARY:
                         pos_precision_score = [score[1] for score in pos_precision_score]
                         pos_recall_score = [score[1] for score in pos_recall_score]
+
+                    pos_recall_score, pos_precision_score, idx_list = self.__filt_override_unit_ordinate_coordinate(
+                        pos_recall_score, pos_precision_score)
+                    precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
+                    precision_cuts = [precision_cuts[idx] for idx in idx_list]
+                    recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
+                    recall_cuts = [recall_cuts[idx] for idx in idx_list]
 
                     self.__save_curve_data(precision_cuts, pos_precision_score, metric_name_precision,
                                            metric_namespace)
