@@ -17,7 +17,8 @@
 package com.webank.ai.fate.serving.adapter.processing;
 
 import com.webank.ai.fate.serving.bean.PreProcessingResult;
+import com.webank.ai.fate.serving.core.bean.Context;
 
 public interface PreProcessing {
-    PreProcessingResult getResult(String paras);
+    PreProcessingResult getResult(Context context , String paras);
 }
