@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -80,6 +79,10 @@ class ModelBase(object):
             if data_sets[data_key].get("data", None):
                 data = data_sets[data_key]["data"]
 
+        if not self.need_run:
+            self.data_output = data
+            return data
+
         if stage == 'cross_validation':
             LOGGER.info("Need cross validation.")
             self.cross_validation(train_data)
@@ -106,7 +109,7 @@ class ModelBase(object):
                     self.data_output = eval_data_output
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
-        
+
         elif eval_data:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
@@ -115,7 +118,7 @@ class ModelBase(object):
                 self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
 
             self.set_predict_data_schema(self.data_output, eval_data.schema)
-        
+
         else:
             if stage == "fit":
                 self.set_flowid('fit')
@@ -196,8 +199,7 @@ class ModelBase(object):
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         # tracker = Tracking('123', 'abc')
-        if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+        # if self.need_cv:
 
         self.tracker.set_metric_meta(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
@@ -205,8 +207,8 @@ class ModelBase(object):
 
     def callback_metric(self, metric_name, metric_namespace, metric_data):
         # tracker = Tracking('123', 'abc')
-        if self.need_cv:
-            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+        # if self.need_cv:
+        #     metric_name = '.'.join([metric_name, str(self.cv_fold)])
 
         self.tracker.log_metric_data(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
