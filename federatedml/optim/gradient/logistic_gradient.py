@@ -142,10 +142,9 @@ class HeteroLogisticGradient(object):
 
         loss = 0
         counter = 0
-        for _, value in enumerate(values):
+        for _, value in values:
             l = value[0] * (-1) + value[1] / 8 + bias
             loss = loss + l
-
             counter += 1
 
         return np.array([loss, counter])

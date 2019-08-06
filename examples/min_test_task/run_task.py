@@ -663,14 +663,14 @@ if __name__ == "__main__":
                                                party_id=10000,
                                                component_name=evaluation_component_name,
                                                output_type='log_metric')
-            print("intersect eval:{}".format(intersect_result))
+            print("train eval:{}".format(intersect_result))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
             auc = float(eval_res[0][1]["validate_evaluate"]['auc'])
             if auc > task_hetero_lr_base_auc:
                 TEST_TASK["TEST_TRAIN"] = 0
         else:
             print("train task is failed")
-            TEST_TASK["TEST_INTERSECT"] = 1
+            TEST_TASK["TEST_TRAIN"] = 1
 
         test_success = 0
         test_failed = 0

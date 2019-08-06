@@ -98,9 +98,9 @@ class HomoLRGuest(HomoLRBase):
                                      })
             # metric_name = self.get_metric_name('loss')
 
-            self.callback_meta(metric_name='loss', metric_namespace=self.flowid, metric_meta=metric_meta)
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
             self.callback_metric(metric_name='loss',
-                                 metric_namespace=self.flowid,
+                                 metric_namespace='train',
                                  metric_data=[Metric(iter_num, total_loss)])
 
             self.loss_history.append(total_loss)
