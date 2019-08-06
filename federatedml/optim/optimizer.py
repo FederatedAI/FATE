@@ -44,6 +44,7 @@ class Optimizer(object):
         self.learning_rate = learning_rate
 
         self.opt_method_name = opt_method_name.lower()
+        self.nesterov_momentum_coeff = 0.9
 
     def SgdOptimizer(self, grad):
         """sgd 优化；
@@ -97,6 +98,15 @@ class Optimizer(object):
         delta_grad = self.learning_rate * opt_m_hat / (np.sqrt(opt_v_hat) + 1e-8)
         return delta_grad
 
+    def nesterov_momentum_sgd_opimizer(self, grad):
+        if self.opt_m is None:
+            self.opt_m = np.zeros_like(grad)
+        v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
+        delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
+        self.opt_m = v
+        # self.learning_rate *= self.nesterov_momentum_coeff_decay
+        return delta_grad
+
     def apply_gradients(self, grad):
         """根据优化器类型应用梯度；
         """
@@ -111,6 +121,8 @@ class Optimizer(object):
 
         elif self.opt_method_name == "adagrad":
             return self.AdaGradOptimizer(grad)
+        elif self.opt_method_name == "momentum":
+            return self.nesterov_momentum_sgd_opimizer(grad)
 
         else:
             raise NotImplementedError("Optimize method cannot be recognized: {}".format(self.opt_method_name))

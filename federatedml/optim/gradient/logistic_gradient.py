@@ -138,26 +138,17 @@ class HeteroLogisticGradient(object):
         numpy.ndarray
             hetero-lr loss
         """
-        half_ywx = []
-        encrypted_wx_square = []
         bias = np.log(2)
 
-        for key, value in values:
-            half_ywx.append(value[0])
-            encrypted_wx_square.append(value[1])
-
-        if len(half_ywx) <= 0 or len(encrypted_wx_square) <= 0:
-            return 0
-
         loss = 0
-        for i in range(len(half_ywx)):
-            l = half_ywx[i] * (-1) + encrypted_wx_square[i] / 8 + bias
-            if i == 0:
-                loss = l
-            else:
-                loss = loss + l
+        counter = 0
+        for _, value in enumerate(values):
+            l = value[0] * (-1) + value[1] / 8 + bias
+            loss = loss + l
 
-        return np.array([loss, len(half_ywx)])
+            counter += 1
+
+        return np.array([loss, counter])
 
     def compute_fore_gradient(self, data_instance, encrypted_wx):
         """
