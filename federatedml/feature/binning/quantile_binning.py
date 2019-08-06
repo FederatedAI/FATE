@@ -155,6 +155,9 @@ class QuantileBinning(Binning):
                 summary_dict[col_name] = quantile_summaries
 
         QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict, header, is_sparse)
+        for _, summary_obj in summary_dict.items():
+            summary_obj.compress()
+
         return summary_dict
 
     @staticmethod

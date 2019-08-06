@@ -43,6 +43,9 @@ class Optimizer(object):
         self.opt_v = None
         self.learning_rate = learning_rate
 
+        self.nesterov_momentum_coeff = 0.9
+        self.lr_decay = 0.9
+
         self.opt_method_name = opt_method_name.lower()
         self.nesterov_momentum_coeff = 0.9
 
@@ -76,6 +79,16 @@ class Optimizer(object):
         self.opt_m = self.rho * self.opt_m + (1 - self.rho) * np.square(grad)
         self.opt_m = np.array(self.opt_m, dtype=np.float64)
         delta_grad = self.learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
+        return delta_grad
+
+    def Nesterov_momentum_SGD_Opimizer(self, grad):
+        if self.opt_m is None:
+            self.opt_m = np.zeros_like(grad)
+        v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
+        delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
+        self.opt_m = v
+        if self.learning_rate > 0.01:
+            self.learning_rate *= self.lr_decay
         return delta_grad
 
     def AdamOptimizer(self, grad):
@@ -113,6 +126,9 @@ class Optimizer(object):
         if self.opt_method_name == "sgd":
             return self.SgdOptimizer(grad)
 
+        elif self.opt_method_name == "nesterov_momentum_sgd":
+            return self.Nesterov_momentum_SGD_Opimizer(grad)
+
         elif self.opt_method_name == "rmsprop":
             return self.RMSPropOptimizer(grad)
 
@@ -126,4 +142,3 @@ class Optimizer(object):
 
         else:
             raise NotImplementedError("Optimize method cannot be recognized: {}".format(self.opt_method_name))
-

@@ -15,7 +15,6 @@
 #
 
 import math
-import time
 import unittest
 
 import numpy as np
@@ -27,7 +26,13 @@ eggroll.init("123")
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
-import time
+from federatedml.feature.sparse_vector import SparseVector
+
+
+compress_thres = 10000
+head_size = 500
+error = 0.001
+bin_num = 30
 
 
 class TestQuantileBinning(unittest.TestCase):
@@ -56,112 +61,126 @@ class TestQuantileBinning(unittest.TestCase):
         self.table.schema = {'header': header}
         self.numpy_table = np.array(numpy_array)
         self.cols = [1, 2]
+        self.used_data_set = []
         # self.cols = -1
 
-    def test_quantile_binning(self):
-        compress_thres = 1000
-        head_size = 500
-        error = 0.01
-        bin_num = 30
+    def _bin_obj_generator(self):
+
         bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
                                         error=error,
-                                        cols=self.cols,
+                                        cols=-1,
                                         bin_num=bin_num)
-        quan_bin = QuantileBinning(bin_param)
-        t0 = time.time()
-        split_points = quan_bin.fit_split_points(self.table)
-        t1 = time.time()
-        print("Split points fitting time: {}".format(t1 - t0))
-        for col_name, col_idx in self.col_dict.items():
-            if col_idx not in self.cols:
-                continue
-            bin_percent = [i * (1.0 / bin_num) for i in range(1, bin_num)]
-            # feature_idx = self.col_dict.get(col)
-            x = self.numpy_table[:, col_idx]
-            x = sorted(x)
-            for bin_idx, percent in enumerate(bin_percent):
-                min_rank = int(math.floor(percent * self.data_num - self.data_num * 10 * error))
-                max_rank = int(math.ceil(percent * self.data_num + self.data_num * 10 * error))
+        bin_obj = QuantileBinning(bin_param)
+        return bin_obj
+
+    def validate_result(self, table, bin_obj, numpy_table, is_sparse=False, all_data_shape=0):
+        header = table.schema['header']
+        data_num = table.count()
+
+        percent_list = [x / 100 for x in range(100)]
+        total_case = 0
+        error_case = 0
+        for p in percent_list:
+            for bin_idx, col_name in enumerate(header):
+                x = numpy_table[:, bin_idx]
+                if is_sparse:
+                    zero_num = all_data_shape - len(x)
+                    if zero_num > 0:
+                        zero_array = np.zeros(zero_num)
+                        x = np.append(x, zero_array)
+                x = sorted(x)
+                result = bin_obj.query_quantile_point(table, [col_name], p)
+                min_rank = int(math.floor(p * data_num - data_num * 2 * error))
+                max_rank = int(math.ceil(p * data_num + data_num * 2 * error))
                 if min_rank < 0:
                     min_rank = 0
                 if max_rank > len(x) - 1:
                     max_rank = len(x) - 1
                 try:
-                    self.assertTrue(x[min_rank] <= split_points[col_name][bin_idx] <= x[max_rank])
-                except:
-                    print(x[min_rank], x[max_rank], split_points[col_name][bin_idx])
-                    found_index = x.index(split_points[col_name][bin_idx])
-                    print("min_rank: {}, found_rank: {}, max_rank: {}".format(
-                        min_rank, found_index, max_rank
+                    # self.assertTrue(x[min_rank] <= split_points[col_name][bin_idx] <= x[max_rank])
+                    self.assertTrue(x[min_rank] <= result[col_name] <= x[max_rank])
+
+                except AssertionError:
+                    print("Error in bin: {}, percent: {}".format(col_name, p))
+                    print("result: {}, min_rank: {}, max_rank: {}, x[min_rank]: {}, x[max_rank]: {}".format(
+                        result, min_rank, max_rank, x[min_rank], x[max_rank]
                     ))
-                # self.assertTrue(x[min_rank] <= split_points[col_name][bin_idx] <= x[max_rank])
+                    value = list(result.values())[0]
+                    print("Real rank is : {}".format(x.index(value)))
+                    error_case += 1
+                total_case += 1
+        print("Error rate: {}".format(error_case / total_case))
 
-    def tearDown(self):
-        self.table.destroy()
-
-
-class TestQuantileBinningSpeed(unittest.TestCase):
-    def setUp(self):
-        # eggroll.init("123")
-        self.data_num = 1000
-        self.feature_num = 30
+    def test_one_partition_prob(self):
         final_result = []
         numpy_array = []
         for i in range(self.data_num):
-            tmp = np.random.randn(self.feature_num)
+            tmp = 100 * np.random.rand(self.feature_num)
             inst = Instance(inst_id=i, features=tmp, label=0)
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
         table = eggroll.parallelize(final_result,
                                     include_key=True,
-                                    partition=10)
-
+                                    partition=1)
         header = ['x' + str(i) for i in range(self.feature_num)]
-        self.col_dict = {}
-        for idx, h in enumerate(header):
-            self.col_dict[h] = idx
+        numpy_table = np.array(numpy_array)
+        table.schema = {'header': header}
 
-        self.table = table
-        self.table.schema = {'header': header}
+        self.used_data_set.append(table)
 
-        self.numpy_table = np.array(numpy_array)
-        self.cols = ['x1', 'x3']
+        bin_obj = self._bin_obj_generator()
+        bin_obj.fit_split_points(table)
+        self.validate_result(table, bin_obj, numpy_table)
 
-    def test_quantile_binning(self):
-        return
-        error = 0.01
-        compress_thres = int(self.data_num / (self.data_num * error))
+    def test_sparse_data_prob(self):
+        final_result = []
+        numpy_array = []
+        sparse_inst_shape = self.feature_num + 15
+        indices = [x for x in range(self.feature_num + 10)]
+        for i in range(self.data_num):
+            tmp = 100 * np.random.rand(self.feature_num)
+            data_index = np.random.choice(indices, self.feature_num, replace=False)
+            data_index = sorted(data_index)
+            sparse_inst = SparseVector(data_index, tmp, shape=sparse_inst_shape)
+            inst = Instance(inst_id=i, features=sparse_inst, label=0)
+            tmp_pair = (str(i), inst)
+            final_result.append(tmp_pair)
+            n = 0
+            pointer = 0
+            tmp_array = []
+            while n < sparse_inst_shape:
+                if n in data_index:
+                    tmp_array.append(tmp[pointer])
+                    pointer += 1
+                else:
+                    tmp_array.append(0)
+                n += 1
 
-        head_size = 5000
-        bin_num = 10
-        bin_percent = [int(i * (100.0 / bin_num)) for i in range(1, bin_num)]
+            numpy_array.append(tmp_array)
+        table = eggroll.parallelize(final_result,
+                                    include_key=True,
+                                    partition=1)
+        header = ['x' + str(i) for i in range(sparse_inst_shape)]
+        numpy_table = np.array(numpy_array)
+        table.schema = {'header': header}
 
-        bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
-                                        error=error,
-                                        cols=self.cols,
-                                        bin_num=bin_num)
-        quan_bin = QuantileBinning(bin_param)
-        t0 = time.time()
-        split_points = quan_bin.fit_split_points(self.table)
-        t1 = time.time()
-        print('Spend time: {}'.format(t1 - t0))
+        self.used_data_set.append(table)
 
-        # collect and test numpy quantile speed
-        local_table = self.table.collect()
-        total_data = []
-        for _, data_inst in local_table:
-            total_data.append(data_inst.features)
-        total_data = np.array(total_data)
-        for col in self.cols:
-            col_idx = self.col_dict.get(col)
-            x = total_data[:, col_idx]
-            sk = np.percentile(x, bin_percent, interpolation="midpoint")
-        t2 = time.time()
-        print('collect and use numpy time: {}'.format(t2 - t1))
+        bin_obj = self._bin_obj_generator()
+        bin_obj.fit_split_points(table)
+        self.validate_result(table, bin_obj, numpy_table, is_sparse=True, all_data_shape=sparse_inst_shape)
+
+        test_array = numpy_table[:, (sparse_inst_shape - 2)]
+        null_array = np.array(test_array)
+        self.assertTrue(all(null_array == 0))
 
     def tearDown(self):
         self.table.destroy()
+
+        for d_table in self.used_data_set:
+            d_table.destroy()
+
 
 
 if __name__ == '__main__':
