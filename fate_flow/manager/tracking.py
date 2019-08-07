@@ -13,8 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import base64
-import pickle
 from typing import List
 
 from arch.api.utils import dtable_utils
@@ -32,20 +30,26 @@ class Tracking(object):
     METRIC_LIST_PARTITION = 48
     JOB_VIEW_PARTITION = 8
 
-    def __init__(self, job_id: str, role: str, party_id: int, model_key: str = None, component_name: str = None,
+    def __init__(self, job_id: str, role: str, party_id: int,
+                 model_id: str = None,
+                 model_version: str = None,
+                 component_name: str = None,
+                 module_name: str = None,
                  task_id: str = None):
         self.job_id = job_id
         self.role = role
         self.party_id = party_id
         self.component_name = component_name if component_name else 'pipeline'
+        self.module_name = module_name if module_name else 'Pipeline'
         self.task_id = task_id if task_id else job_utils.generate_task_id(job_id=self.job_id,
                                                                           component_name=self.component_name)
         self.table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
         self.job_table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
-        self.model_id = Tracking.gen_party_model_id(model_key=model_key, role=role, party_id=party_id)
-        self.model_version = self.job_id
+        self.model_id = model_id
+        self.party_model_id = Tracking.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+        self.model_version = model_version
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
         self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
@@ -199,32 +203,34 @@ class Tracking(object):
         else:
             return None
 
-    def save_output_model(self, model_buffers: dict, module_name: str):
+    def save_output_model(self, model_buffers: dict, model_name: str):
         if model_buffers:
-            model_manager.save_model(model_key=self.component_name,
-                                     model_buffers=model_buffers,
-                                     model_version=self.model_version,
-                                     model_id=self.model_id)
-            self.save_output_model_meta({'{}_module_name'.format(self.component_name): module_name})
+            model_manager.save_component_model(component_model_key='{}.{}'.format(self.component_name, model_name),
+                                               model_buffers=model_buffers,
+                                               party_model_id=self.party_model_id,
+                                               model_version=self.model_version)
+            self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
-    def get_output_model(self):
-        model_buffers = model_manager.read_model(model_key=self.component_name,
-                                                 model_version=self.model_version,
-                                                 model_id=self.model_id)
+    def get_output_model(self, model_name):
+        model_buffers = model_manager.read_component_model(component_model_key='{}.{}'.format(self.component_name, model_name),
+                                                           party_model_id=self.party_model_id,
+                                                           model_version=self.model_version)
+
         return model_buffers
 
     def collect_model(self):
-        model_buffers = model_manager.collect_model(model_version=self.model_version, model_id=self.model_id)
+        model_buffers = model_manager.collect_pipeline_model(party_model_id=self.party_model_id,
+                                                             model_version=self.model_version)
         return model_buffers
 
     def save_output_model_meta(self, kv: dict):
-        model_manager.save_model_meta(kv=kv,
-                                      model_version=self.model_version,
-                                      model_id=self.model_id)
+        model_manager.save_pipeline_model_meta(kv=kv,
+                                               party_model_id=self.party_model_id,
+                                               model_version=self.model_version)
 
     def get_output_model_meta(self):
-        return model_manager.get_model_meta(model_version=self.model_version,
-                                            model_id=self.model_id)
+        return model_manager.get_pipeline_model_meta(party_model_id=self.party_model_id,
+                                                     model_version=self.model_version)
 
     def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         with DB.connection_context():
@@ -373,6 +379,6 @@ class Tracking(object):
         return '_'.join(['job', 'view'])
 
     @staticmethod
-    def gen_party_model_id(model_key, role, party_id):
-        return dtable_utils.gen_namespace_by_key(namespace_key=model_key, role=role,
-                                                 party_id=party_id) if model_key else None
+    def gen_party_model_id(model_id, role, party_id):
+        return dtable_utils.gen_party_namespace_by_federated_namespace(federated_namespace=model_id, role=role,
+                                                                       party_id=party_id) if model_id else None

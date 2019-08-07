@@ -73,7 +73,10 @@ def job_config():
         response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
         response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'],
                                                                    response_data['runtime_conf']['job_parameters'][
-                                                                       'model_key'], job.f_job_id)
+                                                                       'model_id'],
+                                                                   response_data['runtime_conf']['job_parameters'][
+                                                                       'model_version'],
+                                                                   )
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 
@@ -116,9 +119,9 @@ def job_status(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/<model_id>/save/pipeline', methods=['POST'])
-def save_pipeline(job_id, role, party_id, model_id):
-    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_key=base64_decode(model_id))
+@manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
+def save_pipeline(job_id, role, party_id, model_id, model_version):
+    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_id=base64_decode(model_id), model_version=base64_decode(model_version))
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -82,7 +82,9 @@ class TaskExecutor(object):
             task.f_operator = 'python_operator'
             tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
                                task_id=task_id,
-                               model_key=job_parameters['model_key'])
+                               model_id=job_parameters['model_id'],
+                               model_version=job_parameters['model_version'],
+                               module_name=module_name)
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = os.getpid()
@@ -106,12 +108,13 @@ class TaskExecutor(object):
             schedule_logger.info(task_run_args)
             run_object.run(parameters, task_run_args)
             if task_output_dsl:
-                if task_output_dsl.get('data', {}):
+                if task_output_dsl.get('data', []):
                     output_data = run_object.save_data()
                     tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0])
-                if task_output_dsl.get('model', {}):
+                if task_output_dsl.get('model', []):
                     output_model = run_object.export_model()
-                    tracker.save_output_model(output_model, module_name)
+                    # There is only one model output at the current dsl version.
+                    tracker.save_output_model(output_model, task_output_dsl['model'][0])
             task.f_status = 'success'
         except Exception as e:
             schedule_logger.exception(e)
@@ -159,11 +162,11 @@ class TaskExecutor(object):
                         args_from_component[data_type] = data_table
             elif input_type in ['model', 'isometric_model']:
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
-                for model_key in input_detail:
-                    model_key_items = model_key.split('.')
-                    search_component_name, search_model_name = model_key_items[0], model_key_items[1]
+                for dsl_model_key in input_detail:
+                    dsl_model_key_items = dsl_model_key.split('.')
+                    search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
                     models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
-                                      model_key=job_parameters['model_key']).get_output_model()
+                                      model_id=job_parameters['model_id'], model_version=job_parameters['model_version']).get_output_model(model_name=search_model_name)
                     this_type_args[search_component_name] = models
         return task_run_args
 

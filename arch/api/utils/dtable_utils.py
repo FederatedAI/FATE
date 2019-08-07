@@ -28,7 +28,7 @@ def get_table_info(config, create=False):
     if not config.get('gen_table_info', False):
         return table_name, namespace
     if not namespace:
-        namespace = gen_namespace(all_party=all_party, data_type=data_type, role=role, party_id=party_id)
+        namespace = gen_party_namespace(all_party=all_party, data_type=data_type, role=role, party_id=party_id)
     if not table_name:
         if create:
             table_name = get_commit_id()
@@ -37,12 +37,12 @@ def get_table_info(config, create=False):
     return table_name, namespace
 
 
-def gen_namespace(all_party, data_type, role, party_id):
+def gen_party_namespace(all_party, data_type, role, party_id):
     return gen_namespace_separator.join([role, str(party_id), all_party_key(all_party), data_type])
 
 
-def gen_namespace_by_key(namespace_key, role, party_id):
-    return gen_namespace_separator.join([role, str(party_id), namespace_key])
+def gen_party_namespace_by_federated_namespace(federated_namespace, role, party_id):
+    return gen_namespace_separator.join([role, str(party_id), federated_namespace])
 
 
 def all_party_key(all_party):

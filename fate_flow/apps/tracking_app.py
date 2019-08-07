@@ -62,7 +62,6 @@ def component_metric_all():
     request_data = request.json
     check_request_parameters(request_data)
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       task_id=job_utils.generate_task_id(request_data['job_id'], request_data['component_name']),
                        role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     all_metric_data = {}
@@ -85,7 +84,6 @@ def component_metrics():
     request_data = request.json
     check_request_parameters(request_data)
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       task_id=job_utils.generate_task_id(request_data['job_id'], request_data['component_name']),
                        role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     if metrics:
@@ -119,7 +117,6 @@ def component_metric_data():
     request_data = request.json
     check_request_parameters(request_data)
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       task_id=job_utils.generate_task_id(request_data['job_id'], request_data['component_name']),
                        role=request_data['role'], party_id=request_data['party_id'])
     metric_data, metric_meta = get_metric_all_data(tracker=tracker, metric_namespace=request_data['metric_namespace'],
                                                    metric_name=request_data['metric_name'])
@@ -172,16 +169,21 @@ def component_parameters():
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
-    job_runtime_conf = job_utils.get_job_runtime_conf(job_id=request_data['job_id'], role=request_data['role'],
-                                                      party_id=request_data['party_id'])
-    model_key = job_runtime_conf['job_parameters']['model_key']
+    job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'], role=request_data['role'],
+                                                                party_id=request_data['party_id'])
+    model_id = job_runtime_conf['job_parameters']['model_id']
+    model_version = job_runtime_conf['job_parameters']['model_version']
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'], model_key=model_key)
-    output_model = tracker.get_output_model()
+                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id, model_version=model_version)
+    dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf)
+    component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
-    for buffer_name, buffer_object in output_model.items():
-        if buffer_name.endswith('Param'):
-            output_model_json = json_format.MessageToDict(buffer_object, including_default_value_fields=True)
+    if component.get_output().get('model', []):
+        # There is only one model output at the current dsl version.
+        output_model = tracker.get_output_model(component.get_output()['model'][0])
+        for buffer_name, buffer_object in output_model.items():
+            if buffer_name.endswith('Param'):
+                output_model_json = json_format.MessageToDict(buffer_object, including_default_value_fields=True)
     if output_model_json:
         pipeline_output_model = tracker.get_output_model_meta()
         this_component_model_meta = {}

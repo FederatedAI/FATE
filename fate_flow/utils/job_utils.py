@@ -19,11 +19,9 @@ import json
 import operator
 import os
 import subprocess
-import sys
 import threading
 import typing
 import uuid
-from multiprocessing import Process
 
 import psutil
 
@@ -134,15 +132,15 @@ def get_job_dsl_parser(dsl, runtime_conf):
     return dsl_parser
 
 
-def get_job_runtime_conf(job_id, role, party_id):
+def get_job_configuration(job_id, role, party_id):
     with DB.connection_context():
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role,
-                                                    Job.f_party_id == party_id)
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role,
+                                                               Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
-            return json_loads(job.f_runtime_conf)
+            return json_loads(job.f_dsl), json_loads(job.f_runtime_conf)
         else:
-            return {}
+            return {}, {}
 
 
 def query_job(**kwargs):

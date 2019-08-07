@@ -41,9 +41,8 @@ class JobController(object):
         job_dsl = job_data.get('job_dsl', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf.get('job_parameters', {})
-        if not job_parameters.get('model_key', None):
-            model_key = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
-            job_parameters['model_key'] = model_key
+        job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
+        job_parameters['model_version'] = job_id
         job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
                                                             job_dsl=job_dsl,
                                                             job_runtime_conf=job_runtime_conf)
@@ -65,8 +64,7 @@ class JobController(object):
         TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
 
         # generate model info
-        model_version = job_id
-        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_key'], model_version)
+        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_id'], job_parameters['model_version'])
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
@@ -75,17 +73,17 @@ class JobController(object):
         }
         )
         schedule_logger.info(
-            'submit job successfully, job id is {}, model key is {}'.format(job.f_job_id, job_parameters['model_key']))
+            'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         return job_id, job_dsl_path, job_runtime_conf_path, model_info
 
     @staticmethod
-    def gen_model_info(roles, model_key, model_version):
-        model_id = {}
+    def gen_model_info(roles, model_id, model_version):
+        model_info = {'model_id': model_id, 'model_version': model_version}
         for _role, role_partys in roles.items():
-            model_id[_role] = {}
+            model_info[_role] = {}
             for _party_id in role_partys:
-                model_id[_role][_party_id] = Tracking.gen_party_model_id(model_key, role=_role, party_id=_party_id)
-        return {'model_id': model_id, 'model_version': model_version}
+                model_info[_role][_party_id] = Tracking.gen_party_model_id(model_id, role=_role, party_id=_party_id)
+        return model_info
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator):
@@ -164,13 +162,17 @@ class JobController(object):
         job_tracker.save_job_info(role=role, party_id=party_id, job_info=job_info, create=create)
 
     @staticmethod
-    def save_pipeline(job_id, role, party_id, model_key):
-        dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
-        predict_dsl = dsl_parser.get_predict_dsl(role=role)
+    def save_pipeline(job_id, role, party_id, model_id, model_version):
+        job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role, party_id=party_id)
+        dag = job_utils.get_job_dsl_parser(dsl=job_dsl,
+                                           runtime_conf=job_runtime_conf)
+        predict_dsl = dag.get_predict_dsl(role=role)
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
-        job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id, model_key=model_key)
-        job_tracker.save_output_model({'Pipeline': pipeline}, 'Pipeline')
+        pipeline.train_dsl = json_dumps(job_dsl, byte=True)
+        pipeline.train_runtime_conf = json_dumps(job_runtime_conf, byte=True)
+        job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
+        job_tracker.save_output_model({'Pipeline': pipeline}, 'pipeline')
 
     @staticmethod
     def clean_job(job_id, role, party_id):
