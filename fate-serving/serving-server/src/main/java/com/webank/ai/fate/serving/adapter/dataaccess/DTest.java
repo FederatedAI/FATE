@@ -17,7 +17,7 @@
 package com.webank.ai.fate.serving.adapter.dataaccess;
 
 import com.webank.ai.fate.core.bean.ReturnResult;
-import com.webank.ai.fate.core.network.http.client.HttpClientPool;
+import com.webank.ai.fate.serving.utils.HttpClientPool;
 import com.webank.ai.fate.core.utils.ObjectTransform;
 import com.webank.ai.fate.serving.core.constant.InferenceRetCode;
 import org.apache.commons.lang3.StringUtils;
