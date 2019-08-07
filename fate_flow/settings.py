@@ -44,7 +44,6 @@ USE_LOCAL_DATABASE = True
 SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
-    'engine': 'mysql',
     'name': 'task_manager',
     'user': 'root',
     'passwd': 'root1234',
