@@ -346,8 +346,9 @@ class Tracking(object):
                 task.save()
             return task
 
-    def clean_job(self):
-        FateStorage.clean_job(namespace=self.job_id, regex_string='*')
+    def clean_task(self):
+        stat_logger.info('clean table by namespace {}'.format(self.task_id))
+        FateStorage.clean_job(namespace=self.task_id, regex_string='*')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace
@@ -375,28 +376,3 @@ class Tracking(object):
     def gen_party_model_id(model_key, role, party_id):
         return dtable_utils.gen_namespace_by_key(namespace_key=model_key, role=role,
                                                  party_id=party_id) if model_key else None
-
-    @staticmethod
-    def serialize_b64(src):
-        return base64.b64encode(pickle.dumps(src))
-
-    @staticmethod
-    def deserialize_b64(src):
-        return pickle.loads(base64.b64decode(src))
-
-
-if __name__ == '__main__':
-    FateStorage.init_storage()
-    tracker = Tracking(job_utils.generate_job_id(), 'guest', 10000, 'hetero_lr')
-    metric_namespace = 'TRAIN'
-    metric_name = 'LOSS0'
-    tracker.log_metric_data(metric_namespace, metric_name, [Metric(1, 0.2), Metric(2, 0.3)])
-
-    metrics = tracker.get_metric_data(metric_namespace, metric_name)
-    for metric in metrics:
-        print(metric.key, metric.value)
-
-    tracker.set_metric_meta(metric_namespace, metric_name,
-                            MetricMeta(name=metric_name, metric_type='LOSS', extra_metas={'BEST': 0.2}))
-    metric_meta = tracker.get_metric_meta(metric_namespace, metric_name)
-    print(metric_meta.name, metric_meta.metric_type, metric_meta.metas)
