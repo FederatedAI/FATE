@@ -121,6 +121,7 @@ class TaskScheduler(object):
                 else:
                     party_job_args = {}
                 dest_party_id = party_parameters.get('local', {}).get('party_id')
+
                 federated_api(job_id=job_id,
                               method='POST',
                               endpoint='/{}/job/{}/{}/{}/{}/{}/run'.format(
@@ -235,7 +236,7 @@ class TaskScheduler(object):
     @staticmethod
     def start_task(job_id, component_name, task_id, role, party_id, task_config):
         schedule_logger.info(
-            'ready to start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
+            'job {} {} {} {} task subprocess is ready'.format(job_id, component_name, role, party_id, task_config))
         task_process_start_status = False
         try:
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name)
@@ -254,7 +255,7 @@ class TaskScheduler(object):
             ]
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger.info(
-                'try to start {} {} {} {} task subprocess'.format(job_id, component_name, role, party_id, task_config))
+                'job {} {} {} {} task subprocess start'.format(job_id, component_name, role, party_id, task_config))
             p = job_utils.run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_process_start_status = True

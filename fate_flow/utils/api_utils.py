@@ -32,15 +32,7 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if work_mode == WorkMode.STANDALONE:
-        try:
-            stat_logger.info('local api request: {} {}'.format(endpoint, json_body))
-            response = local_api(method=method, endpoint=endpoint, json_body=json_body)
-            response_json_body = response.json()
-            stat_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
-            return response_json_body
-        except Exception as e:
-            stat_logger.exception(e)
-            return {'retcode': 104, 'msg': 'local api request error: {}'.format(e)}
+        return local_api(method=method, endpoint=endpoint, json_body=json_body)
     elif work_mode == WorkMode.CLUSTER:
         _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                    overall_timeout=overall_timeout)
@@ -63,7 +55,15 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_bo
 
 
 def local_api(method, endpoint, json_body):
-    url = "{}{}".format(SERVER_HOST_URL, endpoint)
-    action = getattr(requests, method.lower(), None)
-    resp = action(url=url, json=json_body, headers=HEADERS)
-    return resp
+    try:
+        stat_logger.info('local api request: {} {}'.format(endpoint, json_body))
+        url = "{}{}".format(SERVER_HOST_URL, endpoint)
+        action = getattr(requests, method.lower(), None)
+        response = action(url=url, json=json_body, headers=HEADERS)
+        stat_logger.info(response.text)
+        response_json_body = response.json()
+        stat_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
+        return response_json_body
+    except Exception as e:
+        stat_logger.exception(e)
+        return {'retcode': 101, 'msg': 'local request error: {}'.format(e)}

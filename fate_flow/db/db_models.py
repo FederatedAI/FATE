@@ -61,8 +61,8 @@ class BaseDataBase(object):
 if __main__.__file__ == 'fate_flow_server.py':
     DB = BaseDataBase().database_connection
 else:
-    # TODO: In the next version, the database connection is established only when the server is started
-    DB = BaseDataBase().database_connection
+    # Initialize the database only when the server is started.
+    DB = None
 
 
 def close_connection(db_connection):

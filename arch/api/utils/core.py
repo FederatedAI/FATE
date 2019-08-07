@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import base64
 import json
+import os
+import pickle
+import socket
 import time
 import uuid
-import base64
-import socket
-import os
 
 
 def get_fate_uuid():
@@ -53,7 +54,7 @@ def json_loads(src):
 
 
 def current_timestamp():
-    return int(time.time()*1000)
+    return int(time.time() * 1000)
 
 
 def base64_encode(src):
@@ -64,6 +65,18 @@ def base64_decode(src):
     return bytes_to_string(base64.b64decode(src))
 
 
+def serialize_b64(src, to_str=False):
+    dest = base64.b64encode(pickle.dumps(src))
+    if not to_str:
+        return dest
+    else:
+        return bytes_to_string(dest)
+
+
+def deserialize_b64(src):
+    return pickle.loads(base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src))
+
+
 def get_lan_ip():
     if os.name != "nt":
         import fcntl
@@ -71,9 +84,9 @@ def get_lan_ip():
 
         def get_interface_ip(ifname):
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
+            return socket.inet_ntoa(
+                fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
 
-    #ip = socket.gethostbyname(socket.gethostname())
     ip = socket.gethostbyname(socket.getfqdn())
     if ip.startswith("127.") and os.name != "nt":
         interfaces = [

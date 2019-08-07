@@ -16,9 +16,9 @@
 from flask import Flask, request
 from google.protobuf import json_format
 
+from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import json_loads
 from fate_flow.db.db_models import Job, DB
-from fate_flow.entity.metric import Metric
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.storage.fate_storage import FateStorage
@@ -94,14 +94,24 @@ def component_metrics():
         return get_json_result(retcode=0, retmsg='no data', data={})
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/log', methods=['POST'])
-def log_metric_data(job_id, component_name, task_id, role, party_id):
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
+def save_metric_data(job_id, component_name, task_id, role, party_id):
     request_data = request.json
-    check_request_parameters(request_data)
     tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    for metric_data in request_data:
-        metric = Metric(key=metric_data['key'], value=float(metric_data['value']),
-                        timestamp=(int(metric_data['timestamp']) if 'timestamp' in metric_data else None))
+    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
+    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metrics=metrics, job_level=request_data['job_level'])
+    return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
+def save_metric_meta(job_id, component_name, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    metric_meta = deserialize_b64(request_data['metric_meta'])
+    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metric_meta=metric_meta, job_level=request_data['job_level'])
+    return get_json_result()
 
 
 @manager.route('/component/metric_data', methods=['post'])

@@ -280,7 +280,6 @@ def wait_child_process(signum, frame):
             stat_logger.info('child process %s exit with exitcode %s', child_pid, exitcode)
     except OSError as e:
         if e.errno == errno.ECHILD:
-            stat_logger.info(child_pid)
             stat_logger.warning('current process has no existing unwaited-for child processes.')
         else:
             raise
