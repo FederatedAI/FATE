@@ -121,9 +121,11 @@ class JobController(object):
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
         if create:
+            dsl = json_loads(job_info['f_dsl'])
+            runtime_conf = json_loads(job_info['f_runtime_conf'])
             save_job_conf(job_id=job_id,
-                          job_dsl=json_loads(job_info['f_dsl']),
-                          job_runtime_conf=json_loads(job_info['f_runtime_conf']))
+                          job_dsl=dsl,
+                          job_runtime_conf=runtime_conf)
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}
@@ -144,9 +146,8 @@ class JobController(object):
                             partner[_role] = partner.get(_role, [])
                             partner[_role].append(_party_id)
 
-            job_dsl_path, job_runtime_conf_path = job_utils.get_job_conf_path(job_id=job_id)
-            dag = get_job_dsl_parser(job_dsl_path=job_dsl_path,
-                                     job_runtime_conf_path=job_runtime_conf_path)
+            dag = get_job_dsl_parser(dsl=dsl,
+                                     runtime_conf=runtime_conf)
             job_args = dag.get_args_input()
             dataset = {}
             for _role, _role_party_args in job_args.items():

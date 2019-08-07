@@ -32,7 +32,7 @@ server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job']
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
-TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics", "component_metric_data",
+TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
                  "component_output_model", 'component_output_data']
 DATA_FUNC = ["download", "upload"]
 TABLE_FUNC = ["table_info"]
@@ -71,7 +71,8 @@ def call_fun(func, dsl_data, config_data):
             response_data = response.json()
             if response_data['retcode'] == 0:
                 job_id = response_data['data']['job_id']
-                os.makedirs('job_{}_config'.format(job_id), exist_ok=True)
+                download_directory = 'job_{}_config'.format(job_id)
+                os.makedirs(download_directory, exist_ok=True)
                 for k, v in response_data['data'].items():
                     if k == 'job_id':
                         continue
@@ -79,7 +80,8 @@ def call_fun(func, dsl_data, config_data):
                         json.dump(v, fw, indent=4)
                 del response_data['data']['dsl']
                 del response_data['data']['runtime_conf']
-                response_data['retmsg'] = 'download successfully, please check job_{}_config directory'.format(job_id)
+                response_data['directory'] = download_directory
+                response_data['retmsg'] = 'download successfully, please check {} directory'.format(download_directory)
                 response = response_data
         elif func == 'job_log':
             try:
@@ -102,6 +104,7 @@ def call_fun(func, dsl_data, config_data):
                     except Exception as e:
                         print(e)
                 response = {'retcode': 0,
+                            'directory': extract_dir,
                             'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
             except Exception as e:
                 traceback.print_exc(e)
@@ -119,6 +122,7 @@ def call_fun(func, dsl_data, config_data):
                     for line_items in response['data']:
                         fw.write('{}\n'.format('\t'.join(map(lambda x: str(x), line_items))))
                 del response['data']
+                response['output_path'] = output_file
                 response['retmsg'] = 'download successfully, please check {}'.format(output_file)
             else:
                 response = response.json()['data']
@@ -148,8 +152,8 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
     parser.add_argument('-p', '--party_id', required=False, type=str, help="party id")
     parser.add_argument('-r', '--role', required=False, type=str, help="role")
-    parser.add_argument('-s', '--status', required=False, type=str, help="status")
     parser.add_argument('-cpn', '--component_name', required=False, type=str, help="component name")
+    parser.add_argument('-s', '--status', required=False, type=str, help="status")
     parser.add_argument('-n', '--namespace', required=False, type=str, help="namespace")
     parser.add_argument('-t', '--table_name', required=False, type=str, help="table name")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")

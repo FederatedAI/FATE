@@ -37,9 +37,6 @@ class ParameterOverride(object):
         param_class_path = _module_setting["param_class"]
         param_class = param_class_path.split("/", -1)[-1]
         param_module_path = ".".join(param_class_path.split("/", -1)[:-1]).replace(".py", "")
-        print ("param_class_path is {}", param_class_path)
-        print ("param_class is {}", param_class)
-        print ("param_module_path ", param_module_path)
         param_module = importlib.import_module(param_module_path)
         param_obj = getattr(param_module, param_class)()
         default_runtime_dict = ParameterOverride.change_object_to_dict(param_obj) 

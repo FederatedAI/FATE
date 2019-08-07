@@ -54,9 +54,10 @@ class TaskScheduler(object):
 
     @staticmethod
     def run_job(job_id, job_dsl_path, job_runtime_conf_path):
-        dag = get_job_dsl_parser(job_dsl_path=job_dsl_path,
-                                 job_runtime_conf_path=job_runtime_conf_path)
         job_runtime_conf = file_utils.load_json_conf(job_runtime_conf_path)
+        job_dsl = file_utils.load_json_conf(job_dsl_path)
+        dag = get_job_dsl_parser(dsl=job_dsl,
+                                 runtime_conf=job_runtime_conf)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
         job_args = dag.get_args_input()

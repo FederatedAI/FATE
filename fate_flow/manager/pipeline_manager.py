@@ -14,14 +14,19 @@
 #  limitations under the License.
 #
 from fate_flow.utils import job_utils
+from arch.api.utils.core import json_loads
 from fate_flow.settings import stat_logger
 
 
 def pipeline_dag_dependency(job_id):
     try:
-        job_dsl_path, job_runtime_conf_path = job_utils.get_job_conf_path(job_id=job_id)
-        job_dsl_parser = job_utils.get_job_dsl_parser(job_dsl_path=job_dsl_path,
-                                                      job_runtime_conf_path=job_runtime_conf_path)
+        jobs = job_utils.query_job(job_id=job_id)
+        if not jobs:
+            raise Exception('query job {} failed'.format(job_id))
+        job = jobs[0]
+        job_dsl_parser = job_utils.get_job_dsl_parser(dsl=json_loads(job.f_dsl),
+                                                      runtime_conf=json_loads(job.f_runtime_conf))
         return job_dsl_parser.get_dependency()
     except Exception as e:
         stat_logger.exception(e)
+        raise e

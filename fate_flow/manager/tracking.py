@@ -58,8 +58,10 @@ class Tracking(object):
     def save_metric_data_remote(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
         stat_logger.info(
-            'log job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
-                                                                        self.party_id, metric_namespace, metric_name))
+            'request save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name,
+                                                                                 self.role,
+                                                                                 self.party_id, metric_namespace,
+                                                                                 metric_name))
         request_body = dict()
         request_body['metric_namespace'] = metric_namespace
         request_body['metric_name'] = metric_name
@@ -77,6 +79,9 @@ class Tracking(object):
         return response['retcode'] == 0
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
+        stat_logger.info(
+            'save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
+                                                                         self.party_id, metric_namespace, metric_name))
         kv = []
         for metric in metrics:
             kv.append((metric.key, metric.value))
@@ -103,6 +108,11 @@ class Tracking(object):
     def save_metric_meta_remote(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                                 job_level: bool = False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
+        stat_logger.info(
+            'request save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name,
+                                                                                 self.role,
+                                                                                 self.party_id, metric_namespace,
+                                                                                 metric_name))
         request_body = dict()
         request_body['metric_namespace'] = metric_namespace
         request_body['metric_name'] = metric_name
@@ -122,8 +132,8 @@ class Tracking(object):
     def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                          job_level: bool = False):
         stat_logger.info(
-            'set job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
-                                                                        self.party_id, metric_namespace, metric_name))
+            'save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
+                                                                         self.party_id, metric_namespace, metric_name))
         self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):

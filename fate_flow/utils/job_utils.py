@@ -115,20 +115,20 @@ def get_job_dsl_parser_by_job_id(job_id):
     with DB.connection_context():
         jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id)
         if jobs:
-            job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
-            job_dsl_parser = get_job_dsl_parser(job_dsl_path=job_dsl_path, job_runtime_conf_path=job_runtime_conf_path)
+            job = jobs[0]
+            job_dsl_parser = get_job_dsl_parser(dsl=json_loads(job.f_dsl), runtime_conf=json_loads(job.f_runtime_conf))
             return job_dsl_parser
         else:
             return None
 
 
-def get_job_dsl_parser(job_dsl_path, job_runtime_conf_path):
+def get_job_dsl_parser(dsl, runtime_conf):
     dsl_parser = DSLParser()
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    dsl_parser.run(dsl_json_path=job_dsl_path,
-                   runtime_conf=job_runtime_conf_path,
+    dsl_parser.run(dsl=dsl,
+                   runtime_conf=runtime_conf,
                    default_runtime_conf_prefix=default_runtime_conf_path,
                    setting_conf_prefix=setting_conf_path)
     return dsl_parser

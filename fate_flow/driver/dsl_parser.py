@@ -148,7 +148,6 @@ class DSLParser(object):
         for component in self.components:
             module = component.get_module()
             name = component.get_name()
-            print ("start to extract module {}, name {}".format(module, name))
             role_parameters = parameter_util.ParameterOverride.override_parameter(default_runtime_conf_prefix,
                                                                                   setting_conf_prefix,
                                                                                   runtime_conf,
@@ -561,7 +560,7 @@ class DSLParser(object):
         if not need_predict:
             return
 
-    def run(self, pipeline_dsl=None, pipeline_runtime_conf=None ,dsl=None, runtime_conf=None, default_runtime_conf_prefix=None,
+    def run(self, pipeline_dsl=None, pipeline_runtime_conf=None, dsl=None, runtime_conf=None, default_runtime_conf_prefix=None,
             setting_conf_prefix=None):
 
         self.dsl = copy.deepcopy(dsl)
