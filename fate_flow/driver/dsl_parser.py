@@ -449,7 +449,9 @@ class DSLParser(object):
         output_data_maps = {}
         for i in range(len(self.predict_components)):
             name = self.predict_components[i].get_name()
-            if ("need_deploy" in self.dsl["components"][name] and self.dsl["components"][name].get("need_deploy")) or self.get_need_deploy_parameter(module=self.predict_components[i].get_module(), setting_conf_prefix=setting_conf_prefix):
+            if self.get_need_deploy_parameter(name=name,
+                                              setting_conf_prefix=setting_conf_prefix):
+            # if ("need_deploy" in self.dsl["components"][name] and self.dsl["components"][name].get("need_deploy")) or self.get_need_deploy_parameter(module=self.predict_components[i].get_module(), setting_conf_prefix=setting_conf_prefix):
                 need_predict = True
                 self.predict_dsl["components"][name] = {"module": self.predict_components[i].get_module()}
 
@@ -488,7 +490,9 @@ class DSLParser(object):
                                     pre_name = input_data.split(".")[0]
                                     data_suffix = input_data.split(".")[1]
                                     pre_idx = mapping_list.get(pre_name)
-                                    if self.dsl["components"][pre_name].get("need_deploy", None):
+                                    if self.get_need_deploy_parameter(name=pre_name, 
+                                                                      setting_conf_prefix=setting_conf_prefix):
+                                    # if self.dsl["components"][pre_name].get("need_deploy", None):
                                         self.predict_dsl["components"][name]["input"]["data"].append(input_data)
                                     else:
                                         self.predict_dsl["components"][name]["input"]["data"].append(output_data_maps[
@@ -502,7 +506,10 @@ class DSLParser(object):
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
                                 pre_idx = mapping_list.get(pre_name)
-                                if self.dsl["components"][pre_name].get("need_deploy", None):
+                                if self.get_need_deploy_parameter(name=pre_name, 
+                                                                  setting_conf_prefix=setting_conf_prefix):
+
+                                # if self.dsl["components"][pre_name].get("need_deploy", None):
                                     self.predict_dsl["components"][name]["input"]["eval_data"] = [input_data]
                                 else:
                                     self.predict_dsl["components"][name]["input"]["eval_data"] = output_data_maps[
@@ -516,7 +523,9 @@ class DSLParser(object):
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
                                 pre_idx = mapping_list.get(pre_name)
-                                if self.dsl["components"][pre_name].get("need_deploy", None):
+                                if self.get_need_deploy_parameter(name=pre_name, 
+                                                                  setting_conf_prefix=setting_conf_prefix):
+                                #if self.dsl["components"][pre_name].get("need_deploy", None):
                                     self.predict_dsl["components"][name]["input"]["eval_data"] = [input_data]
                                 else:
                                     self.predict_dsl["components"][name]["input"]["eval_data"] = output_data_maps[
@@ -572,7 +581,11 @@ class DSLParser(object):
 
         return self.components
 
-    def get_need_deploy_parameter(self, module, setting_conf_prefix):
+    def get_need_deploy_parameter(self, name, setting_conf_prefix):
+        if "need_deploy" in self.dsl["components"][name]:
+            return self.dsl["components"][name].get("need_deploy")
+        
+        module = self.dsl["components"][name].get("module")
         need_deploy = True
         with open(os.path.join(setting_conf_prefix, module + ".json"), "r") as fin:
             setting_dict = json.loads(fin.read())
