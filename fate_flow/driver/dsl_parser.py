@@ -28,9 +28,7 @@
 import json
 import copy
 import os
-#from federatedml.util.parameter_util import ParameterOverride
-from federatedml.util import parameter_util
-from federatedml.util.param_extract import ParamExtract
+from fate_flow.utils import parameter_util
 
 
 class Component(object):
@@ -152,10 +150,10 @@ class DSLParser(object):
             name = component.get_name()
             print ("start to extract module {}, name {}".format(module, name))
             role_parameters = parameter_util.ParameterOverride.override_parameter(default_runtime_conf_prefix,
-                                                              setting_conf_prefix,
-                                                              runtime_conf,
-                                                              module,
-                                                              name)
+                                                                                  setting_conf_prefix,
+                                                                                  runtime_conf,
+                                                                                  module,
+                                                                                  name)
             component.set_role_parameters(role_parameters)
 
     def _check_component_valid_names(self):
