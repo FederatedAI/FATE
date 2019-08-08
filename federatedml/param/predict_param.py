@@ -17,7 +17,11 @@
 #  limitations under the License.
 #
 ################################################################################
+
+from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
+
+LOGGER = log_utils.getLogger()
 
 
 class PredictParam(BaseParam):

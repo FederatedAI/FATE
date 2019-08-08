@@ -93,6 +93,8 @@ def call_fun(func, dsl_data, config_data):
             except Exception as e:
                 traceback.print_exc(e)
                 response = {'retcode': 101, 'retmsg': str(e)}
+    elif func in TASK_OPERATE_FUNC:
+        response = requests.post("/".join([LOCAL_URL, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
         response = requests.post("/".join([LOCAL_URL, "tracking", func.replace('_', '/')]), json=config_data)
         if response.json().get('retcode', 100) == 0:
@@ -113,7 +115,12 @@ def call_fun(func, dsl_data, config_data):
         response = requests.post("/".join([LOCAL_URL, "datatable", func]), json=config_data)
     elif func in MODEL_FUNC:
         response = requests.post("/".join([LOCAL_URL, "model", func]), json=config_data)
-    return response.json() if isinstance(response, requests.models.Response) else response
+    try:
+        return response.json() if isinstance(response, requests.models.Response) else response
+    except Exception as e:
+        print(response.text)
+        traceback.print_exc()
+        return {'retcode': 500, 'msg': str(e)}
 
 
 if __name__ == "__main__":

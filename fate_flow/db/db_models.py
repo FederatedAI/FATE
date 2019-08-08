@@ -14,26 +14,65 @@
 #  limitations under the License.
 #
 import datetime
+import os
+import __main__
 from arch.api.utils import log_utils
-from playhouse.pool import PooledMySQLDatabase
-from fate_flow.settings import DATABASE
+from playhouse.pool import PooledMySQLDatabase, PooledSqliteDatabase
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
+from fate_flow.entity.service_support_config import WorkMode
 from arch.api.utils.core import current_timestamp
 from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
 import inspect
 import sys
 
 LOGGER = log_utils.getLogger()
-data_base_config = DATABASE.copy()
-# TODO: create instance according to the engine
-engine = data_base_config.pop("engine")
-db_name = data_base_config.pop("name")
-DB = PooledMySQLDatabase(db_name, **data_base_config)
 
 
-def close_db(db):
+def singleton(cls, *args, **kw):
+    instances = {}
+
+    def _singleton():
+        key = str(cls) + str(os.getpid())
+        if key not in instances:
+            instances[key] = cls(*args, **kw)
+        return instances[key]
+
+    return _singleton
+
+
+@singleton
+class BaseDataBase(object):
+    def __init__(self):
+        database_config = DATABASE.copy()
+        # TODO: create instance according to the engine
+        engine = database_config.pop("engine")
+        db_name = database_config.pop("name")
+        if WORK_MODE == WorkMode.STANDALONE:
+            # TODO: use sqlite on standalone mode
+            """
+            self.database_connection = PooledSqliteDatabase('fate_flow_sqlite.db')
+            stat_logger.info('init sqlite database from standalone mode successfully')
+            """
+            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+            stat_logger.info('init mysql database from standalone mode successfully')
+        elif WORK_MODE == WorkMode.CLUSTER:
+            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+            stat_logger.info('init mysql database from standalone mode successfully')
+        else:
+            raise Exception('can not init database')
+
+
+if __main__.__file__ == 'fate_flow_server.py':
+    DB = BaseDataBase().database_connection
+else:
+    # TODO: In the next version, the database connection is established only when the server is started
+    DB = BaseDataBase().database_connection
+
+
+def close_connection(db_connection):
     try:
-        if db:
-            db.close()
+        if db_connection:
+            db_connection.close()
     except Exception as e:
         LOGGER.exception(e)
 
@@ -53,14 +92,14 @@ class DataBaseModel(Model):
         super(DataBaseModel, self).save(*args, **kwargs)
 
 
-@DB.connection_context()
 def init_tables():
-    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    table_objs = []
-    for name, obj in members:
-        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-            table_objs.append(obj)
-    DB.create_tables(table_objs)
+    with DB.connection_context():
+        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+        table_objs = []
+        for name, obj in members:
+            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+                table_objs.append(obj)
+        DB.create_tables(table_objs)
 
 
 class Job(DataBaseModel):
@@ -71,12 +110,13 @@ class Job(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=50, index=True)
     f_roles = TextField()
+    f_work_mode = IntegerField()
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
     f_dsl = TextField()
     f_runtime_conf = TextField()
     f_run_ip = CharField(max_length=100)
-    f_status = CharField(max_length=50)  # waiting/ready/start/running/success/failed/partial/setFailed
+    f_status = CharField(max_length=50)
     f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL
     f_current_tasks = CharField(max_length=500, null=True)  # record task id
     f_progress = IntegerField(null=True, default=0)
@@ -99,8 +139,8 @@ class Task(DataBaseModel):
     f_party_id = CharField(max_length=50, index=True)
     f_operator = CharField(max_length=100)
     f_run_ip = CharField(max_length=100)
-    f_run_pid = IntegerField()
-    f_status = CharField(max_length=50)  # running/success/failed
+    f_run_pid = IntegerField(null=True)
+    f_status = CharField(max_length=50)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)

@@ -24,7 +24,7 @@ import com.webank.ai.fate.core.constant.MetaConstants.CompositeHeaderKey;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
-import com.webank.ai.fate.core.network.grpc.client.ClientPool;
+import com.webank.ai.fate.core.network.grpc.client.GrpcClientPool;
 import com.webank.ai.fate.core.utils.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,7 @@ public class DistributedDTable implements DTable {
     private int partition;
 
     public DistributedDTable(String name, String nameSpace, int partition) {
-        this.channel = ClientPool.getChannel(Configuration.getProperty("roll"));
+        this.channel = GrpcClientPool.getChannel(Configuration.getProperty("roll"));
         this.name = name;
         this.nameSpace = nameSpace;
         this.partition = partition;

@@ -33,9 +33,9 @@ class TestFTLHost(FTLHostWorkFlow):
         super(TestFTLHost, self).__init__()
 
     def _init_argument(self):
-        self._initialize(config_path)
         with open(config_path) as conf_f:
             runtime_json = json.load(conf_f)
+        self._initialize(runtime_json)
 
         LOGGER.debug("The Host job id is {}".format(job_id))
         LOGGER.debug("The Host work mode id is {}".format(self.workflow_param.work_mode))

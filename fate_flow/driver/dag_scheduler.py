@@ -12,17 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+
+from fate_flow.driver.job_controller import TaskScheduler
 from fate_flow.manager.queue_manager import BaseQueue
-from fate_flow.driver.job_controller import JobController
 from fate_flow.settings import schedule_logger
-import threading
 
 
-class Scheduler(threading.Thread):
+class DAGScheduler(threading.Thread):
     def __init__(self, queue: BaseQueue, concurrent_num: int = 1):
-        super(Scheduler, self).__init__()
+        super(DAGScheduler, self).__init__()
         self.concurrent_num = concurrent_num
         self.queue = queue
         self.job_executor_pool = ThreadPoolExecutor(max_workers=concurrent_num)
@@ -40,8 +41,8 @@ class Scheduler(threading.Thread):
                         break
                 job_event = self.queue.get_event()
                 schedule_logger.info('schedule job {}'.format(job_event))
-                future = self.job_executor_pool.submit(Scheduler.handle_event, job_event)
-                future.add_done_callback(Scheduler.get_result)
+                future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
+                future.add_done_callback(DAGScheduler.get_result)
                 all_jobs.append(future)
             except Exception as e:
                 schedule_logger.exception(e)
@@ -52,7 +53,7 @@ class Scheduler(threading.Thread):
     @staticmethod
     def handle_event(job_event):
         try:
-            return JobController.run_job(**job_event)
+            return TaskScheduler.run_job(**job_event)
         except Exception as e:
             schedule_logger.exception(e)
             return False

@@ -42,7 +42,7 @@ IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
 WORK_MODE = 0
-LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
+SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'engine': 'mysql',

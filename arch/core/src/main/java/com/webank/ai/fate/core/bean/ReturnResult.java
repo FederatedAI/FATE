@@ -16,6 +16,7 @@
 
 package com.webank.ai.fate.core.bean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,5 +84,19 @@ public class ReturnResult {
 
     public String getCaseid() {
         return caseid;
+    }
+
+    @Override
+    public String toString(){
+        String  result= "";
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            result = mapper.writeValueAsString(this);
+        }catch(Throwable e){
+
+        }
+        return  result;
+
+
     }
 }

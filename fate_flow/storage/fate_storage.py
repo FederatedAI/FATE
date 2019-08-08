@@ -17,7 +17,7 @@ from typing import Iterable, Dict
 from arch.api.utils.core import json_dumps, json_loads
 from fate_flow.manager import version_control
 from arch.api import eggroll
-from fate_flow.settings import WORK_MODE
+from fate_flow.entity.runtime_config import RuntimeConfig
 import datetime
 
 
@@ -27,7 +27,7 @@ class FateStorage(object):
 
     @staticmethod
     def init_storage(job_id: str = None):
-        eggroll.init(job_id=job_id, mode=WORK_MODE)
+        eggroll.init(job_id=job_id, mode=RuntimeConfig.WORK_MODE)
 
     @staticmethod
     def table(namespace: str, name: str, partition: int = 1, persistent: bool = True, create_if_missing: bool = True,
