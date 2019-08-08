@@ -89,8 +89,8 @@ c).Other Modules: The node where other modules are installed.
 
 | node           | Node description                                  | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
 | -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Execution node | The operation node that executes the script       | Git tool   Maven3.5 and above                                | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
-| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0          | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 | In the same area or under the same VPC as other nodes        |
+| Execution node | The operation node that executes the script       | Git tool  rsync Maven3.5 and above                                | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
+| Meta-Service   | The node where the meta service module is located | Jdk1.8+   Python3.6  python virtualenv mysql8.0          | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 | In the same area or under the same VPC as other nodes        |
 | Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2(One party only needs to install a redis on the serving-service node.) | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes.       |
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
@@ -123,6 +123,13 @@ fate-base
 |  `-- wheel-0.32.3-py2.py3-none-any.whl
 ```
 According to the above directory structure, the software packages and files needed by Python are placed in the corresponding directory. The dependency packages required by Python are given in the requirements. TXT file as a list. After downloading the dependency packages list, it can be placed in the pip-dependencies directory side by side with requirements. txt. The requirements.txt file can be obtained from [FATE/requirements.txt](https://github.com/WeBankFinTech/FATE/blob/master/requirements.txt) .
+
+you can also download fate-base:
+
+```
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-base.tar.gz
+tar -xzvf fate-base.tar.gz
+```
 
 ### **3.4. Software environment initialization**
 
@@ -227,18 +234,16 @@ cd FATE/fate-serving
 mvn clean package -DskipTests
 ```
 
+Get third-party C++ dependency packages and put them into the following directory tree: FATE/arch/eggroll/storage-service-cxx/third_party
 ```
-cd FATE/
-git submodule update --init --recursive
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/third_party.tar.gz
+tar -xzvf third_party.tar.gz -C FATE/arch/eggroll/storage-service-cxx/third_party
+
 ```
 
+You can also pull the third-party C++ source code to compile: 
+"cd FATE/;git submodule update --init --recursive"  
 *<u>Note:This step "git submodule update --init --recursive" takes a long time</u>*
-
-You can also instead of "git submodule update --init --recursive"  by  downloade the list of  [glog-0.4.0](https://github.com/google/glog/tree/96a2f23dca4cc7180821ca5f32e526314395d26a)
-
-、[grpc-1.19.1](https://github.com/grpc/grpc/tree/109c570727c3089fef655edcdd0dd02cc5958010)、[boost-1.68.0](https://github.com/boostorg/boost/tree/8f9a1cf1d15d262e09c16a305034d8bc1e39aca2)、[lmdb-0.9.22](https://github.com/LMDB/lmdb/tree/2a5eaad6919ce6941dec4f0d5cce370707a00ba7)、[protobuf-3.6.1](https://github.com/protocolbuffers/protobuf/tree/ca21b28287871660057a2b8bada2c044b6b3075d) 、[lmdb-safe](https://github.com/ahupowerdns/lmdb-safe/tree/e02d654dfe9fcb5bd1b79214dda891ae5a481a90)yourself if conditions permit.
-
-nd put them in the corresponding directory as the following directory tree: FATE/arch/eggroll/storage-service-cxx/third_party:
 
 ```
 third_party
