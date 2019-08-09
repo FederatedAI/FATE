@@ -57,7 +57,7 @@ def call_fun(func, dsl_data, config_data):
     LOCAL_URL = "http://{}:{}/{}".format(IP, HTTP_PORT, API_VERSION)
 
     if func in JOB_OPERATE_FUNC:
-        if dsl_data and config_data:
+        if func == 'submit_job':
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
         else:

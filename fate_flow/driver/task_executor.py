@@ -91,8 +91,6 @@ class TaskExecutor(object):
             run_class_paths = parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].rstrip('.py')
             run_class_name = run_class_paths[-1]
-            schedule_logger.debug(task_input_dsl)
-            schedule_logger.debug(job_args)
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            job_parameters=job_parameters, job_args=job_args,
                                                            input_dsl=task_input_dsl)
@@ -145,7 +143,6 @@ class TaskExecutor(object):
                 for data_type, data_list in input_detail.items():
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
-                        schedule_logger.debug(data_key_item)
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
@@ -167,7 +164,12 @@ class TaskExecutor(object):
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
                 for dsl_model_key in input_detail:
                     dsl_model_key_items = dsl_model_key.split('.')
-                    search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
+                    if len(dsl_model_key_items) == 2:
+                        search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
+                    elif len(dsl_model_key_items) == 3 and dsl_model_key_items[0] == 'pipeline':
+                        search_component_name, search_model_name = dsl_model_key_items[1], dsl_model_key_items[2]
+                    else:
+                        raise Exception('get input {} failed'.format(input_type))
                     models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
                                       model_id=job_parameters['model_id'],
                                       model_version=job_parameters['model_version']).get_output_model(

@@ -37,12 +37,13 @@ class JobController(object):
     def submit_job(job_data):
         job_id = generate_job_id()
         schedule_logger.info('submit job, job_id {}, body {}'.format(job_id, job_data))
-        job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_dsl = job_data.get('job_dsl', {})
+        job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
-        job_type = job_parameters.get('type', '')
+        job_type = job_parameters.get('job_type', '')
         if job_type != 'predict':
+            # generate job model info
             job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
             job_parameters['model_version'] = job_id
         else:
@@ -170,7 +171,7 @@ class JobController(object):
     def save_pipeline(job_id, role, party_id, model_id, model_version):
         job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role, party_id=party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
-        job_type = job_parameters.get('type', '')
+        job_type = job_parameters.get('job_type', '')
         if job_type == 'predict':
             return
         dag = job_utils.get_job_dsl_parser(dsl=job_dsl,

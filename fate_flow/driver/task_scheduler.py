@@ -60,7 +60,7 @@ class TaskScheduler(object):
         job_dsl = file_utils.load_json_conf(job_dsl_path)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
-        if job_parameters.get('type', '') == 'predict':
+        if job_parameters.get('job_type', '') == 'predict':
             job_tracker = Tracking(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                    model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
             pipeline_model = job_tracker.get_output_model('pipeline')

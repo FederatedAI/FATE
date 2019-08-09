@@ -5,9 +5,9 @@
     },
     "job_parameters": {
         "work_mode": 0,
-        "type": "predict",
+        "job_type": "predict",
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": "20190809131956407122_2"
+        "model_version": "20190809200138288302_1"
     },
     "role": {
         "guest": [10000],
