@@ -22,7 +22,7 @@ Item              | Meaning             | Example / Value
 ------------------|---------------------|------------------------
 party.id          |party id of FL participant      | e.g. 10000
 service.port      |port to listen on    | federation defaults to 9394
-meta.service.ip   |meta-service ip  | e.g. 172.16.153.xx
+meta.service.ip   |meta-service ip  | e.g. 192.168.1.xx
 meta.service.port |meta-service port | defaults to 8590
 
 ## 2.2. Meta-Service
@@ -129,8 +129,8 @@ root.crt          | path to certification of root ca | 暂时不填
 
 Item              | Meaning                       | Example / Value
 ------------------|------------------------------|------------------------
-default           | ip and port of exchange or default proxy | 172.16.153.xx / 9370
-${partyId}        | federation ip and port of own party  | 172.16.153.yy / 9394
+default           | ip and port of exchange or default proxy | 192.168.1.xx / 9370
+${partyId}        | federation ip and port of own party  | 192.168.1.yy / 9394
 
 example:
 
@@ -205,7 +205,7 @@ Item              | Meaning             | Example / Value
 ------------------|---------------------|------------------------
 party.id          |party id of FL participant | e.g. 10000
 service.port      |port to listen on.   | roll defaults to 8011
-meta.service.ip   |meta-service ip      | e.g. 172.16.153.xx
+meta.service.ip   |meta-service ip      | e.g. 192.168.1.xx
 meta.service.port |meta-service port    | defaults to 8590
 
 ## 2.6. Storage-Service
@@ -231,8 +231,8 @@ ip                              |ip to bind                                     
 port                            |port to listen on                                           | e.g. 8001
 workMode                        |working mode of serving, 0 for standalone and 1 for cluster | e.g. 1
 party.id                        |party id of FL participant                                  | e.g. 10000
-proxy                           |proxy address                                               | e.g. 172.16.153.xx:9370
-roll                            |roll address                                                | e.g. 172.16.153.xx:8011
+proxy                           |proxy address                                               | e.g. 192.168.1.xx:9370
+roll                            |roll address                                                | e.g. 192.168.1.xx:8011
 standaloneStoragePath           |standalone storage path if you deploy as standalone         | e.g. ${deployDir}/python/data/
 modelCacheAccessTTL(hour)       |the model cache will be cleaned up after this time          | e.g. 12
 modelCacheMaxSize               |maximum number of cached models                             | e.g. 50
@@ -279,8 +279,8 @@ APIs are interfaces exposed by the whole running architecture. Algorithm enginee
        "port": 9370         # port address of proxy module
     },
     "servings": [
-        "172.153.16.1:8000",
-        "172.153.16.2:8000"
+        "192.168.1:8000",
+        "192.168.2:8000"
     ]
   }
 }
