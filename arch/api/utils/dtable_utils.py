@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.version_control.control import get_latest_commit, get_id_library_table_name
+from arch.api.utils.version_control import get_latest_commit
 from arch.api.utils.core import get_commit_id
 gen_namespace_separator = '#'
 

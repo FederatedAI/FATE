@@ -15,7 +15,7 @@
 #
 from flask import Flask, request
 
-from fate_flow.manager.version_control import version_history
+from arch.api.utils.version_control import version_history
 from fate_flow.settings import stat_logger, SERVINGS, API_VERSION
 from fate_flow.utils import publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
@@ -50,7 +50,7 @@ def load_model():
             request_config['local'] = {'role': role_name, 'party_id': _party_id}
             response = federated_api(job_id=_job_id,
                                      method='POST',
-                                     endpoint='{}/model/load/do'.format(API_VERSION),
+                                     endpoint='/{}/model/load/do'.format(API_VERSION),
                                      src_party_id=initiator_party_id,
                                      dest_party_id=_party_id,
                                      json_body=request_config,

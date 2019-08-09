@@ -120,13 +120,15 @@ def get_job_dsl_parser_by_job_id(job_id):
             return None
 
 
-def get_job_dsl_parser(dsl, runtime_conf):
+def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, pipeline_runtime_conf=None):
     dsl_parser = DSLParser()
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
+                   pipeline_dsl=pipeline_dsl,
+                   pipeline_runtime_conf=pipeline_runtime_conf,
                    default_runtime_conf_prefix=default_runtime_conf_path,
                    setting_conf_prefix=setting_conf_path)
     return dsl_parser

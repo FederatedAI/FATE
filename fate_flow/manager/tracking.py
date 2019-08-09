@@ -15,13 +15,13 @@
 #
 from typing import List
 
+from arch.api import storage
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils, api_utils
 
 
@@ -176,27 +176,27 @@ class Tracking(object):
         if data_table:
             persistent_table = data_table.save_as(namespace=data_table._namespace,
                                                   name='{}_persistent'.format(data_table._name))
-            FateStorage.save_data_table_meta(
+            storage.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
-                namespace=persistent_table._namespace, name=persistent_table._name)
+                data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
             data_table_info = {
                 data_name: {'name': persistent_table._name, 'namespace': persistent_table._namespace}}
         else:
             data_table_info = {}
-        FateStorage.save_data(
+        storage.save_data(
             data_table_info.items(),
             name=Tracking.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
 
     def get_output_data_table(self, data_name: str = 'component'):
-        output_data_info_table = FateStorage.table(name=Tracking.output_table_name('data'),
-                                                   namespace=self.table_namespace)
+        output_data_info_table = storage.table(name=Tracking.output_table_name('data'),
+                                               namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
         if data_table_info:
-            data_table = FateStorage.table(name=data_table_info.get('name', ''),
-                                           namespace=data_table_info.get('namespace', ''))
-            data_table_meta = FateStorage.get_data_table_meta_by_instance(data_table=data_table)
+            data_table = storage.table(name=data_table_info.get('name', ''),
+                                       namespace=data_table_info.get('namespace', ''))
+            data_table_meta = storage.get_data_table_metas_by_instance(data_table=data_table)
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']
             return data_table
@@ -212,9 +212,10 @@ class Tracking(object):
             self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
     def get_output_model(self, model_name):
-        model_buffers = model_manager.read_component_model(component_model_key='{}.{}'.format(self.component_name, model_name),
-                                                           party_model_id=self.party_model_id,
-                                                           model_version=self.model_version)
+        model_buffers = model_manager.read_component_model(
+            component_model_key='{}.{}'.format(self.component_name, model_name),
+            party_model_id=self.party_model_id,
+            model_version=self.model_version)
 
         return model_buffers
 
@@ -354,7 +355,7 @@ class Tracking(object):
 
     def clean_task(self):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))
-        FateStorage.clean_job(namespace=self.task_id, regex_string='*')
+        storage.clean_table(namespace=self.task_id, regex_string='*')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace

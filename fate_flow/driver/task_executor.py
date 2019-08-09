@@ -18,13 +18,13 @@ import importlib
 import os
 
 from arch.api import federation
+from arch.api import storage
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, get_lan_ip
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import API_VERSION, schedule_logger
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 
@@ -67,7 +67,7 @@ class TaskExecutor(object):
         try:
             # init environment
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'])
-            FateStorage.init_storage(job_id=task_id)
+            storage.init_storage(job_id=task_id, work_mode=RuntimeConfig.WORK_MODE)
             federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
@@ -148,7 +148,7 @@ class TaskExecutor(object):
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
 
-                                data_table = FateStorage.table(
+                                data_table = storage.table(
                                     namespace=job_args['data'][search_data_name]['namespace'],
                                     name=job_args['data'][search_data_name]['name'])
                             else:
@@ -166,7 +166,9 @@ class TaskExecutor(object):
                     dsl_model_key_items = dsl_model_key.split('.')
                     search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
                     models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
-                                      model_id=job_parameters['model_id'], model_version=job_parameters['model_version']).get_output_model(model_name=search_model_name)
+                                      model_id=job_parameters['model_id'],
+                                      model_version=job_parameters['model_version']).get_output_model(
+                        model_name=search_model_name)
                     this_type_args[search_component_name] = models
         return task_run_args
 

@@ -1,0 +1,17 @@
+{
+    "initiator": {
+        "party_id": "10000",
+        "role": "guest"
+    },
+    "role": {
+        "guest": ["10000"],
+        "host": ["10000"],
+        "arbiter": ["10000"]
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "type": "predict",
+        "model_id": "arbiter-10000#guest-10000#host-10000#model",
+        "model_version": "20190808175520141339_1"
+    }
+}

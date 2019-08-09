@@ -24,6 +24,7 @@ from grpc._cython import cygrpc
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
+from arch.api import storage
 from arch.api.proto import proxy_pb2_grpc
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_apps import manager as job_app_manager
@@ -37,7 +38,6 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager import queue_manager
 from fate_flow.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
     API_VERSION, WORK_MODE
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.grpc_utils import UnaryServicer
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     init_database_tables()
     RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-    FateStorage.init_storage()
+    storage.init_storage(job_id='fate_flow', work_mode=RuntimeConfig.WORK_MODE)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     # start job detector

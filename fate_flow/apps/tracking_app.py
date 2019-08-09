@@ -16,12 +16,12 @@
 from flask import Flask, request
 from google.protobuf import json_format
 
+from arch.api import storage
 from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import json_loads
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import stat_logger
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import get_json_result
 from federatedml.feature.instance import Instance
@@ -169,12 +169,14 @@ def component_parameters():
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
-    job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'], role=request_data['role'],
+    job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
+                                                                role=request_data['role'],
                                                                 party_id=request_data['party_id'])
     model_id = job_runtime_conf['job_parameters']['model_id']
     model_version = job_runtime_conf['job_parameters']['model_version']
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id, model_version=model_version)
+                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
+                       model_version=model_version)
     dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
@@ -232,7 +234,7 @@ def component_output_data():
             output_data.append(l)
             num -= 1
     if output_data:
-        output_data_meta = FateStorage.get_data_table_meta_by_instance(output_data_table)
+        output_data_meta = storage.get_data_table_metas_by_instance(output_data_table)
         schema = output_data_meta.get('schema', {})
         header = [schema.get('sid_name', 'sid')]
         if data_label:

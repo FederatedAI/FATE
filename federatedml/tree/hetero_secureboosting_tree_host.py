@@ -36,7 +36,6 @@ from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from numpy import random
 from arch.api import federation
-from arch.api.model_manager import manager
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()

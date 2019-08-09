@@ -40,9 +40,13 @@ class JobController(object):
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_dsl = job_data.get('job_dsl', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
-        job_parameters = job_runtime_conf.get('job_parameters', {})
-        job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
-        job_parameters['model_version'] = job_id
+        job_parameters = job_runtime_conf['job_parameters']
+        job_type = job_parameters.get('type', '')
+        if job_type != 'predict':
+            job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
+            job_parameters['model_version'] = job_id
+        else:
+            job_utils.check_config(job_parameters, ['model_id', 'model_version'])
         job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
                                                             job_dsl=job_dsl,
                                                             job_runtime_conf=job_runtime_conf)
@@ -64,7 +68,8 @@ class JobController(object):
         TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
 
         # generate model info
-        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_id'], job_parameters['model_version'])
+        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_id'],
+                                                  job_parameters['model_version'])
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
@@ -164,6 +169,10 @@ class JobController(object):
     @staticmethod
     def save_pipeline(job_id, role, party_id, model_id, model_version):
         job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role, party_id=party_id)
+        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_type = job_parameters.get('type', '')
+        if job_type == 'predict':
+            return
         dag = job_utils.get_job_dsl_parser(dsl=job_dsl,
                                            runtime_conf=job_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)
@@ -171,7 +180,8 @@ class JobController(object):
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)
         pipeline.train_dsl = json_dumps(job_dsl, byte=True)
         pipeline.train_runtime_conf = json_dumps(job_runtime_conf, byte=True)
-        job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
+        job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id, model_id=model_id,
+                               model_version=model_version)
         job_tracker.save_output_model({'Pipeline': pipeline}, 'pipeline')
 
     @staticmethod
