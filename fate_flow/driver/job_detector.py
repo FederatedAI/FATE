@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 from arch.api.utils.core import get_lan_ip
 from fate_flow.settings import detect_logger, API_VERSION, schedule_logger
 from fate_flow.utils import cron, job_utils, api_utils
@@ -10,9 +25,7 @@ class JobDetector(cron.Cron):
         detect_logger.info('start to detect running job..')
         for task in running_tasks:
             try:
-                process_exist = job_utils.check_job_process(int(task.f_run_pid),
-                                                            keywords=[task.f_job_id, task.f_task_id, task.f_role,
-                                                                      task.f_party_id])
+                process_exist = job_utils.check_job_process(int(task.f_run_pid))
                 if not process_exist:
                     detect_logger.info(
                         'job {} component {} on {} {} task {} {} process does not exist'.format(task.f_job_id,
@@ -39,7 +52,7 @@ class JobDetector(cron.Cron):
                     initiator_party_id = jobs[0].f_initiator_party_id
                 api_utils.federated_api(job_id=job_id,
                                         method='POST',
-                                        url_without_host='/{}/job/stop'.format(
+                                        endpoint='/{}/job/stop'.format(
                                             API_VERSION),
                                         src_party_id=my_party_id,
                                         dest_party_id=initiator_party_id,

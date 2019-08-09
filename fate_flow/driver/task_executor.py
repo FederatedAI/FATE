@@ -33,6 +33,7 @@ class TaskExecutor(object):
     @staticmethod
     def run_task():
         task = Task()
+        task.f_create_time = current_timestamp()
         try:
             parser = argparse.ArgumentParser()
             parser.add_argument('-j', '--job_id', required=True, type=str, help="Specify a config json file path")
@@ -65,7 +66,7 @@ class TaskExecutor(object):
             return
         try:
             # init environment
-            RuntimeConfig.init_config({'WORK_MODE': job_parameters['work_mode']})
+            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'])
             FateStorage.init_storage(job_id=job_id)
             federation.init(job_id=job_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
@@ -78,7 +79,7 @@ class TaskExecutor(object):
             task.f_task_id = task_id
             task.f_role = role
             task.f_party_id = party_id
-            task.f_create_time = current_timestamp()
+            task.f_operator = 'python_operator'
             tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
                                task_id=task_id,
                                model_key=job_parameters['model_key'])
@@ -175,7 +176,7 @@ class TaskExecutor(object):
                     task_info['f_run_ip'] = ''
                 federated_api(job_id=job_id,
                               method='POST',
-                              url_without_host='/{}/job/{}/{}/{}/{}/{}/status'.format(
+                              endpoint='/{}/job/{}/{}/{}/{}/{}/status'.format(
                                   API_VERSION,
                                   job_id,
                                   component_name,
