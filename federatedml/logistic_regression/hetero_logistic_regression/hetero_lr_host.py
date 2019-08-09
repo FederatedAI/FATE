@@ -22,6 +22,7 @@ from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base i
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -190,11 +191,13 @@ class HeteroLRHost(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
-                # is converge
-
                 batch_index += 1
-                # if is_stopped:
-                #    break
+
+                # temporary resource recovery and will be removed in the future
+                rubbish_list = [host_forward,
+                                fore_gradient
+                                ]
+                data_overview.rubbish_clear(rubbish_list)
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(

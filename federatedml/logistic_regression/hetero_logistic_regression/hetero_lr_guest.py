@@ -24,6 +24,7 @@ from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -258,6 +259,16 @@ class HeteroLRGuest(HeteroLRBase):
 
                 # is converge of loss in arbiter
                 batch_index += 1
+
+                # temporary resource recovery and will be removed in the future
+                rubbish_list = [host_forward,
+                                aggregate_forward_res,
+                                en_aggregate_wx,
+                                en_aggregate_wx_square,
+                                fore_gradient,
+                                self.guest_forward
+                                ]
+                data_overview.rubbish_clear(rubbish_list)
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(
