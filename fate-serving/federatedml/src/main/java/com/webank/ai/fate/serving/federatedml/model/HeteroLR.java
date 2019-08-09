@@ -2,6 +2,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.LRModelParamProto.LRModelParam;
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -68,5 +69,5 @@ public abstract class HeteroLR extends BaseModel {
     }
 
     @Override
-    public abstract Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams);
+    public abstract Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams);
 }
