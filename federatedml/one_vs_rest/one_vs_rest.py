@@ -25,7 +25,7 @@ from arch.api.proto import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.util import consts
-from federatedml.util.transfer_variable import OneVsRestTransferVariable
+from federatedml.util.transfer_variable.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -81,12 +81,7 @@ class OneVsRest(object):
                 max_prob = prob
                 max_prob_index = i
 
-        return max_prob, classes[max_prob_index]
-
-    @staticmethod
-    def __append(list_obj, value):
-        list_obj.append(value)
-        return list_obj
+        return classes[max_prob_index], max_prob, instance
 
     def __get_data_classes(self, data_instances):
         """
@@ -167,14 +162,6 @@ class OneVsRest(object):
 
         self.__synchronize_aggregate_classed_list()
 
-    def set_flowid(self, flowid=0):
-        """
-        Set the flowid of each classifier, because each classifier should has different flowid
-        """
-        if self.transfer_variable is not None:
-            self.transfer_variable.set_flowid(flowid)
-            LOGGER.info("set flowid:" + str(flowid))
-
     def fit(self, data_instances=None):
         """
         Fit OneVsRest model
@@ -196,7 +183,7 @@ class OneVsRest(object):
         for flow_id, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with flow_id:{}, label:{}".format(flow_id, label))
             classifier = copy.deepcopy(self.classifier)
-            classifier.set_flowid("train_" + str(flow_id))
+            classifier.set_flowid("_".join(["train", str(flow_id)]))
             if self.need_mask_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self.__mask_data_label(data_instances, label=label)
@@ -212,7 +199,7 @@ class OneVsRest(object):
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(flow_id))
 
-    def predict(self, data_instances, predict_param):
+    def predict(self, data_instances):
         """
         Predict OneVsRest model
         Parameters:
@@ -228,13 +215,12 @@ class OneVsRest(object):
         for i, model in enumerate(self.models):
             LOGGER.info("Start to predict with model:{}".format(i))
             model.set_flowid("predict_" + str(i))
-            predict_res = model.predict(data_instances, predict_param)
+            predict_res = model.predict(data_instances)
             if predict_res:
                 if not prob:
-                    prob = predict_res.mapValues(lambda r: [r[1]])
+                    prob = predict_res.mapValues(lambda r: [r[2]])
                 else:
-                    f = functools.partial(self.__append)
-                    prob = prob.join(predict_res, lambda p, r: f(list_obj=p, value=r[1]))
+                    prob = prob.join(predict_res, lambda p, r: p + [r[2]])
 
             LOGGER.info("finish model_{} predict.".format(i))
 
@@ -242,7 +228,7 @@ class OneVsRest(object):
         if prob:
             f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
             multi_classes_res = prob.mapValues(f)
-            predict_res = data_instances.join(multi_classes_res, lambda d, m: (d.label, m[0], m[1]))
+            predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
 
         LOGGER.info("finish OneVsRest Predict, return predict results.")
 
@@ -303,40 +289,3 @@ class OneVsRest(object):
             self.classes.append(model_class)
 
         LOGGER.info("finish load OneVsRest model.")
-
-    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
-        """
-        evaluate OneVsRest model.
-        Parameters:
-        ----------
-        labels: list, ground true label
-        pred_prob: list, predict probably of pred_labels
-        pred_labels: list, predict label
-        evaluate_param: EvaluateParam
-        Returns:
-        ----------
-        evaluate results
-        """
-        predict_res = None
-        if evaluate_param.classi_type == consts.BINARY:
-            predict_res = pred_prob
-        elif evaluate_param.classi_type == consts.MULTY:
-            predict_res = pred_labels
-        else:
-            LOGGER.warning("unknown classification type, return None as evaluation results")
-
-        eva = Evaluation(evaluate_param.classi_type)
-
-        label_type = type(labels[0])
-
-        if isinstance(predict_res, np.ndarray) and isinstance(labels, np.ndarray):
-            predict_res = predict_res.astype(labels.dtype)
-        else:
-            if not isinstance(predict_res, list):
-                predict_res = list(predict_res)
-
-            for i in range(len(predict_res)):
-                predict_res[i] = label_type(predict_res[i])
-
-        return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
-                          evaluate_param.pos_label)

@@ -57,21 +57,21 @@ class BaseScale(object):
 
     def _get_upper(self, data_shape):
         if isinstance(self.feat_upper, Iterable):
-            return self.feat_upper
+            return list(map(str, self.feat_upper))
         else:
             if self.feat_upper is None:
                 return ["None" for _ in range(data_shape)]
             else:
-                return [self.feat_upper for _ in range(data_shape)]
+                return [str(self.feat_upper) for _ in range(data_shape)]
 
     def _get_lower(self, data_shape):
         if isinstance(self.feat_lower, Iterable):
-            return self.feat_lower
+            return list(map(str, self.feat_lower))
         else:
             if self.feat_lower is None:
                 return ["None" for _ in range(data_shape)]
             else:
-                return [self.feat_lower for _ in range(data_shape)]
+                return [str(self.feat_lower) for _ in range(data_shape)]
 
     def _get_scale_column_idx(self, data):
         data_shape = self._get_data_shape(data)

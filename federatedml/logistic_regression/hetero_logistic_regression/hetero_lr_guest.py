@@ -34,6 +34,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.data_batch_count = []
         self.wx = None
         self.guest_forward = None
+        self.role = consts.GUEST
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -288,8 +289,6 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        LOGGER.debug(
-            "data count: {}, coef_: {}, intercept_: {}".format(data_features.count(), self.coef_, self.intercept_))
         prob_guest = self.compute_wx(data_features, self.coef_, self.intercept_)
         prob_host = federation.get(name=self.transfer_variable.host_prob.name,
                                    tag=self.transfer_variable.generate_transferid(

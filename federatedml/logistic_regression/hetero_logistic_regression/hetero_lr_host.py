@@ -31,6 +31,7 @@ class HeteroLRHost(HeteroLRBase):
         super(HeteroLRHost, self).__init__()
         self.batch_num = None
         self.batch_index_list = []
+        self.role = consts.HOST
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
