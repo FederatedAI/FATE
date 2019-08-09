@@ -33,7 +33,6 @@ from sklearn.metrics import roc_curve
 
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.storage.fate_storage import FateStorage
 
 from federatedml.param import EvaluateParam
 from federatedml.util import consts
@@ -91,7 +90,6 @@ class Evaluation(ModelBase):
                         consts.REGRESSION: self.regression_support_func}
 
         self.round_num = 6
-        FateStorage.init_storage()
 
     def _init_model(self, model):
         self.model_param = model
@@ -132,7 +130,7 @@ class Evaluation(ModelBase):
                 pred_scores.append(d[1][2])
 
             if self.eval_type == consts.BINARY or self.eval_type == consts.REGRESSION:
-                if self.pos_label:
+                if self.pos_label and self.eval_type == consts.BINARY:
                     new_labels = []
                     for label in labels:
                         if self.pos_label == label:

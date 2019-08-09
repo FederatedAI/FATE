@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 
 import numpy as np
 from google.protobuf import json_format
@@ -184,22 +185,32 @@ class BaseLogisticRegression(ModelBase):
         if header is None:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
             return param_protobuf_obj
+        if self.need_one_vs_rest:
+            one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
+        else:
+            one_vs_rest_class = None
 
         weight_dict = {}
         for idx, header_name in enumerate(header):
             if self.need_one_vs_rest:
-                for class_idx, class_obj in self.one_vs_rest_obj.models:
+                for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
                     coef = class_obj.coef_[idx]
-                    class_type = self.one_vs_rest_obj.classes[class_idx]
+                    class_type = one_vs_rest_class[class_idx]
                     class_and_header_name = "_".join(["class", str(class_type), header_name])
                     weight_dict[class_and_header_name] = coef
             else:
                 coef_i = self.coef_[idx]
                 weight_dict[header_name] = coef_i
-        LOGGER.debug("weight_dict: {}, loss_history: {}, header: {}, self.coef_: {}".format(weight_dict,
-                                                                                            self.loss_history,
-                                                                                            header,
-                                                                                            self.coef_))
+
+        if self.need_one_vs_rest:
+            for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
+                intercept = class_obj.intercept_
+                class_type = one_vs_rest_class[class_idx]
+                intercept_name = "_".join(["class", str(class_type), "intercept"])
+                weight_dict[intercept_name] = intercept
+
+            self.intercept_ = 0
+
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
                                                              loss_history=self.loss_history,
                                                              is_converged=self.is_converged,
@@ -207,7 +218,7 @@ class BaseLogisticRegression(ModelBase):
                                                              intercept=self.intercept_,
                                                              header=header,
                                                              need_one_vs_rest=self.need_one_vs_rest,
-                                                             one_vs_rest_classes=self.one_vs_rest_obj.classes
+                                                             one_vs_rest_classes=one_vs_rest_class
                                                              )
         json_result = json_format.MessageToJson(param_protobuf_obj)
         LOGGER.debug("json_result: {}".format(json_result))
@@ -223,26 +234,35 @@ class BaseLogisticRegression(ModelBase):
         return result
 
     def _load_model(self, model_dict):
-        # self._parse_need_run(model_dict, self.model_meta_name)
-        LOGGER.debug("In load model, model_dict: {}".format(model_dict))
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         self.header = list(result_obj.header)
-        LOGGER.debug("In load model, header: {}".format(self.header))
         # For hetero-lr arbiter predict function
         if self.header is None:
             return
 
         feature_shape = len(self.header)
-        self.coef_ = np.zeros(feature_shape)
-        weight_dict = dict(result_obj.weight)
-        self.intercept_ = result_obj.intercept
+        self.need_one_vs_rest = result_obj.need_one_vs_rest
+        if self.need_one_vs_rest:
+            self.one_vs_rest_classes = list(map(float, list(result_obj.one_vs_rest_classes)))
+            weight = dict(result_obj.weight)
+            self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
+                                             one_vs_rest_param=self._get_one_vs_rest_param())
+            self.one_vs_rest_obj.classes = self.one_vs_rest_classes
+            for class_type in self.one_vs_rest_obj.classes:
+                classifier = copy.deepcopy(self)
+                classifier.coef_ = np.zeros(feature_shape)
+                for i, feature_name in self.header:
+                    feature_name = "_".join(["class", str(class_type), feature_name])
+                    self.coef_[i] = weight.get(feature_name)
+                # self.
 
-        for idx, header_name in enumerate(self.header):
-            self.coef_[idx] = weight_dict.get(header_name)
+        else:
+            self.coef_ = np.zeros(feature_shape)
+            weight_dict = dict(result_obj.weight)
+            self.intercept_ = result_obj.intercept
 
-        LOGGER.debug("In load model, coef_: {}, intercept: {}, weight_dict: {}".format(
-            self.coef_, self.intercept_, weight_dict
-        ))
+            for idx, header_name in enumerate(self.header):
+                self.coef_[idx] = weight_dict.get(header_name)
 
     def _abnormal_detection(self, data_instances):
         """
@@ -298,13 +318,16 @@ class BaseLogisticRegression(ModelBase):
         if not self.need_run:
             return data_instances
         kflod_obj = KFold()
+        self.init_schema(data_instances)
         cv_param = self._get_cv_param()
         kflod_obj.run(cv_param, data_instances, self)
+        LOGGER.debug("Finish kflod run")
         return data_instances
 
     def one_vs_rest(self, train_data=None, validate_data=None):
         self.need_one_vs_rest = True
-        self.header = self.get_header(train_data)
+        if self.role != consts.ARBITER:
+            self.header = self.get_header(train_data)
         self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
                                     one_vs_rest_param=self._get_one_vs_rest_param())
         self.one_vs_rest_obj.fit(data_instances=train_data)
@@ -333,16 +356,6 @@ class BaseLogisticRegression(ModelBase):
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
 
-    def callback_meta(self, metric_name, metric_namespace, metric_meta):
-        self.tracker.set_metric_meta(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metric_meta=metric_meta)
-
-    def callback_metric(self, metric_name, metric_namespace, metric_data):
-        self.tracker.log_metric_data(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metrics=metric_data)
-
     def set_schema(self, data_instance, header=None):
         if header is None:
             self.schema["header"] = self.header
@@ -352,5 +365,7 @@ class BaseLogisticRegression(ModelBase):
         return data_instance
 
     def init_schema(self, data_instance):
+        if data_instance is None:
+            return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')

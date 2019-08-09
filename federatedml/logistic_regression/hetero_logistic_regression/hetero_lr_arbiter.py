@@ -184,16 +184,19 @@ class HeteroLRArbiter(HeteroLRBase):
             # if converge
             loss = iter_loss / self.batch_num
             LOGGER.info("iter loss:{}".format(loss))
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters"
-                                     })
-            metric_name = 'loss_' + self.flowid
-            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name=metric_name,
-                                 metric_namespace='train',
-                                 metric_data=[Metric(self.n_iter_, float(loss))])
+
+            if not self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters"
+                                         })
+                metric_name = 'loss_' + self.flowid
+                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name=metric_name,
+                                     metric_namespace='train',
+                                     metric_data=[Metric(self.n_iter_, float(loss))])
+
             if self.converge_func.is_converge(loss):
                 is_stop = True
 

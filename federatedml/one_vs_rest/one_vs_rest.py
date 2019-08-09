@@ -76,12 +76,14 @@ class OneVsRest(object):
         """
         max_prob = -1
         max_prob_index = -1
+        instance_with_class = {}
         for (i, prob) in enumerate(instance):
+            instance_with_class[classes[i]] = prob
             if prob > max_prob:
                 max_prob = prob
                 max_prob_index = i
 
-        return classes[max_prob_index], max_prob, instance
+        return classes[max_prob_index], max_prob, instance_with_class
 
     def __get_data_classes(self, data_instances):
         """
