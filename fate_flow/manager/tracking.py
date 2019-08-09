@@ -18,13 +18,13 @@ import pickle
 from typing import List
 
 from arch.api.utils import dtable_utils
-from arch.api.utils.core import current_timestamp
+from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, API_VERSION
 from fate_flow.storage.fate_storage import FateStorage
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, api_utils
 
 
 class Tracking(object):
@@ -38,7 +38,8 @@ class Tracking(object):
         self.role = role
         self.party_id = party_id
         self.component_name = component_name if component_name else 'pipeline'
-        self.task_id = task_id if task_id else ''
+        self.task_id = task_id if task_id else job_utils.generate_task_id(job_id=self.job_id,
+                                                                          component_name=self.component_name)
         self.table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
         self.job_table_namespace = '_'.join(
@@ -47,17 +48,33 @@ class Tracking(object):
         self.model_version = self.job_id
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
-        self.save_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
-                              job_level=True)
+        self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
+                                     job_level=True)
 
     def log_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
+        self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
+                                     job_level=False)
+
+    def save_metric_data_remote(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
+        # TODO: In the next version will be moved to tracking api module on arch/api package
         stat_logger.info(
             'log job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
                                                                         self.party_id, metric_namespace, metric_name))
-        self.save_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
-                              job_level=False)
+        request_body = dict()
+        request_body['metric_namespace'] = metric_namespace
+        request_body['metric_name'] = metric_name
+        request_body['metrics'] = [serialize_b64(metric, to_str=True) for metric in metrics]
+        request_body['job_level'] = job_level
+        response = api_utils.local_api(method='POST',
+                                       endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_data/save'.format(
+                                           API_VERSION,
+                                           self.job_id,
+                                           self.component_name,
+                                           self.task_id,
+                                           self.role,
+                                           self.party_id),
+                                       json_body=request_body)
+        return response['retcode'] == 0
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         kv = []
@@ -80,7 +97,30 @@ class Tracking(object):
 
     def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                         job_level: bool = False):
-        # TODO: In the next version will be changed to call the API way by the server persistent storage, not here to do
+        self.save_metric_meta_remote(metric_namespace=metric_namespace, metric_name=metric_name,
+                                     metric_meta=metric_meta, job_level=job_level)
+
+    def save_metric_meta_remote(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
+                                job_level: bool = False):
+        # TODO: In the next version will be moved to tracking api module on arch/api package
+        request_body = dict()
+        request_body['metric_namespace'] = metric_namespace
+        request_body['metric_name'] = metric_name
+        request_body['metric_meta'] = serialize_b64(metric_meta, to_str=True)
+        request_body['job_level'] = job_level
+        response = api_utils.local_api(method='POST',
+                                       endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_meta/save'.format(
+                                           API_VERSION,
+                                           self.job_id,
+                                           self.component_name,
+                                           self.task_id,
+                                           self.role,
+                                           self.party_id),
+                                       json_body=request_body)
+        return response['retcode'] == 0
+
+    def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
+                         job_level: bool = False):
         stat_logger.info(
             'set job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
                                                                         self.party_id, metric_namespace, metric_name))
@@ -192,8 +232,8 @@ class Tracking(object):
                 tracking_metric_data_source = []
                 for k, v in kv:
                     db_source = default_db_source.copy()
-                    db_source['f_key'] = Tracking.serialize_b64(k)
-                    db_source['f_value'] = Tracking.serialize_b64(v)
+                    db_source['f_key'] = serialize_b64(k)
+                    db_source['f_value'] = serialize_b64(v)
                     db_source['f_create_time'] = current_timestamp()
                     tracking_metric_data_source.append(db_source)
                 self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
@@ -226,7 +266,7 @@ class Tracking(object):
                 cursor = DB.execute_sql(query_sql)
                 stat_logger.info(query_sql)
                 for row in cursor.fetchall():
-                    yield Tracking.deserialize_b64(row[0]), Tracking.deserialize_b64(row[1])
+                    yield deserialize_b64(row[0]), deserialize_b64(row[1])
             except Exception as e:
                 stat_logger.exception(e)
             return metrics

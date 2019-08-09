@@ -20,7 +20,7 @@ class RuntimeConfig(object):
     JOB_QUEUE = None
 
     @staticmethod
-    def init_config(runtime_config):
-        for k, v in runtime_config.items():
+    def init_config(**kwargs):
+        for k, v in kwargs.items():
             if hasattr(RuntimeConfig, k):
                 setattr(RuntimeConfig, k, v)

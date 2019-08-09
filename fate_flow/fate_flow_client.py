@@ -1,5 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 import argparse
 import json
 import os
@@ -112,7 +125,7 @@ def call_fun(func, dsl_data, config_data):
     elif func in DATA_FUNC:
         response = requests.post("/".join([LOCAL_URL, "data", func]), json=config_data)
     elif func in TABLE_FUNC:
-        response = requests.post("/".join([LOCAL_URL, "datatable", func]), json=config_data)
+        response = requests.post("/".join([LOCAL_URL, "table", func]), json=config_data)
     elif func in MODEL_FUNC:
         response = requests.post("/".join([LOCAL_URL, "model", func]), json=config_data)
     try:
@@ -129,7 +142,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dsl', required=False, type=str, help="dsl path")
     parser.add_argument('-f', '--function', type=str,
                         choices=(
-                                    DATA_FUNC + MODEL_FUNC + JOB_FUNC + JOB_OPERATE_FUNC + TASK_OPERATE_FUNC + TABLE_FUNC + TRACKING_FUNC),
+                                DATA_FUNC + MODEL_FUNC + JOB_FUNC + JOB_OPERATE_FUNC + TASK_OPERATE_FUNC + TABLE_FUNC + TRACKING_FUNC),
                         required=True,
                         help="function to call")
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
