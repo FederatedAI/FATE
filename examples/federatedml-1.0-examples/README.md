@@ -76,3 +76,26 @@ In this step, two config files corresponding to dsl config file and component co
 
 #### 3. Check log files
 Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
+
+
+### Step5: Check out Results
+FATE now provide "FATE-BOARD" for showing modeling log-metrics and evaluation results.
+
+Use your browser to open a website: http://{Your fate-board ip}:{your fate-board port}/index.html#/history.
+
+There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
+
+In the task page, all the components will be shown as a DAG. We use different color to indicate their running status.
+1. Green: run success
+2. Blue: running
+3. Gray: Waiting
+4. Red: Failed.
+
+ You can click each component to get their running parameters on the right side. Below those parameters, there exist a **View the outputs** button. You may check out model output, data output and logs for this component.
+
+If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
+
+1. Left window: showing data set used for each party in this task.
+2. Middle window: Running status or progress of the whole task
+3. Right window: DAG of components.
+

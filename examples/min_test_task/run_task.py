@@ -119,23 +119,35 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
     elif output_type == 'log_metric':
         task_type = 'component_metric_all'
 
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             task_type,
-                             "-j",
-                             jobid,
-                             "-p",
-                             str(party_id),
-                             "-r",
-                             role,
-                             "-cpn",
-                             component_name],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-    subp.wait()
-    stdout = subp.stdout.read().decode("utf-8")
+    retry_counter = 0
+    while True:
+        subp = subprocess.Popen(["python",
+                                 fate_flow_path,
+                                 "-f",
+                                 task_type,
+                                 "-j",
+                                 jobid,
+                                 "-p",
+                                 str(party_id),
+                                 "-r",
+                                 role,
+                                 "-cpn",
+                                 component_name],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        subp.wait()
+        stdout = subp.stdout.read().decode("utf-8")
+        if not stdout:
+
+            retry_counter += 1
+            if retry_counter >= 5:
+                raise ValueError(
+                    "[obtain_component_output] task:{} failed stdout:{}".format(task_type, stdout))
+            time.sleep(5)
+        else:
+            break
+
     print("task_type: {}, jobid: {}, party_id: {}, role: {}, component_name: {}".format(
         task_type, job_id, party_id, role, component_name
     ))
@@ -167,27 +179,36 @@ def parse_exec_task(stdout):
 
 
 def job_status_checker(jobid, component_name):
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             "query_task",
-                             "-j",
-                             jobid,
-                             "-cpn",
-                             component_name
-                             ],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
 
-    subp.wait()
-    print("Current subp status: {}".format(subp.returncode))
-    stdout = subp.stdout.read().decode("utf-8")
-    print("Job_status_checker Stdout is : {}".format(stdout))
-    stdout = json.loads(stdout)
-    status = stdout["retcode"]
-    if status != 0:
-        raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+    check_counter = 0
+    while True:
+        subp = subprocess.Popen(["python",
+                                 fate_flow_path,
+                                 "-f",
+                                 "query_task",
+                                 "-j",
+                                 jobid,
+                                 "-cpn",
+                                 component_name
+                                 ],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+
+        subp.wait()
+        print("Current subp status: {}".format(subp.returncode))
+        stdout = subp.stdout.read().decode("utf-8")
+        print("Job_status_checker Stdout is : {}".format(stdout))
+        stdout = json.loads(stdout)
+        status = stdout["retcode"]
+        if status != 0:
+            if check_counter >= 5:
+                raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+            time.sleep(5)
+            check_counter += 1
+        else:
+            break
+        #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
 
     return stdout
 
@@ -286,47 +307,14 @@ def task_status_checker(jobid, component_name):
 
     for s in task_status:
         if s == FAIL:
+            print("return status is fail")
             return FAIL
 
         if s == RUNNING:
+            print("return status is running")
             return RUNNING
+    print("return status is success")
     return SUCCESS
-
-    # if any([x == FAIL for x in task_status]):
-    #     return FAIL
-    #
-    # if all([x == SUCCESS for x in task_status]):
-    #     return SUCCESS
-    #
-    # if any([x == RUNNING for x in task_status]):
-    #     return RUNNING
-    #
-    # if all([x == START for x in task_status]):
-    #     return RUNNING
-    #
-    # return STUCK
-
-    # for res in check_data:
-    #     status = res["status"]
-    #     party_id = res['party_id']
-    #     role = res['role']
-    #     if status == FAIL:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is fail".format(role, party_id))
-    #         task_status = FAIL
-    #     elif status == RUNNING:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is running".format(role, party_id))
-    #         if task_status == SUCCESS:
-    #             task_status = RUNNING
-    #     elif status == SUCCESS:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is success".format(role, party_id))
-    #     elif status == READY:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is ready".format(role, party_id))
-    #         if status != FAIL:
-    #             task_status = READY
-    #     else:
-    #         raise ValueError("[Task_Status_checker] party_id:{} status is unknown:{}".format(party_id, status))
-
-    # return task_status
 
 
 def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namespace, host_name, host_namespace):
