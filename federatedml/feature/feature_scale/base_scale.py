@@ -35,7 +35,7 @@ class BaseScale(object):
         self.feat_lower = params.feat_lower
         self.data_shape = None
         self.header = None
-        self.scale_column_idx = None
+        self.scale_column_idx = []
 
         self.summary_obj = None
 

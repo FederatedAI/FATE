@@ -138,6 +138,9 @@ class StandardScale(BaseScale):
         else:
             scale_column = ["_".join(["col", str(i)]) for i in self.scale_column_idx]
 
+        if not self.data_shape:
+            self.data_shape = -1
+
         meta_proto_obj = ScaleMeta(method="standard_scale",
                                    area=self.area,
                                    scale_column=scale_column,
@@ -150,13 +153,14 @@ class StandardScale(BaseScale):
 
     def __get_param(self, need_run):
         column_scale_param_dict = {}
-        for i, header in enumerate(self.header):
-            if i in self.scale_column_idx:
-                param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
-                                             column_lower=self.column_min_value[i],
-                                             mean=self.mean[i],
-                                             std=self.std[i])
-                column_scale_param_dict[header] = param_obj
+        if self.header:
+            for i, header in enumerate(self.header):
+                if i in self.scale_column_idx:
+                    param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
+                                                 column_lower=self.column_min_value[i],
+                                                 mean=self.mean[i],
+                                                 std=self.std[i])
+                    column_scale_param_dict[header] = param_obj
 
         param_proto_obj = ScaleParam(col_scale_param=column_scale_param_dict,
                                      header=self.header,
