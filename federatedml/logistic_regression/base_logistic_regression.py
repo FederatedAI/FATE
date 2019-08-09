@@ -291,26 +291,16 @@ class BaseLogisticRegression(ModelBase):
         if not self.need_run:
             return data_instances
         kflod_obj = KFold()
+        self.init_schema(data_instances)
         cv_param = self._get_cv_param()
         kflod_obj.run(cv_param, data_instances, self)
+        LOGGER.debug("Finish kflod run")
         return data_instances
 
     def _get_cv_param(self):
         self.model_param.cv_param.role = self.role
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
-
-    def callback_meta(self, metric_name, metric_namespace, metric_meta):
-        # tracker = Tracking('123', 'abc')
-        self.tracker.set_metric_meta(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metric_meta=metric_meta)
-
-    def callback_metric(self, metric_name, metric_namespace, metric_data):
-        # tracker = Tracking('123', 'abc')
-        self.tracker.log_metric_data(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metrics=metric_data)
 
     def set_schema(self, data_instance, header=None):
         if header is None:
@@ -321,5 +311,7 @@ class BaseLogisticRegression(ModelBase):
         return data_instance
 
     def init_schema(self, data_instance):
+        if data_instance is None:
+            return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-from arch.api.utils import log_utils
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,6 +16,7 @@ from arch.api.utils import log_utils
 #  limitations under the License.
 #
 from federatedml.util.param_extract import ParamExtract
+from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -33,6 +32,7 @@ class ModelBase(object):
         self.taskid = ''
         self.need_run = True
         self.need_cv = False
+        self.need_one_vs_rest = False
         self.tracker = None
         self.cv_fold = 0
 
@@ -51,8 +51,14 @@ class ModelBase(object):
         except AttributeError:
             need_run = True
         self.need_run = need_run
+
+        try:
+            need_one_vs_rest = param.one_vs_rest_param.need_one_vs_rest
+        except AttributeError:
+            need_one_vs_rest = False
+        self.need_one_vs_rest = need_one_vs_rest
+
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
-        return need_cv
 
     def _init_model(self, model):
         pass
@@ -88,6 +94,12 @@ class ModelBase(object):
             LOGGER.info("Need cross validation.")
             self.cross_validation(train_data)
 
+        elif stage == "one_vs_rest":
+            LOGGER.info("Need one vs rest.")
+            self.data_output = self.one_vs_rest(train_data, eval_data)
+            self.set_predict_data_schema(self.data_output, train_data.schema)
+            return
+
         elif train_data:
             self.set_flowid('train')
             self.fit(train_data)
@@ -110,7 +122,7 @@ class ModelBase(object):
                     self.data_output = eval_data_output
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
-
+        
         elif eval_data:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
@@ -119,7 +131,7 @@ class ModelBase(object):
                 self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
 
             self.set_predict_data_schema(self.data_output, eval_data.schema)
-
+        
         else:
             if stage == "fit":
                 self.set_flowid('fit')
@@ -133,10 +145,12 @@ class ModelBase(object):
             LOGGER.debug("In model base, data_output schema: {}".format(self.data_output.schema))
 
     def run(self, component_parameters=None, args=None):
-        need_cv = self._init_runtime_parameters(component_parameters)
+        self._init_runtime_parameters(component_parameters)
 
-        if need_cv:
+        if self.need_cv:
             stage = 'cross_validation'
+        elif self.need_one_vs_rest:
+            stage = "one_vs_rest"
         elif "model" in args:
             self._load_model(args)
             stage = "transform"
@@ -161,6 +175,9 @@ class ModelBase(object):
         pass
 
     def cross_validation(self, data_inst):
+        pass
+
+    def one_vs_rest(self, train_data, eval_data):
         pass
 
     def save_data(self):
@@ -199,17 +216,21 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
-        # tracker = Tracking('123', 'abc')
-        # if self.need_cv:
+        if self.need_cv:
+            metric_name = '.'.join([metric_name, str(self.cv_fold)])
+            flow_id_list = self.flowid.split('.')
+            LOGGER.debug("Need cv, change callback_meta, flow_id_list: {}".format(flow_id_list))
+            if len(flow_id_list) > 1:
+                curve_name = '.'.join(flow_id_list[1:])
+                metric_meta.update_metas({'curve_name': curve_name})
 
         self.tracker.set_metric_meta(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
                                      metric_meta=metric_meta)
 
     def callback_metric(self, metric_name, metric_namespace, metric_data):
-        # tracker = Tracking('123', 'abc')
-        # if self.need_cv:
-        #     metric_name = '.'.join([metric_name, str(self.cv_fold)])
+        if self.need_cv:
+            metric_name = '.'.join([metric_name, str(self.cv_fold)])
 
         self.tracker.log_metric_data(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
