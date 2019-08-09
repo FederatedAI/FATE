@@ -223,6 +223,8 @@ class ModelBase(object):
             if len(flow_id_list) > 1:
                 curve_name = '.'.join(flow_id_list[1:])
                 metric_meta.update_metas({'curve_name': curve_name})
+        else:
+            metric_meta.update_metas({'curve_name': metric_name})
 
         self.tracker.set_metric_meta(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
