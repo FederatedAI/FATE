@@ -22,10 +22,6 @@
                         "dataio_0.train"
                     ]
                 }
-            },
-            "output": {
-                "data": ["train"],
-                "model": ["homolr"]
             }
         }
     }

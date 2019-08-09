@@ -115,3 +115,10 @@ Figure 1： Job Overview</div>
 2. Middle window: Running status or progress of the whole task
 3. Right window: DAG of components.
 
+### Step6: Check out Logs
+
+After you submit a job, you can find your job log in ${Your install path}/logs/${your jobid}
+
+The logs for each party is collected separately and list in different folders. Inside each folder, the logs for different components are also arranged in different folders. In this way, you can check out the log more specifically and get useful detailed  information.
+
+
