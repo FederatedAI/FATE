@@ -94,7 +94,7 @@ class HomoLRGuest(HomoLRBase):
             metric_meta = MetricMeta(name='train',
                                      metric_type="LOSS",
                                      extra_metas={
-                                         "unit_name": "iters"
+                                         "unit_name": "iters",
                                      })
             # metric_name = self.get_metric_name('loss')
 

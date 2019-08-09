@@ -16,6 +16,7 @@
 from flask import Flask, request
 from google.protobuf import json_format
 
+from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import json_loads
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.tracking import Tracking
@@ -91,6 +92,26 @@ def component_metrics():
         return get_json_result(retcode=0, retmsg='success', data=metrics)
     else:
         return get_json_result(retcode=0, retmsg='no data', data={})
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
+def save_metric_data(job_id, component_name, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
+    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metrics=metrics, job_level=request_data['job_level'])
+    return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
+def save_metric_meta(job_id, component_name, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    metric_meta = deserialize_b64(request_data['metric_meta'])
+    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metric_meta=metric_meta, job_level=request_data['job_level'])
+    return get_json_result()
 
 
 @manager.route('/component/metric_data', methods=['post'])
@@ -220,16 +241,16 @@ def component_output_data():
         return get_json_result(retcode=0, retmsg='no data', data=[])
 
 
-@DB.connection_context()
 def check_request_parameters(request_data):
-    if 'role' not in request_data and 'party_id' not in request_data:
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                    Job.f_is_initiator == 1)
-        if jobs:
-            job = jobs[0]
-            job_runtime_conf = json_loads(job.f_runtime_conf)
-            job_initiator = job_runtime_conf.get('initiator', {})
-            role = job_initiator.get('role', '')
-            party_id = job_initiator.get('party_id', 0)
-            request_data['role'] = role
-            request_data['party_id'] = party_id
+    with DB.connection_context():
+        if 'role' not in request_data and 'party_id' not in request_data:
+            jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
+                                                        Job.f_is_initiator == 1)
+            if jobs:
+                job = jobs[0]
+                job_runtime_conf = json_loads(job.f_runtime_conf)
+                job_initiator = job_runtime_conf.get('initiator', {})
+                role = job_initiator.get('role', '')
+                party_id = job_initiator.get('party_id', 0)
+                request_data['role'] = role
+                request_data['party_id'] = party_id

@@ -4,7 +4,7 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "model_key": "fate_flow_hetero_lr_test_breast"
+        "work_mode": 0
     },
     "role": {
         "guest": [10000],

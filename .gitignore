@@ -23,6 +23,7 @@ __pycache__
 /fate-serving/fate-serving-core/target/
 /arch/networking/target/
 /arch/target/
+/fateboard/target/
 /data/
 /logs/
 /jobs/

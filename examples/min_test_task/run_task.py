@@ -93,6 +93,7 @@ def exec_task(config_dict, task, role, dsl_path=None):
                                 stderr=subprocess.STDOUT)
 
     subp.wait()
+    print("Current subp status: {}".format(subp.returncode))
     stdout = subp.stdout.read().decode("utf-8")
     print("stdout:" + str(stdout))
     stdout = json.loads(stdout)
@@ -104,6 +105,11 @@ def exec_task(config_dict, task, role, dsl_path=None):
     return stdout
 
 
+def get_downloaded_data_count(data_file):
+    # TODO: Count download file lines
+    return 0
+
+
 def obtain_component_output(jobid, party_id, role, component_name, output_type='data'):
     task_type = 'component_output_data'
     if output_type == 'data':
@@ -113,33 +119,45 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
     elif output_type == 'log_metric':
         task_type = 'component_metric_all'
 
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             task_type,
-                             "-j",
-                             jobid,
-                             "-p",
-                             str(party_id),
-                             "-r",
-                             role,
-                             "-cpn",
-                             component_name],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-    subp.wait()
-    stdout = subp.stdout.read().decode("utf-8")
+    retry_counter = 0
+    while True:
+        subp = subprocess.Popen(["python",
+                                 fate_flow_path,
+                                 "-f",
+                                 task_type,
+                                 "-j",
+                                 jobid,
+                                 "-p",
+                                 str(party_id),
+                                 "-r",
+                                 role,
+                                 "-cpn",
+                                 component_name],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        subp.wait()
+        stdout = subp.stdout.read().decode("utf-8")
+        if not stdout:
+
+            retry_counter += 1
+            if retry_counter >= 5:
+                raise ValueError(
+                    "[obtain_component_output] task:{} failed stdout:{}".format(task_type, stdout))
+            time.sleep(5)
+        else:
+            break
+
     print("task_type: {}, jobid: {}, party_id: {}, role: {}, component_name: {}".format(
         task_type, job_id, party_id, role, component_name
     ))
 
     print("obtain_component_output stdout:" + str(stdout))
     stdout = json.loads(stdout)
-    status = stdout["retcode"]
-    if status != 0:
-        raise ValueError(
-            "[exec_task] task:{}, role:{} exec fail, status:{}, stdout:{}".format(task, role, status, stdout))
+    # status = stdout["retcode"]
+    # if status != 0:
+    #     raise ValueError(
+    #         "[exec_task] task:{}, role:{} exec fail, status:{}, stdout:{}".format(task, role, status, stdout))
     return stdout
 
 
@@ -161,26 +179,36 @@ def parse_exec_task(stdout):
 
 
 def job_status_checker(jobid, component_name):
-    subp = subprocess.Popen(["python",
-                             fate_flow_path,
-                             "-f",
-                             "query_task",
-                             "-j",
-                             jobid,
-                             "-cpn",
-                             component_name
-                             ],
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
 
-    subp.wait()
-    stdout = subp.stdout.read().decode("utf-8")
-    print("Job_status_checker Stdout is : {}".format(stdout))
-    stdout = json.loads(stdout)
-    status = stdout["retcode"]
-    if status != 0:
-        raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+    check_counter = 0
+    while True:
+        subp = subprocess.Popen(["python",
+                                 fate_flow_path,
+                                 "-f",
+                                 "query_task",
+                                 "-j",
+                                 jobid,
+                                 "-cpn",
+                                 component_name
+                                 ],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+
+        subp.wait()
+        print("Current subp status: {}".format(subp.returncode))
+        stdout = subp.stdout.read().decode("utf-8")
+        print("Job_status_checker Stdout is : {}".format(stdout))
+        stdout = json.loads(stdout)
+        status = stdout["retcode"]
+        if status != 0:
+            if check_counter >= 5:
+                raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+            time.sleep(5)
+            check_counter += 1
+        else:
+            break
+        #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
 
     return stdout
 
@@ -199,7 +227,7 @@ def upload(config_file, self_party_id, role, data_file):
     json_info["table_name"] = this_table_name
     json_info["namespace"] = this_table_namespace
 
-    print(json_info)
+    print("Upload data config json: {}".format(json_info))
     stdout = exec_task(json_info, "upload", role)
     print("Upload output is {}".format(stdout))
     parse_result = parse_exec_task(stdout)
@@ -261,18 +289,8 @@ def task_status_checker(jobid, component_name):
         print("[Workflow_Job_Status_checker] check jobid:{}, status,"
               " current retry counter:{}".format(jobid,
                                                  retry_counter))
-        # all_party_success = True
-        # for component_status in check_data:
-        #     if component_status['f_component_name'] != component_name:
-        #         continue
-        #     this_status = component_status['f_status']
-        #     if this_status == FAIL:
-        #         all_party_success = False
-        #         break
-        # if all_party_success:
-        #     break
-
         stdout = job_status_checker(jobid, component_name)
+        print("In task_status_checker function, retry_counter: {}".format(retry_counter))
         check_data = stdout["data"]
         retry_counter += 1
         if retry_counter >= 5:
@@ -285,41 +303,18 @@ def task_status_checker(jobid, component_name):
         status = component_stats['f_status']
         task_status.append(status)
 
-    if any([x == FAIL for x in task_status]):
-        return FAIL
+    print("Current task status: {}".format(task_status))
 
-    if all([x == SUCCESS for x in task_status]):
-        return SUCCESS
+    for s in task_status:
+        if s == FAIL:
+            print("return status is fail")
+            return FAIL
 
-    if all([x == RUNNING for x in task_status]):
-        return RUNNING
-
-    if all([x == START for x in task_status]):
-        return RUNNING
-
-    return STUCK
-
-    # for res in check_data:
-    #     status = res["status"]
-    #     party_id = res['party_id']
-    #     role = res['role']
-    #     if status == FAIL:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is fail".format(role, party_id))
-    #         task_status = FAIL
-    #     elif status == RUNNING:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is running".format(role, party_id))
-    #         if task_status == SUCCESS:
-    #             task_status = RUNNING
-    #     elif status == SUCCESS:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is success".format(role, party_id))
-    #     elif status == READY:
-    #         print("[Task_Status_checker] role:{}, party_id:{} status is ready".format(role, party_id))
-    #         if status != FAIL:
-    #             task_status = READY
-    #     else:
-    #         raise ValueError("[Task_Status_checker] party_id:{} status is unknown:{}".format(party_id, status))
-
-    # return task_status
+        if s == RUNNING:
+            print("return status is running")
+            return RUNNING
+    print("return status is success")
+    return SUCCESS
 
 
 def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namespace, host_name, host_namespace):
@@ -346,7 +341,8 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
     workflow_job_status_counter = 0
     while cur_job_status == RUNNING or cur_job_status == START:
         time.sleep(WORKFLOW_STATUS_CHECKER_TIME)
-        print("[Intersect] Start workflow job status checker:{}, jobid:{}".format(workflow_job_status_counter, jobid))
+        print("[Intersect] Start intersect job status checker, status counter: {},"
+              " jobid:{}".format(workflow_job_status_counter, jobid))
         cur_job_status = task_status_checker(jobid, component_name='intersect_0')
         print("[Intersect] cur job status:{}".format(cur_job_status))
         end = time.time()
@@ -397,10 +393,10 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     while cur_job_status == RUNNING or cur_job_status == START:
         time.sleep(WORKFLOW_STATUS_CHECKER_TIME)
         cur_job_status = task_status_checker(jobid, train_component_name)
-        print("[train] cur job status:{}, jobid:{}".format(cur_job_status, jobid))
+        print("[Train] cur job status:{}, jobid:{}".format(cur_job_status, jobid))
         end = time.time()
         if end - start > MAX_TRAIN_TIME:
-            print("[train] reach max train time:{}, intersect task may be failed, and exit now")
+            print("[Train] reach max train time:{}, intersect task may be failed, and exit now")
             break
     return cur_job_status, jobid
 
@@ -517,68 +513,6 @@ if __name__ == "__main__":
 
         download(download_config_file, self_party_id, role, table_name, namespace)
 
-    elif method == 'intersect':
-        try:
-            guest_table_name = sys.argv[2]
-            guest_namespace = sys.argv[3]
-            print("Get guest table_name:{}, namespace:{}".format(guest_table_name, guest_namespace))
-            host_name = sys.argv[4]
-            host_namespace = sys.argv[5]
-            print("Get host table_name:{}, namespace:{}".format(host_name, host_namespace))
-        except:
-            print("Not input guest table_name or guest namespace, get the guest newest table_name and namespace")
-            raise ValueError("Lack of parameters, please provided all the following parameters: "
-                             "guest_name, guest_namespace, host_name, host_namespace")
-            # guest_table_name, guest_namespace = download(download_config_file, guest_id, "guest")
-
-        job_status, job_id = intersect(intersect_dsl_file,
-                                       intersect_conf_file,
-                                       guest_id=guest_id,
-                                       host_id=host_id,
-                                       guest_name=guest_table_name,
-                                       guest_namespace=guest_namespace,
-                                       host_name=host_name,
-                                       host_namespace=host_namespace)
-
-        if job_status is SUCCESS:
-            print("intersect task is success")
-            get_table_count(intersect_output_name, intersect_output_namespace)
-            data_out = obtain_component_output(job_id, party_id=10000, role='guest', component_name='intersect_0')
-
-        else:
-            print("intersect task is failed")
-
-    elif method == 'train':
-        if len(sys.argv) != 6:
-            raise ValueError("Lack of parameters, please provided all the following parameters: "
-                             "guest_name, guest_namespace, host_name, host_namespace")
-        train_file = sys.argv[2]
-        predict_file = sys.argv[3]
-        host_name = sys.argv[4]
-        host_namespace = sys.argv[5]
-
-        guest_table_name, guest_namespace = upload(upload_config_file, guest_id, "guest", train_file)
-
-        job_status, jobid = train(hetero_lr_dsl_file,
-                                  hetero_lr_config_file,
-                                  guest_id, host_id, arbiter_id,
-                                  guest_name=guest_table_name,
-                                  guest_namespace=guest_namespace,
-                                  host_name=host_name,
-                                  host_namespace=host_namespace)
-
-        if job_status is SUCCESS:
-            print("train task is success")
-            # TODO: Get evaluation result and show up 1
-            # eval_res = get_table_collect(eval_out_name, eval_out_namespace)
-            eval_model_result = obtain_component_output(jobid=jobid,
-                                                        role='guest',
-                                                        party_id=10000,
-                                                        component_name=evaluation_component_name,
-                                                        output_type='log_metric')
-            print("eval:{}".format(eval_model_result['train'][train_component_name]))
-        else:
-            print("train task is failed")
 
     elif method == "all":
         task = sys.argv[2]
@@ -597,15 +531,20 @@ if __name__ == "__main__":
         else:
             raise ValueError("Unknown task:{}".format(task))
 
+        # Upload Data
+        print("Start Upload Data")
         table_name, table_namespace = upload(upload_config_file, guest_id, 'guest', data_file)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
         time.sleep(6)
-        print("method:{}, count:{}".format(method, get_table_count(table_name, table_namespace)))
+        print("Data uploaded, expected table count: {}".format(task_data_count))
 
+        # Download the uploaded data. Check if download
+        print("Start Download Data")
         guest_table_name, guest_namespace = download(download_config_file, guest_id, "guest",
                                                      table_name, table_namespace)
 
+        # TODO: replace this function
         count = get_table_count(guest_table_name, guest_namespace)
         if count != task_data_count:
             TEST_TASK["TEST_UPLOAD"] = 1
@@ -613,9 +552,10 @@ if __name__ == "__main__":
                 "[failed] Test upload intersect task error, upload data count is:{}, it should be:{}".format(count,
                                                                                                              task_data_count))
         else:
-            print("Test upload intersect task success")
+            print("Test upload and download task success, upload count match download count")
             TEST_TASK["TEST_UPLOAD"] = 0
 
+        print("[Intersect] Start intersect task")
         job_status, job_id = intersect(intersect_dsl_file,
                                        intersect_conf_file,
                                        guest_id=guest_id,
@@ -626,14 +566,14 @@ if __name__ == "__main__":
                                        host_namespace=host_namespace)
 
         if job_status is SUCCESS:
-            print("intersect task is success")
-            # TODO: wait for data output interface 1
+            print("[Intersect] intersect task status is success")
+            # TODO: wait for data output interface
             intersect_result = obtain_component_output(jobid=job_id,
                                                        role='guest',
                                                        party_id=10000,
                                                        component_name='intersect_0',
                                                        output_type='data')
-            print("intersect eval:{}".format(intersect_result))
+            print("intersect result:{}".format(intersect_result))
             if count != task_intersect_count:
                 TEST_TASK["TEST_INTERSECT"] = 1
                 raise ValueError(
@@ -644,6 +584,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("intersect task is failed")
 
+        print("[Train] Start train task")
         job_status, job_id = train(dsl_file=hetero_lr_dsl_file,
                                    config_file=hetero_lr_config_file,
                                    guest_id=guest_id,
@@ -656,20 +597,24 @@ if __name__ == "__main__":
                                    )
 
         if job_status is SUCCESS:
-            print("train task is success")
-            # TODO: Get auc results and compare with base 1
+            print("[Train] train task status is success")
             eval_res = obtain_component_output(jobid=job_id,
                                                role='guest',
                                                party_id=10000,
                                                component_name=evaluation_component_name,
                                                output_type='log_metric')
-            print("train eval:{}".format(intersect_result))
+            eval_results = eval_res['train'][train_component_name]['data']
+            auc = 0
+            for metric_name, metric_value in eval_results.items():
+                if metric_name == 'auc':
+                    auc = metric_value
+            print("[Train] train eval:{}".format(eval_res))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
-            auc = float(eval_res[0][1]["validate_evaluate"]['auc'])
+            # auc = float(eval_res[0][1]["validate_evaluate"]['auc'])
             if auc > task_hetero_lr_base_auc:
                 TEST_TASK["TEST_TRAIN"] = 0
         else:
-            print("train task is failed")
+            print("[Train] train task is failed")
             TEST_TASK["TEST_TRAIN"] = 1
 
         test_success = 0

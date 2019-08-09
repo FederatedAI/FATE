@@ -15,6 +15,7 @@
 #
 
 from federatedml.util import consts
+import numpy as np
 
 
 class ConvergeFunction:
@@ -57,3 +58,15 @@ class AbsConverge(ConvergeFunction):
         else:
             converge_flag = False
         return converge_flag
+
+
+class GradientConverge(ConvergeFunction):
+    """
+    Judge convergence when abs sum of gradient is smaller than eps
+    This is used when encrypted loss is not available.
+    """
+    def is_converge(self, gradient):
+        abs_gradient_sum = sum(map(np.fabs, gradient))
+        if abs_gradient_sum < self.eps:
+            return True
+        return False

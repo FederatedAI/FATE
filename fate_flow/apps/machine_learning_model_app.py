@@ -14,12 +14,13 @@
 #  limitations under the License.
 #
 from flask import Flask, request
-from fate_flow.settings import server_conf
-from fate_flow.utils import publish_model
-from fate_flow.utils.job_utils import generate_job_id
-from fate_flow.utils.api_utils import get_json_result, federated_api
+
 from fate_flow.manager.version_control import version_history
 from fate_flow.settings import stat_logger, SERVINGS, API_VERSION
+from fate_flow.utils import publish_model
+from fate_flow.utils.api_utils import get_json_result, federated_api
+from fate_flow.utils.job_utils import generate_job_id
+
 manager = Flask(__name__)
 
 
@@ -47,17 +48,19 @@ def load_model():
         load_status_info[role_name] = load_status_info.get(role_name, {})
         for _party_id in role_partys:
             request_config['local'] = {'role': role_name, 'party_id': _party_id}
-            st, msg = federated_api(job_id=_job_id,
-                                    method='POST',
-                                    url='{}/model/load/do'.format(API_VERSION),
-                                    src_party_id=initiator_party_id,
-                                    dest_party_id=_party_id,
-                                    json_body=request_config)
-            if st != 0:
+            response = federated_api(job_id=_job_id,
+                                     method='POST',
+                                     endpoint='{}/model/load/do'.format(API_VERSION),
+                                     src_party_id=initiator_party_id,
+                                     dest_party_id=_party_id,
+                                     json_body=request_config,
+                                     work_mode=request_config['work_mode'])
+            if response['retcode'] != 0:
                 load_status = False
                 load_status_msg = 'failed'
-            load_status_info[role_name][_party_id] = st
-    return get_json_result(job_id=_job_id, retcode=(0 if load_status else 101), retmsg=load_status_msg, data=load_status_info)
+            load_status_info[role_name][_party_id] = response['retcode']
+    return get_json_result(job_id=_job_id, retcode=(0 if load_status else 101), retmsg=load_status_msg,
+                           data=load_status_info)
 
 
 @manager.route('/load/do', methods=['POST'])

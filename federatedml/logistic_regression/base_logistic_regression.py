@@ -24,6 +24,7 @@ from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
 from federatedml.optim import DiffConverge, AbsConverge, Optimizer
+from federatedml.optim import convergence
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
 from federatedml.optim import L2Updater
@@ -96,6 +97,8 @@ class BaseLogisticRegression(ModelBase):
 
         if params.converge_func == 'diff':
             self.converge_func = DiffConverge(eps=self.eps)
+        elif params.converge_func == 'weight_diff':
+            self.converge_func = convergence.GradientConverge(eps=self.eps)
         else:
             self.converge_func = AbsConverge(eps=self.eps)
         self.re_encrypt_batches = params.re_encrypt_batches

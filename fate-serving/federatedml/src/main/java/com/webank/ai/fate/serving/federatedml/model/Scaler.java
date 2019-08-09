@@ -3,6 +3,7 @@ package com.webank.ai.fate.serving.federatedml.model;
 import com.webank.ai.fate.core.constant.StatusCode;
 import com.webank.ai.fate.core.mlmodel.buffer.ScaleMetaProto.ScaleMeta;
 import com.webank.ai.fate.core.mlmodel.buffer.ScaleParamProto.ScaleParam;
+import com.webank.ai.fate.serving.core.bean.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,15 +31,15 @@ public class Scaler extends BaseModel {
     }
 
     @Override
-    public Map<String, Object> predict(Map<String, Object> inputData, Map<String, Object> predictParams) {
+    public Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams) {
         if (this.isScale) {
             String scaleMethod = this.scaleMeta.getStrategy();
             if (scaleMethod.toLowerCase().equals("min_max_scale")) {
                 MinMaxScale minMaxScale = new MinMaxScale();
-                inputData = minMaxScale.transform(inputData, this.scaleParam.getMinmaxScaleParamMap());
+                inputData = minMaxScale.transform(context,inputData, this.scaleParam.getMinmaxScaleParamMap());
             } else if (scaleMethod.toLowerCase().equals("standard_scale")) {
                 StandardScale standardScale = new StandardScale();
-                inputData = standardScale.transform(inputData, this.scaleParam.getStandardScaleParamMap());
+                inputData = standardScale.transform(context ,inputData, this.scaleParam.getStandardScaleParamMap());
             }
         }
         return inputData;

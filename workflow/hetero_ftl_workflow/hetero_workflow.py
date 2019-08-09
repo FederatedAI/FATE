@@ -14,21 +14,30 @@
 #  limitations under the License.
 #
 
+import numpy as np
+
+from arch.api import eggroll
 from arch.api.utils import log_utils
-from federatedml.param.param import FTLModelParam, LocalModelParam, FTLDataParam, FTLValidDataParam
-from federatedml.util import ParamExtract
-from federatedml.util.param_checker import FTLDataParamChecker, LocalModelParamChecker, FTLModelParamChecker, \
-    FTLValidDataParamChecker
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
-from workflow import status_tracer_decorator
-from workflow.workflow import WorkFlow
+from federatedml.param.ftl_param import FTLModelParam, LocalModelParam, FTLDataParam, FTLValidDataParam
+from federatedml.param.workflow_param import WorkFlowParam
+from federatedml.util.param_extract import ParamExtract
+from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
-class FTLWorkFlow(WorkFlow):
+class FTLWorkFlow(object):
     def __init__(self):
         super(FTLWorkFlow, self).__init__()
+        self.model = None
+        self.job_id = None
+        self.workflow_param = None
+        self.param_extract = None
+
+    def _initialize(self, config):
+        LOGGER.debug("Get in base workflow initialize")
+        self._initialize_model(config)
+        self._initialize_workflow_param(config)
 
     def _initialize_model(self, config):
         LOGGER.debug("@ initialize model")
@@ -36,18 +45,25 @@ class FTLWorkFlow(WorkFlow):
         ftl_local_model_param = LocalModelParam()
         ftl_data_param = FTLDataParam()
         ftl_valid_data_param = FTLValidDataParam()
-        ftl_model_param = ParamExtract.parse_param_from_config(ftl_model_param, config)
-        ftl_local_model_param = ParamExtract.parse_param_from_config(ftl_local_model_param, config)
-        self.ftl_data_param = ParamExtract.parse_param_from_config(ftl_data_param, config)
-        self.ftl_valid_data_param = ParamExtract.parse_param_from_config(ftl_valid_data_param, config)
+
+        self.param_extract = ParamExtract()
+        ftl_model_param = self.param_extract.parse_param_from_config(ftl_model_param, config)
+        ftl_local_model_param = self.param_extract.parse_param_from_config(ftl_local_model_param, config)
+        self.ftl_data_param = self.param_extract.parse_param_from_config(ftl_data_param, config)
+        self.ftl_valid_data_param = self.param_extract.parse_param_from_config(ftl_valid_data_param, config)
         self.ftl_transfer_variable = HeteroFTLTransferVariable()
 
-        FTLModelParamChecker.check_param(ftl_model_param)
-        LocalModelParamChecker.check_param(ftl_local_model_param)
-        FTLDataParamChecker.check_param(self.ftl_data_param)
-        FTLValidDataParamChecker.check_param(self.ftl_valid_data_param)
+        FTLModelParam.check(ftl_model_param)
+        LocalModelParam.check(ftl_local_model_param)
+        FTLDataParam.check(self.ftl_data_param)
+        FTLValidDataParam.check(self.ftl_valid_data_param)
 
         self._do_initialize_model(ftl_model_param, ftl_local_model_param, self.ftl_data_param)
+
+    def _initialize_workflow_param(self, config):
+        workflow_param = WorkFlowParam()
+        self.workflow_param = self.param_extract.parse_param_from_config(workflow_param, config)
+        workflow_param.check()
 
     def _get_transfer_variable(self):
         return self.ftl_transfer_variable
@@ -62,7 +78,59 @@ class FTLWorkFlow(WorkFlow):
                              ftl_data_param: FTLDataParam):
         raise NotImplementedError("method init must be define")
 
+    def save_eval_result(self, eval_data):
+        LOGGER.info("@ save evaluation result to table with namespace: {0} and name: {1}".format(
+            self.workflow_param.evaluation_output_namespace, self.workflow_param.evaluation_output_table))
+        eggroll.parallelize([eval_data],
+                            include_key=False,
+                            name=self.workflow_param.evaluation_output_table,
+                            namespace=self.workflow_param.evaluation_output_namespace,
+                            error_if_exist=False,
+                            persistent=True
+                            )
+
+    def save_predict_result(self, predict_result):
+        LOGGER.info("@ save prediction result to table with namespace: {0} and name: {1}".format(
+            self.workflow_param.predict_output_namespace, self.workflow_param.predict_output_table))
+        predict_result.save_as(self.workflow_param.predict_output_table, self.workflow_param.predict_output_namespace)
+
+    def evaluate(self, eval_data):
+        if eval_data is None:
+            LOGGER.info("not eval_data!")
+            return None
+
+        eval_data_local = eval_data.collect()
+        labels = []
+        pred_prob = []
+        pred_labels = []
+        data_num = 0
+        for data in eval_data_local:
+            data_num += 1
+            labels.append(data[1][0])
+            pred_prob.append(data[1][1])
+            pred_labels.append(data[1][2])
+
+        labels = np.array(labels)
+        pred_prob = np.array(pred_prob)
+        pred_labels = np.array(pred_labels)
+
+        evaluation_result = self.model.evaluate(labels, pred_prob, pred_labels,
+                                                evaluate_param=self.workflow_param.evaluate_param)
+        return evaluation_result
+
+    def _init_argument(self):
+        pass
+
     def gen_validation_data_instance(self, table, namespace):
+        pass
+
+    def gen_data_instance(self, table, namespace):
+        pass
+
+    def train(self, train_data_instance, validation_data=None):
+        pass
+
+    def predict(self, data_instance):
         pass
 
     def run(self):

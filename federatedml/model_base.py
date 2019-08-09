@@ -94,7 +94,7 @@ class ModelBase(object):
             LOGGER.info("Need cross validation.")
             self.cross_validation(train_data)
 
-        if stage == "one_vs_rest":
+        elif stage == "one_vs_rest":
             LOGGER.info("Need one vs rest.")
             self.data_output = self.one_vs_rest(train_data, eval_data)
             self.set_predict_data_schema(self.data_output, train_data.schema)
@@ -122,7 +122,7 @@ class ModelBase(object):
                     self.data_output = eval_data_output
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
-        
+
         elif eval_data:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
@@ -131,7 +131,7 @@ class ModelBase(object):
                 self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
 
             self.set_predict_data_schema(self.data_output, eval_data.schema)
-        
+
         else:
             if stage == "fit":
                 self.set_flowid('fit')
@@ -218,6 +218,13 @@ class ModelBase(object):
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
+            flow_id_list = self.flowid.split('.')
+            LOGGER.debug("Need cv, change callback_meta, flow_id_list: {}".format(flow_id_list))
+            if len(flow_id_list) > 1:
+                curve_name = '.'.join(flow_id_list[1:])
+                metric_meta.update_metas({'curve_name': curve_name})
+        else:
+            metric_meta.update_metas({'curve_name': metric_name})
 
         self.tracker.set_metric_meta(metric_name=metric_name,
                                      metric_namespace=metric_namespace,

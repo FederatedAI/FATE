@@ -35,17 +35,15 @@ DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
 HEADERS = {
     'Content-Type': 'application/json',
 }
-JOB_SCHEDULER = True
-
 
 IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
 WORK_MODE = 0
-LOCAL_URL = "http://localhost:{}".format(HTTP_PORT)
+USE_LOCAL_DATABASE = True
+SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
-    'engine': 'mysql',
     'name': 'task_manager',
     'user': 'root',
     'passwd': 'root1234',

@@ -110,10 +110,11 @@ class LogisticParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    converge_func : str, 'diff' or 'abs', default: 'diff'
+    converge_func : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+            b)  weight_diff: Use difference between weights of two consecutive iterations
+            c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
     re_encrypt_batches : int, default: 2
         Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
@@ -207,7 +208,7 @@ class LogisticParam(BaseParam):
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs']:
+            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "logistic_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
