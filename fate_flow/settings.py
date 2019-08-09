@@ -27,7 +27,7 @@ Constants
 '''
 
 API_VERSION = "v1"
-ROLE = 'manager'
+ROLE = 'fateflow'
 SERVERS = 'servers'
 MAX_CONCURRENT_JOB_RUN = 5
 DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
@@ -42,14 +42,14 @@ IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
 WORK_MODE = 0
-USE_LOCAL_DATABASE = False
+USE_LOCAL_DATABASE = True
 SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'name': 'fate_flow',
     'user': 'root',
-    'passwd': 'root1234',
-    'host': '10.211.55.2',
+    'passwd': 'fate_dev',
+    'host': '127.0.0.1',
     'port': 3306,
     'max_connections': 100,
     'stale_timeout': 30,

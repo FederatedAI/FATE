@@ -8,7 +8,7 @@
 			"host": "localhost",
 			"port": 9394
 		},
-		"manager": {
+		"fateflow": {
 			"host": "localhost",
 			"grpc.port": 9360,
 			"http.port": 9380

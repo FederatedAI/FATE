@@ -83,7 +83,7 @@ def save_data_table_meta(kv, data_table_name, data_table_namespace):
 
 
 def get_data_table_meta_by_instance(key, data_table):
-    return get_data_table_meta(key, data_table._name, data_table._namespce)
+    return get_data_table_meta(key, data_table._name, data_table._namespace)
 
 
 def get_data_table_meta(key, data_table_name, data_table_namespace):

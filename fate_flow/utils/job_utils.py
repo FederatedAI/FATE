@@ -109,18 +109,18 @@ def get_job_conf_path(job_id):
     return job_dsl_path, job_runtime_conf_path
 
 
-def get_job_dsl_parser_by_job_id(job_id):
+def get_job_dsl_parser_by_job_id(job_id, mode='train'):
     with DB.connection_context():
         jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id)
         if jobs:
             job = jobs[0]
-            job_dsl_parser = get_job_dsl_parser(dsl=json_loads(job.f_dsl), runtime_conf=json_loads(job.f_runtime_conf))
+            job_dsl_parser = get_job_dsl_parser(dsl=json_loads(job.f_dsl), runtime_conf=json_loads(job.f_runtime_conf), mode=mode)
             return job_dsl_parser
         else:
             return None
 
 
-def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, pipeline_runtime_conf=None):
+def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, pipeline_runtime_conf=None, mode='train'):
     dsl_parser = DSLParser()
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
@@ -130,7 +130,8 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, pipeline_
                    pipeline_dsl=pipeline_dsl,
                    pipeline_runtime_conf=pipeline_runtime_conf,
                    default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path)
+                   setting_conf_prefix=setting_conf_path,
+                   mode=mode)
     return dsl_parser
 
 

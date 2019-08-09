@@ -24,10 +24,8 @@ from contextlib import closing
 import requests
 
 from arch.api.utils import file_utils
+from fate_flow.settings import SERVERS, ROLE, API_VERSION
 
-SERVERS = "servers"
-ROLE = "manager"
-API_VERSION = "v1"
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job']
 JOB_FUNC = ["job_config", "job_log"]

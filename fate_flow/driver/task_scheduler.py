@@ -65,9 +65,11 @@ class TaskScheduler(object):
                                    model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
             pipeline_model = job_tracker.get_output_model('pipeline')
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
-            job_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
+            train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
             dag = get_job_dsl_parser(dsl=job_dsl,
-                                     pipeline_runtime_conf=job_runtime_conf)
+                                     runtime_conf=job_runtime_conf,
+                                     pipeline_runtime_conf=train_runtime_conf,
+                                     mode='predict')
         else:
             dag = get_job_dsl_parser(dsl=job_dsl,
                                      runtime_conf=job_runtime_conf)
