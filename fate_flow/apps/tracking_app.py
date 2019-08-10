@@ -216,7 +216,11 @@ def component_output_data():
     if not component:
         return get_json_result(retcode=102, retmsg='can found component', data=[])
     output_dsl = component.get_output()
-    output_data_table = tracker.get_output_data_table(output_dsl.get('data')[0])
+    output_data = output_dsl.get('data', [])
+    if not output_data:
+        return get_json_result(retcode=0, retmsg='no data', data=[])
+    # The current version will only have one data output.
+    output_data_table = tracker.get_output_data_table(output_data[0])
     output_data = []
     num = 100
     data_label = False
