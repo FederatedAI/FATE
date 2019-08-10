@@ -169,15 +169,16 @@ def component_parameters():
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
-    job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
-                                                                role=request_data['role'],
-                                                                party_id=request_data['party_id'])
+    job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=request_data['job_id'],
+                                                                                    role=request_data['role'],
+                                                                                    party_id=request_data['party_id'])
     model_id = job_runtime_conf['job_parameters']['model_id']
     model_version = job_runtime_conf['job_parameters']['model_version']
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
                        role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
                        model_version=model_version)
-    dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf)
+    dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
+                                       train_runtime_conf=train_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
     if component.get_output().get('model', []):

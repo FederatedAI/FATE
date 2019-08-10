@@ -115,6 +115,7 @@ class Job(DataBaseModel):
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
     f_dsl = TextField()
     f_runtime_conf = TextField()
+    f_train_runtime_conf = TextField(null=True)
     f_run_ip = CharField(max_length=100)
     f_status = CharField(max_length=50)
     f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL

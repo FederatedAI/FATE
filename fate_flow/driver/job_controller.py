@@ -41,17 +41,24 @@ class JobController(object):
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
+        job_initiator = job_runtime_conf['initiator']
         job_type = job_parameters.get('job_type', '')
         if job_type != 'predict':
             # generate job model info
             job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
             job_parameters['model_version'] = job_id
+            train_runtime_conf = {}
         else:
             job_utils.check_config(job_parameters, ['model_id', 'model_version'])
+            # get inference dsl from pipeline model as job dsl
+            job_tracker = Tracking(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
+                                   model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
+            pipeline_model = job_tracker.get_output_model('pipeline')
+            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
+            train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
                                                             job_dsl=job_dsl,
                                                             job_runtime_conf=job_runtime_conf)
-        job_initiator = job_runtime_conf['initiator']
 
         job = Job()
         job.f_job_id = job_id
@@ -60,6 +67,7 @@ class JobController(object):
         job.f_initiator_party_id = job_initiator['party_id']
         job.f_dsl = json_dumps(job_dsl)
         job.f_runtime_conf = json_dumps(job_runtime_conf)
+        job.f_train_runtime_conf = json_dumps(train_runtime_conf)
         job.f_run_ip = get_lan_ip()
         job.f_status = 'waiting'
         job.f_progress = 0
@@ -74,8 +82,8 @@ class JobController(object):
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
-            "job_dsl_path": job_dsl_path,
-            "job_runtime_conf_path": job_runtime_conf_path
+            "initiator_role": job_initiator['role'],
+            "initiator_party_id": job_initiator['party_id']
         }
         )
         schedule_logger.info(
@@ -127,6 +135,7 @@ class JobController(object):
         if create:
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
+            train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])
             save_job_conf(job_id=job_id,
                           job_dsl=dsl,
                           job_runtime_conf=runtime_conf)
@@ -151,7 +160,8 @@ class JobController(object):
                             partner[_role].append(_party_id)
 
             dag = get_job_dsl_parser(dsl=dsl,
-                                     runtime_conf=runtime_conf)
+                                     runtime_conf=runtime_conf,
+                                     train_runtime_conf=train_runtime_conf)
             job_args = dag.get_args_input()
             dataset = {}
             for _role, _role_party_args in job_args.items():
@@ -169,13 +179,15 @@ class JobController(object):
 
     @staticmethod
     def save_pipeline(job_id, role, party_id, model_id, model_version):
-        job_dsl, job_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role, party_id=party_id)
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
+                                                                                        party_id=party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_type = job_parameters.get('job_type', '')
         if job_type == 'predict':
             return
         dag = job_utils.get_job_dsl_parser(dsl=job_dsl,
-                                           runtime_conf=job_runtime_conf)
+                                           runtime_conf=job_runtime_conf,
+                                           train_runtime_conf=train_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)
         pipeline = pipeline_pb2.Pipeline()
         pipeline.inference_dsl = json_dumps(predict_dsl, byte=True)

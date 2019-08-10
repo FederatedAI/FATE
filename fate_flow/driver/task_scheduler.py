@@ -19,12 +19,10 @@ import sys
 import time
 
 from arch.api import storage
-from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -55,24 +53,15 @@ class TaskScheduler(object):
                               work_mode=job.f_work_mode)
 
     @staticmethod
-    def run_job(job_id, job_dsl_path, job_runtime_conf_path):
-        job_runtime_conf = file_utils.load_json_conf(job_runtime_conf_path)
-        job_dsl = file_utils.load_json_conf(job_dsl_path)
+    def run_job(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
-        if job_parameters.get('job_type', '') == 'predict':
-            job_tracker = Tracking(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
-                                   model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
-            pipeline_model = job_tracker.get_output_model('pipeline')
-            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
-            train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-            dag = get_job_dsl_parser(dsl=job_dsl,
-                                     runtime_conf=job_runtime_conf,
-                                     pipeline_runtime_conf=train_runtime_conf,
-                                     mode='predict')
-        else:
-            dag = get_job_dsl_parser(dsl=job_dsl,
-                                     runtime_conf=job_runtime_conf)
+        dag = get_job_dsl_parser(dsl=job_dsl,
+                                 runtime_conf=job_runtime_conf,
+                                 train_runtime_conf=train_runtime_conf)
         job_args = dag.get_args_input()
         if not job_initiator:
             return False

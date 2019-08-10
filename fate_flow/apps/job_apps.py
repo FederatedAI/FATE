@@ -71,6 +71,7 @@ def job_config():
         response_data['job_id'] = job.f_job_id
         response_data['dsl'] = json_loads(job.f_dsl)
         response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
+        response_data['train_runtime_conf'] = json_loads(job.f_train_runtime_conf)
         response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'],
                                                                    response_data['runtime_conf']['job_parameters'][
                                                                        'model_id'],

@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.utils import job_utils
 from arch.api.utils.core import json_loads
 from fate_flow.settings import stat_logger
+from fate_flow.utils import job_utils
 
 
 def pipeline_dag_dependency(job_id):
@@ -25,7 +25,8 @@ def pipeline_dag_dependency(job_id):
             raise Exception('query job {} failed'.format(job_id))
         job = jobs[0]
         job_dsl_parser = job_utils.get_job_dsl_parser(dsl=json_loads(job.f_dsl),
-                                                      runtime_conf=json_loads(job.f_runtime_conf))
+                                                      runtime_conf=json_loads(job.f_runtime_conf),
+                                                      train_runtime_conf=json_loads(job.f_train_runtime_conf))
         return job_dsl_parser.get_dependency()
     except Exception as e:
         stat_logger.exception(e)
