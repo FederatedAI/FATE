@@ -27,6 +27,7 @@ from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
+from fate_flow.entity.constant_config import TaskStatus
 
 
 class TaskExecutor(object):
@@ -62,7 +63,7 @@ class TaskExecutor(object):
             module_name = task_config.get('module_name', '')
         except Exception as e:
             schedule_logger.exception(e)
-            task.f_status = 'failed'
+            task.f_status = TaskStatus.FAILED
             return
         try:
             # init environment
@@ -97,7 +98,7 @@ class TaskExecutor(object):
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
             run_object.set_taskid(taskid=task_id)
-            task.f_status = 'running'
+            task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
                                           task_info=task.to_json())
@@ -115,10 +116,10 @@ class TaskExecutor(object):
                     output_model = run_object.export_model()
                     # There is only one model output at the current dsl version.
                     tracker.save_output_model(output_model, task_output_dsl['model'][0])
-            task.f_status = 'success'
+            task.f_status = TaskStatus.SUCCESS
         except Exception as e:
             schedule_logger.exception(e)
-            task.f_status = 'failed'
+            task.f_status = TaskStatus.FAILED
         finally:
             try:
                 task.f_end_time = current_timestamp()

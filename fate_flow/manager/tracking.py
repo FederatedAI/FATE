@@ -23,6 +23,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
 from fate_flow.utils import job_utils, api_utils
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
 class Tracking(object):
@@ -305,7 +306,7 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in ['success', 'failed', 'partial', 'deleted']:
+                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.PARTIAL, JobStatus.DELETED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -338,7 +339,7 @@ class Tracking(object):
             task.f_role = role
             task.f_party_id = party_id
             if 'f_status' in task_info:
-                if task.f_status in ['success', 'failed', 'partial', 'deleted']:
+                if task.f_status in [TaskStatus.SUCCESS, TaskStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass

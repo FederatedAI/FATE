@@ -22,7 +22,7 @@ from flask import jsonify
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT
 from fate_flow.settings import stat_logger, SERVER_HOST_URL, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
-from fate_flow.entity.service_support_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):

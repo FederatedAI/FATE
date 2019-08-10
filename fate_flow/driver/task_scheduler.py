@@ -27,6 +27,7 @@ from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
 class TaskScheduler(object):
@@ -69,7 +70,7 @@ class TaskScheduler(object):
         job = Job()
         job.f_job_id = job_id
         job.f_start_time = current_timestamp()
-        job.f_status = 'running'
+        job.f_status = JobStatus.RUNNING
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
@@ -93,14 +94,14 @@ class TaskScheduler(object):
             if not run_status:
                 break
         if len(top_level_task_status) == 2:
-            job.f_status = 'partial'
+            job.f_status = JobStatus.PARTIAL
         elif True in top_level_task_status:
-            job.f_status = 'success'
+            job.f_status = JobStatus.SUCCESS
         else:
-            job.f_status = 'failed'
+            job.f_status = JobStatus.FAILED
         job.f_end_time = current_timestamp()
         job.f_elapsed = job.f_end_time - job.f_start_time
-        if job.f_status == 'success':
+        if job.f_status == JobStatus.SUCCESS:
             job.f_progress = 100
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
@@ -329,7 +330,7 @@ class TaskScheduler(object):
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if jobs:
             initiator_job = jobs[0]
-            job_info = {'f_job_id': job_id, 'f_status': 'failed'}
+            job_info = {'f_job_id': job_id, 'f_status': JobStatus.FAILED}
             roles = json_loads(initiator_job.f_roles)
             job_work_mode = initiator_job.f_work_mode
             initiator_party_id = initiator_job.f_party_id

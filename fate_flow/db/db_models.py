@@ -25,7 +25,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
 from arch.api.utils.core import current_timestamp
-from fate_flow.entity.service_support_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 
 LOGGER = log_utils.getLogger()

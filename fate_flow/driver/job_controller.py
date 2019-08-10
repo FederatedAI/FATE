@@ -24,6 +24,7 @@ from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
 class JobController(object):
@@ -69,7 +70,7 @@ class JobController(object):
         job.f_runtime_conf = json_dumps(job_runtime_conf)
         job.f_train_runtime_conf = json_dumps(train_runtime_conf)
         job.f_run_ip = get_lan_ip()
-        job.f_status = 'waiting'
+        job.f_status = JobStatus.WAITING
         job.f_progress = 0
         job.f_create_time = current_timestamp()
 
@@ -114,8 +115,8 @@ class JobController(object):
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
-            if task.f_status != 'success':
-                task.f_status = 'failed'
+            if task.f_status != TaskStatus.SUCCESS:
+                task.f_status = TaskStatus.FAILED
             TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
                                           role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
