@@ -40,7 +40,7 @@
     "algorithm_parameters": {
         "homo_lr_0": {
             "penalty": "L2",
-            "optimizer": "rmsprop",
+            "optimizer": "nesterov_momentum_sgd",
             "eps": 1e-5,
             "alpha": 0.01,
             "max_iter": 10,
@@ -50,11 +50,14 @@
             "init_param": {
 				"init_method": "random_uniform"
             },
+            "encrypt_param": {
+                "method": "Paillier"
+            },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,
                 "random_seed": 33,
-                "need_cv": true
+                "need_cv": false
             }
         }
     }

@@ -54,11 +54,7 @@
                 "n_splits": 4,
                 "shuffle": true,
                 "random_seed": 33,
-                "need_cv": false,
-                "evaluate_param": {
-                    "thresholds": [0.3, 0.5, 0.7],
-                    "metrics": ["auc", "ks"]
-                }
+                "need_cv": false
             }
         },
         "evaluation_0": {

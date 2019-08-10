@@ -14,15 +14,17 @@
 #  limitations under the License.
 #
 
+import numpy as np
+
 from arch.api import federation
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.optim import activation
 from federatedml.optim.federated_aggregator import HomoFederatedAggregator
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.util import consts
-from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric
 
 LOGGER = log_utils.getLogger()
 
@@ -31,7 +33,6 @@ class HomoLRArbiter(HomoLRBase):
     def __init__(self):
         super(HomoLRArbiter, self).__init__()
         self.aggregator = HomoFederatedAggregator()
-
 
         self.classes_ = [0, 1]
 
@@ -74,18 +75,22 @@ class HomoLRArbiter(HomoLRBase):
                                                         iter_num=iter_num,
                                                         party_weights=self.party_weights,
                                                         host_use_encryption=self.host_use_encryption)
+            # else:
+            #     total_loss = np.linalg.norm(final_model)
+
             self.loss_history.append(total_loss)
 
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters"
-                                     })
-            metric_name = self.get_metric_name('loss')
-            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name=metric_name,
-                                 metric_namespace='train',
-                                 metric_data=[Metric(iter_num, total_loss)])
+            if self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters"
+                                         })
+                metric_name = self.get_metric_name('loss')
+                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name=metric_name,
+                                     metric_namespace='train',
+                                     metric_data=[Metric(iter_num, total_loss)])
 
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
@@ -105,8 +110,10 @@ class HomoLRArbiter(HomoLRBase):
                                   role=consts.HOST,
                                   idx=idx)
 
-            # send converge flag
-            converge_flag = self.converge_func.is_converge(total_loss)
+            if self.use_loss:
+                converge_flag = self.converge_func.is_converge(total_loss)
+            else:
+                converge_flag = self.converge_func.is_converge(final_model)
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag,
                 iter_num)
@@ -318,9 +325,18 @@ class HomoLRArbiter(HomoLRBase):
 
         if self.need_cv:
             self.cross_validation(None)
-
+        elif self.need_one_vs_rest:
+            if "model" in args:
+                self._load_model(args)
+                self.one_vs_rest_predict(None)
+            else:
+                self.one_vs_rest_fit()
+                self.data_output = self.one_vs_rest_predict(None)
+                if need_eval:
+                    self.data_output = self.one_vs_rest_predict(None)
         elif "model" in args:
             self._load_model(args)
+            self.set_flowid('predict')
             self.predict()
         else:
             self.set_flowid('train')
@@ -331,10 +347,3 @@ class HomoLRArbiter(HomoLRBase):
             if need_eval:
                 self.set_flowid('validate')
                 self.predict()
-
-
-
-
-
-
-

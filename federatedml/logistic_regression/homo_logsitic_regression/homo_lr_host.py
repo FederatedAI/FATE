@@ -101,17 +101,21 @@ class HomoLRHost(HomoLRBase):
                         loss_norm = self.updater.loss_norm(self.coef_)
                         total_loss += loss + loss_norm
 
-                    metric_meta = MetricMeta(name='train',
-                                             metric_type="LOSS",
-                                             extra_metas={
-                                                 "unit_name": "iters"
-                                             })
-                    metric_name = self.get_metric_name('loss')
+                    # if not self.use_loss:
+                    #     total_loss = np.linalg.norm(self.coef_)
 
-                    self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-                    self.callback_metric(metric_name=metric_name,
-                                         metric_namespace='train',
-                                         metric_data=[Metric(iter_num, total_loss)])
+                    if not self.need_one_vs_rest:
+                        metric_meta = MetricMeta(name='train',
+                                                 metric_type="LOSS",
+                                                 extra_metas={
+                                                     "unit_name": "iters"
+                                                 })
+                        metric_name = self.get_metric_name('loss')
+
+                        self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                        self.callback_metric(metric_name=metric_name,
+                                             metric_namespace='train',
+                                             metric_data=[Metric(iter_num, total_loss)])
 
                 else:
                     grad, _ = grad_loss.reduce(self.aggregator.aggregate_grad)
@@ -324,6 +328,17 @@ class HomoLRHost(HomoLRBase):
         self.set_coef_(final_model)
 
     def _get_param(self):
+        if self.need_one_vs_rest:
+            one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
+                                                                 loss_history=[],
+                                                                 is_converged=self.is_converged,
+                                                                 weight={},
+                                                                 intercept=0,
+                                                                 need_one_vs_rest=self.need_one_vs_rest,
+                                                                 one_vs_rest_classes=one_vs_rest_class)
+            return param_protobuf_obj
+
         header = self.header
         weight_dict = {}
         for idx, header_name in enumerate(header):
@@ -335,6 +350,7 @@ class HomoLRHost(HomoLRBase):
                                                              is_converged=self.is_converged,
                                                              weight={},
                                                              intercept=0,
+                                                             need_one_vs_rest=self.need_one_vs_rest,
                                                              header=header)
         from google.protobuf import json_format
         json_result = json_format.MessageToJson(param_protobuf_obj)

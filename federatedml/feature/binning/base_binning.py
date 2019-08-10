@@ -176,13 +176,8 @@ class Binning(object):
 
     def transform(self, data_instances, transform_cols_idx, transform_type):
         self._init_cols(data_instances)
-        before = data_instances.first()[1].features
         if transform_type == 'bin_num':
             data_instances, _, _ = self.convert_feature_to_bin(data_instances, transform_cols_idx, self.split_points)
-        after = data_instances.first()[1].features
-        LOGGER.debug("Before base binning transform, before: {}, after: {}".format(before, after))
-
-
         return data_instances
 
     def get_data_bin(self, data_instances, split_points=None):

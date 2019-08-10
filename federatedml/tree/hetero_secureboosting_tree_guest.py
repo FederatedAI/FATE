@@ -132,11 +132,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         binning_obj = QuantileBinning(param_obj)
         binning_obj.fit_split_points(data_instance)
         self.data_bin, self.bin_split_points, self.bin_sparse_points = binning_obj.convert_feature_to_bin(data_instance)
-        LOGGER.debug("bin_split_points is {}".format(self.bin_split_points))
-        # self.data_bin, self.bin_split_points, self.bin_sparse_points = \
-        #    Quantile.convert_feature_to_bin(
-        #        data_instance, self.quantile_method, self.bin_num,
-        #        self.bin_gap, self.bin_sample_num)
         LOGGER.info("convert feature to bins over")
 
     def set_y(self):
@@ -144,17 +139,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.y = self.data_bin.mapValues(lambda instance: instance.label)
         self.check_label()
 
-    """
-    def set_flowid(self, flowid=0):
-        LOGGER.info("set flowid, flowid is {}".format(flowid))
-        self.flowid = flowid
-    """
-
     def set_runtime_idx(self, runtime_idx):
         self.runtime_idx = runtime_idx
 
     def generate_flowid(self, round_num, tree_num):
-        LOGGER.info("generate flowid")
+        LOGGER.info("generate flowid, flowid {}".format(self.flowid))
         return ".".join(map(str, [self.flowid, round_num, tree_num]))
 
     def check_label(self):
@@ -214,7 +203,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             if self.tree_dim > 1:
                 self.F, self.init_score = self.loss.initialize(self.y, self.tree_dim)
             else:
-                LOGGER.info("tree_dim is %d" % (self.tree_dim))
                 self.F, self.init_score = self.loss.initialize(self.y)
         else:
             accumuldate_f = functools.partial(self.accumulate_f,
@@ -341,7 +329,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(i, loss))
 
-            LOGGER.debug("loss type is {}".format(type(loss)))
             self.callback_metric("loss",
                                  "train",
                                  [Metric(i, loss)])
@@ -395,12 +382,10 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             else:
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
-        LOGGER.debug("predict param is {}".format(self.predict_param.__dict__))
         if self.task_type == consts.CLASSIFICATION:
             classes_ = self.classes_
             if self.num_classes == 2:
                 threshold = self.predict_param.threshold
-                LOGGER.debug("predict result is {}".format(list(predicts.collect())))
                 predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, classes_[1] if pred > threshold else classes_[0], pred, {"0": 1 - pred, "1": pred}])
             else:
                 predict_label = predicts.mapValues(lambda preds: classes_[np.argmax(preds)])
@@ -510,24 +495,3 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
     
-    """
-    def evaluate(self, labels, pred_prob, pred_labels, evaluate_param):
-        LOGGER.info("evaluate data")
-        predict_res = None
-
-        if self.task_type == consts.CLASSIFICATION:
-            if evaluate_param.classi_type == consts.BINARY:
-                predict_res = pred_prob
-            elif evaluate_param.classi_type == consts.MULTY:
-                predict_res = pred_labels
-            else:
-                LOGGER.warning("unknown classification type, return None as evaluation results")
-        elif self.task_type == consts.REGRESSION:
-            predict_res = pred_prob
-        else:
-            LOGGER.warning("unknown task type, return None as evaluation results")
-
-        eva = Evaluation(evaluate_param.classi_type)
-        return eva.report(labels, predict_res, evaluate_param.metrics, evaluate_param.thresholds,
-                          evaluate_param.pos_label)
-    """

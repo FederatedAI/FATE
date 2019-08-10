@@ -33,14 +33,16 @@ class OneVsRestParam(BaseParam):
                 default true
     """
 
-    def __init__(self, has_arbiter=True):
+    def __init__(self, need_one_vs_rest=False, has_arbiter=True):
+        super().__init__()
+        self.need_one_vs_rest = need_one_vs_rest
         self.has_arbiter = has_arbiter
 
     def check(self):
         if type(self.has_arbiter).__name__ != "bool":
             raise ValueError(
                 "one_vs_rest param's has_arbiter {} not supported, should be bool type".format(
-                    self.with_proba))
+                    self.has_arbiter))
 
         LOGGER.debug("Finish one_vs_rest parameter check!")
         return True

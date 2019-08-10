@@ -25,13 +25,10 @@ import numpy as np
 
 
 class Optimizer(object):
-    """  优化模块类；
-    """
 
     def __init__(self, learning_rate, opt_method_name="Sgd"):
         """
         """
-        # 优化算法初始化参数；
         self.opt_beta1 = 0.9
         self.opt_beta2 = 0.999
         self.rho = 0.99
@@ -43,20 +40,18 @@ class Optimizer(object):
         self.opt_v = None
         self.learning_rate = learning_rate
 
+        self.nesterov_momentum_coeff = 0.9
+        self.lr_decay = 0.9
         self.opt_method_name = opt_method_name.lower()
 
     def SgdOptimizer(self, grad):
-        """sgd 优化；
-           grad: 梯度；
-        """
+
         self.learning_rate *= self.opt_beta2
         delta_grad = self.learning_rate * grad
         return delta_grad
 
     def AdaGradOptimizer(self, grad):
-        """ AdaGrad 优化算法；
-            grad: 梯度；
-        """
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -66,9 +61,7 @@ class Optimizer(object):
         return delta_grad
 
     def RMSPropOptimizer(self, grad):
-        """ RMSProp 优化算法；
-            grad: 梯度；
-        """
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -77,10 +70,18 @@ class Optimizer(object):
         delta_grad = self.learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
         return delta_grad
 
+    def Nesterov_momentum_SGD_Opimizer(self, grad):
+        if self.opt_m is None:
+            self.opt_m = np.zeros_like(grad)
+        v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
+        delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
+        self.opt_m = v
+        if self.learning_rate > 0.01:
+            self.learning_rate *= self.lr_decay
+        return delta_grad
+
     def AdamOptimizer(self, grad):
-        """ Adam 优化算法；
-            grad: 梯度；
-        """
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -98,10 +99,12 @@ class Optimizer(object):
         return delta_grad
 
     def apply_gradients(self, grad):
-        """根据优化器类型应用梯度；
-        """
+
         if self.opt_method_name == "sgd":
             return self.SgdOptimizer(grad)
+
+        elif self.opt_method_name == "nesterov_momentum_sgd":
+            return self.Nesterov_momentum_SGD_Opimizer(grad)
 
         elif self.opt_method_name == "rmsprop":
             return self.RMSPropOptimizer(grad)
@@ -114,4 +117,3 @@ class Optimizer(object):
 
         else:
             raise NotImplementedError("Optimize method cannot be recognized: {}".format(self.opt_method_name))
-

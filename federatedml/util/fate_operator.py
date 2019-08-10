@@ -39,16 +39,16 @@ def dot(value, w):
 
     # # dot(a, b)[i, j, k, m] = sum(a[i, j, :] * b[k, :, m])
     # # One-dimension dot, which is the inner product of these two arrays
-    # if np.ndim(X) == np.ndim(w) == 1:
-    #     return _one_dimension_dot(X, w)
-    # elif np.ndim(X) == 2 and np.ndim(w) == 1:
-    #     res = []
-    #     for x in X:
-    #         res.append(_one_dimension_dot(x, w))
-    #     res = np.array(res)
-    # else:
-    #     res = np.dot(X, w)
-    res = np.dot(X, w)
+    if np.ndim(X) == np.ndim(w) == 1:
+        return _one_dimension_dot(X, w)
+    elif np.ndim(X) == 2 and np.ndim(w) == 1:
+        res = []
+        for x in X:
+            res.append(_one_dimension_dot(x, w))
+        res = np.array(res)
+    else:
+        res = np.dot(X, w)
+
     return res
 
 
@@ -69,5 +69,23 @@ def reduce_add(x, y):
             result.append(acc + y[idx])
     return result
 
+
+def norm(vector, p=2):
+    """
+    Get p-norm of this vector
+
+    Parameters
+    ----------
+    vector : numpy array, Input vector
+    p: int, p-norm
+
+    """
+    if p < 1:
+        raise ValueError('p should larger or equal to 1 in p-norm')
+
+    if type(vector).__name__ != 'ndarray':
+        vector = np.array(vector)
+
+    return np.linalg.norm(vector, p)
 
 
