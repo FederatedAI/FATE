@@ -5,7 +5,11 @@ import json
 partyId="10000"
 exchangeip="0.0.0.0"
 fip="0.0.0.0"
-tmip="0.0.0.0"
+
+#tmip="0.0.0.0"
+flip="0.0.0.0"
+fbip="0.0.0.0"
+
 rip="0.0.0.0"
 pip="0.0.0.0"
 sip1="0.0.0.0"
@@ -20,7 +24,9 @@ def get_new_json(module_name,filepath):
 			a["route_table"][partyId]={"default":[{"ip": pip,"port": 9370}]}
 		elif module_name == "proxy":
 			a["route_table"]={"default":{"default":[{"ip": exchangeip,"port": 9370}]},\
-			partyId:{"fate":[{"ip": fip,"port": 9394}],"manager":[{"ip": tmip,"port": 9360}]}}
+			#partyId:{"fate":[{"ip": fip,"port": 9394}],"manager":[{"ip": tmip,"port": 9360}]}}
+			partyId:{"fate":[{"ip": fip,"port": 9394}],"fateflow":[{"ip": flip,"port": 9360}]}}
+
 			if sip1 == "":
 				print("[INFO] The number of serving is 0")
 			else:
@@ -32,7 +38,12 @@ def get_new_json(module_name,filepath):
 			a["servers"]["roll"]={"host":rip,"port": 8011}
 			a["servers"]["federation"]={"host":fip,"port": 9394}
 			a["servers"]["proxy"]={"host":pip,"port": 9370}
-			a["servers"]["manager"]={"host":tmip,"grpc.port": 9360,"http.port": 9380}
+			
+			a["servers"]["fateboard"]={"host":fbip,"port": 9370}
+			#a["servers"]["manager"]={"host":tmip,"grpc.port": 9360,"http.port": 9380}
+			a["servers"]["fateflow"]={"host":flip,"grpc.port": 9360,"http.port": 9380}
+			
+
 			if sip1 == "":
 				print("[INFO] The number of serving is 0")
 			else:

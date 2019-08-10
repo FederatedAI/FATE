@@ -55,7 +55,12 @@ public class Dict {
     static public final String URL_OUTPUT_MODEL = "/v1/tracking/component/output/model";
     static public final String URL_OUTPUT_DATA = "/v1/tracking/component/output/data";
     static public final String URL_JOB_DATAVIEW = "/v1/tracking/job/data_view";
-    static public final String URL_JOB_STOP = "/v1/pipeline/job/stop";
+    static public final String URL_JOB_STOP = "/v1/job/stop";
     static public final String REMOTE_RETURN_MSG = "retmsg";
+
+    static public final String SSH_IP = "ip";
+    static public final String SSH_USER = "user";
+    static public final String SSH_PASSWORD = "password";
+    static public final String SSH_PORT = "port";
 
 }

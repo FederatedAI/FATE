@@ -52,6 +52,7 @@ public class InferenceService extends InferenceServiceGrpc.InferenceServiceImplB
     }
 
     private void inferenceServiceAction(InferenceMessage req, StreamObserver<InferenceMessage> responseObserver, InferenceActionType actionType) {
+
         InferenceMessage.Builder response = InferenceMessage.newBuilder();
         ReturnResult returnResult = new ReturnResult();
 
