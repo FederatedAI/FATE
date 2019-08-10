@@ -258,7 +258,6 @@ class Tracking(object):
                 self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
                                             tracking_metric_data_source)
             except Exception as e:
-                print(e)
                 stat_logger.exception(e)
 
     def bulk_insert_model_data(self, model, data_source):
@@ -271,7 +270,6 @@ class Tracking(object):
                         model.insert_many(data_source[i:i+batch_size]).execute()
                 return len(data_source)
             except Exception as e:
-                print(e)
                 stat_logger.exception(e)
                 return 0
 
