@@ -63,6 +63,8 @@ def gen_unique_path(prefix):
 def exec_task(config_dict, task, role, dsl_path=None):
     config = json.dumps(config_dict)
     config_path = gen_unique_path(task + '_' + role)
+    config_dir_path = os.path.dirname(config_path)
+    os.makedirs(config_dir_path, exist_ok=True)
     with open(config_path, "w") as fout:
         # print("path:{}".format(config_path))
         fout.write(config + "\n")
