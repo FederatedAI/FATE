@@ -19,11 +19,9 @@ import json
 import operator
 import os
 import subprocess
-import sys
 import threading
 import typing
 import uuid
-from multiprocessing import Process
 
 import psutil
 
@@ -34,6 +32,7 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
+from fate_flow.utils import detect_utils
 
 
 class IdCounter:
@@ -55,7 +54,7 @@ id_counter = IdCounter()
 
 
 def generate_job_id():
-    return '_'.join([datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"), str(id_counter.incr())])
+    return '{}{}'.format(datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"), str(id_counter.incr()))
 
 
 def generate_task_id(job_id, component_name):
@@ -79,9 +78,7 @@ def check_config(config: typing.Dict, required_parameters: typing.List):
 
 
 def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
-    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
-    if not check_status:
-        raise Exception('check job_parameters failed: {}'.format(check_msg))
+    detect_utils.check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):
@@ -113,36 +110,42 @@ def get_job_conf_path(job_id):
 
 def get_job_dsl_parser_by_job_id(job_id):
     with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf).where(Job.f_job_id == job_id)
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
         if jobs:
-            job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
-            job_dsl_parser = get_job_dsl_parser(job_dsl_path=job_dsl_path, job_runtime_conf_path=job_runtime_conf_path)
+            job = jobs[0]
+            job_dsl_parser = get_job_dsl_parser(dsl=json_loads(job.f_dsl), runtime_conf=json_loads(job.f_runtime_conf),
+                                                train_runtime_conf=json_loads(job.f_train_runtime_conf))
             return job_dsl_parser
         else:
             return None
 
 
-def get_job_dsl_parser(job_dsl_path, job_runtime_conf_path):
+def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
     dsl_parser = DSLParser()
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    dsl_parser.run(dsl_json_path=job_dsl_path,
-                   runtime_conf=job_runtime_conf_path,
+    job_type = runtime_conf.get('job_parameters', {}).get('job_type', 'train')
+    dsl_parser.run(dsl=dsl,
+                   runtime_conf=runtime_conf,
+                   pipeline_dsl=pipeline_dsl,
+                   pipeline_runtime_conf=train_runtime_conf,
                    default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path)
+                   setting_conf_prefix=setting_conf_path,
+                   mode=job_type)
     return dsl_parser
 
 
-def get_job_runtime_conf(job_id, role, party_id):
+def get_job_configuration(job_id, role, party_id):
     with DB.connection_context():
-        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == job_id, Job.f_role == role,
-                                                    Job.f_party_id == party_id)
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+                                                                                         Job.f_role == role,
+                                                                                         Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
-            return json_loads(job.f_runtime_conf)
+            return json_loads(job.f_dsl), json_loads(job.f_runtime_conf), json_loads(job.f_train_runtime_conf)
         else:
-            return {}
+            return {}, {}, {}
 
 
 def query_job(**kwargs):

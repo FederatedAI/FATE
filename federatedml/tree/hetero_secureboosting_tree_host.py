@@ -36,7 +36,6 @@ from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from numpy import random
 from arch.api import federation
-from arch.api.model_manager import manager
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -64,6 +63,10 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         binning_obj = QuantileBinning(param_obj)
         binning_obj.fit_split_points(data_instance)
         self.data_bin, self.bin_split_points, self.bin_sparse_points = binning_obj.convert_feature_to_bin(data_instance)
+        # self.data_bin, self.bin_split_points, self.bin_sparse_points = \
+        #    Quantile.convert_feature_to_bin(
+        #        data_instance, self.quantile_method, self.bin_num,
+        #        self.bin_gap, self.bin_sample_num)
 
     def sample_valid_features(self):
         LOGGER.info("sample valid features")
@@ -78,11 +81,17 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
             valid_features[fid] = True
         return valid_features
 
+    """
+    def set_flowid(self, flowid=0):
+        LOGGER.info("set flowid, flowid is {}".format(flowid))
+        self.flowid = flowid
+    """
+
     def set_runtime_idx(self, runtime_idx):
         self.runtime_idx = runtime_idx
 
     def generate_flowid(self, round_num, tree_num):
-        LOGGER.info("generate flowid, flowid {}".format(self.flowid))
+        LOGGER.info("generate encrypter")
         return ".".join(map(str, [self.flowid, round_num, tree_num]))
 
     def sync_tree_dim(self):
@@ -105,6 +114,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.gen_feature_fid_mapping(data_inst.schema)
         LOGGER.debug("schema is {}".format(data_inst.schema))
         data_inst = self.data_alignment(data_inst)
+        LOGGER.debug("schema is {}".format(data_inst.schema))
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
@@ -199,6 +209,41 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                              }
 
         return self.model_output
+    """
+    def save_model(self, model_table, model_namespace):
+        LOGGER.info("save model")
+        meta_name, meta_protobuf = self.get_model_meta()
+        param_name, param_protobuf = self.get_model_param()
+        manager.save_model(buffer_type=meta_name,
+                           proto_buffer=meta_protobuf,
+                           name=model_table,
+                           namespace=model_namespace)
+
+        manager.save_model(buffer_type=param_name,
+                           proto_buffer=param_protobuf,
+                           name=model_table,
+                           namespace=model_namespace)
+
+        return [(meta_name, param_name)]
+    """
+
+    """
+    def load_model(self, model_table, model_namespace):
+        LOGGER.info("load model")
+        model_meta = BoostingTreeModelMeta()
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.meta",
+                           proto_buffer=model_meta,
+                           name=model_table,
+                           namespace=model_namespace)
+        self.set_model_meta(model_meta)
+
+        model_param = BoostingTreeModelParam()
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.param",
+                           proto_buffer=model_param,
+                           name=model_table,
+                           namespace=model_namespace)
+        self.set_model_param(model_param)
+    """
 
     def _load_model(self, model_dict):
         LOGGER.info("load model")
@@ -214,17 +259,43 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
 
+    """
+    def run(self, component_parameters, args):
+        self._init_runtime_parameters(component_parameters())
+
+        if args.get("model") is not None:
+            self._load_model(args["model"])
+
+        if args["data"].get("train_data", None):
+            train_data = args["data"]["train_data"][0].get("table")
+            self.fit(train_data)
+
+            self.data_output = self.predict(train_data)
+            self.data_output = self.data_output.mapValues(lambda value: (value, "train"))
+
+            if args["data"].get("eval_data", None):
+                eval_data = args["data"]["eval_data"].get("table")
+                eval_data_output = self.predict(eval_data)
+                eval_data_output = eval_data_output.mapValues(lambda value: (value, "predict"))
+
+                self.data_output.union(eval_data_output)
+
+        elif args["data"].get("eval_data", None):
+            eval_data = args["eval_data"][0].get("table")
+            self.data_output = self.predict(eval_data)
+            self.data_output = self.data_output.mapValues(lambda value: (value, "predict"))
+    """
     def run(self, component_parameters=None, args=None):
         local_role = component_parameters["local"]["role"]
         local_partyid = component_parameters["local"]["party_id"]
         runtime_idx = component_parameters["role"][local_role].index(local_partyid)
         self.set_runtime_idx(runtime_idx)
         
-        self._init_runtime_parameters(component_parameters)
-        LOGGER.debug("component_parameter: {}".format(component_parameters))
+        need_cv = self._init_runtime_parameters(component_parameters)
+        print("component_parameter: {}".format(component_parameters))
 
-        LOGGER.debug('need_cv : {}'.format(self.need_cv))
-        if self.need_cv:
+        print('need_cv : {}'.format(need_cv))
+        if need_cv:
             stage = 'cross_validation'
         elif "model" in args:
             self._load_model(args)

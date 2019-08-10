@@ -12,13 +12,13 @@
     "model": {
       "guest": {
         "10000": {
-          "model_id": "online_inference_hetero_lr_test#guest#10000",
+          "model_id": "",
           "model_version": ""
         }
       },
       "host": {
         "10000": {
-          "model_id": "online_inference_hetero_lr_test#host#10000",
+          "model_id": "",
           "model_version": ""
         }
       }

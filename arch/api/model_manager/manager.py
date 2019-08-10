@@ -14,13 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api.proto.data_transform_server_pb2 import DataTransformServer
-from arch.api.utils.core import json_loads
-from arch.api.utils.format_transform import camel_to_pascal
 from arch.api import eggroll
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
-from arch.api.version_control import control
+from arch.api.utils import version_control
 import datetime
 
 
@@ -30,7 +27,7 @@ def save_model(buffer_type, proto_buffer, name, namespace, version_log=None):
     # todo:  model slice?
     data_table.put(buffer_type, proto_buffer.SerializeToString(), use_serialize=False)
     version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
-    control.save_version(name=name, namespace=namespace, version_log=version_log)
+    version_control.save_version(name=name, namespace=namespace, version_log=version_log)
 
 
 def read_model(buffer_type, proto_buffer, name, namespace):
@@ -50,43 +47,3 @@ def read_model(buffer_type, proto_buffer, name, namespace):
 def get_model_table_partition_count():
     # todo: max size limit?
     return 4 if RuntimeInstance.MODE == WorkMode.CLUSTER else 1
-
-
-def test_model(role):
-    with open("%s_runtime_conf.json" % role) as conf_fr:
-        runtime_conf = json_loads(conf_fr.read())
-
-    model_table_name = runtime_conf.get("WorkFlowParam").get("model_table")
-    model_table_namespace = runtime_conf.get("WorkFlowParam").get("model_namespace")
-    print(model_table_name, model_table_namespace)
-    model_meta_save = ModelMeta()
-    model_meta_save.name = "HeteroLR%s" % (camel_to_pascal(role))
-    save_model("model_meta", model_meta_save, name=model_table_name, namespace=model_table_namespace)
-
-    model_meta_read = ModelMeta()
-    read_model("model_meta", model_meta_read, name=model_table_name, namespace=model_table_namespace)
-    print(model_meta_read)
-
-    model_param_save = ModelParam()
-    model_param_save.weight["k1"] = 1
-    model_param_save.weight["k2"] = 2
-    save_model("model_param", model_param_save, name=model_table_name, namespace=model_table_namespace)
-
-    # read
-    model_param_read = ModelParam()
-    read_model("model_param", model_param_read, name=model_table_name, namespace=model_table_namespace)
-    print(model_param_read)
-
-    data_transform = DataTransformServer()
-    data_transform.missing_replace_method = "xxxx"
-    save_model("data_transform", data_transform, name=model_table_name, namespace=model_table_namespace)
-
-if __name__ == '__main__':
-    import uuid
-    job_id = str(uuid.uuid1().hex)
-    eggroll.init(job_id=job_id, mode=0)
-
-    test_model("guest")
-    test_model("host")
-
-    print(job_id)

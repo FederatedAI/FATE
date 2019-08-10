@@ -13,3 +13,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from enum import IntEnum
+
+
+class WorkMode(IntEnum):
+    STANDALONE = 0
+    CLUSTER = 1
+
+
+class JobStatus(object):
+    WAITING = 'waiting'
+    RUNNING = 'running'
+    SUCCESS = 'success'
+    FAILED = 'failed'
+    PARTIAL = 'partial'
+    DELETED = 'deleted'
+
+
+class TaskStatus(object):
+    START = 'start'
+    RUNNING = 'running'
+    SUCCESS = 'success'
+    FAILED = 'failed'
