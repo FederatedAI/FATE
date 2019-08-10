@@ -50,6 +50,9 @@
             "init_param": {
 				"init_method": "random_uniform"
             },
+            "encrypt_param": {
+                "method": "Paillier"
+            },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,

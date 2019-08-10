@@ -106,34 +106,57 @@ def exec_task(config_dict, task, role, dsl_path=None):
     return stdout
 
 
-def get_downloaded_data_count(data_file):
-    # TODO: Count download file lines
-    return 0
-
-
 def obtain_component_output(jobid, party_id, role, component_name, output_type='data'):
     task_type = 'component_output_data'
     if output_type == 'data':
         task_type = 'component_output_data'
+        cmd = ["python",
+               fate_flow_path,
+               "-f",
+               task_type,
+               "-j",
+               jobid,
+               "-p",
+               str(party_id),
+               "-r",
+               role,
+               "-cpn",
+               component_name,
+               "-o",
+               home_dir
+               ]
     elif output_type == 'model':
         task_type = 'component_output_model'
+        cmd = [fate_flow_path,
+               "-f",
+               task_type,
+               "-j",
+               jobid,
+               "-p",
+               str(party_id),
+               "-r",
+               role,
+               "-cpn",
+               component_name,
+               ]
     elif output_type == 'log_metric':
         task_type = 'component_metric_all'
+        cmd = [fate_flow_path,
+               "-f",
+               task_type,
+               "-j",
+               jobid,
+               "-p",
+               str(party_id),
+               "-r",
+               role,
+               "-cpn",
+               component_name,
+               ]
 
     retry_counter = 0
     while True:
-        subp = subprocess.Popen(["python",
-                                 fate_flow_path,
-                                 "-f",
-                                 task_type,
-                                 "-j",
-                                 jobid,
-                                 "-p",
-                                 str(party_id),
-                                 "-r",
-                                 role,
-                                 "-cpn",
-                                 component_name],
+        subp = subprocess.Popen(cmd,
                                 shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
@@ -177,7 +200,6 @@ def parse_exec_task(stdout):
 
 
 def job_status_checker(jobid, component_name):
-
     check_counter = 0
     while True:
         subp = subprocess.Popen(["python",
@@ -206,7 +228,7 @@ def job_status_checker(jobid, component_name):
             check_counter += 1
         else:
             break
-        #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+            #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
 
     return stdout
 
@@ -427,7 +449,8 @@ def request_offline_feature(name, namespace, ret_size):
     return ret_ids
 
 
-def check_file_line_num(file_name):
+def check_file_line_num(file_path):
+    file_name = '/'.join([file_path, 'output_data.csv'])
     subp = subprocess.Popen(["wc",
                              "-l",
                              file_name
@@ -574,8 +597,8 @@ if __name__ == "__main__":
             count = check_file_line_num(intersect_file_name)
 
             # TODO: Wait for fate-flow interface
-            if count == 100:
-                count = task_intersect_count
+            # if count == 100:
+            #     count = task_intersect_count
 
             if count != task_intersect_count:
                 TEST_TASK["TEST_INTERSECT"] = 1
@@ -613,7 +636,6 @@ if __name__ == "__main__":
                     auc = metric_value
             print("[Train] train eval:{}".format(eval_res))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
-            # auc = float(eval_res[0][1]["validate_evaluate"]['auc'])
             if auc > task_hetero_lr_base_auc:
                 TEST_TASK["TEST_TRAIN"] = 0
         else:

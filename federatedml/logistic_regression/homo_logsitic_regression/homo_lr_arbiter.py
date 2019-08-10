@@ -110,7 +110,10 @@ class HomoLRArbiter(HomoLRBase):
                                   role=consts.HOST,
                                   idx=idx)
 
-            converge_flag = self.converge_func.is_converge(total_loss)
+            if self.use_loss:
+                converge_flag = self.converge_func.is_converge(total_loss)
+            else:
+                converge_flag = self.converge_func.is_converge(final_model)
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag,
                 iter_num)
@@ -333,6 +336,7 @@ class HomoLRArbiter(HomoLRBase):
                     self.data_output = self.one_vs_rest_predict(None)
         elif "model" in args:
             self._load_model(args)
+            self.set_flowid('predict')
             self.predict()
         else:
             self.set_flowid('train')

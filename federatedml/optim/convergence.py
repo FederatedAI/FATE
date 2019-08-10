@@ -15,9 +15,12 @@
 #
 
 from federatedml.util import consts
+from arch.api.utils import log_utils
+
 from federatedml.util import fate_operator
 import numpy as np
 
+LOGGER = log_utils.getLogger()
 
 class ConvergeFunction:
 
