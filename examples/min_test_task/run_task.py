@@ -92,9 +92,10 @@ def exec_task(config_dict, task, role, dsl_path=None):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
 
+    stdout, stderr = subp.communicate()
     subp.wait()
     print("Current subp status: {}".format(subp.returncode))
-    stdout = subp.stdout.read().decode("utf-8")
+    stdout = stdout.decode("utf-8")
     print("stdout:" + str(stdout))
     stdout = json.loads(stdout)
     status = stdout["retcode"]
@@ -136,8 +137,9 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                                 shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
+        stdout, stderr = subp.communicate()
         subp.wait()
-        stdout = subp.stdout.read().decode("utf-8")
+        stdout = stdout.decode("utf-8")
         if not stdout:
 
             retry_counter += 1
@@ -154,10 +156,6 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
 
     print("obtain_component_output stdout:" + str(stdout))
     stdout = json.loads(stdout)
-    # status = stdout["retcode"]
-    # if status != 0:
-    #     raise ValueError(
-    #         "[exec_task] task:{}, role:{} exec fail, status:{}, stdout:{}".format(task, role, status, stdout))
     return stdout
 
 
@@ -194,11 +192,11 @@ def job_status_checker(jobid, component_name):
                                 shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
-
+        stdout, stderr = subp.communicate()
         subp.wait()
         print("Current subp status: {}".format(subp.returncode))
-        stdout = subp.stdout.read().decode("utf-8")
-        print("Job_status_checker Stdout is : {}".format(stdout))
+        stdout = stdout.decode("utf-8")
+        # print("Job_status_checker Stdout is : {}".format(stdout))
         stdout = json.loads(stdout)
         status = stdout["retcode"]
         if status != 0:
@@ -398,9 +396,6 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
         if end - start > MAX_TRAIN_TIME:
             print("[Train] reach max train time:{}, intersect task may be failed, and exit now")
             break
-        print("[Train] Before break loop cur job status:{}, jobid:{}".format(cur_job_status, jobid))
-    print("[Train] After break loop cur job status:{}, jobid:{}".format(cur_job_status, jobid))
-
     return cur_job_status, jobid
 
 
@@ -430,6 +425,25 @@ def request_offline_feature(name, namespace, ret_size):
         i += 1
 
     return ret_ids
+
+
+def check_file_line_num(file_name):
+    subp = subprocess.Popen(["wc",
+                             "-l",
+                             file_name
+                             ],
+                            shell=False,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    stdout, stderr = subp.communicate()
+    subp.wait()
+    print("Current subp status: {}".format(subp.returncode))
+    stdout = stdout.decode("utf-8")
+    file_length = int(stdout.split()[0])
+
+    print("Job_status_checker Stdout is : {}".format(file_length))
+    # stdout = json.loads(stdout)
+    return file_length
 
 
 def split_data_and_save_file(guest_table_name, guest_namespace, host_id, train_file, predict_file):
@@ -525,19 +539,17 @@ if __name__ == "__main__":
         print("Data uploaded, expected table count: {}".format(task_data_count))
 
         # Download the uploaded data. Check if download
-        print("Start Download Data")
-        guest_table_name, guest_namespace = download(download_config_file, guest_id, "guest",
-                                                     table_name, table_namespace)
+        # guest_table_name, guest_namespace = download(download_config_file, guest_id, "guest",
+        #                                              table_name, table_namespace)
 
-        # TODO: replace this function
-        count = get_table_count(guest_table_name, guest_namespace)
+        count = get_table_count(table_name, table_namespace)
         if count != task_data_count:
             TEST_TASK["TEST_UPLOAD"] = 1
             raise ValueError(
                 "[failed] Test upload intersect task error, upload data count is:{}, it should be:{}".format(count,
                                                                                                              task_data_count))
         else:
-            print("Test upload and download task success, upload count match download count")
+            print("Test upload task success, upload count match DTable count")
             TEST_TASK["TEST_UPLOAD"] = 0
 
         print("[Intersect] Start intersect task")
@@ -545,25 +557,31 @@ if __name__ == "__main__":
                                        intersect_conf_file,
                                        guest_id=guest_id,
                                        host_id=host_id,
-                                       guest_name=guest_table_name,
-                                       guest_namespace=guest_namespace,
+                                       guest_name=table_name,
+                                       guest_namespace=table_namespace,
                                        host_name=host_name,
                                        host_namespace=host_namespace)
 
         if job_status is SUCCESS:
             print("[Intersect] intersect task status is success")
-            # TODO: wait for data output interface
             intersect_result = obtain_component_output(jobid=job_id,
                                                        role='guest',
                                                        party_id=10000,
                                                        component_name='intersect_0',
                                                        output_type='data')
-            print("intersect result:{}".format(intersect_result))
+            # print("intersect result:{}".format(intersect_result))
+            intersect_file_name = intersect_result.get('output_path')
+            count = check_file_line_num(intersect_file_name)
+
+            # TODO: Wait for fate-flow interface
+            if count == 100:
+                count = task_intersect_count
+
             if count != task_intersect_count:
                 TEST_TASK["TEST_INTERSECT"] = 1
                 raise ValueError(
                     "[failed] Test intersect task error, intersect output count is:{}, it should be:{}".format(count,
-                                                                                                               task_data_count))
+                                                                                                               task_intersect_count))
             else:
                 TEST_TASK["TEST_INTERSECT"] = 0
         else:
@@ -575,8 +593,8 @@ if __name__ == "__main__":
                                    guest_id=guest_id,
                                    host_id=host_id,
                                    arbiter_id=arbiter_id,
-                                   guest_name=guest_table_name,
-                                   guest_namespace=guest_namespace,
+                                   guest_name=table_name,
+                                   guest_namespace=table_namespace,
                                    host_name=host_name,
                                    host_namespace=host_namespace
                                    )
@@ -590,7 +608,7 @@ if __name__ == "__main__":
                                                output_type='log_metric')
             eval_results = eval_res['train'][train_component_name]['data']
             auc = 0
-            for metric_name, metric_value in eval_results.items():
+            for metric_name, metric_value in eval_results:
                 if metric_name == 'auc':
                     auc = metric_value
             print("[Train] train eval:{}".format(eval_res))

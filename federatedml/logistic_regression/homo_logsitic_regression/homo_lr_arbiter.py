@@ -71,13 +71,12 @@ class HomoLRArbiter(HomoLRBase):
                                                           iter_num=iter_num,
                                                           party_weights=self.party_weights,
                                                           host_encrypter=self.host_encrypter)
-            if self.use_loss:
-                total_loss = self.aggregator.aggregate_loss(transfer_variable=self.transfer_variable,
-                                                            iter_num=iter_num,
-                                                            party_weights=self.party_weights,
-                                                            host_use_encryption=self.host_use_encryption)
-            else:
-                total_loss = np.linalg.norm(final_model)
+            total_loss = self.aggregator.aggregate_loss(transfer_variable=self.transfer_variable,
+                                                        iter_num=iter_num,
+                                                        party_weights=self.party_weights,
+                                                        host_use_encryption=self.host_use_encryption)
+            # else:
+            #     total_loss = np.linalg.norm(final_model)
 
             self.loss_history.append(total_loss)
 
@@ -322,7 +321,15 @@ class HomoLRArbiter(HomoLRBase):
 
         if self.need_cv:
             self.cross_validation(None)
-
+        elif self.need_one_vs_rest:
+            if "model" in args:
+                self._load_model(args)
+                self.one_vs_rest_predict(None)
+            else:
+                self.one_vs_rest_fit()
+                self.data_output = self.one_vs_rest_predict(None)
+                if need_eval:
+                    self.data_output = self.one_vs_rest_predict(None)
         elif "model" in args:
             self._load_model(args)
             self.predict()

@@ -91,21 +91,22 @@ class HomoLRGuest(HomoLRBase):
 
             total_loss /= batch_num
 
-            if not self.use_loss:
-                total_loss = np.linalg.norm(self.coef_)
+            # if not self.use_loss:
+            #     total_loss = np.linalg.norm(self.coef_)
 
             w = self.merge_model()
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters",
-                                     })
-            # metric_name = self.get_metric_name('loss')
+            if not self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters",
+                                         })
+                # metric_name = self.get_metric_name('loss')
 
-            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name='loss',
-                                 metric_namespace='train',
-                                 metric_data=[Metric(iter_num, total_loss)])
+                self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name='loss',
+                                     metric_namespace='train',
+                                     metric_data=[Metric(iter_num, total_loss)])
 
             self.loss_history.append(total_loss)
             LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
@@ -121,14 +122,14 @@ class HomoLRGuest(HomoLRBase):
                               idx=0)
 
             # send loss
-            if self.use_loss:
-                loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
-                LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
-                federation.remote(total_loss,
-                                  name=self.transfer_variable.guest_loss.name,
-                                  tag=loss_transfer_id,
-                                  role=consts.ARBITER,
-                                  idx=0)
+            # if self.use_loss:
+            loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
+            LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
+            federation.remote(total_loss,
+                              name=self.transfer_variable.guest_loss.name,
+                              tag=loss_transfer_id,
+                              role=consts.ARBITER,
+                              idx=0)
 
             # recv model
             model_transfer_id = self.transfer_variable.generate_transferid(
