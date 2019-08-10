@@ -63,6 +63,8 @@ def gen_unique_path(prefix):
 def exec_task(config_dict, task, role, dsl_path=None):
     config = json.dumps(config_dict)
     config_path = gen_unique_path(task + '_' + role)
+    config_dir_path = os.path.dirname(config_path)
+    os.makedirs(config_dir_path, exist_ok=True)
     with open(config_path, "w") as fout:
         # print("path:{}".format(config_path))
         fout.write(config + "\n")
@@ -127,7 +129,8 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                ]
     elif output_type == 'model':
         task_type = 'component_output_model'
-        cmd = [fate_flow_path,
+        cmd = ["python",
+               fate_flow_path,
                "-f",
                task_type,
                "-j",
@@ -137,11 +140,12 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                "-r",
                role,
                "-cpn",
-               component_name,
+               component_name
                ]
     elif output_type == 'log_metric':
         task_type = 'component_metric_all'
-        cmd = [fate_flow_path,
+        cmd = ["python",
+               fate_flow_path,
                "-f",
                task_type,
                "-j",
@@ -151,13 +155,14 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                "-r",
                role,
                "-cpn",
-               component_name,
+               component_name
                ]
     else:
         cmd = []
 
     retry_counter = 0
     while True:
+        print("exec cmd: {}".format(cmd))
         subp = subprocess.Popen(cmd,
                                 shell=False,
                                 stdout=subprocess.PIPE,
@@ -224,9 +229,10 @@ def job_status_checker(jobid, component_name):
         stdout = json.loads(stdout)
         status = stdout["retcode"]
         if status != 0:
-            if check_counter >= 5:
+            if check_counter >= 60:
                 raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-            time.sleep(5)
+            print("Current retry times: {}".format(check_counter))
+            time.sleep(10)
             check_counter += 1
         else:
             break
@@ -414,7 +420,7 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     cur_job_status = RUNNING
     while cur_job_status == RUNNING or cur_job_status == START:
         time.sleep(WORKFLOW_STATUS_CHECKER_TIME)
-        cur_job_status = task_status_checker(jobid, train_component_name)
+        cur_job_status = task_status_checker(jobid, evaluation_component_name)
         print("[Train] cur job status:{}, jobid:{}".format(cur_job_status, jobid))
         end = time.time()
         if end - start > MAX_TRAIN_TIME:
@@ -631,7 +637,7 @@ if __name__ == "__main__":
                                                party_id=10000,
                                                component_name=evaluation_component_name,
                                                output_type='log_metric')
-            eval_results = eval_res['train'][train_component_name]['data']
+            eval_results = eval_res['data']['train'][train_component_name]['data']
             auc = 0
             for metric_name, metric_value in eval_results:
                 if metric_name == 'auc':
