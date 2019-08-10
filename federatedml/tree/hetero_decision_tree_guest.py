@@ -140,12 +140,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def encrypt_grad_and_hess(self):
         LOGGER.info("start to encrypt grad and hess")
         encrypted_grad_and_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
-        """
-        encrypter = self.encrypter
-        encrypted_grad_and_hess = self.grad_and_hess.mapValues(
-            lambda grad_hess: (encrypter.encrypt(grad_hess[0]), encrypter.encrypt(grad_hess[1])))
-        LOGGER.info("finish to encrypt grad and hess")
-        """
         return encrypted_grad_and_hess
 
     def get_grad_hess_sum(self, grad_and_hess_table):
@@ -165,7 +159,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.bin_split_points, self.bin_sparse_points,
             self.valid_features, node_map)
         acc_histograms = FeatureHistogram.accumulate_histogram(histograms)
-        LOGGER.info("acc histogram shape is {}".format(len(acc_histograms)))
         return acc_histograms
 
     def sync_tree_node_queue(self, tree_node_queue, dep=-1):
@@ -234,14 +227,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch)
 
         for i in range(len(encrypted_splitinfo_host)):
-            LOGGER.info("begin to find split")
             encrypted_splitinfo_host_table = eggroll.parallelize(
                 zip(self.cur_split_nodes, encrypted_splitinfo_host[i]), include_key=False, partition=self.data_bin._partitions)
 
             splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
             best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
 
-            LOGGER.info("end to find split")
             self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
 
     def sync_final_split_host(self, dep=-1, batch=-1):
@@ -336,7 +327,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 new_tree_node_queue.append(left_node)
                 new_tree_node_queue.append(right_node)
-                LOGGER.info("tree_node_queue {} split!!!".format(self.tree_node_queue[i].id))
 
                 self.tree_node_queue[i].sitename = splitinfos[i].sitename
                 if self.tree_node_queue[i].sitename == consts.GUEST:
@@ -500,9 +490,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.convert_bin_to_real()
         tree_ = self.tree_
         LOGGER.info("tree node num is %d" % len(tree_))
-        # self.predict_weights = self.node_dispatch.mapValues(
-        #    lambda unleaf_state_nodeid: tree_[unleaf_state_nodeid[1]].weight)
-
         LOGGER.info("end to fit guest decision tree")
 
     @staticmethod

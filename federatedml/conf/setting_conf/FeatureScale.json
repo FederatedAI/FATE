@@ -6,7 +6,7 @@
     {
         "guest|host":
         {
-            "program": "scaler.py/Scaler"
+            "program": "scale.py/Scale"
         }
     }
 }

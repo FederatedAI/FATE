@@ -74,10 +74,12 @@ class DenseFeatureReader(object):
         self.tracker = tracker
 
     def generate_header(self, input_data, input_data_feature):
-        # data_meta = storage.get_data_table_meta(input_data)
-        data_meta = None
+        header = storage.get_data_table_meta_by_instance("header", input_data)
+        sid_name = storage.get_data_table_meta_by_instance("sid", input_data)
+        LOGGER.debug("header is {}".format(header))
+        LOGGER.debug("sid_name is {}".format(sid_name))
 
-        if not data_meta:
+        if not header:
             feature_shape = data_overview.get_data_shape(input_data_feature)
             self.header = ["fid" + str(i) for i in range(feature_shape)]
             self.sid_name = "sid"
@@ -85,13 +87,17 @@ class DenseFeatureReader(object):
             if self.with_label:
                 self.label_name = "label"
         else:
-            self.sid_name = data_meta.get("sid")
-            if self.with_label:
-                self.header = self.header.split(self.delimitor, -1)[: self.label_idx] + \
-                              self.header.split(self.delimitor, -1)[self.label_idx + 1:]
-                self.label_name = self.header.split(self.delimitor, -1)[self.label_idx]
+            if not sid_name:
+                self.sid_name = "sid"
             else:
-                self.header = self.header.split(self.delimitor, -1)
+                self.sid_name = sid_name
+
+            if self.with_label:
+                self.header = header.split(self.delimitor, -1)[: self.label_idx] + \
+                              header.split(self.delimitor, -1)[self.label_idx + 1:]
+                self.label_name = header.split(self.delimitor, -1)[self.label_idx]
+            else:
+                self.header = header.split(self.delimitor, -1)
 
         schema = make_schema(self.header, self.sid_name, self.label_name)
         set_schema(input_data_feature, schema)
