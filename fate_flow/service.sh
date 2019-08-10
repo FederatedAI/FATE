@@ -16,9 +16,9 @@
 #  limitations under the License.
 #
 
-export PYTHONPATH=/data/projects/fate/python/
+export PYTHONPATH=
 log_dir="${PYTHONPATH}/logs"
-venv=/data/projects/fate/venv/
+venv=
 
 module=fate_flow_server.py
 

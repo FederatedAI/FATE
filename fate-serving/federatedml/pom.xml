@@ -23,6 +23,11 @@
             <artifactId>fate-serving-core</artifactId>
             <version>${fate.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20151123</version>
+        </dependency>
     </dependencies>
 
 

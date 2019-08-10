@@ -23,7 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim import DiffConverge, AbsConverge, Optimizer
+from federatedml.optim import Optimizer
 from federatedml.optim import convergence
 from federatedml.optim import Initializer
 from federatedml.optim import L1Updater
@@ -96,11 +96,12 @@ class BaseLogisticRegression(ModelBase):
             self.encrypt_operator = FakeEncrypt()
 
         if params.converge_func == 'diff':
-            self.converge_func = DiffConverge(eps=self.eps)
+            self.converge_func = convergence.DiffConverge(eps=self.eps)
         elif params.converge_func == 'weight_diff':
-            self.converge_func = convergence.GradientConverge(eps=self.eps)
+            self.converge_func = convergence.WeightDiffConverge(eps=self.eps)
         else:
-            self.converge_func = AbsConverge(eps=self.eps)
+            self.converge_func = convergence.AbsConverge(eps=self.eps)
+
         self.re_encrypt_batches = params.re_encrypt_batches
         self.predict_param = params.predict_param
         self.optimizer = Optimizer(params.learning_rate, params.optimizer)

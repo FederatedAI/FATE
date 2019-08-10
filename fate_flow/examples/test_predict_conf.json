@@ -1,0 +1,33 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "job_type": "predict",
+        "model_id": "arbiter-10000#guest-10000#host-10000#model",
+        "model_version": "20190810154805024303_1"
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "breast_b", "namespace": "fate_flow_test_breast"}]
+                }
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "breast_a", "namespace": "fate_flow_test_breast"}]
+                }
+            }
+        }
+    }
+}

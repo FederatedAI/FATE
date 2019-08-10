@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-modules=(federation meta-service egg roll proxy storage-service-cxx)
+modules=(federation meta-service egg roll proxy storage-service-cxx fateboard)
 
 cwd=`pwd`
 

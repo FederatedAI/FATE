@@ -39,10 +39,11 @@ def internal_server_error(e):
 # User interface
 @manager.route('/submit', methods=['POST'])
 def submit_job():
-    job_id, job_dsl_path, job_runtime_conf_path, model_info = JobController.submit_job(request.json)
+    job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
     return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
                                                 'job_runtime_conf_path': job_runtime_conf_path,
-                                                'model_info': model_info
+                                                'model_info': model_info,
+                                                'board_url': board_url
                                                 })
 
 
@@ -71,9 +72,13 @@ def job_config():
         response_data['job_id'] = job.f_job_id
         response_data['dsl'] = json_loads(job.f_dsl)
         response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
+        response_data['train_runtime_conf'] = json_loads(job.f_train_runtime_conf)
         response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'],
                                                                    response_data['runtime_conf']['job_parameters'][
-                                                                       'model_key'], job.f_job_id)
+                                                                       'model_id'],
+                                                                   response_data['runtime_conf']['job_parameters'][
+                                                                       'model_version'],
+                                                                   )
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 
@@ -86,8 +91,7 @@ def job_log():
     for root, dir, files in os.walk(job_log_dir):
         for file in files:
             full_path = os.path.join(root, file)
-            rel_path = os.path.relpath(full_path, job_log_dir)
-            tar.add(full_path, rel_path)
+            tar.add(full_path, os.path.basename(full_path))
     tar.close()
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
@@ -116,9 +120,9 @@ def job_status(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/<model_id>/save/pipeline', methods=['POST'])
-def save_pipeline(job_id, role, party_id, model_id):
-    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_key=base64_decode(model_id))
+@manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
+def save_pipeline(job_id, role, party_id, model_id, model_version):
+    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_id=base64_decode(model_id), model_version=base64_decode(model_version))
     return get_json_result(retcode=0, retmsg='success')
 
 

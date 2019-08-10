@@ -32,3 +32,9 @@ Get host table name and namespace
 
 In guest, make sure Host is finish
 >sh run.sh guest normal ${host_table_name} ${host_namespace}
+
+#### Test Result
+In this run test, three test cases are included.
+
+1. Upload Data test
+    In this step, run_task upload user's data, and get a table_name and namespace back. Then, we use this table_name and namespace to obtain DTable through
