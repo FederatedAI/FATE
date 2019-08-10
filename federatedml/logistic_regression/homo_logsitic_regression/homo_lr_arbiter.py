@@ -80,16 +80,17 @@ class HomoLRArbiter(HomoLRBase):
 
             self.loss_history.append(total_loss)
 
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters"
-                                     })
-            metric_name = self.get_metric_name('loss')
-            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name=metric_name,
-                                 metric_namespace='train',
-                                 metric_data=[Metric(iter_num, total_loss)])
+            if self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters"
+                                         })
+                metric_name = self.get_metric_name('loss')
+                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name=metric_name,
+                                     metric_namespace='train',
+                                     metric_data=[Metric(iter_num, total_loss)])
 
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
