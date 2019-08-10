@@ -95,10 +95,30 @@ class ModelBase(object):
             self.cross_validation(train_data)
 
         elif stage == "one_vs_rest":
-            LOGGER.info("Need one vs rest.")
-            self.data_output = self.one_vs_rest(train_data, eval_data)
-            self.set_predict_data_schema(self.data_output, train_data.schema)
-            return
+            LOGGER.info("Need one_vs_rest.")
+            if train_data:
+                self.one_vs_rest_fit(train_data)
+                self.data_output = self.one_vs_rest_predict(train_data)
+                if self.data_output:
+                    self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
+
+                if eval_data:
+                    eval_data_predict_res = self.one_vs_rest_predict(eval_data)
+                    if eval_data_predict_res:
+                        predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
+
+                        if self.data_output:
+                            self.data_output.union(predict_output_res)
+                        else:
+                            self.data_output = predict_output_res
+
+                self.set_predict_data_schema(self.data_output, train_data.schema)
+
+            elif eval_data:
+                self.data_output = self.one_vs_rest_predict(eval_data)
+                if self.data_output:
+                    self.data_output = self.data_output.mapValues(lambda d: d + ["validation"])
+                    self.set_predict_data_schema(self.data_output, train_data.schema)
 
         elif train_data:
             self.set_flowid('train')
@@ -122,7 +142,7 @@ class ModelBase(object):
                     self.data_output = eval_data_output
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
-        
+
         elif eval_data:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
@@ -131,7 +151,7 @@ class ModelBase(object):
                 self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
 
             self.set_predict_data_schema(self.data_output, eval_data.schema)
-        
+
         else:
             if stage == "fit":
                 self.set_flowid('fit')
@@ -151,6 +171,8 @@ class ModelBase(object):
             stage = 'cross_validation'
         elif self.need_one_vs_rest:
             stage = "one_vs_rest"
+            if "model" in args:
+                self._load_model(args)
         elif "model" in args:
             self._load_model(args)
             stage = "transform"
@@ -177,7 +199,10 @@ class ModelBase(object):
     def cross_validation(self, data_inst):
         pass
 
-    def one_vs_rest(self, train_data, eval_data):
+    def one_vs_rest_fit(self, train_data=None):
+        pass
+
+    def one_vs_rest_predict(self, train_data):
         pass
 
     def save_data(self):

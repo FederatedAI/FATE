@@ -30,6 +30,7 @@ class HeteroLRArbiter(HeteroLRBase):
     def __init__(self):
         # LogisticParamChecker.check_param(logistic_params)
         super(HeteroLRArbiter, self).__init__()
+        self.role = consts.ARBITER
 
         # attribute
         self.pre_loss = None
@@ -53,14 +54,18 @@ class HeteroLRArbiter(HeteroLRBase):
         pass
 
     def run(self, component_parameters=None, args=None):
-        need_cv = self._init_runtime_parameters(component_parameters)
+        self._init_runtime_parameters(component_parameters)
 
-        if need_cv:
+        if self.need_cv:
             LOGGER.info("Task is cross validation.")
             self.cross_validation(None)
-            return 
+            return
 
-        if not "model" in args:
+        if self.need_one_vs_rest:
+            LOGGER.info("Task is one_vs_rest fit")
+            if not "model" in args:
+                self.one_vs_rest_fit()
+        elif not "model" in args:
             LOGGER.info("Task is fit")
             self.set_flowid('train')
             self.fit()
@@ -180,17 +185,19 @@ class HeteroLRArbiter(HeteroLRBase):
             # if converge
             loss = iter_loss / self.batch_num
             LOGGER.info("iter loss:{}".format(loss))
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters"
-                                     })
-            # metric_name = 'loss_' + self.flowid
-            metric_name = 'loss'
-            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name=metric_name,
-                                 metric_namespace='train',
-                                 metric_data=[Metric(self.n_iter_, float(loss))])
+
+            if not self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters"
+                                         })
+                metric_name = 'loss'
+                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name=metric_name,
+                                     metric_namespace='train',
+                                     metric_data=[Metric(self.n_iter_, float(loss))])
+
             if self.converge_func.is_converge(loss):
                 is_stop = True
 

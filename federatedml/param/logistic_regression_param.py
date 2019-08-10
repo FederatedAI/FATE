@@ -21,6 +21,7 @@ import copy
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.util import consts
@@ -128,7 +129,7 @@ class LogisticParam(BaseParam):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam(), one_vs_rest_param=OneVsRestParam()):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -146,6 +147,7 @@ class LogisticParam(BaseParam):
         self.need_run = need_run
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
 
     def check(self):
         descr = "logistic_param's"

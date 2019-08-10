@@ -23,6 +23,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 from federatedml.statistic import data_overview
 
@@ -33,8 +34,9 @@ class HeteroLRGuest(HeteroLRBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
-        self.wx = None
+
         self.guest_forward = None
+        self.role = consts.GUEST
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -46,14 +48,18 @@ class HeteroLRGuest(HeteroLRBase):
         coef_: list, coefficient of lr
         intercept_: float, the interception of lr
         """
-        self.wx = self.compute_wx(data_instances, coef_, intercept_)
+        wx = self.compute_wx(data_instances, coef_, intercept_)
 
-        en_wx = self.encrypted_calculator[batch_index].encrypt(self.wx)
-        wx_square = self.wx.mapValues(lambda v: np.square(v))
+        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(self.wx, lambda e, wx: (e[0], e[1], wx))
+        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [ en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
+        rubbish_clear(rubbish_list)
 
     def aggregate_forward(self, host_forward):
         """
@@ -299,8 +305,6 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        LOGGER.debug(
-            "data count: {}, coef_: {}, intercept_: {}".format(data_features.count(), self.coef_, self.intercept_))
         prob_guest = self.compute_wx(data_features, self.coef_, self.intercept_)
         prob_host = federation.get(name=self.transfer_variable.host_prob.name,
                                    tag=self.transfer_variable.generate_transferid(

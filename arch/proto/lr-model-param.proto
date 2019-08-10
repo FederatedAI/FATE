@@ -26,5 +26,7 @@ message LRModelParam {
     map<string, double> weight = 4;
     double intercept = 5;
     repeated string header = 6;
+    bool need_one_vs_rest = 7;
+    repeated string one_vs_rest_classes = 8;
 }
 
