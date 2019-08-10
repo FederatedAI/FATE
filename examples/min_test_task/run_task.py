@@ -593,7 +593,7 @@ if __name__ == "__main__":
                                                        component_name='intersect_0',
                                                        output_type='data')
             # print("intersect result:{}".format(intersect_result))
-            intersect_file_name = intersect_result.get('output_path')
+            intersect_file_name = intersect_result.get('directory')
             count = check_file_line_num(intersect_file_name)
 
             # TODO: Wait for fate-flow interface
