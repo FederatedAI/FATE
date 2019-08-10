@@ -78,16 +78,20 @@ public class SshService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        String filePath = System.getProperty(Dict.SSH_CONFIG_FILE);
-        if (filePath == null || "".equals(filePath)) {
-            ClassPathResource classPathResource = new ClassPathResource("ssh.properties");
-            load(classPathResource.getInputStream());
-        } else {
-            File file = new File(filePath + "/ssh.properties");
-            Preconditions.checkArgument(file.exists() && file.isFile());
-            load(new FileInputStream(file));
+        try {
+            String filePath = System.getProperty(Dict.SSH_CONFIG_FILE);
+            if (filePath == null || "".equals(filePath)) {
+                ClassPathResource classPathResource = new ClassPathResource("ssh.properties");
+                load(classPathResource.getInputStream());
+            } else {
+                File file = new File(filePath + "/ssh.properties");
+                Preconditions.checkArgument(file.exists() && file.isFile());
+                load(new FileInputStream(file));
+            }
+            ;
+        }catch(Exception e){
+            logger.error("load ssh config file error",e);
         }
-        ;
     }
 
     public ChannelExec executeCmd(Session session, String cmd) throws Exception {
@@ -158,7 +162,7 @@ public class SshService implements InitializingBean {
             config.put("StrictHostKeyChecking", "no");
             session.setConfig(config);
             try {
-                session.connect(30000);
+                session.connect(5000);
             } catch (Exception e) {
                 e.printStackTrace();
 
