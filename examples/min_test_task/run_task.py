@@ -398,6 +398,9 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
         if end - start > MAX_TRAIN_TIME:
             print("[Train] reach max train time:{}, intersect task may be failed, and exit now")
             break
+        print("[Train] Before break loop cur job status:{}, jobid:{}".format(cur_job_status, jobid))
+    print("[Train] After break loop cur job status:{}, jobid:{}".format(cur_job_status, jobid))
+
     return cur_job_status, jobid
 
 
@@ -495,24 +498,6 @@ if __name__ == "__main__":
         if role == HOST:
             print("The table name and namespace is needed by GUEST. To start a modeling task, please inform "
                   "GUEST with the table name and namespace.")
-
-    elif method == "download":
-        role = sys.argv[2]
-        data_type = sys.argv[3]
-        table_name = sys.argv[4]
-        namespace = sys.argv[5]
-
-        if role == GUEST:
-            self_party_id = guest_id
-            partner_party_id = host_id
-        elif role == HOST:
-            self_party_id = host_id
-            partner_party_id = guest_id
-        else:
-            raise ValueError("Unsupport role:{}".format(role))
-
-        download(download_config_file, self_party_id, role, table_name, namespace)
-
 
     elif method == "all":
         task = sys.argv[2]

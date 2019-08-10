@@ -90,6 +90,10 @@ class HomoLRGuest(HomoLRBase):
                 batch_num += 1
 
             total_loss /= batch_num
+
+            if not self.use_loss:
+                total_loss = np.linalg.norm(self.coef_)
+
             w = self.merge_model()
             metric_meta = MetricMeta(name='train',
                                      metric_type="LOSS",
@@ -117,14 +121,14 @@ class HomoLRGuest(HomoLRBase):
                               idx=0)
 
             # send loss
-
-            loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
-            LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
-            federation.remote(total_loss,
-                              name=self.transfer_variable.guest_loss.name,
-                              tag=loss_transfer_id,
-                              role=consts.ARBITER,
-                              idx=0)
+            if self.use_loss:
+                loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
+                LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
+                federation.remote(total_loss,
+                                  name=self.transfer_variable.guest_loss.name,
+                                  tag=loss_transfer_id,
+                                  role=consts.ARBITER,
+                                  idx=0)
 
             # recv model
             model_transfer_id = self.transfer_variable.generate_transferid(

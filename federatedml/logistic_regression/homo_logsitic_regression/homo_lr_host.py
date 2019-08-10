@@ -101,6 +101,8 @@ class HomoLRHost(HomoLRBase):
                         loss_norm = self.updater.loss_norm(self.coef_)
                         total_loss += loss + loss_norm
 
+                    if not self.use_loss:
+                        total_loss = np.linalg.norm(self.coef_)
                     metric_meta = MetricMeta(name='train',
                                              metric_type="LOSS",
                                              extra_metas={
@@ -152,7 +154,7 @@ class HomoLRHost(HomoLRBase):
                               role=consts.ARBITER,
                               idx=0)
 
-            if not self.use_encrypt:
+            if not self.use_encrypt and self.use_loss:
                 loss_transfer_id = self.transfer_variable.generate_transferid(
                     self.transfer_variable.host_loss, iter_num)
 
