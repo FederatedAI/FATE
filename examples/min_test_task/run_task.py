@@ -153,6 +153,8 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                "-cpn",
                component_name,
                ]
+    else:
+        cmd = []
 
     retry_counter = 0
     while True:
