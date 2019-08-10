@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.Map;
 
-public class Scaler extends BaseModel {
+public class Scale extends BaseModel {
     private ScaleMeta scaleMeta;
     private ScaleParam scaleParam;
     private boolean need_run;
@@ -32,19 +32,18 @@ public class Scaler extends BaseModel {
     }
 
     @Override
-    public Map<String, Object> predict(Context context, List<Map<String, Object>> inputData, Map<String, Object> predictParams) {
-//        if (this.need_run) {
-//            String scaleMethod = this.scaleMeta.getMethod();
-//            if (scaleMethod.toLowerCase().equals("min_max_scale")) {
-//                MinMaxScale minMaxScale = new MinMaxScale();
-//                inputData = minMaxScale.transform(inputData, this.scaleParam.getColScaleParamMap());
-//            } else if (scaleMethod.toLowerCase().equals("standard_scale")) {
-//                StandardScale standardScale = new StandardScale();
-//                inputData = standardScale.transform(inputData, this.scaleParam.getColScaleParamMap());
-//            }
-//        }
-//        return inputData;
-
-        return  null;
+    public Map<String, Object> predict(Context context, List<Map<String, Object>> inputDatas, Map<String, Object> predictParams) {
+		Map<String, Object> outputData = inputDatas.get(0);
+        if (this.need_run) {
+            String scaleMethod = this.scaleMeta.getMethod();
+            if (scaleMethod.toLowerCase().equals("min_max_scale")) {
+                MinMaxScale minMaxScale = new MinMaxScale();
+                outputData = minMaxScale.transform(inputDatas.get(0), this.scaleParam.getColScaleParamMap());
+            } else if (scaleMethod.toLowerCase().equals("standard_scale")) {
+                StandardScale standardScale = new StandardScale();
+                outputData = standardScale.transform(inputDatas.get(0), this.scaleParam.getColScaleParamMap());
+            }
+        }
+        return outputData;
     }
 }

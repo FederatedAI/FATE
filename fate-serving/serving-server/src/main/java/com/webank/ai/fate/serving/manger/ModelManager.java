@@ -70,7 +70,7 @@ public class ModelManager {
             }
             federatedRolesModel.forEach((roleName, roleModelInfo) -> {
                 roleModelInfo.forEach((p, m) -> {
-                    if (!p.equals(partyId)) {
+                    if (!p.equals(partyId)||(p.equals(partyId)&&!role.equals(roleName))) {
                         String partnerModelKey = ModelUtils.genModelKey(m.getName(), m.getNamespace());
                         partnerModelIndex.put(partnerModelKey, modelInfo);
                         LOGGER.info("Create model index({}) for partner({}, {})", partnerModelKey, roleName, p);
