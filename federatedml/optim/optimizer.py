@@ -42,9 +42,7 @@ class Optimizer(object):
 
         self.nesterov_momentum_coeff = 0.9
         self.lr_decay = 0.9
-
         self.opt_method_name = opt_method_name.lower()
-        self.nesterov_momentum_coeff = 0.9
 
     def SgdOptimizer(self, grad):
 
