@@ -27,6 +27,7 @@ from arch.api.utils import log_utils
 from arch.api.utils.core import current_timestamp
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 LOGGER = log_utils.getLogger()
 
@@ -51,13 +52,16 @@ class BaseDataBase(object):
         if WORK_MODE == WorkMode.STANDALONE:
             if USE_LOCAL_DATABASE:
                 self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
                 stat_logger.info('init sqlite database on standalone mode successfully')
             else:
                 self.database_connection = PooledMySQLDatabase(db_name, **database_config)
                 stat_logger.info('init mysql database on standalone mode successfully')
+                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
+            RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
 
