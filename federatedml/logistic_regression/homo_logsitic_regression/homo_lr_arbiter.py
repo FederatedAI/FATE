@@ -76,16 +76,17 @@ class HomoLRArbiter(HomoLRBase):
                                                         host_use_encryption=self.host_use_encryption)
             self.loss_history.append(total_loss)
 
-            metric_meta = MetricMeta(name='train',
-                                     metric_type="LOSS",
-                                     extra_metas={
-                                         "unit_name": "iters"
-                                     })
-            metric_name = self.get_metric_name('loss')
-            self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-            self.callback_metric(metric_name=metric_name,
-                                 metric_namespace='train',
-                                 metric_data=[Metric(iter_num, total_loss)])
+            if self.need_one_vs_rest:
+                metric_meta = MetricMeta(name='train',
+                                         metric_type="LOSS",
+                                         extra_metas={
+                                             "unit_name": "iters"
+                                         })
+                metric_name = self.get_metric_name('loss')
+                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
+                self.callback_metric(metric_name=metric_name,
+                                     metric_namespace='train',
+                                     metric_data=[Metric(iter_num, total_loss)])
 
             LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
             # send model
@@ -318,7 +319,15 @@ class HomoLRArbiter(HomoLRBase):
 
         if self.need_cv:
             self.cross_validation(None)
-
+        elif self.need_one_vs_rest:
+            if "model" in args:
+                self._load_model(args)
+                self.one_vs_rest_predict(None)
+            else:
+                self.one_vs_rest_fit()
+                self.data_output = self.one_vs_rest_predict(None)
+                if need_eval:
+                    self.data_output = self.one_vs_rest_predict(None)
         elif "model" in args:
             self._load_model(args)
             self.predict()

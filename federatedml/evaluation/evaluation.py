@@ -218,8 +218,6 @@ class Evaluation(ModelBase):
         fpr, tpr, thresholds, _ = metric_res
 
         fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
-        # fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(np.round(fpr, self.round_num),
-        # np.round(self, tpr))
         thresholds = [thresholds[idx] for idx in idx_list]
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
