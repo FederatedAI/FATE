@@ -154,6 +154,12 @@ class BaseScale(object):
         self.summary_obj = MultivariateStatisticalSummary(data, -1)
         header = data.schema.get("header")
 
+        if self.feat_upper is None:
+            self.feat_upper = 1.0
+
+        if self.feat_lower is None:
+            self.feat_lower = 0
+
         if self.feat_upper < self.feat_lower:
             raise ValueError("feat_upper should not less than feat_lower")
 
