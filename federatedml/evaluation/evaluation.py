@@ -483,8 +483,7 @@ class Evaluation(ModelBase):
 
     def roc(self, labels, pred_scores):
         if self.eval_type == consts.BINARY:
-            fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores))
-            # fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
+            fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
             fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
             filt_thresholds, cuts = self.__filt_threshold(thresholds=thresholds, step=0.01)
             new_thresholds = []
@@ -816,12 +815,16 @@ class BiClassPrecision(object):
     """
     Compute binary classification precision
     """
+    def __init__(self):
+        self.total_positives = 0
 
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
+        self.total_positives = 0
         for value in pred_value:
             if value > threshold:
                 one_hot.append(1)
+                self.total_positives += 1
             else:
                 one_hot.append(0)
 
@@ -832,6 +835,8 @@ class BiClassPrecision(object):
         for threshold in thresholds:
             pred_scores_one_hot = self.__predict_value_to_one_hot(pred_scores, threshold)
             score = list(map(float, precision_score(labels, pred_scores_one_hot, average=None)))
+            if self.total_positives == 0:
+                score[1] = 1.0
             scores.append(score)
 
         return scores, thresholds

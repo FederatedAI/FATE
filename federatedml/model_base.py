@@ -117,7 +117,7 @@ class ModelBase(object):
             elif eval_data:
                 self.data_output = self.one_vs_rest_predict(eval_data)
                 if self.data_output:
-                    self.data_output = self.data_output.mapValues(lambda d: d + ["validation"])
+                    self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
                     self.set_predict_data_schema(self.data_output, eval_data.schema)
 
         elif train_data:
