@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class BaseModel {
@@ -25,9 +26,9 @@ public abstract class BaseModel {
 
     public abstract int initModel(byte[] protoMeta, byte[] protoParam);
 
-    public abstract Map<String, Object> predict(Context context , Map<String, Object> inputData, Map<String, Object> predictParams);
+    public abstract Map<String, Object> predict(Context  context,List<Map<String, Object> > inputData, Map<String, Object> predictParams);
 
-    public Map<String, Object> handlePredict(Context context , Map<String, Object> inputData, Map<String, Object> predictParams){
+    public Map<String, Object> handlePredict(Context context , List<Map<String, Object> >  inputData, Map<String, Object> predictParams){
 
         long  beginTime =  System.currentTimeMillis();
         try{

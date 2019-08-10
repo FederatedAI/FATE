@@ -1,50 +1,35 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
 import com.webank.ai.fate.core.constant.StatusCode;
-import com.webank.ai.fate.core.mlmodel.buffer.ImputerMetaProto.ImputerMeta;
-import com.webank.ai.fate.core.mlmodel.buffer.ImputerParamProto.ImputerParam;
-import com.webank.ai.fate.serving.core.bean.Context;
+import com.webank.ai.fate.core.mlmodel.buffer.DataIOMetaProto.ImputerMeta;
+import com.webank.ai.fate.core.mlmodel.buffer.DataIOParamProto.ImputerParam;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 
-public class Imputer extends BaseModel {
-    private ImputerMeta imputerMetaProto;
-    private ImputerParam imputerParamProto;
-    private boolean isImputer;
+public class Imputer {
     private static final Logger LOGGER = LogManager.getLogger();
+    public HashSet<String> missingValueSet;
+    public Map<String, String> missingReplaceValues;
 
-    @Override
-    public int initModel(byte[] protoMeta, byte[] protoParam) {
-        LOGGER.info("start init Imputer class");
-        try {
-            this.imputerMetaProto = ImputerMeta.parseFrom(protoMeta);
-            this.imputerParamProto = ImputerParam.parseFrom(protoParam);
-            this.isImputer = imputerMetaProto.getIsImputer();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return StatusCode.ILLEGALDATA;
-        }
-        LOGGER.info("Finish init Imputer class");
-        return StatusCode.OK;
+    public Imputer(List<String> missingValues, Map<String, String> missingReplaceValue) {
+    	this.missingValueSet = new HashSet<String>(missingValues);
+    	this.missingReplaceValues = missingReplaceValue;
     }
 
-    @Override
-    public Map<String, Object> predict(Context context, Map<String, Object> inputData, Map<String, Object> predictParams) {
-        if (this.isImputer) {
-            List<String> missingValues = this.imputerMetaProto.getMissingValueList();
-            Map<String, String> missingReplaceValues = this.imputerParamProto.getMissingReplaceValueMap();
-            for (String key : inputData.keySet()) {
-                String value = inputData.get(key).toString();
-                if (missingValues.contains(value.toLowerCase())) {
-                    try {
-                        inputData.put(key, missingReplaceValues.get(key));
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        inputData.put(key, 0.);
-                    }
+    public Map<String, Object> transform(Map<String, Object> inputData) {
+		LOGGER.info("start imputer transform task");
+        for (String key : inputData.keySet()) {
+            String value = inputData.get(key).toString();
+            if (this.missingValueSet.contains(value.toLowerCase())) {
+                try {
+                    inputData.put(key, this.missingReplaceValues.get(key));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    inputData.put(key, 0.);
                 }
             }
         }

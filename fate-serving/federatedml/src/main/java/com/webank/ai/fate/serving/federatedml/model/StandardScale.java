@@ -1,7 +1,6 @@
 package com.webank.ai.fate.serving.federatedml.model;
 
-import com.webank.ai.fate.core.mlmodel.buffer.ScaleParamProto.StandardScaleParam;
-import com.webank.ai.fate.serving.core.bean.Context;
+import com.webank.ai.fate.core.mlmodel.buffer.ScaleParamProto.ColumnScaleParam;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,19 +9,26 @@ import java.util.Map;
 public class StandardScale {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public Map<String, Object> transform(Context context, Map<String, Object> inputData, Map<String, StandardScaleParam> standardScalesMap) {
+    public Map<String, Object> transform(Map<String, Object> inputData, Map<String, ColumnScaleParam> standardScalesMap) {
         LOGGER.info("Start StandardScale transform");
         for (String key : inputData.keySet()) {
             try {
                 if (standardScalesMap.containsKey(key)){
-                    StandardScaleParam standardScale = standardScalesMap.get(key);
+                    ColumnScaleParam standardScale = standardScalesMap.get(key);
 
                     double value = Double.parseDouble(inputData.get(key).toString());
-                    double scale = standardScale.getScale();
-                    if (scale == 0)
-                        scale = 1;
+                    double upper = standardScale.getColumnUpper();
+                    double lower = standardScale.getColumnLower();
+                    if (value > upper)
+                        value = upper;
+                    else if (value < lower)
+                        value = lower;
 
-                    value = (value - standardScale.getMean()) / scale;
+                    double std = standardScale.getStd();
+                    if (std == 0)
+                        std = 1;
+
+                    value = (value - standardScale.getMean()) / std;
                     inputData.put(key, value);
                 }
                 else{
