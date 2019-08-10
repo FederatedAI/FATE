@@ -72,7 +72,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     init_database_tables()
     RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-    storage.init_storage(job_id='fate_flow', work_mode=RuntimeConfig.WORK_MODE)
+    storage.init_storage(work_mode=RuntimeConfig.WORK_MODE)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     # start job detector

@@ -73,7 +73,7 @@ class TaskExecutor(object):
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
             log_utils.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
-                                                  append_to_parent_log=True)
+                                                  append_to_parent_log=True, force=True)
 
             task.f_job_id = job_id
             task.f_component_name = component_name

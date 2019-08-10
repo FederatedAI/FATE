@@ -20,7 +20,7 @@ from arch.api import eggroll
 import datetime
 
 
-def init_storage(job_id, work_mode):
+def init_storage(work_mode, job_id=None):
     eggroll.init(job_id=job_id, mode=work_mode)
 
 
