@@ -18,6 +18,7 @@
 class RuntimeConfig(object):
     WORK_MODE = None
     JOB_QUEUE = None
+    USE_LOCAL_DATABASE = False
 
     @staticmethod
     def init_config(**kwargs):

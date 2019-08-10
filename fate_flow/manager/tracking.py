@@ -24,6 +24,7 @@ from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
 from fate_flow.utils import job_utils, api_utils
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 class Tracking(object):
@@ -264,8 +265,10 @@ class Tracking(object):
         with DB.connection_context():
             try:
                 DB.create_tables([model])
-                with DB.atomic():
-                    model.insert_many(data_source).execute()
+                batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
+                for i in range(0, len(data_source), batch_size):
+                    with DB.atomic():
+                        model.insert_many(data_source[i:i+batch_size]).execute()
                 return len(data_source)
             except Exception as e:
                 print(e)
