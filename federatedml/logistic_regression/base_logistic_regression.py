@@ -246,8 +246,8 @@ class BaseLogisticRegression(ModelBase):
         feature_shape = len(self.header)
         self.need_one_vs_rest = result_obj.need_one_vs_rest
         if self.need_one_vs_rest:
-            self.one_vs_rest_classes = list(map(float, list(result_obj.one_vs_rest_classes)))
-            weight = dict(result_obj.weight)
+            self.one_vs_rest_classes = list(map(int, list(result_obj.one_vs_rest_classes)))
+            weight_dict = dict(result_obj.weight)
             self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
                                              one_vs_rest_param=self._get_one_vs_rest_param())
             self.one_vs_rest_obj.classes = self.one_vs_rest_classes
@@ -256,9 +256,9 @@ class BaseLogisticRegression(ModelBase):
                 classifier.coef_ = np.zeros(feature_shape)
                 for i, feature_name in enumerate(self.header):
                     feature_name = "_".join(["class", str(class_type), feature_name])
-                    self.coef_[i] = weight.get(feature_name)
+                    classifier.coef_[i] = weight_dict.get(feature_name)
                 intercept_name =  "_".join(["class", str(class_type), "intercept"])
-                classifier.intercept_ = weight.get(intercept_name)
+                classifier.intercept_ = weight_dict.get(intercept_name)
                 self.one_vs_rest_obj.models.append(classifier)
         else:
             self.coef_ = np.zeros(feature_shape)

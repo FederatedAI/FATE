@@ -118,7 +118,7 @@ class ModelBase(object):
                 self.data_output = self.one_vs_rest_predict(eval_data)
                 if self.data_output:
                     self.data_output = self.data_output.mapValues(lambda d: d + ["validation"])
-                    self.set_predict_data_schema(self.data_output, train_data.schema)
+                    self.set_predict_data_schema(self.data_output, eval_data.schema)
 
         elif train_data:
             self.set_flowid('train')
