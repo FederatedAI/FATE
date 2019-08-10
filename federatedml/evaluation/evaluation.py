@@ -703,7 +703,7 @@ class Lift(object):
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
-            if value >= threshold:
+            if value > threshold:
                 one_hot.append(1)
             else:
                 one_hot.append(0)
@@ -767,7 +767,7 @@ class Gain(object):
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
-            if value >= threshold:
+            if value > threshold:
                 one_hot.append(1)
             else:
                 one_hot.append(0)
@@ -822,7 +822,7 @@ class BiClassPrecision(object):
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
-            if value >= threshold:
+            if value > threshold:
                 one_hot.append(1)
             else:
                 one_hot.append(0)
@@ -858,7 +858,7 @@ class BiClassRecall(object):
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
-            if value >= threshold:
+            if value > threshold:
                 one_hot.append(1)
             else:
                 one_hot.append(0)
@@ -895,7 +895,7 @@ class BiClassAccuracy(object):
     def __predict_value_to_one_hot(self, pred_value, threshold):
         one_hot = []
         for value in pred_value:
-            if value >= threshold:
+            if value > threshold:
                 one_hot.append(1)
             else:
                 one_hot.append(0)
