@@ -32,7 +32,7 @@ from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-from federatedml.util import fate_operator, abnormal_detection
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -123,7 +123,7 @@ class BaseLogisticRegression(ModelBase):
         return data_instances.schema.get("header")
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(lambda v: fate_operator.dot(v.features, coef_) + intercept_)
+        return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
 
     def update_model(self, gradient):
         if self.fit_intercept:
@@ -254,11 +254,12 @@ class BaseLogisticRegression(ModelBase):
             for class_type in self.one_vs_rest_obj.classes:
                 classifier = copy.deepcopy(self)
                 classifier.coef_ = np.zeros(feature_shape)
-                for i, feature_name in self.header:
+                for i, feature_name in enumerate(self.header):
                     feature_name = "_".join(["class", str(class_type), feature_name])
                     self.coef_[i] = weight.get(feature_name)
-                # self.
-
+                intercept_name =  "_".join(["class", str(class_type), "intercept"])
+                classifier.intercept_ = weight.get(intercept_name)
+                self.one_vs_rest_obj.models.append(classifier)
         else:
             self.coef_ = np.zeros(feature_shape)
             weight_dict = dict(result_obj.weight)
@@ -327,29 +328,19 @@ class BaseLogisticRegression(ModelBase):
         LOGGER.debug("Finish kflod run")
         return data_instances
 
-    def one_vs_rest(self, train_data=None, validate_data=None):
+    def one_vs_rest_fit(self, train_data=None):
         self.need_one_vs_rest = True
         if self.role != consts.ARBITER:
             self.header = self.get_header(train_data)
         self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
                                     one_vs_rest_param=self._get_one_vs_rest_param())
         self.one_vs_rest_obj.fit(data_instances=train_data)
-        train_data_predict_res = self.one_vs_rest_obj.predict(data_instances=train_data)
 
-        output_res = None
-        if train_data_predict_res:
-            output_res = train_data_predict_res.mapValues(lambda d: d + ["train"])
+    def one_vs_rest_predict(self, validate_data):
+        if not self.one_vs_rest_obj:
+            LOGGER.warning("Not one_vs_rest fit before, return now")
 
-        if validate_data:
-            predict_data_predict_res = self.one_vs_rest_obj.predict(data_instances=validate_data)
-            predict_output_res = predict_data_predict_res.mapValues(lambda d: d + ["predict"])
-            if output_res:
-                output_res.union(predict_output_res)
-            else:
-                output_res = predict_output_res
-
-        return output_res
-
+        return self.one_vs_rest_obj.predict(data_instances=validate_data)
 
     def _get_one_vs_rest_param(self):
         return self.model_param.one_vs_rest_param

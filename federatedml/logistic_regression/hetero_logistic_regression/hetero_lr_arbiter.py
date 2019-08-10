@@ -63,7 +63,8 @@ class HeteroLRArbiter(HeteroLRBase):
 
         if self.need_one_vs_rest:
             LOGGER.info("Task is one_vs_rest fit")
-            self.one_vs_rest()
+            if not "model" in args:
+                self.one_vs_rest_fit()
         elif not "model" in args:
             LOGGER.info("Task is fit")
             self.set_flowid('train')
@@ -191,7 +192,7 @@ class HeteroLRArbiter(HeteroLRBase):
                                          extra_metas={
                                              "unit_name": "iters"
                                          })
-                metric_name = 'loss_' + self.flowid
+                metric_name = 'loss'
                 self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
                 self.callback_metric(metric_name=metric_name,
                                      metric_namespace='train',

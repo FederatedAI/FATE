@@ -21,6 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 from federatedml.statistic import data_overview
 
@@ -51,6 +52,14 @@ class HeteroLRHost(HeteroLRBase):
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [wx,
+                        en_wx,
+                        wx_square,
+                        en_wx_square
+                        ]
+        rubbish_clear(rubbish_list)
 
         return host_forward
 
