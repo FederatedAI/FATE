@@ -39,10 +39,11 @@ def internal_server_error(e):
 # User interface
 @manager.route('/submit', methods=['POST'])
 def submit_job():
-    job_id, job_dsl_path, job_runtime_conf_path, model_info = JobController.submit_job(request.json)
+    job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
     return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
                                                 'job_runtime_conf_path': job_runtime_conf_path,
-                                                'model_info': model_info
+                                                'model_info': model_info,
+                                                'board_url': board_url
                                                 })
 
 

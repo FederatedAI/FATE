@@ -54,7 +54,7 @@ id_counter = IdCounter()
 
 
 def generate_job_id():
-    return '_'.join([datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"), str(id_counter.incr())])
+    return '{}{}'.format(datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"), str(id_counter.incr()))
 
 
 def generate_task_id(job_id, component_name):

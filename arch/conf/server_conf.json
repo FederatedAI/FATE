@@ -13,6 +13,10 @@
 			"grpc.port": 9360,
 			"http.port": 9380
 		},
+		"fateboard": {
+			"host": "localhost",
+			"port": 8080
+		},
 		"proxy": {
 			"host": "localhost",
 			"port": 9370

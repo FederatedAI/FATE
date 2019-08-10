@@ -21,7 +21,7 @@ from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import schedule_logger
+from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
@@ -90,7 +90,8 @@ class JobController(object):
         )
         schedule_logger.info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
-        return job_id, job_dsl_path, job_runtime_conf_path, model_info
+        board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
+        return job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url
 
     @staticmethod
     def gen_model_info(roles, model_id, model_version):

@@ -498,8 +498,8 @@ class DSLParser(object):
                                         self.predict_dsl["components"][name]["input"]["data"]["data"] = output_data_maps[
                                             pre_name][data_suffix]
 
-                        elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
-                            input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
+                        elif "train_data" in self.dsl["components"][name]["input"]["data"]:
+                            input_data = self.dsl["components"][name]["input"]["data"].get("train_data")[0]
                             if input_data.split(".")[0] == "args":
                                 new_input_data = "args.eval_data"
                                 self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [new_input_data]
@@ -516,8 +516,8 @@ class DSLParser(object):
                                     self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = output_data_maps[
                                         pre_name][data_suffix]
 
-                        elif "train_data" in self.dsl["components"][name]["input"]["data"]:
-                            input_data = self.dsl["components"][name]["input"]["data"].get("train_data")[0]
+                        elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
+                            input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
                             if input_data.split(".")[0] == "args":
                                 new_input_data = "args.eval_data"
                                 self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = new_input_data
