@@ -566,7 +566,7 @@ class DSLParser(object):
             setting_conf_prefix=None, mode="train"):
 
         self.dsl = copy.deepcopy(dsl)
-        self._init_components(pipeline_dsl)
+        self._init_components(pipeline_dsl, mode)
         self._find_dependencies(pipeline_dsl, mode)
         self.runtime_conf = runtime_conf
 

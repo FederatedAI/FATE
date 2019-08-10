@@ -32,6 +32,7 @@ from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
+from fate_flow.utils import detect_utils
 
 
 class IdCounter:
@@ -77,9 +78,7 @@ def check_config(config: typing.Dict, required_parameters: typing.List):
 
 
 def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
-    check_status, check_msg = check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
-    if not check_status:
-        raise Exception('check job_parameters failed: {}'.format(check_msg))
+    detect_utils.check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):

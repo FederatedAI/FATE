@@ -25,6 +25,7 @@ from fate_flow.settings import schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.utils import detect_utils
 
 
 class JobController(object):
@@ -50,7 +51,7 @@ class JobController(object):
             job_parameters['model_version'] = job_id
             train_runtime_conf = {}
         else:
-            job_utils.check_config(job_parameters, ['model_id', 'model_version'])
+            detect_utils.check_config(job_parameters, ['model_id', 'model_version'])
             # get inference dsl from pipeline model as job dsl
             job_tracker = Tracking(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                    model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])

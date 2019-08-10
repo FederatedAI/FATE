@@ -90,8 +90,7 @@ def job_log():
     for root, dir, files in os.walk(job_log_dir):
         for file in files:
             full_path = os.path.join(root, file)
-            rel_path = os.path.relpath(full_path, job_log_dir)
-            tar.add(full_path, rel_path)
+            tar.add(full_path, os.path.basename(full_path))
     tar.close()
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)

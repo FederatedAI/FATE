@@ -38,7 +38,7 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_bo
                                    overall_timeout=overall_timeout)
         try:
             channel, stub = get_proxy_data_channel()
-            stat_logger.info("grpc api request: {}".format(_packet))
+            # stat_logger.info("grpc api request: {}".format(_packet))
             _return = stub.unaryCall(_packet)
             stat_logger.info("grpc api response: {}".format(_return))
             channel.close()
@@ -56,7 +56,7 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_bo
 
 def local_api(method, endpoint, json_body):
     try:
-        stat_logger.info('local api request: {} {}'.format(endpoint, json_body))
+        stat_logger.info('local api request: {}'.format(endpoint))
         url = "{}{}".format(SERVER_HOST_URL, endpoint)
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)
