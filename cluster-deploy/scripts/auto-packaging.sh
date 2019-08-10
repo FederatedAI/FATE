@@ -11,7 +11,7 @@ output_dir=$fate_dir/cluster-deploy/example-dir-tree
 cd $cwd
 source ./configurations.sh
 
-cd $base_dir
+cd $fate_dir
 targets=`find "$base_dir" -type d -name "target" -mindepth 2`
 
 module="test"
@@ -41,7 +41,7 @@ for target in ${targets[@]}; do
         rm -f $output_file
         gtar czf $output_file lib fate-$sub_module-$version.jar
 		cd $output_dir/$sub_module
-		sed -ie "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
+		sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
 		tar -xzf fate-$sub_module-$version.tar.gz
 		rm -f fate-$sub_module-$version.tar.gz
 		ln -s fate-$sub_module-$version.jar fate-$sub_module.jar
@@ -53,11 +53,21 @@ cp -r $fate_dir/fate-serving/serving-server/target/lib $output_dir/serving-serve
 cp $fate_dir/fate-serving/serving-server/target/fate-serving-server-$version.jar $output_dir/serving-server/
 cd $output_dir/serving-server
 ln -s fate-serving-server-$version.jar fate-serving-server.jar
-sed -ie "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
+sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
+
+
+cp $fate_dir/fateboard/target/fateboard-0.0.1-SNAPSHOT.jar $output_dir/fateboard/
+cd $output_dir/fateboard/
+ln -s fateboard-0.0.1-SNAPSHOT.jar fateboard.jar
+sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
 
 cd $fate_dir
 cp -r arch federatedml workflow examples $output_dir/python/
 cp -r arch/eggroll/storage-service-cxx/* $output_dir/storage-service-cxx/
+cp -r fate_flow  $output_dir/python/
+
+
 cd $output_dir/storage-service-cxx
 mkdir logs
+
 cd $cwd
