@@ -12,19 +12,17 @@ import java.util.Map;
 import java.util.HashSet;
 
 public class Outlier {
-	public HashSet<String> outlierValueSet;
+    public HashSet<String> outlierValueSet;
     public Map<String, String> outlierReplaceValues;
     private static final Logger LOGGER = LogManager.getLogger();
 
     public Outlier(List<String> outlierValues, Map<String, String> outlierReplaceValue) {
-    	this.outlierValueSet = new HashSet<String>(outlierValues);
-    	this.outlierReplaceValues = outlierReplaceValue;
+        this.outlierValueSet = new HashSet<String>(outlierValues);
+        this.outlierReplaceValues = outlierReplaceValue;
     }
 
     public Map<String, Object> transform(Map<String, Object> inputData) {
-
-        LOGGER.info("outlierValues:{}", this.outlierValueSet);
-        LOGGER.info("outlierReplaceValues:{}", this.outlierReplaceValues);
+		LOGGER.info("start outlier transform task");
 
         for (String key : inputData.keySet()) {
             String value = inputData.get(key).toString();

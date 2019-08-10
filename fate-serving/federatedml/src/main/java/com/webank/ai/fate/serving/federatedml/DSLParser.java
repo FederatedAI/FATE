@@ -28,7 +28,6 @@ public class DSLParser {
     
     public int parseDagFromDSL(String jsonStr) {
         LOGGER.info("start parse dag from dsl");
-        LOGGER.info("dsl json is {}", jsonStr);
         try {
             JSONObject dsl = new JSONObject(jsonStr);
             JSONObject components = dsl.getJSONObject("components");
@@ -38,44 +37,43 @@ public class DSLParser {
              
             LOGGER.info("components size is {}", this.topoRankComponent.size());
             for (int i = 0; i < this.topoRankComponent.size(); ++i) {
-            	this.componentIds.put(this.topoRankComponent.get(i), i);
+                this.componentIds.put(this.topoRankComponent.get(i), i);
             }
             
             for (int i = 0; i < topoRankComponent.size(); ++i) {
-        	String componentName = topoRankComponent.get(i);
+                String componentName = topoRankComponent.get(i);
                 LOGGER.info("component is {}", componentName);
-        	JSONObject component = components.getJSONObject(componentName);
-        	String[] codePath = ((String)component.get("CodePath")).split("/", -1);
+                JSONObject component = components.getJSONObject(componentName);
+                String[] codePath = ((String)component.get("CodePath")).split("/", -1);
                 LOGGER.info("code path splits is {}", codePath);
-        	String module = codePath[codePath.length - 1];
+                String module = codePath[codePath.length - 1];
                 LOGGER.info("module is {}", module);
-        	componentModuleMap.put(componentName, module);
-        		
-        	JSONObject upData = component.getJSONObject("input").getJSONObject("data");
-        	if (upData != null) {
+                componentModuleMap.put(componentName, module);
+        
+                JSONObject upData = component.getJSONObject("input").getJSONObject("data");
+                if (upData != null) {
                     int componentId = this.componentIds.get(componentName);
-        	    Iterator<String> dataKeyIterator = upData.keys();
+                    Iterator<String> dataKeyIterator = upData.keys();
                     while (dataKeyIterator.hasNext()) {
-        		String dataKey = dataKeyIterator.next();
+                        String dataKey = dataKeyIterator.next();
                         JSONArray data = upData.getJSONArray(dataKey);
-        		for (int j = 0; j < data.length(); j++) {
-                            LOGGER.info("data j is {}", data.getString(j));
-        	            String upComponent = data.getString(j).split("\\.", -1)[0];
-    			    if (!upInputs.containsKey(componentId)) {
+                        for (int j = 0; j < data.length(); j++) {
+                            String upComponent = data.getString(j).split("\\.", -1)[0];
+                            if (!upInputs.containsKey(componentId)) {
                                 upInputs.put(componentId, new HashSet<Integer>());
                             }
 
                             if (upComponent.equals("args")) {
                                 upInputs.get(componentId).add(-1);
                             } else {
-        	                upInputs.get(componentId).add(this.componentIds.get(upComponent));
+                                upInputs.get(componentId).add(this.componentIds.get(upComponent));
                             }
-        		}
+                        }
 
-        	    }
-        	}
+                    }
+                }
             }
-        	
+        
         } catch (Exception ex) {
             ex.printStackTrace();
             LOGGER.info("DSLParser init catch error:{}", ex);
@@ -103,67 +101,53 @@ public class DSLParser {
         
         for (int i = 0; i < componentList.size(); ++i) {
             String componentName = componentList.get(i);
-            LOGGER.info("component name is {}", componentName);
             JSONObject component = components.getJSONObject(componentName);
             JSONObject upData = component.getJSONObject("input").getJSONObject("data");
-            LOGGER.info("get up data");
             Integer componentId = componentIndexMapping.get(componentName);
-            LOGGER.info("component id is {}", componentId);
-            LOGGER.info("up data is {}", upData);
             if (upData != null) {
-                LOGGER.info("enter updata");
                 Iterator<String> dataKeyIterator = upData.keys();
-            	while (dataKeyIterator.hasNext()) {
-        	    String dataKey = dataKeyIterator.next();
-                    LOGGER.info("dataKey is {}", dataKey);
-        	    JSONArray data = upData.getJSONArray(dataKey);
-                    LOGGER.info("data is {}", data);
-    		    for (int j = 0; j < data.length(); j++) {
-                        LOGGER.info("getString {}", data.getString(j));
-                        LOGGER.info("getStringSplit {}", data.getString(j).split("\\.", -1));
-    			String upComponent = data.getString(j).split("\\.", -1)[0];
-                        LOGGER.info("upComponent {}", upComponent);
-    	   		int upComponentId = -1;
-    	 		if (!upComponent.equals("args")) {
-    			    upComponentId = componentIndexMapping.get(upComponent);
-    			}
-                        LOGGER.info("upComponentID {}", upComponentId);
-    		
-                        if (upComponentId != -1) {			
-    			    if (!edges.containsKey(upComponentId)) {
-    			        edges.put(upComponentId, new ArrayList<Integer>());
-    			    }
-    			    inDegree[componentId]++;
-    			    edges.get(upComponentId).add(componentId);
+                while (dataKeyIterator.hasNext()) {
+                    String dataKey = dataKeyIterator.next();
+                    JSONArray data = upData.getJSONArray(dataKey);
+                    for (int j = 0; j < data.length(); j++) {
+                        String upComponent = data.getString(j).split("\\.", -1)[0];
+                        int upComponentId = -1;
+                        if (!upComponent.equals("args")) {
+                            upComponentId = componentIndexMapping.get(upComponent);
                         }
-    	            }
-        	}
+    
+                        if (upComponentId != -1) {			
+                            if (!edges.containsKey(upComponentId)) {
+                                edges.put(upComponentId, new ArrayList<Integer>());
+                            }
+                            inDegree[componentId]++;
+                            edges.get(upComponentId).add(componentId);
+                        }
+                    }
+                }
             }
         }
         
         LOGGER.info("end of construct edges"); 
         for (int i = 0; i < index; i++) {
             if (inDegree[i] == 0) {
-        	stk.push(i);
+                stk.push(i);
             }
         }
         
         while (!stk.empty()) {
             Integer vertex = stk.pop();
-            LOGGER.info("vertex is {}", vertex);
             topoRankComponent.add(componentList.get(vertex));
-            LOGGER.info("vertex name is is {}", componentList.get(vertex));
             ArrayList<Integer> adjV = edges.get(vertex);
             if (adjV == null) {
                 continue;
             }
-            LOGGER.info("adj vertexs is {}", adjV);
             for (int i = 0; i < adjV.size(); ++i) {
-        	Integer downV = adjV.get(i);
-        	--inDegree[downV];
-        	if (inDegree[downV] == 0) {
-        	    stk.push(downV);
-        	}
+                Integer downV = adjV.get(i);
+                --inDegree[downV];
+                if (inDegree[downV] == 0) {
+                    stk.push(downV);
+                }
             }
         }
         
@@ -171,21 +155,19 @@ public class DSLParser {
     }
 
     public HashMap<String, String> getComponentModuleMap() {
-    	return this.componentModuleMap;
+        return this.componentModuleMap;
     }
     
     public ArrayList<String> getAllComponent() {
-    	return this.topoRankComponent;
+        return this.topoRankComponent;
     }
     
     public HashSet<Integer> getUpInputComponents(int idx) {
-    	if (this.upInputs.containsKey(idx)) {
-    	    return this.upInputs.get(idx);
-    	} else {
-    		return null;
-    	}
+        if (this.upInputs.containsKey(idx)) {
+            return this.upInputs.get(idx);
+        } else {
+            return null;
+        }
     }
-    
-   
    
 }

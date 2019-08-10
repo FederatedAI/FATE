@@ -29,11 +29,9 @@ public class FeatureSelection extends BaseModel {
 			this.featureSelectionMeta = FeatureSelectionMeta.parseFrom(protoMeta);
 			this.needRun = this.featureSelectionMeta.getNeedRun();
             this.featureSelectionParam = FeatureSelectionParam.parseFrom(protoParam);
-            LOGGER.info("feature selection param is {}", this.featureSelectionParam);
 			this.finalLeftCols = featureSelectionParam.getFinalLeftCols();
         } catch (Exception ex) {
             ex.printStackTrace();
-			LOGGER.info("fail of init feature selection model");
             return StatusCode.ILLEGALDATA;
         }
         LOGGER.info("Finish init Feature Selection class");
@@ -45,7 +43,6 @@ public class FeatureSelection extends BaseModel {
         LOGGER.info("Start Feature Selection predict");
         HashMap<String, Object> outputData = new HashMap<>();
         Map<String, Object> firstData = inputData.get(0);
-        LOGGER.info("first data is {}", firstData);
 
 		if (!this.needRun) {
 			return firstData;

@@ -27,28 +27,22 @@ public class PipelineTask {
         LOGGER.info("start init Pipeline");
         try {
             Map<String, byte[]> newModelProtoMap = changeModelProto(modelProtoMap);
-            LOGGER.info("modelProtoMap is {}", modelProtoMap);
-            LOGGER.info("newModelProtoMap is {}", newModelProtoMap);
             String pipelineProtoName = "pipeline.pipeline:Pipeline";
-            LOGGER.info("new model proto map is {}", newModelProtoMap.get(pipelineProtoName));
             PipelineProto.Pipeline pipeLineProto = PipelineProto.Pipeline.parseFrom(newModelProtoMap.get(pipelineProtoName));
-            LOGGER.info("Finish get Pipeline proto");
             String dsl = pipeLineProto.getInferenceDsl().toStringUtf8(); //inference_dsl;
             dslParser.parseDagFromDSL(dsl);
             ArrayList<String> components = dslParser.getAllComponent();
             HashMap<String, String> componentModuleMap = dslParser.getComponentModuleMap();
 
             for (int i = 0; i < components.size(); ++i) {
-            	String componentName = components.get(i);
-            	String className = componentModuleMap.get(componentName);
-            	LOGGER.info("Start get className:{}", className);
-            	try {
+                String componentName = components.get(i);
+                String className = componentModuleMap.get(componentName);
+                LOGGER.info("Start get className:{}", className);
+                try {
                     Class modelClass = Class.forName(this.modelPackage + "." + className);
                     BaseModel mlNode = (BaseModel) modelClass.getConstructor().newInstance();
                     byte[] protoMeta = newModelProtoMap.get(componentName + ".Meta");
-                    LOGGER.info("proto meta is {}", protoMeta);
                     byte[] protoParam = newModelProtoMap.get(componentName + ".Param");
-                    LOGGER.info("proto param is {}", protoParam);
                     mlNode.initModel(protoMeta, protoParam);
 
                     pipeLineNode.add(mlNode);
@@ -72,13 +66,12 @@ public class PipelineTask {
         List<Map<String, Object>> outputData = new ArrayList<>();
         for (int i = 0; i < this.pipeLineNode.size(); i++) {
             if (this.pipeLineNode.get(i) != null) {
-				LOGGER.info("component class is {}", this.pipeLineNode.get(i).getClass().getName());
-			} else {
-				LOGGER.info("component class is {}", this.pipeLineNode.get(i));
-			}
+                LOGGER.info("component class is {}", this.pipeLineNode.get(i).getClass().getName());
+            } else {
+                LOGGER.info("component class is {}", this.pipeLineNode.get(i));
+            }
             List<Map<String, Object>> inputs = new ArrayList<>();
             HashSet<Integer> upInputComponents = this.dslParser.getUpInputComponents(i);
-            LOGGER.info("upInputComponents is {}", upInputComponents);
             if (upInputComponents != null) {
                 Iterator<Integer> iters = upInputComponents.iterator();
                 while (iters.hasNext()) {
@@ -92,14 +85,12 @@ public class PipelineTask {
             } else {
                 inputs.add(inputData);
             }
-            LOGGER.info("input data is {}", inputs);
             if (this.pipeLineNode.get(i) != null) {
-				outputData.add(this.pipeLineNode.get(i).predict(context,inputs, predictParams));
-			} else {
-				outputData.add(inputs.get(0));
-			}
+                outputData.add(this.pipeLineNode.get(i).predict(context,inputs, predictParams));
+            } else {
+                outputData.add(inputs.get(0));
+            }
 
-            LOGGER.info("finish mlNone:{}", i);
         }
         ReturnResult federatedResult = context.getFederatedResult();
         if(federatedResult!=null) {
@@ -107,32 +98,30 @@ public class PipelineTask {
         }
 
         LOGGER.info("Finish Pipeline predict");
-        LOGGER.info("Finish Pipeline predict, outputData is {}", outputData);
-		LOGGER.info("output data is {}", outputData.get(outputData.size() - 1));
         return outputData.get(outputData.size() - 1);
     }
 
     private HashMap<String, byte[]> changeModelProto(Map<String, byte[]> modelProtoMap) {
-    	HashMap<String, byte[]> newModelProtoMap = new HashMap<String, byte[]>();
-    	for (Map.Entry<String, byte[]> entry: modelProtoMap.entrySet()) {
-    		String key = entry.getKey();
-    		if (!key.equals("pipeline.pipeline:Pipeline")) {
-    			String[] componentNameSegments = key.split("\\.", -1);
-    			if (componentNameSegments.length != 2) {
-    				newModelProtoMap.put(entry.getKey(), entry.getValue());
-    				continue;
-    			}
+        HashMap<String, byte[]> newModelProtoMap = new HashMap<String, byte[]>();
+        for (Map.Entry<String, byte[]> entry: modelProtoMap.entrySet()) {
+            String key = entry.getKey();
+            if (!key.equals("pipeline.pipeline:Pipeline")) {
+                String[] componentNameSegments = key.split("\\.", -1);
+                if (componentNameSegments.length != 2) {
+                    newModelProtoMap.put(entry.getKey(), entry.getValue());
+                    continue;
+                }
 
-    			if (componentNameSegments[1].endsWith("Meta")) {
-    				newModelProtoMap.put(componentNameSegments[0] + ".Meta", entry.getValue());
-    			} else if (componentNameSegments[1].endsWith("Param")) {
-    				newModelProtoMap.put(componentNameSegments[0] + ".Param", entry.getValue());
-    			}
-    		} else {
-    			newModelProtoMap.put(entry.getKey(), entry.getValue());
-    		}
-    	}
+                if (componentNameSegments[1].endsWith("Meta")) {
+                    newModelProtoMap.put(componentNameSegments[0] + ".Meta", entry.getValue());
+                } else if (componentNameSegments[1].endsWith("Param")) {
+                    newModelProtoMap.put(componentNameSegments[0] + ".Param", entry.getValue());
+                }
+            } else {
+                newModelProtoMap.put(entry.getKey(), entry.getValue());
+            }
+        }
 
-    	return newModelProtoMap;
+        return newModelProtoMap;
     }
 }

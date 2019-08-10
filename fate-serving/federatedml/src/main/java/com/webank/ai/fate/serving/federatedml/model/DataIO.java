@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DataIO extends BaseModel {
-	private DataIOMeta dataIOMeta;
-	private DataIOParam dataIOParam;
+    private DataIOMeta dataIOMeta;
+    private DataIOParam dataIOParam;
     private Imputer imputer;
     private Outlier outlier;
     private boolean isImputer;
@@ -24,21 +24,19 @@ public class DataIO extends BaseModel {
         LOGGER.info("start init DataIO class");
         try {
             this.dataIOMeta = DataIOMeta.parseFrom(protoMeta);
-            LOGGER.info("data io meta is {}", this.dataIOMeta);
             this.dataIOParam = DataIOParam.parseFrom(protoParam);
-            LOGGER.info("data io param is {}", this.dataIOParam);
             this.isImputer = this.dataIOMeta.getImputerMeta().getIsImputer();
             LOGGER.info("data io isImputer {}", this.isImputer);
             if (this.isImputer) {
-            	this.imputer = new Imputer(this.dataIOMeta.getImputerMeta().getMissingValueList(),
-            			           this.dataIOParam.getImputerParam().getMissingReplaceValue());
+                this.imputer = new Imputer(this.dataIOMeta.getImputerMeta().getMissingValueList(),
+                                           this.dataIOParam.getImputerParam().getMissingReplaceValue());
             }
             
             this.isOutlier = this.dataIOMeta.getOutlierMeta().getIsOutlier();
             LOGGER.info("data io isOutlier {}", this.isOutlier);
             if (this.isOutlier) {
-            	this.outlier = new Outlier(this.dataIOMeta.getOutlierMeta().getOutlierValueList(),
-            			           this.dataIOParam.getOutlierParam().getOutlierReplaceValue());
+                this.outlier = new Outlier(this.dataIOMeta.getOutlierMeta().getOutlierValueList(),
+                                           this.dataIOParam.getOutlierParam().getOutlierReplaceValue());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -50,16 +48,16 @@ public class DataIO extends BaseModel {
 
     @Override
     public Map<String, Object> predict(Context context, List<Map<String, Object> > inputData, Map<String, Object> predictParams) {
-    	Map<String, Object> input = inputData.get(0);
-    	
-    	if (this.isImputer) {
-    		input = this.imputer.transform(input);
-    	}
-    	
-    	if (this.isOutlier) {
-    	    input = this.outlier.transform(input);	
-    	}
-    	
+        Map<String, Object> input = inputData.get(0);
+    
+        if (this.isImputer) {
+            input = this.imputer.transform(input);
+        }
+    
+        if (this.isOutlier) {
+            input = this.outlier.transform(input);	
+        }
+    
         return input;
     }
 }

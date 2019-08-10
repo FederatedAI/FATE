@@ -33,7 +33,7 @@ public class Scale extends BaseModel {
 
     @Override
     public Map<String, Object> predict(Context context, List<Map<String, Object>> inputDatas, Map<String, Object> predictParams) {
-		Map<String, Object> outputData = inputDatas.get(0);
+        Map<String, Object> outputData = inputDatas.get(0);
         if (this.need_run) {
             String scaleMethod = this.scaleMeta.getMethod();
             if (scaleMethod.toLowerCase().equals("min_max_scale")) {

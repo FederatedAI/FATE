@@ -11,7 +11,6 @@ public class MinMaxScale {
 
     public Map<String, Object> transform(Map<String, Object> inputData, Map<String, ColumnScaleParam> scales) {
         LOGGER.info("Start MinMaxScale transform");
-        LOGGER.info("Start MinMaxScale transform, inputData is {}", inputData);
         for (String key : inputData.keySet()) {
             try {
                 if (scales.containsKey(key)) {
