@@ -35,7 +35,7 @@ class BaseScale(object):
         self.feat_lower = params.feat_lower
         self.data_shape = None
         self.header = None
-        self.scale_column_idx = None
+        self.scale_column_idx = []
 
         self.summary_obj = None
 
@@ -57,21 +57,21 @@ class BaseScale(object):
 
     def _get_upper(self, data_shape):
         if isinstance(self.feat_upper, Iterable):
-            return self.feat_upper
+            return list(map(str, self.feat_upper))
         else:
             if self.feat_upper is None:
                 return ["None" for _ in range(data_shape)]
             else:
-                return [self.feat_upper for _ in range(data_shape)]
+                return [str(self.feat_upper) for _ in range(data_shape)]
 
     def _get_lower(self, data_shape):
         if isinstance(self.feat_lower, Iterable):
-            return self.feat_lower
+            return list(map(str, self.feat_lower))
         else:
             if self.feat_lower is None:
                 return ["None" for _ in range(data_shape)]
             else:
-                return [self.feat_lower for _ in range(data_shape)]
+                return [str(self.feat_lower) for _ in range(data_shape)]
 
     def _get_scale_column_idx(self, data):
         data_shape = self._get_data_shape(data)
@@ -153,6 +153,12 @@ class BaseScale(object):
         data_shape = self._get_data_shape(data)
         self.summary_obj = MultivariateStatisticalSummary(data, -1)
         header = data.schema.get("header")
+
+        if self.feat_upper is None:
+            self.feat_upper = 1.0
+
+        if self.feat_lower is None:
+            self.feat_lower = 0
 
         if self.feat_upper < self.feat_lower:
             raise ValueError("feat_upper should not less than feat_lower")

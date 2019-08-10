@@ -37,7 +37,6 @@ class MinMaxScale(BaseScale):
         self.mode = params.mode
 
         self.column_range = None
-        self.scale_column_idx = None
 
     @staticmethod
     def __scale(data, max_value_list, min_value_list, scale_value_list, process_cols_list):
@@ -111,6 +110,9 @@ class MinMaxScale(BaseScale):
         else:
             scale_column = ["_".join(["col", str(i)]) for i in self.scale_column_idx]
 
+        if not self.data_shape:
+            self.data_shape = -1
+
         meta_proto_obj = ScaleMeta(method="min_max_scale",
                                    mode=self.mode,
                                    area=self.area,
@@ -122,11 +124,12 @@ class MinMaxScale(BaseScale):
 
     def __get_param(self, need_run):
         min_max_scale_param_dict = {}
-        for i, header in enumerate(self.header):
-            if i in self.scale_column_idx:
-                param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
-                                             column_lower=self.column_min_value[i])
-                min_max_scale_param_dict[header] = param_obj
+        if self.header:
+            for i, header in enumerate(self.header):
+                if i in self.scale_column_idx:
+                    param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
+                                                 column_lower=self.column_min_value[i])
+                    min_max_scale_param_dict[header] = param_obj
 
         param_proto_obj = ScaleParam(col_scale_param=min_max_scale_param_dict,
                                      header=self.header,

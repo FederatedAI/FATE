@@ -37,3 +37,9 @@ class HomoLRBase(BaseLogisticRegression):
         super(HomoLRBase, self)._init_model(params)
         self.transfer_variable = HomoLRTransferVariable()
 
+    @property
+    def use_loss(self):
+        if self.model_param.converge_func == 'weight_diff':
+            return False
+        return True
+

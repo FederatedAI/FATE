@@ -23,6 +23,16 @@
                     ]
                 }
             }
+        },
+        "homo_lr_1": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "dataio_0.train"
+                    ]
+                }
+            }
         }
     }
 }

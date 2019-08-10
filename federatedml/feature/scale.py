@@ -120,6 +120,7 @@ class Scale(ModelBase):
     def _load_model(self, model_dict):
         model_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         self.header = list(model_obj.header)
+        self.need_run = model_obj.need_run
 
         shape = len(self.header)
         self.column_max_value = [ 0 for _ in range(shape) ]
@@ -140,6 +141,12 @@ class Scale(ModelBase):
         self.scale_column_idx.sort()
 
     def export_model(self):
+        if not self.scale_obj:
+            if self.model_param.method == consts.MINMAXSCALE:
+                self.scale_obj = MinMaxScale(self.model_param)
+            else:
+                self.scale_obj = StandardScale(self.model_param)
+
         return self.scale_obj.export_model(self.need_run)
 
 

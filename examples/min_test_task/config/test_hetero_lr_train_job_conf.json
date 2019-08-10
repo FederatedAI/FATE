@@ -73,7 +73,7 @@
       "alpha": 0.01,
       "max_iter": 10,
       "converge_func": "diff",
-      "batch_size": 320,
+      "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
         "init_method": "random_uniform"

@@ -21,6 +21,7 @@ import copy
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.util import consts
@@ -93,7 +94,7 @@ class LogisticParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'sgd'
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
         Optimize method
 
     party_weight : int or float, default: 1
@@ -109,10 +110,11 @@ class LogisticParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    converge_func : str, 'diff' or 'abs', default: 'diff'
+    converge_func : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+            b)  weight_diff: Use difference between weights of two consecutive iterations
+            c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
     re_encrypt_batches : int, default: 2
         Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
@@ -127,7 +129,7 @@ class LogisticParam(BaseParam):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam(), one_vs_rest_param=OneVsRestParam()):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -145,6 +147,7 @@ class LogisticParam(BaseParam):
         self.need_run = need_run
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -171,10 +174,10 @@ class LogisticParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
                 raise ValueError(
                     "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
         if type(self.batch_size).__name__ != "int":
             raise ValueError(
@@ -205,7 +208,7 @@ class LogisticParam(BaseParam):
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs']:
+            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "logistic_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")

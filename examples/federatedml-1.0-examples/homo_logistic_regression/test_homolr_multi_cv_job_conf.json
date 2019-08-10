@@ -56,6 +56,25 @@
                 "random_seed": 33,
                 "need_cv": true
             }
+        },
+        "homo_lr_1": {
+            "penalty": "L2",
+            "optimizer": "rmsprop",
+            "eps": 1e-5,
+            "alpha": 0.01,
+            "max_iter": 10,
+            "converge_func": "diff",
+            "batch_size": 320,
+            "learning_rate": 0.01,
+            "init_param": {
+				"init_method": "random_uniform"
+            },
+            "cv_param": {
+                "n_splits": 4,
+                "shuffle": true,
+                "random_seed": 33,
+                "need_cv": true
+            }
         }
     }
 }

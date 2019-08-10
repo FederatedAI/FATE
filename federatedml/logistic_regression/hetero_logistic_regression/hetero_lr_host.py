@@ -21,7 +21,9 @@ from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -31,6 +33,7 @@ class HeteroLRHost(HeteroLRBase):
         super(HeteroLRHost, self).__init__()
         self.batch_num = None
         self.batch_index_list = []
+        self.role = consts.HOST
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -49,6 +52,14 @@ class HeteroLRHost(HeteroLRBase):
         en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
         host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [wx,
+                        en_wx,
+                        wx_square,
+                        en_wx_square
+                        ]
+        rubbish_clear(rubbish_list)
 
         return host_forward
 
@@ -190,11 +201,13 @@ class HeteroLRHost(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
 
-                # is converge
-
                 batch_index += 1
-                # if is_stopped:
-                #    break
+
+                # temporary resource recovery and will be removed in the future
+                rubbish_list = [host_forward,
+                                fore_gradient
+                                ]
+                data_overview.rubbish_clear(rubbish_list)
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(

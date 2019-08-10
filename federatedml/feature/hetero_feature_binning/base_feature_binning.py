@@ -212,17 +212,6 @@ class BaseHeteroFeatureBinning(ModelBase):
                 raise RuntimeError('Cannot get feature header, please check input data')
             self.cols = [i for i in range(len(header))]
         else:
-            # cols = []
-            # for idx in self.cols_index:
-            #     try:
-            #         idx = int(idx)
-            #     except ValueError:
-            #         raise ValueError("In binning module, selected index: {} is not integer".format(idx))
-            #
-            #     if idx >= len(header):
-            #         raise ValueError(
-            #             "In binning module, selected index: {} exceed length of data dimension".format(idx))
-            #     cols.append(header[idx])
             self.cols = self.cols_index
 
         self.cols_dict = {}

@@ -91,6 +91,7 @@ class KFold(BaseCrossValidator):
         fold_num = 0
         for train_data, test_data in data_generator:
             model = copy.deepcopy(original_model)
+            LOGGER.debug("In CV, set_flowid flowid is : {}".format(fold_num))
             model.set_flowid(fold_num)
             model.set_cv_fold(fold_num)
 
@@ -103,10 +104,12 @@ class KFold(BaseCrossValidator):
             LOGGER.debug("train_data count: {}".format(train_data.count()))
 
             this_flowid = 'train.' + str(fold_num)
+            LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
             model.fit(train_data)
 
             this_flowid = 'predict_train.' + str(fold_num)
+            LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
             train_pred_res = model.predict(train_data)
 
@@ -116,6 +119,7 @@ class KFold(BaseCrossValidator):
                 self.evaluate(pred_res, fold_name, model)
 
             this_flowid = 'predict_validate.' + str(fold_num)
+            LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
             pred_res = model.predict(test_data)
             model.set_predict_data_schema(pred_res, test_data.schema)
@@ -125,6 +129,8 @@ class KFold(BaseCrossValidator):
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)
             fold_num += 1
+            LOGGER.debug("Finish fold: {}".format(fold_num))
+        LOGGER.debug("Finish all fold running")
 
         return
 
