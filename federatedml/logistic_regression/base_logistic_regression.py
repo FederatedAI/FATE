@@ -95,6 +95,7 @@ class BaseLogisticRegression(ModelBase):
             self.converge_func = convergence.GradientConverge(eps=self.eps)
         else:
             self.converge_func = AbsConverge(eps=self.eps)
+
         self.re_encrypt_batches = params.re_encrypt_batches
         self.predict_param = params.predict_param
         self.optimizer = Optimizer(params.learning_rate, params.optimizer)

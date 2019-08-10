@@ -106,7 +106,10 @@ class HomoLRArbiter(HomoLRBase):
                                   idx=idx)
 
             # send converge flag
-            converge_flag = self.converge_func.is_converge(total_loss)
+            if self.model_param.converge_func == 'weight_diff':
+                converge_flag = self.converge_func.is_converge(final_model)
+            else:
+                converge_flag = self.converge_func.is_converge(total_loss)
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag,
                 iter_num)

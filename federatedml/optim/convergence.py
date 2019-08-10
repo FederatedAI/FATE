@@ -15,6 +15,7 @@
 #
 
 from federatedml.util import consts
+from federatedml.util import fate_operator
 import numpy as np
 
 
@@ -65,8 +66,20 @@ class GradientConverge(ConvergeFunction):
     Judge convergence when abs sum of gradient is smaller than eps
     This is used when encrypted loss is not available.
     """
-    def is_converge(self, gradient):
-        abs_gradient_sum = sum(map(np.fabs, gradient))
-        if abs_gradient_sum < self.eps:
+
+    def __init__(self, pre_weight=None, eps=consts.FLOAT_ZERO):
+        super(GradientConverge, self).__init__(eps=eps)
+        self.pre_weight = pre_weight
+
+    def is_converge(self, weight):
+        if self.pre_weight is None:
+            self.pre_weight = weight
+            return False
+
+        weight_dff = fate_operator.norm(self.pre_weight - weight)
+        self.pre_weight = weight
+        if weight_dff < self.eps * np.max([np.linalg.norm(weight), 1]):
             return True
         return False
+
+
