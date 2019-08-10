@@ -45,7 +45,7 @@ class LoggerFactory(object):
     levels = (10, 20, 30, 40)
 
     @staticmethod
-    def set_directory(directory=None, parent_log_dir=None, append_to_parent_log=None):
+    def set_directory(directory=None, parent_log_dir=None, append_to_parent_log=None, force=False):
         if parent_log_dir:
            LoggerFactory.PARENT_LOG_DIR = parent_log_dir
         if append_to_parent_log:
@@ -53,7 +53,8 @@ class LoggerFactory(object):
         with LoggerFactory.lock:
             if not directory:
                 directory = os.path.join(file_utils.get_project_base_directory(), 'logs')
-            LoggerFactory.LOG_DIR = directory
+            if not LoggerFactory.LOG_DIR or force:
+                LoggerFactory.LOG_DIR = directory
             os.makedirs(LoggerFactory.LOG_DIR, exist_ok=True)
             for loggerName, ghandler in LoggerFactory.global_handler_dict.items():
                 for className, (logger, handler) in LoggerFactory.logger_dict.items():
@@ -163,6 +164,5 @@ def getLogger(className=None, useLevelFile=False):
     if className is None:
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        #className = os.path.splitext(os.path.basename(module.__file__))[0]
         className = 'stat'
     return LoggerFactory.get_logger(className)

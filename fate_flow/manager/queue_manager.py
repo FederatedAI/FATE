@@ -19,7 +19,7 @@ import queue
 import redis
 
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.service_support_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import WORK_MODE, REDIS, REDIS_QUEUE_DB_INDEX, stat_logger
 
 

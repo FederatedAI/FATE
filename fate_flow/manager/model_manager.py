@@ -13,62 +13,63 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import datetime
+import importlib
+import inspect
 import os
-from arch.api.proto.data_transform_server_pb2 import DataTransformServer
-from arch.api.utils.core import json_loads
-from arch.api.utils.format_transform import camel_to_pascal
-from fate_flow.storage.fate_storage import FateStorage
+
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
-from fate_flow.manager import version_control
-import datetime
-import inspect
-import importlib
+from arch.api import storage
+from arch.api.utils import file_utils, version_control
 from fate_flow.settings import stat_logger
-from arch.api.utils import file_utils
 
 
-def save_model(model_key, model_buffers, model_version, model_id, version_log=None):
-    data_table = FateStorage.table(name=model_version, namespace=model_id, partition=get_model_table_partition_count(),
-                                   create_if_missing=True, error_if_exist=False)
+def save_component_model(component_model_key, model_buffers, party_model_id, model_version, version_log=None):
+    pipeline_model_table = storage.table(name=model_version, namespace=party_model_id,
+                                         partition=get_model_table_partition_count(),
+                                         create_if_missing=True, error_if_exist=False)
     model_class_map = {}
     for buffer_name, buffer_object in model_buffers.items():
-        storage_key = '{}.{}'.format(model_key, buffer_name)
-        data_table.put(storage_key, buffer_object.SerializeToString(), use_serialize=False)
+        storage_key = '{}:{}'.format(component_model_key, buffer_name)
+        pipeline_model_table.put(storage_key, buffer_object.SerializeToString(), use_serialize=False)
         model_class_map[storage_key] = type(buffer_object).__name__
-    FateStorage.save_data_table_meta(model_class_map, namespace=model_id, name=model_version)
+    storage.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
     version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
-    version_control.save_version(name=model_version, namespace=model_id, version_log=version_log)
+    version_control.save_version(name=model_version, namespace=party_model_id, version_log=version_log)
 
 
-def read_model(model_key, model_version, model_id):
-    data_table = FateStorage.table(name=model_version, namespace=model_id, partition=get_model_table_partition_count(),
-                                   create_if_missing=False, error_if_exist=False)
+def read_component_model(component_model_key, party_model_id, model_version):
+    pipeline_model_table = storage.table(name=model_version, namespace=party_model_id,
+                                         partition=get_model_table_partition_count(),
+                                         create_if_missing=False, error_if_exist=False)
     model_buffers = {}
-    if data_table:
-        model_class_map = FateStorage.get_data_table_meta_by_instance(data_table=data_table)
-        for storage_key, buffer_object_bytes in data_table.collect(use_serialize=False):
-            storage_key_items = storage_key.split('.')
-            buffer_name = '.'.join(storage_key_items[1:])
+    if pipeline_model_table:
+        model_class_map = storage.get_data_table_metas_by_instance(data_table=pipeline_model_table)
+        for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False):
+            storage_key_items = storage_key.split(':')
+            buffer_name = ':'.join(storage_key_items[1:])
             current_model_key = storage_key_items[0]
-            if current_model_key == model_key:
+            if current_model_key == component_model_key:
                 buffer_object_class = get_proto_buffer_class(model_class_map.get(storage_key, ''))
                 if buffer_object_class:
                     buffer_object = buffer_object_class()
                 else:
-                    raise Exception('can not found this protobuffer class: {}'.format(model_class_map.get(storage_key, '')))
+                    raise Exception(
+                        'can not found this protobuffer class: {}'.format(model_class_map.get(storage_key, '')))
                 buffer_object.ParseFromString(buffer_object_bytes)
                 model_buffers[buffer_name] = buffer_object
     return model_buffers
 
 
-def collect_model(model_version, model_id):
-    data_table = FateStorage.table(name=model_version, namespace=model_id, partition=get_model_table_partition_count(),
-                                   create_if_missing=False, error_if_exist=False)
+def collect_pipeline_model(party_model_id, model_version):
+    pipeline_model_table = storage.table(name=model_version, namespace=party_model_id,
+                                         partition=get_model_table_partition_count(),
+                                         create_if_missing=False, error_if_exist=False)
     model_buffers = {}
-    if data_table:
-        model_class_map = FateStorage.get_data_table_meta_by_instance(data_table=data_table)
-        for storage_key, buffer_object_bytes in data_table.collect(use_serialize=False):
+    if pipeline_model_table:
+        model_class_map = storage.get_data_table_metas_by_instance(data_table=pipeline_model_table)
+        for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False):
             storage_key_items = storage_key.split('.')
             buffer_name = storage_key_items[-1]
             buffer_object_class = get_proto_buffer_class(model_class_map.get(storage_key, ''))
@@ -81,12 +82,12 @@ def collect_model(model_version, model_id):
     return model_buffers
 
 
-def save_model_meta(kv, model_version, model_id):
-    FateStorage.save_data_table_meta(kv, namespace=model_id, name=model_version)
+def save_pipeline_model_meta(kv, party_model_id, model_version):
+    storage.save_data_table_meta(kv, data_table_namespace=party_model_id, data_table_name=model_version)
 
 
-def get_model_meta(model_version, model_id):
-    return FateStorage.get_data_table_meta(namespace=model_id, name=model_version)
+def get_pipeline_model_meta(party_model_id, model_version):
+    return storage.get_data_table_metas(data_table_namespace=party_model_id, data_table_name=model_version)
 
 
 def get_proto_buffer_class(class_name):

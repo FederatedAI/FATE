@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import numpy
+from federatedml.feature.sparse_vector import SparseVector
 
 
 def dataset_to_list(src):
@@ -21,5 +22,10 @@ def dataset_to_list(src):
         return src.tolist()
     elif isinstance(src, list):
         return src
+    elif isinstance(src, SparseVector):
+        vector = [0] * src.get_shape()
+        for idx, v in src.get_all_data():
+            vector[idx] = v
+        return vector
     else:
         return src
