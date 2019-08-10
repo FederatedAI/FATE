@@ -42,7 +42,7 @@ def run_secureboost_host_test(jobid):
     stderr = stderr.decode("utf-8")
     print (stderr)
     process.wait()
-    os.system("rm " + home_dir + "/test_hetero_secure_boost_host.py")
+    os.system("rm " + home_dir + "/test_hetero_secure_boost_host.py_bak")
 
 
 def run_secureboost_guest_test(jobid):
