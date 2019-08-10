@@ -13,18 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import base64
-import pickle
 from typing import List
 
+from arch.api import storage
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils, api_utils
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
 class Tracking(object):
@@ -32,20 +31,26 @@ class Tracking(object):
     METRIC_LIST_PARTITION = 48
     JOB_VIEW_PARTITION = 8
 
-    def __init__(self, job_id: str, role: str, party_id: int, model_key: str = None, component_name: str = None,
+    def __init__(self, job_id: str, role: str, party_id: int,
+                 model_id: str = None,
+                 model_version: str = None,
+                 component_name: str = None,
+                 module_name: str = None,
                  task_id: str = None):
         self.job_id = job_id
         self.role = role
         self.party_id = party_id
         self.component_name = component_name if component_name else 'pipeline'
+        self.module_name = module_name if module_name else 'Pipeline'
         self.task_id = task_id if task_id else job_utils.generate_task_id(job_id=self.job_id,
                                                                           component_name=self.component_name)
         self.table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
         self.job_table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
-        self.model_id = Tracking.gen_party_model_id(model_key=model_key, role=role, party_id=party_id)
-        self.model_version = self.job_id
+        self.model_id = model_id
+        self.party_model_id = Tracking.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+        self.model_version = model_version
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
         self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
@@ -58,8 +63,10 @@ class Tracking(object):
     def save_metric_data_remote(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
         stat_logger.info(
-            'log job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
-                                                                        self.party_id, metric_namespace, metric_name))
+            'request save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name,
+                                                                                 self.role,
+                                                                                 self.party_id, metric_namespace,
+                                                                                 metric_name))
         request_body = dict()
         request_body['metric_namespace'] = metric_namespace
         request_body['metric_name'] = metric_name
@@ -77,6 +84,9 @@ class Tracking(object):
         return response['retcode'] == 0
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
+        stat_logger.info(
+            'save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
+                                                                         self.party_id, metric_namespace, metric_name))
         kv = []
         for metric in metrics:
             kv.append((metric.key, metric.value))
@@ -103,6 +113,11 @@ class Tracking(object):
     def save_metric_meta_remote(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                                 job_level: bool = False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
+        stat_logger.info(
+            'request save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name,
+                                                                                 self.role,
+                                                                                 self.party_id, metric_namespace,
+                                                                                 metric_name))
         request_body = dict()
         request_body['metric_namespace'] = metric_namespace
         request_body['metric_name'] = metric_name
@@ -122,8 +137,8 @@ class Tracking(object):
     def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                          job_level: bool = False):
         stat_logger.info(
-            'set job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
-                                                                        self.party_id, metric_namespace, metric_name))
+            'save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
+                                                                         self.party_id, metric_namespace, metric_name))
         self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):
@@ -162,59 +177,62 @@ class Tracking(object):
         if data_table:
             persistent_table = data_table.save_as(namespace=data_table._namespace,
                                                   name='{}_persistent'.format(data_table._name))
-            FateStorage.save_data_table_meta(
+            storage.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
-                namespace=persistent_table._namespace, name=persistent_table._name)
+                data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
             data_table_info = {
                 data_name: {'name': persistent_table._name, 'namespace': persistent_table._namespace}}
         else:
             data_table_info = {}
-        FateStorage.save_data(
+        storage.save_data(
             data_table_info.items(),
             name=Tracking.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
 
     def get_output_data_table(self, data_name: str = 'component'):
-        output_data_info_table = FateStorage.table(name=Tracking.output_table_name('data'),
-                                                   namespace=self.table_namespace)
+        output_data_info_table = storage.table(name=Tracking.output_table_name('data'),
+                                               namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
         if data_table_info:
-            data_table = FateStorage.table(name=data_table_info.get('name', ''),
-                                           namespace=data_table_info.get('namespace', ''))
-            data_table_meta = FateStorage.get_data_table_meta_by_instance(data_table=data_table)
+            data_table = storage.table(name=data_table_info.get('name', ''),
+                                       namespace=data_table_info.get('namespace', ''))
+            data_table_meta = storage.get_data_table_metas_by_instance(data_table=data_table)
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']
             return data_table
         else:
             return None
 
-    def save_output_model(self, model_buffers: dict, module_name: str):
+    def save_output_model(self, model_buffers: dict, model_name: str):
         if model_buffers:
-            model_manager.save_model(model_key=self.component_name,
-                                     model_buffers=model_buffers,
-                                     model_version=self.model_version,
-                                     model_id=self.model_id)
-            self.save_output_model_meta({'{}_module_name'.format(self.component_name): module_name})
+            model_manager.save_component_model(component_model_key='{}.{}'.format(self.component_name, model_name),
+                                               model_buffers=model_buffers,
+                                               party_model_id=self.party_model_id,
+                                               model_version=self.model_version)
+            self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
-    def get_output_model(self):
-        model_buffers = model_manager.read_model(model_key=self.component_name,
-                                                 model_version=self.model_version,
-                                                 model_id=self.model_id)
+    def get_output_model(self, model_name):
+        model_buffers = model_manager.read_component_model(
+            component_model_key='{}.{}'.format(self.component_name, model_name),
+            party_model_id=self.party_model_id,
+            model_version=self.model_version)
+
         return model_buffers
 
     def collect_model(self):
-        model_buffers = model_manager.collect_model(model_version=self.model_version, model_id=self.model_id)
+        model_buffers = model_manager.collect_pipeline_model(party_model_id=self.party_model_id,
+                                                             model_version=self.model_version)
         return model_buffers
 
     def save_output_model_meta(self, kv: dict):
-        model_manager.save_model_meta(kv=kv,
-                                      model_version=self.model_version,
-                                      model_id=self.model_id)
+        model_manager.save_pipeline_model_meta(kv=kv,
+                                               party_model_id=self.party_model_id,
+                                               model_version=self.model_version)
 
     def get_output_model_meta(self):
-        return model_manager.get_model_meta(model_version=self.model_version,
-                                            model_id=self.model_id)
+        return model_manager.get_pipeline_model_meta(party_model_id=self.party_model_id,
+                                                     model_version=self.model_version)
 
     def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         with DB.connection_context():
@@ -288,7 +306,7 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in ['success', 'failed', 'partial', 'deleted']:
+                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.PARTIAL, JobStatus.DELETED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -321,7 +339,7 @@ class Tracking(object):
             task.f_role = role
             task.f_party_id = party_id
             if 'f_status' in task_info:
-                if task.f_status in ['success', 'failed', 'partial', 'deleted']:
+                if task.f_status in [TaskStatus.SUCCESS, TaskStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -336,8 +354,9 @@ class Tracking(object):
                 task.save()
             return task
 
-    def clean_job(self):
-        FateStorage.clean_job(namespace=self.job_id, regex_string='*')
+    def clean_task(self):
+        stat_logger.info('clean table by namespace {}'.format(self.task_id))
+        storage.clean_table(namespace=self.task_id, regex_string='*')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace
@@ -362,31 +381,6 @@ class Tracking(object):
         return '_'.join(['job', 'view'])
 
     @staticmethod
-    def gen_party_model_id(model_key, role, party_id):
-        return dtable_utils.gen_namespace_by_key(namespace_key=model_key, role=role,
-                                                 party_id=party_id) if model_key else None
-
-    @staticmethod
-    def serialize_b64(src):
-        return base64.b64encode(pickle.dumps(src))
-
-    @staticmethod
-    def deserialize_b64(src):
-        return pickle.loads(base64.b64decode(src))
-
-
-if __name__ == '__main__':
-    FateStorage.init_storage()
-    tracker = Tracking(job_utils.generate_job_id(), 'guest', 10000, 'hetero_lr')
-    metric_namespace = 'TRAIN'
-    metric_name = 'LOSS0'
-    tracker.log_metric_data(metric_namespace, metric_name, [Metric(1, 0.2), Metric(2, 0.3)])
-
-    metrics = tracker.get_metric_data(metric_namespace, metric_name)
-    for metric in metrics:
-        print(metric.key, metric.value)
-
-    tracker.set_metric_meta(metric_namespace, metric_name,
-                            MetricMeta(name=metric_name, metric_type='LOSS', extra_metas={'BEST': 0.2}))
-    metric_meta = tracker.get_metric_meta(metric_namespace, metric_name)
-    print(metric_meta.name, metric_meta.metric_type, metric_meta.metas)
+    def gen_party_model_id(model_id, role, party_id):
+        return dtable_utils.gen_party_namespace_by_federated_namespace(federated_namespace=model_id, role=role,
+                                                                       party_id=party_id) if model_id else None

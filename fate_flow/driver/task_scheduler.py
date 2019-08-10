@@ -18,15 +18,16 @@ import os
 import sys
 import time
 
-from arch.api.utils import file_utils
+from arch.api import storage
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, schedule_logger
-from fate_flow.storage.fate_storage import FateStorage
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
 class TaskScheduler(object):
@@ -53,20 +54,23 @@ class TaskScheduler(object):
                               work_mode=job.f_work_mode)
 
     @staticmethod
-    def run_job(job_id, job_dsl_path, job_runtime_conf_path):
-        dag = get_job_dsl_parser(job_dsl_path=job_dsl_path,
-                                 job_runtime_conf_path=job_runtime_conf_path)
-        job_runtime_conf = file_utils.load_json_conf(job_runtime_conf_path)
+    def run_job(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
+        dag = get_job_dsl_parser(dsl=job_dsl,
+                                 runtime_conf=job_runtime_conf,
+                                 train_runtime_conf=train_runtime_conf)
         job_args = dag.get_args_input()
         if not job_initiator:
             return False
-        FateStorage.init_storage(job_id=job_id)
+        storage.init_storage(job_id=job_id, work_mode=RuntimeConfig.WORK_MODE)
         job = Job()
         job.f_job_id = job_id
         job.f_start_time = current_timestamp()
-        job.f_status = 'running'
+        job.f_status = JobStatus.RUNNING
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
@@ -90,14 +94,14 @@ class TaskScheduler(object):
             if not run_status:
                 break
         if len(top_level_task_status) == 2:
-            job.f_status = 'partial'
+            job.f_status = JobStatus.PARTIAL
         elif True in top_level_task_status:
-            job.f_status = 'success'
+            job.f_status = JobStatus.SUCCESS
         else:
-            job.f_status = 'failed'
+            job.f_status = JobStatus.FAILED
         job.f_end_time = current_timestamp()
         job.f_elapsed = job.f_end_time - job.f_start_time
-        if job.f_status == 'success':
+        if job.f_status == JobStatus.SUCCESS:
             job.f_progress = 100
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
@@ -288,18 +292,21 @@ class TaskScheduler(object):
     def finish_job(job_id, job_runtime_conf):
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
-        model_key_base64 = base64_encode(job_parameters['model_key'])
+        model_id_base64 = base64_encode(job_parameters['model_id'])
+        model_version_base64 = base64_encode(job_parameters['model_version'])
         for role, partys in job_runtime_conf['role'].items():
             for party_id in partys:
                 # save pipeline
                 federated_api(job_id=job_id,
                               method='POST',
-                              endpoint='/{}/job/{}/{}/{}/{}/save/pipeline'.format(
+                              endpoint='/{}/job/{}/{}/{}/{}/{}/save/pipeline'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
                                   party_id,
-                                  model_key_base64),
+                                  model_id_base64,
+                                  model_version_base64
+                              ),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
                               json_body={},
@@ -323,7 +330,7 @@ class TaskScheduler(object):
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if jobs:
             initiator_job = jobs[0]
-            job_info = {'f_job_id': job_id, 'f_status': 'failed'}
+            job_info = {'f_job_id': job_id, 'f_status': JobStatus.FAILED}
             roles = json_loads(initiator_job.f_roles)
             job_work_mode = initiator_job.f_work_mode
             initiator_party_id = initiator_job.f_party_id

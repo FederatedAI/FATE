@@ -25,7 +25,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
 from arch.api.utils.core import current_timestamp
-from fate_flow.entity.service_support_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 
 LOGGER = log_utils.getLogger()
@@ -115,6 +115,7 @@ class Job(DataBaseModel):
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
     f_dsl = TextField()
     f_runtime_conf = TextField()
+    f_train_runtime_conf = TextField(null=True)
     f_run_ip = CharField(max_length=100)
     f_status = CharField(max_length=50)
     f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL

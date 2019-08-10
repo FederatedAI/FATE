@@ -41,7 +41,8 @@ def list_to_str(input_list):
 
 
 def save_data_header(header_source, dst_table_name, dst_table_namespace):
-    storage.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+    header_source_item = header_source.split(',')
+    storage.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}, dst_table_name,
                                  dst_table_namespace)
 
 

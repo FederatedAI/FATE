@@ -23,7 +23,7 @@ import copy
 
 class ParameterOverride(object):
     @staticmethod
-    def override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_conf=None, module=None,
+    def override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_dict=None, module=None,
                            module_alias=None):
 
         _module_setting_path = os.path.join(setting_conf_prefix, module + ".json")
@@ -48,9 +48,6 @@ class ParameterOverride(object):
         except:
             raise Exception("default runtime conf should be a json file")
         
-        submit_dict = None
-        with open(submit_conf, "r") as fin:
-            submit_dict = json.loads(fin.read())
 
         if not submit_dict:
             raise ValueError("submit conf does exist or format is wrong")
@@ -127,11 +124,7 @@ class ParameterOverride(object):
         return runtime_dict
 
     @staticmethod
-    def get_args_input(submit_conf, module="args"):
-        submit_dict = None
-        with open(submit_conf, "r") as fin:
-            submit_dict = json.loads(fin.read())
-
+    def get_args_input(submit_dict, module="args"):
         if "role_parameters" not in submit_dict:
             return {}
 

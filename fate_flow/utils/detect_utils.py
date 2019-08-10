@@ -13,24 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import Enum, IntEnum
+import typing
 
 
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
-
-
-class JobStatus(Enum):
-    WAITING = 'waiting'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
-    PARTIAL = 'partial'
-
-
-class TaskStatus(Enum):
-    START = 'start'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
+def check_config(config: typing.Dict, required_parameters: typing.List):
+    for parameter in required_parameters:
+        if parameter not in config:
+            raise Exception('configuration no {} parameter'.format(parameter))
