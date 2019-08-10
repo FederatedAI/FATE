@@ -95,11 +95,11 @@ class JobController(object):
 
     @staticmethod
     def gen_model_info(roles, model_id, model_version):
-        model_info = {'model_id': model_id, 'model_version': model_version}
+        model_info = {'model_id': {}, 'model_version': model_version}
         for _role, role_partys in roles.items():
-            model_info[_role] = {}
+            model_info['model_id'][_role] = {}
             for _party_id in role_partys:
-                model_info[_role][_party_id] = Tracking.gen_party_model_id(model_id, role=_role, party_id=_party_id)
+                model_info['model_id'][_role][_party_id] = Tracking.gen_party_model_id(model_id, role=_role, party_id=_party_id)
         return model_info
 
     @staticmethod
