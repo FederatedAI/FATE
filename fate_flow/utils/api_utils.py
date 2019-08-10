@@ -19,10 +19,10 @@ import grpc
 import requests
 from flask import jsonify
 
+from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT
 from fate_flow.settings import stat_logger, SERVER_HOST_URL, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
-from fate_flow.entity.constant_config import WorkMode
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
@@ -34,24 +34,28 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_bo
     if work_mode == WorkMode.STANDALONE:
         return local_api(method=method, endpoint=endpoint, json_body=json_body)
     elif work_mode == WorkMode.CLUSTER:
-        _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
-                                   overall_timeout=overall_timeout)
-        try:
-            channel, stub = get_proxy_data_channel()
-            # stat_logger.info("grpc api request: {}".format(_packet))
-            _return = stub.unaryCall(_packet)
-            stat_logger.info("grpc api response: {}".format(_return))
-            channel.close()
-            json_body = json.loads(_return.body.value)
-            return json_body
-        except grpc.RpcError as e:
-            stat_logger.exception(e)
-            return {'retcode': 101, 'msg': 'rpc request error: {}'.format(e)}
-        except Exception as e:
-            stat_logger.exception(e)
-            return {'retcode': 102, 'msg': 'rpc request error: {}'.format(e)}
+        return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id,
+                          dest_party_id=dest_party_id, json_body=json_body, overall_timeout=overall_timeout)
     else:
-        return {'retcode': 103, 'msg': '{} work mode is not supported'.format(work_mode)}
+        raise Exception('{} work mode is not supported'.format(work_mode))
+
+
+def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body,
+               overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+    _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
+                               overall_timeout=overall_timeout)
+    try:
+        channel, stub = get_proxy_data_channel()
+        # stat_logger.info("grpc api request: {}".format(_packet))
+        _return = stub.unaryCall(_packet)
+        stat_logger.info("grpc api response: {}".format(_return))
+        channel.close()
+        json_body = json.loads(_return.body.value)
+        return json_body
+    except grpc.RpcError as e:
+        raise Exception('rpc request error: {}'.format(e))
+    except Exception as e:
+        raise Exception('rpc request error: {}'.format(e))
 
 
 def local_api(method, endpoint, json_body):
@@ -65,5 +69,4 @@ def local_api(method, endpoint, json_body):
         stat_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
         return response_json_body
     except Exception as e:
-        stat_logger.exception(e)
-        return {'retcode': 101, 'msg': 'local request error: {}'.format(e)}
+        raise Exception('local request error: {}'.format(e))

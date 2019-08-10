@@ -48,17 +48,20 @@ def load_model():
         load_status_info[role_name] = load_status_info.get(role_name, {})
         for _party_id in role_partys:
             request_config['local'] = {'role': role_name, 'party_id': _party_id}
-            response = federated_api(job_id=_job_id,
-                                     method='POST',
-                                     endpoint='/{}/model/load/do'.format(API_VERSION),
-                                     src_party_id=initiator_party_id,
-                                     dest_party_id=_party_id,
-                                     json_body=request_config,
-                                     work_mode=request_config['work_mode'])
-            if response['retcode'] != 0:
+            try:
+                response = federated_api(job_id=_job_id,
+                                         method='POST',
+                                         endpoint='/{}/model/load/do'.format(API_VERSION),
+                                         src_party_id=initiator_party_id,
+                                         dest_party_id=_party_id,
+                                         json_body=request_config,
+                                         work_mode=request_config['work_mode'])
+                load_status_info[role_name][_party_id] = response['retcode']
+            except Exception as e:
+                stat_logger.exception(e)
                 load_status = False
                 load_status_msg = 'failed'
-            load_status_info[role_name][_party_id] = response['retcode']
+                load_status_info[role_name][_party_id] = 100
     return get_json_result(job_id=_job_id, retcode=(0 if load_status else 101), retmsg=load_status_msg,
                            data=load_status_info)
 

@@ -495,8 +495,8 @@ class DSLParser(object):
                                                                       setting_conf_prefix=setting_conf_prefix):
                                         self.predict_dsl["components"][name]["input"]["data"]["data"].append(input_data)
                                     else:
-                                        self.predict_dsl["components"][name]["input"]["data"]["data"].append(output_data_maps[
-                                            pre_name][data_suffix])
+                                        self.predict_dsl["components"][name]["input"]["data"]["data"] = output_data_maps[
+                                            pre_name][data_suffix]
 
                         elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
                             input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
@@ -550,10 +550,10 @@ class DSLParser(object):
                 output_data_maps[name] = {}
                 output_data_str = output_data[0]
                 if "train_data" in input_data or "eval_data" in input_data:
-                    if "eval_data" in input_data:
-                        output_data_maps[name][output_data_str] = input_data.get("eval_data")
-                    else:
+                    if "train_data" in input_data:
                         output_data_maps[name][output_data_str] = input_data.get("train_data")
+                    else:
+                        output_data_maps[name][output_data_str] = input_data.get("eval_data")
                 elif "data" in input_data:
                     output_data_maps[name][output_data_str] = input_data.get("data")
                 else:
