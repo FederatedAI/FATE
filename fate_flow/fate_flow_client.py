@@ -59,7 +59,6 @@ def call_fun(func, dsl_data, config_data):
             post_data = config_data
         response = requests.post("/".join([local_url, "job", func.rstrip('_job')]), json=post_data)
     elif func in JOB_FUNC:
-        detect_utils.check_config(config=config_data, required_parameters=['job_id'])
         if func == 'job_config':
             detect_utils.check_config(config=config_data, required_parameters=['output_path'])
             response = requests.post("/".join([local_url, func.replace('_', '/')]), json=config_data)
@@ -99,7 +98,6 @@ def call_fun(func, dsl_data, config_data):
                         'directory': extract_dir,
                         'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
     elif func in TASK_OPERATE_FUNC:
-        detect_utils.check_config(config=config_data, required_parameters=['job_id'])
         response = requests.post("/".join([local_url, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
         detect_utils.check_config(config=config_data,
