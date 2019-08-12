@@ -24,6 +24,7 @@ public class SshInfo {
     private String ip;
     private Integer port;
 
+
     public String getStatus() {
         return status;
     }

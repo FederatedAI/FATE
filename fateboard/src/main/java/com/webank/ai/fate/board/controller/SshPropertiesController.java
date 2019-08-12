@@ -42,58 +42,25 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping(value = "/ssh")
 
 public class SshPropertiesController {
-
     private final static Logger logger = LoggerFactory.getLogger(SshPropertiesController.class);
 
     @Autowired
     SshService sshService;
 
-
     @RequestMapping(value = "/checkStatus", method = RequestMethod.GET)
     public ResponseResult checkSShStatus() throws IOException, InterruptedException {
 
-        HashMap<Object, SshInfo> data = Maps.newHashMap();
+        Map<String ,SshInfo>  data = sshService.getAllsshInfo();
 
-        Properties properties = new Properties();
-        try( InputStream inputStream = this.getInputStream()) {
-            properties.load(inputStream);
-            Enumeration<?> enumeration = properties.propertyNames();
-            int size = properties.size();
+        CountDownLatch  countDownLatch  = new CountDownLatch(data.size());
 
-            while (enumeration.hasMoreElements()) {
-
-                try {
-                    SshInfo sshInfo = new SshInfo();
-                    String status = "0";
-                    String ip = (String) enumeration.nextElement();
-                    status = checkStatus(ip);
-                    String sshValue = properties.getProperty(ip);
-                    String[] params = sshValue.split("\\|");
-                    sshInfo.setIp(ip);
-                    if (params.length > 0) {
-                        sshInfo.setUser(params[0]);
-                        sshInfo.setPassword(params[1]);
-                        sshInfo.setPort(new Integer(params[2]));
-                        sshInfo.setStatus(status);
-                    }
-                    data.put(ip, sshInfo);
-                }catch(Exception e){
-
-                }
-            }
-        }
-        int  size =  data.size();
-
-        CountDownLatch  countDownLatch  = new CountDownLatch(size);
         data.forEach((k,v)->{
             new  Thread(()->{
-
                 try {
                     Session session = null;
                     try {
-                        session = sshService.connect(v);
+                        session = sshService.connect(v,1000);
                     } catch (Exception e) {
-
                         v.setStatus("0");
                     }
                     if (session != null) {
@@ -102,12 +69,7 @@ public class SshPropertiesController {
                 }finally {
                     countDownLatch.countDown();
                 }
-
-
             }).start();
-
-
-
         });
 
         countDownLatch.await(8, TimeUnit.SECONDS);
@@ -115,43 +77,15 @@ public class SshPropertiesController {
 
         return new ResponseResult<>(ErrorCode.SUCCESS, data);
     }
+    private  Map<String, SshInfo>  getAll(){
 
+       return   sshService.getAllsshInfo();
 
-
-        @RequestMapping(value = "/all", method = RequestMethod.GET)
+    }
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
     public ResponseResult readAll() throws Exception {
 
-
-        HashMap<Object, SshInfo> data = Maps.newHashMap();
-
-        Properties properties = new Properties();
-       try( InputStream inputStream = this.getInputStream()) {
-           properties.load(inputStream);
-           Enumeration<?> enumeration = properties.propertyNames();
-           int size = properties.size();
-
-           while (enumeration.hasMoreElements()) {
-               SshInfo  sshInfo  =   new SshInfo();
-
-
-               String ip = (String) enumeration.nextElement();
-
-               String sshValue = properties.getProperty(ip);
-
-               String[] params = sshValue.split("\\|");
-               sshInfo.setIp(ip);
-               if (params.length > 0) {
-                   sshInfo.setUser(params[0]);
-                   sshInfo.setPassword(params[1]);
-                   sshInfo.setPort(new Integer(params[2]));
-               }
-               data.put(ip, sshInfo);
-           }
-
-       }
-
-
-        return new ResponseResult<Map>(ErrorCode.SUCCESS, data);
+        return new ResponseResult<Map>(ErrorCode.SUCCESS, getAll());
     }
 
     private String checkStatus( String ip)  {
@@ -162,7 +96,7 @@ public class SshPropertiesController {
         }
         Session session = null;
         try {
-            session = sshService.connect(sshInfo);
+            session = sshService.connect(sshInfo,1000);
         } catch (Exception e) {
             e.printStackTrace();
             status = "0";
@@ -179,21 +113,9 @@ public class SshPropertiesController {
         JSONObject jsonObject = JSON.parseObject(params);
         String ip = jsonObject.getString(Dict.SSH_IP);
         Preconditions.checkArgument(StringUtils.isNoneEmpty(ip));
-
         HashMap<Object, List> data = Maps.newHashMap();
         List<String> sshInformation = new LinkedList<>();
 
-        Properties properties = new Properties();
-        InputStream inputStream = this.getInputStream();
-        properties.load(inputStream);
-        String value = properties.getProperty(ip);
-        String status = checkStatus( ip);
-
-        sshInformation.add(value);
-        sshInformation.add(status);
-        data.put(ip, sshInformation);
-
-        inputStream.close();
         return new ResponseResult<>(ErrorCode.SUCCESS, data);
     }
 
@@ -202,20 +124,8 @@ public class SshPropertiesController {
         JSONObject jsonObject = JSON.parseObject(params);
         String ip = jsonObject.getString(Dict.SSH_IP);
         Preconditions.checkArgument(StringUtils.isNoneEmpty(ip));
-
-        Properties properties = new Properties();
-        InputStream inputStream = this.getInputStream();
-        properties.load(inputStream);
-        properties.remove(ip);
-
-
-        OutputStream writer = this.getOutputStream();
-        properties.store(writer, "delete '" + ip + "' value");
-
-        sshService.load(inputStream);
-        writer.close();
-        inputStream.close();
-
+        sshService.getAllsshInfo().remove(ip);
+        sshService.flushToFile();
         return new ResponseResult(ErrorCode.SUCCESS);
     }
 
@@ -227,58 +137,14 @@ public class SshPropertiesController {
         String password = jsonObject.getString(Dict.SSH_PASSWORD);
         String port = jsonObject.getString(Dict.SSH_PORT);
         Preconditions.checkArgument(StringUtils.isNoneEmpty(ip, user, password, port));
-
-        HashMap<Object, List> data = Maps.newHashMap();
-        List<String> sshInformation = new LinkedList<>();
-
-
-        Properties properties = new Properties();
-        InputStream inputStream = this.getInputStream();
-        properties.load(inputStream);
-        String connectInformation = user + "|" + password + "|" + port;
-        properties.setProperty(ip, connectInformation);
-        OutputStream writer = this.getOutputStream();
-        properties.store(writer, "add" + "  key:" + ip + ", value" + connectInformation);
-
-        String status = checkStatus( ip);
-        sshInformation.add(connectInformation);
-        sshInformation.add(status);
-        data.put(ip, sshInformation);
-
-        sshService.load(inputStream);
-        writer.close();
-        inputStream.close();
-
-        return new ResponseResult<Map>(ErrorCode.SUCCESS, data);
-
-    }
-
-
-    private InputStream getInputStream() throws IOException {
-        String filePath = System.getProperty(Dict.SSH_CONFIG_FILE);
-        if (filePath == null || "".equals(filePath)) {
-            ClassPathResource classPathResource = new ClassPathResource("ssh.properties");
-            return classPathResource.getInputStream();
-        } else {
-            File file = new File(filePath + "/ssh.properties");
-            Preconditions.checkArgument(file.exists() && file.isFile());
-            return new BufferedInputStream(new FileInputStream(file));
-        }
-
-    }
-
-
-    private OutputStream getOutputStream() throws FileNotFoundException {
-        String filePath = System.getProperty(Dict.SSH_CONFIG_FILE);
-        if (filePath == null || "".equals(filePath)) {
-            ClassPathResource classPathResource = new ClassPathResource("ssh.properties");
-            String path = classPathResource.getPath();
-            return new BufferedOutputStream(new FileOutputStream(path));
-        } else {
-            File file = new File(filePath + "/ssh.properties");
-            Preconditions.checkArgument(file.exists() && file.isFile());
-            return new BufferedOutputStream(new FileOutputStream(file));
-        }
+        SshInfo  sshInfo = new SshInfo();
+        sshInfo.setPort(new Integer(port));
+        sshInfo.setIp(ip);
+        sshInfo.setUser(user);
+        sshInfo.setPassword(password);
+        sshService.addSShInfo(sshInfo);
+        sshService.flushToFile();
+        return new ResponseResult<Map>(ErrorCode.SUCCESS, sshService.getAllsshInfo());
 
     }
 

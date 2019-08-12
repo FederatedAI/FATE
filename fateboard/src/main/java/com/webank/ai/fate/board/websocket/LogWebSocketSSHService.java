@@ -41,6 +41,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 
@@ -57,7 +58,7 @@ public class LogWebSocketSSHService implements InitializingBean, ApplicationCont
     static LogFileTransferEventProducer logFileTransferEventProducer;
     static ThreadPoolTaskExecutor asyncServiceExecutor;
     final String DEFAULT_COMPONENT_ID = "default";
-    Map<Session, LogScanner> sessionMap = Maps.newHashMap();
+    static Map<Session, LogScanner> sessionMap = Maps.newHashMap();
     private Integer tailNum = 1000;
 
     /**
@@ -177,7 +178,13 @@ public class LogWebSocketSSHService implements InitializingBean, ApplicationCont
     @OnError
     public void onError(Session session, Throwable error) {
         logger.error("log web socket error", error);
-        error.printStackTrace();
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            sessionMap.remove(session);
+        }
     }
 
     @Override
@@ -188,6 +195,26 @@ public class LogWebSocketSSHService implements InitializingBean, ApplicationCont
         //    LogWebSocketSSHService.applicationEventPublisher  =  (ApplicationEventPublisher)applicationContext.getBean(ApplicationEventPublisher.class);
         LogWebSocketSSHService.logFileTransferEventProducer = (LogFileTransferEventProducer) applicationContext.getBean("logFileTransferEventProducer");
         asyncServiceExecutor = (ThreadPoolTaskExecutor) applicationContext.getBean("asyncServiceExecutor");
+
+        new  Thread(()->{
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            sessionMap.keySet().forEach(session->{
+
+                if(! session.isOpen()){
+                    try {
+                        session.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+            });
+        }).start();
 
     }
 
