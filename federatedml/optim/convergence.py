@@ -79,9 +79,9 @@ class WeightDiffConverge(ConvergeFunction):
             self.pre_weight = weight
             return False
 
-        weight_dff = fate_operator.norm(self.pre_weight - weight)
+        weight_diff = fate_operator.norm(self.pre_weight - weight)
         self.pre_weight = weight
-        if weight_dff < self.eps * np.max([fate_operator.norm(weight), 1]):
+        if weight_diff < self.eps * np.max([fate_operator.norm(weight), 1]):
             return True
         return False
 

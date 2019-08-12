@@ -22,9 +22,11 @@ hetero_lr_dsl_file = home_dir + "/config/test_hetero_lr_train_job_dsl.json"
 guest_import_data_file = home_dir + "/config/data/breast_b.csv"
 fate_flow_path = home_dir + "/../../fate_flow/fate_flow_client.py"
 
-guest_id = 10000
+guest_id = 9999
 host_id = 10000
 arbiter_id = 10000
+
+work_mode = 1
 
 intersect_output_name = ''
 intersect_output_namespace = ''
@@ -95,8 +97,8 @@ def exec_task(config_dict, task, role, dsl_path=None):
                                 stderr=subprocess.STDOUT)
 
     stdout, stderr = subp.communicate()
-    subp.wait()
-    print("Current subp status: {}".format(subp.returncode))
+    # subp.wait()
+    # print("Current subp status: {}".format(subp.returncode))
     stdout = stdout.decode("utf-8")
     print("stdout:" + str(stdout))
     stdout = json.loads(stdout)
@@ -168,7 +170,7 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
         stdout, stderr = subp.communicate()
-        subp.wait()
+        # subp.wait()
         stdout = stdout.decode("utf-8")
         if not stdout:
 
@@ -222,8 +224,8 @@ def job_status_checker(jobid, component_name):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
         stdout, stderr = subp.communicate()
-        subp.wait()
-        print("Current subp status: {}".format(subp.returncode))
+        # subp.wait()
+        # print("Current subp status: {}".format(subp.returncode))
         stdout = stdout.decode("utf-8")
         # print("Job_status_checker Stdout is : {}".format(stdout))
         stdout = json.loads(stdout)
@@ -431,7 +433,7 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
 
 def get_table_count(name, namespace):
     from arch.api import eggroll
-    eggroll.init("get_intersect_output", mode=0)
+    eggroll.init("get_intersect_output", mode=work_mode)
     table = eggroll.table(name, namespace)
     count = table.count()
     print("table count:{}".format(count))
@@ -440,7 +442,7 @@ def get_table_count(name, namespace):
 
 def get_table_collect(name, namespace):
     from arch.api import eggroll
-    eggroll.init("get_intersect_output", mode=0)
+    eggroll.init("get_intersect_output", mode=work_mode)
     table = eggroll.table(name, namespace)
     return list(table.collect())
 
@@ -597,10 +599,10 @@ if __name__ == "__main__":
             print("[Intersect] intersect task status is success")
             intersect_result = obtain_component_output(jobid=job_id,
                                                        role='guest',
-                                                       party_id=10000,
+                                                       party_id=guest_id,
                                                        component_name='intersect_0',
                                                        output_type='data')
-            # print("intersect result:{}".format(intersect_result))
+            print("intersect result:{}".format(intersect_result))
             intersect_file_name = intersect_result.get('directory')
             count = check_file_line_num(intersect_file_name)
 
@@ -634,7 +636,7 @@ if __name__ == "__main__":
             print("[Train] train task status is success")
             eval_res = obtain_component_output(jobid=job_id,
                                                role='guest',
-                                               party_id=10000,
+                                               party_id=guest_id,
                                                component_name=evaluation_component_name,
                                                output_type='log_metric')
             eval_results = eval_res['data']['train'][train_component_name]['data']
