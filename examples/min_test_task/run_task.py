@@ -355,6 +355,8 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
     json_info['role']['guest'] = [guest_id]
     json_info['role']['host'] = [host_id]
 
+    json_info['initiator']['party_id'] = guest_id
+
     table_info = {"name": guest_name,
                   "namespace": guest_namespace}
     json_info["role_parameters"]["guest"]["args"]["data"]["data"] = [table_info]
@@ -406,6 +408,8 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     json_info['role']['guest'] = [guest_id]
     json_info['role']['host'] = [host_id]
     json_info['role']['arbiter'] = [arbiter_id]
+
+    json_info['initiator']['party_id'] = guest_id
 
     table_info = {"name": guest_name,
                   "namespace": guest_namespace}
@@ -644,7 +648,7 @@ if __name__ == "__main__":
             for metric_name, metric_value in eval_results:
                 if metric_name == 'auc':
                     auc = metric_value
-            print("[Train] train eval:{}".format(eval_res))
+            print("[Train] train eval:{}".format(eval_results))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
             if auc > task_hetero_lr_base_auc:
                 TEST_TASK["TEST_TRAIN"] = 0

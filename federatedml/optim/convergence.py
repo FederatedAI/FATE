@@ -66,7 +66,7 @@ class AbsConverge(ConvergeFunction):
 
 class WeightDiffConverge(ConvergeFunction):
     """
-    Use 2-norm of weight difference to judge whether converge or not. 
+    Use 2-norm of weight difference to judge whether converge or not.
     """
 
     def __init__(self, pre_weight=None, eps=consts.FLOAT_ZERO):
