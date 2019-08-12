@@ -20,6 +20,9 @@
 import math
 
 from federatedml.util import consts
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 class Stats(object):
@@ -125,10 +128,12 @@ class QuantileSummaries(object):
             self.compress()
 
         if other.count == 0:
-            return self
+            return
 
         if self.count == 0:
-            return other
+            self.count = other.count
+            self.sampled = other.sampled
+            return
 
         # merge two sorted array
         new_sample = []
@@ -168,6 +173,9 @@ class QuantileSummaries(object):
 
         if quantile < 0 or quantile > 1:
             raise ValueError("Quantile should be in range [0.0, 1.0]")
+
+        if self.count == 0:
+            return 0
 
         if quantile <= self.error:
             return self.sampled[0].value
@@ -239,7 +247,6 @@ class SparseQuantileSummaries(QuantileSummaries):
             self.smaller_num += 1
         elif x >= consts.FLOAT_ZERO:
             self.bigger_num += 1
-
         super(SparseQuantileSummaries, self).insert(x)
 
     def query(self, quantile):

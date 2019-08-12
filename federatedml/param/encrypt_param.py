@@ -41,11 +41,12 @@ class EncryptParam(BaseParam):
     """
 
     def __init__(self, method=consts.PAILLIER, key_length=1024):
+        super(EncryptParam, self).__init__()
         self.method = method
         self.key_length = key_length
 
     def check(self):
-        if type(self.method).__name__ != "str":
+        if self.method is not None and type(self.method).__name__ != "str":
             raise ValueError(
                 "encrypt_param's method {} not supported, should be str type".format(
                     self.method))

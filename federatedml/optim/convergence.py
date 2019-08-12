@@ -66,8 +66,7 @@ class AbsConverge(ConvergeFunction):
 
 class WeightDiffConverge(ConvergeFunction):
     """
-    Judge convergence when abs sum of gradient is smaller than eps
-    This is used when encrypted loss is not available.
+    Use 2-norm of weight difference to judge whether converge or not.
     """
 
     def __init__(self, pre_weight=None, eps=consts.FLOAT_ZERO):
@@ -79,9 +78,9 @@ class WeightDiffConverge(ConvergeFunction):
             self.pre_weight = weight
             return False
 
-        weight_dff = fate_operator.norm(self.pre_weight - weight)
+        weight_diff = fate_operator.norm(self.pre_weight - weight)
         self.pre_weight = weight
-        if weight_dff < self.eps * np.max([fate_operator.norm(weight), 1]):
+        if weight_diff < self.eps * np.max([fate_operator.norm(weight), 1]):
             return True
         return False
 
