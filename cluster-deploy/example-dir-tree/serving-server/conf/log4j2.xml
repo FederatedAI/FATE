@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="ERROR" monitorInterval="60" packages="com.tencent.jungle.quntribe.utils.log4j2.plugin">
+    <Properties>
+        <Property name="logdir">logs</Property>
+        <Property name="project">fate</Property>
+        <Property name="module">serving</Property>
+    </Properties>
+
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+        </Console>
+
+
+
+        <RollingFile name="inference"
+                     fileName="${logdir}/${project}-${module}-inference.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-inference.log.%d{yyyy-MM-dd}">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+
+
+        <RollingFile name="inferenceAudit"
+                     fileName="${logdir}/${project}-${module}-inference-audit.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-inference-audit.log.%d{yyyy-MM-dd}">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+
+
+
+
+        <!--<RollingFile name="audit"-->
+                     <!--fileName="${logdir}/${project}-${module}-audit.log"-->
+                     <!--filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-audit.log.%d{yyyy-MM-dd}">-->
+            <!--<PatternLayout charset="UTF-8"-->
+                           <!--pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>-->
+            <!--<Policies>-->
+                <!--<TimeBasedTriggeringPolicy/>-->
+            <!--</Policies>-->
+            <!--<DefaultRolloverStrategy max="24"/>-->
+        <!--</RollingFile>-->
+
+        <RollingFile name="stat"
+                     fileName="${logdir}/${project}-${module}-stat.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-stat.log.%d{yyyy-MM-dd}">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+        <RollingFile name="info"
+                     fileName="${logdir}/${project}-${module}.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}.log.%d{yyyy-MM-dd}">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+        <RollingFile name="access"
+                     fileName="${logdir}/${project}-${module}-access.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/${project}-${module}-access.log.%d{yyyy-MM-dd}">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+        <RollingFile name="flow"
+                     fileName="${logdir}/flow.log"
+                     filePattern="${logdir}/%d{yyyy-MM-dd}/flow.log.%d{yyyy-MM-dd}.log">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}|%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+        <RollingFile name="ErrorLog"
+                     fileName="${logdir}/%d{yyyy-MM-dd}/error.log"
+                     filePattern="${logdir}/error.log.%d{yyyy-MM-dd}.log">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] %c{1.}(%F:%L) - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="24"/>
+        </RollingFile>
+
+
+
+    </Appenders>
+
+    <Loggers>
+
+        <AsyncLogger name="inferenceAudit" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="inferenceAudit"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="inference" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="inference"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="stat" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="stat"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="access" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="access"/>
+        </AsyncLogger>
+
+        <AsyncLogger name="flow" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="flow"/>
+        </AsyncLogger>
+
+
+        <AsyncRoot level="info" includeLocation="true">
+            <AppenderRef ref="info" level="info"/>
+            <AppenderRef ref="ErrorLog" level="error"/>
+        </AsyncRoot>
+    </Loggers>
+</Configuration>

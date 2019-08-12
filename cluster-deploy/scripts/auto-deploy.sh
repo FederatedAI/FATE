@@ -53,7 +53,7 @@ eval iplength=\${#iplist[*]}
 	for ((j=0;j<$iplength;j++))
 	do
 		eval ip=\${iplist[${j}]}
-		echo "$eip copy is ok!"
+		echo "$ip copy is ok!"
 		scp fate.tar $user@$ip:$dir
 		ssh -tt $user@$ip<< eeooff
 cd $dir
@@ -93,7 +93,7 @@ do
 	eval slength=\${#serving${i}[*]}
 	eval ips=\${iplist${i}[*]}
 	eval fbip=\${fateboard${i}[0]}
-	
+
 if [ ! $exchangeip ]
 then
 	if [ $(($i%2)) == 0 ]
@@ -141,7 +141,7 @@ sed -i "s/meta.service.ip=.*/meta.service.ip=$mip/g" ./federation/conf/federatio
 exit
 eeooff
 	echo federation module of $partyid done!
-	
+
 	ssh -tt $user@$fbip << eeooff
 cd $dir
 
@@ -161,14 +161,14 @@ do
 cd $dir
 
 sed -i "/$IP/d" ./fateboard/conf/ssh.properties
-echo "$IP=app|Apps@123|36000" >> ./fateboard/conf/ssh.properties
+echo "$IP=abc|123|1000" >> ./fateboard/conf/ssh.properties
 exit
 eeooff
 done
 
 	echo fateboard module of $partyid done!
-	
-	
+
+
 	ssh -tt $user@$mip << eeooff
 cd $dir
 sed -i "s/party.id=.*/party.id=$partyid/g" ./meta-service/conf/meta-service.properties
@@ -230,7 +230,7 @@ eeooff
 		eval eip=\${egglist${i}[${a}]}
 		ssh -tt $user@$eip << eeooff
 cd $dir
-export PYTHONPATH=/data/projects/fate/python 
+export PYTHONPATH=/data/projects/fate/python
 source $venvdir/bin/activate
 sed -i "s/party.id=.*/party.id=$partyid/g" ./egg/conf/egg.properties
 sed -i "s/fip=.*/fip=\"$fip\"/g" ./python/modify_json.py
@@ -238,34 +238,23 @@ sed -i "s/rip=.*/rip=\"$rip\"/g" ./python/modify_json.py
 sed -i "s/pip=.*/pip=\"$pip\"/g" ./python/modify_json.py
 sed -i "s/sip1=.*/sip1=\"$sip1\"/g" ./python/modify_json.py
 sed -i "s/sip2=.*/sip2=\"$sip2\"/g" ./python/modify_json.py
-
-#sed -i "s/tmip=.*/tmip=\"$tmip\"/g" ./python/modify_json.py
 sed -i "s/flip=.*/flip=\"$flip\"/g" ./python/modify_json.py
 sed -i "s/fbip=.*/fbip=\"$fbip\"/g" ./python/modify_json.py
-
-
 sed -i "s/partyId=.*/partyId=\"$partyid\"/g" ./python/modify_json.py
-python python/modify_json.py python ./python/arch/conf/server_conf.json	
+python python/modify_json.py python ./python/arch/conf/server_conf.json
 
-#sed -i "s/PARTY_ID =.*/PARTY_ID = \"$partyid\"/g" ./python/arch/task_manager/settings.py
 sed -i "s/PARTY_ID =.*/PARTY_ID = \"$partyid\"/g" ./python/fate_flow/settings.py
+sed -i "s/'user':.*/'user': '$fldbuser',/g" ./python/fate_flow/settings.py
+sed -i "s/'passwd':.*/'passwd': '$fldbpasswd',/g" ./python/fate_flow/settings.py
+sed -i "s/'host':.*/'host': '$fldbip',/g" ./python/fate_flow/settings.py
+sed -i "s/'name':.*/'name': '$fldbname',/g" ./python/fate_flow/settings.py
 
-
-#sed -i "s/'user':.*/'user': '$jdbcuser',/g" ./python/arch/task_manager/settings.py
-sed -i "s/'user':.*/'user': '$jdbcuser',/g" ./python/fate_flow/settings.py
+sed -i "s/localhost/$flip/g" ./python/fate_flow/settings.py
 
 sed -i "s/'password':.*/'password': '$redispass',/g" ./python/fate_flow/settings.py
+sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '$redisip',/;x};x;}" ./python/fate_flow/settings.py
 
 
-
-#sed -i "s/'passwd':.*/'passwd': '$jdbcpasswd',/g" ./python/arch/task_manager/settings.py
-sed -i "s/'passwd':.*/'passwd': '$jdbcpasswd',/g" ./python/fate_flow/settings.py
-
-#sed -i "s/'host':.*/'host': '$jdbcip',/g" ./python/arch/task_manager/settings.py
-sed -i "s/'host':.*/'host': '$jdbcip',/g" ./python/fate_flow/settings.py
-
-#sed -i "s/localhost/$tmip/g" ./python/arch/task_manager/settings.py
-sed -i "s/localhost/$flip/g" ./python/fate_flow/settings.py
 exit
 
 eeooff
@@ -273,10 +262,10 @@ eeooff
 		then
 		ssh -tt $user@$eip << eeooff
 sudo su - root
-   
+
 cd $dir/storage-service-cxx
 cd third_party/boost
-sed -i "14s#PREFIX=.*#PREFIX=$dir/storage-service-cxx/third_party#g" ./bootstrap.sh 
+sed -i "14s#PREFIX=.*#PREFIX=$dir/storage-service-cxx/third_party#g" ./bootstrap.sh
 ./bootstrap.sh
 ./b2 install
 
@@ -303,7 +292,7 @@ make
 cp lmdb.h $dir/storage-service-cxx/third_party/include
 cp liblmdb.so $dir/storage-service-cxx/third_party/lib
 
-cd $dir 
+cd $dir
 rm -rf third_party
 chown -R app:apps ./*
 
@@ -317,7 +306,7 @@ exit
 eeooff
 		fi
 	done
-	
+
 	#echo egg and task_manager module of $partyid done!
 	echo egg and fate_flow module of $partyid done!
 
@@ -325,7 +314,6 @@ eeooff
 sed -i "s/eggroll_meta/$jdbcdbname/g" $dir/python/arch/eggroll/meta-service/src/main/resources/create-meta-service.sql
 ${mysqldir}/bin/mysql -u$jdbcuser -p$jdbcpasswd -S ${mysqldir}/mysql.sock
 
-#create database task_manager;
 create database $fldbname;
 
 source $dir/python/arch/eggroll/meta-service/src/main/resources/create-meta-service.sql
