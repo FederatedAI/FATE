@@ -19,9 +19,9 @@
         <dependency>
             <groupId>com.webank.ai.fate</groupId>
             <artifactId>fate-core</artifactId>
-            <version>${fate.version}</version>
+            <version>0.3</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../arch/core/target/fate-core-${fate.version}.jar</systemPath>
+            <systemPath>${project.basedir}/../../arch/core/target/fate-core-0.3.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>redis.clients</groupId>
