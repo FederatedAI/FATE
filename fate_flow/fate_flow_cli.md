@@ -29,11 +29,13 @@
     * -j  --job_id: job id
     * -p --party_id: party id
     * -r  --role : role
+    * -o  --output_path : output directory
 
 
 - command: fate_flow_client.py -f job_log 
 - endpoint: v1/job/log
     * -j  --job_id: job id
+    * -o  --output_path : output directory
 
 
 - command: fate_flow_client.py -f query_task 
@@ -90,6 +92,7 @@
     * -r --role: role
     * -p --party_id: party id
     * -cpn --component_name: component name
+    * -o  --output_path : output directory
 
 
 #### DataAccess
