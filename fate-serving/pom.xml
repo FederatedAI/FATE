@@ -17,6 +17,7 @@
 
     <properties>
         <fate.version>1.0</fate.version>
+        <fate.core.version>0.3</fate.core.version>
         <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
