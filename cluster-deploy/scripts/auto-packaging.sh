@@ -1,6 +1,7 @@
 #!/bin/bash
 
 version=0.3
+fateversion=1.0
 cwd=`pwd`
 
 cd ../../
@@ -18,9 +19,9 @@ module="test"
 sub_module="test"
 for target in ${targets[@]}; do
     echo
-    echo $target | awk -F "/" '{print $(NF - 2), $(NF - 1)}' | while read a b; do 
+    echo $target | awk -F "/" '{print $(NF - 2), $(NF - 1)}' | while read a b; do
         module=$a
-        sub_module=$b 
+        sub_module=$b
 
         cd $target
 
@@ -32,7 +33,7 @@ for target in ${targets[@]}; do
 
         output_file=$output_dir/$sub_module/fate-$sub_module-$version.tar.gz
         echo "[INFO] $sub_module output_file: $output_file"
-		
+
 		if [[ ! -d $output_dir/$sub_module ]]
 		then
 			break
@@ -45,20 +46,21 @@ for target in ${targets[@]}; do
 		tar -xzf fate-$sub_module-$version.tar.gz
 		rm -f fate-$sub_module-$version.tar.gz
 		ln -s fate-$sub_module-$version.jar fate-$sub_module.jar
+		ln -s fate-$sub_module-$version.jar fate-$sub_module.jar
     done
     echo "--------------"
 done
 
 cp -r $fate_dir/fate-serving/serving-server/target/lib $output_dir/serving-server/
-cp $fate_dir/fate-serving/serving-server/target/fate-serving-server-$version.jar $output_dir/serving-server/
+cp $fate_dir/fate-serving/serving-server/target/fate-serving-server-$fateversion.jar $output_dir/serving-server/
 cd $output_dir/serving-server
-ln -s fate-serving-server-$version.jar fate-serving-server.jar
+ln -s fate-serving-server-$fateversion.jar fate-serving-server.jar
 sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
 
 
-cp $fate_dir/fateboard/target/fateboard-0.0.1-SNAPSHOT.jar $output_dir/fateboard/
+cp $fate_dir/fateboard/target/fateboard-$fateversion.jar $output_dir/fateboard/
 cd $output_dir/fateboard/
-ln -s fateboard-0.0.1-SNAPSHOT.jar fateboard.jar
+ln -s fateboard-1.0.jar fateboard.jar
 sed -i "s#JAVA_HOME=.*#JAVA_HOME=$javadir#g" ./service.sh
 
 cd $fate_dir
