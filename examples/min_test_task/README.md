@@ -54,4 +54,4 @@ In guest party, there are three tests are going to be verified.
     Guest will start an intersect task which the expected intersect count is already known. After finish the intersect job, the intersected data will be download and check if this data length equal to expected count.
 
 3. Hetero-lr Train
-    After that, a hetero-lr modeling task will be started. This min-test scrip will keep checking the status of this task. As long as the task is finished, it obtain the evaluation result of this task and see if the auc match the expected auc for corresponding pre-defined data set. 
+    After that, a hetero-lr modeling task will be started. This min-test scrip will keep checking the status of this task. As long as the task is finished, it obtain the evaluation result of this task and see if the auc match the expected auc for corresponding pre-defined data set.

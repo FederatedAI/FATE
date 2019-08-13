@@ -80,7 +80,7 @@ class HomoLRArbiter(HomoLRBase):
 
             self.loss_history.append(total_loss)
 
-            if self.need_one_vs_rest:
+            if not self.need_one_vs_rest:
                 metric_meta = MetricMeta(name='train',
                                          metric_type="LOSS",
                                          extra_metas={

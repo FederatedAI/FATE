@@ -41,6 +41,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
         the specific metric value for specific columns. Currently, iv is support for binary labeled data only.
         """
+        LOGGER.info("Start feature binning fit and transform")
         self._abnormal_detection(data_instances)
         self._parse_cols(data_instances)
 
@@ -92,7 +93,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.host_results[consts.HOST] = host_iv_attrs
         self.set_schema(data_instances)
         self.transform(data_instances)
-        LOGGER.debug("Data schema is {}".format(self.data_output.schema))
+        LOGGER.info("Finish feature binning fit and transform")
         return self.data_output
 
     @staticmethod
