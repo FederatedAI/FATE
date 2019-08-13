@@ -249,6 +249,7 @@ def upload(config_file, self_party_id, role, data_file):
     json_info["file"] = data_file
     json_info["local"]["party_id"] = self_party_id
     json_info["local"]["role"] = role
+    json_info['work_mode'] = work_mode
 
     time_str = get_timeid()
     this_table_name = '{}_table_name_{}'.format(role, time_str)
@@ -356,6 +357,7 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
     json_info['role']['host'] = [host_id]
 
     json_info['initiator']['party_id'] = guest_id
+    json_info['job_parameters']['work_mode'] = work_mode
 
     table_info = {"name": guest_name,
                   "namespace": guest_namespace}
@@ -410,6 +412,7 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     json_info['role']['arbiter'] = [arbiter_id]
 
     json_info['initiator']['party_id'] = guest_id
+    json_info['job_parameters']['work_mode'] = work_mode
 
     table_info = {"name": guest_name,
                   "namespace": guest_namespace}

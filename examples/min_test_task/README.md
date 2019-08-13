@@ -34,7 +34,24 @@ In guest, make sure Host is finish
 >sh run.sh guest normal ${host_table_name} ${host_namespace}
 
 #### Test Result
-In this run test, three test cases are included.
+
+The process of min-test can be described as the following steps.
+
+##### Host Party
+>sh run.sh host normal/fast
+
+In host part, uploading data is the only operation when calling the command.
+
+##### Guest Party
+>sh run.sh guest normal ${host_table_name} ${host_namespace}
+
+In guest party, there are three tests are going to be verified.
 
 1. Upload Data test
-    In this step, run_task upload user's data, and get a table_name and namespace back. Then, we use this table_name and namespace to obtain DTable through
+    This is same with host part. Upload the data in Eggroll and check if DTable count match the number of your uploaded file.
+
+2. Intersect
+    Guest will start an intersect task which the expected intersect count is already known. After finish the intersect job, the intersected data will be download and check if this data length equal to expected count.
+
+3. Hetero-lr Train
+    After that, a hetero-lr modeling task will be started. This min-test scrip will keep checking the status of this task. As long as the task is finished, it obtain the evaluation result of this task and see if the auc match the expected auc for corresponding pre-defined data set. 
