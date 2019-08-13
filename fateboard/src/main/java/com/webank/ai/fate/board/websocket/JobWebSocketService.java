@@ -115,6 +115,13 @@ public class JobWebSocketService implements InitializingBean, ApplicationContext
     @OnError
     public void onError(Session session, Throwable error) {
         logger.error("there is a error!", error);
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            jobSessionMap.remove(session);
+        }
         error.printStackTrace();
     }
 

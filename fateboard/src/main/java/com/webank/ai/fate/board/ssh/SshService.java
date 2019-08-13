@@ -29,22 +29,71 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 @Service
 public class SshService implements InitializingBean {
 
+    ExecutorService flushExecutor  = Executors.newSingleThreadExecutor();
+
+    private     Properties sshInfoToProperties(){
+        Properties properties = new Properties();
+
+        sshInfoMap.values().forEach(sshInfo -> {
+            StringBuilder  sb = new StringBuilder();
+            String ip = sshInfo.getIp();
+            String password = sshInfo.getPassword();
+            Integer port = sshInfo.getPort();
+            String  user = sshInfo.getUser();
+            sb.append(user!=null?user:"").append("|").append(password!=null?password:"").append("|")
+                    .append(port!=null?port:"");
+            properties.put(ip,sb.toString());
+
+        });
+
+        return  properties;
+
+
+    }
+
+    public void addSShInfo(SshInfo  sshInfo){
+        if(sshInfo!=null)
+         sshInfoMap.put(sshInfo.getIp(),sshInfo);
+    }
+
+
+    public   void  flushToFile(){
+
+        Properties  properties = sshInfoToProperties();
+
+        flushExecutor.execute(()->{
+
+            try {
+                OutputStream  outputStream = getOutputStream();
+                properties.store(outputStream, "store");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        });
+
+    }
+
     static Map<String, Session> sessionMap = Maps.newHashMap();
     Logger logger = LoggerFactory.getLogger(SshService.class);
     Map<String, SshInfo> sshInfoMap = Maps.newHashMap();
     private String pubKeyPath = "";
+    public     Map<String, SshInfo>   getAllsshInfo(){
+        return  sshInfoMap;
+    }
 
     public SshInfo getSSHInfo(String ip) {
         return this.sshInfoMap.get(ip);
@@ -126,15 +175,22 @@ public class SshService implements InitializingBean {
 
     public Session connect(SshInfo sshInfo) throws Exception {
 
+
+        return this.connect(sshInfo.getUser(), sshInfo.getPassword(), sshInfo.getIp(), new Integer(sshInfo.getPort()),5000);
+
+    }
+
+    public Session connect(SshInfo sshInfo,int timeout) throws Exception {
+
         Preconditions.checkArgument(sshInfo != null, "sshInfo is null");
 
         String currentUser = System.getProperty("user.name");
 
-        return this.connect(sshInfo.getUser(), sshInfo.getPassword(), sshInfo.getIp(), new Integer(sshInfo.getPort()));
+        return this.connect(sshInfo.getUser(), sshInfo.getPassword(), sshInfo.getIp(), new Integer(sshInfo.getPort()),timeout);
 
     }
 
-    public Session connect(String user, String passwd, String host, int port) throws Exception {
+    public Session connect(String user, String passwd, String host, int port,int  timeout) throws Exception {
 
 
         String sessionKey = new StringBuilder().append(user).append("_").append(host).append("_").append(port).toString();
@@ -162,7 +218,7 @@ public class SshService implements InitializingBean {
             config.put("StrictHostKeyChecking", "no");
             session.setConfig(config);
             try {
-                session.connect(5000);
+                session.connect(timeout);
             } catch (Exception e) {
                 e.printStackTrace();
 
@@ -172,6 +228,21 @@ public class SshService implements InitializingBean {
             sessionMap.put(sessionKey, session);
         }
         return session;
+    }
+
+
+    private OutputStream getOutputStream() throws FileNotFoundException {
+        String filePath = System.getProperty(Dict.SSH_CONFIG_FILE);
+        if (filePath == null || "".equals(filePath)) {
+            ClassPathResource classPathResource = new ClassPathResource("ssh.properties");
+            String path = classPathResource.getPath();
+            return new BufferedOutputStream(new FileOutputStream(path));
+        } else {
+            File file = new File(filePath + "/ssh.properties");
+            Preconditions.checkArgument(file.exists() && file.isFile());
+            return new BufferedOutputStream(new FileOutputStream(file));
+        }
+
     }
 
 
