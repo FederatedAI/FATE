@@ -19,13 +19,13 @@ from arch.api.utils.core import current_timestamp, json_dumps, json_loads, get_l
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL
+from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
-from fate_flow.utils import detect_utils
 
 
 class JobController(object):
@@ -70,7 +70,7 @@ class JobController(object):
         job.f_dsl = json_dumps(job_dsl)
         job.f_runtime_conf = json_dumps(job_runtime_conf)
         job.f_train_runtime_conf = json_dumps(train_runtime_conf)
-        job.f_run_ip = get_lan_ip()
+        job.f_run_ip = ''
         job.f_status = JobStatus.WAITING
         job.f_progress = 0
         job.f_create_time = current_timestamp()
@@ -78,9 +78,6 @@ class JobController(object):
         # save job info
         TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
 
-        # generate model info
-        model_info = JobController.gen_model_info(job_runtime_conf['role'], job_parameters['model_id'],
-                                                  job_parameters['model_version'])
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
@@ -91,16 +88,9 @@ class JobController(object):
         schedule_logger.info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
-        return job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url
-
-    @staticmethod
-    def gen_model_info(roles, model_id, model_version):
-        model_info = {'model_id': {}, 'model_version': model_version}
-        for _role, role_partys in roles.items():
-            model_info['model_id'][_role] = {}
-            for _party_id in role_partys:
-                model_info['model_id'][_role][_party_id] = Tracking.gen_party_model_id(model_id, role=_role, party_id=_party_id)
-        return model_info
+        return job_id, job_dsl_path, job_runtime_conf_path, {'model_id': job_parameters['model_id'],
+                                                             'model_version': job_parameters[
+                                                                 'model_version']}, board_url
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator):
@@ -135,6 +125,7 @@ class JobController(object):
     @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
+        job_info['f_run_ip'] = get_lan_ip()
         if create:
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])

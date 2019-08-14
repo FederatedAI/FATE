@@ -358,7 +358,7 @@ class TaskScheduler(object):
                             'send {} {} kill job {} command successfully'.format(role, party_id, job_id))
                     else:
                         schedule_logger.info(
-                            'send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, msg))
+                            'send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, response['retmsg']))
         else:
             schedule_logger.info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))

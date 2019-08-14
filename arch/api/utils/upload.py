@@ -79,14 +79,11 @@ def generate_table_name(input_file_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', required=False, type=str,
+    parser.add_argument('-j', '--job_id', required=True, type=str, help="job id to use")
+    parser.add_argument('-c', '--config', required=True, type=str,
                         help="you should provide a path of configure file with json format")
     try:
         args = parser.parse_args()
-        if not args.config:
-            print("Can not find the parameter -c")
-            sys.exit()
-
         job_config = {}
         try:
             args.config = os.path.abspath(args.config)
@@ -143,7 +140,7 @@ if __name__ == "__main__":
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            eggroll.init(mode=work_mode)
+            eggroll.init(job_id=args.job_id, mode=work_mode)
             input_data = read_data(input_file_path, table_name, namespace, head)
             data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=partition)
             print("------------load data finish!-----------------")

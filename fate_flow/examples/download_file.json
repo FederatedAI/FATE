@@ -1,7 +1,5 @@
 {
-  "file": "examples/data/breast_b.csv",
-  "head": 1,
-  "partition": 10,
+  "output_path": "./download_test.csv",
   "work_mode": 0,
   "namespace": "fate_flow_test_breast",
   "table_name": "breast_b"

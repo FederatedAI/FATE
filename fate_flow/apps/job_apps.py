@@ -73,12 +73,9 @@ def job_config():
         response_data['dsl'] = json_loads(job.f_dsl)
         response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
         response_data['train_runtime_conf'] = json_loads(job.f_train_runtime_conf)
-        response_data['model_info'] = JobController.gen_model_info(response_data['runtime_conf']['role'],
-                                                                   response_data['runtime_conf']['job_parameters'][
-                                                                       'model_id'],
-                                                                   response_data['runtime_conf']['job_parameters'][
-                                                                       'model_version'],
-                                                                   )
+        response_data['model_info'] = {'model_id': response_data['runtime_conf']['job_parameters']['model_id'],
+                                       'model_version': response_data['runtime_conf']['job_parameters'][
+                                           'model_version']}
         return get_json_result(retcode=0, retmsg='success', data=response_data)
 
 
@@ -91,7 +88,8 @@ def job_log():
     for root, dir, files in os.walk(job_log_dir):
         for file in files:
             full_path = os.path.join(root, file)
-            tar.add(full_path, os.path.basename(full_path))
+            rel_path = os.path.relpath(full_path, job_log_dir)
+            tar.add(full_path, rel_path)
     tar.close()
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)

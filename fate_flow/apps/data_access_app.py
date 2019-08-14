@@ -17,11 +17,12 @@ import os
 
 from flask import Flask, request
 
-from arch.api.utils import file_utils, dtable_utils
-from fate_flow.settings import WORK_MODE, JOB_MODULE_CONF
+from arch.api.utils import file_utils
+from fate_flow.settings import JOB_MODULE_CONF
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, run_subprocess
+from fate_flow.utils import detect_utils
 
 manager = Flask(__name__)
 
@@ -40,32 +41,27 @@ def download_upload(data_func):
     _job_dir = get_job_directory(_job_id)
     os.makedirs(_job_dir, exist_ok=True)
     module = data_func
+    required_arguments = ['work_mode', 'namespace', 'table_name']
+    if module == 'upload':
+        required_arguments.extend(['file', 'head', 'partition'])
+    elif module == 'download':
+        required_arguments.extend(['output_path'])
+    else:
+        raise Exception('can not support this operating: {}'.format(module))
+    detect_utils.check_config(request_config, required_arguments=required_arguments)
     if module == "upload":
-        if not os.path.isabs(request_config.get("file", "")):
+        if not os.path.isabs(request_config['file']):
             request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])
     try:
-        request_config["work_mode"] = request_config.get('work_mode', WORK_MODE)
-        table_name, namespace = dtable_utils.get_table_info(config=request_config,
-                                                            create=(True if module == 'upload' else False))
-        if not table_name or not namespace:
-            return get_json_result(retcode=102, retmsg='no table name and namespace')
-        request_config['table_name'] = table_name
-        request_config['namespace'] = namespace
         conf_file_path = new_runtime_conf(job_dir=_job_dir, method=data_func, module=module,
                                           role=request_config.get('local', {}).get("role"),
                                           party_id=request_config.get('local', {}).get("party_id", ''))
         file_utils.dump_json_conf(request_config, conf_file_path)
-        if module == "download":
-            progs = ["python3",
-                     os.path.join(file_utils.get_project_base_directory(), JOB_MODULE_CONF[module]["module_path"]),
-                     "-j", _job_id,
-                     "-c", conf_file_path
-                     ]
-        else:
-            progs = ["python3",
-                     os.path.join(file_utils.get_project_base_directory(), JOB_MODULE_CONF[module]["module_path"]),
-                     "-c", conf_file_path
-                     ]
+        progs = ["python3",
+                 os.path.join(file_utils.get_project_base_directory(), JOB_MODULE_CONF[module]["module_path"]),
+                 "-j", _job_id,
+                 "-c", conf_file_path
+                 ]
         try:
             p = run_subprocess(config_dir=_job_dir, process_cmd=progs)
         except Exception as e:
