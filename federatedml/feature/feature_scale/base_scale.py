@@ -113,7 +113,7 @@ class BaseScale(object):
 
         scale_column_idx = self._get_scale_column_idx(data)
 
-        if self.feat_upper:
+        if self.feat_upper is not None:
             if isinstance(self.feat_upper, list):
                 self.__check_equal(data_shape, len(self.feat_upper))
                 for i in range(data_shape):
@@ -130,7 +130,7 @@ class BaseScale(object):
                         if column_min_value[i] > self.feat_upper:
                             column_min_value[i] = self.feat_upper
 
-        if self.feat_lower:
+        if self.feat_lower is not None:
             if isinstance(self.feat_lower, list):
                 self.__check_equal(data_shape, len(self.feat_lower))
                 for i in range(data_shape):
