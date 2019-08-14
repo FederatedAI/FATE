@@ -18,6 +18,7 @@ import json
 import grpc
 import requests
 from flask import jsonify
+from flask import Response
 
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT
@@ -27,6 +28,10 @@ from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
     return jsonify({"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta})
+
+
+def error_response(response_code, retmsg):
+    return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, work_mode,

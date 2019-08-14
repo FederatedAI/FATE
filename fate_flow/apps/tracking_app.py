@@ -30,7 +30,7 @@ from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
-from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.api_utils import get_json_result, error_response
 from federatedml.feature.instance import Instance
 
 manager = Flask(__name__)
@@ -238,12 +238,12 @@ def component_output_data_download():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)
     if not output_data_table:
-        return get_json_result(retcode=0, retmsg='no data', data=[])
+        return error_response(response_code=500, retmsg='no data')
 
     output_data_count = 0
     have_data_label = False
-    output_file_path = 'tmp/{}/output_%s'.format(get_fate_uuid())
-    output_file_path = os.path.join(os.getcwd(), output_file_path)
+    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))
+    output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
     with open(output_data_file_path, 'w') as fw:
@@ -262,8 +262,8 @@ def component_output_data_download():
         # tar
         memory_file = io.BytesIO()
         tar = tarfile.open(fileobj=memory_file, mode='w:gz')
-        tar.add(output_data_file_path, os.path.basename(output_data_file_path))
-        tar.add(output_data_meta_file_path, os.path.basename(output_data_meta_file_path))
+        tar.add(output_data_file_path, os.path.relpath(output_data_file_path, output_tmp_dir))
+        tar.add(output_data_meta_file_path, os.path.relpath(output_data_meta_file_path, output_tmp_dir))
         tar.close()
         memory_file.seek(0)
         try:

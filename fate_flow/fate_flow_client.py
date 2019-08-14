@@ -84,7 +84,7 @@ def call_fun(func, dsl_data, config_data):
                 response_data['retmsg'] = 'download successfully, please check {} directory'.format(download_directory)
                 response = response_data
         elif func == 'job_log':
-            detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
+            detect_utils.check_config(config=config_data, required_arguments=['job_id', 'output_path'])
             with closing(requests.get("/".join([local_url, func.replace('_', '/')]), json=config_data,
                                       stream=True)) as response:
                 job_id = config_data['job_id']
@@ -117,21 +117,24 @@ def call_fun(func, dsl_data, config_data):
             extract_dir = os.path.join(config_data['output_path'], tar_file_name.replace('.tar.gz', ''))
             with closing(requests.get("/".join([local_url, "tracking", func.replace('_', '/'), 'download']),
                                       json=config_data,
-                                      stream=True)) as response:
-                with open(tar_file_name, 'wb') as fw:
-                    for chunk in response.iter_content(1024):
-                        if chunk:
-                            fw.write(chunk)
-                tar = tarfile.open(tar_file_name, "r:gz")
-                file_names = tar.getnames()
-                for file_name in file_names:
-                    tar.extract(file_name, extract_dir)
-                tar.close()
-                os.remove(tar_file_name)
+                                      stream=True)) as res:
+                if res.status_code == 200:
+                    with open(tar_file_name, 'wb') as fw:
+                        for chunk in res.iter_content(1024):
+                            if chunk:
+                                fw.write(chunk)
+                    tar = tarfile.open(tar_file_name, "r:gz")
+                    file_names = tar.getnames()
+                    for file_name in file_names:
+                        tar.extract(file_name, extract_dir)
+                    tar.close()
+                    os.remove(tar_file_name)
+                    response = {'retcode': 0,
+                                'directory': extract_dir,
+                                'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                else:
+                    response = res.json()
 
-            response = {'retcode': 0,
-                        'directory': extract_dir,
-                        'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
         else:
             response = requests.post("/".join([local_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
