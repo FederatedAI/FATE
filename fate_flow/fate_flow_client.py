@@ -55,12 +55,18 @@ def call_fun(func, dsl_data, config_data):
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
         else:
-            detect_utils.check_config(config=config_data, required_parameters=['job_id'])
+            detect_utils.check_config(config=config_data, required_arguments=['job_id'])
             post_data = config_data
         response = requests.post("/".join([local_url, "job", func.rstrip('_job')]), json=post_data)
+        if func == 'query_job':
+            response = response.json()
+            if response['retcode'] == 0:
+                for i in range(len(response['data'])):
+                    del response['data'][i]['f_runtime_conf']
+                    del response['data'][i]['f_dsl']
     elif func in JOB_FUNC:
         if func == 'job_config':
-            detect_utils.check_config(config=config_data, required_parameters=['output_path'])
+            detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
             response = requests.post("/".join([local_url, func.replace('_', '/')]), json=config_data)
             response_data = response.json()
             if response_data['retcode'] == 0:
@@ -78,7 +84,7 @@ def call_fun(func, dsl_data, config_data):
                 response_data['retmsg'] = 'download successfully, please check {} directory'.format(download_directory)
                 response = response_data
         elif func == 'job_log':
-            detect_utils.check_config(config=config_data, required_parameters=['output_path'])
+            detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
             with closing(requests.get("/".join([local_url, func.replace('_', '/')]), json=config_data,
                                       stream=True)) as response:
                 job_id = config_data['job_id']
@@ -101,9 +107,9 @@ def call_fun(func, dsl_data, config_data):
         response = requests.post("/".join([local_url, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
         detect_utils.check_config(config=config_data,
-                                  required_parameters=['job_id', 'component_name', 'role', 'party_id'])
+                                  required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         if func == 'component_output_data':
-            detect_utils.check_config(config=config_data, required_parameters=['output_path'])
+            detect_utils.check_config(config=config_data, required_arguments=['output_path'])
             tar_file_name = 'job_{}_{}_{}_{}_output_data.tar.gz'.format(config_data['job_id'],
                                                                         config_data['component_name'],
                                                                         config_data['role'],
@@ -185,5 +191,5 @@ if __name__ == "__main__":
         response = call_fun(args.function, dsl_data, config_data)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
-        response = {'retcode': 100, 'retmsg': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
+        response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
     response_dict = prettify(response)

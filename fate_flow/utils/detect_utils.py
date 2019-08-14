@@ -16,7 +16,10 @@
 import typing
 
 
-def check_config(config: typing.Dict, required_parameters: typing.List):
-    for parameter in required_parameters:
-        if parameter not in config:
-            raise Exception('configuration no {} parameter'.format(parameter))
+def check_config(config: typing.Dict, required_arguments: typing.List):
+    no_arguments = []
+    for argument in required_arguments:
+        if argument not in config:
+            no_arguments.append(argument)
+    if no_arguments:
+        raise Exception('the following arguments are required: {}'.format(','.join(no_arguments)))
