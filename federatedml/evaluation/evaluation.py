@@ -320,10 +320,15 @@ class Evaluation(ModelBase):
 
                         pos_recall_score, pos_precision_score, idx_list = self.__filt_override_unit_ordinate_coordinate(
                             pos_recall_score, pos_precision_score)
-                        precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
+
                         precision_cuts = [precision_cuts[idx] for idx in idx_list]
-                        recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
                         recall_cuts = [recall_cuts[idx] for idx in idx_list]
+
+                        edge_idx = idx_list[-1]
+                        if edge_idx == len(precision_thresholds) - 1:
+                            idx_list = idx_list[:-1]
+                        precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
+                        recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
 
                     elif self.eval_type == consts.MULTY:
                         average_precision = float(np.array(pos_precision_score).mean())
@@ -485,6 +490,11 @@ class Evaluation(ModelBase):
         if self.eval_type == consts.BINARY:
             fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
             fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
+
+            # set roc edge value
+            fpr.append(1.0)
+            tpr.append(1.0)
+
             filt_thresholds, cuts = self.__filt_threshold(thresholds=thresholds, step=0.01)
             new_thresholds = []
             new_tpr = []
@@ -632,6 +642,11 @@ class Evaluation(ModelBase):
         if self.eval_type == consts.BINARY:
             thresholds = list(set(pred_scores))
             thresholds, cuts = self.__filt_threshold(thresholds, 0.01)
+
+            # set for recall edge value
+            thresholds.append(min(thresholds) - 0.001)
+            cuts.append(1)
+
             precision_operator = BiClassPrecision()
             precision_res, thresholds = precision_operator.compute(labels, pred_scores, thresholds)
             return precision_res, cuts, thresholds
@@ -656,6 +671,11 @@ class Evaluation(ModelBase):
         if self.eval_type == consts.BINARY:
             thresholds = list(set(pred_scores))
             thresholds, cuts = self.__filt_threshold(thresholds, 0.01)
+
+            # set for recall edge value
+            thresholds.append(min(thresholds) - 0.001)
+            cuts.append(1)
+
             recall_operator = BiClassRecall()
             recall_res, thresholds = recall_operator.compute(labels, pred_scores, thresholds)
             return recall_res, cuts, thresholds
