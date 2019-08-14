@@ -143,6 +143,7 @@ public class LogFileService {
     }
 
     public Integer getRemoteFileLineCount(SshInfo sshInfo, String logFilePath) throws Exception {
+
         Preconditions.checkArgument(sshInfo != null && logFilePath != null && !"".equals(logFilePath));
         Channel wcChannel = null;
         BufferedReader reader = null;

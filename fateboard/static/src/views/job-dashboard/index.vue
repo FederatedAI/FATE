@@ -32,7 +32,7 @@
 
             <el-col :span="14">
               <div class="dataset-item">
-                <p class="name">DATASET</p>
+                <p class="name">dataset</p>
                 <p class="value">
                   <el-tooltip
                     :content="row.datasetData? Object.values(row.datasetData[row.roleValue]).join(', ') : ''"
@@ -53,14 +53,24 @@
           <h3 class="list-title">JOB</h3>
 
           <div v-if="jobStatus==='failed' || jobStatus==='success'" class="job-end-container flex flex-col flex-center">
-            <i
+            <!--<i-->
+            <!--v-if="jobStatus === 'failed'"-->
+            <!--class="el-icon-circle-close job-icon"-->
+            <!--style="color: #ff6464;"/>-->
+            <img
               v-if="jobStatus === 'failed'"
-              class="el-icon-circle-close job-icon icon-error"
-              style="color: #ff6464;"/>
-            <i
-              v-else-if="jobStatus === 'success'"
-              class="el-icon-circle-check job-icon icon-error"
-              style="color: #24b68b;"/>
+              :src="icons.normal.failed"
+              alt=""
+              class="job-icon">
+            <!--<i-->
+            <!--v-else-if="jobStatus === 'success'"-->
+            <!--class="el-icon-circle-check job-icon"-->
+            <!--style="color: #24b68b;"/>-->
+            <img
+              v-if="jobStatus === 'success'"
+              :src="icons.normal.success"
+              alt=""
+              class="job-icon">
             <ul class="job-info flex space-around flex-wrap w-100">
               <li>
                 <p class="name">status</p>
@@ -93,20 +103,21 @@
             <echart-container :class="'echarts'" :options="jobOptions" @getEchartInstance="getJobEchartInstance"/>
           </div>
 
-          <div class="btn-wrapper flex justify-center">
+          <div class="btn-wrapper flex flex-col flex-center">
+            <p v-show="jobStatus==='running'" class="kill text-primary pointer" @click="killJob">kill</p>
             <el-button
               type="primary"
               round
               @click="toDetails(jobId)"
-            >VIEW THIS JOB
+            >view this job
             </el-button>
-            <el-button
-              v-show="jobStatus==='running'"
-              type="primary"
-              round
-              @click="killJob"
-            >KILL
-            </el-button>
+            <!--<el-button-->
+            <!--v-show="jobStatus==='running'"-->
+            <!--type="primary"-->
+            <!--round-->
+            <!--@click="killJob"-->
+            <!--&gt;KILL-->
+            <!--</el-button>-->
           </div>
         </div>
       </el-col>
@@ -159,6 +170,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import EchartContainer from '@/components/EchartContainer'
 import jobOptions from '@/utils/chart-options/gauge'
 import graphOptions from '@/utils/chart-options/graph'
@@ -207,6 +219,11 @@ export default {
       elapsed: '',
       currentLogTab: 'info'
     }
+  },
+  computed: {
+    ...mapGetters([
+      'icons'
+    ])
   },
   mounted() {
     // console.log(process.env.BASE_API)
@@ -341,8 +358,7 @@ export default {
       // console.log(this.jobWebsocket)
       this.$confirm('You can\'t undo this action', 'Are you sure you want to kill this job?', {
         confirmButtonText: 'Sure',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
+        cancelButtonText: 'Cancel'
       }).then(() => {
         killJob({
           job_id: this.jobId,

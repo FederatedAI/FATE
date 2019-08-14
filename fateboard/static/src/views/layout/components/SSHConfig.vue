@@ -91,7 +91,7 @@
 
 <script>
 import Pagination from '@/components/Pagination'
-import { getAllSSHStatus, addSSHConfig, removeSSHConfig } from '@/api/ssh'
+import { getAllSSHConfig, getAllSSHStatus, addSSHConfig, removeSSHConfig } from '@/api/ssh'
 
 export default {
   name: 'SSHConfig',
@@ -160,7 +160,7 @@ export default {
     getAllSSHList() {
       this.tableLoading = true
       this.currentPage = 1
-      getAllSSHStatus().then(res => {
+      getAllSSHConfig().then(res => {
         this.tableLoading = false
         const data = res.data || {}
         const list = []
@@ -170,12 +170,24 @@ export default {
               ip: obj.ip,
               username: obj.user,
               password: obj.password,
-              port: obj.port,
-              status: obj.status
+              port: obj.port
             })
           }
         })
         this.sshList = list
+        getAllSSHStatus().then(res => {
+          const data = res.data
+          Object.keys(data).forEach(ip => {
+            for (let i = 0; i < this.sshList.length; i++) {
+              if (this.sshList[i].ip === ip) {
+                this.sshList[i].status = data[ip].status
+                break
+              }
+            }
+          })
+          // console.log(this.sshList)
+          this.sshList.splice()
+        })
       }).catch(() => {
         this.tableLoading = false
       })
@@ -216,8 +228,7 @@ export default {
     handleDelete(row) {
       this.$confirm('You can\'t undo this action', 'Are you sure you want to delete this cluster?', {
         confirmButtonText: 'Save',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
+        cancelButtonText: 'Cancel'
       }).then(() => {
         removeSSHConfig(row.ip).then(res => {
           this.getAllSSHList()

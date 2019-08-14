@@ -88,21 +88,14 @@ export default {
       })
     },
     handleKillJob(jobId, role, partyId) {
-      const kill = status === 'waiting' ? 'cancel' : 'kill'
-      this.$confirm(
-        `You can\'t undo this action', 'Are you sure you want to ${kill} this job?`,
-        {
-          confirmButtonText: 'Sure',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }
-      )
-        .then(() => {
-          this.submitKillJob({ jobId, role, partyId })
-        })
-        .catch(() => {
-          // console.log('cancel kill')
-        })
+      this.$confirm('You can\'t undo this action', 'Are you sure you want to kill this job?', {
+        confirmButtonText: 'Sure',
+        cancelButtonText: 'Cancel'
+      }).then(() => {
+        this.submitKillJob({ jobId, role, partyId })
+      }).catch(() => {
+        // console.log('cancel kill')
+      })
     },
     submitKillJob({ jobId, role, partyId }) {
       const para = { job_id: jobId, role, party_id: partyId }

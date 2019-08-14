@@ -17,7 +17,7 @@ export default {
         show: true,
         color: '#494ece',
         formatter: '{value}%',
-        offsetCenter: [0, '66%'],
+        offsetCenter: [0, '60%'],
         fontWeight: 'bold',
         fontSize: 36
       },

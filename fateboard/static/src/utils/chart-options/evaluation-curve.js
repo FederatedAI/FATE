@@ -6,10 +6,28 @@ export default {
   backgroundColor: '#fbfbfc',
   tooltip: {
     // enterable: true,
-    position(pos, params, el, elRect, size) {
-      const obj = { top: 10 }
-      obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 80
-      return obj
+    // position(pos, params, el, elRect, size) {
+    //   console.log(pos, params, size)
+    //   const obj = { top: 10 }
+    //   obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 80
+    //   return obj
+    // },
+    position(pos, params, el, rect, size) {
+      const toolTipWidth = el.offsetWidth
+      const toolTipHeight = el.offsetHeight
+      const viewWidth = size.viewSize[0]
+      const viewHeight = size.viewSize[1]
+      const leftGap = 20
+      const topGap = -10
+      let left = pos[0] + leftGap
+      let top = pos[1] + topGap
+      if (top + toolTipHeight >= viewHeight) {
+        top = viewHeight - toolTipHeight
+      }
+      if (left + toolTipWidth + 5 * leftGap >= viewWidth) {
+        left = viewWidth - toolTipWidth - 5 * leftGap
+      }
+      return { left, top }
     },
     axisPointer: {
       type: 'line'

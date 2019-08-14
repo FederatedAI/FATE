@@ -60,9 +60,9 @@ public class HttpClientPool implements InitializingBean {
 
     private static void config(HttpRequestBase httpRequestBase) {
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(2000)
-                .setConnectTimeout(2000)
-                .setSocketTimeout(2000).build();
+                .setConnectionRequestTimeout(8000)
+                .setConnectTimeout(8000)
+                .setSocketTimeout(8000).build();
         httpRequestBase.addHeader("Content-Type", "application/json;charset=UTF-8");
         httpRequestBase.setConfig(requestConfig);
     }
@@ -79,6 +79,7 @@ public class HttpClientPool implements InitializingBean {
                     socketFactoryRegistry);
             poolConnManager.setMaxTotal(200);
             poolConnManager.setDefaultMaxPerRoute(200);
+
             int socketTimeout = 10000;
             int connectTimeout = 10000;
             int connectionRequestTimeout = 10000;
@@ -95,6 +96,7 @@ public class HttpClientPool implements InitializingBean {
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setConnectionManager(poolConnManager)
                 .setDefaultRequestConfig(requestConfig)
+
                 .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
                 .build();
         return httpClient;
@@ -132,6 +134,7 @@ public class HttpClientPool implements InitializingBean {
     private String getResponse(HttpRequestBase request) {
         CloseableHttpResponse response = null;
         try {
+
             response = httpClient.execute(request,
                     HttpClientContext.create());
             HttpEntity entity = response.getEntity();
@@ -140,8 +143,8 @@ public class HttpClientPool implements InitializingBean {
 
             return result;
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            logger.error("send http error",e);
+            return "";
         } finally {
             try {
                 if (response != null) {
@@ -150,6 +153,8 @@ public class HttpClientPool implements InitializingBean {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+
         }
     }
 

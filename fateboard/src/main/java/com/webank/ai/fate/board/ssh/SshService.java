@@ -118,6 +118,8 @@ public class SshService implements InitializingBean {
                     sshInfo.setPort(new Integer(params[2]));
                 }
                 sshInfoMap.put(key, sshInfo);
+
+                logger.info("load new sshInfoMap {}",sshInfoMap);
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("parse ssh info error", e);

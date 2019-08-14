@@ -5,7 +5,126 @@ import stackBarOptions from '@/utils/chart-options/stackBar'
 import doubleBarOptions from '@/utils/chart-options/doubleBar'
 
 const { modelNameMap } = store.state
+const handleBinningData = data => {
+  if (data && Object.keys(data).length > 0) {
+    const sourceData = []
+    const options = []
+    const variableData = {}
+    const stackBarData = {}
+    const woeData = {}
+    Object.keys(data).forEach(key => {
+      const tableData = []
+      let min = 0
+      const formatterArr = []
+      const iterationArr = data[key].ivArray.length > 0 ? data[key].ivArray : data[key].splitPoints
+      iterationArr.forEach((item, index, self) => {
+        const point = data[key].splitPoints[index] || data[key].splitPoints[index - 1]
+        let binning = ''
+        let formatterBinning = ''
+        if (point) {
+          if (min === 0) {
+            binning = `${key} < ${point}`
+            formatterBinning = `(-∞,${point})`
+          } else if (index === self.length - 1) {
+            binning = `${key} >= ${point}`
+            formatterBinning = `[${point},+∞)`
+          } else {
+            binning = `${min} <= ${key} < ${point}`
+            formatterBinning = `[${min},${point})`
+          }
+          min = point
+        }
+        tableData.push({
+          binning,
+          event_count: data[key].eventCountArray[index],
+          event_ratio: data[key].eventRateArray[index],
+          non_event_count: data[key].nonEventCountArray[index],
+          non_event_ratio: data[key].nonEventRateArray[index],
+          woe: data[key].woeArray[index],
+          iv: data[key].ivArray[index]
+        })
+        formatterArr.push({
+          formatterBinning,
+          event_count: data[key].eventCountArray[index],
+          event_ratio: data[key].eventRateArray[index],
+          non_event_count: data[key].nonEventCountArray[index],
+          non_event_ratio: data[key].nonEventRateArray[index],
+          woe: data[key].woeArray[index]
+        })
+      })
+      variableData[key] = tableData
+      const eventOptions = deepClone(stackBarOptions)
+      const woeOptions = deepClone(stackBarOptions)
+      eventOptions.tooltip.formatter = (params) => {
+        const obj = formatterArr[params[0].dataIndex]
+        return `${obj.formatterBinning}<br>Event Count: ${obj.event_count}<br>
+                Event Ratio: ${obj.event_ratio}<br>Non-Event Count: ${obj.non_event_count}<br>
+                Non-Event Ratio: ${obj.non_event_ratio}<br>`
+      }
+      woeOptions.tooltip.trigger = 'item'
+      woeOptions.tooltip.formatter = (params) => {
+        const obj = formatterArr[params.dataIndex]
+        return `${obj.formatterBinning}<br>Woe: ${obj.woe}<br>`
+      }
+      eventOptions.series.push({
+        name: 'event count',
+        type: 'bar',
+        data: data[key].eventCountArray,
+        stack: 'event'
+        // barWidth: '20%',
+      })
 
+      eventOptions.series.push({
+        name: 'non-event count',
+        type: 'bar',
+        data: data[key].nonEventCountArray,
+        stack: 'event'
+        // barWidth: '20%',
+      })
+      for (let i = 1; i <= data[key].eventCountArray.length; i++) {
+        eventOptions.xAxis.data.push(i)
+        woeOptions.xAxis.data.push(i)
+      }
+      stackBarData[key] = eventOptions
+
+      woeOptions.series.push({
+        name: 'woe',
+        type: 'bar',
+        data: data[key].woeArray
+        // barWidth: '20%',
+      })
+      woeOptions.series.push({
+        // name: 'woe ',
+        type: 'line',
+        tooltip: {
+          show: false
+        },
+        data: data[key].woeArray
+        // barWidth: '20%',
+      })
+      woeData[key] = woeOptions
+      sourceData.push({
+        variable: key,
+        iv: data[key].iv,
+        // woe: data[key].woe,
+        monotonicity: data[key].isWoeMonotonic ? data[key].isWoeMonotonic.toString() : 'false'
+      })
+      options.push({
+        value: key,
+        label: key
+      })
+    })
+    return {
+      sourceData,
+      options,
+      variableData,
+      stackBarData,
+      woeData
+    }
+  } else {
+    return null
+  }
+}
 export default function({ outputType, responseData }) {
   let output = {
     isNoModelOutput: false
@@ -57,14 +176,19 @@ export default function({ outputType, responseData }) {
       output.isNoModelOutput = true
     }
   } else if (outputType === modelNameMap.scale) {
-    console.log(responseData)
     const data = responseData && responseData.colScaleParam
+    const header = responseData && responseData.header
     const tBody = []
-    if (data) {
-      Object.keys(data).forEach(key => {
-        const obj = data[key]
-        obj.variable = key
-        tBody.push(obj)
+    if (data && header) {
+      // Object.keys(data).forEach(key => {
+      //   const obj = data[key]
+      //   obj.variable = key
+      //   tBody.push(obj)
+      // })
+      header.forEach(head => {
+        const row = data[head]
+        row.variable = head
+        tBody.push(row)
       })
       output = {
         tBody
@@ -74,7 +198,6 @@ export default function({ outputType, responseData }) {
     }
   } else if (outputType === modelNameMap.homoLR || outputType === modelNameMap.heteroLR) {
     const { weight, intercept, isConverged, iters, needOneVsRest } = responseData
-    console.log(isConverged, iters)
     const tData = []
     if (weight && Object.keys(weight).length > 0) {
       Object.keys(weight).forEach(key => {
@@ -188,119 +311,12 @@ export default function({ outputType, responseData }) {
       output.isNoModelOutput = true
     }
   } else if (outputType === modelNameMap.binning) {
-    const sourceData = []
-    const options = []
-    const variableData = {}
-    const stackBarData = {}
-    const woeData = {}
     const data = responseData && responseData.binningResult && responseData.binningResult.binningResult
-    if (data) {
-      Object.keys(data).forEach(key => {
-        const tableData = []
-        let min = 0
-        const formatterArr = []
-        data[key].ivArray.forEach((item, index, self) => {
-          const point = data[key].splitPoints[index] || data[key].splitPoints[index - 1]
-          let binning = ''
-          let formatterBinning = ''
-          if (min === 0) {
-            binning = `${key} < ${point}`
-            formatterBinning = `(-∞,${point})`
-          } else if (index === self.length - 1) {
-            binning = `${key} >= ${point}`
-            formatterBinning = `[${point},+∞)`
-          } else {
-            binning = `${min} <= ${key} < ${point}`
-            formatterBinning = `[${min},${point})`
-          }
-          min = point
-          tableData.push({
-            binning,
-            event_count: data[key].eventCountArray[index],
-            event_ratio: data[key].eventRateArray[index],
-            non_event_count: data[key].nonEventCountArray[index],
-            non_event_ratio: data[key].nonEventRateArray[index],
-            woe: data[key].woeArray[index],
-            iv: data[key].ivArray[index]
-          })
-          formatterArr.push({
-            formatterBinning,
-            event_count: data[key].eventCountArray[index],
-            event_ratio: data[key].eventRateArray[index],
-            non_event_count: data[key].nonEventCountArray[index],
-            non_event_ratio: data[key].nonEventRateArray[index],
-            woe: data[key].woeArray[index]
-          })
-        })
-        variableData[key] = tableData
-        const eventOptions = deepClone(stackBarOptions)
-        const woeOptions = deepClone(stackBarOptions)
-        eventOptions.tooltip.formatter = (params) => {
-          const obj = formatterArr[params[0].dataIndex]
-          return `${obj.formatterBinning}<br>Event Count: ${obj.event_count}<br>
-                Event Ratio: ${obj.event_ratio}<br>Non-Event Count: ${obj.non_event_count}<br>
-                Non-Event Ratio: ${obj.non_event_ratio}<br>`
-        }
-        woeOptions.tooltip.trigger = 'item'
-        woeOptions.tooltip.formatter = (params) => {
-          const obj = formatterArr[params.dataIndex]
-          return `${obj.formatterBinning}<br>Woe: ${obj.woe}<br>`
-        }
-        eventOptions.series.push({
-          name: 'event count',
-          type: 'bar',
-          data: data[key].eventCountArray,
-          stack: 'event'
-          // barWidth: '20%',
-        })
+    const hostData = responseData && responseData.hostResults && responseData.hostResults.host && responseData.hostResults.host.binningResult
 
-        eventOptions.series.push({
-          name: 'non-event count',
-          type: 'bar',
-          data: data[key].nonEventCountArray,
-          stack: 'event'
-          // barWidth: '20%',
-        })
-        for (let i = 1; i <= data[key].eventCountArray.length; i++) {
-          eventOptions.xAxis.data.push(i)
-          woeOptions.xAxis.data.push(i)
-        }
-        stackBarData[key] = eventOptions
-
-        woeOptions.series.push({
-          name: 'woe',
-          type: 'bar',
-          data: data[key].woeArray
-          // barWidth: '20%',
-        })
-        woeOptions.series.push({
-          // name: 'woe ',
-          type: 'line',
-          tooltip: {
-            show: false
-          },
-          data: data[key].woeArray
-          // barWidth: '20%',
-        })
-        woeData[key] = woeOptions
-        sourceData.push({
-          variable: key,
-          iv: data[key].iv,
-          // woe: data[key].woe,
-          monotonicity: data[key].isWoeMonotonic ? data[key].isWoeMonotonic.toString() : 'false'
-        })
-        options.push({
-          value: key,
-          label: key
-        })
-      })
-      output = {
-        sourceData,
-        options,
-        variableData,
-        stackBarData,
-        woeData
-      }
+    if ((data && Object.keys(data).length > 0) || (hostData && Object.keys(hostData).length > 0)) {
+      output.data = handleBinningData(data)
+      output.hostData = handleBinningData(hostData)
     } else {
       output.isNoModelOutput = true
     }

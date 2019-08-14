@@ -97,7 +97,11 @@ export function initWebSocket(url, onopen, onmessage, onclose = null) {
   instance.onopen = onopen
   instance.onmessage = onmessage
   instance.onerror = () => {
-    this.initWebSocket(url, instance)
+    try {
+      this.initWebSocket(url, onopen, onmessage, onclose = null)
+    } catch (e) {
+      console.log('websoket error:', e)
+    }
   }
   instance.onclose = function() {
   }

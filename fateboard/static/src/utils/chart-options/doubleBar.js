@@ -35,8 +35,9 @@ const options = {
   title: {
     text: '',
     textStyle: {
-      color: '#534c77',
-      fontSize: 16
+      color: '#606266',
+      fontSize: 16,
+      fontFamily: '"Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif'
     }
   },
   tooltip: {

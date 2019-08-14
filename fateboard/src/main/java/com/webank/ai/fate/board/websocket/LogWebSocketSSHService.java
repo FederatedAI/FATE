@@ -125,7 +125,12 @@ public class LogWebSocketSSHService implements InitializingBean, ApplicationCont
                 logFileTransferEventProducer.onData(sshInfo, jobDir, jobDir);
             }
 
+
+
+
             Integer lines = logFileService.getRemoteFileLineCount(sshInfo, filePath);
+
+            logger.info("try to find remote file {} at {} num {}",filePath,sshInfo.getIp(),lines);
 
             Integer beginLine = tailNum > lines ? 0 : lines - tailNum;
 

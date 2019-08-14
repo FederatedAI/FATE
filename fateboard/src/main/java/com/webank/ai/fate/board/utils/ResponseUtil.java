@@ -18,6 +18,7 @@ package com.webank.ai.fate.board.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.webank.ai.fate.board.global.ResponseResult;
+import org.apache.commons.lang3.StringUtils;
 
 public class ResponseUtil {
 
@@ -25,6 +26,10 @@ public class ResponseUtil {
     public static ResponseResult buildResponse(String result, String dataName) {
 
 
+        if(StringUtils.isEmpty(result)){
+            return null;
+
+        }
         JSONObject resultObject = JSON.parseObject(result);
 
         Integer retcode = resultObject.getInteger(Dict.RETCODE);

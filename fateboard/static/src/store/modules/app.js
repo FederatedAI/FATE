@@ -44,7 +44,9 @@ const app = {
         fullscreen: require('../../icons/jobdetail_outputsfromjob_visualization_fullscreen_default.png'),
         close: require('@/icons/jobdetail_outputsfromjob_visualization_close_default.png'),
         left: require('@/icons/jobdetail_outputsfromjob_visualization_pagebackward_default.png'),
-        right: require('@/icons/jobdetail_outputsfromjob_visualization_pageforward_default.png')
+        right: require('@/icons/jobdetail_outputsfromjob_visualization_pageforward_default.png'),
+        success: require('@/icons/dashboard_job_complete.png'),
+        failed: require('@/icons/dashboard_job_failed.png')
       },
       active: {
         fullscreen: require('@/icons/jobdetail_outputsfromjob_visualization_fullscreen_click.png'),

@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         } else {
             logger.error("error ", e);
             response.setCode(ErrorCode.SYSTEM_ERROR.getCode());
-            response.setMsg(e.getMessage());
+            response.setMsg("system error");
         }
         return response;
     }
