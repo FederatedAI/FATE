@@ -49,7 +49,7 @@ STUCK = 'stuck'
 MAX_INTERSECT_TIME = 600
 MAX_TRAIN_TIME = 3600
 RETRY_JOB_STATUS_TIME = 5
-WORKFLOW_STATUS_CHECKER_TIME = 5
+STATUS_CHECKER_TIME = 5
 
 TEST_TASK = {'TEST_UPLOAD': 2, 'TEST_INTERSECT': 2, 'TEST_TRAIN': 2}
 
@@ -209,36 +209,36 @@ def parse_exec_task(stdout):
 
 
 def job_status_checker(jobid, component_name):
-    check_counter = 0
-    while True:
-        subp = subprocess.Popen(["python",
-                                 fate_flow_path,
-                                 "-f",
-                                 "query_task",
-                                 "-j",
-                                 jobid,
-                                 "-cpn",
-                                 component_name
-                                 ],
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = subp.communicate()
-        # subp.wait()
-        # print("Current subp status: {}".format(subp.returncode))
-        stdout = stdout.decode("utf-8")
-        # print("Job_status_checker Stdout is : {}".format(stdout))
-        stdout = json.loads(stdout)
-        status = stdout["retcode"]
-        if status != 0:
-            if check_counter >= 60:
-                raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-            print("Current retry times: {}".format(check_counter))
-            time.sleep(20)
-            check_counter += 1
-        else:
-            break
-            #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+    # check_counter = 0
+    # while True:
+    subp = subprocess.Popen(["python",
+                             fate_flow_path,
+                             "-f",
+                             "query_task",
+                             "-j",
+                             jobid,
+                             "-cpn",
+                             component_name
+                             ],
+                            shell=False,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    stdout, stderr = subp.communicate()
+    # subp.wait()
+    # print("Current subp status: {}".format(subp.returncode))
+    stdout = stdout.decode("utf-8")
+    # print("Job_status_checker Stdout is : {}".format(stdout))
+    stdout = json.loads(stdout)
+    # status = stdout["retcode"]
+    # if status != 0:
+    #     if check_counter >= 60:
+    #         raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
+    #     print("Current retry times: {}".format(check_counter))
+    #     time.sleep(20)
+    #     check_counter += 1
+    # else:
+    #     break
+    #     #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
 
     return stdout
 
@@ -272,7 +272,7 @@ def download(config_file, self_party_id, this_role, this_table_name, this_table_
 
     json_info['local']['party_id'] = self_party_id
     json_info['local']['role'] = this_role
-
+    json_info['work_mode'] = work_mode
     json_info['table_name'] = this_table_name
     json_info['namespace'] = this_table_namespace
 
@@ -283,52 +283,38 @@ def download(config_file, self_party_id, this_role, this_table_name, this_table_
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def download_id_library(config_file, guest_id, host_id, role):
-    if role == GUEST:
-        self_party_id = guest_id
-    elif role == HOST:
-        self_party_id = host_id
-    else:
-        raise ValueError("Unsupport role:{}".format(role))
-
-    # write new json
-    json_file = open(config_file, 'r', encoding='utf-8')
-    json_info = json.load(json_file)
-
-    json_info['local']['party_id'] = self_party_id
-    json_info['local']['role'] = role
-    json_info['role']['guest'] = [guest_id]
-    json_info['role']['host'] = [host_id]
-
-    print(json_info)
-    stdout = exec_task(json_info, "download", role)
-    parse_result = parse_exec_task(stdout)
-    print("[Task Download]finsih download id libraray data_type:data_input, table_name:{}, namespace:{}".format(
-        parse_result["table_name"], parse_result["namespace"]))
-    return parse_result["table_name"], parse_result["namespace"]
-
-
-def task_status_checker(jobid, component_name):
+def task_status_checker(jobid, component_name, task_name):
     stdout = job_status_checker(jobid, component_name)
-    check_data = stdout["data"]
+    # check_data = stdout["data"]
+    status = stdout["retcode"]
 
-    retry_counter = 0
+    if status != 0:
+        return RUNNING
+
+    # retry_counter = 0
 
     # Wait for task start
-    while check_data is None:
-        time.sleep(2)
-        print("[Workflow_Job_Status_checker] check jobid:{}, status,"
-              " current retry counter:{}".format(jobid,
-                                                 retry_counter))
-        stdout = job_status_checker(jobid, component_name)
-        print("In task_status_checker function, retry_counter: {}".format(retry_counter))
-        check_data = stdout["data"]
-        retry_counter += 1
-        if retry_counter >= 5:
-            print("[Workflow_Job_Status_checker] retry time >= 5, check jobid failed")
-            return FAIL
+    # while status != 0:
+    #     time.sleep(STATUS_CHECKER_TIME)
+    #     # if retry_counter % 5 == 0:
+    #     print("[Job_Status_checker] task: {}, check jobid:{}, status: {},"
+    #           " current retry counter:{}".format(task_name, jobid, status, retry_counter))
+    #     stdout = job_status_checker(jobid, component_name)
+    #     status = stdout["retcode"]
+    #     retry_counter += 1
+    #     # end_time = time.time()
+    #     if retry_counter > 5:
+    #         print("[Job_Status_checker] task: {} retry times exceed {}, check jobid failed".format(
+    #             task_name, retry_counter))
+    #         return FAIL
+            # if end_time - start_time >= max_check_time:
+            #     print("[Job_Status_checker] task: {} wait time exceed {}, check jobid failed".format(
+            #         task_name, max_check_time))
+            #     return FAIL
 
     task_status = []
+    check_data = stdout["data"]
+
     # Collect all party status
     for component_stats in check_data:
         status = component_stats['f_status']
@@ -336,15 +322,12 @@ def task_status_checker(jobid, component_name):
 
     print("Current task status: {}".format(task_status))
 
-    for s in task_status:
-        if s == FAIL:
-            print("return status is fail")
-            return FAIL
+    if any([s == FAIL for s in task_status]):
+        return FAIL
 
-        if s == RUNNING:
-            print("return status is running")
-            return RUNNING
-    print("return status is success")
+    if any([s == RUNNING for s in task_status]):
+        return RUNNING
+
     return SUCCESS
 
 
@@ -367,23 +350,24 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
                   "namespace": host_namespace}
     json_info["role_parameters"]["host"]["args"]["data"]["data"] = [table_info]
 
-    start = time.time()
     stdout = exec_task(json_info, "submit_job", "guest_intersect", dsl_path=dsl_file)
     jobid = parse_exec_task(stdout)["jobId"]
 
     cur_job_status = RUNNING
     workflow_job_status_counter = 0
+    # cur_job_status = task_status_checker(jobid, component_name='intersect_0',task_name='Intersect')
+    start = time.time()
     while cur_job_status == RUNNING or cur_job_status == START:
-        time.sleep(WORKFLOW_STATUS_CHECKER_TIME)
+        time.sleep(STATUS_CHECKER_TIME)
         print("[Intersect] Start intersect job status checker, status counter: {},"
               " jobid:{}".format(workflow_job_status_counter, jobid))
-        cur_job_status = task_status_checker(jobid, component_name='intersect_0')
-        print("[Intersect] cur job status:{}".format(cur_job_status))
+        cur_job_status = task_status_checker(jobid, component_name='intersect_0', task_name="Intersect")
         end = time.time()
-        if end - start > MAX_INTERSECT_TIME:
+        wait_time = end - start
+        print("[Intersect] cur job status:{}, wait_time: {}".format(cur_job_status, wait_time))
+        if wait_time > MAX_INTERSECT_TIME:
             print("[Intersect] reach max intersect time:{}, intersect task may be failed, and exit now")
             break
-
         workflow_job_status_counter += 1
 
     # Wait for Status checker
@@ -422,17 +406,22 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
                   "namespace": host_namespace}
     json_info["role_parameters"]["host"]["args"]["data"]["train_data"] = [table_info]
 
-    start = time.time()
     stdout = exec_task(json_info, "submit_job", "guest_train", dsl_path=dsl_file)
     jobid = parse_exec_task(stdout)["jobId"]
 
+    # cur_job_status = task_status_checker(jobid, evaluation_component_name,
+    #                                      max_check_time=MAX_TRAIN_TIME,
+    #                                      task_name='Train and Evaluation')
+
     cur_job_status = RUNNING
+    start = time.time()
     while cur_job_status == RUNNING or cur_job_status == START:
-        time.sleep(WORKFLOW_STATUS_CHECKER_TIME)
-        cur_job_status = task_status_checker(jobid, evaluation_component_name)
-        print("[Train] cur job status:{}, jobid:{}".format(cur_job_status, jobid))
+        time.sleep(STATUS_CHECKER_TIME)
+        cur_job_status = task_status_checker(jobid, evaluation_component_name, task_name='Train and Evaluation')
         end = time.time()
-        if end - start > MAX_TRAIN_TIME:
+        wait_time = end - start
+        print("[Train] cur job status:{}, jobid:{}, wait_time: {}".format(cur_job_status, jobid, wait_time))
+        if wait_time > MAX_TRAIN_TIME:
             print("[Train] reach max train time:{}, intersect task may be failed, and exit now")
             break
     return cur_job_status, jobid
@@ -445,25 +434,6 @@ def get_table_count(name, namespace):
     count = table.count()
     print("table count:{}".format(count))
     return count
-
-
-def get_table_collect(name, namespace):
-    from arch.api import eggroll
-    eggroll.init("get_intersect_output", mode=work_mode)
-    table = eggroll.table(name, namespace)
-    return list(table.collect())
-
-
-def request_offline_feature(name, namespace, ret_size):
-    data_id = get_table_collect(name, namespace)
-    ret_ids = []
-
-    i = 0
-    while len(ret_ids) < ret_size or i >= len(data_id):
-        ret_ids.append(data_id[i][0])
-        i += 1
-
-    return ret_ids
 
 
 def check_file_line_num(file_path):
@@ -571,10 +541,6 @@ if __name__ == "__main__":
             print("intersect result:{}".format(intersect_result))
             intersect_file_name = intersect_result.get('directory')
             count = check_file_line_num(intersect_file_name)
-
-            # TODO: Wait for fate-flow interface
-            # if count == 100:
-            #     count = task_intersect_count
 
             if count != task_intersect_count:
                 TEST_TASK["TEST_INTERSECT"] = 1
