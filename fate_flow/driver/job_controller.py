@@ -70,7 +70,7 @@ class JobController(object):
         job.f_dsl = json_dumps(job_dsl)
         job.f_runtime_conf = json_dumps(job_runtime_conf)
         job.f_train_runtime_conf = json_dumps(train_runtime_conf)
-        job.f_run_ip = get_lan_ip()
+        job.f_run_ip = ''
         job.f_status = JobStatus.WAITING
         job.f_progress = 0
         job.f_create_time = current_timestamp()
@@ -125,6 +125,7 @@ class JobController(object):
     @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
+        job_info['f_run_ip'] = get_lan_ip()
         if create:
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
