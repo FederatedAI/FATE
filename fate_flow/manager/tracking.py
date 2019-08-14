@@ -16,13 +16,12 @@
 from typing import List
 
 from arch.api import storage
-from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
-from fate_flow.utils import job_utils, api_utils
+from fate_flow.utils import job_utils, api_utils, model_utils
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -50,7 +49,7 @@ class Tracking(object):
         self.job_table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
         self.model_id = model_id
-        self.party_model_id = Tracking.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
+        self.party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
         self.model_version = model_version
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
@@ -380,8 +379,3 @@ class Tracking(object):
     @staticmethod
     def job_view_table_name():
         return '_'.join(['job', 'view'])
-
-    @staticmethod
-    def gen_party_model_id(model_id, role, party_id):
-        return dtable_utils.gen_party_namespace_by_federated_namespace(federated_namespace=model_id, role=role,
-                                                                       party_id=party_id) if model_id else None

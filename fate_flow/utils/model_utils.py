@@ -13,13 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
+from arch.api.utils import dtable_utils
 
 
-def check_config(config: typing.Dict, required_arguments: typing.List):
-    no_arguments = []
-    for argument in required_arguments:
-        if argument not in config:
-            no_arguments.append(argument)
-    if no_arguments:
-        raise Exception('the following arguments are required: {}'.format(','.join(no_arguments)))
+def gen_party_model_id(model_id, role, party_id):
+    return dtable_utils.gen_party_namespace_by_federated_namespace(federated_namespace=model_id, role=role,
+                                                                   party_id=party_id) if model_id else None

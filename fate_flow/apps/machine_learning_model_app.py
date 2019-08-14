@@ -34,11 +34,8 @@ def internal_server_error(e):
 def load_model():
     request_config = request.json
     _job_id = generate_job_id()
-    initiator = request_config.get('initiator', {})
-    initiator_party_id = initiator.get('party_id', 0)
-    status = publish_model.generate_publish_model_info(request_config)
-    if not status:
-        return get_json_result(retcode=101, retmsg='can not found model')
+    initiator_party_id = request_config['initiator']['party_id']
+    publish_model.generate_publish_model_info(request_config)
     load_status = True
     load_status_info = {}
     load_status_msg = 'success'
@@ -55,7 +52,7 @@ def load_model():
                                          src_party_id=initiator_party_id,
                                          dest_party_id=_party_id,
                                          json_body=request_config,
-                                         work_mode=request_config['work_mode'])
+                                         work_mode=request_config['job_parameters']['work_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']
             except Exception as e:
                 stat_logger.exception(e)
