@@ -5,7 +5,7 @@
     <ul>
       <li v-for="(output,index) in metricOutputList" :key="index">
         <div v-if="output.type==='text'" class="flex">
-          <p style="line-height: 2" v-html="output.data"/>
+          <p class="model-text" v-html="output.data"/>
         </div>
         <div v-if="output.type==='table'" class="flex">
           <el-table
@@ -28,8 +28,8 @@
     </ul>
     <ul v-if="lossList.length>0" class="cv-wrapper">
       <li
-        v-for="(output,index) in lossList"
-        :key="index"
+        v-for="(output,instanceIndex) in lossList"
+        :key="instanceIndex"
       >
         <div class="w-100 overflow-hidden">
           <div class="cv-top flex flex-center space-between">
@@ -37,11 +37,17 @@
               <h3 style="margin-right: 20px;">{{ output.type }}</h3>
               <p>{{ output.nameSpace }}</p>
             </div>
-            <curve-legend :legend-data="output.legendData"/>
+            <curve-legend
+              :legend-data="output.legendData"
+              :instance-index="instanceIndex"
+              :instance-list="lossInstanceList"
+              @clickLegend="clickLegend"/>
           </div>
           <echart-container
             :class="'echart'"
-            :options="output.data"/>
+            :options="output.data"
+            :legend-index="instanceIndex"
+            @getEchartInstance="getLossInstance"/>
         </div>
       </li>
     </ul>
@@ -101,8 +107,8 @@
       </div>
       <!--lr-->
       <div v-else-if="(modelOutputType===modelNameMap.homoLR || modelOutputType===modelNameMap.heteroLR)">
-        <p style="line-height: 2">max iterations: {{ modelOutput.iters }}</p>
-        <p style="line-height: 2">converged: <span class="text-primary">{{ modelOutput.isConverged }}</span></p>
+        <p class="model-text" style="margin-bottom: 0">max iterations: {{ modelOutput.iters }}</p>
+        <p class="model-text">converged: {{ modelOutput.isConverged }}</p>
         <pagination-table
           :table-data="modelOutput.tData"
           :page-size="10"
@@ -139,15 +145,19 @@
       </div>
       <!--binning-->
       <div v-else-if="modelOutputType===modelNameMap.binning">
+        <div v-if="role==='guest'" class="flex flex-end" style="margin-bottom: 24px;">
+          <el-radio v-model="binningType" label="guest">guest</el-radio>
+          <el-radio v-model="binningType" label="host">host</el-radio>
+        </div>
         <pagination-table
-          :table-data="modelOutput.sourceData"
+          :table-data="modelOutput[currentbinningData].sourceData"
           :page-size="10"
           :header="binningSummaryHeader"
         />
         <div style="border:1px solid #eee;padding: 30px;margin-top: 25px">
           <el-select v-model="binningSelectValue" @change="changeBinning">
             <el-option
-              v-for="(item,index) in modelOutput.options"
+              v-for="(item,index) in modelOutput[currentbinningData].options"
               :key="index"
               :label="item.label"
               :value="item.value"
@@ -155,7 +165,7 @@
           </el-select>
           <div v-if="binningSelectValue" style="margin-top: 20px;">
             <pagination-table
-              :table-data="modelOutput.variableData[binningSelectValue]"
+              :table-data="modelOutput[currentbinningData].variableData[binningSelectValue]"
               :page-size="10"
               :header="binningHeader"
             />
@@ -163,7 +173,6 @@
         </div>
         <echart-container :class="'echart'" @getEchartInstance="getStackBarInstance"/>
         <echart-container :class="'echart'" @getEchartInstance="getWoeInstance"/>
-        <!--{{ modelOutput.stackBarData[binningSelectValue] }}-->
       </div>
     </div>
     <!--model summary-->
@@ -212,6 +221,7 @@
             <curve-legend
               :legend-data="output.legendData"
               :instance-index="instanceIndex"
+              :instance-list="echartInstanceList"
               @clickLegend="clickLegend"/>
           </div>
           <echart-container
@@ -255,6 +265,10 @@ export default {
         }
       }
     },
+    role: {
+      type: String,
+      default: ''
+    },
     modelOutputType: {
       type: String,
       default: ''
@@ -280,9 +294,12 @@ export default {
       oneHotSelectValue: '',
       stackBarInstance: null,
       echartInstanceList: [],
+      lossInstanceList: [],
       woeInstance: null,
       imputerDataPage: 1,
       outlierDataPage: 1,
+      binningType: 'guest',
+      lazyBinningType: 'guest',
       evaluationOutputTypeListArr: ['ROC', 'K-S', 'Lift', 'Gain', 'Precision Recall', 'Accuracy'],
       dataIoOulierHeader: [
         {
@@ -430,6 +447,9 @@ export default {
         return item.type === this.metricTypeMap.loss
       })
     },
+    currentbinningData() {
+      return this.binningType === 'guest' ? 'data' : 'hostData'
+    },
     modelSummaryTitle() {
       return this.modelOutputType === this.modelNameMap.evaluation
         ? 'Evaluation scores' : 'Cross validation scores'
@@ -447,11 +467,14 @@ export default {
   },
   updated() {
     if (this.modelOutputType === this.modelNameMap.binning && this.modelOutput) {
-      if (this.modelOutput.options && !this.binningSelectValue) {
-        this.binningSelectValue = this.modelOutput.options[0].value
+      if ((this.modelOutput[this.currentbinningData].options && !this.binningSelectValue) || this.lazyBinningType !== this.binningType) {
+        this.lazyBinningType = this.binningType
+        this.binningSelectValue = this.modelOutput[this.currentbinningData].options[0].value
       }
-      this.stackBarInstance.setOption(this.modelOutput.stackBarData[this.binningSelectValue], true)
-      this.woeInstance.setOption(this.modelOutput.woeData[this.binningSelectValue], true)
+      const stackBarData = this.modelOutput[this.currentbinningData].stackBarData[this.binningSelectValue]
+      const woeData = this.modelOutput[this.currentbinningData].woeData[this.binningSelectValue]
+      this.stackBarInstance.setOption(stackBarData, true)
+      this.woeInstance.setOption(woeData, true)
     }
     if (this.modelOutputType === this.modelNameMap.oneHot && this.modelOutput) {
       if (this.modelOutput.options && !this.oneHotSelectValue) {
@@ -461,12 +484,14 @@ export default {
   },
   methods: {
     changeBinning(value) {
-      this.stackBarInstance.setOption(this.modelOutput.stackBarData[value], true)
-      this.stackBarInstance.setOption(this.modelOutput.woeData[value], true)
-      console.log(this.modelOutput.woeData[value])
+      this.binningSelectValue = value
+      // console.log(this.binningSelectValue)
+      // console.log(this.modelOutput, this.currentbinningData)
+      this.stackBarInstance.setOption(this.modelOutput[this.currentbinningData].stackBarData[value], true)
+      this.stackBarInstance.setOption(this.modelOutput[this.currentbinningData].woeData[value], true)
     },
     changeOneHot(value) {
-      console.log('changeonehot', value)
+      // console.log('changeonehot', value)
     },
     getStackBarInstance(echartInstance) {
       this.stackBarInstance = echartInstance
@@ -509,22 +534,24 @@ export default {
     clearEchartInstance() {
       this.echartInstanceList = []
     },
-    clickLegend({ curveName, evaluationListIndex }) {
+    clickLegend({ curveName, evaluationListIndex, instanceList }) {
       curveName = curveName.replace(/(_tpr|_fpr|_precision|_recall)/g, '')
       let echartInstanceListIndex = -1
-      for (let i = 0; i < this.echartInstanceList.length; i++) {
-        const instance = this.echartInstanceList[i]
+      for (let i = 0; i < instanceList.length; i++) {
+        const instance = instanceList[i]
         if (instance.legendIndex === evaluationListIndex) {
           echartInstanceListIndex = i
           break
         }
       }
+      // console.log(echartInstanceListIndex, curveName)
       if (echartInstanceListIndex === -1) {
         return
       }
-      const instance = this.echartInstanceList[echartInstanceListIndex].instance
+      const instance = instanceList[echartInstanceListIndex].instance
       const options = instance.getOption()
       const series = options.series
+      // console.log(series)
       for (let i = 0; i < series.length; i++) {
         const item = series[i]
         const name = item.name.replace(/(_tpr|_fpr|_precision|_recall)/g, '')
@@ -544,6 +571,9 @@ export default {
     },
     getEchartInstance(instance, legendIndex) {
       this.echartInstanceList.push({ instance, legendIndex })
+    },
+    getLossInstance(instance, legendIndex) {
+      this.lossInstanceList.push({ instance, legendIndex })
     }
   }
 }
@@ -585,6 +615,14 @@ export default {
       border-color: #494ece;
       color: #494ece;
     }
+  }
+
+  .model-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: #7f7d8e;
+    line-height: 24px;
+    margin-bottom: 12px;
   }
 
   .cv-wrapper {

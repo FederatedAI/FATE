@@ -130,7 +130,7 @@ public class JobDetailController {
             for (Object o : components_list) {
                 HashMap<String, String> component = new HashMap<>();
                 component.put(Dict.COMPONENT_NAME, (String) o);
-                String taskStatus = taskManagerService.findTaskStatus(jobId, (String) o);
+                String taskStatus = taskManagerService.findTaskStatus(jobId, role,(String) o);
                 component.put(Dict.STATUS, taskStatus);
                 componentList.add(component);
             }

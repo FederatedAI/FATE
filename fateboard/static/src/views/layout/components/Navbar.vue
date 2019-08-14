@@ -64,14 +64,6 @@ export default {
     },
     pid() {
       return this.$route.query.pid || ''
-    },
-    isFormChanged() {
-      return JSON.stringify(this.configForm) !== JSON.stringify({
-        ip: '172.168.1.1',
-        username: 'app',
-        port: '22',
-        pwd: '33'
-      })
     }
   },
   watch: {
@@ -103,12 +95,6 @@ export default {
     },
     openModal() {
       this.showConfigModal = true
-      this.configForm = {
-        ip: '172.168.1.1',
-        username: 'app',
-        port: '22',
-        pwd: '33'
-      }
     },
     save() {
       this.$message('save successfully')

@@ -29,20 +29,22 @@ const curveAlphaColor = [
   '#FFEA84'
 ]
 // const curveColor = ['#f00', '#0f0', '#00f', '#0088ff']
-const curveFormatter = (xName, yName, thresholdsArr = []) => {
+const curveFormatter = (xName, yName, legendData, thresholdsArr = []) => {
   return (params) => {
     // console.log(params)
     let str = ''
-    params.forEach(obj => {
-      let xValue = ''
-      if (Array.isArray(thresholdsArr[obj.seriesIndex])) {
-        xValue = thresholdsArr[obj.seriesIndex][obj.dataIndex]
-      } else {
-        xValue = thresholdsArr[obj.dataIndex] || 0
+    params.forEach((obj, index) => {
+      if (!legendData || legendData[index].isActive !== false) {
+        let xValue = ''
+        if (Array.isArray(thresholdsArr[obj.seriesIndex])) {
+          xValue = thresholdsArr[obj.seriesIndex][obj.dataIndex]
+        } else {
+          xValue = thresholdsArr[obj.dataIndex] || 0
+        }
+        str += `${xName}(${obj.seriesName}): ${xValue}<br>`
+        const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
+        str += `${yName}(${obj.seriesName}): ${value}<br>`
       }
-      str += `${xName}: ${xValue}<br>`
-      const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
-      str += `${yName}(${obj.seriesName}): ${value}<br>`
     })
     return str
   }
@@ -157,15 +159,15 @@ export default function(
     if (metric_type === metricTypeMap.Gain) {
       // outputData.xAxis.name = 'threshold'
       outputData.yAxis.name = 'gain'
-      outputData.tooltip.formatter = curveFormatter('Threshold', 'Gain', thresholds)
+      outputData.tooltip.formatter = curveFormatter('Threshold', 'Gain', null, thresholds)
     } else if (metric_type === metricTypeMap.Accuracy) {
       // outputData.xAxis.name = 'threshold'
       outputData.yAxis.name = 'accuracy'
-      outputData.tooltip.formatter = curveFormatter('Threshold', 'Accuracy', thresholds)
+      outputData.tooltip.formatter = curveFormatter('Threshold', 'Accuracy', null, thresholds)
     } else if (metric_type === metricTypeMap.Lift) {
       // outputData.xAxis.name = 'threshold'
       outputData.yAxis.name = 'lift'
-      outputData.tooltip.formatter = curveFormatter('Threshold', 'Lift', thresholds)
+      outputData.tooltip.formatter = curveFormatter('Threshold', 'Lift', null, thresholds)
     } else if (metric_type === metricTypeMap.ROC) {
       outputData.yAxis.name = 'tpr'
       seriesObj.areaStyle = {
@@ -188,7 +190,7 @@ export default function(
       outputData.xAxis.name = 'class'
       outputData.xAxis.type = 'category'
       outputData.yAxis.name = 'precision, recall'
-      outputData.tooltip.formatter = (params) => {
+      outputData.tooltip.formatter = params => {
         let str = ''
         const xValue = params[0].axisValue
         str += `Class: ${xValue}<br>`
@@ -221,7 +223,6 @@ export default function(
         str += `iteration: ${xValue}<br>`
         params.forEach(obj => {
           const value = obj.data[1]
-          // str += `loss(${curve_name}): ${value}<br>`
           str += `loss(${obj.seriesName}): ${value}<br>`
         })
         return str
@@ -271,19 +272,49 @@ export default function(
         } else {
           item.thresholdsArr.push(thresholds)
           if (metric_type === metricTypeMap.Gain) {
-            item.data.tooltip.formatter = curveFormatter('Threshold', 'Gain', item.thresholdsArr)
+            item.data.tooltip.formatter = curveFormatter('Threshold', 'Gain', item.legendData, item.thresholdsArr)
           } else if (metric_type === metricTypeMap.Accuracy) {
-            item.data.tooltip.formatter = curveFormatter('Threshold', 'Accuracy', item.thresholdsArr)
+            item.data.tooltip.formatter = curveFormatter('Threshold', 'Accuracy', item.legendData, item.thresholdsArr)
           } else if (metric_type === metricTypeMap.Lift) {
-            item.data.tooltip.formatter = curveFormatter('Threshold', 'Lift', item.thresholdsArr)
+            item.data.tooltip.formatter = curveFormatter('Threshold', 'Lift', item.legendData, item.thresholdsArr)
+          } else if (metric_type === metricTypeMap.loss) {
+            item.data.tooltip.formatter = outputData.tooltip.formatter = (params) => {
+              let str = ''
+              const xValue = params[0].axisValue
+              str += `iteration: ${xValue}<br>`
+              params.forEach((obj, index) => {
+                if (item.legendData[index].isActive !== false) {
+                  const value = obj.data[1]
+                  str += `loss(${obj.seriesName}): ${value}<br>`
+                }
+              })
+              return str
+            }
+          } else if (metric_type === metricTypeMap.RecallMulti || metric_type === metricTypeMap.PrecisionMulti) {
+            item.data.tooltip.formatter = params => {
+              let str = ''
+              const xValue = params[0].axisValue
+              str += `Class: ${xValue}<br>`
+              params.forEach((obj, index) => {
+                if (item.legendData[index].isActive !== false) {
+                  const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
+                  str += `${obj.seriesName}: ${value}<br>`
+                }
+              })
+              return str
+            }
           } else if (metric_type === metricTypeMap.ROC) {
             item.data.tooltip.formatter = (params) => {
               let str = ''
-              params.forEach(obj => {
-                const xValue = item.thresholdsArr[obj.seriesIndex][obj.dataIndex] || 0
-                str += `Threshold: ${xValue}<br>`
-                str += `Tpr(${obj.seriesName}): ${obj.data[1]}<br>`
-                str += `Fpr(${obj.seriesName}): ${obj.axisValue}<br>`
+              // console.log(params)
+              // console.log(item.legendData)
+              params.forEach((obj, index) => {
+                if (item.legendData[index].isActive !== false) {
+                  const xValue = item.thresholdsArr[index][obj.dataIndex] || 0
+                  str += `Threshold(${obj.seriesName}): ${xValue}<br>`
+                  str += `Tpr(${obj.seriesName}): ${obj.data[1]}<br>`
+                  str += `Fpr(${obj.seriesName}): ${obj.axisValue}<br>`
+                }
               })
               return str
             }
@@ -353,7 +384,12 @@ export default function(
       // symbol: 'none',
       symbolSize: 1,
       halfData: dataObj,
-      itemStyle: {},
+      itemStyle: {
+        opacity: 1
+      },
+      lineStyle: {
+        opacity: 1
+      },
       pair_type
     }
 
@@ -365,7 +401,7 @@ export default function(
       // console.log(params)
       params.forEach(obj => {
         const thresholdValue = thresholds[obj.dataIndex] || ''
-        str += `Thresholds: ${thresholdValue}<br>`
+        str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
         const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
         str += `Precision(${obj.seriesName}):${value}<br>`
         str += `Recall(${obj.seriesName}):${obj.axisValue}<br>`
@@ -380,6 +416,29 @@ export default function(
         for (let j = 0; j < item.data.series.length; j++) {
           const curve = item.data.series[j]
           if (curve.pair_type === pair_type) {
+            if (!item.thresholdsArr) {
+              item.thresholdsArr = [thresholds]
+            } else {
+              item.thresholdsArr.push(thresholds)
+            }
+            // console.log(item.thresholdsArr)
+            // if (metric_namespace === 'validate' && curve_name === 'fold_2') {
+            //   console.log(thresholds)
+            // }
+            item.data.tooltip.formatter = (params) => {
+              let str = ''
+              // console.log(params),
+              params.forEach((obj, index) => {
+                if (item.legendData[index].isActive !== false) {
+                  const thresholdValue = item.thresholdsArr[index][obj.dataIndex] || ''
+                  str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
+                  const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
+                  str += `Precision(${obj.seriesName}):${value}<br>`
+                  str += `Recall(${obj.seriesName}):${obj.axisValue}<br>`
+                }
+              })
+              return str
+            }
             const prObj = {}
             Object.keys(curve.halfData).forEach(key => {
               const p = []
@@ -480,10 +539,12 @@ export default function(
             const formatterObj = /_tpr$/g.test(curve.name)
               ? {
                 tpr: curve.name,
-                fpr: seriesObj.name
+                fpr: seriesObj.name,
+                pairType: curve.name.replace(/_tpr$/g, '')
               } : {
                 tpr: seriesObj.name,
-                fpr: curve.name
+                fpr: curve.name,
+                pairType: seriesObj.name.replace(/_tpr$/g, '')
               }
             formatterObj.thresholds = thresholds
             if (item.data.KSFormaterArr) {
@@ -508,32 +569,34 @@ export default function(
               },
               pairType: pair_type
             })
-            item.data.tooltip.formatter = (params) => {
+            item.data.tooltip.formatter = params => {
               let str = ''
               // const xAxisName = trimId(params[0].axisId)
               // str += `${xAxisName}: ${params[0].axisValue}<br>`
-              item.data.KSFormaterArr.forEach(ksObj => {
-                // console.log(thresholds, params[0])
-                str += `Threshold: ${ksObj.thresholds[params[0].dataIndex]}<br>`
-                let ksflag = false
-                let v1 = 0
-                let v2 = 0
-                params.forEach(obj => {
-                  if (obj.seriesName === ksObj.tpr) {
-                    // str += `Tpr(${ksObj.tpr}): ${obj.data[1]}<br>`
-                    str += `${ksObj.tpr}: ${obj.data[1]}<br>`
-                    v1 = obj.data[1]
-                    ksflag = true
+              item.data.KSFormaterArr.forEach((ksObj, ksIndex) => {
+                if (item.legendData[ksIndex].isActive !== false) {
+                  // console.log(thresholds, params[0])
+                  str += `Threshold: (${ksObj.pairType})${ksObj.thresholds[params[0].dataIndex]}<br>`
+                  let ksflag = false
+                  let v1 = 0
+                  let v2 = 0
+                  params.forEach(obj => {
+                    if (obj.seriesName === ksObj.tpr) {
+                      // str += `Tpr(${ksObj.tpr}): ${obj.data[1]}<br>`
+                      str += `${ksObj.tpr}: ${obj.data[1]}<br>`
+                      v1 = obj.data[1]
+                      ksflag = true
+                    }
+                    if (obj.seriesName === ksObj.fpr) {
+                      // str += `Fpr(${ksObj.fpr}): ${obj.data[1]}<br>`
+                      str += `${ksObj.fpr}: ${obj.data[1]}<br>`
+                      v2 = obj.data[1]
+                    }
+                  })
+                  if (ksflag) {
+                    const ks = Math.abs(v1 - v2)
+                    str += `KS: ${ks.toFixed(6)}<br>`
                   }
-                  if (obj.seriesName === ksObj.fpr) {
-                    // str += `Fpr(${ksObj.fpr}): ${obj.data[1]}<br>`
-                    str += `${ksObj.fpr}: ${obj.data[1]}<br>`
-                    v2 = obj.data[1]
-                  }
-                })
-                if (ksflag) {
-                  const ks = Math.abs(v1 - v2)
-                  str += `KS: ${ks.toFixed(6)}<br>`
                 }
               })
               return str

@@ -29,7 +29,8 @@ $link: #409eff;
           line-height: $h;
           border-radius: $h;
           &:hover{
-            background: #e8e8ef;
+            //background: #e8e8ef;
+            text-decoration: underline;
           }
         }
       }

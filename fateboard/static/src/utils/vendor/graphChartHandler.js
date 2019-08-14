@@ -131,7 +131,7 @@ export default function(data) {
     } else {
       x = xLength / (levelNodesCount + 1) * node.index * 3
     }
-    node.x = x
+    node.x = x || 0
     // 层级决定y坐标
     // for (let i = index; i >= 0; i--) {
     //   if (dataList[i].level === node.level) {
@@ -148,5 +148,6 @@ export default function(data) {
   //     dataList[i - 1].symbolSize = [120, 20]
   //   }
   // }
+  console.log(dataList, linksList)
   return { dataList, linksList }
 }

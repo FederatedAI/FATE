@@ -47,6 +47,7 @@ $common-bg:#f8f8fa;
             color: $deep-gray;
           }
           .value {
+            font-size: 16px;
             color: $deep-gray;
             font-weight: bold;
             overflow: hidden;
@@ -98,10 +99,13 @@ $common-bg:#f8f8fa;
             //padding: 0 5%;
             margin-bottom: 20px;
             .name {
-              font-size: 12px;
+              font-size: 14px;
               color: $light-gray;
             }
             .value {
+              font-size: 16px;
+              font-weight: bold;
+              color: $deep-gray;
             }
           }
         }
@@ -111,8 +115,14 @@ $common-bg:#f8f8fa;
         left: 0;
         bottom: 32px;
         width: 100%;
+        .kill{
+          &:hover{
+            text-decoration: underline;
+          }
+        }
         .el-button {
           padding: 7px 24px 6px;
+          margin-top: 6px;
         }
       }
     }

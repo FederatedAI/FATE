@@ -63,6 +63,12 @@ export default {
     instanceIndex: {
       type: Number,
       default: -1
+    },
+    instanceList: {
+      type: Array,
+      default() {
+        return []
+      }
     }
   },
   data() {
@@ -102,7 +108,11 @@ export default {
       legendIndex = (this.page - 1) * this.pageSize + legendIndex
       this.legendData[legendIndex].isActive = !this.legendData[legendIndex].isActive
       this.legendData.splice()
-      this.$emit('clickLegend', { curveName, evaluationListIndex: this.instanceIndex })
+      this.$emit('clickLegend', {
+        curveName,
+        evaluationListIndex: this.instanceIndex,
+        instanceList: this.instanceList
+      })
     }
   }
 }

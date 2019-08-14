@@ -201,6 +201,7 @@
               :evaluation-output-list="evaluationInstances"
               :model-summary-data="modelSummaryData"
               :model-output-type="modelOutputType"
+              :role="role"
               :model-output="modelOutputData"
               :is-no-metric-output="isNoMetricOutput"
               :is-no-model-output="isNoModelOutput"
@@ -364,7 +365,7 @@ export default {
       })
     },
     toPrevPage() {
-      console.log(this.$route)
+      // console.log(this.$route)
       let path = null
       if (this.jobFrom === 'Job overview') {
         path = '/history'
@@ -388,7 +389,6 @@ export default {
           this.graphOptions.series[0].data = dataList
           this.graphOptions.series[0].links = linksList
           echartInstance.setOption(this.graphOptions, true)
-          // 点击交互
           echartInstance.on('click', { dataType: 'node' }, nodeData => {
             // console.log(nodeData)
             this.clickComponent(nodeData.name, nodeData.dataIndex, nodeData.data.componentType)
@@ -553,13 +553,9 @@ export default {
                 metric_namespace,
                 metric_name
               }
-              // const metricDataPara = Object.assign(para, { metric_namespace, metric_name })
               getMetricData(metricDataPara).then(res => {
                 const { data, meta } = res.data
                 if (data && meta) {
-                  // data.map(item => {
-                  //   item[1] = item[1].toFixed(4)
-                  // })
                   const { metric_type, unit_name, curve_name, pair_type, thresholds } = meta
                   if (metric_type) {
                     metricDataHandle({
@@ -589,7 +585,6 @@ export default {
                       arr.push(item.type)
                     }
                   })
-                  // this.evaluationOutputList = evaluationOutputList
                   this.$store.dispatch('SetCurveInstances', evaluationOutputList)
                   const filterArr = ['ROC', 'K-S', 'Lift', 'Gain', 'Precision Recall', 'Accuracy'].filter(type => {
                     return arr.indexOf(type) !== -1

@@ -10,7 +10,7 @@ import { Message } from 'element-ui'
 const service = axios.create({
   baseURL: window.location.origin,
   withCredentials: false,
-  timeout: 10000 // request timeout
+  timeout: 20000 // request timeout
 })
 // request interceptor
 service.interceptors.request.use(
@@ -68,7 +68,7 @@ service.interceptors.response.use(
       return Promise.reject('warning')
     } else {
       Message({
-        message: res.message || res.msg,
+        message: res.message || res.msg || res.retmsg,
         type: 'error',
         duration: 3 * 1000
       })
@@ -76,7 +76,7 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err' + error) // for debug
+    console.log('err:', error) // for debug
     Message({
       message: error.message,
       type: 'error',
