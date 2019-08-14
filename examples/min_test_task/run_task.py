@@ -234,7 +234,7 @@ def job_status_checker(jobid, component_name):
             if check_counter >= 60:
                 raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
             print("Current retry times: {}".format(check_counter))
-            time.sleep(10)
+            time.sleep(20)
             check_counter += 1
         else:
             break
@@ -484,47 +484,6 @@ def check_file_line_num(file_path):
     print("Job_status_checker Stdout is : {}".format(file_length))
     # stdout = json.loads(stdout)
     return file_length
-
-
-def split_data_and_save_file(guest_table_name, guest_namespace, host_id, train_file, predict_file):
-    guest_data = get_table_collect(guest_table_name, guest_namespace)
-    pos_label_set = []
-    neg_label_set = []
-
-    print("host_id:{}".format(len(host_id)))
-    print("guest_id:{}".format(len(guest_data)))
-    for data in guest_data:
-        if data[0] in host_id:
-            label = data[1].split(',')[0]
-            if label == '0':
-                neg_label_set.append(data)
-            elif label == '1':
-                pos_label_set.append(data)
-            else:
-                raise ValueError("Unknown label:{}".format(label))
-        else:
-            print("not in host_id:{}".format(data))
-    print("pos count:{}".format(len(pos_label_set)))
-    print("neg count:{}".format(len(neg_label_set)))
-
-    random.shuffle(pos_label_set)
-    random.shuffle(neg_label_set)
-
-    train_pos_size = int(0.8 * len(pos_label_set))
-    train_neg_size = int(0.8 * len(neg_label_set))
-    train_data = pos_label_set[:train_pos_size]
-    predict_data = pos_label_set[train_pos_size:]
-
-    train_data.extend(neg_label_set[:train_neg_size])
-    predict_data.extend(neg_label_set[train_neg_size:])
-
-    with open(train_file, 'w') as fout:
-        for data in train_data:
-            fout.write(data[0] + ',' + data[1] + '\n')
-
-    with open(predict_file, 'w') as fout:
-        for data in predict_data:
-            fout.write(data[0] + ',' + data[1] + '\n')
 
 
 if __name__ == "__main__":

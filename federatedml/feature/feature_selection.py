@@ -323,18 +323,33 @@ class IVValueSelectFilter(FilterMethod):
         Use for collecting iv among all parties.
     """
 
-    def __init__(self, param, cols, binning_obj):
+    def __init__(self, param, cols, binning_obj, host_select_cols=None):
         super(IVValueSelectFilter, self).__init__()
         self.value_threshold = param.value_threshold
         self.cols = cols
         self.binning_obj = binning_obj
+        if host_select_cols is None:
+            self.host_select_cols = {}
+        else:
+            self.host_select_cols = host_select_cols
 
-    def fit(self, data_instances=None):
+    def fit(self, data_instances=None, fit_host=False):
         # fit guest
         self._init_cols(data_instances)
+        self._fit_local()
+
+        if fit_host:
+            self._fit_host()
+
+        LOGGER.debug("In iv value filter, returned left_cols: {}, host_cols: {}".format(self.left_cols, self.host_cols))
+
+        return self.left_cols
+
+    def _fit_local(self):
         guest_binning_result = self.binning_obj.binning_result
         for col_name, iv_attr in guest_binning_result.items():
-            col_idx = self.header.index(col_name)
+            # col_idx = self.header.index(col_name)
+            col_idx = self.cols_dict[col_name]
             if col_idx not in self.cols:
                 continue
             self.feature_values[col_name] = iv_attr.iv
@@ -342,32 +357,34 @@ class IVValueSelectFilter(FilterMethod):
         self.left_cols = self.filter_one_party(self.feature_values, True, self.value_threshold, self.header)
         self.left_cols = self._keep_one_feature()
 
+    def _fit_host(self):
+        LOGGER.debug("Binning host results: {}, host_select_cols: {}".format(
+            self.binning_obj.host_results, self.host_select_cols))
         for host_name, host_bin_result in self.binning_obj.host_results.items():
             tmp_host_value = {}
-            for host_col_name, host_iv_attr in host_bin_result.items():
-                tmp_host_value[host_col_name] = host_iv_attr.iv
+            for host_col_idx, host_iv_attr in host_bin_result.items():
+                host_col_idx = int(host_col_idx)
+                if host_col_idx not in self.host_select_cols:
+                    continue
+                if not self.host_select_cols[host_col_idx]:
+                    continue
+                tmp_host_value[host_col_idx] = host_iv_attr.iv
             self.host_feature_values[host_name] = tmp_host_value
             left_cols = self.filter_one_party(tmp_host_value, True, self.value_threshold)
             left_cols = self._keep_one_feature(left_cols=left_cols, feature_values=tmp_host_value)
             self.host_cols[host_name] = left_cols
-
-        return self.left_cols
 
     def get_param_obj(self):
         left_col_name_dict = self._generate_col_name_dict()
         cols = [str(i) for i in self.cols]
 
         host_obj = {}
-        LOGGER.debug("In get_param_obj, host_cols: {}".format(self.host_cols))
         for host_name, host_left_cols in self.host_cols.items():
             host_cols = list(map(str, host_left_cols.keys()))
-
-            # new_host_left_cols = {}
-            # for k, v in host_left_cols.items():
-            #     new_host_left_cols[str(k)] = v
+            new_host_left_col = {str(k): v for k, v in host_left_cols.items()}
 
             host_left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
-                                                                     left_cols=host_left_cols)
+                                                                     left_cols=new_host_left_col)
             host_obj[host_name] = host_left_col_obj
 
             for host_col, is_left in host_left_cols.items():
@@ -380,7 +397,9 @@ class IVValueSelectFilter(FilterMethod):
 
         host_value_objs = {}
         for host_name, host_feature_values in self.host_feature_values.items():
-            host_feature_value_obj = feature_selection_param_pb2.FeatureValue(feature_values=host_feature_values)
+            new_host_feature_values = {str(k): v for k, v in host_feature_values.items()}
+
+            host_feature_value_obj = feature_selection_param_pb2.FeatureValue(feature_values=new_host_feature_values)
             host_value_objs[host_name] = host_feature_value_obj
 
         # Combine both guest and host results
@@ -459,6 +478,8 @@ class IVPercentileFilter(FilterMethod):
                 host_col_idx = int(host_col_idx)
                 if host_col_idx not in host_to_select_cols:
                     continue
+                if not host_to_select_cols[host_col_idx]:
+                    continue
                 tmp_host_value[host_col_idx] = host_iv_attr.iv
             host_feature_values[host_name] = tmp_host_value
             self.host_feature_values = host_feature_values
@@ -473,6 +494,9 @@ class IVPercentileFilter(FilterMethod):
         local_left_cols, host_left_cols = union_filter.fit(data_instances)
         self.left_cols = local_left_cols
         self.host_cols = host_left_cols
+        LOGGER.debug("In iv percentile filter, returned left_cols: {}, host_cols: {}".format(
+            self.left_cols, self.host_cols))
+
         return self.left_cols
 
     def get_param_obj(self):
@@ -482,7 +506,7 @@ class IVPercentileFilter(FilterMethod):
         host_obj = {}
         for host_name, host_left_cols in self.host_cols.items():
             host_cols = list(map(str, host_left_cols.keys()))
-            new_host_left_col = {str(k): v for k, v in host_left_cols.items() }
+            new_host_left_col = {str(k): v for k, v in host_left_cols.items()}
             host_left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=host_cols,
                                                                      left_cols=new_host_left_col)
             for host_col, is_left in host_left_cols.items():
@@ -497,7 +521,7 @@ class IVPercentileFilter(FilterMethod):
 
         host_value_objs = {}
         for host_name, host_feature_values in self.host_feature_values.items():
-            new_host_feature_values = {str(k): v for k, v in host_feature_values.items() }
+            new_host_feature_values = {str(k): v for k, v in host_feature_values.items()}
             host_feature_value_obj = feature_selection_param_pb2.FeatureValue(feature_values=new_host_feature_values)
             host_value_objs[host_name] = host_feature_value_obj
 

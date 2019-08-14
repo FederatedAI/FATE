@@ -33,6 +33,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         self.static_obj = None
         self.flowid = ''
         self.party_name = consts.GUEST
+        self.fed_filter_count = 0
 
     def fit(self, data_instances):
 
@@ -63,27 +64,25 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         if method == consts.IV_VALUE_THRES:
             iv_param = self.model_param.iv_value_param
-            iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                              self.cols,
-                                                              self.binning_model)
-            new_left_cols = iv_filter.fit(data_instances)
-
-            # self.left_cols = new_left_cols
-            self._renew_final_left_cols(new_left_cols)
 
             if not self.local_only:
                 host_select_cols = self._get_host_select_cols(consts.IV_VALUE_THRES)
+                LOGGER.debug("In iv value filter, host_select_cols: {}".format(host_select_cols))
+                iv_filter = feature_selection.IVValueSelectFilter(iv_param,
+                                                                  self.cols,
+                                                                  self.binning_model,
+                                                                  host_select_cols=host_select_cols)
+                new_left_cols = iv_filter.fit(data_instances, fit_host=True)
+                self._renew_final_left_cols(new_left_cols)
+
                 host_left_cols = iv_filter.host_cols
-                # Only one host
                 left_cols = host_left_cols.get(consts.HOST)
+
+                left_cols = {int(k): v for k, v in left_cols.items()}
                 LOGGER.debug("In Guest IV filter, host_select_cols: {}, host_left_cols: {}".format(host_select_cols,
                                                                                                    host_left_cols))
                 new_result = {}
                 for host_col_idx, _ in host_select_cols.items():
-                    # if host_col_name not in left_cols:
-                    #     LOGGER.warning(
-                    #         "Host column {} has not been set in feature binning module".format(host_col_name))
-                    #     continue
                     host_col_idx = int(host_col_idx)
                     is_left = left_cols.get(host_col_idx)
                     new_result[host_col_idx] = is_left
@@ -92,6 +91,13 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 LOGGER.debug(
                     "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Host left cols are: {}".format(
                         self.host_left_cols))
+
+            else:
+                iv_filter = feature_selection.IVValueSelectFilter(iv_param,
+                                                                  self.cols,
+                                                                  self.binning_model)
+                new_left_cols = iv_filter.fit(data_instances)
+                self._renew_final_left_cols(new_left_cols)
 
             LOGGER.debug(
                 "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Self left cols are: {}".format(
@@ -126,14 +132,22 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 # Only one host
                 left_cols = host_left_cols.get(consts.HOST)
                 new_result = {}
-                for host_col_name in host_select_cols:
+                for host_col_idx in host_select_cols:
 
-                    if host_col_name not in left_cols:
+                    if host_col_idx not in left_cols:
                         LOGGER.warning(
-                            "Host column {} has not been set in feature binning module".format(host_col_name))
+                            "Host column {} has not been set in feature binning module".format(host_col_idx))
                         continue
-                    is_left = left_cols.get(host_col_name)
-                    new_result[host_col_name] = is_left
+
+                    original_left = host_select_cols.get(host_col_idx)
+                    if not original_left:
+                        continue
+
+                    is_left = left_cols.get(host_col_idx)
+                    new_result[host_col_idx] = is_left
+
+                LOGGER.debug("Recived result: host_select_cols: {}, iv result: host_left_cols: {},"
+                             "final_result new_result : {}".format(host_select_cols, host_left_cols, new_result))
                 self.host_left_cols = new_result
                 self._send_host_result_cols(consts.IV_PERCENTILE)
                 LOGGER.info(
