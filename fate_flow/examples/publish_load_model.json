@@ -10,7 +10,6 @@
     },
     "job_parameters": {
         "work_mode": 0,
-        "job_type": "load_model",
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
         "model_version": "2019081217340125761469"
     }
