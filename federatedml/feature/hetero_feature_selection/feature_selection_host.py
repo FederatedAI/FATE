@@ -40,17 +40,17 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.fed_filter_count = 0
 
     def fit(self, data_instances):
+        LOGGER.info("Start Hetero Selection Fit and transform.")
+
         self._abnormal_detection(data_instances)
         self._init_cols(data_instances)
-        LOGGER.debug("host data count: {}, host header: {}".format(data_instances.count(), self.header))
         LOGGER.debug("filter methods: {}".format(self.filter_methods))
         for method in self.filter_methods:
             self.filter_one_method(data_instances, method)
-            print("After method: {}, left_cols: {}".format(method, self.left_cols))
-
-            # self._renew_left_col_names()
 
         new_data = self._transfer_data(data_instances)
+        LOGGER.info("Finish Hetero Selection Fit and transform.")
+
         return new_data
 
     def transform(self, data_instances):

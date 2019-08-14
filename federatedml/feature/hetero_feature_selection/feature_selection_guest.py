@@ -36,10 +36,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         self.fed_filter_count = 0
 
     def fit(self, data_instances):
-
-        one_data = data_instances.first()
-        LOGGER.debug("When input in feature selection, data features: {}".format(one_data[1].features))
-
+        LOGGER.info("Start Hetero Selection Fit and transform.")
         self._abnormal_detection(data_instances)
         self._init_cols(data_instances)
 
@@ -49,6 +46,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             # self._renew_left_col_names()
 
         new_data = self._transfer_data(data_instances)
+        LOGGER.info("Finish Hetero Selection Fit and transform.")
         return new_data
 
     def transform(self, data_instances):
@@ -168,6 +166,11 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             self._renew_final_left_cols(new_left_cols)
 
             self.static_obj = coe_filter.statics_obj
+
+            LOGGER.info(
+                "[Result][FeatureSelection][Guest]Finish coefficient of variance filter. Self left cols are: {}".format(
+                    self.left_cols))
+
             self.variance_coe_meta = coe_filter.get_meta_obj()
             self.results.append(coe_filter.get_param_obj())
             # self._renew_left_col_names()
@@ -182,7 +185,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             self.unique_meta = unique_filter.get_meta_obj()
             self.results.append(unique_filter.get_param_obj())
 
-            LOGGER.debug(
+            LOGGER.info(
                 "[Result][FeatureSelection][Guest]Finish unique value filter. Current left cols are: {}".format(
                     self.left_cols))
 
@@ -193,6 +196,9 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             self._renew_final_left_cols(new_left_cols)
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
+            LOGGER.info(
+                "[Result][FeatureSelection][Guest]Finish outlier filter. Self left cols are: {}".format(
+                    self.left_cols))
             # self._renew_left_col_names()
 
     def _send_host_result_cols(self, filter_name):

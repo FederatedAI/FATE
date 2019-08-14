@@ -82,7 +82,7 @@ class FilterMethod(object):
     #             party_name, class_name, col_name, feature_value
     #         ))
 
-    def _keep_one_feature(self, pick_high=True, left_cols=None, feature_values=None):
+    def _keep_one_feature(self, pick_high=True, left_cols=None, feature_values=None, use_header=True):
         """
         Make sure at least one feature can be left after filtering.
 
@@ -114,7 +114,11 @@ class FilterMethod(object):
         else:
             result = sorted(feature_values.items(), key=operator.itemgetter(1), reverse=pick_high)
             left_col_name = result[0][0]
-            left_key = self.header.index(left_col_name)
+            if use_header:
+                left_key = self.header.index(left_col_name)
+            else:
+                left_key = left_col_name
+
         left_cols[left_key] = True
         LOGGER.debug("In _keep_one_feature, left_key: {}, left_cols: {}".format(left_key, left_cols))
 
@@ -349,6 +353,8 @@ class IVValueSelectFilter(FilterMethod):
         guest_binning_result = self.binning_obj.binning_result
         for col_name, iv_attr in guest_binning_result.items():
             # col_idx = self.header.index(col_name)
+            if col_name not in self.cols_dict:
+                continue
             col_idx = self.cols_dict[col_name]
             if col_idx not in self.cols:
                 continue
@@ -371,7 +377,7 @@ class IVValueSelectFilter(FilterMethod):
                 tmp_host_value[host_col_idx] = host_iv_attr.iv
             self.host_feature_values[host_name] = tmp_host_value
             left_cols = self.filter_one_party(tmp_host_value, True, self.value_threshold)
-            left_cols = self._keep_one_feature(left_cols=left_cols, feature_values=tmp_host_value)
+            left_cols = self._keep_one_feature(left_cols=left_cols, feature_values=tmp_host_value, use_header=False)
             self.host_cols[host_name] = left_cols
 
     def get_param_obj(self):
