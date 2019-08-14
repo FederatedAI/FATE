@@ -3,131 +3,137 @@
 #### Job
 
 - command: fate_flow_client.py -f submit_job
-- endpoint: v1/job/submit
 - parameter:
-    * -c  --config: runtime conf path
-    * -d  --dsl: dsl path
+    * -c  --config: runtime conf path, Required
+    * -d  --dsl: dsl path, Required
+- description: submit job
 
 
 - command: fate_flow_client.py -f stop_job
-- endpoint: v1/job/stop
 - parameter:
-    * -j  --job_id: job id
+    * -j  --job_id: job id, Required
+- description: stop job 
 
 
 - command: fate_flow_client.py -f query_job
-- endpoint: v1/job/query
 - parameter:
-    * -j  --job_id: job id
-    * -p  --party_id: party id
-    * -r  --role : role
-    * -s  --status: status
+    * -j  --job_id: job id, Required
+    * -p  --party_id: party id, Optional
+    * -r  --role : role, Optional
+    * -s  --status: status, Optional
+- description: query information about this job
 
 
 - command: fate_flow_client.py -f job_config 
-- endpoint: v1/job/config
-    * -j  --job_id: job id
-    * -p --party_id: party id
-    * -r  --role : role
+- parameter:
+    * -j  --job_id: job id, Optional
+    * -p  --party_id: party id, Optional
+    * -r  --role : role, Optional
+    * -o  --output_path: config output path, Required
+- description: download the configuration of this job
 
 
-- command: fate_flow_client.py -f job_log 
-- endpoint: v1/job/log
-    * -j  --job_id: job id
+- command: fate_flow_client.py -f job_log
+- parameter: 
+    * -j  --job_id: job id, Optional
+    * -o  --output_path: config output path, Required
+- description: download the log of this job
 
 
 - command: fate_flow_client.py -f query_task 
-- endpoint: v1/job/task/query
-    * -j  --job_id: job id
-    * -p --party_id: party id
-    * -r  --role : role
-    * -cpn --component_name: component name
-    * -s  --status: status
+- parameter:
+    * -j  --job_id: job id, Optional
+    * -p --party_id: party id, Optional
+    * -r  --role : role, Optional
+    * -cpn --component_name: component name, Optional
+    * -s  --status: status, Optional
+- description: query information about this task
 
 
 #### Tracking
 
 - command: fate_flow_client.py -f component_parameters 
-- endpoint: v1/tracking/component/parameters
 - parameter:
-    * -j --job_id: job id
-    * -r --role: role
-    * -p --party_id: party id
-    * -cpn --component_name: component name
+    * -j --job_id: job id, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+    * -cpn --component_name: component name, Required
+- description: query the parameters of this component
 
 
 - command: fate_flow_client.py -f component_metric_all
-- endpoint: v1/tracking/component/metric/all
 - parameter:
-    * -j --job_id: job id
-    * -r --role: role
-    * -p --party_id: party id
-    * -cpn --component_name: component name
+    * -j --job_id: job id, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+    * -cpn --component_name: component name, Required
+- description: query all metric data 
 
 
 - command: fate_flow_client.py -f component_metrics
-- endpoint: v1/tracking/component/metrics
 - parameter:
-    * -j --job_id: job id
-    * -r --role: role
-    * -p --party_id: party id
-    * -cpn --component_name: component name
+    * -j --job_id: job id, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+    * -cpn --component_name: component name, Required
+- description: query metrics
 
 
 - command: fate_flow_client.py -f component_output_model
-- endpoint: v1/component/output/model
 - parameter:
-    * -j --job_id: job id
-    * -r --role: role
-    * -p --party_id: party id
-    * -cpn --component_name: component name
+    * -j --job_id: job id, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+    * -cpn --component_name: component name, Required
+- description: query this component model meta
 
 
 - command: fate_flow_client.py -f component_output_data 
-- endpoint: v1/component/output/data
 - parameter:
-    * -j --job_id: job id
-    * -r --role: role
-    * -p --party_id: party id
-    * -cpn --component_name: component name
+    * -j --job_id: job id, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+    * -cpn --component_name: component name, Required
+    * -o  --output_path: config output path, Required
+- description: download the output data of this component
 
 
 #### DataAccess
 
 - command: fate_flow_client.py -f download
-- endpoint: v1/data/download
 - parameter:
-    * -n --namespace: namespace
-    * -t  --table_name: table name
-    * -o --output_path: output path
+    * -n --namespace: namespace, Required
+    * -t --table_name: table name, Required
+    * -o --output_path: output path, Required
+- description: download data
 
 
 - command: fate_flow_client.py -f upload 
-- endpoint: v1/data/upload
 - parameter:
-    * -c --config: config path
+    * -c --config: config path, Required
+- description: upload data
 
 
 #### Table
 
 - command: fate_flow_client.py -f table_info
-- endpoint: v1/table/table_info
 - parameter:
-    * -n --namespace: namespace
-    * -t  --table_name: table name
+    * -n --namespace: namespace, Optional
+    * -t  --table_name: table name, Optional
+- description: query table information
 
 
 #### Model
 
 - command: fate_flow_client.py -f load
-- endpoint: v1/mode/load
-  
+- description: load mode
 
+  
 - command: fate_flow_client.py -f online
-- endpoint: v1/mode/online
+- description: publish_online
 
 
 - command: fate_flow_client.py -f version 
-- endpoint: v1/mode/version
 - parameter:
-    * -n --namespace: namespace
+    * -n --namespace: namespace, Required
+- description: query model version history
