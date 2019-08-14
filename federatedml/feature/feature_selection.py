@@ -349,6 +349,8 @@ class IVValueSelectFilter(FilterMethod):
         guest_binning_result = self.binning_obj.binning_result
         for col_name, iv_attr in guest_binning_result.items():
             # col_idx = self.header.index(col_name)
+            if col_name not in self.cols_dict:
+                continue
             col_idx = self.cols_dict[col_name]
             if col_idx not in self.cols:
                 continue
