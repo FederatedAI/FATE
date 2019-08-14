@@ -3,10 +3,6 @@
   "head": 1,
   "partition": 10,
   "work_mode": 0,
-  "local": {
-    "party_id": 10000,
-    "role": "guest"
-  },
-  "table_name": "hetero_feature_selection_host",
-  "namespace": "hetero_feature_selection"
+  "table_name": "breast_b",
+  "namespace": "hetero_breast"
 }

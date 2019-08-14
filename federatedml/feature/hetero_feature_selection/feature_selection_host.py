@@ -37,19 +37,20 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         self.header = []
         self.flowid = ''
         self.party_name = consts.HOST
+        self.fed_filter_count = 0
 
     def fit(self, data_instances):
+        LOGGER.info("Start Hetero Selection Fit and transform.")
+
         self._abnormal_detection(data_instances)
         self._init_cols(data_instances)
-        LOGGER.debug("host data count: {}, host header: {}".format(data_instances.count(), self.header))
         LOGGER.debug("filter methods: {}".format(self.filter_methods))
         for method in self.filter_methods:
             self.filter_one_method(data_instances, method)
-            print("After method: {}, left_cols: {}".format(method, self.left_cols))
-
-            # self._renew_left_col_names()
 
         new_data = self._transfer_data(data_instances)
+        LOGGER.info("Finish Hetero Selection Fit and transform.")
+
         return new_data
 
     def transform(self, data_instances):
@@ -81,7 +82,7 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             variance_coe_param = self.model_param.variance_coe_param
-            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param, self.left_cols, self.static_obj)
+            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param, self.cols, self.static_obj)
             new_left_cols = coe_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
@@ -95,7 +96,7 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.UNIQUE_VALUE:
             unique_param = self.model_param.unique_param
-            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.left_cols, self.static_obj)
+            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.cols, self.static_obj)
             new_left_cols = unique_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
@@ -108,7 +109,7 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.OUTLIER_COLS:
             outlier_param = self.model_param.outlier_param
-            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.left_cols)
+            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.cols)
             new_left_cols = outlier_filter.fit(data_instances)
             self._renew_final_left_cols(new_left_cols)
 
@@ -124,9 +125,12 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         left_cols = federation.get(name=self.transfer_variable.result_left_cols.name,
                                    tag=result_cols_id,
                                    idx=0)
-        LOGGER.info("Received left columns from guest")
+        LOGGER.info("Received left columns from guest, received left_cols: {}".format(left_cols))
         # self.left_cols = left_cols
+        LOGGER.debug("Before renew: self.left_cols: {}".format(self.left_cols))
         self._renew_final_left_cols(left_cols)
+        LOGGER.debug("After renew: self.left_cols: {}".format(self.left_cols))
+
         # self._renew_left_col_names()
 
         host_cols = list(left_cols.keys())
@@ -152,6 +156,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
     def _send_select_cols(self, filter_name):
         host_select_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_select_cols,
                                                                          filter_name)
+
+        LOGGER.debug("Before send select cols, self.left_cols: {}".format(self.left_cols))
         federation.remote(self.left_cols,
                           name=self.transfer_variable.host_select_cols.name,
                           tag=host_select_cols_id,

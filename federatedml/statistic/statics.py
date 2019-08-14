@@ -24,6 +24,7 @@ from federatedml.feature.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -76,10 +77,15 @@ class SummaryStatistics(object):
     @property
     def variance(self):
         mean = self.mean
-        return self.sum_square / self.count - 2 * self.sum * mean / self.count + mean ** 2
+        variance = self.sum_square / self.count - 2 * self.sum * mean / self.count + mean ** 2
+        if math.fabs(variance) < consts.FLOAT_ZERO:
+            return 0.0
+        return variance
 
     @property
     def std_variance(self):
+        if math.fabs(self.variance) < consts.FLOAT_ZERO:
+            return 0.0
         return math.sqrt(self.variance)
 
 
