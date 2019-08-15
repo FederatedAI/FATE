@@ -148,6 +148,5 @@ export default function(data) {
   //     dataList[i - 1].symbolSize = [120, 20]
   //   }
   // }
-  console.log(dataList, linksList)
   return { dataList, linksList }
 }
