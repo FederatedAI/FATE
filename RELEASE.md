@@ -1,3 +1,10 @@
+# Release 0.3.2
+## Bug Fixes
+* Adjust the Logic of Online Service Module
+* Adjust the log format
+* Replace the grpc connection pool of the online service module
+* Improving Model Processing Details
+
 # Release 0.3.1
 ## Bug Fixes
 * fix feature scale bugs in v0.3
