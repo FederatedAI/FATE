@@ -36,7 +36,7 @@ ERROR_STATES = [federation_pb2.CANCELLED, federation_pb2.ERROR]
 
 
 async def _async_receive(stub, transfer_meta):
-    LOGGER.debug("start receiving {}".format(transfer_meta))
+    #LOGGER.debug("start receiving {}".format(transfer_meta))
     resp_meta = stub.recv(transfer_meta)
     while resp_meta.transferStatus != federation_pb2.COMPLETE:
         if resp_meta.transferStatus in ERROR_STATES:
@@ -44,19 +44,19 @@ async def _async_receive(stub, transfer_meta):
                 "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
         resp_meta = stub.checkStatusNow(resp_meta)
         await asyncio.sleep(1)
-    LOGGER.info("finish receiving {}".format(resp_meta))
+    #LOGGER.info("finish receiving {}".format(resp_meta))
     return resp_meta
 
 
 def _thread_receive(receive_func, check_func, transfer_meta):
-    LOGGER.debug("start receiving {}".format(transfer_meta))
+    #LOGGER.debug("start receiving {}".format(transfer_meta))
     resp_meta = receive_func(transfer_meta)
     while resp_meta.transferStatus != federation_pb2.COMPLETE:
         if resp_meta.transferStatus in ERROR_STATES:
             raise IOError(
                 "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
         resp_meta = check_func(resp_meta)
-    LOGGER.info("finish receiving {}".format(resp_meta))
+    #LOGGER.info("finish receiving {}".format(resp_meta))
     return resp_meta
 
 
