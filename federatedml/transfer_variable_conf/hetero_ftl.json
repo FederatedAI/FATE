@@ -1,0 +1,188 @@
+{
+  "HeteroFTLTransferVariable": {
+    "paillier_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "batch_data_index": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_component_list": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_component_list": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_precomputed_comp_list": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_precomputed_comp_list": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypt_guest_gradient": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "decrypt_guest_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "encrypt_host_gradient": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "decrypt_host_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypt_loss": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "is_encrypted_ftl_stopped": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "is_stopped": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "batch_size": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "batch_num": {
+      "src": "guest",
+      "dst": [
+        "arbiter",
+        "host"
+      ]
+    },
+    "host_prob": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "pred_prob": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "encrypt_prob": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "decrypt_prob": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_sample_indexes": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_sample_indexes": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+
+    "guest_public_key": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_public_key": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_enc_guest_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_host_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_guest_gradients": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "masked_dec_host_gradients": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_enc_loss": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "masked_dec_loss": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "is_decentralized_enc_ftl_stopped": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

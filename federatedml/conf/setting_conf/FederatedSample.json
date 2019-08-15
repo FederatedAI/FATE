@@ -1,0 +1,13 @@
+{
+    "module_path":  "federatedml/feature",
+    "default_runtime_conf": "sample_param.json",
+    "param_class" : "federatedml/param/sample_param.py/SampleParam",
+    "need_deploy": false,
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "sampler.py/Sampler"
+        }
+    }
+}

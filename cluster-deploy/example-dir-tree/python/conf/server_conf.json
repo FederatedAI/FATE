@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"roll": {
+			"host": "localhost",
+			"port": 8011
+		},
+		"federation": {
+			"host": "localhost",
+			"port": 9394
+		}
+	}
+}

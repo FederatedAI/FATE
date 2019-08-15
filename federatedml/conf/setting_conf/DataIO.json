@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/util",
+    "default_runtime_conf": "data_io_param.json",
+    "param_class" : "federatedml/param/dataio_param.py/DataIOParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "data_io.py/DataIO"
+        }
+    }
+}

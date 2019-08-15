@@ -1,0 +1,16 @@
+{
+  "HeteroWorkFlowTransferVariable": {
+    "train_data": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "test_data": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

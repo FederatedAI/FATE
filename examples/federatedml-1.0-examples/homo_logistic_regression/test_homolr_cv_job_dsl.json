@@ -1,0 +1,28 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "homo_lr_0": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "dataio_0.train"
+                    ]
+                }
+            }
+        }
+    }
+}

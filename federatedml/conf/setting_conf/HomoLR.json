@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/logistic_regression/homo_logsitic_regression",
+    "default_runtime_conf": "logistic_regression_param.json",
+    "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "homo_lr_guest.py/HomoLRGuest"
+        },
+        "host":
+        {
+            "program": "homo_lr_host.py/HomoLRHost"
+        },
+        "arbiter":
+        {
+            "program": "homo_lr_arbiter.py/HomoLRArbiter"
+        }
+    }
+}

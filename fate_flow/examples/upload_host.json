@@ -1,0 +1,8 @@
+{
+  "file": "examples/data/breast_a.csv",
+  "head": 1,
+  "partition": 10,
+  "work_mode": 0,
+  "namespace": "fate_flow_test_breast",
+  "table_name": "breast_a"
+}
