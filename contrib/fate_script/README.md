@@ -325,7 +325,7 @@ The file `HeteroLR.fml` is the FATE Script file written by the developer.
 
 **Run cluster Version**
 
-In cluster mode, developer must specified the host IP which executes the FATE Script job of specific role matches the configuration of route.json. Take the route.json mentioned above as example, role H and role D belongs to the cluster a, hence, FATE Script job of role H , role R and role D must be executed on the hosts of cluster a(IP: `123.12.234.14`， `123.12.234.19` and `123.12.234.23`). Same as the role A ,G and E.
+In cluster mode, developer must specified the host IP which executes the FATE Script job of specific role matches the configuration of route.json. Take the route.json mentioned above as example, role H and role D belongs to the cluster a, hence, FATE Script job of role H , role R and role D must be executed on the hosts of cluster a. Same as the role A ,G and E.
 Start the FATE Script job through following steps:
 
 > `cd $FATE_install_path/contrib/fate_script/`
