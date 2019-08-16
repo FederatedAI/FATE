@@ -30,27 +30,60 @@
         }
       },
       "dataio_0": {
-        "with_label": [
-          true
-        ],
-        "label_idx": [
-          0
-        ],
-        "label_type": [
-          "int"
-        ],
-        "output_format": [
-          "dense"
-        ],
-        "missing_fill": [
-          true
-        ],
-        "outlier_replace": [
-          true
-        ]
+        "with_label": [true],
+        "label_idx": [0],
+        "label_type": ["int"],
+        "output_format": ["dense"],
+        "missing_fill": [true],
+        "outlier_replace": [true]
       },
       "feature_scale_0": {
-          "method": ["min_max_scale"]
+        "method": ["min_max_scale"]
+      },
+      "hetero_feature_binning_0": {
+        "method": ["quantile"],
+        "compress_thres": [10000],
+        "head_size": [10000],
+        "error": [0.001],
+        "bin_num": [10],
+        "cols": [-1],
+        "adjustment_factor": [0.5],
+        "local_only": [false],
+        "transform_param": {
+          "transform_cols": [-1],
+          "transform_type": ["bin_num"]
+        }
+      },
+      "hetero_feature_selection_0": {
+        "select_cols": [-1],
+        "filter_methods": [[
+          "unique_value",
+          "iv_value_thres",
+          "coefficient_of_variation_value_thres",
+          "iv_percentile",
+          "outlier_cols"
+        ]],
+        "local_only": [false],
+        "unique_param": {
+          "eps": [1e-6]
+        },
+        "iv_value_param": {
+          "value_threshold": [1.0]
+        },
+        "iv_percentile_param": {
+          "percentile_threshold": [0.9]
+        },
+        "variance_coe_param": {
+          "value_threshold": [0.3]
+        },
+        "outlier_param": {
+          "percentile": [0.95],
+          "upper_threshold": [10]
+        }
+      },
+      "evaluation_0": {
+        "eval_type": ["binary"],
+        "pos_label": [1]
       }
     },
     "host": {
@@ -65,59 +98,78 @@
         }
       },
       "dataio_0": {
-        "with_label": [
-          false
-        ],
-        "output_format": [
-          "dense"
-        ],
-        "outlier_replace": [
-          true
-        ]
+        "with_label": [false],
+        "output_format": ["dense"],
+        "outlier_replace": [true]
       },
       "feature_scale_0": {
-          "method": ["standard_scale"],
-          "need_run": [false]
+        "method": ["standard_scale"],
+        "need_run": [false]
+      },
+      "hetero_feature_binning_0": {
+        "method": ["quantile"],
+        "compress_thres": [10000],
+        "head_size": [10000],
+        "error": [0.001],
+        "bin_num": [10],
+        "cols": [-1],
+        "adjustment_factor": [0.5],
+        "local_only": [false],
+        "transform_param": {
+          "transform_cols": [-1],
+          "transform_type": ["bin_num"]
+        }
+      },
+      "hetero_feature_selection_0": {
+        "select_cols": [-1],
+        "filter_methods": [[
+          "unique_value",
+          "iv_value_thres",
+          "coefficient_of_variation_value_thres",
+          "iv_percentile",
+          "outlier_cols"
+        ]],
+        "local_only": [false],
+        "unique_param": {
+          "eps": [1e-6]
+        },
+        "iv_value_param": {
+          "value_threshold": [1.0]
+        },
+        "iv_percentile_param": {
+          "percentile_threshold": [0.9]
+        },
+        "variance_coe_param": {
+          "value_threshold": [0.3]
+        },
+        "outlier_param": {
+          "percentile": [0.95],
+          "upper_threshold": [10]
+        }
+      },
+      "evaluation_0": {
+        "need_run": [false]
+      }
+    },
+    "arbiter": {
+      "dataio_0": {
+        "need_run": [false]
+      },
+      "feature_scale_0": {
+        "need_run": [false]
+      },
+      "hetero_feature_binning_0": {
+        "need_run": [false]
+      },
+      "hetero_feature_selection_0": {
+        "need_run": [false]
+      },
+      "evaluation_0": {
+        "need_run": [false]
       }
     }
   },
   "algorithm_parameters": {
-    "hetero_feature_binning_0": {
-      "method": "quantile",
-      "compress_thres": 10000,
-      "head_size": 10000,
-      "error": 0.001,
-      "bin_num": 10,
-      "cols": -1,
-      "adjustment_factor": 0.5,
-      "local_only": false,
-      "transform_param": {
-        "transform_cols": -1,
-        "transform_type": "bin_num"
-      }
-    },
-    "hetero_feature_selection_0": {
-      "select_cols": -1,
-      "filter_methods": ["unique_value", "iv_value_thres",
-        "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
-      "local_only": false,
-      "unique_param": {
-        "eps": 1e-6
-      },
-      "iv_value_param": {
-        "value_threshold": 1.0
-      },
-      "iv_percentile_param": {
-        "percentile_threshold": 0.9
-      },
-      "variance_coe_param": {
-        "value_threshold": 0.3
-      },
-      "outlier_param": {
-        "percentile": 0.95,
-        "upper_threshold": 10
-      }
-    },
     "hetero_lr_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",
@@ -139,10 +191,6 @@
           "eval_type": "binary"
         }
       }
-    },
-    "evaluation_0": {
-      "eval_type": "binary",
-      "pos_label": 1
     }
   }
 }
