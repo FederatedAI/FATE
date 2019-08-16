@@ -45,7 +45,7 @@ def prettify(response, verbose=True):
     return response
 
 
-def call_fun(func, dsl_path, config_data, config_path):
+def call_fun(func, config_data, dsl_path, config_path):
     ip = server_conf.get(SERVERS).get(ROLE).get('host')
     http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
     local_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
@@ -179,7 +179,6 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         config_data = {}
-        dsl_data = {}
         dsl_path = args.dsl
         config_path = args.config
         if args.config:
@@ -193,7 +192,7 @@ if __name__ == "__main__":
                 config_data['local']['party_id'] = args.party_id
             if args.role:
                 config_data['local']['role'] = args.role
-        response = call_fun(args.function, dsl_path, config_data, config_path)
+        response = call_fun(args.function, config_data, dsl_path, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
         response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
