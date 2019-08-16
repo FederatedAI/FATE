@@ -63,21 +63,21 @@ def read_component_model(component_model_key, party_model_id, model_version):
                 else:
                     raise Exception(
                         'can not found this protobuffer class: {}'.format(model_class_map.get(storage_key, '')))
-                make_proto_object(proto_object=buffer_object, proto_object_serialized_bytes=buffer_object_bytes)
+                parse_proto_object(proto_object=buffer_object, proto_object_serialized_bytes=buffer_object_bytes)
                 model_buffers[buffer_name] = buffer_object
     return model_buffers
 
 
-def make_proto_object(proto_object, proto_object_serialized_bytes):
+def parse_proto_object(proto_object, proto_object_serialized_bytes):
     try:
         proto_object.ParseFromString(proto_object_serialized_bytes)
-        stat_logger.info('make {} proto object normal'.format(type(proto_object).__name__))
+        stat_logger.info('parse {} proto object normal'.format(type(proto_object).__name__))
     except Exception as e1:
         try:
             fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
             fill_message.ParseFromString(proto_object_serialized_bytes)
             proto_object.ParseFromString(bytes())
-            stat_logger.info('make {} proto object use empty string'.format(type(proto_object).__name__))
+            stat_logger.info('parse {} proto object with default values'.format(type(proto_object).__name__))
         except Exception as e2:
             stat_logger.exception(e2)
             raise e1
