@@ -1,10 +1,38 @@
 role=${1}
 task=${2}
+
+if [ ! ${role} ];then
+    echo "Lack of parameter role, for host user, usage:"
+    echo "sh run.sh host fast(or normal)"
+    echo "Guest user usage: "
+    echo "sh run.sh guest fast(or normal) host_table_name host_namespace"
+    echo "where host_table_name & host_namespace are provided by host user"
+    exit 0
+fi
+
+if [ ! ${task} ];then
+    echo "Lack of parameter mode, for host user, usage: sh run.sh host fast(or normal)"
+    echo "sh run.sh host fast(or normal)"
+    echo "Guest user usage: "
+    echo "sh run.sh guest fast(or normal) host_table_name host_namespace"
+    echo "where host_table_name & host_namespace are provided by host user"
+    exit 0
+fi
+
 if [ ${role} == "guest" ];then
     echo "role is guest"
     party='b'
     host_name=${3}
     host_namespace=${4}
+
+    if [[ ! ${host_name} ]] || [[ ! ${host_namespace} ]];then
+        echo "Guest user usage: "
+        echo "sh run.sh guest fast(or normal) host_table_name host_namespace"
+        echo "where host_table_name & host_namespace are provided by host user"
+        exit 0
+    fi
+
+
 elif [ ${role} == "host" ];then
     echo "role is host"
     party='a'
@@ -25,7 +53,6 @@ else
 fi
 
 if [ ${role} == "host" ];then
-    cd ../../arch/task_manager/
     python $basepath/run_task.py upload $role ${data}
     sleep 2
     echo "finish upload intersect data"

@@ -201,9 +201,9 @@ def parameter_checker(args):
     if args.work_mode is not None:
         if args.work_mode not in ['0', '1']:
             raise ValueError('Unsupported Work mode parameter {} should be 0 or 1'.format(args.work_mode))
-        work_mode = int(args.work_mode)
+        this_work_mode = int(args.work_mode)
     else:
-        work_mode = 0
+        this_work_mode = 0
 
     if args.algorithm is not None:
         if args.algorithm not in ALGORITHM_LIST:
@@ -215,10 +215,10 @@ def parameter_checker(args):
             raise ValueError('Unsupported role parameter {} should be one of: {}'.format(
                 args.work_mode, [GUEST, HOST]))
 
-    if work_mode == 1 and args.role is None:
+    if this_work_mode == 1 and args.role is None:
         raise ValueError("In cluster version please indicate role")
 
-    return work_mode
+    return this_work_mode
 
 
 def cluster_host(args):

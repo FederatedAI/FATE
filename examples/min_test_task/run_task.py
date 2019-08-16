@@ -49,7 +49,7 @@ STUCK = 'stuck'
 MAX_INTERSECT_TIME = 600
 MAX_TRAIN_TIME = 3600
 RETRY_JOB_STATUS_TIME = 5
-STATUS_CHECKER_TIME = 5
+STATUS_CHECKER_TIME = 10
 
 TEST_TASK = {'TEST_UPLOAD': 2, 'TEST_INTERSECT': 2, 'TEST_TRAIN': 2}
 
@@ -186,7 +186,7 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
         task_type, job_id, party_id, role, component_name
     ))
 
-    print("obtain_component_output stdout:" + str(stdout))
+    # print("obtain_component_output stdout:" + str(stdout))
     stdout = json.loads(stdout)
     return stdout
 
@@ -224,22 +224,8 @@ def job_status_checker(jobid, component_name):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     stdout, stderr = subp.communicate()
-    # subp.wait()
-    # print("Current subp status: {}".format(subp.returncode))
     stdout = stdout.decode("utf-8")
-    # print("Job_status_checker Stdout is : {}".format(stdout))
     stdout = json.loads(stdout)
-    # status = stdout["retcode"]
-    # if status != 0:
-    #     if check_counter >= 60:
-    #         raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-    #     print("Current retry times: {}".format(check_counter))
-    #     time.sleep(20)
-    #     check_counter += 1
-    # else:
-    #     break
-    #     #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-
     return stdout
 
 
@@ -247,8 +233,7 @@ def upload(config_file, self_party_id, role, data_file):
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
     json_info["file"] = data_file
-    json_info["local"]["party_id"] = self_party_id
-    json_info["local"]["role"] = role
+
     json_info['work_mode'] = work_mode
 
     time_str = get_timeid()
@@ -270,8 +255,6 @@ def download(config_file, self_party_id, this_role, this_table_name, this_table_
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
 
-    json_info['local']['party_id'] = self_party_id
-    json_info['local']['role'] = this_role
     json_info['work_mode'] = work_mode
     json_info['table_name'] = this_table_name
     json_info['namespace'] = this_table_namespace
@@ -290,27 +273,6 @@ def task_status_checker(jobid, component_name, task_name):
 
     if status != 0:
         return RUNNING
-
-    # retry_counter = 0
-
-    # Wait for task start
-    # while status != 0:
-    #     time.sleep(STATUS_CHECKER_TIME)
-    #     # if retry_counter % 5 == 0:
-    #     print("[Job_Status_checker] task: {}, check jobid:{}, status: {},"
-    #           " current retry counter:{}".format(task_name, jobid, status, retry_counter))
-    #     stdout = job_status_checker(jobid, component_name)
-    #     status = stdout["retcode"]
-    #     retry_counter += 1
-    #     # end_time = time.time()
-    #     if retry_counter > 5:
-    #         print("[Job_Status_checker] task: {} retry times exceed {}, check jobid failed".format(
-    #             task_name, retry_counter))
-    #         return FAIL
-            # if end_time - start_time >= max_check_time:
-            #     print("[Job_Status_checker] task: {} wait time exceed {}, check jobid failed".format(
-            #         task_name, max_check_time))
-            #     return FAIL
 
     task_status = []
     check_data = stdout["data"]

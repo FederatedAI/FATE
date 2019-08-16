@@ -200,4 +200,6 @@ Then you are supposed to see the above output. You can view the job on the url a
 This is just uploading data
 
 2. Guest party:
-> python quick_run.py -w 1 -r guest -gid guest_id -hid host_id -aid arbiter_id
+> python quick_run.py -w 1 -r guest -gid guest_id -hid host_id -aid arbiter_id -a algorithm
+
+The config files that generated is stored in a new created folder named **user_config**
