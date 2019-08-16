@@ -167,7 +167,7 @@ def component_parameters():
                             output_parameters[p_k] = p_v
                     return get_json_result(retcode=0, retmsg='success', data=output_parameters)
         else:
-            return get_json_result(retcode=102, retmsg='can not found this component parameters')
+            return get_json_result(retcode=0, retmsg='can not found this component parameters')
     else:
         return get_json_result(retcode=101, retmsg='can not found this job')
 
