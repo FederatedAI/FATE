@@ -39,9 +39,11 @@ const curveFormatter = (xName, yName, legendData, thresholdsArr = []) => {
         if (Array.isArray(thresholdsArr[obj.seriesIndex])) {
           xValue = thresholdsArr[obj.seriesIndex][obj.dataIndex]
         } else {
-          xValue = thresholdsArr[obj.dataIndex] || 0
+          xValue = thresholdsArr[obj.dataIndex]
         }
-        str += `${xName}(${obj.seriesName}): ${xValue}<br>`
+        if (xValue || xValue === 0) {
+          str += `${xName}(${obj.seriesName}): ${xValue}<br>`
+        }
         const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
         str += `${yName}(${obj.seriesName}): ${value}<br>`
       }
@@ -178,8 +180,10 @@ export default function(
       outputData.tooltip.formatter = (params) => {
         let str = ''
         params.forEach(obj => {
-          const xValue = thresholds[obj.dataIndex] || 0
-          str += `Threshold: ${xValue}<br>`
+          const xValue = thresholds[obj.dataIndex]
+          if (xValue || xValue === 0) {
+            str += `Threshold: ${xValue}<br>`
+          }
           str += `Tpr(${obj.seriesName}): ${obj.data[1]}<br>`
           str += `Fpr(${obj.seriesName}): ${obj.axisValue}<br>`
         })
@@ -310,8 +314,10 @@ export default function(
               // console.log(item.legendData)
               params.forEach((obj, index) => {
                 if (item.legendData[index].isActive !== false) {
-                  const xValue = item.thresholdsArr[index][obj.dataIndex] || 0
-                  str += `Threshold(${obj.seriesName}): ${xValue}<br>`
+                  const xValue = item.thresholdsArr[index][obj.dataIndex]
+                  if (xValue || xValue === 0) {
+                    str += `Threshold(${obj.seriesName}): ${xValue}<br>`
+                  }
                   str += `Tpr(${obj.seriesName}): ${obj.data[1]}<br>`
                   str += `Fpr(${obj.seriesName}): ${obj.axisValue}<br>`
                 }
@@ -400,8 +406,10 @@ export default function(
       let str = ''
       // console.log(params)
       params.forEach(obj => {
-        const thresholdValue = thresholds[obj.dataIndex] || ''
-        str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
+        const thresholdValue = thresholds[obj.dataIndex]
+        if (thresholdValue || thresholdValue === 0) {
+          str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
+        }
         const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
         str += `Precision(${obj.seriesName}):${value}<br>`
         str += `Recall(${obj.seriesName}):${obj.axisValue}<br>`
@@ -430,8 +438,10 @@ export default function(
               // console.log(params),
               params.forEach((obj, index) => {
                 if (item.legendData[index].isActive !== false) {
-                  const thresholdValue = item.thresholdsArr[index][obj.dataIndex] || ''
-                  str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
+                  const thresholdValue = item.thresholdsArr[index][obj.dataIndex]
+                  if (thresholdValue || thresholdValue === 0) {
+                    str += `Thresholds(${obj.seriesName}): ${thresholdValue}<br>`
+                  }
                   const value = Array.isArray(obj.data) ? obj.data[1] : obj.data
                   str += `Precision(${obj.seriesName}):${value}<br>`
                   str += `Recall(${obj.seriesName}):${obj.axisValue}<br>`
@@ -576,7 +586,10 @@ export default function(
               item.data.KSFormaterArr.forEach((ksObj, ksIndex) => {
                 if (item.legendData[ksIndex].isActive !== false) {
                   // console.log(thresholds, params[0])
-                  str += `Threshold: (${ksObj.pairType})${ksObj.thresholds[params[0].dataIndex]}<br>`
+                  const thresholdValue = ksObj.thresholds[params[0].dataIndex]
+                  if (thresholdValue || thresholdValue === 0) {
+                    str += `Threshold: (${ksObj.pairType})${thresholdValue}<br>`
+                  }
                   let ksflag = false
                   let v1 = 0
                   let v2 = 0

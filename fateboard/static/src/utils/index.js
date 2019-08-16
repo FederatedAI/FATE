@@ -32,7 +32,7 @@ export function parseTime(time, cFormat) {
     let value = formatObj[key]
     // Note: getDay() returns 0 on Sunday
     if (key === 'a') {
-      return ['日', '一', '二', '三', '四', '五', '六'][value]
+      return [][value]
     }
     if (result.length > 0 && value < 10) {
       value = '0' + value
@@ -120,14 +120,14 @@ export function formatTime(time, option) {
   const diff = (now - d) / 1000
 
   if (diff < 30) {
-    return '刚刚'
+    return ''
   } else if (diff < 3600) {
     // less 1 hour
-    return Math.ceil(diff / 60) + '分钟前'
+    return Math.ceil(diff / 60) + ''
   } else if (diff < 3600 * 24) {
-    return Math.ceil(diff / 3600) + '小时前'
+    return Math.ceil(diff / 3600) + ''
   } else if (diff < 3600 * 24 * 2) {
-    return '1天前'
+    return ''
   }
   if (option) {
     return parseTime(time, option)
@@ -135,18 +135,17 @@ export function formatTime(time, option) {
     return (
       d.getMonth() +
       1 +
-      '月' +
+      '' +
       d.getDate() +
-      '日' +
+      '' +
       d.getHours() +
-      '时' +
+      '' +
       d.getMinutes() +
-      '分'
+      ''
     )
   }
 }
 
-// 格式化时间
 export function getQueryObject(url) {
   url = url == null ? window.location.href : url
   const search = url.substring(url.lastIndexOf('?') + 1)
@@ -282,7 +281,7 @@ export function toggleClass(element, className) {
 
 export const pickerOptions = [
   {
-    text: '今天',
+    text: 'today',
     onClick(picker) {
       const end = new Date()
       const start = new Date(new Date().toDateString())
@@ -291,7 +290,7 @@ export const pickerOptions = [
     }
   },
   {
-    text: '最近一周',
+    text: '',
     onClick(picker) {
       const end = new Date(new Date().toDateString())
       const start = new Date()
@@ -300,7 +299,7 @@ export const pickerOptions = [
     }
   },
   {
-    text: '最近一个月',
+    text: '',
     onClick(picker) {
       const end = new Date(new Date().toDateString())
       const start = new Date()
@@ -309,7 +308,7 @@ export const pickerOptions = [
     }
   },
   {
-    text: '最近三个月',
+    text: '',
     onClick(picker) {
       const end = new Date(new Date().toDateString())
       const start = new Date()
@@ -339,7 +338,6 @@ export function debounce(func, wait, immediate) {
       timeout = setTimeout(later, wait - last)
     } else {
       timeout = null
-      // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
       if (!immediate) {
         result = func.apply(context, args)
         if (!timeout) context = args = null
@@ -351,7 +349,6 @@ export function debounce(func, wait, immediate) {
     context = this
     timestamp = +new Date()
     const callNow = immediate && !timeout
-    // 如果延时不存在，重新设定延时
     if (!timeout) timeout = setTimeout(later, wait)
     if (callNow) {
       result = func.apply(context, args)
