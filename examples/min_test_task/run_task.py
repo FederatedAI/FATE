@@ -112,6 +112,7 @@ def exec_task(config_dict, task, role, dsl_path=None):
 
 def obtain_component_output(jobid, party_id, role, component_name, output_type='data'):
     task_type = 'component_output_data'
+    data_dir = home_dir + '/user_data'
     if output_type == 'data':
         task_type = 'component_output_data'
         cmd = ["python",
@@ -127,7 +128,7 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                "-cpn",
                component_name,
                "-o",
-               home_dir
+               data_dir
                ]
     elif output_type == 'model':
         task_type = 'component_output_model'
@@ -229,7 +230,7 @@ def job_status_checker(jobid, component_name):
     return stdout
 
 
-def upload(config_file, self_party_id, role, data_file):
+def upload(config_file, role, data_file):
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
     json_info["file"] = data_file
@@ -250,23 +251,7 @@ def upload(config_file, self_party_id, role, data_file):
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def download(config_file, self_party_id, this_role, this_table_name, this_table_namespace):
-    # write new json
-    with open(config_file, 'r', encoding='utf-8') as f:
-        json_info = json.loads(f.read())
-
-    json_info['work_mode'] = work_mode
-    json_info['table_name'] = this_table_name
-    json_info['namespace'] = this_table_namespace
-
-    stdout = exec_task(json_info, "download", this_role)
-    parse_result = parse_exec_task(stdout)
-    print("[Task Download] finish download, table_name:{}, namespace:{}".format(
-        parse_result["table_name"], parse_result["namespace"]))
-    return parse_result["table_name"], parse_result["namespace"]
-
-
-def task_status_checker(jobid, component_name, task_name):
+def task_status_checker(jobid, component_name):
     stdout = job_status_checker(jobid, component_name)
     # check_data = stdout["data"]
     status = stdout["retcode"]
@@ -323,7 +308,7 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
         time.sleep(STATUS_CHECKER_TIME)
         print("[Intersect] Start intersect job status checker, status counter: {},"
               " jobid:{}".format(workflow_job_status_counter, jobid))
-        cur_job_status = task_status_checker(jobid, component_name='intersect_0', task_name="Intersect")
+        cur_job_status = task_status_checker(jobid, component_name='intersect_0')
         end = time.time()
         wait_time = end - start
         print("[Intersect] cur job status:{}, wait_time: {}".format(cur_job_status, wait_time))
@@ -379,7 +364,7 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     start = time.time()
     while cur_job_status == RUNNING or cur_job_status == START:
         time.sleep(STATUS_CHECKER_TIME)
-        cur_job_status = task_status_checker(jobid, evaluation_component_name, task_name='Train and Evaluation')
+        cur_job_status = task_status_checker(jobid, evaluation_component_name)
         end = time.time()
         wait_time = end - start
         print("[Train] cur job status:{}, jobid:{}, wait_time: {}".format(cur_job_status, jobid, wait_time))
@@ -435,7 +420,7 @@ if __name__ == "__main__":
         if not os.path.exists(data_file):
             raise ValueError("file:{} is not found".format(data_file))
 
-        table_name, table_namespace = upload(upload_config_file, self_party_id, role, data_file)
+        table_name, table_namespace = upload(upload_config_file, role, data_file)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
         time.sleep(6)
@@ -463,7 +448,7 @@ if __name__ == "__main__":
 
         # Upload Data
         print("Start Upload Data")
-        table_name, table_namespace = upload(upload_config_file, guest_id, 'guest', data_file)
+        table_name, table_namespace = upload(upload_config_file, 'guest', data_file)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
         time.sleep(6)
