@@ -409,8 +409,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_meta.tree_meta.CopyFrom(self.tree_meta)
         model_meta.learning_rate = self.learning_rate 
         model_meta.num_trees = self.num_trees 
-        model_meta.quantile_meta.CopyFrom(QuantileMeta(quantile_method=self.quantile_method,
-                                                       bin_num=self.bin_num))
+        model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
         #modelmeta.objective.CopyFrom(ObjectiveParamMeta(objective=self.objective_param.objective, param=self.objective_param.params))
         model_meta.objective_meta.CopyFrom(ObjectiveMeta(objective=self.objective_param.objective,
                                                          param=self.objective_param.params))
@@ -429,7 +428,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.tree_meta = model_meta.tree_meta
         self.learning_rate = model_meta.learning_rate
         self.num_trees = model_meta.num_trees
-        self.quantile_method = model_meta.quantile_meta.quantile_method
         self.bin_num = model_meta.quantile_meta.bin_num
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)

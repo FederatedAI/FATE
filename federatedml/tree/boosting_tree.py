@@ -48,7 +48,6 @@ class BoostingTree(ModelBase):
         self.n_iter_no_change = None
         self.encrypt_param = None
         self.tol = 0.0
-        self.quantile_method = None
         self.bin_num = None
         self.calculated_mode = None
         self.re_encrypted_rate = None
@@ -70,7 +69,6 @@ class BoostingTree(ModelBase):
         self.n_iter_no_change = boostingtree_param.n_iter_no_change
         self.encrypt_param = boostingtree_param.encrypt_param
         self.tol = boostingtree_param.tol
-        self.quantile_method = boostingtree_param.quantile_method
         self.bin_num = boostingtree_param.bin_num
         self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
         self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
