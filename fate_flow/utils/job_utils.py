@@ -31,7 +31,7 @@ from arch.api.utils.core import json_loads, json_dumps
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, WORK_MODE
 from fate_flow.utils import detect_utils
 
 
@@ -78,7 +78,7 @@ def check_config(config: typing.Dict, required_parameters: typing.List):
 
 
 def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
-    detect_utils.check_config(runtime_conf.get('job_parameters', {}), ['work_mode'])
+    detect_utils.check_config(runtime_conf.get('job_parameters', {}), [('work_mode', WORK_MODE)])
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):
