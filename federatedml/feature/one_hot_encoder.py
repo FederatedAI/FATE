@@ -210,7 +210,8 @@ class OneHotEncoder(ModelBase):
         data_instance.schema = self.schema
 
     def _get_meta(self):
-        meta_protobuf_obj = onehot_meta_pb2.OneHotMeta(cols=self.cols)
+        meta_protobuf_obj = onehot_meta_pb2.OneHotMeta(cols=self.cols,
+                                                       need_run=self.need_run)
         return meta_protobuf_obj
 
     def _get_param(self):

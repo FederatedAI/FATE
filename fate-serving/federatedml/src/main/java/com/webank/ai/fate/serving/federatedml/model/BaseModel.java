@@ -12,6 +12,7 @@ import com.webank.ai.fate.serving.core.bean.Context;
 import com.webank.ai.fate.serving.core.bean.Dict;
 import com.webank.ai.fate.serving.core.bean.GrpcConnectionPool;
 import com.webank.ai.fate.serving.core.manager.CacheManager;
+import com.webank.ai.fate.serving.core.utils.ProtobufUtils;
 import io.grpc.ManagedChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,10 @@ public abstract class BaseModel {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public abstract int initModel(byte[] protoMeta, byte[] protoParam);
+
+    protected <T> T parseModel(com.google.protobuf.Parser<T> protoParser, byte[] protoString) throws com.google.protobuf.InvalidProtocolBufferException {
+        return ProtobufUtils.parseProtoObject(protoParser, protoString);
+    }
 
     public abstract Map<String, Object> predict(Context  context,List<Map<String, Object> > inputData, Map<String, Object> predictParams);
 

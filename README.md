@@ -36,7 +36,6 @@ There are a few algorithms under [examples/](./examples) folder, try them out!
 
 FATE provides a tar package with basic components to enable users to run FATE in a stand-alone environment, in which users are required to install dependent components on their own.please refer to manual deploy guide at [manual-deploy](./standalone-deploy/Manual). 
 
-
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 

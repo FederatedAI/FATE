@@ -19,7 +19,7 @@ public abstract class HeteroLR extends BaseModel {
     public int initModel(byte[] protoMeta, byte[] protoParam) {
         LOGGER.info("start init HeteroLR class");
         try {
-            LRModelParam lrModelParam = LRModelParam.parseFrom(protoParam);
+            LRModelParam lrModelParam = this.parseModel(LRModelParam.parser(), protoParam);
 
             this.weight = lrModelParam.getWeightMap();
             this.intercept = lrModelParam.getIntercept();

@@ -1,5 +1,5 @@
 {
-    "components" : {
+    "components": {
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -14,24 +14,30 @@
                 "model": ["dataio"]
             }
          },
-        "homo_lr_0": {
-            "module": "HomoLR",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
-                    "train_data": [
+                    "data": [
                         "dataio_0.train"
                     ]
                 }
+            },
+            "output": {
+                "data": ["train"]
             }
         },
-        "homo_lr_1": {
-            "module": "HomoLR",
+        "secureboost_0": {
+            "module": "HeteroSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "dataio_0.train"
+                        "intersection_0.train"
                     ]
                 }
+            },
+            "output": {
+                "data": ["train"]
             }
         }
     }

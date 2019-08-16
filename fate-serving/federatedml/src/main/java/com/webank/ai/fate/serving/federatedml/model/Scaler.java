@@ -20,8 +20,8 @@ public class Scaler extends BaseModel {
     public int initModel(byte[] protoMeta, byte[] protoParam) {
         LOGGER.info("start init Scale class");
         try {
-            this.scaleMeta = ScaleMeta.parseFrom(protoMeta);
-            this.scaleParam = ScaleParam.parseFrom(protoParam);
+            this.scaleMeta = this.parseModel(ScaleMeta.parser(), protoMeta);
+            this.scaleParam = this.parseModel(ScaleParam.parser(), protoParam);
             this.need_run = scaleParam.getNeedRun();
         } catch (Exception ex) {
             ex.printStackTrace();
