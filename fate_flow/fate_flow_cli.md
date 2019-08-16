@@ -127,11 +127,11 @@
 #### Model
 
 - command: fate_flow_client.py -f load
-- description: load model
+- description: load model.Since the model is not well controlled here, the interface here is not implemented.
 
-  
+
 - command: fate_flow_client.py -f online
-- description: publish model online
+- description: publish model online.Since the model is not well controlled here, the interface here is not implemented.
 
 
 - command: fate_flow_client.py -f version 

@@ -45,13 +45,20 @@ def prettify(response, verbose=True):
     return response
 
 
-def call_fun(func, dsl_data, config_data):
+def call_fun(func, dsl_path, config_data, config_path):
     ip = server_conf.get(SERVERS).get(ROLE).get('host')
     http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
     local_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
 
     if func in JOB_OPERATE_FUNC:
         if func == 'submit_job':
+            if not config_path:
+                raise Exception('the following arguments are required: {}'.format('runtime conf path'))
+            if not dsl_path:
+                raise Exception('the following arguments are required: {}'.format('dsl path'))
+            dsl_path = os.path.abspath(dsl_path)
+            with open(dsl_path, 'r') as f:
+                dsl_data = json.load(f)
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
         else:
@@ -144,6 +151,8 @@ def call_fun(func, dsl_data, config_data):
         detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([local_url, "table", func]), json=config_data)
     elif func in MODEL_FUNC:
+        if func == "version":
+            detect_utils.check_config(config=config_data, required_arguments=['namespace'])
         response = requests.post("/".join([local_url, "model", func]), json=config_data)
     return response.json() if isinstance(response, requests.models.Response) else response
 
@@ -171,6 +180,8 @@ if __name__ == "__main__":
         args = parser.parse_args()
         config_data = {}
         dsl_data = {}
+        dsl_path = args.dsl
+        config_path = args.config
         if args.config:
             args.config = os.path.abspath(args.config)
             with open(args.config, 'r') as f:
@@ -182,11 +193,7 @@ if __name__ == "__main__":
                 config_data['local']['party_id'] = args.party_id
             if args.role:
                 config_data['local']['role'] = args.role
-        if args.dsl:
-            args.dsl = os.path.abspath(args.dsl)
-            with open(args.dsl, 'r') as f:
-                dsl_data = json.load(f)
-        response = call_fun(args.function, dsl_data, config_data)
+        response = call_fun(args.function, dsl_path, config_data, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
         response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
