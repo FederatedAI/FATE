@@ -35,18 +35,7 @@ There are a few algorithms under [examples/](./examples) folder, try them out!
 ##### Manual version
 
 ```
-1.在本机安装mysql,能够通过3306端口访问
-2.在本机安装python, python版本要求高于3.6.5并低于3.7，可以通过python --version 命令检查版本信息，并且执行pip --version  查看pip是否能够正常使用
-3.在本机安装jdk1.8,可以通过 java --version命令检查是否安装成功
-4.检查本地8080端口是否被占用。
-5.创建mysql用户fate
-  create database fate_flow DEFAULT CHARSET utf8 COLLATE utf8_general_ci; 
-  GRANT ALL ON *.* TO 'fate_dev'@'localhost';
-  flush privileges;
-6.下载单机版压缩包,并解压
-7. cd  FATE
-8. sh init.sh
-9. sh start_all.sh
+
 
 FATE (venv) $ pip install -r requirements.txt
 FATE (venv) $ export PYTHONPATH=`pwd -P`
