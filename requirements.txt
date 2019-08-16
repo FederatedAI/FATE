@@ -134,4 +134,4 @@ websocket-client==0.54.0
 Werkzeug==0.14.1
 widgetsnbextension==3.4.0
 xlrd==1.1.0
-apws==3.9.2.post1
+apsw==3.9.2.post1
