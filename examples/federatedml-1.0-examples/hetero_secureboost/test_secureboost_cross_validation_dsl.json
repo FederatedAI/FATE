@@ -12,11 +12,10 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
-        "federated_sample_0": {
-            "module": "FederatedSample",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
@@ -33,13 +32,12 @@
             "input": {
                 "data": {
                     "train_data": [
-                        "federated_sample_0.train"
+                        "intersection_0.train"
                     ]
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["secureboost0"]
+                "data": ["train"]
             }
         }
     }

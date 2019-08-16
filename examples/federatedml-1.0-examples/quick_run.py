@@ -188,7 +188,7 @@ def submit_job(algorithm, work_mode, guest_id, host_id, arbiter_id):
     if arbiter_id is not None:
         conf_json['role']['arbiter'] = [int(arbiter_id)]
 
-    print("Submit job config json: {}".format(conf_json))
+    # print("Submit job config json: {}".format(conf_json))
     stdout = exec_modeling_task(dsl_json, conf_json)
     job_id = stdout['jobId']
     fate_board_url = stdout['data']['board_url']
