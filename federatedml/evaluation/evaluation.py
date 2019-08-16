@@ -121,7 +121,7 @@ class Evaluation(ModelBase):
 
             data_type = key
             mode = "eval"
-            if len(eval_data_local[0][1]) >= 4:
+            if len(eval_data_local[0][1]) >= 5:
                 mode = eval_data_local[0][1][4]
 
             for d in eval_data_local:
@@ -217,7 +217,14 @@ class Evaluation(ModelBase):
     def __save_roc(self, data_type, metric_name, metric_namespace, metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
+        # set roc edge value
+        fpr.append(1.0)
+        tpr.append(1.0)
+        
         fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
+        edge_idx = idx_list[-1]
+        if edge_idx == len(thresholds):
+            idx_list = idx_list[:-1]
         thresholds = [thresholds[idx] for idx in idx_list]
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
@@ -491,9 +498,6 @@ class Evaluation(ModelBase):
             fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
             fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
 
-            # set roc edge value
-            fpr.append(1.0)
-            tpr.append(1.0)
 
             filt_thresholds, cuts = self.__filt_threshold(thresholds=thresholds, step=0.01)
             new_thresholds = []

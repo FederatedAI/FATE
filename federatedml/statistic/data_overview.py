@@ -113,6 +113,8 @@ def rubbish_clear(rubbish_list):
     """
     for r in rubbish_list:
         try:
+            if r is None:
+                continue
             r.destroy()
         except Exception as e:
             LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
