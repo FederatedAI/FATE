@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "090ff6089cb111e9bddf5254005e961b",
-              "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_guest_breast"
             }
           ]
         }
@@ -41,6 +41,12 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "missing_fill": [
+          true
+        ],
+        "outlier_replace": [
+          true
         ]
       }
     },
@@ -49,8 +55,8 @@
         "data": {
           "train_data": [
             {
-              "name": "090ff6089cb111e9bddf5254005e961b",
-              "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_host_breast"
             }
           ]
         }
@@ -61,6 +67,9 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "outlier_replace": [
+          true
         ]
       }
     }
@@ -74,19 +83,22 @@
       "max_iter": 10,
       "converge_func": "diff",
       "batch_size": 320,
-      "learning_rate": 0.15,
+      "learning_rate": 0.01,
       "init_param": {
         "init_method": "random_uniform"
       },
       "cv_param": {
-        "n_splits": 5,
+        "n_splits": 4,
         "shuffle": true,
-        "random_seed": 103,
-        "need_cv": false,
-        "evaluate_param": {
-          "eval_type": "binary"
-        }
+        "random_seed": 33,
+        "need_cv": false
       }
+    },
+    "evaluation_0": {
+      "eval_type": "binary"
+    },
+    "evaluation_1": {
+      "eval_type": "binary"
     }
   }
 }

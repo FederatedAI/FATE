@@ -134,15 +134,11 @@
         "n_splits": 5,
         "shuffle": false,
         "random_seed": 103,
-        "need_cv": false,
+        "need_cv": true,
         "evaluate_param": {
           "eval_type": "binary"
         }
       }
-    },
-    "evaluation_0": {
-      "eval_type": "binary",
-      "pos_label": 1
     }
   }
 }
