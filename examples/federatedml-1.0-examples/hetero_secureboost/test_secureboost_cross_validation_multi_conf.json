@@ -14,7 +14,7 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "vehicle_scale_b", "namespace": "multi_class"}]
+                    "train_data": [{"name": "vehicle_scale_b", "namespace": "hetero"}]
                 }
             },
             "dataio_0":{
@@ -27,7 +27,7 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "vehicle_scale_a", "namespace": "multi_class"}]
+                    "train_data": [{"name": "vehicle_scale_a", "namespace": "hetero"}]
                 }
             },
              "dataio_0":{
@@ -37,16 +37,6 @@
         }
     },
     "algorithm_parameters": {
-        "federated_sample_0": {
-            "mode": "random",
-            "method": "upsample",
-            "fractions": 1.5
-        },
-        "federated_sample_backup": {
-            "mode": "stratified",
-            "method": "upsample",
-            "fractions": [[0, 1.5], [1, 2.5]]
-        },
         "secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1, 
@@ -56,8 +46,6 @@
             "tol": 0.0001,
             "quantile_method": "bin_by_sample_data",
             "bin_num": 50,
-            "bin_gap": 0.000001,
-            "bin_sample_num": 150000,
             "objective_param": { 
                 "objective": "cross_entropy"
             },
@@ -68,15 +56,15 @@
                 "with_proba": true,
                 "threshold": 0.5 
             },
-      "cv_param": {
-        "n_splits": 5,
-        "shuffle": false,
-        "random_seed": 103,
-        "need_cv": false,
-        "evaluate_param": {
-            "eval_type": "multi"
-        }
-      }
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": true,
+                "evaluate_param": {
+                    "eval_type": "multi"
+                }
+             }
         }
     }
 }
