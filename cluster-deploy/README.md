@@ -39,7 +39,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 ​                                                        Example deployment in one party
 
-![1565925632083](C:\Users\v_wbymxu\AppData\Local\Temp\1565925632083.png)
+<img src="./arc.png" /> 
 
 ### **2.2. Module Deployment Method**
 
