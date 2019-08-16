@@ -7,8 +7,6 @@
     "tol": 0.0001,
     "quantile_method": "bin_by_sample_data",
     "bin_num": 50,
-    "bin_gap": 0.000001,
-    "bin_sample_num": 150000,
     "tree_param": {
         "criterion_method": "xgboost",
         "criterion_params": [0.1],

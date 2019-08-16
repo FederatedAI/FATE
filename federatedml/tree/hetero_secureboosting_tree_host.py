@@ -159,9 +159,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         model_meta.tree_meta.CopyFrom(self.tree_meta)
         model_meta.num_trees = self.num_trees
         model_meta.quantile_meta.CopyFrom(QuantileMeta(quantile_method=self.quantile_method,
-                                                       bin_num=self.bin_num,
-                                                       bin_gap=self.bin_gap,
-                                                       bin_sample_num=self.bin_sample_num))
+                                                       bin_num=self.bin_num))
         model_meta.tree_dim = self.tree_dim
         model_meta.need_run = self.need_run 
 
@@ -174,8 +172,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.num_trees = model_meta.num_trees
         self.quantile_method = model_meta.quantile_meta.quantile_method
         self.bin_num = model_meta.quantile_meta.bin_num
-        self.bin_gap = model_meta.quantile_meta.bin_gap
-        self.bin_sample_num = model_meta.quantile_meta.bin_sample_num
         self.tree_dim = model_meta.tree_dim
 
     def get_model_param(self):
