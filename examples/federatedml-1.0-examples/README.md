@@ -4,7 +4,7 @@ There are three config files need to be prepared to build a algorithm model in F
 
 ### Step1: Define upload data config file
 
-To make FATE be able to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in **dsl_test** folder.
+To make FATE be able to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in current folder.
 
 #### Field Specification
 1. file: file path
@@ -21,7 +21,7 @@ Currently, FATE provide a kind of domain-specific language(DSL) to define whatev
 
 The DSL config file will define input data and(or) model as well as output data and(or) model for each component. The downstream components take output data and(or) model of upstream components as input. In this way, a DAG can be constructed by the config file.
 
-We have provided several example dsl files in **dsl_test** folder. Here is some points may worth paying attention to.
+We have provided several example dsl files located in the corresponding algorithm folder.
 
 #### Field Specification
 1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
@@ -48,7 +48,7 @@ We have provided several example dsl files in **dsl_test** folder. Here is some 
         3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
     2. model: There are two possible model-input type:
         1. model: This is a model input by same type of component, used in prediction\transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
-        2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.0. HeteroFeatureSelection can take the model output of HetereFeatureBinning and
+        2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.0. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
 5. output: Same as input, two type of output may occur which are data and model.
     1. data: Specify the output data name
     2. model: Specify the output model name
@@ -67,7 +67,7 @@ This config file is used to config parameters for all components among every par
 #### 1. Upload data
 Before starting a task, you need to load data among all the data-providers. To do that, a load_file config is needed to be prepared.  Then run the following command:
 
-> python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c upload_data.json
 
 Here is an example of configuring upload_data.json:
 ```
@@ -75,22 +75,36 @@ Here is an example of configuring upload_data.json:
       "file": "examples/data/breast_b.csv",
       "head": 1,
       "partition": 10,
-      "word_mode": 0,
-      "table_name": "breast_b",
-      "namespace": "hetero_breast"
+      "work_mode": 0,
+      "table_name": "hetero_breast_b",
+      "namespace": "hetero_guest_breast"
     }
 ```
 
-We use **breast_b** & **hetero_breast** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **breast_a** & **hetero_breast** and upload the data with path of  **examples/data/breast_a.csv**
+We use **hetero_breast_b** & **hetero_guest_breast** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **hetero_breast_a** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_a.csv**
 
 To use other data set, please change your file path and table_name & namespace. Please do not upload different data set with same table_name and namespace.
 
 Note: This step is needed for every data-provide node(i.e. Guest and Host).
 
 #### 2. Start your modeling task
-In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf. should be Then run the following command:
+In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf.
 
-> python ${your_install_path}/fate_flow/fate_flow_client.py -f submitJob -d hetero_logistic_regression/test_hetero_lr_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_job_conf.json
+ ```
+     "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                }
+            },
+ ```
+
+ As the above example shows, the input train_data should match the upload file conf.
+
+ Then run the following command:
+
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_job_conf.json
 
 #### 3. Check log files
 Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
