@@ -49,7 +49,7 @@ STUCK = 'stuck'
 MAX_INTERSECT_TIME = 600
 MAX_TRAIN_TIME = 3600
 RETRY_JOB_STATUS_TIME = 5
-STATUS_CHECKER_TIME = 5
+STATUS_CHECKER_TIME = 10
 
 TEST_TASK = {'TEST_UPLOAD': 2, 'TEST_INTERSECT': 2, 'TEST_TRAIN': 2}
 
@@ -112,6 +112,7 @@ def exec_task(config_dict, task, role, dsl_path=None):
 
 def obtain_component_output(jobid, party_id, role, component_name, output_type='data'):
     task_type = 'component_output_data'
+    data_dir = home_dir + '/user_data'
     if output_type == 'data':
         task_type = 'component_output_data'
         cmd = ["python",
@@ -127,7 +128,7 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
                "-cpn",
                component_name,
                "-o",
-               home_dir
+               data_dir
                ]
     elif output_type == 'model':
         task_type = 'component_output_model'
@@ -186,7 +187,7 @@ def obtain_component_output(jobid, party_id, role, component_name, output_type='
         task_type, job_id, party_id, role, component_name
     ))
 
-    print("obtain_component_output stdout:" + str(stdout))
+    # print("obtain_component_output stdout:" + str(stdout))
     stdout = json.loads(stdout)
     return stdout
 
@@ -224,31 +225,16 @@ def job_status_checker(jobid, component_name):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     stdout, stderr = subp.communicate()
-    # subp.wait()
-    # print("Current subp status: {}".format(subp.returncode))
     stdout = stdout.decode("utf-8")
-    # print("Job_status_checker Stdout is : {}".format(stdout))
     stdout = json.loads(stdout)
-    # status = stdout["retcode"]
-    # if status != 0:
-    #     if check_counter >= 60:
-    #         raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-    #     print("Current retry times: {}".format(check_counter))
-    #     time.sleep(20)
-    #     check_counter += 1
-    # else:
-    #     break
-    #     #     raise ValueError("jobid:{} status exec fail, status:{}".format(jobid, status))
-
     return stdout
 
 
-def upload(config_file, self_party_id, role, data_file):
+def upload(config_file, role, data_file):
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
     json_info["file"] = data_file
-    json_info["local"]["party_id"] = self_party_id
-    json_info["local"]["role"] = role
+
     json_info['work_mode'] = work_mode
 
     time_str = get_timeid()
@@ -265,52 +251,13 @@ def upload(config_file, self_party_id, role, data_file):
     return parse_result["table_name"], parse_result["namespace"]
 
 
-def download(config_file, self_party_id, this_role, this_table_name, this_table_namespace):
-    # write new json
-    with open(config_file, 'r', encoding='utf-8') as f:
-        json_info = json.loads(f.read())
-
-    json_info['local']['party_id'] = self_party_id
-    json_info['local']['role'] = this_role
-    json_info['work_mode'] = work_mode
-    json_info['table_name'] = this_table_name
-    json_info['namespace'] = this_table_namespace
-
-    stdout = exec_task(json_info, "download", this_role)
-    parse_result = parse_exec_task(stdout)
-    print("[Task Download] finish download, table_name:{}, namespace:{}".format(
-        parse_result["table_name"], parse_result["namespace"]))
-    return parse_result["table_name"], parse_result["namespace"]
-
-
-def task_status_checker(jobid, component_name, task_name):
+def task_status_checker(jobid, component_name):
     stdout = job_status_checker(jobid, component_name)
     # check_data = stdout["data"]
     status = stdout["retcode"]
 
     if status != 0:
         return RUNNING
-
-    # retry_counter = 0
-
-    # Wait for task start
-    # while status != 0:
-    #     time.sleep(STATUS_CHECKER_TIME)
-    #     # if retry_counter % 5 == 0:
-    #     print("[Job_Status_checker] task: {}, check jobid:{}, status: {},"
-    #           " current retry counter:{}".format(task_name, jobid, status, retry_counter))
-    #     stdout = job_status_checker(jobid, component_name)
-    #     status = stdout["retcode"]
-    #     retry_counter += 1
-    #     # end_time = time.time()
-    #     if retry_counter > 5:
-    #         print("[Job_Status_checker] task: {} retry times exceed {}, check jobid failed".format(
-    #             task_name, retry_counter))
-    #         return FAIL
-            # if end_time - start_time >= max_check_time:
-            #     print("[Job_Status_checker] task: {} wait time exceed {}, check jobid failed".format(
-            #         task_name, max_check_time))
-            #     return FAIL
 
     task_status = []
     check_data = stdout["data"]
@@ -361,7 +308,7 @@ def intersect(dsl_file, config_file, guest_id, host_id, guest_name, guest_namesp
         time.sleep(STATUS_CHECKER_TIME)
         print("[Intersect] Start intersect job status checker, status counter: {},"
               " jobid:{}".format(workflow_job_status_counter, jobid))
-        cur_job_status = task_status_checker(jobid, component_name='intersect_0', task_name="Intersect")
+        cur_job_status = task_status_checker(jobid, component_name='intersect_0')
         end = time.time()
         wait_time = end - start
         print("[Intersect] cur job status:{}, wait_time: {}".format(cur_job_status, wait_time))
@@ -417,7 +364,7 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
     start = time.time()
     while cur_job_status == RUNNING or cur_job_status == START:
         time.sleep(STATUS_CHECKER_TIME)
-        cur_job_status = task_status_checker(jobid, evaluation_component_name, task_name='Train and Evaluation')
+        cur_job_status = task_status_checker(jobid, evaluation_component_name)
         end = time.time()
         wait_time = end - start
         print("[Train] cur job status:{}, jobid:{}, wait_time: {}".format(cur_job_status, jobid, wait_time))
@@ -473,7 +420,7 @@ if __name__ == "__main__":
         if not os.path.exists(data_file):
             raise ValueError("file:{} is not found".format(data_file))
 
-        table_name, table_namespace = upload(upload_config_file, self_party_id, role, data_file)
+        table_name, table_namespace = upload(upload_config_file, role, data_file)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
         time.sleep(6)
@@ -501,7 +448,7 @@ if __name__ == "__main__":
 
         # Upload Data
         print("Start Upload Data")
-        table_name, table_namespace = upload(upload_config_file, guest_id, 'guest', data_file)
+        table_name, table_namespace = upload(upload_config_file, 'guest', data_file)
         print("table_name:{}".format(table_name))
         print("namespace:{}".format(table_namespace))
         time.sleep(6)

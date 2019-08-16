@@ -212,15 +212,7 @@ class BoostingTreeParam(BaseParam):
 
     encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
 
-    quantile_method : str, accepted 'bin_by_sample_data' or 'bin_by_data_block' only,
-                      the quantile method use in secureboost, default: 'bin_by_sample_data'
-
     bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
-
-    bin_gap: float, least difference between bin points, default: 1e-3
-
-    bin_sample_num: int, if quantile method is 'bin_by_sample_data', max amount of samples to find bins.
-                    default: 10000
 
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
                                      default: EncryptedModeCalculatorParam()
@@ -229,8 +221,8 @@ class BoostingTreeParam(BaseParam):
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
-                 tol=0.0001, encrypt_param=EncryptParam(), quantile_method="bin_by_sample_data",
-                 bin_num=32, bin_gap=1e-3, bin_sample_num=10000,
+                 tol=0.0001, encrypt_param=EncryptParam(), 
+                 bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam()):
         self.tree_param = copy.deepcopy(tree_param)
@@ -242,10 +234,7 @@ class BoostingTreeParam(BaseParam):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
         self.encrypt_param = copy.deepcopy(encrypt_param)
-        self.quantile_method = quantile_method
         self.bin_num = bin_num
-        self.bin_gap = bin_gap
-        self.bin_sample_num = bin_sample_num
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
@@ -282,23 +271,10 @@ class BoostingTreeParam(BaseParam):
 
         self.encrypt_param.check()
 
-        self.quantile_method = self.check_and_change_lower(self.quantile_method,
-                                                             ["bin_by_data_block", "bin_by_sample_data"],
-                                                             "boosting tree param's quantile_method")
-
         if type(self.bin_num).__name__ not in ["int", "long"] or self.bin_num < 2:
             raise ValueError(
                 "boosting tree param's bin_num {} not supported, should be positive integer greater than 1".format(
                     self.bin_num))
-
-        if type(self.bin_gap).__name__ not in ["float", "int", "long"]:
-            raise ValueError(
-                "boosting tree param's bin_gap {} not supported, should be numeric".format(self.bin_gap))
-
-        if self.quantile_method == "bin_by_sample_data":
-            if type(self.bin_sample_num).__name__ not in ["int", "long"] or self.bin_sample_num < 1:
-                raise ValueError("boosting tree param's sample_num {} not supported, should be positive integer".format(
-                    self.bin_sample_num))
 
         return True
 

@@ -12,6 +12,9 @@
     ],
     "host": [
       10000
+    ],
+    "arbiter": [
+      10000
     ]
   },
   "role_parameters": {
@@ -38,7 +41,16 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "missing_fill": [
+          true
+        ],
+        "outlier_replace": [
+          true
         ]
+      },
+      "feature_scale_0": {
+          "method": ["min_max_scale"]
       }
     },
     "host": {
@@ -58,7 +70,14 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "outlier_replace": [
+          true
         ]
+      },
+      "feature_scale_0": {
+          "method": ["standard_scale"],
+          "need_run": [false]
       }
     }
   },
@@ -96,7 +115,29 @@
       },
       "outlier_param": {
         "percentile": 0.95,
-        "upper_threshold": 2.0
+        "upper_threshold": 10
+      }
+    },
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "optimizer": "rmsprop",
+      "eps": 1e-5,
+      "alpha": 0.01,
+      "max_iter": 10,
+      "converge_func": "diff",
+      "batch_size": -1,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
+      },
+      "cv_param": {
+        "n_splits": 5,
+        "shuffle": false,
+        "random_seed": 103,
+        "need_cv": true,
+        "evaluate_param": {
+          "eval_type": "binary"
+        }
       }
     }
   }

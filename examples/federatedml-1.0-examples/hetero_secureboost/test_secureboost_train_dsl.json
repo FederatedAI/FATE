@@ -12,27 +12,28 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
         "dataio_1": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "args.train_data"
+                        "args.eval_data"
                     ]
                 },
                 "model": [
                     "dataio_0.dataio"
-                ]
+                ] 
             },
             "output": {
-                "data": ["eval_data"]
-            }
+                "data": ["eval"],
+                "model": ["dataio"]
+            },
+            "need_deploy": false
          },
-        "sample_0": {
-            "module": "FederatedSample",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
@@ -41,40 +42,48 @@
                 }
             },
             "output": {
-                "data": ["sample"]
+                "data": ["train"]
             }
+        },
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.eval"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["eval"]
+            },
+            "need_deploy": false
         },
         "secureboost_0": {
             "module": "HeteroSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "sample_0.sample"
+                        "intersection_0.train"
                     ],
                     "eval_data": [
-                        "dataio_1.eval_data"
+                        "intersection_1.eval"
                     ]
                 }
             },
             "output": {
                 "data": ["train"],
-                "model": ["hetero_secureboost"]
+                "model": ["train"]
             }
         },
-        "secureboost_1": {
-            "module": "HeteroSecureBoost",
+        "evaluation_0": {
+            "module": "Evaluation",
             "input": {
                 "data": {
-                    "eval_data": [
-                        "dataio_1.eval_data"
+                    "data": [
+                        "secureboost_0.train"
                     ]
-                },
-                "model": [
-                    "secureboost_0.hetero_secureboost"
-                ]
-            },
-            "output": {
-                "data": ["eval"]
+                }
             }
         }
     }

@@ -96,6 +96,15 @@ class MinMaxScale(BaseScale):
         transform_data:data_instance, data after transform
         """
 
+        self.column_range = []
+        for i in range(len(self.column_max_value)):
+            scale = self.column_max_value[i] - self.column_min_value[i]
+            if scale < 0:
+                raise ValueError("scale value should large than 0")
+            elif np.abs(scale - 0) < 1e-6:
+                scale = 1
+            self.column_range.append(scale)
+
         f = functools.partial(MinMaxScale.__scale, max_value_list=self.column_max_value,
                               min_value_list=self.column_min_value, scale_value_list=self.column_range,
                               process_cols_list=self.scale_column_idx)

@@ -15,7 +15,7 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "090ff6089cb111e9bddf5254005e961b", "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"}]
+                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
                 }
             },
             "dataio_0":{
@@ -28,7 +28,7 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "0bacabea9cb111e9af7f5254005e961b", "namespace": "host#10000#arbiter-10000#guest-10000#host-10000#train_input"}]
+                    "train_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
                 }
             },
             "dataio_0":{
