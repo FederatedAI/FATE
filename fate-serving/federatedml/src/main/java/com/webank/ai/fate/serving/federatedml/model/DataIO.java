@@ -23,8 +23,8 @@ public class DataIO extends BaseModel {
     public int initModel(byte[] protoMeta, byte[] protoParam) {
         LOGGER.info("start init DataIO class");
         try {
-            this.dataIOMeta = DataIOMeta.parseFrom(protoMeta);
-            this.dataIOParam = DataIOParam.parseFrom(protoParam);
+            this.dataIOMeta = this.parseModel(DataIOMeta.parser(), protoMeta);
+            this.dataIOParam = this.parseModel(DataIOParam.parser(), protoParam);
             this.isImputer = this.dataIOMeta.getImputerMeta().getIsImputer();
             LOGGER.info("data io isImputer {}", this.isImputer);
             if (this.isImputer) {
