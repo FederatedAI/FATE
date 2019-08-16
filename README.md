@@ -33,7 +33,10 @@ FATE $ docker exec -t -i ${CONTAINER_ID} bash
 There are a few algorithms under [examples/](./examples) folder, try them out!
 
 ##### Manual version
+
 ```
+
+
 FATE (venv) $ pip install -r requirements.txt
 FATE (venv) $ export PYTHONPATH=`pwd -P`
 ```

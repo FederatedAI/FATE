@@ -1,5 +1,4 @@
 # fateboard-adm-web
-联邦学习可视化系统web端
 
 
 ## Build Setup
