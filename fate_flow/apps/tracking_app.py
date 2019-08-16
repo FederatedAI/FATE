@@ -249,7 +249,7 @@ def component_output_data_download():
     with open(output_data_file_path, 'w') as fw:
         for k, v in output_data_table.collect():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            fw.write('{}\n'.format('\t'.join(map(lambda x: str(x), data_line))))
+            fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
             output_data_count += 1
 
     if output_data_count:
