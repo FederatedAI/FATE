@@ -8,7 +8,7 @@
     python --version
     pip --version
    ````
-3. Install JDK1.8 locally and check the installation success with the java --version command
+3. Install JDK1.8 locally and check the installation success with the java -version command
     ````
     java -version
     ````
