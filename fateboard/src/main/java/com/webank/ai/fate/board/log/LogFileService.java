@@ -32,6 +32,7 @@ import com.webank.ai.fate.board.utils.Dict;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,7 +44,7 @@ import java.util.Map;
 
 
 @Service
-public class LogFileService {
+public class LogFileService implements InitializingBean{
 
 
     final static String TASK_LOG_PATH = "$job_id/$role/$party_id/$component_id/$file_name";
@@ -98,7 +99,11 @@ public class LogFileService {
     }
 
     public String getJobDir(String jobId) {
-        return FATE_DEPLOY_PREFIX + jobId + "/";
+
+
+
+            return FATE_DEPLOY_PREFIX + jobId + "/";
+
     }
 
 
@@ -284,6 +289,16 @@ public class LogFileService {
         jobTaskInfo.ip = ip;
         return jobTaskInfo;
 
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+
+        String systemDeloyPrefix =  System.getProperty("FATE_DEPLOY_PREFIX");
+
+        if(systemDeloyPrefix!=null&&systemDeloyPrefix.length()!=0){
+            FATE_DEPLOY_PREFIX=  System.getProperty("FATE_DEPLOY_PREFIX");
+        }
     }
 
     ;
