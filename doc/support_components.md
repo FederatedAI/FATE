@@ -11,7 +11,7 @@ Each component has a strictly corresponding module name which will be used in ds
         }
 ```
 
-### 1. Data-io
+### 1. DataIO
 This component is typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
 
 Corresponding module name: DataIO

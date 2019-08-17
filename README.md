@@ -55,14 +55,14 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at "/examples/federatedml-1.0-examples"
+We have provided a python script for quick starting modeling task. This scrip is located at ["./examples/federatedml-1.0-examples"](./examples/federatedml-1.0-examples)
 
-### Standalone Version
+#### Standalone Version
 1. Start standalone version hetero-lr task (default)
 > python quick_run.py
 
 
-### Cluster Version
+#### Cluster Version
 
 1. Host party:
 > python quick_run.py -r host
@@ -74,7 +74,7 @@ This is just uploading data
 
 The config files that generated is stored in a new created folder named **user_config**
 
-### Start a Predict Task
+#### Start a Predict Task
 Once you finish one training task, you can start a predict task. You need to modify "TASK" variable in quick_run.py script as "predict":
 ```
 # Define what type of task it is
