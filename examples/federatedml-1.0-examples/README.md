@@ -12,8 +12,12 @@ We have provided a python script for quick starting modeling task.
 - description: quick start a job.
 
 ### Standalone Version
-1. Start standalone version hetero-lr task (default)
+1. Start standalone version hetero-lr task (default) by running this command:
+
 > python quick_run.py
+
+Then you are supposed to see the output as follows.
+
 
 ```
 stdout:{
@@ -37,7 +41,7 @@ Please check your task in fate-board, url is : http://localhost:8080/index.html#
 The log info is located in ${your install path}/examples/federatedml-1.0-examples/../../logs/20190815211211735986134
 ```
 
-Then you are supposed to see the above output. You can view the job on the url above or check out the log through the log file path.
+You can view the job on the url above or check out the log through the log file path.
 
 You can also define your own task through editing the following variables:
 ```
@@ -83,6 +87,18 @@ This is just uploading data
 > python quick_run.py -r guest
 
 The config files that generated is stored in a new created folder named **user_config**
+
+### Start a Predict Task
+Once you finish one training task, you can start a predict task. You need to modify "TASK" variable in quick_run.py script as "predict":
+```
+# Define what type of task it is
+# TASK = 'train'
+TASK = 'predict'
+```
+Then all you need to do is running the following command:
+> python quick_run.py
+
+Please note this works only if you have finished the trainning task.
 
 
 ## Start Training Task
@@ -244,8 +260,6 @@ After you submit a job, you can find your job log in ${Your install path}/logs/$
 The logs for each party is collected separately and list in different folders. Inside each folder, the logs for different components are also arranged in different folders. In this way, you can check out the log more specifically and get useful detailed  information.
 
 
-
-
 ## FATE-FLOW Usage
 
 #### 1.How to get the output data of each component:
@@ -308,7 +322,7 @@ Pay attention to following points to enable predicting:
    a. After submit a job, there will be some model information output in which "model_id" and "model_version" are our interested field.
    b. Beside that, you can also obtain these information through the following command directly:
 
-       python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f job_config -r guest -p ${guest_partyid}  -o ${job_config_output_path}
+       python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f job_config -j ${jobid} -r guest -p ${guest_partyid}  -o ${job_config_output_path}
 
        where
        $guest_partyid is the partyid of guest (the party submitted the job)
@@ -322,10 +336,11 @@ This config file is used to config parameters for predicting.
 
 1. initiator: Specify the initiator's role and party id, it should be same with training process.
 2. job_parameters:
-
     work_mode: cluster or standalone, it should be same with training process.
     model_id\model_version: model indicator which mentioned in Step1.
     job_type: type of job. In this case, it should be "predict".
+
+    There is an example test config file located in ["./test_predict_conf.json"]("./test_predict_conf.json")
 3. role: Indicate all the party ids for all roles, it should be same with training process.
 4. role_parameters: Set parameters for each roles. In this case, the "eval_data", which means data going to be predicted, should be filled for both Guest and Host parties.
 
