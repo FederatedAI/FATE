@@ -2,7 +2,7 @@
 
 ### Job
 
-- **command: fate_flow_client.py -f submit_job**
+**command: fate_flow_client.py -f submit_job**
 - description: submit a pipeline job
 - parameter:
     * -c  --config: runtime conf path, Required
@@ -10,7 +10,7 @@
     
     
     
-- **command: fate_flow_client.py -f stop_job**
+**command: fate_flow_client.py -f stop_job**
 - description: stop job 
 - parameter:
     * -j  --job_id: job id, Required

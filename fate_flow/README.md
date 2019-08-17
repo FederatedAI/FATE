@@ -45,13 +45,6 @@ Only one step is required to configure a component for pipeline.
 
 
 
-
-<div style="text-align:center", align=center>
-<img src="./images/fate_flow_dag.png" />
-</div>
-
-
-
 ## Architecture
 
 ![fate_flow_arch](./images/fate_flow_arch.png)
