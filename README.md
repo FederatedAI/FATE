@@ -78,8 +78,6 @@ Then all you need to do is running the following command:
 Please note this works only if you have finished the trainning task.
 
 
-###  Start Programs
-
 ## Doc
 ## API doc
 FATE provides some API documents in [doc-api](./doc/api/), including federatedml, eggroll, federation.
