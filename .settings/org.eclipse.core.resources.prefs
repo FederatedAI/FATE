@@ -1,0 +1,12 @@
+eclipse.preferences.version=1
+encoding//cluster-deploy/scripts/modify_json.py=utf-8
+encoding//federatedml/feature/binning/base_binning.py=utf-8
+encoding//federatedml/feature/one_hot_encoder.py=utf-8
+encoding//federatedml/feature/quantile_summaries.py=utf-8
+encoding//federatedml/optim/optimizer.py=utf-8
+encoding//federatedml/toy_example/secure_add_guest.py=utf-8
+encoding//federatedml/tree/boosting_tree.py=utf-8
+encoding//federatedml/tree/decision_tree.py=utf-8
+encoding//federatedml/tree/hetero_decision_tree_guest.py=utf-8
+encoding//federatedml/tree/hetero_secureboosting_tree_guest.py=utf-8
+encoding//federatedml/tree/hetero_secureboosting_tree_host.py=utf-8
