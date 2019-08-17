@@ -27,36 +27,48 @@ import traceback
 HOME_DIR = os.path.split(os.path.realpath(__file__))[0]
 CONFIG_DIR = '/'.join([HOME_DIR, 'config'])
 FATE_FLOW_PATH = HOME_DIR + "/../../fate_flow/fate_flow_client.py"
-# UPLOAD_GUEST = HOME_DIR + "/upload_data_guest.json"
-# UPLOAD_HOST = HOME_DIR + "/upload_data_host.json"
 UPLOAD_PATH = HOME_DIR + "/upload_data.json"
 
 GUEST = 'guest'
 HOST = 'host'
 
+# You can set up your own configuration files here
 DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
 SUBMIT_CONF_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_conf.json'
 
 TEST_PREDICT_CONF = HOME_DIR + '/test_predict_conf.json'
 
+# Define what type of task it is
 TASK = 'train'
 # TASK = 'predict'
 
-LATEST_TRAINED_RESULT = '/'.join([HOME_DIR, 'user_config', 'train_info.json'])
-
+# Put your data to /examples/data folder and indicate the data names here
 GUEST_DATA_SET = 'breast_b.csv'
 HOST_DATA_SET = 'breast_a.csv'
 # GUEST_DATA_SET = 'breast_homo_guest.csv'
 # HOST_DATA_SET = 'breast_homo_host.csv'
 
-MODE = 'hetero'
-# MODE = 'homo'
-
+# Define your party ids here
 GUEST_ID = 10000
 HOST_ID = 10000
 ARBITER_ID = 10000
 
-WORK_MODE = 0  # 0 represent for standalone version while 1 represent for cluster version
+# 0 represent for standalone version while 1 represent for cluster version
+WORK_MODE = 0
+
+# Time out for waiting a task
+MAX_WAIT_TIME = 3600
+
+# Time interval for querying task status
+RETRY_JOB_STATUS_TIME = 10
+
+# Your task status list
+SUCCESS = 'success'
+RUNNING = 'running'
+FAIL = 'failed'
+
+# Your latest trained model info is stored here and this will be used when starting a predict task
+LATEST_TRAINED_RESULT = '/'.join([HOME_DIR, 'user_config', 'train_info.json'])
 
 
 def get_timeid():
@@ -139,13 +151,73 @@ def exec_modeling_task(dsl_dict, config_dict):
     return stdout
 
 
+def job_status_checker(jobid):
+    # check_counter = 0
+    # while True:
+    subp = subprocess.Popen(["python",
+                             FATE_FLOW_PATH,
+                             "-f",
+                             "query_job",
+                             "-j",
+                             jobid
+                             ],
+                            shell=False,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    stdout, stderr = subp.communicate()
+    stdout = stdout.decode("utf-8")
+    stdout = json.loads(stdout)
+    status = stdout["retcode"]
+    if status != 0:
+        return RUNNING
+    check_data = stdout["data"]
+    task_status = []
+
+    for component_stats in check_data:
+        status = component_stats['f_status']
+        task_status.append(status)
+
+    if any([s == FAIL for s in task_status]):
+        return FAIL
+
+    if any([s == RUNNING for s in task_status]):
+        return RUNNING
+
+    return SUCCESS
+
+
+def wait_query_job(jobid):
+    start = time.time()
+    while True:
+        job_status = job_status_checker(jobid)
+        if job_status == SUCCESS:
+            print("Task Finished")
+            break
+        elif job_status == FAIL:
+            print("Task Failed")
+            break
+        else:
+            time.sleep(RETRY_JOB_STATUS_TIME)
+            end = time.time()
+            print("Task is running, wait time: {}".format(end - start))
+
+            if end - start > MAX_WAIT_TIME:
+                print("Task Failed, may by stuck in federation")
+                break
+
+
 def generate_data_info(role):
     if role == GUEST:
         data_name = GUEST_DATA_SET
     else:
         data_name = HOST_DATA_SET
-    table_name = data_name
-    table_name_space = '{}_{}'.format(MODE, role)
+
+    if '.' in data_name:
+        table_name_list = data_name.split('.')
+        table_name = '_'.join(table_name_list[:-1])
+    else:
+        table_name = data_name
+    table_name_space = '{}_{}'.format(table_name, role)
     return table_name, table_name_space
 
 
@@ -156,9 +228,9 @@ def upload(role):
     json_info['work_mode'] = int(WORK_MODE)
     table_name, table_name_space = generate_data_info(role)
     if role == GUEST:
-        file_path = 'example/data/{}'.format(GUEST_DATA_SET)
+        file_path = 'examples/data/{}'.format(GUEST_DATA_SET)
     else:
-        file_path = 'example/data/{}'.format(HOST_DATA_SET)
+        file_path = 'examples/data/{}'.format(HOST_DATA_SET)
     json_info['file'] = file_path
     json_info['table_name'] = table_name
     json_info['namespace'] = table_name_space
@@ -205,6 +277,7 @@ def submit_job():
     print("Please check your task in fate-board, url is : {}".format(fate_board_url))
     log_path = HOME_DIR + '/../../logs/{}'.format(job_id)
     print("The log info is located in {}".format(log_path))
+    wait_query_job(job_id)
 
 
 def predict_task():
@@ -262,6 +335,8 @@ def predict_task():
     print("stdout:" + str(stdout))
     stdout = json.loads(stdout)
     status = stdout["retcode"]
+    job_id = stdout['jobId']
+    wait_query_job(job_id)
     if status != 0:
         raise ValueError(
             "[Upload task]exec fail, status:{}, stdout:{}".format(status, stdout))

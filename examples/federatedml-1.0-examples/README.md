@@ -1,10 +1,96 @@
 # Instructions for building models
 
+## Quick Start
+
+We have provided a python script for quick starting modeling task.
+
+### Command Line Interface
+
+- command: python quick_run.py
+- parameter:
+    * -r  --role: start role, needed only in cluster version, Optional
+- description: quick start a job.
+
+### Standalone Version
+1. Start standalone version hetero-lr task (default)
+> python quick_run.py
+
+```
+stdout:{
+    "data": {
+        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000",
+        "job_dsl_path": "${your install path}/jobs/20190815211211735986134/job_dsl.json",
+        "job_runtime_conf_path": "/data/projects/fate/python/jobs/20190815211211735986134/job_runtime_conf.json",
+        "model_info": {
+            "model_id": "arbiter-10000#guest-10000#host-10000#model",
+            "model_version": "20190815211211735986134"
+        }
+    },
+    "jobId": "20190815211211735986134",
+    "meta": null,
+    "retcode": 0,
+    "retmsg": "success"
+}
+
+
+Please check your task in fate-board, url is : http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000
+The log info is located in ${your install path}/examples/federatedml-1.0-examples/../../logs/20190815211211735986134
+```
+
+Then you are supposed to see the above output. You can view the job on the url above or check out the log through the log file path.
+
+You can also define your own task through editing the following variables:
+```
+# You can set up your own configuration files here
+DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
+SUBMIT_CONF_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_conf.json'
+
+TEST_PREDICT_CONF = HOME_DIR + '/test_predict_conf.json'
+
+# Define what type of task it is
+TASK = 'train'
+# TASK = 'predict'
+
+# Put your data to /example/data folder and indicate the data names here
+GUEST_DATA_SET = 'breast_b.csv'
+HOST_DATA_SET = 'breast_a.csv'
+# GUEST_DATA_SET = 'breast_homo_guest.csv'
+# HOST_DATA_SET = 'breast_homo_host.csv'
+
+# Define your party ids here
+GUEST_ID = 10000
+HOST_ID = 10000
+ARBITER_ID = 10000
+
+# 0 represent for standalone version while 1 represent for cluster version
+WORK_MODE = 0
+
+# Time out for waiting a task
+MAX_WAIT_TIME = 3600
+
+# Time interval for querying task status
+RETRY_JOB_STATUS_TIME = 10
+```
+
+### Cluster Version
+
+1. Host party:
+> python quick_run.py -r host
+
+This is just uploading data
+
+2. Guest party:
+> python quick_run.py -r guest
+
+The config files that generated is stored in a new created folder named **user_config**
+
+
 ## Start Training Task
 
 There are three config files need to be prepared to build a algorithm model in FATE.
-1. Upload data config file
-2.
+1. Upload data config file: for upload data
+2. DSL config file: for defining your modeling task
+3. Submit runtime conf: for setting parameters for each component
 
 ### Step1: Define upload data config file
 
@@ -59,7 +145,7 @@ We have provided several example dsl files located in the corresponding algorith
 
 6. need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
 
-### Step3: Define configuration for each specific component.
+### Step3: Define submit runtime configuration for each specific component.
 This config file is used to config parameters for all components among every party.
 1. initiator: Specify the initiator's role and party id
 2. role: Indicate all the party ids for all roles.
@@ -158,71 +244,10 @@ After you submit a job, you can find your job log in ${Your install path}/logs/$
 The logs for each party is collected separately and list in different folders. Inside each folder, the logs for different components are also arranged in different folders. In this way, you can check out the log more specifically and get useful detailed  information.
 
 
-## Quick Start
-
-We have provided a python script for quick starting modeling task.
-
-### Command Line Interface
-
-- command: python quick_run.py
-- parameter:
-    * -w  --work_mode: work mode, 1 represent for cluster version while 0 stand for standalone version, default 0, Optional
-    * -r  --role: start role, needed only in cluster version, Optional
-    * -a  --algorithm: Selection algorithm. Support hetero_lr, homo_lr, hetero_secureboost, default hetero_lr, Optional
-    * -gid --guest_id: Only needed in cluster version, Optional
-    * -hid --host_id: Only needed in cluster version, Optional
-    * -aid --arbiter_id: Only needed in cluster version, Optional
-
-- description: quick start a job.
 
 
-### Standalone Version
-1. Start standalone version hetero-lr task (default)
-> python quick_run.py
+## FATE-FLOW Usage
 
-```
-stdout:{
-    "data": {
-        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000",
-        "job_dsl_path": "${your install path}/jobs/20190815211211735986134/job_dsl.json",
-        "job_runtime_conf_path": "/data/projects/fate/python/jobs/20190815211211735986134/job_runtime_conf.json",
-        "model_info": {
-            "model_id": "arbiter-10000#guest-10000#host-10000#model",
-            "model_version": "20190815211211735986134"
-        }
-    },
-    "jobId": "20190815211211735986134",
-    "meta": null,
-    "retcode": 0,
-    "retmsg": "success"
-}
-
-
-Please check your task in fate-board, url is : http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000
-The log info is located in ${your install path}/examples/federatedml-1.0-examples/../../logs/20190815211211735986134
-```
-
-Then you are supposed to see the above output. You can view the job on the url above or check out the log through the log file path.
-
-2. Start standalone version homo-lr task
-> python quick_run.py -a homo_lr
-
-3. Start standalone version hetero-secureboost task
-> python quick_run.py -a hetero_secureboost
-
-### Cluster Version
-
-1. Host party:
-> python quick_run.py -w 1 -r host
-
-This is just uploading data
-
-2. Guest party:
-> python quick_run.py -w 1 -r guest -gid guest_id -hid host_id -aid arbiter_id -a algorithm
-
-The config files that generated is stored in a new created folder named **user_config**
-
-### Some common usages of fate flow
 #### 1.How to get the output data of each component:
 
  >cd {your_fate_path}/fate_flow

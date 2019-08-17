@@ -186,8 +186,6 @@ class HomoLRGuest(HomoLRBase):
         return w
 
     def predict(self, data_instances):
-        LOGGER.debug("Get in predict, data_instance count: {}, need_run: {}".format(data_instances.count(),
-                                                                                    self.need_run))
 
         if not self.need_run:
             return data_instances
