@@ -2,20 +2,12 @@
 
 This section introduces the dsl and conf for usage of different type of task.
 
-#### Training Task.
+#### Fit Task.
 
 1. Train_task:
     dsl: test_homolr_train_job_dsl.json
     runtime_config : test_homolr_train_job_conf.json
    
-2. Train, test and evaluation task:
-    dsl: test_homolr_evaluate_job_dsl.json
-    runtime_config: test_homolr_evaluate_job_conf.json
-   
-3. Cross Validation Task:
-    dsl: test_homolr_cv_job_dsl.json
-    runtime_config: test_homolr_cv_job_conf.json
-
     
 Users can use following commands to running the task.
     

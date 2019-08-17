@@ -12,7 +12,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
+            }
          },
          "intersection_0": {
              "module": "Intersection",
@@ -39,7 +39,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["feature_scale"]
-            },
+            }
         },
         "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
@@ -70,7 +70,7 @@
             "output": {
                 "data": ["train"],
                 "model": ["selected"]
-            },
+            }
         },
         "hetero_lr_0": {
             "module": "HeteroLR",
@@ -81,7 +81,7 @@
             },
             "output": {
                 "data": ["train"]
-            },
+            }
         }
     }
 }
