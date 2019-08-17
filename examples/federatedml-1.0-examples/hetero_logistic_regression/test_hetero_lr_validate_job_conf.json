@@ -106,23 +106,6 @@
       "evaluation_0": {
           "need_run": [false]
       }
-    },
-    "arbiter":{
-      "dataio_0": {
-          "need_run": [false]
-      },
-      "dataio_1": {
-          "need_run": [false]
-      },
-      "intersect_0": {
-          "need_run": [false]
-      },
-      "intersect_1": {
-          "need_run": [false]
-      },
-      "evaluation_0": {
-          "need_run": [false]
-      }
     }
   },
   "algorithm_parameters": {

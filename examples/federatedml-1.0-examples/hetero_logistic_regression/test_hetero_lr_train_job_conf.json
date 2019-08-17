@@ -150,23 +150,6 @@
       "evaluation_0": {
         "need_run": [false]
       }
-    },
-    "arbiter": {
-      "dataio_0": {
-        "need_run": [false]
-      },
-      "feature_scale_0": {
-        "need_run": [false]
-      },
-      "hetero_feature_binning_0": {
-        "need_run": [false]
-      },
-      "hetero_feature_selection_0": {
-        "need_run": [false]
-      },
-      "evaluation_0": {
-        "need_run": [false]
-      }
     }
   },
   "algorithm_parameters": {
