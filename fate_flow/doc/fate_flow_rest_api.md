@@ -1,4 +1,4 @@
-﻿# FATE-FLOW REST API
+﻿# FATE-Flow REST API
 
 - HTTP Method: POST
 - Content-Type: application/json
@@ -304,7 +304,7 @@
     
     
     
-## table
+## Table
 
 #### /v1/table/table_info
 - request structure
