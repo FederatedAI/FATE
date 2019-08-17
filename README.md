@@ -20,13 +20,12 @@ FATE already supports a number of federated learning algorithms, including verti
 
 
 ## Install
-FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.FATE can be installed on Linux by using:
+FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.
 
-```
-git clone https://github.com/WeBankFinTech/FATE.git
-```
 Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
 
+#### Standalone
+FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
 
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
