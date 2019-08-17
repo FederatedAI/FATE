@@ -76,7 +76,7 @@ If a validate set was provided for the job, then evaluation curves are presented
 
 Preview the data of each component and you can view 100 lines of output data, from which you can also see the prediction data, including prediction result, prediction score and prediction detail.
 
-# **Frequently Asked Questions** #
+# **FAQ** #
 
 **My FATEBoard isn’t showing any data of components!** 
 
