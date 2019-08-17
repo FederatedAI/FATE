@@ -366,7 +366,7 @@ You can also checkout job status by fate_flow in case without FATE_board install
 
 The following command is used to query job status such as running, success or fail.
 
-    python /data/projects/fate/python/fate_flow/fate_flow_client.py -f query_job -j {job_id} -r guest
+    python ${Your install path}/fate_flow/fate_flow_client.py -f query_job -j {job_id} -r guest
 
 ### Step5: Download Predicting Results.
 
