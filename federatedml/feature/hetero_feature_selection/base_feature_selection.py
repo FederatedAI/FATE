@@ -87,7 +87,8 @@ class BaseHeteroFeatureSelection(ModelBase):
                                                                             iv_value_meta=self.iv_value_meta,
                                                                             iv_percentile_meta=self.iv_percentile_meta,
                                                                             variance_coe_meta=self.variance_coe_meta,
-                                                                            outlier_meta=self.outlier_meta)
+                                                                            outlier_meta=self.outlier_meta,
+                                                                            need_run=self.need_run)
         return meta_protobuf_obj
 
     def _get_param(self):

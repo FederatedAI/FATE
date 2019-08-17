@@ -12,4 +12,4 @@ Users can use following commands to running the task.
     
     python {fate_install_path}/fate_flow/fate_flow_client.py -f submit_job -c ${runtime_config} -d ${dsl}
 
-Moreover, after successfully running the training task, you can use it to predict too. Read more  [here](../PREDICT_TASK_README.md)
+Moreover, after successfully running the training task, you can use it to predict too.
