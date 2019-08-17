@@ -4,14 +4,14 @@
 
 We have provided a python script for quick starting modeling task.
 
-### Command Line Interface
+### 1. Command Line Interface
 
 - command: python quick_run.py
 - parameter:
     * -r  --role: start role, needed only in cluster version, Optional
 - description: quick start a job.
 
-### Standalone Version
+### 2. Standalone Version
 1. Start standalone version hetero-lr task (default) by running this command:
 
 > python quick_run.py
@@ -43,7 +43,7 @@ The log info is located in ${your install path}/examples/federatedml-1.0-example
 
 You can view the job on the url above or check out the log through the log file path.
 
-You can also define your own task through editing the following variables:
+You can also define your own task through editing the following variables in quick_run.py:
 ```
 # You can set up your own configuration files here
 DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
@@ -76,7 +76,7 @@ MAX_WAIT_TIME = 3600
 RETRY_JOB_STATUS_TIME = 10
 ```
 
-### Cluster Version
+### 3. Cluster Version
 
 1. Host party:
 > python quick_run.py -r host
@@ -88,7 +88,7 @@ This is just uploading data
 
 The config files that generated is stored in a new created folder named **user_config**
 
-### Start a Predict Task
+### 4. Start a Predict Task
 Once you finish one training task, you can start a predict task. You need to modify "TASK" variable in quick_run.py script as "predict":
 ```
 # Define what type of task it is
@@ -127,12 +127,12 @@ Currently, FATE provide a kind of domain-specific language(DSL) to define whatev
 
 The DSL config file will define input data and(or) model as well as output data and(or) model for each component. The downstream components take output data and(or) model of upstream components as input. In this way, a DAG can be constructed by the config file.
 
-We have provided several example dsl files located in the corresponding algorithm folder.
+We have provided several example dsl files located in the corresponding algorithm folder. For example, hetero-lr dsl files are located in 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
+
 
 #### Field Specification
 1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
-2. work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
-3. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
+2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
    FATE-1.0 supports 11 usable algorithm module.
 
    > DataIO: transform input-data into Instance Object for later components
@@ -147,7 +147,7 @@ We have provided several example dsl files located in the corresponding algorith
    > HeteroSecureBoost: hetero secure-boost module.
    > Evaluation: evaluation module. support metrics for binary, multi-class and regression.
 
-4. input: There are two type of input, data and model.
+3. input: There are two type of input, data and model.
     1. data: There are three possible data_input type:
         1. data: typically used in data_io, feature_engineering modules and evaluation.
         2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
@@ -155,20 +155,20 @@ We have provided several example dsl files located in the corresponding algorith
     2. model: There are two possible model-input type:
         1. model: This is a model input by same type of component, used in prediction\transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
         2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.0. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
-5. output: Same as input, two type of output may occur which are data and model.
+4. output: Same as input, two type of output may occur which are data and model.
     1. data: Specify the output data name
     2. model: Specify the output model name
 
-6. need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
+5. need_deploy: true or false. This field is used to specify whether the component need to deploy for online inference or not. This field just use for online-inference dsl deduction.
 
-### Step3: Define submit runtime configuration for each specific component.
+### Step3: Define Submit Runtime Configuration for Each Specific Component.
 This config file is used to config parameters for all components among every party.
 1. initiator: Specify the initiator's role and party id
 2. role: Indicate all the party ids for all roles.
 3. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
 4. algorithm_parameters: Those parameters are same among all parties are here.
 
-### Step4: Start modeling task
+### Step4: Start Modeling Task
 
 #### 1. Upload data
 Before starting a task, you need to load data among all the data-providers. To do that, a load_file config is needed to be prepared.  Then run the following command:
@@ -194,7 +194,7 @@ To use other data set, please change your file path and table_name & namespace. 
 Note: This step is needed for every data-provide node(i.e. Guest and Host).
 
 #### 2. Start your modeling task
-In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf.
+In this step, two config files corresponding to dsl config file and submit runtime conf file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf.
 
  ```
      "role_parameters": {
@@ -210,7 +210,7 @@ In this step, two config files corresponding to dsl config file and component co
 
  Then run the following command:
 
-> python ${your_install_path}/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_job_conf.json
+> python ${your_install_path}/fate_flow/fate_flow_client.py -f submit_job -d hetero_logistic_regression/test_hetero_lr_train_job_dsl.json -c hetero_logistic_regression/test_hetero_lr_train_job_conf.json
 
 #### 3. Check log files
 Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
@@ -250,7 +250,7 @@ If you want a big picture of the whole task, there is a **dashboard** button on 
 Figure 1： Job Overview</div>
 
 1. Left window: showing data set used for each party in this task.
-2. Middle window: Running status or progress of the whole task
+2. Middle window: Running status or progress of the whole task.
 3. Right window: DAG of components.
 
 ### Step6: Check out Logs
@@ -310,7 +310,7 @@ output_dir: the output directory
 
 In order to use trained model to predict. The following several steps are needed.
 
-### Step1: Train Model. Please check [here](./README.md)
+### Step1: Train Model
 
 Pay attention to following points to enable predicting:
 1. you should add/modify "need_deploy" field for those modules that need to deploy in predict stage. All modules have set True as their default value except FederatedmSample and Evaluation, which typically will not run in predict stage. The "need_deploy" field is True means this module should run a "fit" process and the fitted model need to be deployed in predict stage.
