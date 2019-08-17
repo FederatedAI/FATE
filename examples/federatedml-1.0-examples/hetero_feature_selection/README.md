@@ -1,13 +1,13 @@
-## Homo Logistic Regression Configuration Usage Guide.
+## Hetero Feature Selection Configuration Usage Guide.
 
 This section introduces the dsl and conf for usage of different type of task.
 
 #### Fit Task.
 
-1. Train_task:
-    dsl: test_homolr_train_job_dsl.json
-    runtime_config : test_homolr_train_job_conf.json
-   
+1. Fit task:
+    dsl: test_hetero_feature_selection_job_dsl.json
+    runtime_config : test_hetero_feature_selection_job_conf.json
+
     
 Users can use following commands to running the task.
     

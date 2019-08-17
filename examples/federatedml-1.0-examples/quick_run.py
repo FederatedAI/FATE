@@ -27,17 +27,36 @@ import traceback
 HOME_DIR = os.path.split(os.path.realpath(__file__))[0]
 CONFIG_DIR = '/'.join([HOME_DIR, 'config'])
 FATE_FLOW_PATH = HOME_DIR + "/../../fate_flow/fate_flow_client.py"
-UPLOAD_GUEST = HOME_DIR + "/upload_data_guest.json"
-UPLOAD_HOST = HOME_DIR + "/upload_data_host.json"
+# UPLOAD_GUEST = HOME_DIR + "/upload_data_guest.json"
+# UPLOAD_HOST = HOME_DIR + "/upload_data_host.json"
+UPLOAD_PATH = HOME_DIR + "/upload_data.json"
 
 GUEST = 'guest'
 HOST = 'host'
 
-HETERO_LR = 'hetero_lr'
-HOMO_LR = 'homo_lr'
-HETERO_SECUREBOOST = 'hetero_secureboost'
+DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
+SUBMIT_CONF_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_conf.json'
 
-ALGORITHM_LIST = (HETERO_LR, HOMO_LR, HETERO_SECUREBOOST)
+TEST_PREDICT_CONF = HOME_DIR + '/test_predict_conf.json'
+
+TASK = 'train'
+# TASK = 'predict'
+
+LATEST_TRAINED_RESULT = '/'.join([HOME_DIR, 'user_config', 'train_info.json'])
+
+GUEST_DATA_SET = 'breast_b.csv'
+HOST_DATA_SET = 'breast_a.csv'
+# GUEST_DATA_SET = 'breast_homo_guest.csv'
+# HOST_DATA_SET = 'breast_homo_host.csv'
+
+MODE = 'hetero'
+# MODE = 'homo'
+
+GUEST_ID = 10000
+HOST_ID = 10000
+ARBITER_ID = 10000
+
+WORK_MODE = 0  # 0 represent for standalone version while 1 represent for cluster version
 
 
 def get_timeid():
@@ -110,6 +129,9 @@ def exec_modeling_task(dsl_dict, config_dict):
     stdout = stdout.decode("utf-8")
     print("stdout:" + str(stdout))
     stdout = json.loads(stdout)
+    with open(LATEST_TRAINED_RESULT, 'w') as outfile:
+        json.dump(stdout, outfile)
+
     status = stdout["retcode"]
     if status != 0:
         raise ValueError(
@@ -117,76 +139,64 @@ def exec_modeling_task(dsl_dict, config_dict):
     return stdout
 
 
-def upload(work_mode, role):
+def generate_data_info(role):
     if role == GUEST:
-        with open(UPLOAD_GUEST, 'r', encoding='utf-8') as f:
-            json_info = json.loads(f.read())
+        data_name = GUEST_DATA_SET
     else:
-        with open(UPLOAD_HOST, 'r', encoding='utf-8') as f:
-            json_info = json.loads(f.read())
+        data_name = HOST_DATA_SET
+    table_name = data_name
+    table_name_space = '{}_{}'.format(MODE, role)
+    return table_name, table_name_space
 
-    json_info['work_mode'] = int(work_mode)
+
+def upload(role):
+    with open(UPLOAD_PATH, 'r', encoding='utf-8') as f:
+        json_info = json.loads(f.read())
+
+    json_info['work_mode'] = int(WORK_MODE)
+    table_name, table_name_space = generate_data_info(role)
+    if role == GUEST:
+        file_path = 'example/data/{}'.format(GUEST_DATA_SET)
+    else:
+        file_path = 'example/data/{}'.format(HOST_DATA_SET)
+    json_info['file'] = file_path
+    json_info['table_name'] = table_name
+    json_info['namespace'] = table_name_space
 
     print("Upload data config json: {}".format(json_info))
     stdout = exec_upload_task(json_info, role)
     return stdout
 
 
-def upload_homo(work_mode, role):
-    if role == GUEST:
-        with open(UPLOAD_GUEST, 'r', encoding='utf-8') as f:
-            json_info = json.loads(f.read())
-    else:
-        with open(UPLOAD_HOST, 'r', encoding='utf-8') as f:
-            json_info = json.loads(f.read())
-
-    if role == GUEST:
-        json_info['file'] = 'examples/data/breast_homo_guest.csv'
-        json_info['table_name'] = 'homo_breast_guest'
-        json_info['namespace'] = 'homo_breast_guest'
-    else:
-        json_info['file'] = 'examples/data/breast_homo_host.csv'
-        json_info['table_name'] = 'homo_breast_host'
-        json_info['namespace'] = 'homo_breast_host'
-
-    json_info['work_mode'] = int(work_mode)
-    print("Upload data config json: {}".format(json_info))
-    stdout = exec_upload_task(json_info, role)
-    return stdout
-
-
-def submit_job(algorithm, work_mode, guest_id, host_id, arbiter_id):
-
-    if algorithm is None or algorithm == HETERO_LR:
-        dsl_path = '/'.join([HOME_DIR, 'hetero_logistic_regression', 'test_hetero_lr_train_job_dsl.json'])
-        conf_path = '/'.join([HOME_DIR, 'hetero_logistic_regression', 'test_hetero_lr_train_job_conf.json'])
-    elif algorithm == HOMO_LR:
-        dsl_path = '/'.join([HOME_DIR, 'homo_logistic_regression', 'test_homolr_train_job_dsl.json'])
-        conf_path = '/'.join([HOME_DIR, 'homo_logistic_regression', 'test_homolr_train_job_conf.json'])
-    elif algorithm == HETERO_SECUREBOOST:
-        dsl_path = '/'.join([HOME_DIR, 'hetero_secureboost', 'test_secureboost_train_dsl.json'])
-        conf_path = '/'.join([HOME_DIR, 'hetero_secureboost', 'test_secureboost_train_binary_conf.json'])
-    else:
-        raise ValueError("Unsupported algorithm: {}, should be ".format(algorithm))
-
-    with open(dsl_path, 'r', encoding='utf-8') as f:
+def submit_job():
+    with open(DSL_PATH, 'r', encoding='utf-8') as f:
         dsl_json = json.loads(f.read())
 
-    with open(conf_path, 'r', encoding='utf-8') as f:
+    with open(SUBMIT_CONF_PATH, 'r', encoding='utf-8') as f:
         conf_json = json.loads(f.read())
 
-    if work_mode is not None:
-        conf_json['job_parameters']['work_mode'] = int(work_mode)
+    conf_json['job_parameters']['work_mode'] = WORK_MODE
 
-    if guest_id is not None:
-        conf_json['initiator']['party_id'] = guest_id
-        conf_json['role']['guest'] = [int(guest_id)]
+    conf_json['initiator']['party_id'] = GUEST_ID
+    conf_json['role']['guest'] = [GUEST_ID]
+    conf_json['role']['host'] = [HOST_ID]
+    conf_json['role']['arbiter'] = [ARBITER_ID]
 
-    if host_id is not None:
-        conf_json['role']['host'] = [int(host_id)]
+    guest_table_name, guest_namespace = generate_data_info(GUEST)
+    host_table_name, host_namespace = generate_data_info(HOST)
 
-    if arbiter_id is not None:
-        conf_json['role']['arbiter'] = [int(arbiter_id)]
+    conf_json['role_parameters']['guest']['args']['data']['train_data'] = [
+        {
+            'name': guest_table_name,
+            'namespace': guest_namespace
+        }
+    ]
+    conf_json['role_parameters']['host']['args']['data']['train_data'] = [
+        {
+            'name': host_table_name,
+            'namespace': host_namespace
+        }
+    ]
 
     # print("Submit job config json: {}".format(conf_json))
     stdout = exec_modeling_task(dsl_json, conf_json)
@@ -197,79 +207,96 @@ def submit_job(algorithm, work_mode, guest_id, host_id, arbiter_id):
     print("The log info is located in {}".format(log_path))
 
 
-def parameter_checker(args):
-    if args.work_mode is not None:
-        if args.work_mode not in ['0', '1']:
-            raise ValueError('Unsupported Work mode parameter {} should be 0 or 1'.format(args.work_mode))
-        this_work_mode = int(args.work_mode)
+def predict_task():
+    try:
+        with open(LATEST_TRAINED_RESULT, 'r', encoding='utf-8') as f:
+            model_info = json.loads(f.read())
+    except FileNotFoundError:
+        raise FileNotFoundError('Train Result not Found, please finish a train task before going to predict task')
+
+    model_id = model_info['data']['model_info']['model_id']
+    model_version = model_info['data']['model_info']['model_version']
+
+    with open(TEST_PREDICT_CONF, 'r', encoding='utf-8') as f:
+        predict_conf = json.loads(f.read())
+
+    predict_conf['initiator']['party_id'] = GUEST_ID
+    predict_conf['job_parameters']['work_mode'] = WORK_MODE
+    predict_conf['job_parameters']['model_id'] = model_id
+    predict_conf['job_parameters']['model_version'] = model_version
+
+    predict_conf['role']['guest'] = [GUEST_ID]
+    predict_conf['role']['host'] = [HOST_ID]
+    predict_conf['role']['arbiter'] = [ARBITER_ID]
+
+    guest_table_name, guest_namespace = generate_data_info(GUEST)
+    host_table_name, host_namespace = generate_data_info(HOST)
+
+    predict_conf['role_parameters']['guest']['args']['data']['eval_data'] = [
+        {
+            'name': guest_table_name,
+            'namespace': guest_namespace
+        }
+    ]
+
+    predict_conf['role_parameters']['host']['args']['data']['eval_data'] = [
+        {
+            'name': host_table_name,
+            'namespace': host_namespace
+        }
+    ]
+
+    predict_conf_path = save_config_file(predict_conf, 'predict_conf')
+    subp = subprocess.Popen(["python",
+                             FATE_FLOW_PATH,
+                             "-f",
+                             "submit_job",
+                             "-c",
+                             predict_conf_path
+                             ],
+                            shell=False,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    stdout, stderr = subp.communicate()
+    stdout = stdout.decode("utf-8")
+    print("stdout:" + str(stdout))
+    stdout = json.loads(stdout)
+    status = stdout["retcode"]
+    if status != 0:
+        raise ValueError(
+            "[Upload task]exec fail, status:{}, stdout:{}".format(status, stdout))
+    return stdout
+
+
+def upload_data():
+    if WORK_MODE == 0:
+        upload(GUEST)
+        time.sleep(3)
+        upload(HOST)
+        time.sleep(3)
     else:
-        this_work_mode = 0
-
-    if args.algorithm is not None:
-        if args.algorithm not in ALGORITHM_LIST:
-            raise ValueError('Unsupported algorithm parameter {} should be one of: {}'.format(
-                args.work_mode, ALGORITHM_LIST))
-
-    if args.role is not None:
-        if args.role not in [GUEST, HOST]:
-            raise ValueError('Unsupported role parameter {} should be one of: {}'.format(
-                args.work_mode, [GUEST, HOST]))
-
-    if this_work_mode == 1 and args.role is None:
-        raise ValueError("In cluster version please indicate role")
-
-    return this_work_mode
-
-
-def cluster_host(args):
-    if args.algorithm == HOMO_LR:
-        upload_homo(work_mode=1, role=HOST)
-    else:
-        upload(work_mode=1, role=HOST)
-
-
-def cluster_guest(args):
-    if args.algorithm == HOMO_LR:
-        upload_homo(work_mode=1, role=GUEST)
-    else:
-        upload(work_mode=1, role=GUEST)
-    time.sleep(3)
-    submit_job(args.algorithm, args.work_mode, args.guest_party_id, args.host_party_id, args.arbiter_party_id)
-
-
-def standalone(args):
-    if args.algorithm == HOMO_LR:
-        upload_func = upload_homo
-    else:
-        upload_func = upload
-
-    upload_func(0, GUEST)
-    time.sleep(3)
-    upload_func(0, HOST)
-    time.sleep(3)
-    submit_job(args.algorithm, args.work_mode, args.guest_party_id, args.host_party_id, args.arbiter_party_id)
+        if args.role == HOST:
+            upload(HOST)
+        else:
+            upload(GUEST)
+            time.sleep(3)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gid', '--guest_party_id', required=False, type=str, help="guest party id")
-    parser.add_argument('-hid', '--host_party_id', required=False, type=str, help="host party id")
-    parser.add_argument('-aid', '--arbiter_party_id', required=False, type=str, help="arbiter party id")
-    parser.add_argument('-w', '--work_mode', required=False, type=str, help="work mode", default='0')
-    parser.add_argument('-r', '--role', required=False, type=str, help="role")
-    parser.add_argument('-a', '--algorithm', required=False, type=str, help="algorithm type",
-                        choices=ALGORITHM_LIST, default=HETERO_LR)
 
+    parser.add_argument('-r', '--role', required=False, type=str, help="role",
+                        choices=(GUEST, HOST), default=GUEST
+                        )
     try:
         args = parser.parse_args()
-        work_mode = parameter_checker(args)
-        if work_mode == 0:
-            standalone(args)
+        upload_data()
+        if TASK == 'train':
+            submit_job()
         else:
             if args.role == HOST:
-                cluster_host(args)
-            else:
-                cluster_guest(args)
+                raise ValueError("Predict task can be initialed by guest only")
+            predict_task()
 
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
