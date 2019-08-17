@@ -375,7 +375,7 @@ Once predict task finished, the first 100 records of predict result are availabl
     python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r ${role} -cpn ${component_name} -o ${predict_result_output_dir}
 
     where
-    ${jobIid}: predict task's job_id
+    ${job_id}: predict task's job_id
     ${party_id}: the partyid of current user.
     ${role}: the role of current user. Please keep in mind that host users are not supposed to get predict results in heterogeneous algorithm.
     ${component_name}: the component who has predict results
