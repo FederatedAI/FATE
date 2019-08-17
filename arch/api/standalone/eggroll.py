@@ -47,7 +47,6 @@ class Standalone:
         self.data_dir = os.path.join(file_utils.get_project_base_directory(), 'data')
         self.job_id = str(uuid.uuid1()) if job_id is None else "{}".format(job_id)
         self.meta_table = _DTable('__META__', '__META__', 'fragments', 10)
-        self.pool = Executor()
         Standalone.__instance = self
         if not eggroll_context:
             eggroll_context = EggRollContext()
@@ -680,11 +679,12 @@ class _DTable(object):
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(Standalone.get_instance().job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
-        for p in range(self._partitions):
-            _op = _Operand(self._type, self._namespace, self._name, p)
-            _p_conf = _ProcessConf.get_default()
-            _p = _UnaryProcess(_task_info, _op, _p_conf)
-            results.append(Standalone.get_instance().pool.submit(_do_func, _p))
+        with Executor() as pool:
+            for p in range(self._partitions):
+                _op = _Operand(self._type, self._namespace, self._name, p)
+                _p_conf = _ProcessConf.get_default()
+                _p = _UnaryProcess(_task_info, _op, _p_conf)
+                results.append(pool.submit(_do_func, _p))
         return results
 
     def map(self, func):
@@ -733,12 +733,13 @@ class _DTable(object):
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
-        for p in range(self._partitions):
-            _left = _Operand(self._type, self._namespace, self._name, p)
-            _right = _Operand(other._type, other._namespace, other._name, p)
-            _p_conf = _ProcessConf.get_default()
-            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
-            results.append(Standalone.get_instance().pool.submit(do_join, _p))
+        with Executor() as pool:
+            for p in range(self._partitions):
+                _left = _Operand(self._type, self._namespace, self._name, p)
+                _right = _Operand(other._type, other._namespace, other._name, p)
+                _p_conf = _ProcessConf.get_default()
+                _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
+                results.append(pool.submit(do_join, _p))
         for r in results:
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
@@ -759,12 +760,13 @@ class _DTable(object):
         func_id, pickled_function = self._serialize_and_hash_func(self._namespace + '.' + self._name + '-' + other._namespace + '.' + other._name)
         _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
-        for p in range(self._partitions):
-            _left = _Operand(self._type, self._namespace, self._name, p)
-            _right = _Operand(other._type, other._namespace, other._name, p)
-            _p_conf = _ProcessConf.get_default()
-            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
-            results.append(Standalone.get_instance().pool.submit(do_subtract_by_key, _p))
+        with Executor() as pool:
+            for p in range(self._partitions):
+                _left = _Operand(self._type, self._namespace, self._name, p)
+                _right = _Operand(other._type, other._namespace, other._name, p)
+                _p_conf = _ProcessConf.get_default()
+                _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
+                results.append(pool.submit(do_subtract_by_key, _p))
         for r in results:
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
@@ -780,19 +782,20 @@ class _DTable(object):
         if other._partitions != self._partitions:
             if other.count() > self.count():
                 return self.save_as(str(uuid.uuid1()), _job_id, partition=other._partitions).union(other,
-                                                                                                  func)
+                                                                                                   func)
             else:
                 return self.union(other.save_as(str(uuid.uuid1()), _job_id, partition=self._partitions),
-                                 func)
+                                  func)
         func_id, pickled_function = self._serialize_and_hash_func(func)
         _task_info = _TaskInfo(_job_id, func_id, pickled_function, self.get_in_place_computing())
         results = []
-        for p in range(self._partitions):
-            _left = _Operand(self._type, self._namespace, self._name, p)
-            _right = _Operand(other._type, other._namespace, other._name, p)
-            _p_conf = _ProcessConf.get_default()
-            _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
-            results.append(Standalone.get_instance().pool.submit(do_union, _p))
+        with Executor() as pool:
+            for p in range(self._partitions):
+                _left = _Operand(self._type, self._namespace, self._name, p)
+                _right = _Operand(other._type, other._namespace, other._name, p)
+                _p_conf = _ProcessConf.get_default()
+                _p = _BinaryProcess(_task_info, _left, _right, _p_conf)
+                results.append(pool.submit(do_union, _p))
         for r in results:
             result = r.result()
         return Standalone.get_instance().table(result._name, result._namespace, self._partitions, persistent=False)
