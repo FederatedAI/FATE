@@ -1,0 +1,27 @@
+{
+    "task": "load_model",
+    "gen_table_info": true,
+    "local": {
+        "party_id": "9999",
+        "role": "guest"
+    },
+    "role": {
+        "guest": ["9999"],
+        "host": ["10000"],
+        "arbiter": ["10000"]
+    },
+    "model": {
+      "guest": {
+        "9999": {
+          "table_name": "",
+          "namespace": ""
+        }
+      },
+      "host": {
+        "10000": {
+          "table_name": "",
+          "namespace": ""
+        }
+      }
+    }
+}

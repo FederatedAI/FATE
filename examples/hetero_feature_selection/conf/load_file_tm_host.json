@@ -1,0 +1,8 @@
+{
+  "file": "/data/projects/fate/python/examples/data/breast_a.csv",
+  "head": 1,
+  "partition": 10,
+  "table_name": "hetero_feature_selection_host",
+  "namespace": "hetero_feature_selection",
+  "work_mode": 1
+}

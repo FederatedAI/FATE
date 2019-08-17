@@ -1,0 +1,17 @@
+{
+    "local": {
+        "role": "host",
+        "party_id": _host_party_id
+    },
+    "role": {
+        "host": [
+            _host_party_id
+        ],
+        "guest": [
+            _guest_party_id
+        ]
+    },
+    "WorkFlowParam": {
+        "work_mode": _work_mode
+    }
+}

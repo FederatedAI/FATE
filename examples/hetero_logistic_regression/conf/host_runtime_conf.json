@@ -1,0 +1,143 @@
+{
+
+    "local": {
+        "role": "host",
+        "party_id": _host_party_id
+    },
+
+    "role": {
+        "host": [
+            _host_party_id
+        ],
+        "arbiter": [
+            _arbiter_party_id
+        ],
+        "guest": [
+            _guest_party_id
+        ]
+    },
+
+    "DataIOParam": {
+        "with_label": false,
+        "output_format": "dense"
+    },
+    "WorkFlowParam": {
+        "method": "_workflow_method",
+        "train_input_table": "_train_table_name",
+        "train_input_namespace": "example_data_namespace",
+        "model_table": "hetero_lr_host_model",
+        "model_namespace": "hetero_lr",
+        "predict_input_table": "_predict_table_name",
+        "predict_input_namespace": "example_data_namespace",
+        "predict_output_table": "hetero_lr_host_predict_output__jobid",
+        "predict_output_namespace": "hetero_lr",
+        "evaluation_output_table": "some_evaluate_output_table_name__jobid",
+        "evaluation_output_namespace": "hetero_lr",
+        "data_input_table": "_cross_validation_table_name",
+        "data_input_namespace": "example_data_namespace",
+        "work_mode": _work_mode,
+        "n_split": 5,
+        "need_intersect": true,
+        "need_feature_selection": false,
+        "need_scale": false,
+        "need_one_hot": false,
+        "one_vs_rest": false
+        },
+
+    "OneHotEncoderParam": {
+        "cols": ["fid0"]
+    },
+    "EncryptParam": {
+        "method": "Paillier",
+        "key_length": 1024
+    },
+    "InitParam": {
+        "init_method": "random_uniform",
+        "fit_intercept": true
+    },
+    "EvaluateParam":{
+        "metrics": ["auc", "precision"],
+        "classi_type": "binary",
+        "pos_label": 1,
+        "thresholds": [0.5]
+    },
+    "LogisticParam": {
+        "penalty": "L2",
+        "optimizer": "rmsprop",
+        "eps": 1e-4,
+        "alpha": 0.01,
+        "max_iter": 10,
+        "converge_func": "diff",
+        "batch_size": -1,
+        "learning_rate": 0.15
+    },
+    "IntersectParam": {
+        "intersect_method": "raw",
+        "is_send_intersect_ids": true,
+        "join_role": "guest",
+        "with_encode": true
+    },
+    "EncodeParam": {
+        "encode_method": "sha256",
+        "salt": "12345",
+        "base64": false
+    },
+    "PredictParam":{
+        "with_proba": true,
+        "threshold": 0.5
+    },
+    "ScaleParam":{
+        "method": "min_max_scale",
+        "mode": "normal",
+        "area": "all",
+        "feat_upper": null,
+        "feat_lower": null,
+        "out_upper": null,
+        "out_lower": null
+    },
+
+    "FeatureBinningParam": {
+        "method": "quantile",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "adjustment_factor": 0.5,
+        "bin_num": 10,
+        "cols": -1,
+        "local_only": false,
+        "result_table": "TO SET",
+        "result_namespace": "TO SET",
+        "display_result": ["iv"]
+    },
+    "FeatureSelectionParam": {
+        "method": "fit",
+        "filter_method": ["unique_value", "iv_value_thres",
+                "coefficient_of_variation_value_thres", "outlier_cols"],
+        "select_cols": -1,
+        "local_only": false,
+        "result_table": "feature_selection_guest_model_table",
+        "result_namespace": "feature_select_namespace"
+    },
+    "UniqueValueParam": {
+        "eps": 1e-5
+    },
+    "IVSelectionParam": {
+        "value_threshold": 0.1,
+        "percentile_threshold": 1.0
+    },
+    "CoeffOfVarSelectionParam": {
+        "value_threshold": 0.1,
+        "percentile_threshold": 0.8
+    },
+    "OutlierColsSelectionParam": {
+        "percentile": 0.9,
+        "upper_threshold": 1000
+    },
+    "EncryptedModeCalculatorParam":{
+        "mode": "strict",
+        "re_encrypted_rate": 1
+    },
+    "OneVsRestParam":{
+        "has_arbiter":true
+    }
+}

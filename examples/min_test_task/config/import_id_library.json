@@ -1,0 +1,17 @@
+{
+  "task": "importId",
+  "module": "upload",
+  "file": "/home/app/user_test/hartinzheng/dengta/data/breast_b.csv",
+  "head": 1,
+  "partition": 10,
+  "local": {
+    "party_id": 9999,
+    "role": "guest"
+  },
+  "role": {
+    "guest": [9999],
+    "host": [10000]
+  },
+  "gen_table_info": true,
+  "data_type": "data_input"
+}

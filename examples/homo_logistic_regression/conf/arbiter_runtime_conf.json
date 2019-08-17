@@ -1,0 +1,72 @@
+{
+
+    "local": {
+        "role": "arbiter",
+        "party_id": _arbiter_party_id
+    },
+
+    "role": {
+        "host": [
+            _host_party_id
+        ],
+        "arbiter": [
+            _arbiter_party_id
+        ],
+        "guest": [
+            _guest_party_id
+        ]
+    },
+
+    "DataIOParam": {
+        "with_label": false,
+        "output_format": "dense"
+    },
+    "WorkFlowParam": {
+        "method": "_workflow_method",
+        "train_input_table": "_train_table_name",
+        "train_input_namespace": "example_data_namespace",
+        "model_table": "homo_lr_model",
+        "model_namespace": "homo_lr",
+        "predict_input_table": "_predict_table_name",
+        "predict_input_namespace": "example_data_namespace",
+        "predict_output_table": "homo_lr_predict_out__jobid",
+        "predict_output_namespace": "some_predict_output_path",
+        "evaluation_output_table": "homo_lr_evaluation_output__jobid",
+        "evaluation_output_namespace": "some_evaluate_output_path",
+        "data_input_table": "_cross_validation_table_name",
+        "data_input_namespace": "example_data_namespace",
+        "intersect_data_output_table": null,
+        "intersect_data_output_namespace": null,
+        "work_mode": _work_mode,
+        "need_one_hot": false,
+        "n_splits": 5
+        },
+
+    "OneHotEncoderParam": {
+        "cols": ["fid0"]
+    },
+    "EncryptParam": {
+        "method": "Paillier",
+        "key_length": 1024
+    },
+    "InitParam": {
+        "init_method": "random_uniform",
+        "fit_intercept": true
+    },
+    "EvaluateParam":{
+        "metrics": ["auc", "precision"],
+        "classi_type": "binary",
+        "pos_label": 1,
+        "predict_threshold": [0.5]
+    },
+    "LogisticParam": {
+        "penalty": "L2",
+        "optimizer": "rmsprop",
+        "eps": 1e-4,
+        "alpha": 0.1,
+        "max_iter": 30,
+        "converge_func": "diff",
+        "batch_size": 320,
+        "learning_rate": 0.01
+    }
+}

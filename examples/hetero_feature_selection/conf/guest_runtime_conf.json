@@ -1,0 +1,75 @@
+{
+
+    "local": {
+        "role": "guest",
+        "party_id": "TO SET"
+    },
+
+    "role": {
+        "host": [
+            "TO SET"
+        ],
+        "guest": [
+            "TO SET"
+        ]
+    },
+
+    "DataIOParam": {
+        "with_label": true,
+        "label_idx": 0,
+        "label_type": "int",
+        "output_format": "dense"
+    },
+    "WorkFlowParam": {
+        "method": "feature_select",
+        "train_input_table": "TO SET",
+        "train_input_namespace": "example_data_namespace",
+        "work_mode": "TO SET",
+        "model_table": "feature_selection_guest_model_table",
+        "model_namespace": "example_data_namespace",
+        "predict_output_table": "feature_select_guest_out_table",
+        "predict_output_namespace": "example_data_namespace",
+        "need_feature_selection": true
+        },
+
+    "EncryptParam": {
+        "method": "Paillier",
+        "key_length": 1024
+    },
+
+    "FeatureBinningParam": {
+        "method": "quantile",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "adjustment_factor": 0.5,
+        "bin_num": 10,
+        "cols": -1,
+        "local_only": false,
+        "display_result": ["iv"]
+    },
+    "FeatureSelectionParam": {
+        "method": "fit",
+        "filter_method": ["unique_value", "iv_value_thres",
+                "coefficient_of_variation_value_thres", "outlier_cols"],
+        "select_cols": -1,
+        "local_only": false
+    },
+    "UniqueValueParam": {
+        "eps": 1e-5
+    },
+    "IVValueSelectionParam": {
+        "value_threshold": 0.1
+    },
+    "IVPercentileSelectionParam": {
+        "percentile_threshold": 0.8
+    },
+    "CoeffOfVarSelectionParam": {
+        "value_threshold": 0.1,
+        "percentile_threshold": 0.8
+    },
+    "OutlierColsSelectionParam": {
+        "percentile": 0.9,
+        "upper_threshold": 1000.0
+    }
+}

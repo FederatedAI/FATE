@@ -1,0 +1,222 @@
+#!/usr/bin/env python    
+# -*- coding: utf-8 -*- 
+
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+################################################################################
+#
+#
+################################################################################
+
+# =============================================================================
+# HeteroSecureBoostingHost 
+# =============================================================================
+
+from federatedml.feature.quantile import Quantile
+from federatedml.tree import HeteroDecisionTreeHost
+from federatedml.tree import BoostingTree
+from federatedml.util import HeteroSecureBoostingTreeTransferVariable
+from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
+from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from numpy import random
+from arch.api import federation
+from arch.api.model_manager import manager
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
+
+
+class HeteroSecureBoostingTreeHost(BoostingTree):
+    def __init__(self, secureboost_tree_param):
+        super(HeteroSecureBoostingTreeHost, self).__init__(secureboost_tree_param)
+
+        self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
+        self.flowid = 0
+        self.tree_dim = None
+        self.feature_num = None
+        self.trees_ = []
+        self.tree_meta = None
+        self.bin_split_points = None
+        self.bin_sparse_points = None
+        self.data_bin = None
+        self.runtime_idx = 0
+
+    def convert_feature_to_bin(self, data_instance):
+        LOGGER.info("convert feature to bins")
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = \
+            Quantile.convert_feature_to_bin(
+                data_instance, self.quantile_method, self.bin_num,
+                self.bin_gap, self.bin_sample_num)
+
+    def sample_valid_features(self):
+        LOGGER.info("sample valid features")
+        if self.feature_num is None:
+            self.feature_num = self.bin_split_points.shape[0]
+
+        choose_feature = random.choice(range(0, self.feature_num), \
+                                       max(1, int(self.subsample_feature_rate * self.feature_num)), replace=False)
+
+        valid_features = [False for i in range(self.feature_num)]
+        for fid in choose_feature:
+            valid_features[fid] = True
+        return valid_features
+
+    def set_flowid(self, flowid=0):
+        LOGGER.info("set flowid, flowid is {}".format(flowid))
+        self.flowid = flowid
+
+    def set_runtime_idx(self, runtime_idx):
+        self.runtime_idx = runtime_idx
+
+    def generate_flowid(self, round_num, tree_num):
+        LOGGER.info("generate encrypter")
+        return ".".join(map(str, [self.flowid, round_num, tree_num]))
+
+    def sync_tree_dim(self):
+        LOGGER.info("sync tree dim from guest")
+        self.tree_dim = federation.get(name=self.transfer_inst.tree_dim.name,
+                                       tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree_dim),
+                                       idx=0)
+        LOGGER.info("tree dim is %d" % (self.tree_dim))
+
+    def sync_stop_flag(self, num_round):
+        LOGGER.info("sync stop flag from guest, boosting round is {}".format(num_round))
+        stop_flag = federation.get(name=self.transfer_inst.stop_flag.name,
+                                   tag=self.transfer_inst.generate_transferid(self.transfer_inst.stop_flag, num_round),
+                                   idx=0)
+
+        return stop_flag
+
+    def fit(self, data_inst):
+        LOGGER.info("begin to train secureboosting guest model")
+        data_inst = self.data_alignment(data_inst)
+        self.convert_feature_to_bin(data_inst)
+        self.sync_tree_dim()
+
+        for i in range(self.num_trees):
+            # n_tree = []
+            for tidx in range(self.tree_dim):
+                tree_inst = HeteroDecisionTreeHost(self.tree_param)
+
+                tree_inst.set_inputinfo(data_bin=self.data_bin, bin_split_points=self.bin_split_points,
+                                        bin_sparse_points=self.bin_sparse_points)
+
+                valid_features = self.sample_valid_features()
+                tree_inst.set_flowid(self.generate_flowid(i, tidx))
+                tree_inst.set_runtime_idx(self.runtime_idx)
+                tree_inst.set_valid_features(valid_features)
+
+                tree_inst.fit()
+                tree_meta, tree_param = tree_inst.get_model()
+                self.trees_.append(tree_param)
+                if self.tree_meta is None:
+                    self.tree_meta = tree_meta
+                # n_tree.append(tree_inst.get_tree_model())
+
+            # self.trees_.append(n_tree)
+
+            if self.n_iter_no_change is True:
+                stop_flag = self.sync_stop_flag(i)
+                if stop_flag:
+                    break
+
+        LOGGER.info("end to train secureboosting guest model")
+
+    def predict(self, data_inst, predict_param=None):
+        LOGGER.info("start predict")
+        data_inst = self.data_alignment(data_inst)
+        rounds = len(self.trees_) // self.tree_dim
+        for i in range(rounds):
+            # n_tree = self.trees_[i]
+            for tidx in range(self.tree_dim):
+                tree_inst = HeteroDecisionTreeHost(self.tree_param)
+                tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
+                # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
+                tree_inst.set_flowid(self.generate_flowid(i, tidx))
+                tree_inst.set_runtime_idx(self.runtime_idx)
+
+                tree_inst.predict(data_inst)
+
+        LOGGER.info("end predict")
+
+    def get_model_meta(self):
+        model_meta = BoostingTreeModelMeta()
+        model_meta.tree_meta.CopyFrom(self.tree_meta)
+        model_meta.num_trees = self.num_trees
+        model_meta.quantile_meta.CopyFrom(QuantileMeta(quantile_method=self.quantile_method,
+                                                       bin_num=self.bin_num,
+                                                       bin_gap=self.bin_gap,
+                                                       bin_sample_num=self.bin_sample_num))
+        model_meta.tree_dim = self.tree_dim
+
+        meta_name = "HeteroSecureBoostingTreeHost.meta"
+
+        return meta_name, model_meta
+
+    def set_model_meta(self, model_meta):
+        self.tree_meta = model_meta.tree_meta
+        self.num_trees = model_meta.num_trees
+        self.quantile_method = model_meta.quantile_meta.quantile_method
+        self.bin_num = model_meta.quantile_meta.bin_num
+        self.bin_gap = model_meta.quantile_meta.bin_gap
+        self.bin_sample_num = model_meta.quantile_meta.bin_sample_num
+        self.tree_dim = model_meta.tree_dim
+
+    def get_model_param(self):
+        model_param = BoostingTreeModelParam()
+        model_param.tree_num = len(list(self.trees_))
+        model_param.trees_.extend(self.trees_)
+
+        param_name = "HeteroSecureBoostingTreeHost.param"
+
+        return param_name, model_param
+
+    def set_model_param(self, model_param):
+        self.trees_ = list(model_param.trees_)
+
+    def save_model(self, model_table, model_namespace):
+        LOGGER.info("save model")
+        meta_name, meta_protobuf = self.get_model_meta()
+        param_name, param_protobuf = self.get_model_param()
+        manager.save_model(buffer_type=meta_name,
+                           proto_buffer=meta_protobuf,
+                           name=model_table,
+                           namespace=model_namespace)
+
+        manager.save_model(buffer_type=param_name,
+                           proto_buffer=param_protobuf,
+                           name=model_table,
+                           namespace=model_namespace)
+
+        return [(meta_name, param_name)]
+
+    def load_model(self, model_table, model_namespace):
+        LOGGER.info("load model")
+        model_meta = BoostingTreeModelMeta()
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.meta",
+                           proto_buffer=model_meta,
+                           name=model_table,
+                           namespace=model_namespace)
+        self.set_model_meta(model_meta)
+
+        model_param = BoostingTreeModelParam()
+        manager.read_model(buffer_type="HeteroSecureBoostingTreeHost.param",
+                           proto_buffer=model_param,
+                           name=model_table,
+                           namespace=model_namespace)
+        self.set_model_param(model_param)
+

@@ -1,0 +1,14 @@
+{
+  "output_path": "./download.txt",
+  "gen_table_info": true,
+  "local": {
+    "party_id": 0,
+    "role": ""
+  },
+  "role": {
+    "guest": [],
+    "host": [],
+    "arbiter": []
+  },
+  "data_type": ""
+}

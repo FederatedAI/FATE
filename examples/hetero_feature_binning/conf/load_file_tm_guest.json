@@ -1,0 +1,8 @@
+{
+  "file": "{modify_this_to_FATE_install_path}/examples/data/breast_b.csv",
+  "head": 1,
+  "partition": 10,
+  "table_name": "hetero_feature_binning_guest",
+  "namespace": "hetero_feature_binning",
+  "work_mode": 1
+}
