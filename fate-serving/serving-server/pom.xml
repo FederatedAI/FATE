@@ -11,7 +11,7 @@
 
     <artifactId>fate-serving-server</artifactId>
     <properties>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.10.0.pr1</jackson.version>
         <grpc.version>1.19.0</grpc.version>
         <guava.version>27.1-jre</guava.version>
         <jedis.version>2.9.0</jedis.version>
