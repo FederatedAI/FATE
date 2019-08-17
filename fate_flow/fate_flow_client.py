@@ -54,11 +54,14 @@ def call_fun(func, config_data, dsl_path, config_path):
         if func == 'submit_job':
             if not config_path:
                 raise Exception('the following arguments are required: {}'.format('runtime conf path'))
-            if not dsl_path:
+            dsl_data = {}
+            if dsl_path or config_data.get('job_parameters', {}).get('job_type', '') == 'predict':
+                if dsl_path:
+                    dsl_path = os.path.abspath(dsl_path)
+                    with open(dsl_path, 'r') as f:
+                        dsl_data = json.load(f)
+            else:
                 raise Exception('the following arguments are required: {}'.format('dsl path'))
-            dsl_path = os.path.abspath(dsl_path)
-            with open(dsl_path, 'r') as f:
-                dsl_data = json.load(f)
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
         else:

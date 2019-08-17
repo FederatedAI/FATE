@@ -106,7 +106,6 @@ class TaskExecutor(object):
             schedule_logger.info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger.info(parameters)
             schedule_logger.info(task_input_dsl)
-            schedule_logger.info(task_run_args)
             run_object.run(parameters, task_run_args)
             if task_output_dsl:
                 if task_output_dsl.get('data', []):
