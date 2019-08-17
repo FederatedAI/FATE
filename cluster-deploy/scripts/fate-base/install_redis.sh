@@ -14,7 +14,7 @@ cp redis-cli redis-server ../bin
 cd ..
 cp redis.conf ./conf/
 sed -i 's/127.0.0.1/0.0.0.0/g' ./conf/redis.conf
-sed -i 's/# requirepass foobared/requirepass fate1234/g' ./conf/redis.conf
+sed -i 's/# requirepass foobared/requirepass fate_dev/g' ./conf/redis.conf
 sed -i 's/databases 16/databases 50/g' ./conf/redis.conf
 nohup ./bin/redis-server ./conf/redis.conf &
 
