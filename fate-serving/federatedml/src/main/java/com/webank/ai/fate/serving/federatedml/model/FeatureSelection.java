@@ -26,9 +26,9 @@ public class FeatureSelection extends BaseModel {
         LOGGER.info("start init Feature Selection class");
 		this.needRun = false;
         try {
-			this.featureSelectionMeta = FeatureSelectionMeta.parseFrom(protoMeta);
+			this.featureSelectionMeta = this.parseModel(FeatureSelectionMeta.parser(), protoMeta);
 			this.needRun = this.featureSelectionMeta.getNeedRun();
-            this.featureSelectionParam = FeatureSelectionParam.parseFrom(protoParam);
+            this.featureSelectionParam = this.parseModel(FeatureSelectionParam.parser(), protoParam);
 			this.finalLeftCols = featureSelectionParam.getFinalLeftCols();
         } catch (Exception ex) {
             ex.printStackTrace();

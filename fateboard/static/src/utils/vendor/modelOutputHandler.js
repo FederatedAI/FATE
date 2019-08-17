@@ -187,8 +187,10 @@ export default function({ outputType, responseData }) {
       // })
       header.forEach(head => {
         const row = data[head]
-        row.variable = head
-        tBody.push(row)
+        if (row) {
+          row.variable = head
+          tBody.push(row)
+        }
       })
       output = {
         tBody
