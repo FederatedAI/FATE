@@ -372,7 +372,7 @@ The following command is used to query job status such as running, success or fa
 
 Once predict task finished, the first 100 records of predict result are available in FATE-board. You can also download all results through the following command.
 
-    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r $role} -cpn ${component_name} -o ${predict_result_output_dir}
+    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r ${role} -cpn ${component_name} -o ${predict_result_output_dir}
 
     where
     ${jobIid}: predict task's job_id
