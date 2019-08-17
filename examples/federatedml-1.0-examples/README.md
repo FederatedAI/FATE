@@ -340,7 +340,7 @@ This config file is used to config parameters for predicting.
     model_id\model_version: model indicator which mentioned in Step1.
     job_type: type of job. In this case, it should be "predict".
 
-    There is an example test config file located in ["./test_predict_conf.json"]("./test_predict_conf.json")
+    There is an example test config file located in ["./test_predict_conf.json"](./test_predict_conf.json)
 3. role: Indicate all the party ids for all roles, it should be same with training process.
 4. role_parameters: Set parameters for each roles. In this case, the "eval_data", which means data going to be predicted, should be filled for both Guest and Host parties.
 
