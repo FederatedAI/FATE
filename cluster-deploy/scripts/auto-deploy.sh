@@ -155,7 +155,7 @@ do
 cd $dir
 
 sed -i "/$IP/d" ./fateboard/conf/ssh.properties
-echo "$IP=fate_dev|fate_dev|1000" >> ./fateboard/conf/ssh.properties
+echo "$IP=app|app|22" >> ./fateboard/conf/ssh.properties
 exit
 eeooff
 done
