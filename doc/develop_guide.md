@@ -254,4 +254,4 @@ In this step, two config files corresponding to dsl config file and component co
 #### 3. Check log files
 Now you can check out the log in the following path: ${your_install_path}/logs/{your jobid}.
 
-For more detail information about dsl configure file and parameter configure files, please check out [example doc here](../example)
+For more detail information about dsl configure file and parameter configure files, please check out [example doc here](../examples/federatedml-1.0-examples)

@@ -1,13 +1,13 @@
 {
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 1
     },
     "role": {
-        "guest": [10000],
+        "guest": [9999],
         "host": [10000],
         "arbiter": [10000]
     },
@@ -15,7 +15,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                    "train_data": [{"name": "breast_homo_guest2", "namespace": "breast_homo_guest2"}],
+                    "eval_data": [{"name": "breast_homo_guest2", "namespace": "breast_homo_guest2"}]
                 }
             },
             "dataio_0":{
@@ -28,7 +29,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
+                    "train_data": [{"name": "breast_homo_host2", "namespace": "breast_homo_host2"}],
+                    "eval_data": [{"name": "breast_homo_host2", "namespace": "breast_homo_host2"}]
                 }
             },
             "dataio_0":{
@@ -40,7 +42,7 @@
     "algorithm_parameters": {
         "homo_lr_0": {
             "penalty": "L2",
-            "optimizer": "rmsprop",
+            "optimizer": "nesterov_momentum_sgd",
             "eps": 1e-5,
             "alpha": 0.01,
             "max_iter": 10,

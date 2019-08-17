@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.train_data"
+                        "args.eval_data"
                     ]
                 },
                 "model": [
@@ -49,7 +49,7 @@
             "input": {
                 "data": {
                     "eval_data": [
-                        "dataio_0.train"
+                        "dataio_1.eval_data"
                     ]
                 },
                 "model": [

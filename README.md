@@ -30,7 +30,7 @@ FATE provides Standalone runtime architecture for developers. It can help develo
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 
-To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy). 
+To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
 ## Running Tests
 
@@ -44,6 +44,41 @@ All the unittests shall pass if FATE is installed properly.
 
 ## Example Programs
 
+### Quick Start
+
+We have provided a python script for quick starting modeling task. This scrip is located at ["./examples/federatedml-1.0-examples"](./examples/federatedml-1.0-examples)
+
+#### Standalone Version
+1. Start standalone version hetero-lr task (default)
+> python quick_run.py
+
+
+#### Cluster Version
+
+1. Host party:
+> python quick_run.py -r host
+
+This is just uploading data
+
+2. Guest party:
+> python quick_run.py -r guest
+
+The config files that generated is stored in a new created folder named **user_config**
+
+#### Start a Predict Task
+Once you finish one training task, you can start a predict task. You need to modify "TASK" variable in quick_run.py script as "predict":
+```
+# Define what type of task it is
+# TASK = 'train'
+TASK = 'predict'
+```
+Then all you need to do is running the following command:
+> python quick_run.py
+
+Please note this works only if you have finished the trainning task.
+
+
+###  Start Programs
 
 ## Doc
 ## API doc
@@ -51,7 +86,7 @@ FATE provides some API documents in [doc-api](./doc/api/), including federatedml
 ## Develop Guide doc
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
 ## Other doc
-FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better. 
+FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
 ## License
 [Apache License 2.0](LICENSE)
 
