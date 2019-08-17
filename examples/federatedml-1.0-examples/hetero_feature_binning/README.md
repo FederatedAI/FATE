@@ -1,4 +1,4 @@
-## Hetero Feature Selection Configuration Usage Guide.
+## Hetero Feature Binning Configuration Usage Guide.
 
 This section introduces the dsl and conf for usage of different type of task.
 
