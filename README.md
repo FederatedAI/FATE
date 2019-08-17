@@ -27,9 +27,6 @@ git clone https://github.com/WeBankFinTech/FATE.git
 ```
 Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
 
-#### Standalone
-FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
-
 
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
@@ -58,3 +55,4 @@ How to develop your federated learning algorithm using FATE? you can see FATE de
 FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better. 
 ## License
 [Apache License 2.0](LICENSE)
+

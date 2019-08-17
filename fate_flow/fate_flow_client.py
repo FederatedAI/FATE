@@ -45,17 +45,28 @@ def prettify(response, verbose=True):
     return response
 
 
-def call_fun(func, dsl_data, config_data):
+def call_fun(func, config_data, dsl_path, config_path):
     ip = server_conf.get(SERVERS).get(ROLE).get('host')
     http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
     local_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
 
     if func in JOB_OPERATE_FUNC:
         if func == 'submit_job':
+            if not config_path:
+                raise Exception('the following arguments are required: {}'.format('runtime conf path'))
+            dsl_data = {}
+            if dsl_path or config_data.get('job_parameters', {}).get('job_type', '') == 'predict':
+                if dsl_path:
+                    dsl_path = os.path.abspath(dsl_path)
+                    with open(dsl_path, 'r') as f:
+                        dsl_data = json.load(f)
+            else:
+                raise Exception('the following arguments are required: {}'.format('dsl path'))
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
         else:
-            detect_utils.check_config(config=config_data, required_arguments=['job_id'])
+            if func != 'query_job':
+                detect_utils.check_config(config=config_data, required_arguments=['job_id'])
             post_data = config_data
         response = requests.post("/".join([local_url, "job", func.rstrip('_job')]), json=post_data)
         if func == 'query_job':
@@ -140,8 +151,11 @@ def call_fun(func, dsl_data, config_data):
     elif func in DATA_FUNC:
         response = requests.post("/".join([local_url, "data", func]), json=config_data)
     elif func in TABLE_FUNC:
+        detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([local_url, "table", func]), json=config_data)
     elif func in MODEL_FUNC:
+        if func == "version":
+            detect_utils.check_config(config=config_data, required_arguments=['namespace'])
         response = requests.post("/".join([local_url, "model", func]), json=config_data)
     return response.json() if isinstance(response, requests.models.Response) else response
 
@@ -162,36 +176,26 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--status', required=False, type=str, help="status")
     parser.add_argument('-n', '--namespace', required=False, type=str, help="namespace")
     parser.add_argument('-t', '--table_name', required=False, type=str, help="table name")
+    parser.add_argument('-w', '--work_mode', required=False, type=int, help="work mode")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
     try:
         args = parser.parse_args()
         config_data = {}
-        dsl_data = {}
-        try:
-            if args.config:
-                args.config = os.path.abspath(args.config)
-                with open(args.config, 'r') as f:
-                    config_data = json.load(f)
-            config_data.update(dict((k, v) for k, v in vars(args).items() if v is not None))
-            if args.party_id or args.role:
-                config_data['local'] = config_data.get('local', {})
-                if args.party_id:
-                    config_data['local']['party_id'] = args.party_id
-                if args.role:
-                    config_data['local']['role'] = args.role
-            if args.dsl:
-                args.dsl = os.path.abspath(args.dsl)
-                with open(args.dsl, 'r') as f:
-                    dsl_data = json.load(f)
-        except ValueError:
-            print('json parse error')
-            exit(-102)
-        except IOError:
-            print("reading config jsonfile error")
-            exit(-103)
-
-        response = call_fun(args.function, dsl_data, config_data)
+        dsl_path = args.dsl
+        config_path = args.config
+        if args.config:
+            args.config = os.path.abspath(args.config)
+            with open(args.config, 'r') as f:
+                config_data = json.load(f)
+        config_data.update(dict((k, v) for k, v in vars(args).items() if v is not None))
+        if args.party_id or args.role:
+            config_data['local'] = config_data.get('local', {})
+            if args.party_id:
+                config_data['local']['party_id'] = args.party_id
+            if args.role:
+                config_data['local']['role'] = args.role
+        response = call_fun(args.function, config_data, dsl_path, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
         response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}

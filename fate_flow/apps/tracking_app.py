@@ -167,7 +167,7 @@ def component_parameters():
                             output_parameters[p_k] = p_v
                     return get_json_result(retcode=0, retmsg='success', data=output_parameters)
         else:
-            return get_json_result(retcode=102, retmsg='can not found this component parameters')
+            return get_json_result(retcode=0, retmsg='can not found this component parameters')
     else:
         return get_json_result(retcode=101, retmsg='can not found this job')
 
@@ -249,7 +249,7 @@ def component_output_data_download():
     with open(output_data_file_path, 'w') as fw:
         for k, v in output_data_table.collect():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            fw.write('{}\n'.format('\t'.join(map(lambda x: str(x), data_line))))
+            fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
             output_data_count += 1
 
     if output_data_count:

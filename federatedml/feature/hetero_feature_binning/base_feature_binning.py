@@ -142,8 +142,8 @@ class BaseHeteroFeatureBinning(ModelBase):
 
         result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
                                                                    host_results=final_host_results)
-        json_result = json_format.MessageToJson(result_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+        # json_result = json_format.MessageToJson(result_obj)
+        # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
     def _load_model(self, model_dict):

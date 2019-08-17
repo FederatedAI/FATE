@@ -38,12 +38,12 @@ In guest, make sure Host is finish
 The process of min-test can be described as the following steps.
 
 ##### Host Party
->sh run.sh host normal/fast
+>sh run.sh host normal(or fast)
 
 In host part, uploading data is the only operation when calling the command.
 
 ##### Guest Party
->sh run.sh guest normal ${host_table_name} ${host_namespace}
+>sh run.sh guest normal(or fast) ${host_table_name} ${host_namespace}
 
 In guest party, there are three tests are going to be verified.
 
