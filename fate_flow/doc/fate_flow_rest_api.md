@@ -1,11 +1,11 @@
-﻿### FATE-FLOW REST API
+﻿# FATE-FLOW REST API
 
 - HTTP Method: POST
 - Content-Type: application/json
 
-#### DataAccess
+## DataAccess
 
-- endpoint: **v1/data/upload**
+#### /v1/data/upload
 - request structure
     * local: Required,Object: local configuration 
     * role: Optional,Object: role information    
@@ -23,7 +23,8 @@
     * job_id: upload job id,String
 
 
-- endpoint:**v1/data/download**
+
+#### /v1/data/download
 - request structure
     * local: Required,Object: local configuration
     * role: Optional,Object: role information
@@ -38,24 +39,10 @@
     * job_id: download job id,String
 
 
-#### table
 
-- endpoint: **v1/table/table_info**
-- request structure
-  - create: Optional, Boolean: whether to create
-  - namespace: Optional,String: download data table namespace
-  - table_name:  Optional,String: download data table name
-  - local: Required,Object: local configuration
-  - role: Optional,Object: role information
-  - data_type: Optional,String: download file data type
-  - gen_table_info: Optional,Boolean: tag table information
-- response structure
-  - data: table information
+## Job
 
-​		
-#### Job
-
-- endpoint: **v1/job/submit**
+#### /v1/job/submit
 - request structure
     * job_runtime_conf: Required,Object: configuration information for the currently submitted job
     * job_dsl: Required,Object: dsl of the currently submitted job
@@ -64,7 +51,8 @@
     * data: return data for submitting job ,Object
 
 
-- endpoint: **v1/job/stop**
+
+#### /v1/job/stop
 - request structure
     * job_id: Required, String: job id
 - response structure
@@ -72,7 +60,8 @@
     * data: return data for submitting job ,Object
 
 
-- endpoint: **v1/job/query**
+
+#### /v1/job/query
 - request structure
     * job_id: Optional,String: job id
     * name: Optional,String: job name
@@ -101,7 +90,8 @@
     * data: job data, Array
 
 
-- endpoint: **v1/job/config**
+
+#### /v1/job/config
 - request structure
     * job_id: Optional,String: job id
     * name: Optional,String: job name
@@ -130,14 +120,16 @@
     * data: config data, Object
 
 
-- endpoint: **v1/job/log**
+
+#### /v1/job/log
 - request structure
     * job_id: Required, String: job id
 - response structure
     * data: Object 
 
 
-- endpoint: **v1/job/task/query**
+
+#### /v1/job/task/query
 - request structure
     * job_id: Optional,String: job id
     * name: Optional,String: job name
@@ -166,131 +158,10 @@
     * data: tasks data, Array
 
 
-- endpoint: **v1/job/<job_id>/<role>/<party_id>/create**
-- request structure
-    * f_job_id: Required,String: job id
-    * f_name: Optional,String: job name
-    * f_description: Optional,String: job description
-    * f_tag: Optional,String:Optional,String: job tag
-    * f_role: Required,String: job role                    
-    * f_party_id: Required,String: job party id
-    * f_roles: Required,String: job roles
-    * f_initiator_party_id: Optional,String: initiator's party id
-    * f_is_initiator: Optional,Integer: mark if it is the initiator           
-    * f_dsl: Required,String: job dsl                             
-    * f_runtime_conf : Required,String: configuration information for the job           
-    * f_run_ip: Required,String: job run ip
-    * f_status: Required,String: job status
-    * f_current_steps: Optional,String:record component id in DSL
-    * f_current_tasks: Optional,String: record task id
-    * f_progress: Optional,Integer: job progress
-    * f_create_time: Optional,Integer: job create time
-    * f_update_time: Optional,Integer:job update time
-    * f_start_time: Optional,Integer: job start time
-    * f_end_time: Optional,Integer: job end time
-    * f_elapsed: Optional,Integer: job elapsed time
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
-
-- endpoint: **v1/job/<job_id>/<role>/<party_id>/status**
-- request structure
-    * f_job_id: Required,String: job id
-    * f_name: Optional,String: job name
-    * f_description: Optional,String: job description
-    * f_tag: Optional,String:Optional,String: job tag
-    * f_role: Required,String: job role                    
-    * f_party_id: Required,String: job party id
-    * f_roles: Required,String: job roles
-    * f_initiator_party_id: Optional,String: initiator's party id
-    * f_is_initiator: Optional,Integer: mark if it is the initiator           
-    * f_dsl: Required,String: job dsl                             
-    * f_runtime_conf : Required,String: configuration information for the job           
-    * f_run_ip: Required,String: job run ip
-    * f_status: Required,String: job status
-    * f_current_steps: Optional,String:record component id in DSL
-    * f_current_tasks: Optional,String: record task id
-    * f_progress: Optional,Integer: job progress
-    * f_create_time: Optional,Integer: job create time
-    * f_update_time: Optional,Integer:job update time
-    * f_start_time: Optional,Integer: job start time
-    * f_end_time: Optional,Integer: job end time
-    * f_elapsed: Optional,Integer: job elapsed time
-- response structure
-    * retcode:return code,Integer
-    * retmsg:return code description,String
-
-    
-- endpoint: **v1/job/<job_id>/<role>/<party_id>/<model_id>/save/pipeline**
-- request structure
-    * none
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
-
-- endpoint: **v1/job/<job_id>/<role>/<party_id>/kill**
-- request structure
-    * job_initiator: required, object: job initiator information 
-- response structure
-    * retcode:return code,Integer
-    * retmsg:return code description,String
-
-
-- endpoint: **v1/job/<job_id>/<role>/<party_id>/clean**
-- request structure
-    * none
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
-
-- endpoint: **v1/job/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run**
-- request structure
-    * job_parameters: Required,Object: job parameters information
-    * job_initiator: Required,Object: job initiator information 
-    * job_args: Required,Object: job args 
-    * input: Required,Object: task input dsl
-    * output: Required,Object: task output dsl 
-    * parameters: Required,Object: federation runtime config
-    * module_name: Required,String: module name
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
-
-- endpoint: **v1/job/<job_id>/<component_name>/<task_id>/<role>/<party_id>/status**
-- request structure
-    * f_job_id: Required,String: job id
-    * f_name: Optional,String: job name
-    * f_description: Optional,String: job description
-    * f_tag: Optional,String:Optional,String: job tag
-    * f_role: Required,String: job role                    
-    * f_party_id: Required,String: job party id
-    * f_roles: Required,String: job roles
-    * f_initiator_party_id: Optional,String: initiator's party id
-    * f_is_initiator: Optional,Integer: mark if it is the initiator           
-    * f_dsl: Required,String: job dsl                             
-    * f_runtime_conf : Required,String: configuration information for the job           
-    * f_run_ip: Required,String: job run ip
-    * f_status: Required,String: job status
-    * f_current_steps: Optional,String:record component id in DSL
-    * f_current_tasks: Optional,String: record task id
-    * f_progress: Optional,Integer: job progress
-    * f_create_time: Optional,Integer: job create time
-    * f_update_time: Optional,Integer:job update time
-    * f_start_time: Optional,Integer: job start time
-    * f_end_time: Optional,Integer: job end time
-    * f_elapsed: Optional,Integer: job elapsed time
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
 
 #### Tracking
 
-- endpoint: **v1/tracking/job/data_view**
+#### /v1/tracking/job/data_view
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -301,7 +172,8 @@
     * data: job view data,Object
 
 
-- endpoint: **v1/tracking/component/metric/all**
+
+#### /v1/tracking/component/metric/all
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -313,7 +185,8 @@
     * data: all metric data,Object
 
 
-- endpoint: **v1/tracking/component/metrics**
+
+#### /v1/tracking/component/metrics
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -325,7 +198,8 @@
     * data: metrics data,Object
 
 
-- endpoint: **v1/tracking/component/metric_data**
+
+#### /v1/tracking/component/metric_data
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -341,7 +215,8 @@
     * meta: metric meta, Object
 
     
-- endpoint: **v1/tracking/component/parameters**
+    
+#### /v1/tracking/component/parameters
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -353,7 +228,8 @@
     * data: output parameters, Object
 
 
-- endpoint: **v1/tracking/component/output/model**
+
+#### /v1/tracking/component/output/model
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -366,7 +242,8 @@
     * meta: component model meta,Object
 
     
-- endpoint: **v1/tracking/component/output/data**
+    
+#### /v1/tracking/component/output/data
 - request structure
     * job_id: Required,String: job id
     * role: Required,String: role information
@@ -379,9 +256,10 @@
     * meta: schema header information, Object
 
 
+
 #### Pipeline
 
-- endpoint: **v1/pipeline/dag/dependency**
+#### /v1/pipeline/dag/dependency
 - request structure
     * job_id: Required,String:job id
 - response structure
@@ -390,9 +268,10 @@
     * data: pipeline dag dependency data,Object
 
 
+
 #### Model
 
-- endpoint:**v1/model/load**
+#### /v1/model/load
 - request structure
     * initiator: Optional,Object: job initiator  information
     * role: Required,Object: role information
@@ -405,18 +284,8 @@
     * data: status info, Object
 
 
-- endpoint:**v1/model/load/do**
-- request structure
-    * initiator: Optional,Object: job initiator information
-    * role: Required,Object: role information
-    * gen_table_info: Optional,Boolean: tag table information
-    * model: Requied, Object: model information
-    * local: Requied,Object: local information
-- response structure
-    * retcode: return code,Integer
 
-
-- endpoint:**v1/model/online**
+#### /v1/model/online
 - request structure
     * servings: Optional,Array: my party servings
     * role: Required,Object: role information
@@ -426,8 +295,25 @@
     * retcode: return code, Integer
 
 
-- endpoint:**v1/model/version**
-- requesst structure
+
+#### /v1/model/version
+- request structure
     * namespace: Requied,String: data table namespace
 - response structure
     * data: version history,Array
+    
+    
+    
+## table
+
+#### /v1/table/table_info
+- request structure
+  - create: Optional, Boolean: whether to create
+  - namespace: Optional,String: download data table namespace
+  - table_name:  Optional,String: download data table name
+  - local: Required,Object: local configuration
+  - role: Optional,Object: role information
+  - data_type: Optional,String: download file data type
+  - gen_table_info: Optional,Boolean: tag table information
+- response structure
+  - data: table information
