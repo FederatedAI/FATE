@@ -25,7 +25,7 @@ Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redi
 #### Standalone
 ##### Docker version
 ```
-FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [manual-deploy](./standalone-deploy/Manual).
+FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](./standalone-deploy/docker).
 
 ##### Manual version
 
