@@ -12,9 +12,6 @@
     ],
     "host": [
       10000
-    ],
-    "arbiter": [
-      10000
     ]
   },
   "role_parameters": {
@@ -23,8 +20,8 @@
         "data": {
           "train_data": [
             {
-              "name": "1ca0d9eea77e11e9a84f5254005e961b",
-              "namespace": "arbiter-10000#guest-10000#host-10000#train_input#guest#10000"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_guest_breast"
             }
           ]
         }
@@ -49,8 +46,8 @@
         "data": {
           "train_data": [
             {
-              "name": "3de22bdaa77e11e99c5d5254005e961b",
-              "namespace": "arbiter-10000#guest-10000#host-10000#train_input#host#10000"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_host_breast"
             }
           ]
         }

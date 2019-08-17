@@ -14,26 +14,54 @@
                 "model": ["dataio"]
             }
          },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+        "feature_scale_0": {
+            "module": "FeatureScale",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["feature_scale"]
+            }
+        },
         "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "feature_scale_0.train"
                     ]
                 }
             },
             "output": {
                 "data": ["transform_data"],
                 "model": ["binning_model"]
-            }
+            },
+            "need_deploy": false
         },
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "feature_scale_0.train"
                     ]
                 },
                 "isometric_model": [

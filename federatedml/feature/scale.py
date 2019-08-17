@@ -102,8 +102,10 @@ class Scale(ModelBase):
             LOGGER.info("DataTransform method is {}, do nothing and return!".format(self.model_param.method))
 
         if self.scale_obj:
+            self.scale_obj.header = self.header
+            self.scale_obj.scale_column_idx = self.scale_column_idx
             self.scale_obj.set_column_range(self.column_max_value, self.column_min_value)
-            transform_data = self.scale_obj.fit(data)
+            transform_data = self.scale_obj.transform(data)
             transform_data.schema = data.schema
 
             self.callback_meta(metric_name="scale", metric_namespace="train",
@@ -126,7 +128,7 @@ class Scale(ModelBase):
         self.column_max_value = [ 0 for _ in range(shape) ]
         self.column_min_value = [0 for _ in range(shape)]
         self.mean = [0 for _ in range(shape)]
-        self.std = [0 for _ in range(shape)]
+        self.std = [1 for _ in range(shape)]
         self.scale_column_idx = []
         scale_param_dict = dict(model_obj.col_scale_param)
         for key, column_scale_param in scale_param_dict.items():

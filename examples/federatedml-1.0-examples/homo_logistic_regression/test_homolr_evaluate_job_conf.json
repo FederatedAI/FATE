@@ -15,7 +15,7 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "090ff6089cb111e9bddf5254005e961b", "namespace": "guest#10000#arbiter-10000#guest-10000#host-10000#train_input"}]
+                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
                 }
             },
             "dataio_0":{
@@ -28,7 +28,7 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "0bacabea9cb111e9af7f5254005e961b", "namespace": "host#10000#arbiter-10000#guest-10000#host-10000#train_input"}]
+                    "train_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
                 }
             },
             "dataio_0":{
@@ -40,7 +40,7 @@
     "algorithm_parameters": {
         "homo_lr_0": {
             "penalty": "L2",
-            "optimizer": "nesterov_momentum_sgd",
+            "optimizer": "rmsprop",
             "eps": 1e-5,
             "alpha": 0.01,
             "max_iter": 10,
@@ -48,10 +48,7 @@
             "batch_size": 320,
             "learning_rate": 0.01,
             "init_param": {
-				"init_method": "random_uniform"
-            },
-            "encrypt_param": {
-                "method": "Paillier"
+				"init_method": "zeros"
             },
             "cv_param": {
                 "n_splits": 4,
@@ -59,6 +56,12 @@
                 "random_seed": 33,
                 "need_cv": false
             }
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
+        },
+        "evaluation_1": {
+            "eval_type": "binary"
         }
     }
 }
