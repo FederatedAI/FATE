@@ -77,7 +77,7 @@ export default {
   },
   filters: {
     formatType(type) {
-      let typePresent = '未知'
+      let typePresent = ''
       switch (type) {
         case 1:
           typePresent = 'intersection'

@@ -22,6 +22,7 @@ from arch.api import RuntimeInstance
 from arch.api import WorkMode
 from arch.api import storage
 from arch.api.utils import file_utils, version_control
+from arch.api.proto import default_empty_fill_pb2
 from fate_flow.settings import stat_logger
 
 
@@ -32,7 +33,12 @@ def save_component_model(component_model_key, model_buffers, party_model_id, mod
     model_class_map = {}
     for buffer_name, buffer_object in model_buffers.items():
         storage_key = '{}:{}'.format(component_model_key, buffer_name)
-        pipeline_model_table.put(storage_key, buffer_object.SerializeToString(), use_serialize=False)
+        buffer_object_serialize_string = buffer_object.SerializeToString()
+        if not buffer_object_serialize_string:
+            fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
+            fill_message.flag = 'set'
+            buffer_object_serialize_string = fill_message.SerializeToString()
+        pipeline_model_table.put(storage_key, buffer_object_serialize_string, use_serialize=False)
         model_class_map[storage_key] = type(buffer_object).__name__
     storage.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
     version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
@@ -57,9 +63,24 @@ def read_component_model(component_model_key, party_model_id, model_version):
                 else:
                     raise Exception(
                         'can not found this protobuffer class: {}'.format(model_class_map.get(storage_key, '')))
-                buffer_object.ParseFromString(buffer_object_bytes)
+                parse_proto_object(proto_object=buffer_object, proto_object_serialized_bytes=buffer_object_bytes)
                 model_buffers[buffer_name] = buffer_object
     return model_buffers
+
+
+def parse_proto_object(proto_object, proto_object_serialized_bytes):
+    try:
+        proto_object.ParseFromString(proto_object_serialized_bytes)
+        stat_logger.info('parse {} proto object normal'.format(type(proto_object).__name__))
+    except Exception as e1:
+        try:
+            fill_message = default_empty_fill_pb2.DefaultEmptyFillMessage()
+            fill_message.ParseFromString(proto_object_serialized_bytes)
+            proto_object.ParseFromString(bytes())
+            stat_logger.info('parse {} proto object with default values'.format(type(proto_object).__name__))
+        except Exception as e2:
+            stat_logger.exception(e2)
+            raise e1
 
 
 def collect_pipeline_model(party_model_id, model_version):
