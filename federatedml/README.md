@@ -3,7 +3,7 @@ This module provides various federated machine learning algorithms for users.
 
 ### Algorithm List
 
-#### 1. Data-io
+#### 1. DataIO
 This component is typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
 
 Corresponding module name: DataIO
