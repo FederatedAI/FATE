@@ -23,10 +23,10 @@
    flush privileges;
    ````
 6. Download the compressed package of stand-alone version and decompress it
-   The download link is :https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE.tar.gz
+   The download link is :https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATEv1.0.tar.gz
    
    ````
-   tar -xvf  FATE.tar.gz
+   tar -xvf  FATEv1.0.tar.gz
    ````
 7. Enter FATE directory and execute the init.sh
    ````
