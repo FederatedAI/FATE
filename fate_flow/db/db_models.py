@@ -86,7 +86,7 @@ class DataBaseModel(Model):
         database = DB
 
     def to_json(self):
-        return self.__dict__['__data__'].copy()
+        return self.__dict__['__data__']
 
     def save(self, *args, **kwargs):
         if hasattr(self, "update_date"):
