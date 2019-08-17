@@ -76,17 +76,6 @@
       "evaluation_0": {
           "need_run": [false]
       }
-    },
-    "arbiter": {
-      "dataio_0": {
-          "need_run": [false]
-      },
-      "intersect_0": {
-          "need_run": [false]
-      },
-      "evaluation_0": {
-          "need_run": [false]
-      }
     }
   },
   "algorithm_parameters": {
