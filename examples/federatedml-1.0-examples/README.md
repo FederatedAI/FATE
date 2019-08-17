@@ -366,16 +366,16 @@ You can also checkout job status by fate_flow in case without FATE_board install
 
 The following command is used to query job status such as running, success or fail.
 
-    python /data/projects/fate/python/fate_flow/fate_flow_client.py -f query_job -j {job_id} -r guest
+    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f query_job -j {job_id} -r guest
 
 ### Step5: Download Predicting Results.
 
 Once predict task finished, the first 100 records of predict result are available in FATE-board. You can also download all results through the following command.
 
-    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r $role} -cpn ${component_name} -o ${predict_result_output_dir}
+    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r ${role} -cpn ${component_name} -o ${predict_result_output_dir}
 
     where
-    ${jobIid}: predict task's job_id
+    ${job_id}: predict task's job_id
     ${party_id}: the partyid of current user.
     ${role}: the role of current user. Please keep in mind that host users are not supposed to get predict results in heterogeneous algorithm.
     ${component_name}: the component who has predict results
