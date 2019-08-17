@@ -25,11 +25,11 @@ Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redi
 #### Standalone
 ##### Docker version
 
-FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](./standalone-deploy/docker).
+FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](./standalone-deploy).
 
 ##### Manual version
 
-FATE provides a tar package with basic components to enable users to run FATE in a stand-alone environment, in which users are required to install dependent components on their own.please refer to manual deploy guide at [manual-deploy](./standalone-deploy/Manual). 
+FATE provides a tar package with basic components to enable users to run FATE in a stand-alone environment, in which users are required to install dependent components on their own.please refer to manual deploy guide at [manual-deploy](./standalone-deploy). 
 
 #### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
