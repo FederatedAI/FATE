@@ -7,7 +7,7 @@ In order to use trained model to predict. The following several steps are needed
 Pay attention to following points to enable predicting:
 1. you should add/modify "need_deploy" field for those modules that need to deploy in predict stage. All modules have set True as their default value except FederatedmSample and Evaluation, which typically will not run in predict stage. The "need_deploy" field is True means this module should run a "fit" process and the fitted model need to be deployed in predict stage.
 
-2. Except setting those model as "need_deploy", they should also config to have a model output except Intersect module. Only in this way can fate-flow store the trained model and make it usable in inference stage.
+2. Besiedes setting those model as "need_deploy", they should also config to have a model output except Intersect module. Only in this way can fate-flow store the trained model and make it usable in inference stage.
 
 3. Get training model's model_id and model_version. There are two ways to get this.
     
