@@ -32,13 +32,9 @@ sed -i "s#python.path=.*#python.path=$dir/python#g" ./egg/conf/egg.properties
 sed -i "s#data.dir=.*#data.dir=$dir/data-dir#g" ./egg/conf/egg.properties
 sed -i "s/max.processors.count=.*/max.processors.count=16/g" ./egg/conf/egg.properties
 
-#sed -i "s/IP =.*/IP = \'0.0.0.0\'/g" ./python/arch/task_manager/settings.py
 sed -i "s/IP =.*/IP = \'0.0.0.0\'/g" ./python/fate_flow/settings.py
-#sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./python/arch/task_manager/settings.py
 sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./python/fate_flow/settings.py
-#sed -i "s#PYTHONPATH=.*#PYTHONPATH=$dir/python#g" ./python/arch/task_manager/service.sh
 sed -i "s#PYTHONPATH=.*#PYTHONPATH=$dir/python#g" ./python/fate_flow/service.sh
-#sed -i "s#venv=.*#venv=$venvdir#g" ./python/arch/task_manager/service.sh
 sed -i "s#venv=.*#venv=$venvdir#g" ./python/fate_flow/service.sh
 
 sed -i "20s#-I. -I.*#-I. -I$dir/storage-service-cxx/third_party/include#g" ./storage-service-cxx/Makefile
@@ -77,7 +73,6 @@ do
 	eval redisip=\${redisip[${i}]}
 	eval sip1=\${serving${i}[0]}
 	eval sip2=\${serving${i}[1]}
-	#eval tmip=\${tmlist${i}[0]}
 	eval flip=\${fllist${i}[0]}
 
 	eval partyid=\${partylist[${i}]}
@@ -145,7 +140,6 @@ eeooff
 	ssh -tt $user@$fbip << eeooff
 cd $dir
 
-#sed -i "s#^fate.url=.*#fate.url=http://$tmip:9380#g" ./fateboard/conf/application.properties
 sed -i "s#^fate.url=.*#fate.url=http://$flip:9380#g" ./fateboard/conf/application.properties
 
 sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://$fldbip:3306/$fldbname?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./fateboard/conf/application.properties
@@ -161,7 +155,7 @@ do
 cd $dir
 
 sed -i "/$IP/d" ./fateboard/conf/ssh.properties
-echo "$IP=abc|123|1000" >> ./fateboard/conf/ssh.properties
+echo "$IP=app|app|22" >> ./fateboard/conf/ssh.properties
 exit
 eeooff
 done
@@ -258,7 +252,7 @@ sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '$redisip',/;x};x;}" ./
 exit
 
 eeooff
-		if  [ ${eggautocompile} != "true" ]
+		if  [ ${Cxxcompile} = "true" ]
 		then
 		ssh -tt $user@$eip << eeooff
 sudo su - root
@@ -307,7 +301,7 @@ eeooff
 		fi
 	done
 
-	#echo egg and task_manager module of $partyid done!
+	
 	echo egg and fate_flow module of $partyid done!
 
 	ssh -tt $user@$jdbcip<< eeooff

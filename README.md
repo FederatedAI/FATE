@@ -24,13 +24,8 @@ Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redi
 
 #### Standalone
 ##### Docker version
-```
-FATE $ sh build_standalone_docker.sh
-FATE $ CONTAINER_ID=`docker run -t -d  fate/standalone`
-FATE $ docker exec -t -i ${CONTAINER_ID} bash
-```
 
-There are a few algorithms under [examples/](./examples) folder, try them out!
+FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](./standalone-deploy/docker).
 
 ##### Manual version
 
@@ -93,3 +88,4 @@ Now you can check out the log in the following path: ${your_install_path}/logs/{
 
 ## License
 [Apache License 2.0](LICENSE)
+
