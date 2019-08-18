@@ -1,6 +1,6 @@
 # Release 1.0
 ## Major Features and Improvements
->This version includes two new products of FATE, FATE-Board and FATE-Flow respectively, FATE-Board as a visual tool for federation modeling, and FATE-Flow is a end to end pipeline platform for federated learning.This version contains important improvements to the FederatedML, which better tracks the running progress of federated learning algorithms.
+>This version includes two new products of FATE, FATE-Board, and FATE-Flow respectively, FATE-Board as a visual tool for federation modeling, and FATE-Flow is an end to end pipeline platform for federated learning. This version contains important improvements to the FederatedML, which better tracks the running progress of federated learning algorithms.
 
 >FATE-Board
 * Federated Learning Job DashBoard
@@ -10,7 +10,7 @@
 
 
 >FATE-FLOW
- * DAG define Pipeline
+ * DAG defines Pipeline
  * Federated Multi-party asymmetric DSL parser
  * Federated Learning lifecycle management
  * Federated Task collaborative scheduling
@@ -18,9 +18,9 @@
  * Federated Multi-party model management
  
 >FederatedML
-* Update all algorithm modules running mechanism for supportting federated modeling pipeline by FATE-Flow
+* Update all algorithm modules running mechanism for supporting federated modeling pipeline by FATE-Flow
 * Intermediate statistic result callback is available and visualizable in FATE-Board for all algorithm modules.
-* Support Nesterov Momentum SGD Opimizer
+* Support Nesterov Momentum SGD Optimizer
 * Add Homomorphic Encryption Scheme Based on Affine Transforms
 * Support sparse input-format in federated feature binning
 * Update evaluation metrics, such as ks, roc, gain, lift curve and so on 
