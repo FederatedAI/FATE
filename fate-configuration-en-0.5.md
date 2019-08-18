@@ -22,7 +22,7 @@ Item              | Meaning             | Example / Value
 ------------------|---------------------|------------------------
 party.id          |party id of FL participant      | e.g. 10000
 service.port      |port to listen on    | federation defaults to 9394
-meta.service.ip   |meta-service ip  | e.g. 172.16.153.xx
+meta.service.ip   |meta-service ip  | e.g. 192.168.153.xx
 meta.service.port |meta-service port | defaults to 8590
 
 ## 2.2. Meta-Service
