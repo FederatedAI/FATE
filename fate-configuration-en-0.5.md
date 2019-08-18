@@ -22,7 +22,7 @@ Item              | Meaning             | Example / Value
 ------------------|---------------------|------------------------
 party.id          |party id of FL participant      | e.g. 10000
 service.port      |port to listen on    | federation defaults to 9394
-meta.service.ip   |meta-service ip  | e.g. 172.16.153.xx
+meta.service.ip   |meta-service ip  | e.g. 192.168.153.xx
 meta.service.port |meta-service port | defaults to 8590
 
 ## 2.2. Meta-Service
@@ -129,8 +129,8 @@ root.crt          | path to certification of root ca | 暂时不填
 
 Item              | Meaning                       | Example / Value
 ------------------|------------------------------|------------------------
-default           | ip and port of exchange or default proxy | 172.16.153.xx / 9370
-${partyId}        | federation ip and port of own party  | 172.16.153.yy / 9394
+default           | ip and port of exchange or default proxy | 192.168.153.xx / 9370
+${partyId}        | federation ip and port of own party  | 192.168.153.yy / 9394
 
 example:
 
@@ -181,7 +181,7 @@ Item              | Meaning             | Example / Value
 ------------------|---------------------|------------------------
 party.id          |party id of FL participant | e.g. 10000
 service.port      |port to listen on.   | roll defaults to 8011
-meta.service.ip   |meta-service ip      | e.g. 172.16.153.xx
+meta.service.ip   |meta-service ip      | e.g. 192.168.153.xx
 meta.service.port |meta-service port    | defaults to 8590
 
 ## 2.6. Storage-Service
