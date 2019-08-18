@@ -195,7 +195,7 @@ python fate_flow_client.py -f query_job -r guest -p 10000 -j $job_id
 ```
 And then, you can found so many useful command from [**CLI**](./doc/fate_flow_cli.md).
 
-##### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.0-examples**](../examples/federatedml-1.0-examples) and it's [**README**](../examples/federatedml-1.0-examples/README.md)
+#### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.0-examples**](../examples/federatedml-1.0-examples).
 
 
 
