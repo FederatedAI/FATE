@@ -1,5 +1,5 @@
 ####  Standalone
-
+It is strongly recommended to use docker, which greatly reduces the possibility of encountering problems.
 ##### Docker version
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
@@ -71,6 +71,7 @@ Please ignore the following tips:
 
    ```
       create database fate_flow DEFAULT CHARSET utf8 COLLATE utf8_general_ci; 
+      create user 'fate_dev'@'localhost' identified by 'fate_dev';
       grant all on *.* to 'fate_dev'@'localhost';
       flush privileges;
    ```
