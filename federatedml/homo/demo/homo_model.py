@@ -17,57 +17,25 @@
 from __future__ import print_function
 
 from arch.api.utils import log_utils
-from federatedml.frameworks.homo.aggregator import MeanAggregator
-from federatedml.frameworks.homo.model.model import Model
-from federatedml.frameworks.homo.coordinate.synchronized_uuid import SynchronizedUUID
-from federatedml.frameworks.homo.coordinate.diffie_hellman_keys_exchange import DHKeysExchange
-from federatedml.frameworks.homo.coordinate.synchronized_party_weights import SynchronizedPartyWeights
-from federatedml.frameworks.homo.coordinate.paillier_pubkey_gen import GenPaillierCipher
-from federatedml.frameworks.homo.coordinate.model_aggregate import ModelAggregate, GradientAggregate
-from federatedml.frameworks.homo.coordinate.model_broadcast import ModelBroadcast, GradientBroadcast
+from federatedml.homo import MeanAggregator
+from federatedml.homo import Model
+from federatedml.homo import SynchronizedPartyWeights
+from federatedml.homo import ModelAggregate, GradientAggregate
+from federatedml.homo import ModelBroadcast, GradientBroadcast
 from federatedml.param.homo_param import HomoParam
-from federatedml.secureprotol.encrypt import FakeEncrypt
-from federatedml.secureprotol.encrypt import PadsCipher
 from federatedml.util.transfer_variable.homo_transfer_variable import HomeModelTransferVariable
 from federatedml.util.consts import PAILLIER, RANDOM_PADS, NONE
 from federatedml.model_base import ModelBase
+from federatedml.util import consts
+from federatedml.homo import ReEncrypt
+from federatedml.homo import RandomPadding
+from federatedml.homo import SynPaillierCipher
 
 LOGGER = log_utils.getLogger()
 
-MODEL_AGG = "model_agg"
-GRAD_AGG = "grad_agg"
-
 
 class HomoModel(ModelBase):
-
-    def __init__(self, model: Model):
-        super().__init__()
-        self.model = model
-
-        self.encrypt_operator = FakeEncrypt()  # todo: xx
-
-        self.transfer_variable: HomeModelTransferVariable = HomeModelTransferVariable()
-
-        self.fit_mode = MODEL_AGG
-        self._iter_index = 0
-
-        self.flowid = None
-
-    def set_flowid(self, flowid):
-        self.flowid = flowid
-
-    def fit(self, data_instance):
-        pass
-
-    def evaluate(self, data_instance):
-        pass
-
-    def save_model(self):
-        self.model.save_model()
-
-    def load_model(self):
-        self.model.load_model()
-
+    pass
 
 class ArbiterModel(HomoModel):
 
@@ -84,27 +52,45 @@ class ArbiterModel(HomoModel):
 
         self.weights = None
 
+
+    def fit_random_padding(self, transfer_variable, enable_encrypt):
+        if enable_encrypt:
+
+
+    def fit_paillier(self, transfer_variable, enable_encrypt=True):
+        if enable_encrypt:
+            LOGGER.info(f"enable paillier cipher")
+            paillier = SynPaillierCipher(transfer_variable, suffix="train").arbiter()
+            paillier.maybe_gen_pubkey(self.encrypt_param.key_length)
+            paillier.set_re_cipher_time()
+
+        party_weights = SynchronizedPartyWeights(transfer_variable=self.transfer_variable).party_weight_arbiter()
+
+        model_agg_fn = ModelAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
+        model_bc_fn = ModelBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
+
+
+        for iter_num in range(self.max_iter):
+
+            re_encrypt(iter_num=iter_num, )
+
+                mean_weights = model_agg_fn(party_weights=self.party_weights,
+                                            paillier_ciphers=paillier_ciphers,
+                                            tag_suffix=f"epoch_{self._iter_index}")
+                self.weights = mean_weights
+                model_bc_fn(model_weights=self.weights,
+                            paillier_ciphers=paillier_ciphers,
+                            tag_suffix=f"epoch_{self._iter_index}")
+
+
     def _prepare(self):
 
         LOGGER.info(f"use encrypt method: {self.encrypt_method}")
         if self.encrypt_method == RANDOM_PADS:
-            LOGGER.info("synchronizing uuid")
-            SynchronizedUUID.from_transfer_variable(transfer_variable=self.transfer_variable) \
-                .arbiter_call()
-
-            LOGGER.info("Diffie-Hellman keys exchanging")
-            DHKeysExchange.from_transfer_variable(transfer_variable=self.transfer_variable)\
-                .arbiter_call()
+            RandomPadding(self.transfer_variable).cipher_create_arbiter()
 
         elif self.encrypt_method == PAILLIER:
-            LOGGER.info("generate paillier ciphers")
-            host_use_encryption, hosts_cipher = \
-                GenPaillierCipher.from_transfer_variable(transfer_variable=self.transfer_variable)\
-                .arbiter_call(self.encrypt_param)
 
-            LOGGER.info(f"hosts that enable paillier cipher: {self.host_use_encryption}")
-            self.host_use_encryption = host_use_encryption
-            self.paillier_ciphers = hosts_cipher
 
         elif self.encrypt_method == NONE:
             pass
@@ -113,10 +99,7 @@ class ArbiterModel(HomoModel):
             raise NotImplementedError(f"encrypt method {self.encrypt_method} not implemented")
 
         # sync party weights
-        LOGGER.info("synchronizing party weights")
-        self.party_weights = SynchronizedPartyWeights.from_transfer_variable(transfer_variable=self.transfer_variable)\
-            .arbiter_fn()
-        LOGGER.info(f"synchronized party weights: {self.party_weights}")
+
 
     def fit(self, data_instances):
 
@@ -124,15 +107,18 @@ class ArbiterModel(HomoModel):
 
         paillier_ciphers = self.paillier_ciphers if self.encrypt_method == PAILLIER else None
         max_iter = self.max_iter
-        model_agg_fn = ModelAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_call
-        model_bc_fn = ModelBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_call
+        model_agg_fn = ModelAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
+        model_bc_fn = ModelBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
         gradient_agg_fn = \
-            GradientAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_call
-        gradient_bc_fn = GradientBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_call
+            GradientAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
+        gradient_bc_fn = GradientBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).arbiter_get_weights
+        re_encrypt = ReEncrypt.from_transfer_variable(self.transfer_variable).arbiter_get_weights
 
-        while self._iter_index < max_iter:
+        for iter_num in range(self.max_iter):
 
-            if self.fit_mode == MODEL_AGG:
+
+            if self.fit_mode == consts.MODEL_AGG:
+
                 mean_weights = model_agg_fn(party_weights=self.party_weights,
                                             paillier_ciphers=paillier_ciphers,
                                             tag_suffix=f"epoch_{self._iter_index}")
@@ -153,6 +139,7 @@ class ArbiterModel(HomoModel):
                                paillier_ciphers=paillier_ciphers,
                                tag_suffix=f"epoch_{self._iter_index}")
             self._iter_index += 1
+
 
 
 class GuestModel(HomoModel):
@@ -176,18 +163,8 @@ class GuestModel(HomoModel):
 
         LOGGER.info(f"use encrypt method: {self.encrypt_method}")
         if self.encrypt_method == RANDOM_PADS:
-            LOGGER.info("synchronizing uuid")
-            uuid = SynchronizedUUID.from_transfer_variable(transfer_variable=self.transfer_variable).guest_call()
-            LOGGER.info(f"local uuid={uuid}")
-
-            LOGGER.info("Diffie-Hellman keys exchanging")
-            exchanged_keys = DHKeysExchange.from_transfer_variable(transfer_variable=self.transfer_variable)\
-                .guest_call(uuid)
-            LOGGER.info(f"Diffie-Hellman exchanged keys {exchanged_keys}")
-
-            self.cipher = PadsCipher()
-            self.cipher.set_self_uuid(uuid)
-            self.cipher.set_exchanged_keys(exchanged_keys)
+            self.pads_cipher = RandomPadding(self.transfer_variable)
+            self.pads_cipher.cipher_create_guest()
 
         elif self.encrypt_method == PAILLIER:
             pass  # do nothing
@@ -201,19 +178,19 @@ class GuestModel(HomoModel):
         LOGGER.info(f"synchronizing party weights, local: {self.party_weight}")
         self.party_weights_norm = \
             SynchronizedPartyWeights.from_transfer_variable(transfer_variable=self.transfer_variable)\
-            .guest_call(self.party_weight)
+            .send_party_weight(self.party_weight)
         LOGGER.info(f"synchronized party weights: {self.party_weights_norm}")
 
     def fit(self, data_instances):
         print(self.max_iter)
         max_iter = self.max_iter
-        model_agg_fn = ModelAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).guest_call
-        model_bc_fn = ModelBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).guest_call
-        gradient_agg_fn = GradientAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).guest_call
-        gradient_bc_fn = GradientBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).guest_call
+        model_agg_fn = ModelAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).send_party_weight
+        model_bc_fn = ModelBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).send_party_weight
+        gradient_agg_fn = GradientAggregate.from_transfer_variable(transfer_variable=self.transfer_variable).send_party_weight
+        gradient_bc_fn = GradientBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).send_party_weight
         while self._iter_index < max_iter:
 
-            if self.fit_mode == MODEL_AGG:
+            if self.fit_mode == consts.MODEL_AGG:
                 # train local model
                 self.model.train_local(data_instances)
 
@@ -230,10 +207,10 @@ class GuestModel(HomoModel):
 
             # encrypt before transfer to arbiter
             if self.encrypt_method == RANDOM_PADS:
-                # Pads cipher encrypt model before sending to arbiter
-                transfer_weights.encrypted(self.cipher)
+                self.pads_cipher.encrypt(transfer_weights)
 
-            if self.fit_mode == MODEL_AGG:
+
+            if self.fit_mode == consts.MODEL_AGG:
                 model_agg_fn(weights=transfer_weights, tag_suffix=f"epoch_{self._iter_index}")
                 remote_wgt = model_bc_fn(tag_suffix=f"epoch_{self._iter_index}")
             else:
@@ -248,7 +225,7 @@ class GuestModel(HomoModel):
         self.model.save_model()
 
 
-class HostModel(HomoModel):
+class HomeHostBase(HomoModel):
 
     def __init__(self, model, params: HomoParam):
         super().__init__(model)
@@ -270,24 +247,10 @@ class HostModel(HomoModel):
 
         LOGGER.info(f"use encrypt method: {self.encrypt_method}")
         if self.encrypt_method == RANDOM_PADS:
-            LOGGER.info("synchronizing uuid")
-            uuid = SynchronizedUUID.from_transfer_variable(transfer_variable=self.transfer_variable).host_call()
-            LOGGER.info(f"local uuid={uuid}")
-
-            LOGGER.info("Diffie-Hellman keys exchanging")
-            exchanged_keys = DHKeysExchange.from_transfer_variable(transfer_variable=self.transfer_variable)\
-                .host_call(uuid)
-            LOGGER.info(f"Diffie-Hellman exchanged keys {exchanged_keys}")
-
-            self.cipher = PadsCipher()
-            self.cipher.set_self_uuid(uuid)
-            self.cipher.set_exchanged_keys(exchanged_keys)
+            self.pads_cipher = RandomPadding(self.transfer_variable)
+            self.pads_cipher.cipher_create_host()
 
         elif self.encrypt_method == PAILLIER:
-            LOGGER.info(f"generating paillier pubkey... paillier cipher enabled?({self.host_use_paillier_encrypt})")
-            pubkey = GenPaillierCipher.from_transfer_variable(transfer_variable=self.transfer_variable)\
-                .host_call(self.host_use_paillier_encrypt)
-            LOGGER.info(f"pubkey: {pubkey}")
 
             if self.host_use_paillier_encrypt:
                 self.encrypt_operator.set_public_key(public_key=pubkey)
@@ -312,7 +275,7 @@ class HostModel(HomoModel):
         gradient_bc_fn = GradientBroadcast.from_transfer_variable(transfer_variable=self.transfer_variable).host_call
         while self._iter_index < max_iter:
 
-            if self.fit_mode == MODEL_AGG:
+            if self.fit_mode == consts.MODEL_AGG:
                 # train local model
                 self.model.train_local(data_instances)
 
@@ -330,9 +293,9 @@ class HostModel(HomoModel):
             # encrypt before transfer to arbiter
             if self.encrypt_method == RANDOM_PADS:
                 # Pads cipher encrypt model before sending to arbiter
-                transfer_weights.encrypted(self.cipher)
+                self.pads_cipher.encrypt(transfer_weights)
 
-            if self.fit_mode == MODEL_AGG:
+            if self.fit_mode == consts.MODEL_AGG:
                 model_agg_fn(weights=transfer_weights, tag_suffix=f"epoch_{self._iter_index}")
                 remote_wgt = model_bc_fn(tag_suffix=f"epoch_{self._iter_index}")
             else:

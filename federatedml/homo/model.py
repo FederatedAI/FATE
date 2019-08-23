@@ -22,7 +22,7 @@ import tensorflow as tf
 
 from arch.api.proto.tf_model_param_pb2 import TFModelParam, Tensor
 from arch.api.utils import log_utils
-from federatedml.frameworks.homo.model.weights import TransferableWeights
+from federatedml.homo import TransferableWeights
 from federatedml.model_selection.mini_batch import MiniBatch
 
 LOGGER = log_utils.getLogger()
@@ -157,7 +157,7 @@ class TFModel(Model):
         for k, v in output_ops.items():
             self._tensor_info_to_pb(pb.predict.add(), k, v)
 
-        # todo: saving to eggrole
+        # todo: saving to eggroll
         with open("model.pb", "wb") as f:
             f.write(pb.SerializeToString())
 

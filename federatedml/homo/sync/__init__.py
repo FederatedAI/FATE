@@ -13,19 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import abc
-
-
-class Coordinate(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def guest_call(self, *args, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def host_call(self, *args, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def arbiter_call(self, *args, **kwargs):
-        pass

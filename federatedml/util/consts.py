@@ -18,6 +18,10 @@ ARBITER = 'arbiter'
 HOST = 'host'
 GUEST = 'guest'
 
+
+MODEL_AGG = "model_agg"
+GRAD_AGG = "grad_agg"
+
 BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
