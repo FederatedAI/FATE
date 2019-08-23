@@ -1,0 +1,139 @@
+########################################################
+# Copyright 2019-2020 program was created VMware, Inc. #
+# SPDX-License-Identifier: Apache-2.0                  #
+########################################################
+
+version: '3'
+
+networks:
+  fate-network:
+services:
+  federation:
+    image: "${PREFIX}/federation:${TAG}"
+    expose:
+      - 9394
+    volumes:
+      - ./confs/federation/conf/federation.properties:/data/projects/fate/federation/conf/federation.properties
+    networks:
+      - fate-network
+
+  proxy:
+    image: "${PREFIX}/proxy:${TAG}"
+    ports:
+      - "9370:9370"
+    volumes:
+      - ./confs/proxy/conf/proxy.properties:/data/projects/fate/proxy/conf/proxy.properties
+      - ./confs/proxy/conf/route_table.json:/data/projects/fate/proxy/conf/route_table.json
+    networks:
+      - fate-network
+
+  serving-server:
+    image: "${PREFIX}/serving-server:${TAG}"
+    expose:
+      - 8001
+    volumes:
+      - ./confs/serving-server/conf/serving-server.properties:/data/projects/fate/serving-server/conf/serving-server.properties
+    depends_on:
+      - redis
+    networks:
+      - fate-network
+
+  fateboard:
+    image: "${PREFIX}/fateboard:${TAG}"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./confs/fateboard/conf/application.properties:/data/projects/fate/fateboard/conf/application.properties
+      - ./confs/fateboard/conf/ssh.properties:/data/projects/fate/fateboard/conf/ssh.properties
+    networks:
+      - fate-network
+    depends_on:
+      - meta-service
+
+  roll:
+    image: "${PREFIX}/roll:${TAG}"
+    expose:
+      - 8011
+    volumes:
+      - ./confs/roll/conf/roll.properties:/data/projects/fate/roll/conf/roll.properties
+    networks:
+      - fate-network
+    depends_on:
+      - meta-service
+
+  egg:
+    image: "${PREFIX}/egg:${TAG}"
+    expose:
+      - 7888
+      - 7778
+      - 50001
+      - 50002
+      - 50003
+      - 50004
+    environment:
+      - PYTHONPATH=python.path=/data/projects/fate/python
+    volumes:
+      - ./confs/egg/conf/roll.properties:/data/projects/fate/egg/conf/roll.properties
+      - ./confs/python/arch/conf/server_conf.json:/data/projects/fate/python/arch/conf/server_conf.json
+      - ./confs/python/arch/conf/settings.py:/data/projects/fate/python/arch/conf/settings.py
+      - ./confs/python/conf:/data/projects/fate/python/conf
+    networks:
+      - fate-network
+
+  python:
+    image: "${PREFIX}/python:${TAG}"
+    expose:
+      - 9360
+      - 9380
+    restart: always
+    volumes:
+      - ./confs/python/arch/conf:/data/projects/fate/python/arch/conf
+      - ./confs/python/conf:/data/projects/fate/python/conf
+      - ./confs/python/fate_flow/settings.py:/data/projects/fate/python/fate_flow/settings.py
+    depends_on:
+      - redis
+      - meta-service
+      - proxy
+      - roll
+      - egg
+    command: /bin/bash -c "sleep 10; source /data/projects/fate/venv/bin/activate; cd python/fate_flow && python fate_flow_server.py"
+    networks:
+      - fate-network
+
+  meta-service:
+    image: "${PREFIX}/meta-service:${TAG}"
+    expose:
+      - 8590
+    volumes:
+      - ./confs/meta-service/conf/jdbc.properties:/data/projects/fate/meta-service/conf/jdbc.properties
+      - ./confs/meta-service/conf/meta-service.properties:/data/projects/fate/meta-service/conf/meta-service.properties
+    depends_on:
+      - mysql
+    networks:
+      - fate-network
+
+  mysql:
+    image: "mysql"
+    expose:
+      - 3306
+    volumes:
+      - ./confs/mysql/init:/docker-entrypoint-initdb.d/
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Fate123#$$
+      MYSQL_DATABASE: fate
+      MYSQL_USER: fate
+      MYSQL_PASSWORD: Fate123#$$
+    networks:
+      - fate-network
+
+  redis:
+    image: "redis"
+    expose:
+      - 6379
+    command: redis-server --requirepass fate1234
+    volumes:
+      - ./confs/redis/data:/data"
+    networks:
+      - fate-network
+
