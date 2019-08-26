@@ -41,7 +41,6 @@ class HomoLRGuest(HomoLRBase):
         self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
 
-        self.initializer = Initializer()
         self.classes_ = [0, 1]
 
         self.evaluator = Evaluation()

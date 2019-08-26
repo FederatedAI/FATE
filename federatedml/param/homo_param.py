@@ -60,10 +60,6 @@ class HomoParam(object):
         overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
         this parameter. Too large batches may cause training failure.
 
-    model_path : Abandoned
-
-    table_name : Abandoned
-
     """
 
     def __init__(self, penalty='L2',
@@ -71,7 +67,6 @@ class HomoParam(object):
                  batch_size=-1, num_batch=201, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, model_agg_iter=0, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 model_path='lr_model', table_name='lr_table',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam()):
         self.penalty = penalty
         self.eps = eps
@@ -86,7 +81,5 @@ class HomoParam(object):
         self.converge_func = converge_func
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
-        self.model_path = model_path
-        self.table_name = table_name
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)

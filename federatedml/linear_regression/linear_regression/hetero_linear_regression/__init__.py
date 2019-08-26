@@ -14,13 +14,8 @@
 #  limitations under the License.
 #
 
-from federatedml.optim import gradient
-from federatedml.optim.convergence import DiffConverge, AbsConverge
-from federatedml.optim.optimizer_old import Optimizer
-from federatedml.optim.initialize import Initializer
-from federatedml.optim.updater import L1Updater, L2Updater
-from federatedml.optim import federated_aggregator
-from federatedml.optim import activation
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_arbiter import HeteroLRArbiter
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
 
-__all__ = ['gradient', 'federated_aggregator', 'DiffConverge', 'AbsConverge', 'Optimizer', 'Initializer',
-           'federated_aggregator', 'L1Updater', 'L2Updater', 'activation']
+__all__ = ["HeteroLinRHost", "HeteroLinRGuest", "HeteroLinRArbiter"]

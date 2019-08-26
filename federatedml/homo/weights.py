@@ -20,25 +20,25 @@ import abc
 import operator
 
 
-class TransferableParameters(metaclass=segment_transfer_enabled()):
+class TransferableVariables(metaclass=segment_transfer_enabled()):
     def __init__(self, parameters):
         self.parameters = parameters
 
 
-class Parameters(object):
+class Variables(object):
 
     def __init__(self, l):
         self._parameter = l
 
     def for_remote(self):
-        return TransferableParameters(self._parameter)
+        return TransferableVariables(self._parameter)
 
     @staticmethod
-    def from_transferable(transferable_parameters: TransferableParameters):
+    def from_transferable(transferable_parameters: TransferableVariables):
         if isinstance(transferable_parameters.parameters, list):
-            return ListParameters(transferable_parameters.parameters)
+            return ListVariables(transferable_parameters.parameters)
         if isinstance(transferable_parameters.parameters, dict):
-            return DictParameters(transferable_parameters.parameters)
+            return DictVariables(transferable_parameters.parameters)
 
         raise NotImplemented(f"build parameters from {type(transferable_parameters.parameters)}")
 
@@ -79,7 +79,7 @@ class Parameters(object):
         return self.map_values(lambda x: x / other, inplace=True)
 
 
-class ListParameters(Parameters):
+class ListVariables(Variables):
     def __init__(self, l):
         super().__init__(l)
 
@@ -92,9 +92,9 @@ class ListParameters(Parameters):
             _w = []
             for v in self._parameter:
                 _w.append(func(v))
-            return ListParameters(_w)
+            return ListVariables(_w)
 
-    def binary_op(self, other: 'ListParameters', func, inplace):
+    def binary_op(self, other: 'ListVariables', func, inplace):
         if inplace:
             for k, v in enumerate(self._parameter):
                 self._parameter[k] = func(self._parameter[k], other._parameter[k])
@@ -103,14 +103,14 @@ class ListParameters(Parameters):
             _w = []
             for k, v in enumerate(self._parameter):
                 _w.append(func(self._parameter[k], other._parameter[k]))
-            return ListParameters(_w)
+            return ListVariables(_w)
 
-    def axpy(self, a, y: 'ListParameters'):
+    def axpy(self, a, y: 'ListVariables'):
         for k, v in enumerate(self._parameter):
             self._parameter[k] += a * y._parameter[k]
 
 
-class DictParameters(Parameters):
+class DictVariables(Variables):
 
     def __init__(self, d):
         super().__init__(d)
@@ -124,9 +124,9 @@ class DictParameters(Parameters):
             _w = dict()
             for k, v in self._parameter.items():
                 _w[k] = func(v)
-            return DictParameters(_w)
+            return DictVariables(_w)
 
-    def binary_op(self, other: 'DictParameters', func, inplace):
+    def binary_op(self, other: 'DictVariables', func, inplace):
         if inplace:
             for k, v in self._parameter.items():
                 self._parameter[k] = func(other._parameter, v)
@@ -135,8 +135,8 @@ class DictParameters(Parameters):
             _w = dict()
             for k, v in self._parameter.items():
                 _w[k] = func(other._parameter, v)
-            return DictParameters(_w)
+            return DictVariables(_w)
 
-    def axpy(self, a, y: 'DictParameters'):
+    def axpy(self, a, y: 'DictVariables'):
         for k, v in self._parameter.items():
             self._parameter[k] += a * y._parameter[k]

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.weights import Parameters
+from federatedml.homo.weights import Variables
 from federatedml.homo.sync.party_weights import PartyWeightsProcedures
 from federatedml.homo.sync.scatter_parameters import ScatterParameters
 
@@ -38,11 +38,11 @@ class _Arbiter(object):
     def get_models(self, version):
         # receive host models
 
-        self._host_models = [Parameters.from_transferable(v)
+        self._host_models = [Variables.from_transferable(v)
                              for v in self._scatter.get_hosts(suffix=_tag_suffix(version))]
 
         # receive guest models
-        self._guest_model = Parameters.from_transferable(self._scatter.get_guest(suffix=_tag_suffix(version)))
+        self._guest_model = Variables.from_transferable(self._scatter.get_guest(suffix=_tag_suffix(version)))
 
     def decrypt_models(self, ciphers: dict):
         # decrypt model by paillier ciphers
@@ -80,7 +80,7 @@ class _Guest(object):
     def send_party_weight(self, party_weight):
         PartyWeightsProcedures.guest(self._transfer_variable).remote_party_weight(party_weight)
 
-    def send(self, weights: Parameters, version=0):
+    def send(self, weights: Variables, version=0):
         self._scatter.remote_guest(weights.for_remote(), suffix=_tag_suffix(version))
 
 
@@ -92,7 +92,7 @@ class _Host(object):
     def send_party_weight(self, party_weight):
         PartyWeightsProcedures.host(self._transfer_variable).remote_party_weight(party_weight)
 
-    def send(self, weights: Parameters, version):
+    def send(self, weights: Variables, version):
         self._scatter.remote_host(weights.for_remote(), suffix=_tag_suffix(version))
 
 

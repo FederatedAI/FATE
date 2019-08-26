@@ -194,87 +194,98 @@ class TFModel(Model):
         pass
 
 
+# class LRModel(Model):
+#     def __init__(self, model_shape, initializer, init_param_obj, fit_intercept, gradient_operator,
+#                  encrypt_operator, aggregator, updater, optimizer):
+#         self.gradient_operator = gradient_operator
+#         self.encrypt_operator = encrypt_operator
+#         self.fit_intercept = fit_intercept
+#         self.aggregator = aggregator
+#         self.updater = updater
+#         self.optimizer = optimizer
+#         self.loss_history = []
+#         self.batch_size = 1000
+#         w = initializer.init_model(model_shape, init_params=init_param_obj)
+#         w = self.encrypt_operator.encrypt_list(w)
+#         if fit_intercept:
+#             self._coef = w[:-1]
+#             self._intercept = w[-1]
+#         else:
+#             self._coef = w
+#             self._intercept = 0
+#
+#     def get_gradient_weights(self, batch) -> TransferableWeights:
+#         raise NotImplementedError("not implemented")
+#
+#     def get_model_weights(self) -> TransferableWeights:
+#         return TransferableWeights(dict(coef=self._coef, intercept=self._intercept))
+#
+#     def apply_gradient_weights(self, weights: TransferableWeights):
+#         raise NotImplementedError("not implemented")
+#
+#     def assign_model_weights(self, weights: TransferableWeights):
+#         self._coef = weights["coef"]
+#         self._intercept = weights["intercept"]
+#
+#     def _update_model(self, gradient):
+#         if self.fit_intercept:
+#             if self.updater is not None:
+#                 self._coef = self.updater.update_coef(self._coef, gradient[:-1])
+#             else:
+#                 self._coef = self._coef - gradient[:-1]
+#             self._intercept -= gradient[-1]
+#
+#         else:
+#             if self.updater is not None:
+#                 self._coef = self.updater.update_coef(self._coef, gradient)
+#             else:
+#                 self._coef = self._coef - gradient
+#
+#     def _merge_model(self):
+#         w = self._coef.copy()
+#         if self.fit_intercept:
+#             w = np.append(w, self._intercept)
+#         return w
+#
+#     def train_local(self, data_instances):
+#         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
+#         batch_data_generator = mini_batch_obj.mini_batch_data_generator()
+#         total_loss = 0
+#         batch_num = 0
+#
+#         for batch_data in batch_data_generator:
+#             n = batch_data.count()
+#
+#             f = functools.partial(self.gradient_operator.compute,
+#                                   coef=self._coef,
+#                                   intercept=self._intercept,
+#                                   fit_intercept=self.fit_intercept)
+#             grad_loss = batch_data.mapPartitions(f)
+#
+#             grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
+#
+#             grad /= n
+#             loss /= n
+#
+#             if self.updater is not None:
+#                 loss_norm = self.updater.loss_norm(self._coef)
+#                 total_loss += (loss + loss_norm)
+#             delta_grad = self.optimizer.apply_gradients(grad)
+#
+#             self._update_model(delta_grad)
+#             batch_num += 1
+#
+#         total_loss /= batch_num
+#         w = self._merge_model()
+#         self.loss_history.append(total_loss)
+
+
 class LRModel(Model):
-    def __init__(self, model_shape, initializer, init_param_obj, fit_intercept, gradient_operator,
-                 encrypt_operator, aggregator, updater, optimizer):
-        self.gradient_operator = gradient_operator
-        self.encrypt_operator = encrypt_operator
-        self.fit_intercept = fit_intercept
-        self.aggregator = aggregator
-        self.updater = updater
-        self.optimizer = optimizer
-        self.loss_history = []
-        self.batch_size = 1000
-        w = initializer.init_model(model_shape, init_params=init_param_obj)
-        w = self.encrypt_operator.encrypt_list(w)
-        if fit_intercept:
-            self._coef = w[:-1]
-            self._intercept = w[-1]
-        else:
-            self._coef = w
-            self._intercept = 0
+    def __init__(self):
+        self.coef_ = []
+        self.intercept = 0
+        self.n_iter = 0
+        # ...
 
-    def get_gradient_weights(self, batch) -> TransferableWeights:
-        raise NotImplementedError("not implemented")
 
-    def get_model_weights(self) -> TransferableWeights:
-        return TransferableWeights(dict(coef=self._coef, intercept=self._intercept))
 
-    def apply_gradient_weights(self, weights: TransferableWeights):
-        raise NotImplementedError("not implemented")
-
-    def assign_model_weights(self, weights: TransferableWeights):
-        self._coef = weights["coef"]
-        self._intercept = weights["intercept"]
-
-    def _update_model(self, gradient):
-        if self.fit_intercept:
-            if self.updater is not None:
-                self._coef = self.updater.update_coef(self._coef, gradient[:-1])
-            else:
-                self._coef = self._coef - gradient[:-1]
-            self._intercept -= gradient[-1]
-
-        else:
-            if self.updater is not None:
-                self._coef = self.updater.update_coef(self._coef, gradient)
-            else:
-                self._coef = self._coef - gradient
-
-    def _merge_model(self):
-        w = self._coef.copy()
-        if self.fit_intercept:
-            w = np.append(w, self._intercept)
-        return w
-
-    def train_local(self, data_instances):
-        mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
-        batch_data_generator = mini_batch_obj.mini_batch_data_generator()
-        total_loss = 0
-        batch_num = 0
-
-        for batch_data in batch_data_generator:
-            n = batch_data.count()
-
-            f = functools.partial(self.gradient_operator.compute,
-                                  coef=self._coef,
-                                  intercept=self._intercept,
-                                  fit_intercept=self.fit_intercept)
-            grad_loss = batch_data.mapPartitions(f)
-
-            grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
-
-            grad /= n
-            loss /= n
-
-            if self.updater is not None:
-                loss_norm = self.updater.loss_norm(self._coef)
-                total_loss += (loss + loss_norm)
-            delta_grad = self.optimizer.apply_gradients(grad)
-
-            self._update_model(delta_grad)
-            batch_num += 1
-
-        total_loss /= batch_num
-        w = self._merge_model()
-        self.loss_history.append(total_loss)

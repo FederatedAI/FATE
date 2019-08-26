@@ -242,13 +242,16 @@ class Binning(object):
             f = functools.partial(self._convert_sparse_data,
                                   transform_cols_idx=transform_cols_idx,
                                   split_points_dict=split_points,
-                                  header=self.header)
+                                  header=self.header,
+                                  abnormal_list=self.abnormal_list
+                                  )
             new_data = data_instances.mapValues(f)
         else:
             f = functools.partial(self._convert_dense_data,
                                   transform_cols_idx=transform_cols_idx,
                                   split_points_dict=split_points,
-                                  header=self.header)
+                                  header=self.header,
+                                  abnormal_list=self.abnormal_list)
             new_data = data_instances.mapValues(f)
         new_data.schema = {"header": self.header}
         bin_sparse = self.get_sparse_bin(transform_cols_idx, split_points)
@@ -263,7 +266,7 @@ class Binning(object):
         return new_data, split_points_result, bin_sparse
 
     @staticmethod
-    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header):
+    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
         all_data = instances.features.get_all_data()
         data_shape = instances.features.get_shape()
         indice = []
@@ -273,6 +276,9 @@ class Binning(object):
         # ))
         for col_idx, col_value in all_data:
             if col_idx in transform_cols_idx:
+                if col_value in abnormal_list:
+                    sparse_value.append(col_value)
+                    continue
                 col_name = header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
@@ -299,10 +305,13 @@ class Binning(object):
         return result
 
     @staticmethod
-    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header):
+    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
         features = instances.features
         for col_idx, col_value in enumerate(features):
             if col_idx in transform_cols_idx:
+                if col_value in abnormal_list:
+                    features[col_idx] = col_value
+                    continue
                 col_name = header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)

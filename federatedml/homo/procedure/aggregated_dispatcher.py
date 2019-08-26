@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.weights import Parameters
+from federatedml.homo.weights import Variables
 from federatedml.homo.transfer import arbiter_broadcast
 
 
@@ -26,7 +26,7 @@ class _Arbiter(object):
     def __init__(self, dispatcher):
         self._dispatcher = dispatcher
 
-    def send(self, model_weights: Parameters, version, ciphers):
+    def send(self, model_weights: Variables, version, ciphers):
         if ciphers:
             for idx, cipher in ciphers.items():
                 encrypt_model = model_weights.encrypted(cipher, inplace=False)

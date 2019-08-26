@@ -109,6 +109,8 @@ class MultivariateStatisticalSummary(object):
             self.abnormal_list = abnormal_list
         self._init_cols(data_instances)
 
+        self.label_summary = None
+
     def _init_cols(self, data_instances):
 
         # Already initialized
@@ -395,3 +397,23 @@ class MultivariateStatisticalSummary(object):
                 result[col_name] = summary_obj.std_variance
 
         return result
+
+    def get_label_histogram(self):
+
+        def get_label_static_dict(data_instances):
+            from collections import defaultdict
+            result_dict = defaultdict(lambda: 0)
+            for instance in data_instances:
+                result_dict[instance[1].label] += 1
+            return result_dict
+
+        def merge_result_dict(dict_a, dict_b):
+            for k, v in dict_b.items():
+                if k in dict_a:
+                    dict_a[k] += v
+                else:
+                    dict_a[k] = v
+            return dict_a
+
+        label_histogram = self.data_instances.mapPartitions(get_label_static_dict).reduce(merge_result_dict)
+        return label_histogram
