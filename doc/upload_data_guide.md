@@ -23,15 +23,12 @@ sorting the occurred tags by lexicographic order, then fill the occur item with 
 Here is an example showing how to create a upload config file:
 ```
 {
-    "file": "examples/data/breast_b.csv",
-    "head": 1,
-    "partition": 10,
-    "local": {
-        "party_id": 10000,
-        "role": "guest"
-    },
-    "table_name": "hetero_feature_selection_host",
-    "namespace": "hetero_feature_selection"
+  "file": "examples/data/breast_b.csv",
+  "head": 1,
+  "partition": 10,
+  "work_mode": 0,
+  "table_name": "hetero_breast_b",
+  "namespace": "hetero_guest_breast"
 }
 ```
 
