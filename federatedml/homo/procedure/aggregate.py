@@ -14,101 +14,97 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.weights import Variables
-from federatedml.homo.sync.party_weights import PartyWeightsProcedures
-from federatedml.homo.sync.scatter_parameters import ScatterParameters
+import operator
+from functools import reduce
 
-
-def _tag_suffix(version):
-    return f"epoch_{version}"
+from federatedml.homo.sync import party_weights
+from federatedml.homo.utils.scatter import scatter
+from federatedml.homo.weights import Parameters
+from federatedml.util import consts
+from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
 class _Arbiter(object):
-    def __init__(self, transfer_variable):
-        self._host_models = None
-        self._guest_model = None
-        self._transfer_variable = transfer_variable
-        self._scatter = ScatterParameters.arbiter(transfer_variable)
+    def __init__(self,
+                 host_party_weight_trv: Variable,
+                 guest_party_weight_trv: Variable,
+                 host_model_to_agg_trv: Variable,
+                 guest_model_to_agg_trv: Variable):
+        self._h_pw = host_party_weight_trv
+        self._g_pw = guest_party_weight_trv
+        self._h_model_to_agg = host_model_to_agg_trv
+        self._g_model_to_agg = guest_model_to_agg_trv
+
+        self._models = None
         self._party_weights = None
 
     def get_party_weights(self):
-        self._party_weights = PartyWeightsProcedures.arbiter(self._transfer_variable).get_party_weights()
+        self._party_weights = party_weights.arbiter(self._g_pw, self._h_pw).get_party_weights()
         return self._party_weights
 
-    def get_models(self, version):
-        # receive host models
+    def _get_models(self, *suffix):
+        self._models = scatter(self._h_model_to_agg, self._g_model_to_agg, suffix=suffix)
 
-        self._host_models = [Variables.from_transferable(v)
-                             for v in self._scatter.get_hosts(suffix=_tag_suffix(version))]
+    def _decrypt_models(self, host_ciphers: dict):
+        for i, cipher in host_ciphers.items():
+            self._models[i + 1] = self._models[i].decrypted(cipher)
 
-        # receive guest models
-        self._guest_model = Variables.from_transferable(self._scatter.get_guest(suffix=_tag_suffix(version)))
-
-    def decrypt_models(self, ciphers: dict):
-        # decrypt model by paillier ciphers
-        for i, cipher in ciphers.items():
-            self._host_models[i] = self._host_models[i].decrypted(cipher)
-
-    def mean_aggregate(self):
-        num_clients = len(self._host_models) + 1
+    def _mean_aggregate(self):
+        num_clients = len(self._models)
         if not self._party_weights:
-            agg_model = self._guest_model
-            for model in self._host_models:
-                agg_model += model
-                agg_model /= float(num_clients)
+            agg_model = reduce(operator.add, self._models) / num_clients
         else:
-            agg_model = self._guest_model
-            agg_model *= self._party_weights[0]
-
-            for i, model in enumerate(self._host_models):
-                agg_model.axpy(self._party_weights[i + 1], model)
-
+            for m, w in zip(self._models, self._party_weights):
+                m *= w
+            agg_model = reduce(operator.add, self._models)
+        self._models = None  # performed inplace operation, not correct anymore
         return agg_model
 
     def aggregate(self, version, cipher=None):
-        self.get_models(version)
+        self._get_models(version)
         if cipher:
-            self.decrypt_models(cipher)
-        return self.mean_aggregate()
+            self._decrypt_models(cipher)
+        return self._mean_aggregate()
 
 
 class _Guest(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
-        self._scatter = ScatterParameters.guest(transfer_variable)
+    def __init__(self,
+                 guest_party_weight_trv: Variable,
+                 guest_model_to_agg_trv: Variable):
+        self._g_pw = guest_party_weight_trv
+        self._g_model_to_agg = guest_model_to_agg_trv
 
     def send_party_weight(self, party_weight):
-        PartyWeightsProcedures.guest(self._transfer_variable).remote_party_weight(party_weight)
+        party_weights.guest(self._g_pw).send(party_weight)
 
-    def send(self, weights: Variables, version=0):
-        self._scatter.remote_guest(weights.for_remote(), suffix=_tag_suffix(version))
+    def send_model(self, weights: Parameters, *suffix):
+        self._g_model_to_agg.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
 
 
 class _Host(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
-        self._scatter = ScatterParameters.host(transfer_variable)
+    def __init__(self,
+                 host_party_weight_trv: Variable,
+                 host_model_to_agg_trv: Variable):
+        self._h_pw = host_party_weight_trv
+        self._h_model_to_agg = host_model_to_agg_trv
 
     def send_party_weight(self, party_weight):
-        PartyWeightsProcedures.host(self._transfer_variable).remote_party_weight(party_weight)
+        party_weights.guest(self._h_pw).send(party_weight)
 
-    def send(self, weights: Variables, version):
-        self._scatter.remote_host(weights.for_remote(), suffix=_tag_suffix(version))
+    def send_model(self, weights: Parameters, *suffix):
+        self._h_model_to_agg.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
 
 
-class Aggregate(object):
-    """@hosts, @guest -> @arbiter
-    transfer models from hosts and guest to arbiter for model aggregation
-    """
+def arbiter(host_party_weight_trv: Variable,
+            guest_party_weight_trv: Variable,
+            host_model_to_agg_trv: Variable,
+            guest_model_to_agg_trv: Variable):
+    return _Arbiter(host_party_weight_trv, guest_party_weight_trv, host_model_to_agg_trv, guest_model_to_agg_trv)
 
-    @staticmethod
-    def arbiter(transfer_variable):
-        return _Arbiter(transfer_variable)
 
-    @staticmethod
-    def guest(transfer_variable):
-        return _Guest(transfer_variable)
+def guest(guest_party_weight_trv: Variable, guest_model_to_agg_trv: Variable):
+    return _Guest(guest_party_weight_trv, guest_model_to_agg_trv)
 
-    @staticmethod
-    def host(transfer_variable):
-        return _Host(transfer_variable)
+
+def host(host_party_weight_trv: Variable, host_model_to_agg_trv: Variable):
+    return _Host(host_party_weight_trv, host_model_to_agg_trv)

@@ -14,56 +14,38 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.transfer import Scatter
-from federatedml.homo.transfer import arbiter_scatter
+from federatedml.homo.utils.scatter import scatter
+from federatedml.util.transfer_variable.base_transfer_variable import Variable
+from federatedml.util import consts
 
 
 class _Arbiter(object):
-    def __init__(self, party_weights_scatter: Scatter):
-        self._party_weights_scatter = party_weights_scatter
 
-    def get_party_weights(self):
-        weights = []
-        guest_weight = self._party_weights_scatter.get_guest()
-        hosts_weights = self._party_weights_scatter.get_hosts()
-        weights.append(guest_weight)
-        weights.extend(hosts_weights)
-        return [x / sum(weights) for x in weights]
+    def __init__(self, guest_pw_trv, host_pw_trv):
+        self._guest_pw_trv = guest_pw_trv
+        self._host_pw_trv = host_pw_trv
 
-
-class _Guest(object):
-    def __init__(self, party_weights_scatter: Scatter):
-        self._party_weights_scatter = party_weights_scatter
-
-    def remote_party_weight(self, party_weight):
-        self._party_weights_scatter.remote_guest(party_weight)
+    def get(self):
+        weights = list(scatter(self._host_pw_trv, self._guest_pw_trv))
+        total = sum(weights)
+        return [x / total for x in weights]
 
 
-class _Host(object):
-    def __init__(self, party_weights_scatter: Scatter):
-        self._party_weights_scatter = party_weights_scatter
+class _Client(object):
+    def __init__(self, trv: Variable):
+        self._trv = trv
 
-    def remote_party_weight(self, party_weight):
-        self._party_weights_scatter.remote_host(party_weight)
-
-
-def _parse_transfer_variable(transfer_variable):
-    return arbiter_scatter(host_name=transfer_variable.host_party_weight.name,
-                           host_tag=transfer_variable.generate_transferid(transfer_variable.host_party_weight),
-                           guest_name=transfer_variable.guest_party_weight.name,
-                           guest_tag=transfer_variable.generate_transferid(transfer_variable.guest_party_weight))
+    def send(self, obj):
+        self._trv.remote(obj=obj, role=consts.ARBITER, idx=0)
 
 
-class PartyWeightsProcedures(object):
+def arbiter(guest_pw_trv, host_pw_trv):
+    return _Arbiter(guest_pw_trv, host_pw_trv)
 
-    @staticmethod
-    def arbiter(transfer_variable):
-        return _Arbiter(_parse_transfer_variable(transfer_variable))
 
-    @staticmethod
-    def guest(transfer_variable):
-        return _Guest(_parse_transfer_variable(transfer_variable))
+def host(host_pw_trv):
+    return _Client(host_pw_trv)
 
-    @staticmethod
-    def host(transfer_variable):
-        return _Host(_parse_transfer_variable(transfer_variable))
+
+def guest(guest_pw_trv):
+    return _Client(guest_pw_trv)
