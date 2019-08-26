@@ -15,37 +15,41 @@
 #
 
 from arch.api.utils.log_utils import LoggerFactory
-from federatedml.homo.sync.synchronized_uuid import SynchronizedUUIDProcedure
-from federatedml.homo.sync.diffie_hellman_keys_exchange import DHKeysExchange
+from federatedml.homo.sync import dh_keys_exchange
+from federatedml.homo.sync import identify_uuid
 from federatedml.secureprotol.encrypt import PadsCipher
+from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 LOGGER = LoggerFactory.get_logger()
 
 
 class _Arbiter(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
+    def __init__(self, uuid_sync: identify_uuid, dh_sync):
+        self._uuid_sync = uuid_sync
+        self._dh_sync = dh_sync
 
-    def create_cipher(self):
+    def exchange_secret_keys(self):
         LOGGER.info("synchronizing uuid")
-        SynchronizedUUIDProcedure.arbiter(self._transfer_variable).validate_uuid()
+        self._uuid_sync.validate_uuid()
 
         LOGGER.info("Diffie-Hellman keys exchanging")
-        DHKeysExchange.arbiter(self._transfer_variable).key_exchange()
+        self._dh_sync.key_exchange()
 
 
-class _Guest(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
+class _Client(object):
+    def __init__(self, uuid_sync, dh_sync):
+        self._uuid_sync = uuid_sync
+        self._dh_sync = dh_sync
+
         self._cipher = None
 
     def create_cipher(self) -> PadsCipher:
         LOGGER.info("synchronizing uuid")
-        uuid = SynchronizedUUIDProcedure.guest(self._transfer_variable).generate_uuid()
+        uuid = self._uuid_sync.generate_uuid()
         LOGGER.info(f"local uuid={uuid}")
 
         LOGGER.info("Diffie-Hellman keys exchanging")
-        exchanged_keys = DHKeysExchange.guest(self._transfer_variable).key_exchange(uuid)
+        exchanged_keys = self._dh_sync.key_exchange(uuid)
         LOGGER.info(f"Diffie-Hellman exchanged keys {exchanged_keys}")
 
         cipher = PadsCipher()
@@ -58,41 +62,37 @@ class _Guest(object):
         transfer_weights.encrypted(self._cipher)
 
 
-class _Host(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
-        self._cipher = None
-
-    def create_cipher(self) -> PadsCipher:
-        LOGGER.info("synchronizing uuid")
-        uuid = SynchronizedUUIDProcedure.host(self._transfer_variable).generate_uuid()
-        LOGGER.info(f"local uuid={uuid}")
-
-        LOGGER.info("Diffie-Hellman keys exchanging")
-        exchanged_keys = DHKeysExchange.host(self._transfer_variable).key_exchange(uuid)
-        LOGGER.info(f"Diffie-Hellman exchanged keys {exchanged_keys}")
-
-        cipher = PadsCipher()
-        cipher.set_self_uuid(uuid)
-        cipher.set_exchanged_keys(exchanged_keys)
-        self._cipher = cipher
-        return cipher
-
-    def encrypt(self, transfer_weights):
-        transfer_weights.encrypted(self._cipher)
+def arbiter(guest_uuid_trv: Variable,
+            host_uuid_trv: Variable,
+            conflict_flag_trv: Variable,
+            dh_pubkey_trv: Variable,
+            dh_ciphertext_host_trv: Variable,
+            dh_ciphertext_guest_trv: Variable,
+            dh_ciphertext_bc_trv: Variable):
+    return _Arbiter(uuid_sync=identify_uuid.arbiter(guest_uuid_trv, host_uuid_trv, conflict_flag_trv),
+                    dh_sync=dh_keys_exchange.arbiter(dh_pubkey_trv,
+                                                     dh_ciphertext_host_trv,
+                                                     dh_ciphertext_guest_trv,
+                                                     dh_ciphertext_bc_trv))
 
 
-class RandomPadding(object):
-    @staticmethod
-    def arbiter(transfer_variable):
-        return _Arbiter(transfer_variable)\
+def guest(guest_uuid_trv: Variable,
+          conflict_flag_trv: Variable,
+          dh_pubkey_trv: Variable,
+          dh_ciphertext_guest_trv: Variable,
+          dh_ciphertext_bc_trv: Variable):
+    return _Client(uuid_sync=identify_uuid.guest(guest_uuid_trv, conflict_flag_trv),
+                   dh_sync=dh_keys_exchange.guest(dh_pubkey_trv,
+                                                  dh_ciphertext_guest_trv,
+                                                  dh_ciphertext_bc_trv))
 
 
-    @staticmethod
-    def guest(transfer_variable):
-        return _Guest(transfer_variable)\
-
-
-    @staticmethod
-    def host(transfer_variable):
-        return _Host(transfer_variable)
+def host(host_uuid_trv: Variable,
+         conflict_flag_trv: Variable,
+         dh_pubkey_trv: Variable,
+         dh_ciphertext_host_trv: Variable,
+         dh_ciphertext_bc_trv: Variable):
+    return _Client(uuid_sync=identify_uuid.guest(host_uuid_trv, conflict_flag_trv),
+                   dh_sync=dh_keys_exchange.guest(dh_pubkey_trv,
+                                                  dh_ciphertext_host_trv,
+                                                  dh_ciphertext_bc_trv))

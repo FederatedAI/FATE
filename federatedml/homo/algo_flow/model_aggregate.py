@@ -14,8 +14,3 @@
 #  limitations under the License.
 #
 
-from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_arbiter import HomoLRArbiter
-from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_host import HomoLRHost
-from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_guest import HomoLRGuest
-#
-__all__ = ["HomoLRHost", 'HomoLRGuest', 'HomoLRArbiter']

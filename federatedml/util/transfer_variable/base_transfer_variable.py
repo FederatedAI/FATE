@@ -28,14 +28,40 @@ class Variable(object):
         self.auth = auth
         self._transfer_variable = transfer_variable
 
-    def remote(self, obj, role, idx, *suffix):
+    def remote(self, obj, role=None, idx=-1, suffix=tuple()):
+        """
+        send obj to other parties.
+
+        Args:
+            obj: object to be sent
+            role: role of parties to sent to, use one of ['Host', 'Guest', 'Arbiter', None].
+                The default is None, means sent values to parties regardless their party role
+            idx: id of party to sent to.
+                The default is -1, which means sent values to parties regardless their party id
+            suffix: additional tag suffix, the default is tuple()
+        """
+        if not isinstance(suffix, tuple):
+            suffix = (suffix, )
         federation.remote(obj=obj,
                           name=self.name,
                           tag=self._transfer_variable.generate_transferid(self, *suffix),
                           role=role,
                           idx=idx)
 
-    def get(self, idx, *suffix):
+    def get(self, idx=-1, suffix=tuple()):
+        """
+        get obj from other parties.
+
+        Args:
+            idx: id of party to get from.
+                The default is -1, which means get values from parties regardless their party id
+            suffix: additional tag suffix, the default is tuple()
+
+        Returns:
+            object or list of object
+        """
+        if not isinstance(suffix, tuple):
+            suffix = (suffix, )
         federation.get(name=self.name, tag=self._transfer_variable.generate_transferid(self, *suffix), idx=idx)
 
 
