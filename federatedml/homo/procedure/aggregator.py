@@ -42,7 +42,7 @@ class _Arbiter(object):
         self._party_weights = party_weights.arbiter(self._g_pw, self._h_pw).get_party_weights()
         return self._party_weights
 
-    def _get_models(self, *suffix):
+    def _get_models(self, suffix=tuple()):
         self._models = scatter(self._h_model_to_agg, self._g_model_to_agg, suffix=suffix)
 
     def _decrypt_models(self, host_ciphers: dict):
@@ -60,8 +60,8 @@ class _Arbiter(object):
         self._models = None  # performed inplace operation, not correct anymore
         return agg_model
 
-    def aggregate(self, version, cipher=None):
-        self._get_models(version)
+    def aggregate(self, cipher=None, suffix=tuple()):
+        self._get_models(suffix)
         if cipher:
             self._decrypt_models(cipher)
         return self._mean_aggregate()

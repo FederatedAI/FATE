@@ -79,7 +79,7 @@ peewee==3.9.3
 pexpect==4.6.0
 phe==1.4.0
 pickleshare==0.7.4
-plyvel==1.0.5
+plyvel==1.1.0
 pox==0.2.4
 ppft==1.6.4.8
 prometheus-client==0.3.1
