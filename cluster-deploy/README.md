@@ -87,14 +87,14 @@ c).Other Modules: The node where other modules are installed.
 | node           | Node description                                  | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
 | -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Execution node | The operation node that executes the script       | Git tool   rsync Maven 3.5 and above                         | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
-| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0          | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0 | In the same area or under the same VPC as other nodes        |
+| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0.13       | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0.13 | In the same area or under the same VPC as other nodes        |
 | Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2(One party only needs to install a redis on the serving-service node.) | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes.       |
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
 
 ### **3.3. Package Preparation**
 
-List of software involved:mysql-8.0, jdk1.8, python virtualenv surroundings, Python3.6, redis-5.0.2 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
+List of software involved:mysql-8.0.13, jdk1.8, python virtualenv surroundings, Python3.6, redis-5.0.2 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
 The script directory structure is as follows:
 
 ```
@@ -121,7 +121,7 @@ fate-base
 |   |-- pip-18.1-py2.py3-none-any.whl
 |   |-- setuptools-40.6.3-py2.py3-none-any.whl
 |   |-- virtualenv-16.1.0-py2.py3-none-any.whl
-|   |-- wheel-1.02.3-py2.py3-none-any.whl
+|   |-- wheel-0.32.3-py2.py3-none-any.whl
 ```
 According to the above directory structure, the software packages and files needed by Python are placed in the corresponding directory. The dependency packages required by Python are given in the requirements. TXT file as a list. After downloading the dependency packages list, it can be placed in the pip-dependencies directory side by side with requirements. txt. The requirements.txt file can be obtained from [FATE/requirements.txt](https://github.com/WeBankFinTech/FATE/blob/master/requirements.txt) .
 
@@ -140,25 +140,17 @@ After uploading, you can put the above-mentioned fate-base directory with depend
 
 ```
 cd /data/app
-tar –xf fate-base.tar
+tar –xf fate-base.tar.gz
 cd fate-base
 ```
-
-If there is no app user, you need to create an app user:
-
-```
-groupadd -g 6000 apps
-useradd -s /bin/sh -g apps -d /home/app app
-passwd app
-```
-
-After the creation is completed, modify the app user password (according to actual needs)
 
 Initialize the server and execute it under **root user**:
 
 ```
 sh env.sh
 ```
+
+The env.sh creates the default **app** user for you. You also can modify the app user password (according to actual needs).
 
 The following steps are performed under the **app user**.
 
@@ -182,7 +174,7 @@ Check Python 3.6 and the virtualized environment. If it is not installed, execut
 sh install_py3.sh
 ```
 
-Check if mysql8.0 is installed. If it is not installed, execute the install_mysql.sh script to install it:
+Check if mysql8.0.13 is installed. If it is not installed, execute the install_mysql.sh script to install it:
 
 ```
 sh install_mysql.sh 
@@ -191,7 +183,7 @@ sh install_mysql.sh
 After installing mysql, **change the mysql password to "fate_dev" and create database user "fate_dev"** (modified according to actual needs):
 
 ```
-$/data/projects/common/mysql/mysql-8.0/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0/mysql.sock
+$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
 Enter password:(please input the original password)
 >set password='fate_dev';
 >CREATE USER 'fate_dev'@'localhost' IDENTIFIED BY 'fate_dev';
@@ -202,7 +194,7 @@ Enter password:(please input the original password)
 After installing mysql, you need to use the following statement on the node where MySQL is installed to empower all IP in the party (replacing IP with actual ip):
 
 ```
-$/data/projects/common/mysql/mysql-8.0/bin/mysql -ufate_dev -p –S /data/projects/common/mysql/mysql-8.0/mysql.sock
+$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate_dev -p –S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
 Enter password: fate_dev
 >CREATE USER 'fate_dev'@'$ip' IDENTIFIED BY 'fate_dev';
 >GRANT ALL ON *.* TO 'fate_dev'@'$ip';
@@ -310,21 +302,20 @@ The configuration file configurations.sh instructions:
 
 Assume that each configuration is represented by the following code relationship:
 
-| Code representation | Code node description                                        |
-| ------------------- | ------------------------------------------------------------ |
-| partyA.id           | Indicates the partyid of partyA                              |
-| A.MS-ip             | Indicates the node where the meta-Service module of partyA is located. |
-| A.FF-ip             | Indicates the database ip of fate-flow in partyA.            |
-| A.F-ip              | Indicates the ip of the node where the federation module of partyA is located. |
-| A.P-ip              | Indicates the ip of the node where partyA's Proxy module is located. |
-| A.R-ip              | Indicates the ip of the node where the party module's Roll module is located. |
-| A.FL-ip             | Indicates the fateflow ip of party A.                        |
-| A.S-ip              | Indicates the server ip of the partyA's Serving-server. If there are multiple, the number is incremented. |
-| A.E-ip              | Indicates the server ip of partyA's Egg. If there are more than one, add the number increment. |
-| exchangeip          | Exchange server ip                                           |
-| A.redisip           | Indicates the ip of the node where the redis of partyA is located.One party only needs to install a redis on the serving-service node. |
-| A.FB-ip             | Indicates the fateboard ip of party A                        |
-|                     |                                                              |
+| Code representation | Code node description                                        | Example         |
+| ------------------- | ------------------------------------------------------------ | --------------- |
+| partyA.id           | Indicates the partyid of partyA                              | 10000           |
+| A.MS-ip             | Indicates the node where the meta-Service module of partyA is located. | 192.168.xxx.xxx |
+| A.FF-ip             | Indicates the database ip of fate-flow in partyA.            | 192.168.xxx.xxx |
+| A.F-ip              | Indicates the ip of the node where the federation module of partyA is located. | 192.168.xxx.xxx |
+| A.P-ip              | Indicates the ip of the node where partyA's Proxy module is located. | 192.168.xxx.xxx |
+| A.R-ip              | Indicates the ip of the node where the party module's Roll module is located. | 192.168.xxx.xxx |
+| A.FL-ip             | Indicates the fateflow ip of party A.                        | 192.168.xxx.xxx |
+| A.S-ip              | Indicates the server ip of the partyA's Serving-server. If there are multiple, the number is incremented. | 192.168.xxx.xxx |
+| A.E-ip              | Indicates the server ip of partyA's Egg. If there are more than one, add the number increment. | 192.168.xxx.xxx |
+| A.dbname1           | Indicates the name of database of partyA.                    | fate_dev        |
+| A.user              | Indicates the user of database of partyA.                    | fate_dev        |
+| A.password          | Indicates the password of database of partyA.                | fate_dev        |
 
 The role code representation in partyB is similar to the above description.
 
@@ -341,10 +332,10 @@ venvdir=/data/projects/fate/venv
 redisip=(A.redisip B.redisip)
 redispass=fate_dev
 partylist=(partyA.id partyB.id)
-JDBC0=(A.MS-ip A.dbname A.user A.password) 
-JDBC1=(B.MS-ip B.dbname B.user B.password) 
-fateflowdb0=(A.FF-ip A.dbname A.user A.password) 
-fateflowdb1=(B.FF-ip B.dbname B.user B.password) 
+JDBC0=(A.MS-ip A.dbname1 A.user A.password) 
+JDBC1=(B.MS-ip B.dbname1 B.user B.password) 
+fateflowdb0=(A.FF-ip A.dbname2 A.user A.password) 
+fateflowdb1=(B.FF-ip B.dbname2 B.user B.password) 
 iplist=(A.F-ip A.MS-ip A.P-ip A.R-ip A.FB-ip B.F-ip B.MS-ip B.P-ip B.R-ip B.FB-ip)
 iplist0=(A.F-ip A.MS-ip A.P-ip A.R-ip A.FB-ip A.E1-ip A.E2-ip A.E3-ip...)
 iplist1=(B.F-ip B.MS-ip B.P-ip B.R-ip B.FB-ip B.E1-ip B.E2-ip B.E3-ip...)
@@ -600,7 +591,7 @@ sh service.sh stop
 
 ### **7.1. Stand-alone Test**
 
-Use ssh login to each node **app user**, enter the /data/projects/fate directory to execute:
+Use ssh login to each node **app user**, run:
 
 ```
 source /data/projects/fate/venv/bin/activate
@@ -614,12 +605,6 @@ See the "OK" field to indicate that the operation is successful.In other cases, 
 ### **7.2. Toy_example Deployment Verification**
 
 To run the test, you have 3 parameters to set:   guest_partyid, host_partyid, work_mode.
-
- **For Stand-alone version:**  
-
-The work_mode is 0. The  guest_partyid and host_partyid should be same and correspond to the partyid which would run the test. 
-
- **For Distributed version:**  
 
 The work_mode is 1, the  guest_partyid and  host_partyid  should correspond to the your distributed version settings.  And please note distributed version test only do in the guest party
 
