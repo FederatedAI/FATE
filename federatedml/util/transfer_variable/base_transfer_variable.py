@@ -17,13 +17,27 @@
 #  limitations under the License.
 #
 from arch.api.utils import log_utils
+from arch.api import federation
 
 LOGGER = log_utils.getLogger()
 
+
 class Variable(object):
-    def __init__(self, name, auth):
+    def __init__(self, name, auth, transfer_variable):
         self.name = name
         self.auth = auth
+        self._transfer_variable = transfer_variable
+
+    def remote(self, obj, role, idx, *suffix):
+        federation.remote(obj=obj,
+                          name=self.name,
+                          tag=self._transfer_variable.generate_transferid(self, *suffix),
+                          role=role,
+                          idx=idx)
+
+    def get(self, idx, *suffix):
+        federation.get(name=self.name, tag=self._transfer_variable.generate_transferid(self, *suffix), idx=idx)
+
 
 class BaseTransferVariable(object):
     def __init__(self, flowid=0):

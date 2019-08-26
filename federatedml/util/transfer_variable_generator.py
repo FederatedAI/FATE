@@ -24,25 +24,28 @@
 import json
 import os
 import sys
+
 from arch.api.utils import file_utils
 
 BASE_DIR = file_utils.get_project_base_directory()
-TRANSFER_VARIABLE_TEMPLATE = os.path.join(BASE_DIR, "federatedml", 
-                                         "util", "transfer_variable", 
-                                         "transfer_variable_template.py")
+TRANSFER_VARIABLE_TEMPLATE = os.path.join(BASE_DIR, "federatedml",
+                                          "util", "transfer_variable",
+                                          "transfer_variable_template.py")
 
 
 class TransferVariableGenerator(object):
     def __init__(self):
         pass
 
-    def write_out_class(self, writer, class_name, transfer_var_dict, with_header=True):
+    @staticmethod
+    def write_out_class(writer, class_name, transfer_var_dict, with_header=True):
         if with_header:
             global TRANSFER_VARIABLE_TEMPLATE
-            
+
             with open(TRANSFER_VARIABLE_TEMPLATE, "r") as fin:
                 writer.write(fin.read())
 
+        writer.write("# noinspection PyAttributeOutsideInit\n")
         writer.write("class " + class_name + "(BaseTransferVariable):" + "\n")
 
         tag = '    '
@@ -51,13 +54,11 @@ class TransferVariableGenerator(object):
         for transfer_var, auth_dict in transfer_var_dict.items():
             writer.write(tag + tag)
             var_name = class_name + "." + transfer_var
-            writer.write("self." + transfer_var + " = ")
-            writer.write("Variable(name=" + '"' + var_name + '"' + ", ")
-            writer.write("auth=" + "{'src': " + '"' + auth_dict["src"] + '"' + ", " + \
-                         "'dst': " + str(auth_dict["dst"]) + "})")
-
+            src_auth = auth_dict['src']
+            dst_auth = auth_dict['dst']
+            writer.write(
+                f"self.{transfer_var} = Variable(name='{var_name}', auth=dict(src='{src_auth}', dst={dst_auth}), transfer_variable=self)")
             writer.write("\n")
-
         writer.write(tag + tag + "pass\n")
         writer.flush()
 
@@ -66,7 +67,7 @@ class TransferVariableGenerator(object):
         conf_dir = os.path.join(BASE_DIR, "federatedml", "transfer_variable_conf")
         merge_conf_path = os.path.join(conf_dir, "transfer_conf.json")
         trans_var_dir = os.path.join(BASE_DIR, "federatedml", "util", "transfer_variable")
-       
+
         merge_dict = {}
         with open(merge_conf_path, "w") as fin:
             pass
@@ -77,11 +78,11 @@ class TransferVariableGenerator(object):
 
             if conf == "transfer_conf.json":
                 continue
-            
+
             with open(os.path.join(conf_dir, conf), "r") as fin:
                 var_dict = json.loads(fin.read())
                 merge_dict.update(var_dict)
-       
+
             out_path = os.path.join(trans_var_dir, conf.split(".", -1)[0] + "_transfer_variable.py")
             fout = open(out_path, "w")
             with_header = True
@@ -92,7 +93,7 @@ class TransferVariableGenerator(object):
 
             fout.flush()
             fout.close()
-        
+
         with open(merge_conf_path, "w") as fout:
             jsonDumpsIndentStr = json.dumps(merge_dict, indent=1);
             buffers = jsonDumpsIndentStr.split("\n", -1)
