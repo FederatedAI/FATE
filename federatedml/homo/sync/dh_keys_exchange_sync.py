@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.utils.scatter import scatter
+from federatedml.homo.utils.scatter import Scatter
 from federatedml.homo.utils.secret import DiffieHellman
 from federatedml.util import consts
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
@@ -27,13 +27,13 @@ class _Arbiter(object):
                  dh_ciphertext_guest_trv: Variable,
                  dh_ciphertext_bc_trv: Variable):
         self._dh_pubkey_trv = dh_pubkey_trv
-        self._dh_pubkey_scatter = scatter(dh_ciphertext_host_trv, dh_ciphertext_guest_trv)
+        self._dh_pubkey_scatter = Scatter(dh_ciphertext_host_trv, dh_ciphertext_guest_trv)
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
 
     def key_exchange(self):
         p, g = DiffieHellman.key_pair()
         self._dh_pubkey_trv.remote(obj=(int(p), int(g)), role=None, idx=-1)
-        pubkey = dict(self._dh_pubkey_scatter)
+        pubkey = dict(self._dh_pubkey_scatter.get())
         self._dh_ciphertext_bc_trv.remote(obj=pubkey, role=None, idx=-1)
 
 

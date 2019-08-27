@@ -16,22 +16,23 @@
 
 import uuid
 
-from federatedml.homo.utils.scatter import scatter
+from federatedml.homo.utils.scatter import Scatter
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
 from federatedml.util import consts
 
 
-class _Arbiter(object):
-    def __init__(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv: Variable):
-        self._guest_uuid_trv = guest_uuid_trv
-        self._host_uuid_trv = host_uuid_trv
+class Arbiter(object):
+
+    # noinspection PyAttributeOutsideInit
+    def register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
         self._conflict_flag_trv = conflict_flag_trv
+        self._scatter = Scatter(host_uuid_trv, guest_uuid_trv)
 
     def validate_uuid(self):
         ind = 0
         while True:
             uuid_set = set()
-            for uid in scatter(self._host_uuid_trv, self._guest_uuid_trv, suffix=ind):
+            for uid in self._scatter.get(suffix=ind):
                 if uid in uuid_set:
                     self._conflict_flag_trv.remote(obj=False, role=None, idx=-1, suffix=ind)
                     ind += 1
@@ -41,10 +42,11 @@ class _Arbiter(object):
                 break
 
 
-class _Guest(object):
-    def __init__(self, guest_uuid_trv: Variable, conflict_flag_trv: Variable):
-        self._guest_uuid_trv = guest_uuid_trv
+class Guest(object):
+    # noinspection PyAttributeOutsideInit
+    def register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
         self._conflict_flag_trv = conflict_flag_trv
+        self._scatter = Scatter(host_uuid_trv, guest_uuid_trv)
 
     def generate_uuid(self):
         ind = -1

@@ -17,94 +17,93 @@
 import operator
 from functools import reduce
 
-from federatedml.homo.sync import party_weights
-from federatedml.homo.utils.scatter import scatter
-from federatedml.homo.weights import Parameters
-from federatedml.util import consts
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
+from federatedml.homo.sync import party_weights_sync, model_transfer_sync, loss_transfer_sync
 
 
-class _Arbiter(object):
-    def __init__(self,
-                 host_party_weight_trv: Variable,
-                 guest_party_weight_trv: Variable,
-                 host_model_to_agg_trv: Variable,
-                 guest_model_to_agg_trv: Variable):
-        self._h_pw = host_party_weight_trv
-        self._g_pw = guest_party_weight_trv
-        self._h_model_to_agg = host_model_to_agg_trv
-        self._g_model_to_agg = guest_model_to_agg_trv
+class Arbiter(party_weights_sync.Arbiter, model_transfer_sync.Arbiter, loss_transfer_sync.Arbiter):
 
-        self._models = None
-        self._party_weights = None
+    # noinspection PyAttributeOutsideInit
+    def initialize_aggregator(self, use_party_weight=True):
+        if use_party_weight:
+            self._party_weights = self.get_party_weights()
 
-    def get_party_weights(self):
-        self._party_weights = party_weights.arbiter(self._g_pw, self._h_pw).get_party_weights()
-        return self._party_weights
+    def register_aggregator(self, transfer_variables):
+        """
+        register transfer of party_weights, models and losses.
+        Args:
+            transfer_variables: assuming transfer_variable has variables:
+                1. guest_party_weight,  host_party_weight for party_weights transfer
+                2. guest_model_transfer, host_model_transfer for model transfer
+                3. guest_loss_transfer, host_loss_transfer for loss transfer
+        """
+        self.register_party_weights_transfer(guest_party_weight_transfer=transfer_variables.guest_party_weight,
+                                             host_party_weight_transfer=transfer_variables.host_party_weight)
 
-    def _get_models(self, suffix=tuple()):
-        self._models = scatter(self._h_model_to_agg, self._g_model_to_agg, suffix=suffix)
+        self.register_model_transfer(host_model_transfer=transfer_variables.host_model_transfer,
+                                     guest_model_transfer=transfer_variables.guest_model_transfer)
 
-    def _decrypt_models(self, host_ciphers: dict):
-        for i, cipher in host_ciphers.items():
-            self._models[i + 1] = self._models[i].decrypted(cipher)
+        self.register_loss_transfer(host_loss_transfer=transfer_variables.host_loss_transfer,
+                                    guest_loss_transfer=transfer_variables.guest_loss_transfer)
 
-    def _mean_aggregate(self):
-        num_clients = len(self._models)
+    def aggregate_model(self, ciphers_dict=None, suffix=tuple()):
+        models = self.get_models(ciphers_dict, suffix=suffix)
+        num_clients = len(models)
         if not self._party_weights:
-            agg_model = reduce(operator.add, self._models) / num_clients
+            return reduce(operator.add, models) / num_clients
+        for m, w in zip(models, self._party_weights):
+            m *= w
+        return reduce(operator.add, models)
+
+    def aggregate_loss(self, idx=None, suffix=tuple()):
+        losses = self.get_losses(idx=idx, suffix=suffix)
+        if idx is None:
+            return sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
         else:
-            for m, w in zip(self._models, self._party_weights):
-                m *= w
-            agg_model = reduce(operator.add, self._models)
-        self._models = None  # performed inplace operation, not correct anymore
-        return agg_model
-
-    def aggregate(self, cipher=None, suffix=tuple()):
-        self._get_models(suffix)
-        if cipher:
-            self._decrypt_models(cipher)
-        return self._mean_aggregate()
+            total_weights = self._party_weights[0]
+            loss = losses[0]
+            for party_id in idx:
+                total_weights += self._party_weights[party_id]
+                loss += losses[party_id]
+            return loss / total_weights
 
 
-class _Guest(object):
-    def __init__(self,
-                 guest_party_weight_trv: Variable,
-                 guest_model_to_agg_trv: Variable):
-        self._g_pw = guest_party_weight_trv
-        self._g_model_to_agg = guest_model_to_agg_trv
+class Guest(party_weights_sync.Guest, model_transfer_sync.Guest, loss_transfer_sync.Guest):
 
-    def send_party_weight(self, party_weight):
-        party_weights.guest(self._g_pw).send(party_weight)
+    def initialize_aggregator(self, party_weight):
+        self.send_party_weight(party_weight)
 
-    def send_model(self, weights: Parameters, *suffix):
-        self._g_model_to_agg.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
+    def register_aggregator(self, transfer_variables):
+        """
+           register transfer of party_weights, models and losses.
+           Args:
+               transfer_variables: assuming transfer_variable has variables:
+                   1. guest_party_weight for party_weights transfer
+                   2. guest_model_transfer for model transfer
+                   3. guest_loss_transfer for loss transfer
+        """
+        self.register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
 
+        self.register_model_transfer(model_transfer=transfer_variables.guest_model_transfer)
 
-class _Host(object):
-    def __init__(self,
-                 host_party_weight_trv: Variable,
-                 host_model_to_agg_trv: Variable):
-        self._h_pw = host_party_weight_trv
-        self._h_model_to_agg = host_model_to_agg_trv
-
-    def send_party_weight(self, party_weight):
-        party_weights.guest(self._h_pw).send(party_weight)
-
-    def send_model(self, weights: Parameters, *suffix):
-        self._h_model_to_agg.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
+        self.register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
 
 
-def arbiter(host_party_weight_trv: Variable,
-            guest_party_weight_trv: Variable,
-            host_model_to_agg_trv: Variable,
-            guest_model_to_agg_trv: Variable):
-    return _Arbiter(host_party_weight_trv, guest_party_weight_trv, host_model_to_agg_trv, guest_model_to_agg_trv)
+class Host(party_weights_sync.Host, model_transfer_sync.Host, loss_transfer_sync.Host):
 
+    def initialize_aggregator(self, party_weight):
+        self.send_party_weight(party_weight)
 
-def guest(guest_party_weight_trv: Variable, guest_model_to_agg_trv: Variable):
-    return _Guest(guest_party_weight_trv, guest_model_to_agg_trv)
+    def register_aggregator(self, transfer_variables):
+        """
+           register transfer of party_weights, models and losses.
+           Args:
+               transfer_variables: assuming transfer_variable has variables:
+                   1. host_party_weight for party_weights transfer
+                   2. host_model_transfer for model transfer
+                   3. host_loss_transfer for loss transfer
+        """
+        self.register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
 
+        self.register_model_transfer(model_transfer=transfer_variables.host_model_transfer)
 
-def host(host_party_weight_trv: Variable, host_model_to_agg_trv: Variable):
-    return _Host(host_party_weight_trv, host_model_to_agg_trv)
+        self.register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
