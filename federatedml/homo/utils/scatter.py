@@ -16,21 +16,36 @@
 
 
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
-import types
 
 
-def scatter(host_variable: Variable, guest_variable: Variable, suffix=tuple()) -> types.GeneratorType:
-    """
-    scatter values from guest and hosts
+class Scatter(object):
 
-    Args:
-        host_variable: a variable represents `Host -> Arbiter`
-        guest_variable: a variable represent `Guest -> Arbiter`
-        suffix: additional suffix appended to transfer tag
+    def __init__(self, host_variable: Variable, guest_variable: Variable):
+        """
+            scatter values from guest and hosts
 
-    Returns:
-        return a generator of scatted values
-    """
-    yield guest_variable.get(idx=0, suffix=suffix)
-    for ret in host_variable.get(idx=-1, suffix=suffix):
-        yield ret
+            Args:
+                host_variable: a variable represents `Host -> Arbiter`
+                guest_variable: a variable represent `Guest -> Arbiter`
+
+            Returns:
+                return a generator of scatted values
+        """
+        self._host_variable = host_variable
+        self._guest_variable = guest_variable
+
+    def get(self, suffix=tuple(), host_ids=None):
+        """
+        create a generator of values from guest and hosts.
+        Args:
+            suffix: tag suffix
+            host_ids: ids of hosts to get value from.
+                If None provided, get values from all hosts.
+                If a list of int provided, get values from all hosts listed.
+                Otherwise, ValueError raised
+        """
+        yield self._guest_variable.get(idx=0, suffix=suffix)
+        if host_ids is None:
+            host_ids = -1
+        for ret in self._host_variable.get(idx=host_ids, suffix=suffix):
+            yield ret

@@ -56,9 +56,9 @@ class HomoLRArbiter(HomoLRBase):
         if not self.need_run:
             return data
 
-        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
+        LOGGER.debug("self.has_synchronized_encryption: {}".format(self.has_sychronized_encryption))
         self.__init_parameters()
-        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
+        LOGGER.debug("self.has_synchronized_encryption: {}".format(self.has_sychronized_encryption))
 
         LOGGER.info("Finish init parameters")
 

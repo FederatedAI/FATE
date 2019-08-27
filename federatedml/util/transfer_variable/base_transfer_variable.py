@@ -62,7 +62,15 @@ class Variable(object):
         """
         if not isinstance(suffix, tuple):
             suffix = (suffix, )
-        federation.get(name=self.name, tag=self._transfer_variable.generate_transferid(self, *suffix), idx=idx)
+        tag = self._transfer_variable.generate_transferid(self, *suffix)
+        name = self.name
+        if isinstance(idx, int):
+            return federation.get(name=name, tag=tag, idx=idx)
+        elif isinstance(idx, list):
+            name = self.name
+            return [federation.get(name=name, tag=tag, idx=pid) for pid in idx]
+        else:
+            raise ValueError(f"illegal idx type: {type(idx)}, supported types: int or list of int")
 
 
 class BaseTransferVariable(object):

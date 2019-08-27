@@ -15,8 +15,8 @@
 #
 
 from arch.api.utils.log_utils import LoggerFactory
-from federatedml.homo.sync import dh_keys_exchange
-from federatedml.homo.sync import identify_uuid
+from federatedml.homo.sync import dh_keys_exchange_sync
+from federatedml.homo.sync import identify_uuid_sync
 from federatedml.secureprotol.encrypt import PadsCipher
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
@@ -24,7 +24,7 @@ LOGGER = LoggerFactory.get_logger()
 
 
 class _Arbiter(object):
-    def __init__(self, uuid_sync: identify_uuid, dh_sync):
+    def __init__(self, uuid_sync: identify_uuid_sync, dh_sync):
         self._uuid_sync = uuid_sync
         self._dh_sync = dh_sync
 
@@ -69,11 +69,11 @@ def arbiter(guest_uuid_trv: Variable,
             dh_ciphertext_host_trv: Variable,
             dh_ciphertext_guest_trv: Variable,
             dh_ciphertext_bc_trv: Variable):
-    return _Arbiter(uuid_sync=identify_uuid.arbiter(guest_uuid_trv, host_uuid_trv, conflict_flag_trv),
-                    dh_sync=dh_keys_exchange.arbiter(dh_pubkey_trv,
-                                                     dh_ciphertext_host_trv,
-                                                     dh_ciphertext_guest_trv,
-                                                     dh_ciphertext_bc_trv))
+    return _Arbiter(uuid_sync=identify_uuid_sync.arbiter(guest_uuid_trv, host_uuid_trv, conflict_flag_trv),
+                    dh_sync=dh_keys_exchange_sync.arbiter(dh_pubkey_trv,
+                                                          dh_ciphertext_host_trv,
+                                                          dh_ciphertext_guest_trv,
+                                                          dh_ciphertext_bc_trv))
 
 
 def guest(guest_uuid_trv: Variable,
@@ -81,10 +81,10 @@ def guest(guest_uuid_trv: Variable,
           dh_pubkey_trv: Variable,
           dh_ciphertext_guest_trv: Variable,
           dh_ciphertext_bc_trv: Variable):
-    return _Client(uuid_sync=identify_uuid.guest(guest_uuid_trv, conflict_flag_trv),
-                   dh_sync=dh_keys_exchange.guest(dh_pubkey_trv,
-                                                  dh_ciphertext_guest_trv,
-                                                  dh_ciphertext_bc_trv))
+    return _Client(uuid_sync=identify_uuid_sync.guest(guest_uuid_trv, conflict_flag_trv),
+                   dh_sync=dh_keys_exchange_sync.guest(dh_pubkey_trv,
+                                                       dh_ciphertext_guest_trv,
+                                                       dh_ciphertext_bc_trv))
 
 
 def host(host_uuid_trv: Variable,
@@ -92,7 +92,7 @@ def host(host_uuid_trv: Variable,
          dh_pubkey_trv: Variable,
          dh_ciphertext_host_trv: Variable,
          dh_ciphertext_bc_trv: Variable):
-    return _Client(uuid_sync=identify_uuid.guest(host_uuid_trv, conflict_flag_trv),
-                   dh_sync=dh_keys_exchange.guest(dh_pubkey_trv,
-                                                  dh_ciphertext_host_trv,
-                                                  dh_ciphertext_bc_trv))
+    return _Client(uuid_sync=identify_uuid_sync.guest(host_uuid_trv, conflict_flag_trv),
+                   dh_sync=dh_keys_exchange_sync.guest(dh_pubkey_trv,
+                                                       dh_ciphertext_host_trv,
+                                                       dh_ciphertext_bc_trv))
