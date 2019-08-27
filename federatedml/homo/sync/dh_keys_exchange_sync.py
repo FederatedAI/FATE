@@ -20,12 +20,14 @@ from federatedml.util import consts
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
-class _Arbiter(object):
-    def __init__(self,
-                 dh_pubkey_trv: Variable,
-                 dh_ciphertext_host_trv: Variable,
-                 dh_ciphertext_guest_trv: Variable,
-                 dh_ciphertext_bc_trv: Variable):
+class Arbiter(object):
+
+    # noinspection PyAttributeOutsideInit
+    def register_dh_key_exchange(self,
+                                 dh_pubkey_trv: Variable,
+                                 dh_ciphertext_host_trv: Variable,
+                                 dh_ciphertext_guest_trv: Variable,
+                                 dh_ciphertext_bc_trv: Variable):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_pubkey_scatter = Scatter(dh_ciphertext_host_trv, dh_ciphertext_guest_trv)
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
@@ -37,11 +39,13 @@ class _Arbiter(object):
         self._dh_ciphertext_bc_trv.remote(obj=pubkey, role=None, idx=-1)
 
 
-class _Client(object):
-    def __init__(self,
-                 dh_pubkey_trv: Variable,
-                 dh_ciphertext_trv: Variable,
-                 dh_ciphertext_bc_trv: Variable):
+class Client(object):
+
+    # noinspection PyAttributeOutsideInit
+    def register_dh_key_exchange(self,
+                                 dh_pubkey_trv: Variable,
+                                 dh_ciphertext_trv: Variable,
+                                 dh_ciphertext_bc_trv: Variable):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_ciphertext_trv = dh_ciphertext_trv
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
@@ -56,20 +60,5 @@ class _Client(object):
         return share_secret
 
 
-def arbiter(dh_pubkey_trv: Variable,
-            dh_ciphertext_host_trv: Variable,
-            dh_ciphertext_guest_trv: Variable,
-            dh_ciphertext_bc_trv: Variable):
-    return _Arbiter(dh_pubkey_trv, dh_ciphertext_host_trv, dh_ciphertext_guest_trv, dh_ciphertext_bc_trv)
-
-
-def guest(dh_pubkey_trv: Variable,
-          dh_ciphertext_guest_trv: Variable,
-          dh_ciphertext_bc_trv: Variable):
-    return _Client(dh_pubkey_trv, dh_ciphertext_guest_trv, dh_ciphertext_bc_trv)
-
-
-def host(dh_pubkey_trv: Variable,
-         dh_ciphertext_host_trv: Variable,
-         dh_ciphertext_bc_trv: Variable):
-    return _Client(dh_pubkey_trv, dh_ciphertext_host_trv, dh_ciphertext_bc_trv)
+Guest = Client
+Host = Client
