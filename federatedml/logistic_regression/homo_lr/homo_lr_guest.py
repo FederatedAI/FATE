@@ -29,10 +29,12 @@ from federatedml.optim import Initializer
 from federatedml.optim import activation
 from federatedml.optim.gradient import LogisticGradient
 from fate_flow.entity.metric import MetricMeta
+from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from fate_flow.entity.metric import Metric
+from federatedml.homo.procedure import aggregate
 from federatedml.util import consts
 from federatedml.statistic import data_overview
-from federatedml.logistic_regression.logistic_regression_param import LogisticRegressionVariables as LRParam
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables as LRParam
 LOGGER = log_utils.getLogger()
 
 
@@ -59,17 +61,30 @@ class HomoLRGuest(HomoLRBase):
 
         max_iter = self.max_iter
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
-
+        iter_loss = 0
+        batch_num = 0
         while self.n_iter_ < max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             for batch_data in batch_data_generator:
+                n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
                                       coef=self.lr_param.coef_,
                                       intercept=self.lr_param.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
+
+                grad /= n
+                loss /= n
+                self.lr_param = self.optimizer.apply_gradients(self.lr_param, grad)
+                iter_loss += (loss + self.optimizer.loss_norm(self.lr_param))
+                batch_num += 1
+            iter_loss /= batch_num
+            self.callback_loss(self.n_iter_, iter_loss)
+            self.loss_history.append(iter_loss)
+            aggregate.guest()
+
 
     def __init_model(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)

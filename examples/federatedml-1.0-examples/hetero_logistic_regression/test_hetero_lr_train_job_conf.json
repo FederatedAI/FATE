@@ -153,6 +153,15 @@
     }
   },
   "algorithm_parameters": {
+    "feature_scale_0": {
+        "need_run": false
+    },
+    "hetero_feature_binning_0": {
+      "need_run": false
+    },
+    "hetero_feature_selection_0": {
+      "need_run": false
+    },
     "hetero_lr_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",

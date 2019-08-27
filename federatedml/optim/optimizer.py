@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from federatedml.logistic_regression.logistic_regression_param import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 
 
 class Optimizer(object):
@@ -33,12 +33,12 @@ class Optimizer(object):
         this_step_size = self.learning_rate / np.sqrt(self.iters)
         return self.alpha * this_step_size
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         raise NotImplementedError("Should not call here")
 
-    def l1_updator(self, model_param: LogisticRegressionVariables, gradient):
-        coef_ = model_param.coef_
-        if model_param.fit_intercept:
+    def __l1_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        coef_ = model_variables.coef_
+        if model_variables.fit_intercept:
             gradient_without_intercept = gradient[: -1]
         else:
             gradient_without_intercept = gradient
@@ -46,32 +46,49 @@ class Optimizer(object):
         new_weights = np.sign(coef_ - gradient_without_intercept) * \
                       np.maximum(0, np.abs(coef_ - gradient_without_intercept) - self.shrinkage_val)
 
-        if model_param.fit_intercept:
-            new_weights = np.append(new_weights, model_param.intercept_)
+        if model_variables.fit_intercept:
+            new_weights = np.append(new_weights, model_variables.intercept_)
             new_weights[-1] -= gradient[-1]
-        new_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
+        new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
         return new_param
 
-    def l2_updator(self, model_param: LogisticRegressionVariables, gradient):
-        coef_ = model_param.coef_
-        if model_param.fit_intercept:
+    def __l2_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        coef_ = model_variables.coef_
+        if model_variables.fit_intercept:
             gradient_without_intercept = gradient[: -1]
         else:
             gradient_without_intercept = gradient
 
         new_weights = coef_ - gradient_without_intercept - self.learning_rate * self.alpha * coef_
-        if model_param.fit_intercept:
-            new_weights = np.append(new_weights, model_param.intercept_)
+        if model_variables.fit_intercept:
+            new_weights = np.append(new_weights, model_variables.intercept_)
             new_weights[-1] -= gradient[-1]
-        new_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
+        new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
         return new_param
 
-    def update(self, model_param: LogisticRegressionVariables, grad):
+    def update(self, model_variables: LogisticRegressionVariables, grad):
         if self.penalty == 'l1':
-            model_param = self.l1_updator(model_param, grad)
+            model_variables = self.__l1_updator(model_variables, grad)
         elif self.penalty == 'l2':
-            model_param = self.l2_updator(model_param, grad)
-        return model_param
+            model_variables = self.__l2_updator(model_variables, grad)
+        return model_variables
+
+    def __l1_loss_norm(self, model_variables: LogisticRegressionVariables):
+        coef_ = model_variables.coef_
+        loss_norm = np.sum(self.alpha * np.abs(coef_))
+        return loss_norm
+
+    def __l2_loss_norm(self, model_variables: LogisticRegressionVariables):
+        coef_ = model_variables.coef_
+        loss_norm = 0.5 * self.alpha * np.dot(coef_, coef_)
+        return loss_norm
+
+    def loss_norm(self, model_variables: LogisticRegressionVariables):
+        if self.penalty == 'l1':
+            model_variables = self.__l1_loss_norm(model_variables)
+        elif self.penalty == 'l2':
+            model_variables = self.__l2_loss_norm(model_variables)
+        return model_variables
 
 
 class SgdOptimizer(Optimizer):
@@ -79,11 +96,11 @@ class SgdOptimizer(Optimizer):
         super().__init__(learning_rate, alpha, penalty)
         self.opt_beta = 0.999
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         self.learning_rate *= self.opt_beta
-        new_weights = model_param.parameter - self.learning_rate * grad
-        model_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
-        new_param = self.update(model_param, grad)
+        new_weights = model_variables.parameter - self.learning_rate * grad
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        new_param = self.update(model_variables, grad)
         return new_param
 
 
@@ -93,18 +110,18 @@ class RMSPropOptimizer(Optimizer):
         self.rho = 0.99
         self.opt_m = None
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
         self.opt_m = self.rho * self.opt_m + (1 - self.rho) * np.square(grad)
         self.opt_m = np.array(self.opt_m, dtype=np.float64)
         delta_grad = self.learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
-        new_weights = model_param.parameter - delta_grad
+        new_weights = model_variables.parameter - delta_grad
 
-        model_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
-        model_param = self.update(model_param, grad)
-        return model_param
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        model_variables = self.update(model_variables, grad)
+        return model_variables
 
 
 class AdaGradOptimizer(Optimizer):
@@ -112,17 +129,17 @@ class AdaGradOptimizer(Optimizer):
         super().__init__(learning_rate, alpha, penalty)
         self.opt_m = None
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         self.opt_m = self.opt_m + np.square(grad)
         self.opt_m = np.array(self.opt_m, dtype=np.float64)
         delta_grad = self.learning_rate * grad / (np.sqrt(self.opt_m) + 1e-7)
-        new_weights = model_param.parameter - delta_grad
+        new_weights = model_variables.parameter - delta_grad
 
-        model_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
-        model_param = self.update(model_param, grad)
-        return model_param
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        model_variables = self.update(model_variables, grad)
+        return model_variables
 
 
 class NesterovMomentumSGDOpimizer(Optimizer):
@@ -132,7 +149,7 @@ class NesterovMomentumSGDOpimizer(Optimizer):
         self.lr_decay = 0.9
         self.opt_m = None
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
@@ -141,11 +158,11 @@ class NesterovMomentumSGDOpimizer(Optimizer):
         if self.learning_rate > 0.01:
             self.learning_rate *= self.lr_decay
 
-        new_weights = model_param.parameter - delta_grad
+        new_weights = model_variables.parameter - delta_grad
 
-        model_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
-        model_param = self.update(model_param, grad)
-        return model_param
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        model_variables = self.update(model_variables, grad)
+        return model_variables
 
 
 class AdamOptimizer(Optimizer):
@@ -159,7 +176,7 @@ class AdamOptimizer(Optimizer):
         self.opt_m = None
         self.opt_v = None
 
-    def apply_gradients(self, model_param: LogisticRegressionVariables, grad):
+    def apply_gradients(self, model_variables: LogisticRegressionVariables, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -174,8 +191,8 @@ class AdamOptimizer(Optimizer):
         opt_v_hat = self.opt_v / (1 - self.opt_beta2_decay)
         opt_v_hat = np.array(opt_v_hat, dtype=np.float64)
         delta_grad = self.learning_rate * opt_m_hat / (np.sqrt(opt_v_hat) + 1e-8)
-        new_weights = model_param.parameter - delta_grad
+        new_weights = model_variables.parameter - delta_grad
 
-        model_param = LogisticRegressionVariables(new_weights, model_param.fit_intercept)
-        model_param = self.update(model_param, grad)
-        return model_param
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        model_variables = self.update(model_variables, grad)
+        return model_variables

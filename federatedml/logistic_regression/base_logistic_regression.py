@@ -23,11 +23,12 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim import Optimizer
+from federatedml.optim.optimizer import Optimizer
 from federatedml.optim import convergence
 from federatedml.optim import Initializer
-from federatedml.optim import L1Updater
-from federatedml.optim import L2Updater
+from fate_flow.entity.metric import MetricMeta
+from fate_flow.entity.metric import Metric
+
 from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
@@ -119,42 +120,22 @@ class BaseLogisticRegression(ModelBase):
             return self.header
         return data_instances.schema.get("header")
 
+    def callback_loss(self, iter_num, loss):
+        if not self.need_one_vs_rest:
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "iters",
+                                     })
+            # metric_name = self.get_metric_name('loss')
+
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name='loss',
+                                 metric_namespace='train',
+                                 metric_data=[Metric(iter_num, loss)])
+
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
-
-    def update_model(self, gradient):
-        if self.fit_intercept:
-            if self.updater is not None:
-                self.coef_ = self.updater.update_coef(self.coef_, gradient[:-1])
-            else:
-                self.coef_ = self.coef_ - gradient[:-1]
-            self.intercept_ -= gradient[-1]
-
-        else:
-            if self.updater is not None:
-                self.coef_ = self.updater.update_coef(self.coef_, gradient)
-            else:
-                self.coef_ = self.coef_ - gradient
-
-    def merge_model(self):
-        w = self.coef_.copy()
-        if self.fit_intercept:
-            w = np.append(w, self.intercept_)
-        return w
-
-    def set_coef_(self, w):
-        self.coef_ = []
-        self.intercept_ = []
-        if self.fit_intercept:
-            self.coef_ = w[: -1]
-            self.intercept_ = w[-1]
-        else:
-            self.coef_ = w
-            self.intercept_ = 0
-
-        LOGGER.debug("In set_coef_, coef: {}, intercept: {}, fit_intercept: {}".format(
-            self.coef_, self.intercept_, self.fit_intercept
-        ))
 
     def classified(self, prob_table, threshold):
         """
