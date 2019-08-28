@@ -31,14 +31,14 @@ from federatedml.optim.gradient import LogisticGradient
 from fate_flow.entity.metric import MetricMeta
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
 from fate_flow.entity.metric import Metric
-from federatedml.homo.procedure import aggregator, aggregated_bc, paillier_cipher
+from federatedml.homo.procedure import aggregator
 from federatedml.util import consts
 from federatedml.statistic import data_overview
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables as LRParam
 LOGGER = log_utils.getLogger()
 
 
-class HomoLRGuest(HomoLRBase, aggregator.Guest, aggregated_bc.Guest):
+class HomoLRGuest(HomoLRBase, aggregator.Guest):
     def __init__(self):
         super(HomoLRGuest, self).__init__()
         self.aggregator = HomoFederatedAggregator
@@ -50,12 +50,11 @@ class HomoLRGuest(HomoLRBase, aggregator.Guest, aggregated_bc.Guest):
         self.loss_history = []
         self.is_converged = False
         self.role = consts.GUEST
-        self.aggregator = aggregator.Guest()
         self.lr_param = None
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.aggregator.register_aggregator(self.transfer_variable)
+        self.register_aggregator(self.transfer_variable)
         self.initialize_aggregator(params.party_weight)
 
     def fit(self, data_instances):
@@ -89,10 +88,8 @@ class HomoLRGuest(HomoLRBase, aggregator.Guest, aggregated_bc.Guest):
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
             self.loss_history.append(iter_loss)
-            aggregator.Guest.send_model(self.lr_param.for_remote(), self.n_iter_)
-            aggregator.Guest.send_loss(iter_loss, self.n_iter_)
-
-            # TODO: finish other procedure
+            self.send_model(self.lr_param.for_remote(), self.n_iter_)
+            self.send_loss(iter_loss, self.n_iter_)
 
 
     def __init_model(self, data_instances):
