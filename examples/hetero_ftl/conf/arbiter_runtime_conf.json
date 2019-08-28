@@ -27,6 +27,8 @@
         "method": "train",
         "train_input_table": "20190112181013",
         "train_input_namespace": "breast_b",
+        "model_table" : "some_model_table_name",
+        "model_namespace" : "some_model_path",
         "predict_input_table": "20190112181013",
         "predict_input_namespace": "breast_b",
         "predict_result_partition": 2,
