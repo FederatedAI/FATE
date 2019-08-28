@@ -21,7 +21,7 @@ from federatedml.util import consts
 # noinspection PyAttributeOutsideInit
 class Arbiter(object):
 
-    def register_party_weights_transfer(self, guest_party_weight_transfer, host_party_weight_transfer):
+    def _register_party_weights_transfer(self, guest_party_weight_transfer, host_party_weight_transfer):
         self._scatter = Scatter(guest_party_weight_transfer, host_party_weight_transfer)
 
     def get_party_weights(self):
@@ -34,7 +34,7 @@ class Arbiter(object):
 class _Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_party_weights_transfer(self, transfer_variable):
+    def _register_party_weights_transfer(self, transfer_variable):
         self._transfer_variable = transfer_variable
 
     def send_party_weight(self, obj):

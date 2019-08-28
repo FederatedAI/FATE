@@ -20,9 +20,9 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_paillier_re_cipher(self, re_encrypt_times_transfer,
-                                    model_to_re_encrypt_transfer,
-                                    model_re_encrypted_transfer):
+    def _register_paillier_re_cipher(self, re_encrypt_times_transfer,
+                                     model_to_re_encrypt_transfer,
+                                     model_re_encrypted_transfer):
         self._re_encrypt_times_transfer = re_encrypt_times_transfer
         self._model_to_re_encrypt_transfer = model_to_re_encrypt_transfer
         self._model_re_encrypted_transfer = model_re_encrypted_transfer
@@ -57,9 +57,9 @@ class Arbiter(object):
 class Host(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_paillier_re_cipher(self, re_encrypt_times_transfer,
-                                    model_to_re_encrypt_transfer,
-                                    model_re_encrypted_transfer):
+    def _register_paillier_re_cipher(self, re_encrypt_times_transfer,
+                                     model_to_re_encrypt_transfer,
+                                     model_re_encrypted_transfer):
         self._re_encrypt_times_transfer = re_encrypt_times_transfer
         self._model_to_re_encrypt_transfer = model_to_re_encrypt_transfer
         self._model_re_encrypted_transfer = model_re_encrypted_transfer

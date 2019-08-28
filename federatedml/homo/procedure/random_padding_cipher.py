@@ -32,14 +32,14 @@ class Arbiter(identify_uuid_sync.Arbiter,
                 1. guest_uuid,  host_uuid and uuid_conflict_flag for uuid generate transfer
                 2. dh_pubkey, dh_guest_ciphertext,  dh_host_ciphertext, dh_bc_ciphertext for dh key exchange
         """
-        self.register_identify_uuid(guest_uuid_trv=transfer_variables.guest_uuid,
-                                    host_uuid_trv=transfer_variables.host_uuid,
-                                    conflict_flag_trv=transfer_variables.uuid_conflict_flag)
+        self._register_identify_uuid(guest_uuid_trv=transfer_variables.guest_uuid,
+                                     host_uuid_trv=transfer_variables.host_uuid,
+                                     conflict_flag_trv=transfer_variables.uuid_conflict_flag)
 
-        self.register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                      dh_ciphertext_guest_trv=transfer_variables.dh_guest_ciphertext,
-                                      dh_ciphertext_host_trv=transfer_variables.dh_host_ciphertext,
-                                      dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+        self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
+                                       dh_ciphertext_guest_trv=transfer_variables.dh_guest_ciphertext,
+                                       dh_ciphertext_host_trv=transfer_variables.dh_host_ciphertext,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
 
     def exchange_secret_keys(self):
         LOGGER.info("synchronizing uuid")
@@ -75,18 +75,18 @@ class _Client(identify_uuid_sync.Client,
 class Guest(_Client):
 
     def register_random_padding_cipher(self, transfer_variables):
-        self.register_identify_uuid(uuid_transfer_variable=transfer_variables.guest_uuid,
-                                    conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
-        self.register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                      dh_ciphertext_trv=transfer_variables.dh_guest_ciphertext,
-                                      dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+        self._register_identify_uuid(uuid_transfer_variable=transfer_variables.guest_uuid,
+                                     conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
+        self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
+                                       dh_ciphertext_trv=transfer_variables.dh_guest_ciphertext,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
 
 
 class Host(_Client):
 
     def register_random_padding_cipher(self, transfer_variables):
-        self.register_identify_uuid(uuid_transfer_variable=transfer_variables.host_uuid,
-                                    conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
-        self.register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                      dh_ciphertext_trv=transfer_variables.dh_host_ciphertext,
-                                      dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+        self._register_identify_uuid(uuid_transfer_variable=transfer_variables.host_uuid,
+                                     conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
+        self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
+                                       dh_ciphertext_trv=transfer_variables.dh_host_ciphertext,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)

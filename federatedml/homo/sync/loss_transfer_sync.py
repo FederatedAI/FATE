@@ -21,7 +21,7 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_loss_transfer(self, host_loss_transfer, guest_loss_transfer):
+    def _register_loss_transfer(self, host_loss_transfer, guest_loss_transfer):
         self._loss_sync = scatter.Scatter(host_loss_transfer, guest_loss_transfer)
 
     def get_losses(self, idx=None, suffix=tuple()):
@@ -31,7 +31,7 @@ class Arbiter(object):
 class _Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_loss_transfer(self, loss_transfer):
+    def _register_loss_transfer(self, loss_transfer):
         self._loss_sync = loss_transfer
 
     def send_loss(self, loss, *suffix):

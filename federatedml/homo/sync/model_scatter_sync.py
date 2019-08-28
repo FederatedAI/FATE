@@ -22,7 +22,7 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_model_scatter(self, host_model_transfer, guest_model_transfer):
+    def _register_model_scatter(self, host_model_transfer, guest_model_transfer):
         self._models_sync = scatter.Scatter(host_model_transfer, guest_model_transfer)
 
     def _get_models(self, ciphers_dict=None, suffix=tuple()):
@@ -35,7 +35,7 @@ class Arbiter(object):
 
 class _Client(object):
     # noinspection PyAttributeOutsideInit
-    def register_model_scatter(self, model_transfer):
+    def _register_model_scatter(self, model_transfer):
         self._models_sync = model_transfer
 
     def _send_model(self, weights: Parameters, suffix=tuple()):

@@ -23,11 +23,11 @@ from federatedml.util.transfer_variable.base_transfer_variable import Variable
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_dh_key_exchange(self,
-                                 dh_pubkey_trv: Variable,
-                                 dh_ciphertext_host_trv: Variable,
-                                 dh_ciphertext_guest_trv: Variable,
-                                 dh_ciphertext_bc_trv: Variable):
+    def _register_dh_key_exchange(self,
+                                  dh_pubkey_trv: Variable,
+                                  dh_ciphertext_host_trv: Variable,
+                                  dh_ciphertext_guest_trv: Variable,
+                                  dh_ciphertext_bc_trv: Variable):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_pubkey_scatter = Scatter(dh_ciphertext_host_trv, dh_ciphertext_guest_trv)
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
@@ -42,10 +42,10 @@ class Arbiter(object):
 class Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_dh_key_exchange(self,
-                                 dh_pubkey_trv: Variable,
-                                 dh_ciphertext_trv: Variable,
-                                 dh_ciphertext_bc_trv: Variable):
+    def _register_dh_key_exchange(self,
+                                  dh_pubkey_trv: Variable,
+                                  dh_ciphertext_trv: Variable,
+                                  dh_ciphertext_bc_trv: Variable):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_ciphertext_trv = dh_ciphertext_trv
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
