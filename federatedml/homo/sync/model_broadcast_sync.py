@@ -25,7 +25,7 @@ class Arbiter(object):
     def register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
 
-    def _send_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
+    def send_aggregated_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
         if ciphers_dict:
             self._models_broadcast.remote(obj=model.for_remote(),
                                           role=consts.GUEST,
@@ -48,7 +48,7 @@ class Client(object):
     def register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
 
-    def _get_model(self, suffix=tuple()):
+    def get_aggregated_model(self, suffix=tuple()):
         self._models_broadcast.get(idx=0, suffix=suffix)
 
 

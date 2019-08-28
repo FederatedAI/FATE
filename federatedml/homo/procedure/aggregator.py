@@ -53,7 +53,7 @@ class Arbiter(party_weights_sync.Arbiter,
                                     guest_loss_transfer=transfer_variables.guest_loss)
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Parameters:
-        models = self._get_models(ciphers_dict, suffix=suffix)
+        models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
         num_clients = len(models)
         if not self._party_weights:
             return reduce(operator.add, models) / num_clients
@@ -70,10 +70,10 @@ class Arbiter(party_weights_sync.Arbiter,
             suffix: tag suffix
         """
         model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self._send_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
+        self.send_aggregated_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
 
     def send_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
-        self._send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
+        self.send_aggregated_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
         losses = self.get_losses(idx=idx, suffix=suffix)
@@ -115,8 +115,8 @@ class Guest(party_weights_sync.Guest,
         self.register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
 
     def aggregate_and_get(self, model: Parameters, suffix=tuple()):
-        self._send_model(weights=model, suffix=suffix)
-        return self._get_model(suffix=suffix)
+        self.send_model_for_aggregate(weights=model, suffix=suffix)
+        return self.get_aggregated_model(suffix=suffix)
 
 
 class Host(party_weights_sync.Host,
@@ -146,5 +146,5 @@ class Host(party_weights_sync.Host,
         self.register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
 
     def aggregate_and_get(self, model: Parameters, suffix=tuple()):
-        self._send_model(weights=model, suffix=suffix)
-        return self._get_model(suffix=suffix)
+        self.send_model_for_aggregate(weights=model, suffix=suffix)
+        return self.get_aggregated_model(suffix=suffix)
