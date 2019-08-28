@@ -23,9 +23,9 @@ LOGGER = LoggerFactory.get_logger()
 class Host(paillier_keygen_sync.Host, paillier_re_cipher_sync.Host):
 
     def register_paillier_cipher(self, transfer_variables):
-        self.register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
-                                      pubkey_transfer=transfer_variables.paillier_pubkey)
-        self.register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
+        self._register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
+                                       pubkey_transfer=transfer_variables.paillier_pubkey)
+        self._register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
                                          model_to_re_encrypt_transfer=transfer_variables.model_to_re_encrypt,
                                          model_re_encrypted_transfer=transfer_variables.model_re_encrypted)
 
@@ -34,8 +34,8 @@ class Arbiter(paillier_keygen_sync.Arbiter, paillier_re_cipher_sync.Arbiter):
 
     def register_paillier_cipher(self, transfer_variables):
 
-        self.register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
-                                      pubkey_transfer=transfer_variables.paillier_pubkey)
-        self.register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
+        self._register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
+                                       pubkey_transfer=transfer_variables.paillier_pubkey)
+        self._register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
                                          model_to_re_encrypt_transfer=transfer_variables.model_to_re_encrypt,
                                          model_re_encrypted_transfer=transfer_variables.model_re_encrypted)

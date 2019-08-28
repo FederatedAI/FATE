@@ -17,7 +17,7 @@
 import operator
 from functools import reduce
 
-from federatedml.homo.sync import party_weights_sync, model_scatter_sync,\
+from federatedml.homo.sync import party_weights_sync, model_scatter_sync, \
     loss_transfer_sync, model_broadcast_sync
 from federatedml.homo.weights import Parameters
 
@@ -42,15 +42,15 @@ class Arbiter(party_weights_sync.Arbiter,
                 3. aggregated_model for broadcast aggregated model
                 4. guest_loss, host_loss for loss scatter
         """
-        self.register_party_weights_transfer(guest_party_weight_transfer=transfer_variables.guest_party_weight,
-                                             host_party_weight_transfer=transfer_variables.host_party_weight)
+        self._register_party_weights_transfer(guest_party_weight_transfer=transfer_variables.guest_party_weight,
+                                              host_party_weight_transfer=transfer_variables.host_party_weight)
 
-        self.register_model_scatter(host_model_transfer=transfer_variables.host_model,
-                                    guest_model_transfer=transfer_variables.guest_model)
-        self.register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_scatter(host_model_transfer=transfer_variables.host_model,
+                                     guest_model_transfer=transfer_variables.guest_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
 
-        self.register_loss_transfer(host_loss_transfer=transfer_variables.host_loss,
-                                    guest_loss_transfer=transfer_variables.guest_loss)
+        self._register_loss_transfer(host_loss_transfer=transfer_variables.host_loss,
+                                     guest_loss_transfer=transfer_variables.guest_loss)
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Parameters:
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
@@ -70,10 +70,13 @@ class Arbiter(party_weights_sync.Arbiter,
             suffix: tag suffix
         """
         model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self.send_aggregated_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
+        self._send_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
 
-    def send_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
-        self.send_aggregated_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
+    def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
+        return self._get_models(ciphers_dict=ciphers_dict, suffix=suffix)
+
+    def send_aggregated_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
+        self._send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
         losses = self.get_losses(idx=idx, suffix=suffix)
@@ -106,17 +109,23 @@ class Guest(party_weights_sync.Guest,
                    3. aggregated_model to get aggregated model
                    4. guest_loss for loss send
         """
-        self.register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
+        self._register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
 
-        self.register_model_scatter(model_transfer=transfer_variables.guest_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.guest_model_transfer)
 
-        self.register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
 
-        self.register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
 
     def aggregate_and_get(self, model: Parameters, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
+
+    def get_aggregated_model(self, suffix=tuple()):
+        self._get_model(suffix=suffix)
+
+    def send_model_for_aggregate(self, weights: Parameters, suffix=tuple()):
+        self._send_model(weights=weights, suffix=suffix)
 
 
 class Host(party_weights_sync.Host,
@@ -137,14 +146,20 @@ class Host(party_weights_sync.Host,
                     3. aggregated_model to get aggregated model
                     4. host_loss for loss send
         """
-        self.register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
+        self._register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
 
-        self.register_model_scatter(model_transfer=transfer_variables.host_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.host_model_transfer)
 
-        self.register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
 
-        self.register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
 
     def aggregate_and_get(self, model: Parameters, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
+
+    def send_model_for_aggregate(self, weights: Parameters, suffix=tuple()):
+        self._send_model(weights=weights, suffix=suffix)
+
+    def get_aggregated_model(self, suffix=tuple()):
+        return self._get_model(suffix=suffix)

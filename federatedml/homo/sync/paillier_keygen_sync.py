@@ -23,7 +23,7 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
+    def _register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
         self._use_encrypt_transfer = use_encrypt_transfer
         self._pubkey_transfer = pubkey_transfer
 
@@ -45,7 +45,7 @@ class Arbiter(object):
 class Host(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
+    def _register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
         self._use_encrypt_transfer = use_encrypt_transfer
         self._pubkey_transfer = pubkey_transfer
 

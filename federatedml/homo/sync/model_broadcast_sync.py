@@ -22,10 +22,10 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_model_broadcaster(self, model_transfer: Variable):
+    def _register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
 
-    def send_aggregated_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
+    def _send_model(self, model: Parameters, ciphers_dict=None, suffix=tuple()):
         if ciphers_dict:
             self._models_broadcast.remote(obj=model.for_remote(),
                                           role=consts.GUEST,
@@ -45,10 +45,10 @@ class Arbiter(object):
 
 class Client(object):
     # noinspection PyAttributeOutsideInit
-    def register_model_broadcaster(self, model_transfer: Variable):
+    def _register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
 
-    def get_aggregated_model(self, suffix=tuple()):
+    def _get_model(self, suffix=tuple()):
         self._models_broadcast.get(idx=0, suffix=suffix)
 
 
