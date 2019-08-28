@@ -243,6 +243,8 @@ class SparseQuantileSummaries(QuantileSummaries):
         self._total_count = total_count
 
     def insert(self, x):
+        if x in self.abnormal_list:
+            return
         if x < consts.FLOAT_ZERO:
             self.smaller_num += 1
         elif x >= consts.FLOAT_ZERO:
