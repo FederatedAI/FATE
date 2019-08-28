@@ -22,10 +22,10 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def register_model_transfer(self, host_model_transfer, guest_model_transfer):
+    def register_model_scatter(self, host_model_transfer, guest_model_transfer):
         self._models_sync = scatter.Scatter(host_model_transfer, guest_model_transfer)
 
-    def get_models(self, ciphers_dict=None, suffix=tuple()):
+    def _get_models(self, ciphers_dict=None, suffix=tuple()):
         models = list(self._models_sync.get(suffix=suffix))
         if ciphers_dict:
             for i, cipher in ciphers_dict.items():
@@ -35,10 +35,10 @@ class Arbiter(object):
 
 class _Client(object):
     # noinspection PyAttributeOutsideInit
-    def register_model_transfer(self, model_transfer):
+    def register_model_scatter(self, model_transfer):
         self._models_sync = model_transfer
 
-    def send_model(self, weights: Parameters, *suffix):
+    def _send_model(self, weights: Parameters, suffix=tuple()):
         self._models_sync.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
 
 

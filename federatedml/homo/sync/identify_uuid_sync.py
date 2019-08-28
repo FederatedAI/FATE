@@ -42,46 +42,23 @@ class Arbiter(object):
                 break
 
 
-class Guest(object):
+class Client(object):
+
     # noinspection PyAttributeOutsideInit
-    def register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
-        self._conflict_flag_trv = conflict_flag_trv
-        self._scatter = Scatter(host_uuid_trv, guest_uuid_trv)
+    def register_identify_uuid(self, uuid_transfer_variable, conflict_flag_transfer_variable):
+        self._conflict_flag_transfer_variable = conflict_flag_transfer_variable
+        self._uuid_transfer_variable = uuid_transfer_variable
 
     def generate_uuid(self):
         ind = -1
         while True:
             ind = ind + 1
             _uid = uuid.uuid1()
-            self._guest_uuid_trv.remote(obj=_uid, role=consts.ARBITER, idx=0, suffix=ind)
-            if self._conflict_flag_trv.get(idx=0, suffix=ind):
+            self._uuid_transfer_variable.remote(obj=_uid, role=consts.ARBITER, idx=0, suffix=ind)
+            if self._conflict_flag_transfer_variable.get(idx=0, suffix=ind):
                 break
         return _uid
 
 
-class _Host(object):
-    def __init__(self, host_uuid_trv: Variable, conflict_flag_trv: Variable):
-        self._host_uuid_trv = host_uuid_trv
-        self._conflict_flag_trv = conflict_flag_trv
-
-    def generate_uuid(self):
-        ind = -1
-        while True:
-            ind = ind + 1
-            _uid = uuid.uuid1()
-            self._host_uuid_trv.remote(obj=_uid, role=consts.ARBITER, idx=0, suffix=ind)
-            if self._conflict_flag_trv.get(idx=0, suffix=ind):
-                break
-        return _uid
-
-
-def arbiter(guest_uuid_trv, host_uuid_trv, conflict_flag_trv) -> _Arbiter:
-    return _Arbiter(host_uuid_trv, guest_uuid_trv, conflict_flag_trv)
-
-
-def guest(guest_uuid_trv, conflict_flag_trv) -> _Guest:
-    return _Guest(guest_uuid_trv, conflict_flag_trv)
-
-
-def host(host_uuid_trv, conflict_flag_trv) -> _Host:
-    return _Host(host_uuid_trv, conflict_flag_trv)
+Host = Client
+Guest = Client

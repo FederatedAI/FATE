@@ -57,7 +57,7 @@ class Variables(object):
     def decrypted(self, cipher: Encrypt, inplace=True):
         return self.map_values(cipher.decrypt, inplace=inplace)
 
-    def encrypted(self, cipher: Encrypt, inplace=True):
+    def encrypted(self, cipher: Encrypt, inplace=True) -> 'Parameters':
         return self.map_values(cipher.encrypt, inplace=inplace)
 
     def __imul__(self, other):
