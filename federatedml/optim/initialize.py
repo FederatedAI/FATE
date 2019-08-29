@@ -83,5 +83,5 @@ class Initializer(object):
         # return coef_, intercept_
 
         LOGGER.debug("Initialed model: {}".format(w))
-        lr_param = LogisticRegressionVariables(w, init_params.fit_intercept)
-        return lr_param
+        lr_variables = LogisticRegressionVariables(w, init_params.fit_intercept)
+        return lr_variables

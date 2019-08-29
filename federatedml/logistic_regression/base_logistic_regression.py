@@ -62,6 +62,7 @@ class BaseLogisticRegression(ModelBase):
         self.role = ''
         self.mode = ''
         self.schema = {}
+        self.cipher_operator = None
 
         # one_ve_rest parameter
         self.need_one_vs_rest = False
@@ -85,9 +86,9 @@ class BaseLogisticRegression(ModelBase):
         self.penalty = params.penalty
 
         if params.encrypt_param.method == consts.PAILLIER:
-            self.encrypt_operator = PaillierEncrypt()
+            self.cipher_operator = PaillierEncrypt()
         else:
-            self.encrypt_operator = FakeEncrypt()
+            self.cipher_operator = FakeEncrypt()
 
         self.encrypt_params = params.encrypt_param
         self.encrypt_method = self.encrypt_params.method

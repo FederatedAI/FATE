@@ -39,7 +39,7 @@ class Arbiter(object):
                 pub_key = cipher.get_public_key()
                 self._pubkey_transfer.remote(obj=pub_key, role=consts.HOST, idx=idx, suffix=suffix)
                 host_ciphers[idx] = cipher
-        return hosts_use_cipher
+        return host_ciphers
 
 
 class Host(object):

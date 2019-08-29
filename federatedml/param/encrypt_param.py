@@ -50,6 +50,8 @@ class EncryptParam(BaseParam):
             raise ValueError(
                 "encrypt_param's method {} not supported, should be str type".format(
                     self.method))
+        elif self.method is None:
+            pass
         else:
             user_input = self.method.lower()
             if user_input == 'paillier':

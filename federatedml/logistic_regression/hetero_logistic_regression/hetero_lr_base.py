@@ -20,6 +20,7 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.util import consts
 from federatedml.util.transfer_variable.hetero_lr_transfer_variable import HeteroLRTransferVariable
 
+
 class HeteroLRBase(BaseLogisticRegression):
     def __init__(self):
         super().__init__()
@@ -27,7 +28,11 @@ class HeteroLRBase(BaseLogisticRegression):
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'
         self.mode = consts.HETERO
+        self.aggregator = None
+        self.cipher = None
 
     def _init_model(self, params):
         super(HeteroLRBase, self)._init_model(params)
         self.transfer_variable = HeteroLRTransferVariable()
+        self.aggregator.register_aggregator(self.transfer_variable)
+        self.cipher.register_paillier_cipher(self.transfer_variable)

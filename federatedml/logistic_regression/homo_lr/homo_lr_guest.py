@@ -18,52 +18,42 @@
 
 import functools
 
-import numpy as np
-
-from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
+from federatedml.homo.procedure import aggregator
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.model_selection import MiniBatch
-from federatedml.optim import Initializer
-from federatedml.optim import activation
 from federatedml.optim.gradient import LogisticGradient
-from fate_flow.entity.metric import MetricMeta
-from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
-from fate_flow.entity.metric import Metric
-from federatedml.homo.procedure import aggregator, aggregated_bc, paillier_cipher
-from federatedml.util import consts
 from federatedml.statistic import data_overview
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables as LRParam
+from federatedml.util import consts
+from federatedml.util import fate_operator
+
 LOGGER = log_utils.getLogger()
 
 
-class HomoLRGuest(HomoLRBase, aggregator.Guest, aggregated_bc.Guest):
+class HomoLRGuest(HomoLRBase):
     def __init__(self):
         super(HomoLRGuest, self).__init__()
-        self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
-
-        self.classes_ = [0, 1]
-
         self.evaluator = Evaluation()
         self.loss_history = []
         self.is_converged = False
         self.role = consts.GUEST
         self.aggregator = aggregator.Guest()
-        self.lr_param = None
+        self.lr_variables = None
 
     def _init_model(self, params):
         super()._init_model(params)
         self.aggregator.register_aggregator(self.transfer_variable)
-        self.initialize_aggregator(params.party_weight)
+        self.aggregator.initialize_aggregator(params.party_weight)
 
     def fit(self, data_instances):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
 
-        self.lr_param = self.__init_model(data_instances)
+        self.lr_variables = self.__init_model(data_instances)
 
         max_iter = self.max_iter
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
@@ -75,30 +65,29 @@ class HomoLRGuest(HomoLRBase, aggregator.Guest, aggregated_bc.Guest):
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.lr_param.coef_,
-                                      intercept=self.lr_param.intercept_,
+                                      coef=self.lr_variables.coef_,
+                                      intercept=self.lr_variables.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
-                grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
-
+                grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
                 loss /= n
-                self.lr_param = self.optimizer.apply_gradients(self.lr_param, grad)
-                iter_loss += (loss + self.optimizer.loss_norm(self.lr_param))
+                self.lr_variables = self.optimizer.apply_gradients(self.lr_variables, grad)
+                iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))
                 batch_num += 1
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
             self.loss_history.append(iter_loss)
-            aggregator.Guest.send_model(self.lr_param.for_remote(), self.n_iter_)
-            aggregator.Guest.send_loss(iter_loss, self.n_iter_)
-
-            # TODO: finish other procedure
-
+            self.aggregator.send_model_for_aggregate(self.lr_variables.for_remote(), self.n_iter_)
+            self.aggregator.send_loss(iter_loss, self.n_iter_)
+            weight = aggregator.Guest.get_aggregated_model(self.n_iter_)
+            self.lr_variables = LogisticRegressionVariables(weight, self.fit_intercept)
+            # TODO: judge convergence
 
     def __init_model(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)
 
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
-        lr_param = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        return lr_param
+        lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        return lr_variables

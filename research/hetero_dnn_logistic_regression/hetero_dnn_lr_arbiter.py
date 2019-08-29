@@ -18,7 +18,7 @@ class HeteroDNNLRArbiter(HeteroLRArbiter):
         self.federation_client = FATEFederationClient()
 
     def _decrypt(self, enc_item):
-        return distribute_decrypt_matrix(self.encrypt_operator.get_privacy_key(), enc_item)
+        return distribute_decrypt_matrix(self.cipher_operator.get_privacy_key(), enc_item)
 
     def _decrypt_grads(self, enc_grads):
         if type(enc_grads) is list:

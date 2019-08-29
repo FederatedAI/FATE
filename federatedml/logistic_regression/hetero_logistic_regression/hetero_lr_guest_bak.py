@@ -19,7 +19,7 @@ import numpy as np
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
-from federatedml.hetero_lr_utils.procedure import aggregator, paillier_cipher
+from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
@@ -34,10 +34,9 @@ class HeteroLRGuest(HeteroLRBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
+
         self.guest_forward = None
         self.role = consts.GUEST
-        self.aggregator = aggregator.Guest()
-        self.cipher = paillier_cipher.Guest()
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -102,10 +101,16 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
+
         self.header = self.get_header(data_instances)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
+                                    tag=self.transfer_variable.generate_transferid(
+                                        self.transfer_variable.paillier_pubkey),
+                                    idx=0)
+        LOGGER.info("Get public_key from arbiter:{}".format(public_key))
+        self.cipher_operator.set_public_key(public_key)
 
         LOGGER.info("Generate mini-batch from input data")
         mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)

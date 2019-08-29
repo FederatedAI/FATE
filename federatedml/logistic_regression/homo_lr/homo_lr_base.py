@@ -32,10 +32,13 @@ class HomoLRBase(BaseLogisticRegression):
         self.model_param_name = 'HomoLogisticRegressionParam'
         self.model_meta_name = 'HomoLogisticRegressionMeta'
         self.mode = consts.HOMO
+        self.aggregator = None
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)
         self.transfer_variable = HomoLRTransferVariable()
+        self.aggregator.register_aggregator(self.transfer_variable)
+        self.aggregator.initialize_aggregator(params.party_weight)
 
     @property
     def use_loss(self):

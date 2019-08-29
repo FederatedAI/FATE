@@ -244,7 +244,7 @@ class HomoLRHost(HomoLRBase):
                                     tag=pubkey_id,
                                     idx=0)
             LOGGER.debug("Received pubkey")
-            self.encrypt_operator.set_public_key(pubkey)
+            self.cipher_operator.set_public_key(pubkey)
         LOGGER.info("Finish synchronized ecryption")
         self.has_sychronized_encryption = True
 
@@ -306,7 +306,7 @@ class HomoLRHost(HomoLRBase):
         model_shape = data_overview.get_features_shape(data_instances)
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-        w = self.encrypt_operator.encrypt_list(w)
+        w = self.cipher_operator.encrypt_list(w)
         w = np.array(w)
 
         if self.fit_intercept:

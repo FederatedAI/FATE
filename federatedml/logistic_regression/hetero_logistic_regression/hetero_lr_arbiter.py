@@ -88,8 +88,8 @@ class HeteroLRArbiter(HeteroLRBase):
             self.header = []
 
         # Generate encrypt keys
-        self.encrypt_operator.generate_key(self.key_length)
-        public_key = self.encrypt_operator.get_public_key()
+        self.cipher_operator.generate_key(self.key_length)
+        public_key = self.cipher_operator.get_public_key()
         public_key = public_key
         LOGGER.info("public_key:{}".format(public_key))
         federation.remote(public_key,
@@ -137,7 +137,7 @@ class HeteroLRArbiter(HeteroLRBase):
                 gradient = np.hstack((host_gradient, guest_gradient))
                 # decrypt gradient
                 for i in range(gradient.shape[0]):
-                    gradient[i] = self.encrypt_operator.decrypt(gradient[i])
+                    gradient[i] = self.cipher_operator.decrypt(gradient[i])
 
                 # optimization
                 optim_gradient = self.optimizer.apply_gradients(gradient)
@@ -176,7 +176,7 @@ class HeteroLRArbiter(HeteroLRBase):
                                           self.transfer_variable.loss, self.n_iter_, batch_index),
                                       idx=0)
 
-                de_loss = self.encrypt_operator.decrypt(loss)
+                de_loss = self.cipher_operator.decrypt(loss)
                 iter_loss += de_loss
                 # LOGGER.info("Get loss from guest:{}".format(de_loss))
 

@@ -81,7 +81,7 @@ class HeteroLRHost(HeteroLRBase):
                                     idx=0)
 
         LOGGER.info("Get public_key from arbiter:{}".format(public_key))
-        self.encrypt_operator.set_public_key(public_key)
+        self.cipher_operator.set_public_key(public_key)
 
         batch_info = federation.get(name=self.transfer_variable.batch_info.name,
                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
@@ -94,7 +94,7 @@ class HeteroLRHost(HeteroLRBase):
                 "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
                     self.batch_size))
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
+        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
                                      in range(self.batch_num)]
@@ -160,13 +160,13 @@ class HeteroLRHost(HeteroLRBase):
                                                idx=0)
                 LOGGER.info("Get fore_gradient from guest")
                 if self.gradient_operator is None:
-                    self.gradient_operator = HeteroLogisticGradient(self.encrypt_operator)
+                    self.gradient_operator = HeteroLogisticGradient(self.cipher_operator)
                 host_gradient = self.gradient_operator.compute_gradient(batch_feat_inst, fore_gradient,
                                                                         fit_intercept=False)
                 # regulation if necessary
                 if self.updater is not None:
                     loss_regular = self.updater.loss_norm(self.coef_)
-                    en_loss_regular = self.encrypt_operator.encrypt(loss_regular)
+                    en_loss_regular = self.cipher_operator.encrypt(loss_regular)
                     federation.remote(en_loss_regular,
                                       name=self.transfer_variable.host_loss_regular.name,
                                       tag=self.transfer_variable.generate_transferid(
