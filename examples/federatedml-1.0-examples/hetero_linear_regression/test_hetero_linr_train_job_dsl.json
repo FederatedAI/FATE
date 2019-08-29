@@ -1,0 +1,69 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+         "feature_scale_0": {
+             "module": "FeatureScale",
+             "input": {
+                 "data": {
+                     "data": [
+                         "intersection_0.train"
+                     ]
+                 }
+             },
+
+             "output": {
+                "data": ["train"],
+                "model": ["scale"]
+             }
+         },
+        "hetero_linr_0": {
+            "module": "HeteroLinR",
+            "input": {
+                "data": {
+                    "train_data": ["feature_scale_0.train"]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_linr"]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["hetero_linr_0.train"]
+                }
+            },
+            "output": {
+                "data": ["evaluate"]
+            }
+        }
+    }
+}

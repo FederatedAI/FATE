@@ -15,5 +15,7 @@
 #
 
 from federatedml.optim.gradient.logistic_gradient import LogisticGradient, HeteroLogisticGradient, TaylorLogisticGradient
+from federatedml.optim.gradient.linear_gradient import LinearGradient, HeteroLinearGradient
 
-__all__ = ["LogisticGradient", "HeteroLogisticGradient", "TaylorLogisticGradient"]
+__all__ = ["LogisticGradient", "HeteroLogisticGradient", "TaylorLogisticGradient",
+           "LinearGradient", "HeteroLinearGradient"]
