@@ -81,36 +81,9 @@ class HeteroLRArbiter(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr_arbiter fit")
-        if data_instances:
-            # self.header = data_instance.schema.get('header')
-            self.header = self.get_header(data_instances)
-        else:
-            self.header = []
 
-        # Generate encrypt keys
-        self.cipher_operator.generate_key(self.key_length)
-        public_key = self.cipher_operator.get_public_key()
-        public_key = public_key
-        LOGGER.info("public_key:{}".format(public_key))
-        federation.remote(public_key,
-                          name=self.transfer_variable.paillier_pubkey.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
-                          role=consts.HOST,
-                          idx=0)
-        LOGGER.info("remote public_key to host")
-
-        federation.remote(public_key,
-                          name=self.transfer_variable.paillier_pubkey.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
-                          role=consts.GUEST,
-                          idx=0)
-        LOGGER.info("remote public_key to guest")
-
-        batch_info = federation.get(name=self.transfer_variable.batch_info.name,
-                                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
-                                    idx=0)
-        LOGGER.info("Get batch_info from guest:{}".format(batch_info))
-        self.batch_num = batch_info["batch_num"]
+        self.cipher_operator = self.cipher.paillier_keygen()
+        self.batch_generator.initialize_batch_generator()
 
         is_stop = False
         self.n_iter_ = 0

@@ -75,29 +75,15 @@ class HeteroLRHost(HeteroLRBase):
         self._abnormal_detection(data_instances)
 
         self.header = self.get_header(data_instances)
-        public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
-                                    tag=self.transfer_variable.generate_transferid(
-                                        self.transfer_variable.paillier_pubkey),
-                                    idx=0)
+        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
-        LOGGER.info("Get public_key from arbiter:{}".format(public_key))
-        self.cipher_operator.set_public_key(public_key)
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
 
-        batch_info = federation.get(name=self.transfer_variable.batch_info.name,
-                                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
-                                    idx=0)
-        LOGGER.info("Get batch_info from guest:" + str(batch_info))
-        self.batch_size = batch_info["batch_size"]
-        self.batch_num = batch_info["batch_num"]
-        if self.batch_size < consts.MIN_BATCH_SIZE and self.batch_size != -1:
-            raise ValueError(
-                "Batch size get from guest should not less than 10, except -1, batch_size is {}".format(
-                    self.batch_size))
-
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_num)]
+        # TODO: different encrypter
+        # self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
+        #                                                    self.encrypted_mode_calculator_param.mode,
+        #                                                    self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+        #                              in range(batch_num)]
 
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
@@ -108,38 +94,16 @@ class HeteroLRHost(HeteroLRBase):
         if self.fit_intercept:
             self.fit_intercept = False
 
-        self.coef_ = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-
-        self.n_iter_ = 0
-        index_data_inst_map = {}
+        self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-            batch_index = 0
-            while batch_index < self.batch_num:
-                LOGGER.info("batch:{}".format(batch_index))
-                # set batch_data
-                if len(self.batch_index_list) < self.batch_num:
-                    batch_data_index = federation.get(name=self.transfer_variable.batch_data_index.name,
-                                                      tag=self.transfer_variable.generate_transferid(
-                                                          self.transfer_variable.batch_data_index, self.n_iter_,
-                                                          batch_index),
-                                                      idx=0)
-                    LOGGER.info("Get batch_index from Guest")
-                    self.batch_index_list.append(batch_data_index)
-                else:
-                    batch_data_index = self.batch_index_list[batch_index]
 
-                # Get mini-batch train data
-                if len(index_data_inst_map) < self.batch_num:
-                    batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
-                    index_data_inst_map[batch_index] = batch_data_inst
-                else:
-                    batch_data_inst = index_data_inst_map[batch_index]
+            batch_data_generator = self.batch_generator.generate_batch_data()
 
-                LOGGER.info("batch_data_inst size:{}".format(batch_data_inst.count()))
+            for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data_inst)
+                batch_feat_inst = self.transform(batch_data)
 
                 # compute forward
                 host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)

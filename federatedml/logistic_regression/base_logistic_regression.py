@@ -44,8 +44,6 @@ class BaseLogisticRegression(ModelBase):
         self.model_param = LogisticParam()
         # attribute:
         self.n_iter_ = 0
-        self.coef_ = None
-        self.intercept_ = 0
         self.classes_ = None
         self.feature_shape = None
 
@@ -55,7 +53,6 @@ class BaseLogisticRegression(ModelBase):
         self.loss_history = []
         self.is_converged = False
         self.header = None
-        self.class_name = self.__class__.__name__
         self.model_name = 'LogisticRegression'
         self.model_param_name = 'LogisticRegressionParam'
         self.model_meta_name = 'LogisticRegressionMeta'
@@ -68,6 +65,8 @@ class BaseLogisticRegression(ModelBase):
         self.need_one_vs_rest = False
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
+        self.lr_variables = None
+
 
     def _init_model(self, params):
         self.model_param = params

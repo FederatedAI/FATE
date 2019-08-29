@@ -18,14 +18,15 @@
 
 from federatedml.hetero_lr_utils.sync import batch_info_sync
 from federatedml.model_selection import MiniBatch
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 class Guest(batch_info_sync.Guest):
-
     def __init__(self):
         self.mini_batch_obj = None
-        self.batch_data_list = []
-
+        self.finish_sycn = False
 
     def register_batch_generator(self, transfer_variables):
         self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
@@ -34,8 +35,56 @@ class Guest(batch_info_sync.Guest):
         self.mini_batch_obj = MiniBatch(data_instances, batch_size=batch_size)
         batch_info = {"batch_size": batch_size, "batch_num": self.mini_batch_obj.batch_nums}
         self.sync_batch_info(batch_info, suffix)
+        index_generator = self.mini_batch_obj.mini_batch_data_generator(result='index')
+        batch_index = 0
+        for batch_data_index in index_generator:
+            batch_suffix = suffix + tuple(batch_index)
+            self.sync_batch_index(batch_data_index, batch_suffix)
+            batch_index += 1
 
     def generate_batch_data(self):
+        data_generator = self.mini_batch_obj.mini_batch_data_generator(result='data')
+        for batch_data in data_generator:
+            yield batch_data
 
 
+class Host(batch_info_sync.Host):
+    def __init__(self):
+        self.finish_sycn = False
+        self.batch_data_insts = []
 
+    def register_batch_generator(self, transfer_variables):
+        self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
+
+    def initialize_batch_generator(self, data_instances, suffix=tuple()):
+        batch_info = self.sync_batch_info(suffix)
+        batch_num = batch_info.get('batch_num')
+        for batch_index in range(batch_num):
+            batch_suffix = suffix + tuple(batch_index)
+            batch_data_index = self.sync_batch_index(suffix=batch_suffix)
+            batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
+            self.batch_data_insts.append(batch_data_inst)
+
+    def generate_batch_data(self):
+        batch_index = 0
+        for batch_data_inst in self.batch_data_insts:
+            LOGGER.info("batch_num: {}, batch_data_inst size:{}".format(
+                batch_index, batch_data_inst.count()))
+            yield batch_data_inst
+            batch_index += 1
+
+
+class Arbiter(batch_info_sync.Host):
+    def __init__(self):
+        self.batch_num = None
+
+    def register_batch_generator(self, transfer_variables):
+        self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
+
+    def initialize_batch_generator(self, suffix=tuple()):
+        batch_info = self.sync_batch_info(suffix)
+        self.batch_num = batch_info.get('batch_num')
+
+    def generate_batch_data(self):
+        for i in range(self.batch_num):
+            yield i

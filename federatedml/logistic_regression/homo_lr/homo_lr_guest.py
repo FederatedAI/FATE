@@ -38,10 +38,8 @@ class HomoLRGuest(HomoLRBase):
         self.gradient_operator = LogisticGradient()
         self.evaluator = Evaluation()
         self.loss_history = []
-        self.is_converged = False
         self.role = consts.GUEST
         self.aggregator = aggregator.Guest()
-        self.lr_variables = None
 
     def _init_model(self, params):
         super()._init_model(params)

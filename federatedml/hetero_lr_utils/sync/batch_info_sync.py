@@ -29,6 +29,10 @@ class Guest(object):
                                              role=consts.HOST,
                                              suffix=suffix)
 
+        self.batch_data_info_transfer.remote(obj=batch_info,
+                                             role=consts.ARBITER,
+                                             suffix=suffix)
+
     def sync_batch_index(self, batch_index, suffix=tuple()):
         self.batch_data_index_transfer.remote(obj=batch_index,
                                               role=consts.HOST,
@@ -43,9 +47,25 @@ class Host(object):
     def sync_batch_info(self, suffix=tuple()):
         batch_info = self.batch_data_info_transfer.get(role=consts.GUEST,
                                                        suffix=suffix)
+        batch_size = batch_info.get('batch_size')
+        if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
+            raise ValueError(
+                "Batch size get from guest should not less than {}, except -1, batch_size is {}".format(
+                    consts.MIN_BATCH_SIZE, batch_size))
         return batch_info
 
     def sync_batch_index(self, suffix=tuple()):
         batch_index = self.batch_data_index_transfer.get(role=consts.GUEST,
                                                          suffix=suffix)
         return batch_index
+
+
+class Arbiter(object):
+    def _register_batch_data_index_transfer(self, batch_data_info_transfer, batch_data_index_transfer):
+        self.batch_data_info_transfer = batch_data_info_transfer
+        self.batch_data_index_transfer = batch_data_index_transfer
+
+    def sync_batch_info(self, suffix=tuple()):
+        batch_info = self.batch_data_info_transfer.get(role=consts.GUEST,
+                                                       suffix=suffix)
+        return batch_info
