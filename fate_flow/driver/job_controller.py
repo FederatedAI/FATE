@@ -205,3 +205,32 @@ class JobController(object):
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
                 schedule_logger.exception(e)
         schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
+
+    @staticmethod
+    def cancel_waiting_job(job_id):
+        schedule_logger.info('get waiting job {} command'.format(job_id))
+        jobs = job_utils.query_job(job_id=job_id)
+        job = None
+        if jobs:
+            for each_job in jobs:
+                if each_job.f_is_initiator == 1:
+                    job = each_job
+            if not job:
+                schedule_logger.info('cancel waiting job {} command failed: not the job initiator'.format(job_id))
+                return 'cancel waiting job {} command failed: not the job initiator'.format(job_id)
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = dict()
+            event['job_id'] = job.f_job_id
+            event['initiator_role'] = job_runtime_conf['initiator']['role']
+            event['initiator_party_id'] = job_runtime_conf['initiator']['party_id']
+            is_failure = RuntimeConfig.JOB_QUEUE.del_event(event)
+            if is_failure:
+                return is_failure
+            schedule_logger.info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            job_info = {'f_status': JobStatus.CANCEL}
+            roles = json_loads(job.f_roles)
+            TaskScheduler.sync_job_status(job_id, roles, job.f_work_mode, job.f_initiator_party_id, job_info)
+        else:
+            schedule_logger.info('cancel waiting job command failed: can not found job {}'.format(job_id))
+            return 'can not found job {}'.format(job_id)
+

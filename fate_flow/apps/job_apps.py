@@ -47,6 +47,14 @@ def submit_job():
                                                 })
 
 
+@manager.route('/cancel', methods=['POST'])
+def cancel_waiting_job():
+    response_retmsg = JobController.cancel_waiting_job(job_id=request.json.get('job_id', ''))
+    if response_retmsg:
+        return get_json_result(retcode=101, retmsg=response_retmsg)
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/stop', methods=['POST'])
 def stop_job():
     TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
