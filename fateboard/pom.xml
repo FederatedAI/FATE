@@ -50,9 +50,6 @@
         </dependency>
 
 
-
-
-
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
@@ -74,7 +71,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.25</version>
+            <version>1.2.58</version>
             <exclusions>
                 <exclusion>
                     <artifactId>fastjson</artifactId>
@@ -115,6 +112,11 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.16</version>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.28.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -229,7 +231,6 @@
                     </execution>
                 </executions>
             </plugin>
-
 
 
         </plugins>
