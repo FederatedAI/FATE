@@ -52,6 +52,15 @@
 
 
 
+#### /v1/job/cancel
+- request structure
+    * job_id: Required, String: job id
+- response structure
+    * retcode: return code,Integer
+    * retmsg: return code description,String
+
+
+
 #### /v1/job/stop
 - request structure
     * job_id: Required, String: job id
