@@ -52,7 +52,7 @@ public class JobManagerController {
     @Autowired
     HttpClientPool httpClientPool;
 
-    @Value("${fate.url}")
+    @Value("${fateflow.url}")
     String fateUrl;
     @Autowired
     ThreadPoolTaskExecutor asyncServiceExecutor;
