@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import datetime
+import functools
 import errno
 import json
 import operator
@@ -31,8 +32,10 @@ from arch.api.utils.core import json_loads, json_dumps
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger, WORK_MODE
+from fate_flow.settings import stat_logger, WORK_MODE, JOB_SERVER_HOST
 from fate_flow.utils import detect_utils
+from fate_flow.utils import api_utils
+from flask import request
 
 
 class IdCounter:
@@ -337,3 +340,20 @@ def gen_all_party_key(all_party):
     else:
         all_party_key = None
     return all_party_key
+
+
+def job_server_routing(func):
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        job_server = set()
+        jobs = query_job(job_id=request.json.get('job_id', None))
+        for job in jobs:
+            if job.f_run_ip:
+                job_server.add(job.f_run_ip)
+        if len(job_server) == 1:
+            execute_host = job_server.pop()
+            if execute_host != JOB_SERVER_HOST:
+                return api_utils.request_execute_server(request=request, execute_host=execute_host)
+        return func(*args, **kwargs)
+    return _wrapper
+
