@@ -18,6 +18,9 @@ import os
 
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
+from arch.api.utils.core import get_lan_ip
+import argparse
+import __main__
 
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
 stat_logger = log_utils.getLogger("fate_flow_stat")
@@ -32,6 +35,9 @@ Constants
 API_VERSION = "v1"
 ROLE = 'fateflow'
 SERVERS = 'servers'
+MAIN_MODULE = os.path.relpath(__main__.__file__)
+SERVER_MODULE = 'fate_flow_server.py'
+TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
 MAX_CONCURRENT_JOB_RUN = 5
 DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
                               'predict_output', 'evaluation_output', 'intersect_data_output']
@@ -44,9 +50,9 @@ HEADERS = {
 IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
+STANDALONE_NODE_HTTP_PORT = 9381
 WORK_MODE = 0
 USE_LOCAL_DATABASE = False
-SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'name': 'fate_flow',
@@ -65,12 +71,42 @@ REDIS = {
     'max_connections': 500
 }
 
+REDIS_QUEUE_DB_INDEX = 0
+JOB_MODULE_CONF = file_utils.load_json_conf("fate_flow/job_module_conf.json")
+
+"""
+Services
+"""
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
-BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 SERVINGS = server_conf.get(SERVERS).get('servings')
-JOB_MODULE_CONF = file_utils.load_json_conf("fate_flow/job_module_conf.json")
-REDIS_QUEUE_DB_INDEX = 0
+
+"""
+Dynamic configs
+"""
+if MAIN_MODULE in [SERVER_MODULE, TASK_EXECUTOR_MODULE]:
+    parser = argparse.ArgumentParser()
+    if MAIN_MODULE == SERVER_MODULE:
+        parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
+        args = parser.parse_args()
+        if args.standalone_node:
+            WORK_MODE = 0
+            HTTP_PORT = STANDALONE_NODE_HTTP_PORT
+    elif MAIN_MODULE == TASK_EXECUTOR_MODULE:
+        parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
+        parser.add_argument('-n', '--component_name', required=True, type=str,
+                            help="component name")
+        parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
+        parser.add_argument('-r', '--role', required=True, type=str, help="role")
+        parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
+        parser.add_argument('-c', '--config', required=True, type=str, help="task config")
+        parser.add_argument('--job_server', help="job server", type=str)
+        args = parser.parse_args()
+        if args.job_server:
+            HTTP_PORT = args.job_server.split(':')[1]
+BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
+JOB_SERVER_HOST = "{}:{}".format(get_lan_ip(), HTTP_PORT)
+SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)

@@ -65,13 +65,28 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body,
 
 def local_api(method, endpoint, json_body):
     try:
-        stat_logger.info('local api request: {}'.format(endpoint))
         url = "{}{}".format(SERVER_HOST_URL, endpoint)
+        stat_logger.info('local api request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)
         stat_logger.info(response.text)
         response_json_body = response.json()
         stat_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
         return response_json_body
+    except Exception as e:
+        raise Exception('local request error: {}'.format(e))
+
+
+def request_execute_server(request, execute_host):
+    try:
+        endpoint = request.base_url.replace(request.host_url, '')
+        method = request.method
+        url = "http://{}/{}".format(execute_host, endpoint)
+        stat_logger.info('sub request: {}'.format(url))
+        action = getattr(requests, method.lower(), None)
+        response = action(url=url, json=request.json, headers=HEADERS)
+        return jsonify(response.json())
+    except requests.exceptions.ConnectionError as e:
+        return get_json_result(retcode=999, retmsg='please start execute server: {}'.format(execute_host))
     except Exception as e:
         raise Exception('local request error: {}'.format(e))

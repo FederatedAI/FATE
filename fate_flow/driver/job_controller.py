@@ -15,14 +15,14 @@
 #
 from arch.api.proto import pipeline_pb2
 from arch.api.utils import dtable_utils
-from arch.api.utils.core import current_timestamp, json_dumps, json_loads, get_lan_ip
+from arch.api.utils.core import current_timestamp, json_dumps, json_loads
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL
+from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL, JOB_SERVER_HOST
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
@@ -125,7 +125,7 @@ class JobController(object):
     @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
-        job_info['f_run_ip'] = get_lan_ip()
+        job_info['f_run_ip'] = JOB_SERVER_HOST
         if create:
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
