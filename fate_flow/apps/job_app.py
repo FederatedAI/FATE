@@ -55,7 +55,7 @@ def submit_job():
 
 
 @manager.route('/stop', methods=['POST'])
-@job_utils.job_server_routing
+@job_utils.job_server_routing()
 def stop_job():
     TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
     return get_json_result(retcode=0, retmsg='success')
@@ -88,6 +88,7 @@ def job_config():
 
 
 @manager.route('/log', methods=['get'])
+@job_utils.job_server_routing(307)
 def job_log():
     job_id = request.json.get('job_id', '')
     memory_file = io.BytesIO()
