@@ -35,7 +35,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, WORK_MODE, JOB_SERVER_HOST
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
-from flask import request
+from flask import request, redirect, url_for
 
 
 class IdCounter:
@@ -342,18 +342,22 @@ def gen_all_party_key(all_party):
     return all_party_key
 
 
-def job_server_routing(func):
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        job_server = set()
-        jobs = query_job(job_id=request.json.get('job_id', None))
-        for job in jobs:
-            if job.f_run_ip:
-                job_server.add(job.f_run_ip)
-        if len(job_server) == 1:
-            execute_host = job_server.pop()
-            if execute_host != JOB_SERVER_HOST:
-                return api_utils.request_execute_server(request=request, execute_host=execute_host)
-        return func(*args, **kwargs)
-    return _wrapper
-
+def job_server_routing(routing_type=0):
+    def _out_wrapper(func):
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            job_server = set()
+            jobs = query_job(job_id=request.json.get('job_id', None))
+            for job in jobs:
+                if job.f_run_ip:
+                    job_server.add(job.f_run_ip)
+            if len(job_server) == 1:
+                execute_host = job_server.pop()
+                if execute_host != JOB_SERVER_HOST:
+                    if routing_type == 0:
+                        return api_utils.request_execute_server(request=request, execute_host=execute_host)
+                    else:
+                        return redirect('http://{}{}'.format(execute_host, url_for(request.endpoint)), code=307)
+            return func(*args, **kwargs)
+        return _wrapper
+    return _out_wrapper

@@ -19,6 +19,8 @@
 export PYTHONPATH=
 log_dir="${PYTHONPATH}/logs"
 venv=
+# FATE deployment suggested path
+# venv=/data/projects/fate/venv/
 
 module=fate_flow_server.py
 
