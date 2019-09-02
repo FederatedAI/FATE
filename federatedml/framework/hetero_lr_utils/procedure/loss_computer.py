@@ -19,7 +19,6 @@
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero_lr_utils.sync import three_parties_sync
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 
 LOGGER = log_utils.getLogger()
 
@@ -59,3 +58,59 @@ class Guest(three_parties_sync.Guest):
                               suffix=current_suffix)
 
 
+class Host(three_parties_sync.Host):
+    def __init__(self):
+        self.batch_index = 0
+        self.n_iter_ = 0
+        self.optimizer = None
+        self.cipher_operator = None
+
+    def _register_intermediate_transfer(self, transfer_variables):
+        self.host_loss_regular_transfer = transfer_variables.host_loss_regular
+
+    def _register_attrs(self, lr_model):
+        if lr_model.model_param.penalty in ['l1', 'l2']:
+            self.has_penalty = True
+        self.optimizer = lr_model.optimizer
+        self.cipher_operator = lr_model.cipher_operator
+
+    def register_loss_procedure(self, transfer_variables, lr_model):
+        self._register_intermediate_transfer(transfer_variables)
+        self._register_attrs(lr_model)
+
+    def renew_current_info(self, n_iter, batch_index):
+        self.n_iter_ = n_iter
+        self.batch_index = batch_index
+
+    def apply_procedure(self, lr_variables):
+        current_suffix = (self.n_iter_, self.batch_index)
+
+        if self.has_penalty:
+            loss_regular = self.optimizer.loss_norm(lr_variables.coef_)
+            en_loss_regular = self.cipher_operator.encrypt(loss_regular)
+            self.host_to_guest(variables=en_loss_regular,
+                               transfer_variables=(self.host_loss_regular_transfer,),
+                               suffix=current_suffix)
+            LOGGER.info("Remote host_loss_regular to Guest")
+
+
+class Arbiter(three_parties_sync.Arbiter):
+    def __init__(self):
+        self.batch_index = 0
+        self.n_iter_ = 0
+
+    def _register_intermediate_transfer(self, transfer_variables):
+        self.loss_transfer = transfer_variables.loss
+
+    def register_loss_procedure(self, transfer_variables, lr_model):
+        self._register_intermediate_transfer(transfer_variables)
+
+    def renew_current_info(self, n_iter, batch_index):
+        self.n_iter_ = n_iter
+        self.batch_index = batch_index
+
+    def apply_procedure(self):
+        current_suffix = (self.n_iter_, self.batch_index)
+        loss = self.guest_to_arbiter(transfer_variables=(self.loss_transfer,),
+                                     suffix=current_suffix)[0]
+        return loss

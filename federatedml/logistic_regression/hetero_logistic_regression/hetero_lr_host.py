@@ -19,6 +19,9 @@ import numpy as np
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
+from federatedml.framework.hetero_lr_utils.procedure import loss_computer, aggregator, convergence
+from federatedml.framework.hetero_lr_utils.procedure import paillier_cipher, batch_generator
+from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
@@ -34,6 +37,12 @@ class HeteroLRHost(HeteroLRBase):
         self.batch_num = None
         self.batch_index_list = []
         self.role = consts.HOST
+
+        self.cipher = paillier_cipher.Host()
+        self.batch_generator = batch_generator.Host()
+        self.gradient_procedure = hetero_gradient_procedure.Host()
+        self.loss_computer = loss_computer.Host()
+        self.converge_procedure = convergence.Host()
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -79,99 +88,36 @@ class HeteroLRHost(HeteroLRBase):
 
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
 
-        # TODO: different encrypter
-        # self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-        #                                                    self.encrypted_mode_calculator_param.mode,
-        #                                                    self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-        #                              in range(batch_num)]
+        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+                                     in range(self.batch_generator.batch_nums)]
+
+        self.gradient_procedure.register_func(self)
+        self.gradient_procedure.register_attrs(self)
 
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
-
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-
-        if self.fit_intercept:
-            self.fit_intercept = False
-
         self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
 
             batch_data_generator = self.batch_generator.generate_batch_data()
-
+            batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
 
-                # compute forward
-                host_forward = self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)
-                federation.remote(host_forward,
-                                  name=self.transfer_variable.host_forward_dict.name,
-                                  tag=self.transfer_variable.generate_transferid(
-                                      self.transfer_variable.host_forward_dict,
-                                      self.n_iter_,
-                                      batch_index),
-                                  role=consts.GUEST,
-                                  idx=0)
-                LOGGER.info("Remote host_forward to guest")
+                self.renew_current_info(self.n_iter_, batch_index)
 
-                # compute host gradient
-                fore_gradient = federation.get(name=self.transfer_variable.fore_gradient.name,
-                                               tag=self.transfer_variable.generate_transferid(
-                                                   self.transfer_variable.fore_gradient, self.n_iter_, batch_index),
-                                               idx=0)
-                LOGGER.info("Get fore_gradient from guest")
-                if self.gradient_operator is None:
-                    self.gradient_operator = HeteroLogisticGradient(self.cipher_operator)
-                host_gradient = self.gradient_operator.compute_gradient(batch_feat_inst, fore_gradient,
-                                                                        fit_intercept=False)
-                # regulation if necessary
-                if self.updater is not None:
-                    loss_regular = self.updater.loss_norm(self.coef_)
-                    en_loss_regular = self.cipher_operator.encrypt(loss_regular)
-                    federation.remote(en_loss_regular,
-                                      name=self.transfer_variable.host_loss_regular.name,
-                                      tag=self.transfer_variable.generate_transferid(
-                                          self.transfer_variable.host_loss_regular,
-                                          self.n_iter_,
-                                          batch_index),
-                                      role=consts.GUEST,
-                                      idx=0)
-                    LOGGER.info("Remote host_loss_regular to guest")
-
-                federation.remote(host_gradient,
-                                  name=self.transfer_variable.host_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_gradient,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                LOGGER.info("Remote host_gradient to arbiter")
-
-                # Get optimize host gradient and update model
-                optim_host_gradient = federation.get(name=self.transfer_variable.host_optim_gradient.name,
-                                                     tag=self.transfer_variable.generate_transferid(
-                                                         self.transfer_variable.host_optim_gradient, self.n_iter_,
-                                                         batch_index),
-                                                     idx=0)
-                LOGGER.info("Get optim_host_gradient from arbiter")
-
-                LOGGER.info("update_model")
-                self.update_model(optim_host_gradient)
-
-                # update local model that transforms features of raw input 'batch_data_inst'
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
+                optim_host_gradient = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
+                self.loss_computer.apply_procedure(self.lr_variables)
 
                 batch_index += 1
 
-                # temporary resource recovery and will be removed in the future
-                rubbish_list = [host_forward,
-                                fore_gradient
-                                ]
-                data_overview.rubbish_clear(rubbish_list)
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(

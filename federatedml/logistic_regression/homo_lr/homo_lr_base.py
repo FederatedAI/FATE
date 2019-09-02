@@ -18,7 +18,8 @@
 
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
-from federatedml.optim import Optimizer
+from federatedml.optim.optimizer import optimizer_factory
+
 from federatedml.util import consts
 from arch.api.utils import log_utils
 
@@ -39,6 +40,7 @@ class HomoLRBase(BaseLogisticRegression):
         self.transfer_variable = HomoLRTransferVariable()
         self.aggregator.register_aggregator(self.transfer_variable)
         self.aggregator.initialize_aggregator(params.party_weight)
+        self.optimizer = optimizer_factory(params)
 
     @property
     def use_loss(self):

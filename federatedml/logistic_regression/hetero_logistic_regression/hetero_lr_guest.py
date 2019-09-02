@@ -14,16 +14,14 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.hetero_lr_utils.procedure import paillier_cipher, batch_generator
-
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.framework.hetero_lr_utils.procedure import aggregator
+from federatedml.framework.hetero_lr_utils.procedure import loss_computer, aggregator, convergence
+from federatedml.framework.hetero_lr_utils.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic import data_overview
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -39,7 +37,8 @@ class HeteroLRGuest(HeteroLRBase):
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
         self.gradient_procedure = hetero_gradient_procedure.Guest()
-        self.gradient_procedure.register_gradient_procedure(self.transfer_variable)
+        self.loss_computer = loss_computer.Guest()
+        self.converge_procedure = convergence.Guest()
 
     @staticmethod
     def load_data(data_instance):
@@ -90,41 +89,25 @@ class HeteroLRGuest(HeteroLRBase):
 
             batch_index = 0
             for batch_data in batch_data_generator:
-
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
 
+                self.renew_current_info(self.n_iter_, batch_index)
+
                 # Start gradient procedure
-                self.gradient_procedure.renew_current_info(self.n_iter_, batch_index)
                 optim_guest_gradient, loss = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
-
-
+                self.loss_computer.apply_procedure(loss)
 
                 # is converge of loss in arbiter
                 batch_index += 1
 
-                # temporary resource recovery and will be removed in the future
-                rubbish_list = [host_forward,
-                                aggregate_forward_res,
-                                en_aggregate_wx,
-                                en_aggregate_wx_square,
-                                fore_gradient,
-                                self.guest_forward
-                                ]
-                data_overview.rubbish_clear(rubbish_list)
-
-            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                        tag=self.transfer_variable.generate_transferid(
-                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                        idx=0)
-            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
+            self.is_converged = self.converge_procedure.syn_converge_info(self.is_converged)
+            LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
             self.n_iter_ += 1
-            if is_stopped:
-                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
+            if self.is_converged:
                 break
 
-        LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances):
         """

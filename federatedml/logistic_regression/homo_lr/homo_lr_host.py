@@ -18,11 +18,10 @@
 
 import functools
 
-from federatedml.homo.procedure import paillier_cipher
-
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
 from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.model_selection import MiniBatch
@@ -87,7 +86,7 @@ class HomoLRHost(HomoLRBase):
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
-                self.lr_variables = self.optimizer.apply_gradients(self.lr_variables, grad)
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
                 if not self.use_encrypt:
                     loss /= n
                     iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))

@@ -46,6 +46,7 @@ class HomoLRGuest(HomoLRBase):
         self.aggregator.register_aggregator(self.transfer_variable)
         self.aggregator.initialize_aggregator(params.party_weight)
 
+
     def fit(self, data_instances):
 
         self._abnormal_detection(data_instances)
@@ -70,7 +71,7 @@ class HomoLRGuest(HomoLRBase):
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
                 loss /= n
-                self.lr_variables = self.optimizer.apply_gradients(self.lr_variables, grad)
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
                 iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))
                 batch_num += 1
             iter_loss /= batch_num

@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero_lr_utils import batch_info_sync
+from federatedml.framework.hetero_lr_utils.sync import batch_info_sync
 from federatedml.model_selection import MiniBatch
 
 LOGGER = log_utils.getLogger()
@@ -76,7 +76,7 @@ class Host(batch_info_sync.Host):
             batch_index += 1
 
 
-class Arbiter(batch_info_sync.Host):
+class Arbiter(batch_info_sync.Arbiter):
     def __init__(self):
         self.batch_num = None
 

@@ -23,10 +23,10 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim.optimizer import optimizer_factory
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim import convergence
 from federatedml.optim import Initializer
+from federatedml.optim.optimizer import optimizer_factory
 from fate_flow.entity.metric import MetricMeta
 from fate_flow.entity.metric import Metric
 
@@ -78,6 +78,7 @@ class BaseLogisticRegression(ModelBase):
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
         self.party_weight = params.party_weight
+        self.optimizer = optimizer_factory(params)
 
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
@@ -90,7 +91,6 @@ class BaseLogisticRegression(ModelBase):
 
         self.re_encrypt_batches = params.re_encrypt_batches
         self.predict_param = params.predict_param
-        self.optimizer = optimizer_factory(params)
         self.key_length = params.encrypt_param.key_length
 
     def set_feature_shape(self, feature_shape):
