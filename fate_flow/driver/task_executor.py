@@ -49,6 +49,8 @@ class TaskExecutor(object):
             schedule_logger.info('enter task process')
             schedule_logger.info(args)
             # init function args
+            if args.job_server:
+                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id

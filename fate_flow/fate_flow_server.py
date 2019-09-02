@@ -40,8 +40,8 @@ from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.manager import queue_manager
-from fate_flow.settings import IP, GRPC_PORT, HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
-    API_VERSION, WORK_MODE
+from fate_flow.settings import IP, GRPC_PORT, STANDALONE_NODE_HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
+    API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.grpc_utils import UnaryServicer
@@ -76,7 +76,15 @@ if __name__ == '__main__':
     # init
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     init_database_tables()
-    RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
+    # init runtime config
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
+    args = parser.parse_args()
+    if args.standalone_node:
+        RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
+        RuntimeConfig.init_config(HTTP_PORT=STANDALONE_NODE_HTTP_PORT)
+
     storage.init_storage(work_mode=RuntimeConfig.WORK_MODE)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
@@ -95,7 +103,7 @@ if __name__ == '__main__':
     server.start()
     # start http server
     try:
-        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
+        run_simple(hostname=IP, port=RuntimeConfig.HTTP_PORT, application=app, threaded=True)
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

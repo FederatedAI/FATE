@@ -22,10 +22,11 @@ from flask import Flask, request, send_file
 from arch.api.utils.core import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.settings import stat_logger, WORK_MODE, STANDALONE_NODE_HTTP_PORT
+from fate_flow.settings import stat_logger, STANDALONE_NODE_HTTP_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -40,7 +41,7 @@ def internal_server_error(e):
 def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    if work_mode == WORK_MODE:
+    if work_mode == RuntimeConfig.WORK_MODE:
         job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
         return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
                                                     'job_runtime_conf_path': job_runtime_conf_path,
@@ -48,7 +49,7 @@ def submit_job():
                                                     'board_url': board_url
                                                     })
     else:
-        if WORK_MODE == WorkMode.STANDALONE:
+        if RuntimeConfig.WORK_MODE == WorkMode.STANDALONE:
             raise Exception('server run on standalone can not support cluster mode job')
         # use cluster standalone node server to execute standalone job
         return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, STANDALONE_NODE_HTTP_PORT))

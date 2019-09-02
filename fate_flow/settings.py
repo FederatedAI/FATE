@@ -18,8 +18,7 @@ import os
 
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
-from arch.api.utils.core import get_lan_ip
-import argparse
+from fate_flow.entity.runtime_config import RuntimeConfig
 import __main__
 
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
@@ -83,30 +82,6 @@ PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
 SERVINGS = server_conf.get(SERVERS).get('servings')
-
-"""
-Dynamic configs
-"""
-if MAIN_MODULE in [SERVER_MODULE, TASK_EXECUTOR_MODULE]:
-    parser = argparse.ArgumentParser()
-    if MAIN_MODULE == SERVER_MODULE:
-        parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
-        args = parser.parse_args()
-        if args.standalone_node:
-            WORK_MODE = 0
-            HTTP_PORT = STANDALONE_NODE_HTTP_PORT
-    elif MAIN_MODULE == TASK_EXECUTOR_MODULE:
-        parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
-        parser.add_argument('-n', '--component_name', required=True, type=str,
-                            help="component name")
-        parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
-        parser.add_argument('-r', '--role', required=True, type=str, help="role")
-        parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
-        parser.add_argument('-c', '--config', required=True, type=str, help="task config")
-        parser.add_argument('--job_server', help="job server", type=str)
-        args = parser.parse_args()
-        if args.job_server:
-            HTTP_PORT = args.job_server.split(':')[1]
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
-JOB_SERVER_HOST = "{}:{}".format(get_lan_ip(), HTTP_PORT)
-SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
+RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
+RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)

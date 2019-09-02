@@ -22,8 +22,9 @@ from flask import Response
 
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT
-from fate_flow.settings import stat_logger, SERVER_HOST_URL, HEADERS
+from fate_flow.settings import stat_logger, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
@@ -65,7 +66,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body,
 
 def local_api(method, endpoint, json_body):
     try:
-        url = "{}{}".format(SERVER_HOST_URL, endpoint)
+        url = "{}{}".format(RuntimeConfig.SERVER_HOST_URL, endpoint)
         stat_logger.info('local api request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)
