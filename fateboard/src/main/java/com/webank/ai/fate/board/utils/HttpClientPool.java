@@ -51,7 +51,7 @@ import java.util.Map;
 
 @Service
 public class HttpClientPool implements InitializingBean {
-    @Value("${fate.url}")
+    @Value("${fateflow.url}")
     public String fateUrl;
     Logger logger = LoggerFactory.getLogger(HttpClientPool.class);
     private PoolingHttpClientConnectionManager poolConnManager;

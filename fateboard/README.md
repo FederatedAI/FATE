@@ -12,6 +12,14 @@ The FATE stand-alone version has been integrated with FATEBoard, and users just 
 In a distributed environment, FATEBoard needs to be deployed through cluster automated deployment script rather than individually, which you need to configure some information about the cluster, such as URL of FATEFlow, directory of log files, SSH information of each machine, etc. All the configuration information could be generated automatically using automated script deployment. If the information is not filled in correctly, it will not work properly.
 
 # **Usage** #
+**Database Configuration** 
+
+The default database for FATEBoard for cluster version is mysql. If you want to use standalone version, you should use sqlite databse. Just update the file : fateboard/src/main/resources/application.properties with right parameters of sqlite.
+The parameters you should update are below:
+spring.datasource.driver-Class-Name=org.sqlite.JDBC
+spring.datasource.url=xxx
+spring.datasource.username=
+spring.datasource.password=
 
 **Starting FATEBoard** 
 
