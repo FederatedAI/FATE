@@ -165,7 +165,6 @@ class Evaluation(ModelBase):
             split_data_with_label = self.split_data_with_type(eval_data_local)
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metircs(mode, data)
-                key = '_'.join([key, mode])
                 self.eval_results[key] = eval_result
 
         self.callback_metric_data()
