@@ -41,7 +41,7 @@ class TaskScheduler(object):
                     job.f_is_initiator = 1
                 else:
                     job.f_is_initiator = 0
-                federated_api(job_id=job.f_job_id,
+                response_json = federated_api(job_id=job.f_job_id,
                               method='POST',
                               endpoint='/{}/job/{}/{}/{}/create'.format(
                                   API_VERSION,
@@ -52,6 +52,10 @@ class TaskScheduler(object):
                               dest_party_id=party_id,
                               json_body=job.to_json(),
                               work_mode=job.f_work_mode)
+                if response_json["retcode"]:
+                    return response_json["retmsg"]
+        return None
+
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):

@@ -75,14 +75,27 @@ class JobController(object):
         job.f_progress = 0
         job.f_create_time = current_timestamp()
 
+        initiator_role = job_initiator['role']
+        initiator_party_id = job_initiator['party_id']
+        if initiator_party_id not in job_runtime_conf['role'][initiator_role]:
+            schedule_logger.info("initiator party id error:{}".format(initiator_party_id))
+            raise Exception("initiator party id error {}".format(initiator_party_id))
+
+        get_job_dsl_parser(dsl=job_dsl,
+                                 runtime_conf=job_runtime_conf,
+                                 train_runtime_conf=train_runtime_conf)
+
         # save job info
-        TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
+        response_error_info = TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
+        if response_error_info:
+            schedule_logger.info("save job {} info failed:{}".format(job_id, response_error_info))
+            raise Exception(response_error_info)
 
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
-            "initiator_role": job_initiator['role'],
-            "initiator_party_id": job_initiator['party_id']
+            "initiator_role": initiator_role,
+            "initiator_party_id": initiator_party_id
         }
         )
         schedule_logger.info(

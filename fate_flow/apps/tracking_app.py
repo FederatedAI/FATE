@@ -159,7 +159,7 @@ def component_parameters():
         for role, partys_parameters in parameters.items():
             for party_parameters in partys_parameters:
                 if party_parameters.get('local', {}).get('role', '') == request_data['role'] and party_parameters.get(
-                        'local', {}).get('party_id', '') == request_data['party_id']:
+                        'local', {}).get('party_id', '') == int(request_data['party_id']):
                     output_parameters = {}
                     output_parameters['module'] = party_parameters.get('module', '')
                     for p_k, p_v in party_parameters.items():
