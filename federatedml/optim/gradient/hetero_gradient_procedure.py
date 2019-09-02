@@ -19,7 +19,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero_lr_utils.sync import three_parties_sync
+from federatedml.framework.hetero.sync import three_parties_sync
 from federatedml.framework.weights import ListVariables
 from federatedml.optim.gradient.logistic_gradient import HeteroLogisticGradientComputer
 

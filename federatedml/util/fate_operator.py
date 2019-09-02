@@ -66,6 +66,8 @@ def reduce_add(x, y):
     else:
         result = []
         for idx, acc in enumerate(x):
+            if acc is None:
+                result.append(acc)
             result.append(acc + y[idx])
     return result
 
