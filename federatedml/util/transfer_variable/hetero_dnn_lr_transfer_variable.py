@@ -24,13 +24,13 @@
 ################################################################################
 
 from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
+# noinspection PyAttributeOutsideInit
 class HeteroDNNLRTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.guest_dec_gradient = Variable(name="HeteroDNNLRTransferVariable.guest_dec_gradient", auth={'src': "arbiter", 'dst': ['guest']})
-        self.guest_enc_gradient = Variable(name="HeteroDNNLRTransferVariable.guest_enc_gradient", auth={'src': "guest", 'dst': ['arbiter']})
-        self.host_dec_gradient = Variable(name="HeteroDNNLRTransferVariable.host_dec_gradient", auth={'src': "arbiter", 'dst': ['host']})
-        self.host_enc_gradient = Variable(name="HeteroDNNLRTransferVariable.host_enc_gradient", auth={'src': "host", 'dst': ['arbiter']})
+        self.guest_dec_gradient = Variable(name='HeteroDNNLRTransferVariable.guest_dec_gradient', auth=dict(src='arbiter', dst=['guest']), transfer_variable=self)
+        self.guest_enc_gradient = Variable(name='HeteroDNNLRTransferVariable.guest_enc_gradient', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
+        self.host_dec_gradient = Variable(name='HeteroDNNLRTransferVariable.host_dec_gradient', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
+        self.host_enc_gradient = Variable(name='HeteroDNNLRTransferVariable.host_enc_gradient', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         pass

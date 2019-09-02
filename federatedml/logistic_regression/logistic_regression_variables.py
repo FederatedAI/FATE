@@ -15,14 +15,29 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
-################################################################################
-#
-# AUTO GENERATED TRANSFER VARIABLE CLASS. DO NOT MODIFY
-#
-################################################################################
+import numpy as np
 
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.framework.weights import ListVariables
 
 
+class LogisticRegressionVariables(ListVariables):
+    def __init__(self, l, fit_intercept):
+        super().__init__(l)
+        self.fit_intercept = fit_intercept
+
+    @property
+    def coef_(self):
+        if self.fit_intercept:
+            return np.array(self._parameter[:-1])
+        return np.array(self._parameter)
+
+    @property
+    def intercept_(self):
+        if self.fit_intercept:
+            return self._parameter[-1]
+        return 0.0
+
+    @property
+    def parameter(self):
+        return np.array(self._parameter)

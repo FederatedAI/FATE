@@ -189,7 +189,7 @@ class KFold(BaseCrossValidator):
         elif self.role == consts.HOST:
             data_sid = federation.get(name=transfer_id.name,
                                       tag=transfer_variable.generate_transferid(transfer_id, flowid),
-                                      idx=0)
+                                      idx=-1)
 
             LOGGER.info("get {} from guest".format(data_application))
             join_data_insts = data_sid.join(data_instance, lambda s, d: d)
