@@ -19,6 +19,7 @@ import os
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
+from arch.api.utils.core import get_lan_ip
 import __main__
 
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
@@ -80,6 +81,8 @@ server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
+if BOARD_HOST == 'localhost':
+    BOARD_HOST = get_lan_ip()
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
 SERVINGS = server_conf.get(SERVERS).get('servings')
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
