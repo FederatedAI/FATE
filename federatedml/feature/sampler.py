@@ -510,7 +510,7 @@ class Sampler(ModelBase):
             return sample_data_inst
 
     def fit(self, data_inst):
-        return self.run_sample(data_inst, self.task_type, self,task_role)
+        return self.run_sample(data_inst, self.task_type, self.task_role)
 
     def transform(self, data_inst):
         return self.run_sample(data_inst, self.task_type, self.task_role)
@@ -518,7 +518,7 @@ class Sampler(ModelBase):
     def run(self, component_parameters, args=None):
         self._init_runtime_parameters(component_parameters)
         self._init_role(component_parameters)
-        stage = None
+        stage = "fit"
         if args.get("data", None) is None:
             return
 

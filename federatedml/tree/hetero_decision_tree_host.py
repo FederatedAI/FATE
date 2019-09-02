@@ -29,7 +29,6 @@ from arch.api import federation
 from arch.api.utils import log_utils
 from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
-from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
@@ -136,7 +135,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
-        # self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
         histograms = FeatureHistogram.calculate_histogram(
             self.data_bin_with_position, self.grad_and_hess,
             self.bin_split_points, self.bin_sparse_points,

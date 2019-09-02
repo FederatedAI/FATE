@@ -1,5 +1,5 @@
 ####  Standalone
-
+It is strongly recommended to use docker, which greatly reduces the possibility of encountering problems.
 ##### Docker version
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
@@ -7,6 +7,10 @@
 2. Dependent on docker and docker-compose, You can verify the docker environment with the following command:docker --version and docker-compose --version.
 
 3. execute follow command by root user (because need to create /var/log/fate directory).
+
+4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
+
+5. It takes about 40 minutes to complete the execution, please wait for a moment.
 
    please follow the below step:
 
@@ -25,7 +29,7 @@ FATE $ sh ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples/](https://github.com/WeBankFinTech/FATE/blob/master/examples) folder, try them out!
+There are a few algorithms under [examples/](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://host ip:8080.
@@ -71,6 +75,7 @@ Please ignore the following tips:
 
    ```
       create database fate_flow DEFAULT CHARSET utf8 COLLATE utf8_general_ci; 
+      create user 'fate_dev'@'localhost' identified by 'fate_dev';
       grant all on *.* to 'fate_dev'@'localhost';
       flush privileges;
    ```
