@@ -24,10 +24,10 @@
 ################################################################################
 
 from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
+# noinspection PyAttributeOutsideInit
 class SampleTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.sample_ids = Variable(name="SampleTransferVariable.sample_ids", auth={'src': "guest", 'dst': ['host']})
+        self.sample_ids = Variable(name='SampleTransferVariable.sample_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass

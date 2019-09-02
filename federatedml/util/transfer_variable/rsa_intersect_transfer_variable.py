@@ -24,14 +24,14 @@
 ################################################################################
 
 from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
+# noinspection PyAttributeOutsideInit
 class RsaIntersectTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.rsa_pubkey = Variable(name="RsaIntersectTransferVariable.rsa_pubkey", auth={'src': "host", 'dst': ['guest']})
-        self.intersect_guest_ids = Variable(name="RsaIntersectTransferVariable.intersect_guest_ids", auth={'src': "guest", 'dst': ['host']})
-        self.intersect_host_ids_process = Variable(name="RsaIntersectTransferVariable.intersect_host_ids_process", auth={'src': "host", 'dst': ['guest']})
-        self.intersect_guest_ids_process = Variable(name="RsaIntersectTransferVariable.intersect_guest_ids_process", auth={'src': "host", 'dst': ['guest']})
-        self.intersect_ids = Variable(name="RsaIntersectTransferVariable.intersect_ids", auth={'src': "guest", 'dst': ['host']})
+        self.rsa_pubkey = Variable(name='RsaIntersectTransferVariable.rsa_pubkey', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.intersect_guest_ids = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.intersect_host_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_host_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.intersect_guest_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.intersect_ids = Variable(name='RsaIntersectTransferVariable.intersect_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass
