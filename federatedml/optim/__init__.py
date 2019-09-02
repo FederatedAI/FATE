@@ -16,7 +16,7 @@
 
 from federatedml.optim import gradient
 from federatedml.optim.convergence import DiffConverge, AbsConverge
-from federatedml.optim.optimizer import Optimizer
+from federatedml.optim.optimizer_old import Optimizer
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.updater import L1Updater, L2Updater
 from federatedml.optim import federated_aggregator

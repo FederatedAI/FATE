@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -12,10 +15,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-
-from federatedml.optim.gradient.logistic_gradient import LogisticGradient, HeteroLogisticGradient, TaylorLogisticGradient
-from federatedml.optim.gradient.linear_gradient import LinearGradient, HeteroLinearGradient
-
-__all__ = ["LogisticGradient", "HeteroLogisticGradient", "TaylorLogisticGradient",
-           "LinearGradient", "HeteroLinearGradient"]

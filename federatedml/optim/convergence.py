@@ -22,7 +22,7 @@ import numpy as np
 
 LOGGER = log_utils.getLogger()
 
-class ConvergeFunction:
+class _ConvergeFunction:
 
     def __init__(self, eps):
         self.eps = eps
@@ -30,15 +30,15 @@ class ConvergeFunction:
     def is_converge(self, loss): pass
 
 
-class DiffConverge(ConvergeFunction):
+class _DiffConverge(_ConvergeFunction):
     """
     Judge convergence by the difference between two iterations.
     If the difference is smaller than eps, converge flag will be provided.
     """
 
-    def __init__(self, pre_loss=None, eps=consts.FLOAT_ZERO):
-        super(DiffConverge, self).__init__(eps=eps)
-        self.pre_loss = pre_loss
+    def __init__(self, eps):
+        super().__init__(eps=eps)
+        self.pre_loss = None
 
     def is_converge(self, loss):
         converge_flag = False
@@ -50,7 +50,7 @@ class DiffConverge(ConvergeFunction):
         return converge_flag
 
 
-class AbsConverge(ConvergeFunction):
+class _AbsConverge(_ConvergeFunction):
     """
     Judge converge by absolute loss value. When loss value smaller than eps, converge flag
     will be provided.
@@ -64,14 +64,14 @@ class AbsConverge(ConvergeFunction):
         return converge_flag
 
 
-class WeightDiffConverge(ConvergeFunction):
+class _WeightDiffConverge(_ConvergeFunction):
     """
     Use 2-norm of weight difference to judge whether converge or not.
     """
 
-    def __init__(self, pre_weight=None, eps=consts.FLOAT_ZERO):
-        super(WeightDiffConverge, self).__init__(eps=eps)
-        self.pre_weight = pre_weight
+    def __init__(self, eps):
+        super().__init__(eps=eps)
+        self.pre_weight = None
 
     def is_converge(self, weight):
         if self.pre_weight is None:
@@ -83,5 +83,22 @@ class WeightDiffConverge(ConvergeFunction):
         if weight_diff < self.eps * np.max([fate_operator.norm(weight), 1]):
             return True
         return False
+
+
+def converge_func_factory(param):
+    try:
+        converge_func = param.converge_func
+        eps = param.eps
+    except AttributeError:
+        raise AttributeError("Converge Function parameters has not been totally set")
+
+    if converge_func == 'diff':
+        return _DiffConverge(eps)
+    elif converge_func == 'weight_diff':
+        return _WeightDiffConverge(eps)
+    elif converge_func == 'abs':
+        return _AbsConverge(eps)
+    else:
+        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(optimizer_type))
 
 

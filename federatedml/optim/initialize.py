@@ -17,11 +17,13 @@
 import numpy as np
 
 from arch.api.utils import log_utils
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 
 LOGGER = log_utils.getLogger()
 
 
-class Initializer:
+class Initializer(object):
+
     def zeros(self, data_shape):
         inits = np.zeros(data_shape)
         return inits
@@ -81,5 +83,5 @@ class Initializer:
         # return coef_, intercept_
 
         LOGGER.debug("Initialed model: {}".format(w))
-
-        return w
+        lr_variables = LogisticRegressionVariables(w, init_params.fit_intercept)
+        return lr_variables

@@ -15,53 +15,110 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-################################################################################
-#
-#
-################################################################################
 
 import numpy as np
 
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 
-class Optimizer(object):
 
-    def __init__(self, learning_rate, opt_method_name="Sgd"):
-        """
-        """
-        self.opt_beta1 = 0.9
-        self.opt_beta2 = 0.999
-        self.rho = 0.99
-
-        self.opt_beta1_decay = 1.0
-        self.opt_beta2_decay = 1.0
-
-        self.opt_m = None
-        self.opt_v = None
+class _Optimizer(object):
+    def __init__(self, learning_rate, alpha, penalty):
         self.learning_rate = learning_rate
+        self.iters = 0
+        self.alpha = alpha
+        self.penalty = penalty
 
-        self.nesterov_momentum_coeff = 0.9
-        self.lr_decay = 0.9
-        self.opt_method_name = opt_method_name.lower()
+    @property
+    def shrinkage_val(self):
+        this_step_size = self.learning_rate / np.sqrt(self.iters)
+        return self.alpha * this_step_size
 
-    def SgdOptimizer(self, grad):
+    def apply_gradients(self, grad):
+        raise NotImplementedError("Should not call here")
 
-        self.learning_rate *= self.opt_beta2
+    def __l1_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        coef_ = model_variables.coef_
+        if model_variables.fit_intercept:
+            gradient_without_intercept = gradient[: -1]
+        else:
+            gradient_without_intercept = gradient
+
+        new_weights = np.sign(coef_ - gradient_without_intercept) * \
+                      np.maximum(0, np.abs(coef_ - gradient_without_intercept) - self.shrinkage_val)
+
+        if model_variables.fit_intercept:
+            new_weights = np.append(new_weights, model_variables.intercept_)
+            new_weights[-1] -= gradient[-1]
+        new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        return new_param
+
+    def __l2_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        coef_ = model_variables.coef_
+        if model_variables.fit_intercept:
+            gradient_without_intercept = gradient[: -1]
+        else:
+            gradient_without_intercept = gradient
+
+        new_weights = coef_ - gradient_without_intercept - self.learning_rate * self.alpha * coef_
+        if model_variables.fit_intercept:
+            new_weights = np.append(new_weights, model_variables.intercept_)
+            new_weights[-1] -= gradient[-1]
+        new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        return new_param
+
+    def update(self, model_variables: LogisticRegressionVariables, grad):
+        if self.penalty == 'l1':
+            model_variables = self.__l1_updator(model_variables, grad)
+        elif self.penalty == 'l2':
+            model_variables = self.__l2_updator(model_variables, grad)
+        self.iters += 1
+        return model_variables
+
+    def __l1_loss_norm(self, model_variables: LogisticRegressionVariables):
+        coef_ = model_variables.coef_
+        loss_norm = np.sum(self.alpha * np.abs(coef_))
+        return loss_norm
+
+    def __l2_loss_norm(self, model_variables: LogisticRegressionVariables):
+        coef_ = model_variables.coef_
+        loss_norm = 0.5 * self.alpha * np.dot(coef_, coef_)
+        return loss_norm
+
+    def loss_norm(self, model_variables: LogisticRegressionVariables):
+        if self.penalty == 'l1':
+            loss_norm_value = self.__l1_loss_norm(model_variables)
+        elif self.penalty == 'l2':
+            loss_norm_value = self.__l2_loss_norm(model_variables)
+        else:
+            loss_norm_value = 0
+        return loss_norm_value
+
+    def update_model(self, model_variables: LogisticRegressionVariables, grad):
+        delta_grad = self.apply_gradients(grad)
+        new_weights = model_variables.parameter - delta_grad
+        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        new_param = self.update(model_variables, grad)
+        return new_param
+
+
+class _SgdOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty):
+        super().__init__(learning_rate, alpha, penalty)
+        self.opt_beta = 0.999
+
+    def apply_gradients(self, grad):
+        self.learning_rate *= self.opt_beta
         delta_grad = self.learning_rate * grad
         return delta_grad
 
-    def AdaGradOptimizer(self, grad):
 
-        if self.opt_m is None:
-            self.opt_m = np.zeros_like(grad)
+class _RMSPropOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty):
+        super().__init__(learning_rate, alpha, penalty)
+        self.rho = 0.99
+        self.opt_m = None
 
-        self.opt_m = self.opt_m + np.square(grad)
-        self.opt_m = np.array(self.opt_m, dtype=np.float64)
-        delta_grad = self.learning_rate * grad / (np.sqrt(self.opt_m) + 1e-7)
-        return delta_grad
-
-    def RMSPropOptimizer(self, grad):
-
+    def apply_gradients(self, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -70,7 +127,29 @@ class Optimizer(object):
         delta_grad = self.learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
         return delta_grad
 
-    def Nesterov_momentum_SGD_Opimizer(self, grad):
+
+class _AdaGradOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty):
+        super().__init__(learning_rate, alpha, penalty)
+        self.opt_m = None
+
+    def apply_gradients(self, grad):
+        if self.opt_m is None:
+            self.opt_m = np.zeros_like(grad)
+        self.opt_m = self.opt_m + np.square(grad)
+        self.opt_m = np.array(self.opt_m, dtype=np.float64)
+        delta_grad = self.learning_rate * grad / (np.sqrt(self.opt_m) + 1e-7)
+        return delta_grad
+
+
+class _NesterovMomentumSGDOpimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty):
+        super().__init__(learning_rate, alpha, penalty)
+        self.nesterov_momentum_coeff = 0.9
+        self.lr_decay = 0.9
+        self.opt_m = None
+
+    def apply_gradients(self, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
@@ -80,8 +159,19 @@ class Optimizer(object):
             self.learning_rate *= self.lr_decay
         return delta_grad
 
-    def AdamOptimizer(self, grad):
 
+class _AdamOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty):
+        super().__init__(learning_rate, alpha, penalty)
+        self.opt_beta1 = 0.9
+        self.opt_beta2 = 0.999
+        self.opt_beta1_decay = 1.0
+        self.opt_beta2_decay = 1.0
+
+        self.opt_m = None
+        self.opt_v = None
+
+    def apply_gradients(self, grad):
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -98,22 +188,25 @@ class Optimizer(object):
         delta_grad = self.learning_rate * opt_m_hat / (np.sqrt(opt_v_hat) + 1e-8)
         return delta_grad
 
-    def apply_gradients(self, grad):
 
-        if self.opt_method_name == "sgd":
-            return self.SgdOptimizer(grad)
+def optimizer_factory(param):
+    try:
+        optimizer_type = param.optimizer
+        learning_rate = param.learning_rate
+        alpha = param.alpha
+        penalty = param.penalty
+    except AttributeError:
+        raise AttributeError("Optimizer parameters has not been totally set")
 
-        elif self.opt_method_name == "nesterov_momentum_sgd":
-            return self.Nesterov_momentum_SGD_Opimizer(grad)
-
-        elif self.opt_method_name == "rmsprop":
-            return self.RMSPropOptimizer(grad)
-
-        elif self.opt_method_name == "adam":
-            return self.AdamOptimizer(grad)
-
-        elif self.opt_method_name == "adagrad":
-            return self.AdaGradOptimizer(grad)
-
-        else:
-            raise NotImplementedError("Optimize method cannot be recognized: {}".format(self.opt_method_name))
+    if optimizer_type == 'sgd':
+        return _SgdOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'nesterov_momentum_sgd':
+        return _NesterovMomentumSGDOpimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'rmsprop':
+        return _RMSPropOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'adam':
+        return _AdamOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'adagrad':
+        return _AdaGradOptimizer(learning_rate, alpha, penalty)
+    else:
+        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))

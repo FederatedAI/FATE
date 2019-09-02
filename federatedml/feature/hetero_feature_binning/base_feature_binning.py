@@ -68,7 +68,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.cols = None
+        self.cols = []
         self.cols_dict = {}
         self.binning_obj = None
         self.header = []

@@ -45,3 +45,5 @@ class L2Updater(Updater):
 
     def update_coef(self, coef_, gradient):
         return coef_ - gradient - self.learning_rate * self.alpha * coef_
+
+

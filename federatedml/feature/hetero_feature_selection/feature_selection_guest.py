@@ -43,6 +43,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
         for method in self.filter_methods:
             self.filter_one_method(data_instances, method)
             LOGGER.debug("After method: {}, left_cols: {}".format(method, self.left_cols))
+            self._add_left_cols()
             # self._renew_left_col_names()
 
         new_data = self._transfer_data(data_instances)
@@ -85,6 +86,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                     is_left = left_cols.get(host_col_idx)
                     new_result[host_col_idx] = is_left
                 self.host_left_cols = new_result
+                self._add_host_left_cols(self.host_left_cols)
                 self._send_host_result_cols(consts.IV_VALUE_THRES)
                 LOGGER.debug(
                     "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Host left cols are: {}".format(
@@ -147,6 +149,7 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 LOGGER.debug("Recived result: host_select_cols: {}, iv result: host_left_cols: {},"
                              "final_result new_result : {}".format(host_select_cols, host_left_cols, new_result))
                 self.host_left_cols = new_result
+                self._add_host_left_cols(self.host_left_cols)
                 self._send_host_result_cols(consts.IV_PERCENTILE)
                 LOGGER.info(
                     "[Result][FeatureSelection][Host]Finish iv percentile threshold filter. Host left cols are: {}".format(
@@ -218,4 +221,11 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                                           tag=host_select_cols_id,
                                           idx=0)
         LOGGER.info("Received host_select_cols from host, host cols are: {}".format(host_select_cols))
+
+        left_col_idx = set()
+        for col_idx, _ in host_select_cols.items():
+            col_name = '.'.join(['host', str(col_idx)])
+            left_col_idx.add(col_name)
+        self.host_cols_list.append(left_col_idx)
+
         return host_select_cols
