@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-import numpy as np
+from operator import add
 
 from arch.api import federation
 from arch.api.utils import log_utils
@@ -22,10 +22,8 @@ from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base imp
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient import HeteroLinearGradient
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.util import consts
 from federatedml.statistic import data_overview
-
-from operator import add
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -116,7 +114,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                                      in range(batch_num)]
 
         LOGGER.info("Start initialize model.")
-        #LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
+        # LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
         weight = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         if self.init_param_obj.fit_intercept is True:
@@ -166,9 +164,9 @@ class HeteroLinRGuest(HeteroLinRBase):
                         self.encrypt_operator)
                 self.compute_intermediate(batch_feat_inst, self.coef_, self.intercept_)
                 host_forward_wx = federation.get(name=self.transfer_variable.host_forward_wx.name,
-                                              tag=self.transfer_variable.generate_transferid(
-                                                  self.transfer_variable.host_forward_wx, self.n_iter_, batch_index),
-                                              idx=0)
+                                                 tag=self.transfer_variable.generate_transferid(
+                                                     self.transfer_variable.host_forward_wx, self.n_iter_, batch_index),
+                                                 idx=0)
                 LOGGER.info("Get host_forward_wx from host")
 
                 host_forward_loss = federation.get(
@@ -271,9 +269,9 @@ class HeteroLinRGuest(HeteroLinRBase):
         data_features = self.transform(data_instances)
         guest_partial_prediction = self.compute_wx(data_features, self.coef_, self.intercept_)
         host_partial_prediction = federation.get(name=self.transfer_variable.host_partial_prediction.name,
-                                   tag=self.transfer_variable.generate_transferid(
-                                       self.transfer_variable.host_partial_prediction),
-                                   idx=0)
+                                                 tag=self.transfer_variable.generate_transferid(
+                                                     self.transfer_variable.host_partial_prediction),
+                                                 idx=0)
         LOGGER.info("Get partial predictions from host")
 
         prediction = guest_partial_prediction.join(host_partial_prediction, lambda g, h: g + h)

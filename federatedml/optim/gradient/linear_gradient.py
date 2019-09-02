@@ -73,6 +73,7 @@ class LinearGradient(Gradient):
         loss = self.compute_loss(X, Y, coef, intercept)
         return grad, loss
 
+
 class HeteroLinearGradient(object):
     """
     Class for compute hetero linear regression gradient and loss

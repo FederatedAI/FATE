@@ -15,7 +15,7 @@
 #
 
 from arch.api.utils.log_utils import LoggerFactory
-from federatedml.hetero_lr_utils.sync import paillier_keygen_sync
+from federatedml.framework.hetero_lr_utils.sync import paillier_keygen_sync
 
 LOGGER = LoggerFactory.get_logger()
 

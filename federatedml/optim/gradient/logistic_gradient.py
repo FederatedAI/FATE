@@ -75,18 +75,10 @@ class TaylorLogisticGradient(Gradient):
         return grad, None
 
 
-class HeteroLogisticGradient(object):
+class HeteroLogisticGradientComputer(object):
     """
     Class for compute hetero-lr gradient and loss
     """
-
-    def __init__(self, encrypt_method=None):
-        """
-        Parameters
-        ----------
-        encrypt_obj: Object, encrypt object set in hetero-lr, like Paillier, it should be inited before.
-        """
-        self.encrypt_operator = encrypt_method
 
     @staticmethod
     def __compute_gradient(data, fit_intercept=True):
@@ -185,9 +177,9 @@ class HeteroLogisticGradient(object):
         gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
         gradient = gradient_partition[:-1] / gradient_partition[-1]
 
-        for i in range(len(gradient)):
-            if not isinstance(gradient[i], PaillierEncryptedNumber):
-                gradient[i] = self.encrypt_operator.encrypt(gradient[i])
+        # for i in range(len(gradient)):
+        #     if not isinstance(gradient[i], PaillierEncryptedNumber):
+        #         gradient[i] = self.encrypt_operator.encrypt(gradient[i])
 
         # temporary resource recovery and will be removed in the future
         rubbish_list = [feat_join_grad]

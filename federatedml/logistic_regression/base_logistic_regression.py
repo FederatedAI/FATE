@@ -23,7 +23,8 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim.optimizer import Optimizer
+from federatedml.optim.optimizer import optimizer_factory
+from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim import convergence
 from federatedml.optim import Initializer
 from fate_flow.entity.metric import MetricMeta
@@ -46,7 +47,6 @@ class BaseLogisticRegression(ModelBase):
         self.n_iter_ = 0
         self.classes_ = None
         self.feature_shape = None
-
         self.gradient_operator = None
         self.initializer = Initializer()
         self.transfer_variable = None
@@ -67,22 +67,17 @@ class BaseLogisticRegression(ModelBase):
         self.one_vs_rest_obj = None
         self.lr_variables = None
 
-
     def _init_model(self, params):
         self.model_param = params
         self.alpha = params.alpha
         self.init_param_obj = params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept
-        self.learning_rate = params.learning_rate
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.encrypted_calculator = None
 
-        self.eps = params.eps
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
-        self.learning_rate = params.learning_rate
         self.party_weight = params.party_weight
-        self.penalty = params.penalty
 
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
@@ -91,17 +86,11 @@ class BaseLogisticRegression(ModelBase):
 
         self.encrypt_params = params.encrypt_param
         self.encrypt_method = self.encrypt_params.method
-
-        if params.converge_func == 'diff':
-            self.converge_func = convergence.DiffConverge(eps=self.eps)
-        elif params.converge_func == 'weight_diff':
-            self.converge_func = convergence.WeightDiffConverge(eps=self.eps)
-        else:
-            self.converge_func = convergence.AbsConverge(eps=self.eps)
+        self.converge_func = converge_func_factory(params)
 
         self.re_encrypt_batches = params.re_encrypt_batches
         self.predict_param = params.predict_param
-        self.optimizer = Optimizer(params.learning_rate, params.optimizer)
+        self.optimizer = optimizer_factory(params)
         self.key_length = params.encrypt_param.key_length
 
     def set_feature_shape(self, feature_shape):
@@ -149,12 +138,12 @@ class BaseLogisticRegression(ModelBase):
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
-                                                          eps=self.eps,
+                                                          eps=self.model_param.eps,
                                                           alpha=self.alpha,
                                                           optimizer=self.model_param.optimizer,
                                                           party_weight=self.model_param.party_weight,
                                                           batch_size=self.batch_size,
-                                                          learning_rate=self.learning_rate,
+                                                          learning_rate=self.model_param.learning_rate,
                                                           max_iter=self.max_iter,
                                                           converge_func=self.model_param.converge_func,
                                                           re_encrypt_batches=self.re_encrypt_batches)
@@ -252,49 +241,6 @@ class BaseLogisticRegression(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
-
-    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
-        """
-        update local model that transforms features of raw input
-
-        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
-        input into more representative features. We typically adopt neural networks as the local model, which is
-        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
-        refer to 'hetero_dnn_logistic_regression' folder.
-
-        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
-        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
-        performed on the local model since there is no one.
-
-        Parameters:
-        ___________
-        :param fore_gradient: a table holding fore gradient
-        :param data_inst: a table holding instances of raw input of guest side
-        :param coef: coefficients of logistic regression model
-        :param training_info: a dictionary holding training information
-        """
-        pass
-
-    def transform(self, data_inst):
-        """
-        transform features of instances held by 'data_inst' table into more representative features
-
-        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
-        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
-        transform features. Particularly, we would adopt neural network models such as auto-encoder or CNN to perform
-        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
-        folder.
-
-        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
-        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
-        passed to it. In other words, no feature transformation performed on the raw input of guest.
-
-        Parameters:
-        ___________
-        :param data_inst: a table holding instances of raw input of guest side
-        :return: a table holding instances with transformed features
-        """
-        return data_inst
 
     def cross_validation(self, data_instances):
         if not self.need_run:

@@ -14,8 +14,8 @@
 #  limitations under the License.
 #
 
+from federatedml.framework.homo import random_padding_cipher_flow
 from federatedml.model_base import ModelBase
-from federatedml.homo.algo_flow import random_padding_cipher_flow
 
 
 class HomeDNNArbiter(ModelBase):

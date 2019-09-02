@@ -14,18 +14,17 @@
 #  limitations under the License.
 #
 
-import numpy as np
+from federatedml.framework.hetero_lr_utils.procedure import paillier_cipher, batch_generator
 
 from arch.api import federation
 from arch.api.utils import log_utils
+from federatedml.framework.hetero_lr_utils.procedure import aggregator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
-from federatedml.hetero_lr_utils.procedure import aggregator, paillier_cipher, batch_generator
 from federatedml.optim import activation
-from federatedml.optim.gradient import HeteroLogisticGradient
+from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
-from federatedml.util import consts
 from federatedml.statistic import data_overview
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -34,52 +33,13 @@ class HeteroLRGuest(HeteroLRBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
-        self.guest_forward = None
+        # self.guest_forward = None
         self.role = consts.GUEST
         self.aggregator = aggregator.Guest()
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
-
-    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
-        """
-        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
-        and b is the interception
-        Parameters
-        ----------
-        data_instances: DTable of Instance, input data
-        coef_: list, coefficient of lr
-        intercept_: float, the interception of lr
-        """
-        wx = self.compute_wx(data_instances, coef_, intercept_)
-
-        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
-
-        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [ en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
-        rubbish_clear(rubbish_list)
-
-    def aggregate_forward(self, host_forward):
-        """
-        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h , where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
-        and en_wx_h is the encrypted W * X + b of host.
-        Parameters
-        ----------
-        host_forward: DTable, include encrypted W * X and (W * X)^2
-
-        Returns
-        ----------
-        aggregate_forward_res
-        list
-            include W * X and (W * X)^2 federate with guest and host
-        """
-        aggregate_forward_res = self.guest_forward.join(host_forward,
-                                                        lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
-        return aggregate_forward_res
+        self.gradient_procedure = hetero_gradient_procedure.Guest()
+        self.gradient_procedure.register_gradient_procedure(self.transfer_variable)
 
     @staticmethod
     def load_data(data_instance):
@@ -110,12 +70,13 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+                                     in range(self.batch_generator.batch_nums)]
 
-        # TODO: different encrypter
-        # self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-        #                                                    self.encrypted_mode_calculator_param.mode,
-        #                                                    self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-        #                              in range(batch_num)]
+        self.gradient_procedure.register_func(self)
+        self.gradient_procedure.register_attrs(self)
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
@@ -133,84 +94,11 @@ class HeteroLRGuest(HeteroLRBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
 
-                # guest/host forward
-                self.compute_forward(batch_feat_inst, self.coef_, self.intercept_, batch_index)
-                host_forward = federation.get(name=self.transfer_variable.host_forward_dict.name,
-                                              tag=self.transfer_variable.generate_transferid(
-                                                  self.transfer_variable.host_forward_dict, self.n_iter_, batch_index),
-                                              idx=0)
-                LOGGER.info("Get host_forward from host")
-                aggregate_forward_res = self.aggregate_forward(host_forward)
-                en_aggregate_wx = aggregate_forward_res.mapValues(lambda v: v[0])
-                en_aggregate_wx_square = aggregate_forward_res.mapValues(lambda v: v[1])
+                # Start gradient procedure
+                self.gradient_procedure.renew_current_info(self.n_iter_, batch_index)
+                optim_guest_gradient, loss = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
 
-                # compute [[d]]
-                if self.gradient_operator is None:
-                    self.gradient_operator = HeteroLogisticGradient(self.cipher_operator)
-                fore_gradient = self.gradient_operator.compute_fore_gradient(batch_feat_inst, en_aggregate_wx)
-                federation.remote(fore_gradient,
-                                  name=self.transfer_variable.fore_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.fore_gradient,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.HOST,
-                                  idx=0)
 
-                LOGGER.info("Remote fore_gradient to Host")
-                # compute guest gradient and loss
-                guest_gradient, loss = self.gradient_operator.compute_gradient_and_loss(batch_feat_inst,
-                                                                                        fore_gradient,
-                                                                                        en_aggregate_wx,
-                                                                                        en_aggregate_wx_square,
-                                                                                        self.fit_intercept)
-
-                # loss regulation if necessary
-                if self.updater is not None:
-                    guest_loss_regular = self.updater.loss_norm(self.coef_)
-                    loss += self.cipher_operator.encrypt(guest_loss_regular)
-
-                federation.remote(guest_gradient,
-                                  name=self.transfer_variable.guest_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.guest_gradient,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                LOGGER.info("Remote guest_gradient to arbiter")
-
-                optim_guest_gradient = federation.get(name=self.transfer_variable.guest_optim_gradient.name,
-                                                      tag=self.transfer_variable.generate_transferid(
-                                                          self.transfer_variable.guest_optim_gradient, self.n_iter_,
-                                                          batch_index),
-                                                      idx=0)
-                LOGGER.info("Get optim_guest_gradient from arbiter")
-
-                # update model
-                LOGGER.info("update_model")
-                self.update_model(optim_guest_gradient)
-
-                # update local model that transforms features of raw input 'batch_data_inst'
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, batch_data_inst, self.coef_, **training_info)
-
-                # Get loss regulation from Host if regulation is set
-                if self.updater is not None:
-                    en_host_loss_regular = federation.get(name=self.transfer_variable.host_loss_regular.name,
-                                                          tag=self.transfer_variable.generate_transferid(
-                                                              self.transfer_variable.host_loss_regular, self.n_iter_,
-                                                              batch_index),
-                                                          idx=0)
-                    LOGGER.info("Get host_loss_regular from Host")
-                    loss += en_host_loss_regular
-
-                federation.remote(loss,
-                                  name=self.transfer_variable.loss.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.loss,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                LOGGER.info("Remote loss to arbiter")
 
                 # is converge of loss in arbiter
                 batch_index += 1

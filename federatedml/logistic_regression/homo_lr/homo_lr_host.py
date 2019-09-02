@@ -18,9 +18,11 @@
 
 import functools
 
+from federatedml.homo.procedure import paillier_cipher
+
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.homo.procedure import aggregator, paillier_cipher
+from federatedml.framework.homo.procedure import aggregator
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.model_selection import MiniBatch

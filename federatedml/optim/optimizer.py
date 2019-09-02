@@ -21,7 +21,7 @@ import numpy as np
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 
 
-class Optimizer(object):
+class _Optimizer(object):
     def __init__(self, learning_rate, alpha, penalty):
         self.learning_rate = learning_rate
         self.iters = 0
@@ -85,13 +85,15 @@ class Optimizer(object):
 
     def loss_norm(self, model_variables: LogisticRegressionVariables):
         if self.penalty == 'l1':
-            model_variables = self.__l1_loss_norm(model_variables)
+            loss_norm_value = self.__l1_loss_norm(model_variables)
         elif self.penalty == 'l2':
-            model_variables = self.__l2_loss_norm(model_variables)
-        return model_variables
+            loss_norm_value = self.__l2_loss_norm(model_variables)
+        else:
+            loss_norm_value = 0
+        return loss_norm_value
 
 
-class SgdOptimizer(Optimizer):
+class _SgdOptimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.opt_beta = 0.999
@@ -104,7 +106,7 @@ class SgdOptimizer(Optimizer):
         return new_param
 
 
-class RMSPropOptimizer(Optimizer):
+class _RMSPropOptimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.rho = 0.99
@@ -124,7 +126,7 @@ class RMSPropOptimizer(Optimizer):
         return model_variables
 
 
-class AdaGradOptimizer(Optimizer):
+class _AdaGradOptimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.opt_m = None
@@ -142,7 +144,7 @@ class AdaGradOptimizer(Optimizer):
         return model_variables
 
 
-class NesterovMomentumSGDOpimizer(Optimizer):
+class _NesterovMomentumSGDOpimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.nesterov_momentum_coeff = 0.9
@@ -165,7 +167,7 @@ class NesterovMomentumSGDOpimizer(Optimizer):
         return model_variables
 
 
-class AdamOptimizer(Optimizer):
+class _AdamOptimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.opt_beta1 = 0.9
@@ -196,3 +198,26 @@ class AdamOptimizer(Optimizer):
         model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
         model_variables = self.update(model_variables, grad)
         return model_variables
+
+
+def optimizer_factory(param):
+    try:
+        optimizer_type = param.optimizer
+        learning_rate = param.learning_rate
+        alpha = param.alpha
+        penalty = param.penalty
+    except AttributeError:
+        raise AttributeError("Optimizer parameters has not been totally set")
+
+    if optimizer_type == 'sgd':
+        return _SgdOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'nesterov_momentum_sgd':
+        return _NesterovMomentumSGDOpimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'rmsprop':
+        return _RMSPropOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'adam':
+        return _AdamOptimizer(learning_rate, alpha, penalty)
+    elif optimizer_type == 'adagrad':
+        return _AdaGradOptimizer(learning_rate, alpha, penalty)
+    else:
+        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))

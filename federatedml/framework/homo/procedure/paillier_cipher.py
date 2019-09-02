@@ -14,8 +14,10 @@
 #  limitations under the License.
 #
 
+from federatedml.homo.sync import paillier_keygen_sync
+
 from arch.api.utils.log_utils import LoggerFactory
-from federatedml.homo.sync import paillier_keygen_sync, paillier_re_cipher_sync
+from federatedml.framework.homo.sync import paillier_re_cipher_sync
 
 LOGGER = LoggerFactory.get_logger()
 

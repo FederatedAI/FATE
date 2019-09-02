@@ -16,9 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.hetero_lr_utils.sync import batch_info_sync
-from federatedml.model_selection import MiniBatch
 from arch.api.utils import log_utils
+from federatedml.framework.hetero_lr_utils import batch_info_sync
+from federatedml.model_selection import MiniBatch
 
 LOGGER = log_utils.getLogger()
 
@@ -27,13 +27,15 @@ class Guest(batch_info_sync.Guest):
     def __init__(self):
         self.mini_batch_obj = None
         self.finish_sycn = False
+        self.batch_nums = None
 
     def register_batch_generator(self, transfer_variables):
         self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
 
     def initialize_batch_generator(self, data_instances, batch_size, suffix=tuple()):
         self.mini_batch_obj = MiniBatch(data_instances, batch_size=batch_size)
-        batch_info = {"batch_size": batch_size, "batch_num": self.mini_batch_obj.batch_nums}
+        self.batch_nums = self.mini_batch_obj.batch_nums
+        batch_info = {"batch_size": batch_size, "batch_num": self.batch_nums}
         self.sync_batch_info(batch_info, suffix)
         index_generator = self.mini_batch_obj.mini_batch_data_generator(result='index')
         batch_index = 0

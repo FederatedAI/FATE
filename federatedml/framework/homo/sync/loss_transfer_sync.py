@@ -14,32 +14,29 @@
 #  limitations under the License.
 #
 
-from federatedml.homo.utils.scatter import Scatter
+from federatedml.framework.homo.utils import scatter
 from federatedml.util import consts
 
 
-# noinspection PyAttributeOutsideInit
 class Arbiter(object):
 
-    def _register_party_weights_transfer(self, guest_party_weight_transfer, host_party_weight_transfer):
-        self._scatter = Scatter(guest_party_weight_transfer, host_party_weight_transfer)
+    # noinspection PyAttributeOutsideInit
+    def _register_loss_transfer(self, host_loss_transfer, guest_loss_transfer):
+        self._loss_sync = scatter.Scatter(host_loss_transfer, guest_loss_transfer)
 
-    def get_party_weights(self):
-        weights = list(self._scatter.get())
-        total = sum(weights)
-        self._party_weights = [x / total for x in weights]
-        return self._party_weights
+    def get_losses(self, idx=None, suffix=tuple()):
+        return self._loss_sync.get(host_ids=idx, suffix=suffix)
 
 
 class _Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_party_weights_transfer(self, transfer_variable):
-        self._transfer_variable = transfer_variable
+    def _register_loss_transfer(self, loss_transfer):
+        self._loss_sync = loss_transfer
 
-    def send_party_weight(self, obj):
-        self._transfer_variable.remote(obj=obj, role=consts.ARBITER, idx=0)
+    def send_loss(self, loss, *suffix):
+        self._loss_sync.remote(obj=loss, role=consts.ARBITER, idx=0, suffix=suffix)
 
 
-Host = _Client
 Guest = _Client
+Host = _Client

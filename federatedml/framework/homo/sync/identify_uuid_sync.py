@@ -16,7 +16,7 @@
 
 import uuid
 
-from federatedml.homo.utils.scatter import Scatter
+from federatedml.framework.homo import Scatter
 from federatedml.util import consts
 
 

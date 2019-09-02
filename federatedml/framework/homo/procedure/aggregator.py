@@ -17,15 +17,21 @@
 import operator
 from functools import reduce
 
-from federatedml.hetero_lr_utils.sync import party_weights_sync, model_scatter_sync, \
-    loss_transfer_sync, model_broadcast_sync
-from federatedml.hetero_lr_utils.weights import Variables
+from federatedml.homo.sync import party_weights_sync, loss_transfer_sync, model_broadcast_sync
+from federatedml.homo.weights import Parameters
+
+from federatedml.framework.homo.sync import model_scatter_sync
 
 
 class Arbiter(party_weights_sync.Arbiter,
               model_scatter_sync.Arbiter,
               model_broadcast_sync.Arbiter,
               loss_transfer_sync.Arbiter):
+
+    # noinspection PyAttributeOutsideInit
+    def initialize_aggregator(self, use_party_weight=True):
+        if use_party_weight:
+            self._party_weights = self.get_party_weights()
 
     def register_aggregator(self, transfer_variables):
         """
@@ -37,6 +43,8 @@ class Arbiter(party_weights_sync.Arbiter,
                 3. aggregated_model for broadcast aggregated model
                 4. guest_loss, host_loss for loss scatter
         """
+        self._register_party_weights_transfer(guest_party_weight_transfer=transfer_variables.guest_party_weight,
+                                              host_party_weight_transfer=transfer_variables.host_party_weight)
 
         self._register_model_scatter(host_model_transfer=transfer_variables.host_model,
                                      guest_model_transfer=transfer_variables.guest_model)
@@ -88,6 +96,9 @@ class Guest(party_weights_sync.Guest,
             model_scatter_sync.Guest,
             loss_transfer_sync.Guest,
             model_broadcast_sync.Guest):
+
+    def initialize_aggregator(self, party_weight):
+        self.send_party_weight(party_weight)
 
     def register_aggregator(self, transfer_variables):
         """

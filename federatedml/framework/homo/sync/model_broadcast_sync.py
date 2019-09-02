@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
-from federatedml.homo.weights import Parameters
+from federatedml.framework.homo import Parameters
 from federatedml.util import consts
+from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
 class Arbiter(object):

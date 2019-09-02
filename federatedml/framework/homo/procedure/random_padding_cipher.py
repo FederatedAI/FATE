@@ -15,7 +15,7 @@
 #
 
 from arch.api.utils.log_utils import LoggerFactory
-from federatedml.homo.sync import dh_keys_exchange_sync, identify_uuid_sync
+from federatedml.framework.homo.sync import identify_uuid_sync, dh_keys_exchange_sync
 from federatedml.secureprotol.encrypt import PadsCipher
 
 LOGGER = LoggerFactory.get_logger()

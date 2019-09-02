@@ -16,19 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import functools
+from federatedml.homo.procedure import paillier_cipher
 
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.homo.procedure import aggregator, paillier_cipher
+from federatedml.framework.homo.procedure import aggregator
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
-from federatedml.model_selection import MiniBatch
 from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
-from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
