@@ -23,7 +23,7 @@ from arch.api.utils.core import current_timestamp, base64_encode, json_loads, ge
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION, schedule_logger, HTTP_PORT
+from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
@@ -144,7 +144,7 @@ class TaskScheduler(object):
                                          'module_name': module_name,
                                          'input': component.get_input(),
                                          'output': component.get_output(),
-                                         'job_server': {'ip': get_lan_ip(), 'http_port': HTTP_PORT}},
+                                         'job_server': {'ip': get_lan_ip(), 'http_port': RuntimeConfig.HTTP_PORT}},
                               work_mode=job_parameters['work_mode'])
         component_task_status = TaskScheduler.check_task_status(job_id=job_id, component=component)
         if component_task_status:
