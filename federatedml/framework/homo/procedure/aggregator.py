@@ -73,7 +73,7 @@ class Arbiter(party_weights_sync.Arbiter,
             suffix: tag suffix
         """
         model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self._send_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
+        self._send_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
         return model
 
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
@@ -116,11 +116,11 @@ class Guest(party_weights_sync.Guest,
         """
         self._register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
 
-        self._register_model_scatter(model_transfer=transfer_variables.guest_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.guest_model)
 
         self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
 
-        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss)
 
         self._register_is_converge(is_converge_variable=transfer_variables.is_converge)
 
@@ -129,7 +129,7 @@ class Guest(party_weights_sync.Guest,
         return self.get_aggregated_model(suffix=suffix)
 
     def get_aggregated_model(self, suffix=tuple()):
-        self._get_model(suffix=suffix)
+        return self._get_model(suffix=suffix)
 
     def send_model_for_aggregate(self, weights: Variables, suffix=tuple()):
         self._send_model(weights=weights, suffix=suffix)
@@ -156,11 +156,11 @@ class Host(party_weights_sync.Host,
         """
         self._register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
 
-        self._register_model_scatter(model_transfer=transfer_variables.host_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.host_model)
 
         self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
 
-        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss)
 
         self._register_is_converge(is_converge_variable=transfer_variables.is_converge)
 
