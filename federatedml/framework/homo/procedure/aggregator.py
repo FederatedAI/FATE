@@ -48,12 +48,12 @@ class Arbiter(party_weights_sync.Arbiter,
 
         self._register_model_scatter(host_model_transfer=transfer_variables.host_model,
                                      guest_model_transfer=transfer_variables.guest_model)
-        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
 
         self._register_loss_transfer(host_loss_transfer=transfer_variables.host_loss,
                                      guest_loss_transfer=transfer_variables.guest_loss)
 
-        self._register_is_converge(is_converge_variable=transfer_variables.is_converge)
+        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Variables:
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
@@ -116,13 +116,13 @@ class Guest(party_weights_sync.Guest,
         """
         self._register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
 
-        self._register_model_scatter(model_transfer=transfer_variables.guest_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.guest_model)
 
-        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
 
-        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss)
 
-        self._register_is_converge(is_converge_variable=transfer_variables.is_converge)
+        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
     def aggregate_and_get(self, model: Variables, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)
@@ -156,13 +156,13 @@ class Host(party_weights_sync.Host,
         """
         self._register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
 
-        self._register_model_scatter(model_transfer=transfer_variables.host_model_transfer)
+        self._register_model_scatter(model_transfer=transfer_variables.host_model)
 
-        self._register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
 
-        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss_transfer)
+        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss)
 
-        self._register_is_converge(is_converge_variable=transfer_variables.is_converge)
+        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
     def aggregate_and_get(self, model: Variables, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)

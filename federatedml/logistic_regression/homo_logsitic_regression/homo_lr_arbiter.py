@@ -16,42 +16,37 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.homo.procedure import paillier_cipher
-
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
-from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.procedure import aggregator, predict_procedure
+from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
-from federatedml.statistic import data_overview
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class HomoLRHost(HomoLRBase):
+class HomoLRArbiter(HomoLRBase):
     def __init__(self):
-        super(HomoLRHost, self).__init__()
-        self.aggregator = HomoFederatedAggregator
-        self.gradient_operator = None
-        self.evaluator = Evaluation()
+        super(HomoLRArbiter, self).__init__()
         self.re_encrypt_times = []  # Record the times needed for each host
 
         self.loss_history = []
         self.is_converged = False
-        self.role = consts.GUEST
+        self.role = consts.ARBITER
         self.aggregator = aggregator.Arbiter()
         self.lr_variables = None
         self.cipher = paillier_cipher.Arbiter()
+        self.predict_procedure = predict_procedure.Arbiter()
 
     def _init_model(self, params):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_flag_transfer = self.transfer_variable.converge_flag
+        self.predict_procedure.register_predict_sync(self.transfer_variable)
 
     def fit(self, data_instances):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
-                                                   suffix=tuple('fit'))
+                                                   suffix=('fit',))
         host_has_cipher_ids = list(host_ciphers.keys())
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
@@ -61,26 +56,36 @@ class HomoLRHost(HomoLRBase):
                                   re_encrypt_times=self.re_encrypt_times,
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
-            self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
-                                                    suffix=tuple(self.n_iter_))
+            suffix = (self.n_iter_,)
+
+            merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
+                                                                   suffix=suffix)
 
             total_loss = self.aggregator.aggregate_loss(idx=host_has_cipher_ids,
-                                                        suffix=tuple(self.n_iter_))
-            # TODO: converge logic
+                                                        suffix=suffix)
+            self.callback_loss(self.n_iter_, total_loss)
+            self.loss_history.append(total_loss)
+            if self.use_loss:
+                converge_var = total_loss
+            else:
+                converge_var = merged_model
+            self.aggregator.check_converge_status(self.converge_func.is_converge,
+                                                  converge_var,
+                                                  suffix=(self.n_iter_,))
 
-            # self.converge_flag_transfer.remote(converge_flag, suffix=(iter_num,))
+            LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
+                                                                                   total_loss,
+                                                                                   self.is_converged))
+            if self.is_converged:
+                break
+            self.n_iter_ += 1
 
-    def __init_model(self, data_instances):
-        model_shape = data_overview.get_features_shape(data_instances)
+    def predict(self, data_instantces):
+        current_suffix = ('predict',)
 
-        LOGGER.info("Initialized model shape is {}".format(model_shape))
-
-        lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        return lr_variables
-
-
-
-
-
-
-
+        host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
+                                                   suffix=current_suffix)
+        self.predict_procedure.start_predict(host_ciphers,
+                                             self.lr_variables,
+                                             self.model_param.predict_param.threshold,
+                                             current_suffix)

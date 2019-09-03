@@ -120,7 +120,7 @@ class ModelBase(object):
                     self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
                     self.set_predict_data_schema(self.data_output, eval_data.schema)
 
-        elif train_data:
+        elif train_data is not None:
             self.set_flowid('train')
             self.fit(train_data)
             self.set_flowid('predict')
@@ -143,7 +143,7 @@ class ModelBase(object):
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
 
-        elif eval_data:
+        elif eval_data is not None:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
 

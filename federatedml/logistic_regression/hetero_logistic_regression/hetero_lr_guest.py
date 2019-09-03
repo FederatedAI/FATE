@@ -33,7 +33,6 @@ class HeteroLRGuest(HeteroLRBase):
         self.data_batch_count = []
         # self.guest_forward = None
         self.role = consts.GUEST
-        self.aggregator = aggregator.Guest()
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
         self.gradient_procedure = hetero_gradient_procedure.Guest()
@@ -98,6 +97,8 @@ class HeteroLRGuest(HeteroLRBase):
                 optim_guest_gradient, loss = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
                 self.loss_computer.apply_procedure(loss)
 
+                self.optimizer.update_model()
+
                 # is converge of loss in arbiter
                 batch_index += 1
 
@@ -107,7 +108,6 @@ class HeteroLRGuest(HeteroLRBase):
             self.n_iter_ += 1
             if self.is_converged:
                 break
-
 
     def predict(self, data_instances):
         """

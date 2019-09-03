@@ -42,16 +42,16 @@ HEADERS = {
 }
 
 IP = '0.0.0.0'
-GRPC_PORT = 9360
-HTTP_PORT = 9380
+GRPC_PORT = 9361
+HTTP_PORT = 9381
 WORK_MODE = 0
-USE_LOCAL_DATABASE = False
+USE_LOCAL_DATABASE = True
 SERVER_HOST_URL = "http://localhost:{}".format(HTTP_PORT)
 
 DATABASE = {
     'name': 'fate_flow',
     'user': 'root',
-    'passwd': 'fate_dev',
+    'passwd': 'Fate123#$',
     'host': '127.0.0.1',
     'port': 3306,
     'max_connections': 100,

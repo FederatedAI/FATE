@@ -20,11 +20,11 @@ import functools
 
 from arch.api.utils import log_utils
 from federatedml.evaluation import Evaluation
-from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.model_selection import MiniBatch
-from federatedml.optim.gradient import LogisticGradient
+from federatedml.optim.gradient.logistic_gradient import LogisticGradient
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator
@@ -36,16 +36,14 @@ class HomoLRGuest(HomoLRBase):
     def __init__(self):
         super(HomoLRGuest, self).__init__()
         self.gradient_operator = LogisticGradient()
-        self.evaluator = Evaluation()
         self.loss_history = []
         self.role = consts.GUEST
         self.aggregator = aggregator.Guest()
+        self.predict_procedure = predict_procedure.Guest()
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.aggregator.register_aggregator(self.transfer_variable)
-        self.aggregator.initialize_aggregator(params.party_weight)
-
+        self.predict_procedure.register_predict_sync(self.transfer_variable, self)
 
     def fit(self, data_instances):
 
@@ -77,11 +75,23 @@ class HomoLRGuest(HomoLRBase):
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
             self.loss_history.append(iter_loss)
-            self.aggregator.send_model_for_aggregate(self.lr_variables.for_remote(), self.n_iter_)
+            self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
             self.aggregator.send_loss(iter_loss, self.n_iter_)
-            weight = aggregator.Guest.get_aggregated_model(self.n_iter_)
+            weight = self.aggregator.get_aggregated_model(self.n_iter_)
             self.lr_variables = LogisticRegressionVariables(weight, self.fit_intercept)
-            # TODO: judge convergence
+            self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
+            LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
+            if self.is_converged:
+                break
+            self.n_iter_ += 1
+
+    def predict(self, data_instances):
+        self._abnormal_detection(data_instances)
+        self.init_schema(data_instances)
+        predict_result = self.predict_procedure.start_predict(data_instances,
+                                                              self.lr_variables,
+                                                              self.model_param.predict_param.threshold)
+        return predict_result
 
     def __init_model(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)
@@ -90,3 +100,38 @@ class HomoLRGuest(HomoLRBase):
 
         lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         return lr_variables
+
+    # def run(self, component_parameters=None, args=None):
+    #     self._init_runtime_parameters(component_parameters)
+    #     train_data, eval_data = self._run_data(args["data"])
+    #     stage, has_eval = self._judge_stage(train_data, eval_data)
+    #     if self.need_cv:
+    #         LOGGER.info("Need cross validation.")
+    #         self.cross_validation(train_data)
+    #
+    #     elif self.need_one_vs_rest:
+    #         if "model" in args:
+    #             self._load_model(args)
+    #         self.one_vs_rest_logic(stage, train_data, eval_data)
+    #
+    #     elif stage == "fit":
+    #         self.fit(train_data)
+    #         self.data_output = self.predict(train_data)
+    #         self.data_output = self.data_output.mapValues(lambda value: value + ["train"])
+    #         if has_eval:
+    #             self.set_flowid('validate')
+    #             eval_data_output = self.data_output = self.predict(eval_data)
+    #             eval_data_output = eval_data_output.mapValues(lambda value: value + ["validation"])
+    #             self.data_output = self.data_output.union(eval_data_output)
+    #         self.set_predict_data_schema(self.data_output, train_data.schema)
+    #     else:
+    #         self.set_flowid('predict')
+    #         self.data_output = self.predict(eval_data)
+    #
+    #         if self.data_output:
+    #             self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
+    #
+    #         self.set_predict_data_schema(self.data_output, eval_data.schema)
+
+
+

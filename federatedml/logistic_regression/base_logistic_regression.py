@@ -20,21 +20,19 @@ from google.protobuf import json_format
 
 from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim.convergence import converge_func_factory
-from federatedml.optim import convergence
 from federatedml.optim import Initializer
+from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
-from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric
-
 from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
-from federatedml.util import consts
 from federatedml.util import abnormal_detection
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -84,14 +82,8 @@ class BaseLogisticRegression(ModelBase):
             self.cipher_operator = PaillierEncrypt()
         else:
             self.cipher_operator = FakeEncrypt()
-
-        self.encrypt_params = params.encrypt_param
-        self.encrypt_method = self.encrypt_params.method
         self.converge_func = converge_func_factory(params)
-
         self.re_encrypt_batches = params.re_encrypt_batches
-        self.predict_param = params.predict_param
-        self.key_length = params.encrypt_param.key_length
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -125,13 +117,6 @@ class BaseLogisticRegression(ModelBase):
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
-
-    def classified(self, prob_table, threshold):
-        """
-        convert a probability table into a predicted class table.
-        """
-        predict_table = prob_table.mapValues(lambda x: 1 if x > threshold else 0)
-        return predict_table
 
     def fit(self, data_instance):
         pass
@@ -224,7 +209,7 @@ class BaseLogisticRegression(ModelBase):
                 for i, feature_name in enumerate(self.header):
                     feature_name = "_".join(["class", str(class_type), feature_name])
                     classifier.coef_[i] = weight_dict.get(feature_name)
-                intercept_name =  "_".join(["class", str(class_type), "intercept"])
+                intercept_name = "_".join(["class", str(class_type), "intercept"])
                 classifier.intercept_ = weight_dict.get(intercept_name)
                 self.one_vs_rest_obj.models.append(classifier)
         else:
@@ -257,7 +242,7 @@ class BaseLogisticRegression(ModelBase):
         if self.role != consts.ARBITER:
             self.header = self.get_header(train_data)
         self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
-                                    one_vs_rest_param=self._get_one_vs_rest_param())
+                                         one_vs_rest_param=self._get_one_vs_rest_param())
         self.one_vs_rest_obj.fit(data_instances=train_data)
 
     def one_vs_rest_predict(self, validate_data):
@@ -273,6 +258,44 @@ class BaseLogisticRegression(ModelBase):
         self.model_param.cv_param.role = self.role
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
+
+    def one_vs_rest_logic(self, stage, train_data=None, eval_data=None):
+        LOGGER.info("Need one_vs_rest.")
+        if stage == 'fit':
+            self.one_vs_rest_fit(train_data)
+            self.data_output = self.one_vs_rest_predict(train_data)
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
+
+            if eval_data:
+                eval_data_predict_res = self.one_vs_rest_predict(eval_data)
+                if eval_data_predict_res:
+                    predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
+
+                    if self.data_output:
+                        self.data_output.union(predict_output_res)
+                    else:
+                        self.data_output = predict_output_res
+
+            self.set_predict_data_schema(self.data_output, train_data.schema)
+
+        elif stage == 'predict':
+            self.data_output = self.one_vs_rest_predict(eval_data)
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
+                self.set_predict_data_schema(self.data_output, eval_data.schema)
+
+    def _judge_stage(self, train_data, eval_data):
+        if train_data is not None:
+            stage = 'fit'
+            if eval_data is not None:
+                has_eval = True
+            else:
+                has_eval = False
+        else:
+            stage = 'predict'
+            has_eval = False
+        return stage, has_eval
 
     def set_schema(self, data_instance, header=None):
         if header is None:

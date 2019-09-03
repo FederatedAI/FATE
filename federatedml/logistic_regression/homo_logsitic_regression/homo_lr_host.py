@@ -19,14 +19,12 @@
 import functools
 
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
-from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.model_selection import MiniBatch
-from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
-from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
+from federatedml.optim.gradient.logistic_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator
@@ -37,33 +35,33 @@ LOGGER = log_utils.getLogger()
 class HomoLRHost(HomoLRBase):
     def __init__(self):
         super(HomoLRHost, self).__init__()
-        self.aggregator = HomoFederatedAggregator
         self.gradient_operator = None
-        self.evaluator = Evaluation()
         self.loss_history = []
         self.is_converged = False
-        self.role = consts.GUEST
+        self.role = consts.HOST
         self.aggregator = aggregator.Host()
         self.lr_variables = None
         self.cipher = paillier_cipher.Host()
+        self.predict_procedure = predict_procedure.Host()
 
     def _init_model(self, params):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
-        if params.encrypt_params.method in [consts.PAILLIER]:
+        if params.encrypt_param.method in [consts.PAILLIER]:
             self.use_encrypt = True
             self.gradient_operator = TaylorLogisticGradient()
             self.re_encrypt_batches = params.re_encrypt_batches
         else:
             self.use_encrypt = False
             self.gradient_operator = LogisticGradient()
+        self.predict_procedure.register_predict_sync(self.transfer_variable, self)
 
     def fit(self, data_instances):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
 
-        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=tuple('fit'))
+        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
@@ -92,12 +90,12 @@ class HomoLRHost(HomoLRBase):
                     iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))
                 batch_num += 1
                 if self.use_encrypt and self.n_iter_ % self.re_encrypt_batches == 0:
-                    w = self.cipher.re_cipher(w=self.lr_variables.for_remote(),
+                    w = self.cipher.re_cipher(w=self.lr_variables.for_remote().parameters,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
                     self.lr_variables = LogisticRegressionVariables(w, self.fit_intercept)
 
-            self.aggregator.send_model_for_aggregate(self.lr_variables.for_remote(), self.n_iter_)
+            self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
             if self.use_encrypt:
                 iter_loss /= batch_num
                 self.callback_loss(self.n_iter_, iter_loss)
@@ -105,6 +103,27 @@ class HomoLRHost(HomoLRBase):
                 self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
             self.lr_variables = LogisticRegressionVariables(weight, self.fit_intercept)
+            self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
+            LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
+            if self.is_converged:
+                break
+            self.n_iter_ += 1
+
+    def predict(self, data_instances):
+        self._abnormal_detection(data_instances)
+        self.init_schema(data_instances)
+        suffix = ('predict',)
+        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
+        if self.use_encrypt:
+            self.cipher_operator.set_public_key(pubkey)
+
+        predict_result = self.predict_procedure.start_predict(data_instances,
+                                                              self.lr_variables,
+                                                              self.model_param.predict_param.threshold,
+                                                              self.use_encrypt,
+                                                              self.fit_intercept,
+                                                              suffix=suffix)
+        return predict_result
 
     def __init_model(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)

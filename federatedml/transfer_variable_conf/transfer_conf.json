@@ -624,7 +624,6 @@
    ]
   }
  },
- ,
  "HeteroLinRTransferVariable": {
     "paillier_pubkey": {
       "src": "arbiter",
