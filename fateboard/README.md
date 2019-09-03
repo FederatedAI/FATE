@@ -126,6 +126,14 @@ you can launch a fateboard service by following steps.
 
 
 # **Usage** #
+**Database Configuration** 
+
+The default database for FATEBoard for cluster version is mysql. If you want to use standalone version, you should use sqlite databse. Just update the file : fateboard/src/main/resources/application.properties with right parameters of sqlite.
+The parameters you should update are below:
+spring.datasource.driver-Class-Name=org.sqlite.JDBC
+spring.datasource.url=xxx
+spring.datasource.username=
+spring.datasource.password=
 
 **Starting FATEBoard** 
 
