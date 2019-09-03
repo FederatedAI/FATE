@@ -36,7 +36,6 @@ from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from numpy import random
 from arch.api import federation
-from arch.api.model_manager import manager
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -47,7 +46,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         super(HeteroSecureBoostingTreeHost, self).__init__()
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
-        # self.flowid = 0
         self.tree_dim = None
         self.feature_num = None
         self.trees_ = []
@@ -109,7 +107,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.sync_tree_dim()
 
         for i in range(self.num_trees):
-            # n_tree = []
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
 
@@ -126,9 +123,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 self.trees_.append(tree_param)
                 if self.tree_meta is None:
                     self.tree_meta = tree_meta
-                # n_tree.append(tree_inst.get_tree_model())
 
-            # self.trees_.append(n_tree)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)
@@ -142,11 +137,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         data_inst = self.data_alignment(data_inst)
         rounds = len(self.trees_) // self.tree_dim
         for i in range(rounds):
-            # n_tree = self.trees_[i]
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
-                # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
                 tree_inst.set_runtime_idx(self.runtime_idx)
 

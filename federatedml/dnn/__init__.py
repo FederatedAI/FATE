@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -15,14 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-cd $(dirname "$0")
-curtime=$(date +%Y%m%d%H%M%S)
-work_mode=0
-jobid="logistic_regression_example_standalone_"$curtime
-
-echo current_dir is $(dirname "$0")
-nohup python homo_lr_guest.py ${jobid} > nohup.guest &
-nohup python homo_lr_host.py ${jobid} > nohup.host &
-nohup python homo_lr_arbiter.py ${jobid} > nohup.arbiter &
-

@@ -22,6 +22,7 @@ from Cryptodome.PublicKey import RSA
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
+from federatedml.secureprotol.random import RandomPads
 
 
 # LOGGER = log_utils.getLogger()
@@ -229,3 +230,27 @@ class AffineEncrypt(SymmetricEncrypt):
             return self.key.decrypt(ciphertext)
         else:
             return None
+
+
+class PadsCipher(Encrypt):
+
+    def __init__(self):
+        super().__init__()
+        self._uuid = None
+        self._rands = None
+
+    def set_self_uuid(self, uuid):
+        self._uuid = uuid
+
+    def set_exchanged_keys(self, keys):
+        self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
+
+    def encrypt(self, value):
+        for uid, rand in self._rands.items():
+            if uid > self._uuid:
+                return rand.add_rand_pads(value, 1.0)
+            else:
+                return rand.add_rand_pads(value, -1.0)
+
+    def decrypt(self, value):
+        return value

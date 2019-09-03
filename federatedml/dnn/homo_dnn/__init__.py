@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,5 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-ps -ef | grep homo_lr | grep -v grep | cut -c 9-15 | xargs kill -s 9
