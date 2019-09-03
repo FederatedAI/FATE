@@ -41,7 +41,7 @@ def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, jo
 
 
 def get_url(_suffix):
-    return "{}/{}".format(RuntimeConfig.SERVER_HOST_URL.rstrip('/'), _suffix.lstrip('/'))
+    return "http://{}/{}".format(RuntimeConfig.JOB_SERVER_HOST.rstrip('/'), _suffix.lstrip('/'))
 
 
 class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
