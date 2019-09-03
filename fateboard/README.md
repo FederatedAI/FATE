@@ -11,13 +11,127 @@ The FATE stand-alone version has been integrated with FATEBoard, and users just 
 
 In a distributed environment, FATEBoard needs to be deployed through cluster automated deployment script rather than individually, which you need to configure some information about the cluster, such as URL of FATEFlow, directory of log files, SSH information of each machine, etc. All the configuration information could be generated automatically using automated script deployment. If the information is not filled in correctly, it will not work properly.
 
+you can launch a fateboard service by following steps.
+
+1. Modify FATE/fateboard/src/main/resources/application.properties.
+
+   | Item                                      | explains                  | default                                                      |
+   | :---------------------------------------- | :------------------------ | :----------------------------------------------------------- |
+   | server.port                               | port of fateboard         | 8080                                                         |
+   | fateflow.url                              | the url of fate_flow node | none                                                         |
+   | spring.datasource.driver-Class-Name       | driver for database       | com.mysql.cj.jdbc.Driver                                     |
+   | management.endpoints.web.exposure.include | endpoints for exposure    | *                                                            |
+   | spring.http.encoding.charset              | code set for http         | UTF-8                                                        |
+   | spring.http.encoding.enabled              | toggle for encoding       | true                                                         |
+   | server.tomcat.uri-encoding                | code set for tomcat       | UTF-8                                                        |
+   | spring.datasource.url                     | url of database           | jdbc:mysql://localhost:3306/task_manager?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8 |
+   | spring.datasource.username                | username of database      | none                                                         |
+   | spring.datasource.password                | password of database      | none                                                         |
+   | server.tomcat.max-threads                 | max threads of tomcat     | 1000                                                         |
+
+   - example1 (database: mysql)
+
+     ```
+     server.port=8080
+     fateflow.url=http://localhost:9380
+     spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
+     management.endpoints.web.exposure.include=*
+     spring.http.encoding.charset=UTF-8
+     spring.http.encoding.enabled=true
+     server.tomcat.uri-encoding=UTF-8
+     spring.datasource.url=jdbc:mysql://localhost:3306/task_manager?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
+     spring.datasource.username=fate_dev
+     spring.datasource.password=fate_dev
+     server.tomcat.max-threads=1000
+     server.tomcat.max-connections=20000
+     ```
+
+   - example2(database:sqlite)
+
+     ```
+     server.port=8080
+     fateflow.url=http://localhost:9380
+     spring.datasource.driver-class-name=org.sqlite.JDBC
+     spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db
+     management.endpoints.web.exposure.include=*
+     spring.http.encoding.charset=UTF-8
+     spring.http.encoding.enabled=true
+     server.tomcat.uri-encoding=UTF-8
+     spring.datasource.username=
+     spring.datasource.password=
+     server.tomcat.max-threads=1000
+     server.tomcat.max-connections=20000
+     ```
+
+     
+
+2. Modify FATE/fateboard/src/main/resources/ssh.properties.
+
+   Format : ip=username|password|port
+
+   | Item     | explains                     |
+   | -------- | ---------------------------- |
+   | ip       | ip of other nodes in FATE    |
+   | username | username of operating system |
+   | password | passwordof operating system  |
+   | port     | port which can access        |
+
+   example:
+
+   ```
+   192.168.xxx.xxx=app|app|22
+   ```
+
+3. Package
+
+   ```
+   cd FATE/fateboard
+   mvn clean package -DskipTests
+   ```
+
+4. Launch the service
+
+   command explains:
+
+   | Item                     | explains                                           |
+   | ------------------------ | -------------------------------------------------- |
+   | -Dspring.config.location | path of application.properties of fateboard        |
+   | -Dssh_config_file        | path of directory which ssh.properties lies in     |
+   | -DFATE_DEPLOY_PREFIX     | path of logs directory which produced by fate_flow |
+
+   command example:
+
+   ```
+   java   -Dspring.config.location=FATE/fateboard/src/main/resources/application.properties -DFATE_DEPLOY_PREFIX=FATE/logs/  -Dssh_config_file=FATE/fateboard/src/main/resources/  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar FATE/fateboard/target/fateborad-1.0.jar  >/dev/null 2>&1 &
+   ```
+
+5. Stop the service
+
+   Get the pid of fateboard:
+
+   ```
+   ps -ef|grep java|grep fateboard-1.0.jar|grep -v grep|awk '{print $2}'
+   ```
+
+   kill the fateboard:
+
+   ```
+   kill -9 ${pid}
+   ```
+
+   
+
+
+
+
+
 # **Usage** #
 
 **Starting FATEBoard** 
 
 The FATEBoard source code uses the spring-boot framework and the embedded tomcat container. The default web port provided is 8080. Before starting, it is necessary to check whether port 8080 of the machine is already occupied. If the port is occupied, FATEBoard will fail to start.
 
-FATEBoard gets job list through accessing MySQL database. If the database is not installed properly, the job list query will fail.
+FATEBoard gets job list through accessing MySQL database or  SQLite database. If the database is not installed properly, the job list query will fail.
 FATEBoard access FATEFlow through HTTP protocol. If FATEFlow is not started properly, FATEBoard will not display charts.
 
 You can access FATEBoard by visiting http://{fateboard-ip}:8080.
