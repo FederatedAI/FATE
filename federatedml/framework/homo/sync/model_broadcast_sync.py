@@ -24,6 +24,7 @@ class Arbiter(object):
     # noinspection PyAttributeOutsideInit
     def _register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
+        return self
 
     def _send_model(self, model: Variables, ciphers_dict=None, suffix=tuple()):
         if ciphers_dict:
@@ -32,10 +33,16 @@ class Arbiter(object):
                                           idx=0,
                                           suffix=suffix)
             for i, cipher in ciphers_dict.items():
-                self._models_broadcast.remote(obj=model.encrypted(cipher, inplace=False).for_remote(),
-                                              role=consts.HOST,
-                                              idx=i,
-                                              suffix=suffix)
+                if cipher:
+                    self._models_broadcast.remote(obj=model.encrypted(cipher, inplace=False).for_remote(),
+                                                  role=consts.HOST,
+                                                  idx=i,
+                                                  suffix=suffix)
+                else:
+                    self._models_broadcast.remote(obj=model.for_remote(),
+                                                  role=consts.HOST,
+                                                  idx=i,
+                                                  suffix=suffix)
         else:
             self._models_broadcast.remote(obj=model.for_remote(),
                                           role=None,
@@ -47,9 +54,10 @@ class Client(object):
     # noinspection PyAttributeOutsideInit
     def _register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
+        return self
 
     def _get_model(self, suffix=tuple()):
-        self._models_broadcast.get(idx=0, suffix=suffix)
+        return self._models_broadcast.get(idx=0, suffix=suffix)
 
 
 Guest = Client

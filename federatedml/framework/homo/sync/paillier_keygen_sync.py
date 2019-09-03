@@ -26,13 +26,14 @@ class Arbiter(object):
     def _register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
         self._use_encrypt_transfer = use_encrypt_transfer
         self._pubkey_transfer = pubkey_transfer
+        return self
 
     def paillier_keygen(self, key_length, suffix=tuple()) -> dict:
         hosts_use_cipher = self._use_encrypt_transfer.get(suffix=suffix)
         host_ciphers = dict()
         for idx, use_encryption in enumerate(hosts_use_cipher):
             if not use_encryption:
-                continue
+                host_ciphers[idx] = None
             else:
                 cipher = PaillierEncrypt()
                 cipher.generate_key(key_length)
@@ -48,6 +49,7 @@ class Host(object):
     def _register_paillier_keygen(self, use_encrypt_transfer, pubkey_transfer):
         self._use_encrypt_transfer = use_encrypt_transfer
         self._pubkey_transfer = pubkey_transfer
+        return self
 
     def gen_paillier_pubkey(self, enable, suffix=tuple()) -> PaillierPublicKey:
         self._use_encrypt_transfer.remote(obj=enable, role=consts.ARBITER, idx=0, suffix=suffix)

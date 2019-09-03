@@ -24,12 +24,14 @@ class Arbiter(object):
     # noinspection PyAttributeOutsideInit
     def _register_model_scatter(self, host_model_transfer, guest_model_transfer):
         self._models_sync = scatter.Scatter(host_model_transfer, guest_model_transfer)
+        return self
 
     def _get_models(self, ciphers_dict=None, suffix=tuple()):
-        models = list(self._models_sync.get(suffix=suffix))
+        models = [Variables.from_transferable(model) for model in self._models_sync.get(suffix=suffix)]
         if ciphers_dict:
             for i, cipher in ciphers_dict.items():
-                models[i + 1] = models[i + 1].decrypted(ciphers_dict[i])
+                if cipher:
+                    models[i + 1] = models[i + 1].decrypted(ciphers_dict[i])
         return models
 
 
@@ -37,9 +39,11 @@ class _Client(object):
     # noinspection PyAttributeOutsideInit
     def _register_model_scatter(self, model_transfer):
         self._models_sync = model_transfer
+        return self
 
     def _send_model(self, weights: Variables, suffix=tuple()):
         self._models_sync.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
+        return weights
 
 
 Guest = _Client

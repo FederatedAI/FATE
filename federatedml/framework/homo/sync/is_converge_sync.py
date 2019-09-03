@@ -23,6 +23,7 @@ class Arbiter(object):
     # noinspection PyAttributeOutsideInit
     def _register_is_converge(self, is_converge_variable: Variable):
         self._is_converge_variable = is_converge_variable
+        return self
 
     def check_converge_status(self, converge_func: types.FunctionType, converge_args, suffix=tuple()):
         is_converge = converge_func(*converge_args)
@@ -35,6 +36,7 @@ class _Client(object):
     # noinspection PyAttributeOutsideInit
     def _register_is_converge(self, is_converge_variable: Variable):
         self._is_converge_variable = is_converge_variable
+        return self
 
     def get_converge_status(self, suffix=tuple()):
         return self._is_converge_variable.get(idx=0, suffix=suffix)

@@ -31,6 +31,7 @@ class Arbiter(object):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_pubkey_scatter = Scatter(dh_ciphertext_host_trv, dh_ciphertext_guest_trv)
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
+        return self
 
     def key_exchange(self):
         p, g = DiffieHellman.key_pair()
@@ -49,6 +50,7 @@ class Client(object):
         self._dh_pubkey_trv = dh_pubkey_trv
         self._dh_ciphertext_trv = dh_ciphertext_trv
         self._dh_ciphertext_bc_trv = dh_ciphertext_bc_trv
+        return self
 
     def key_exchange(self, uuid):
         p, g = self._dh_pubkey_trv.get(idx=0)

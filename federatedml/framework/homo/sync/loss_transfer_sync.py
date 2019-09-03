@@ -23,6 +23,7 @@ class Arbiter(object):
     # noinspection PyAttributeOutsideInit
     def _register_loss_transfer(self, host_loss_transfer, guest_loss_transfer):
         self._loss_sync = scatter.Scatter(host_loss_transfer, guest_loss_transfer)
+        return self
 
     def get_losses(self, idx=None, suffix=tuple()):
         return self._loss_sync.get(host_ids=idx, suffix=suffix)
@@ -33,9 +34,11 @@ class _Client(object):
     # noinspection PyAttributeOutsideInit
     def _register_loss_transfer(self, loss_transfer):
         self._loss_sync = loss_transfer
+        return self
 
     def send_loss(self, loss, *suffix):
         self._loss_sync.remote(obj=loss, role=consts.ARBITER, idx=0, suffix=suffix)
+        return loss
 
 
 Guest = _Client
