@@ -26,11 +26,15 @@ class Arbiter(object):
         self._re_encrypt_times_transfer = re_encrypt_times_transfer
         self._model_to_re_encrypt_transfer = model_to_re_encrypt_transfer
         self._model_re_encrypted_transfer = model_re_encrypted_transfer
+        return self
 
     def set_re_cipher_time(self, host_ciphers_dict, suffix=tuple()):
         re_encrypt_times = dict()
-        for idx, _ in host_ciphers_dict.items():
-            re_encrypt_times[idx] = self._re_encrypt_times_transfer.get(idx=idx, suffix=suffix)
+        for idx, cipher in host_ciphers_dict.items():
+            if cipher:
+                re_encrypt_times[idx] = self._re_encrypt_times_transfer.get(idx=idx, suffix=suffix)
+            else:
+                re_encrypt_times[idx] = 0
         return re_encrypt_times
 
     def re_cipher(self, iter_num, re_encrypt_times, host_ciphers_dict, re_encrypt_batches, suffix=tuple()):
@@ -63,9 +67,11 @@ class Host(object):
         self._re_encrypt_times_transfer = re_encrypt_times_transfer
         self._model_to_re_encrypt_transfer = model_to_re_encrypt_transfer
         self._model_re_encrypted_transfer = model_re_encrypted_transfer
+        return self
 
     def set_re_cipher_time(self, re_encrypt_times, suffix=tuple()):
         self._re_encrypt_times_transfer.remote(obj=re_encrypt_times, role=consts.ARBITER, idx=0, suffix=suffix)
+        return re_encrypt_times
 
     def re_cipher(self, w, iter_num, batch_iter_num, suffix=tuple()):
         self._model_to_re_encrypt_transfer.remote(obj=w,
