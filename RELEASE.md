@@ -1,13 +1,13 @@
 # Release 1.0.1
 ## Bug Fixes
-* Fix evaluation data type bug
+* Fix bugs for evaluation data type 
 * Fix bugs for feature binning to take abnormal values into consideration
 * Fix bugs for train and eval
 * Fix bugs in binning merge
 * Fix bugs in Samplers
 * Fix federated feature selection feature filter bug
-* upload file support in version argument
-* get serviceRoleName from configuration
+* Support upload file  in version argument
+* Support get serviceRoleName from configuration
 
 
 # Release 1.0
