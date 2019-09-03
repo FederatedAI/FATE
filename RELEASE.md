@@ -1,3 +1,15 @@
+# Release 1.0.1
+## Bug Fixes
+* Fix bugs for evaluation data type 
+* Fix bugs for feature binning to take abnormal values into consideration
+* Fix bugs for train and eval
+* Fix bugs in binning merge
+* Fix bugs in Samplers
+* Fix federated feature selection feature filter bug
+* Support upload file  in version argument
+* Support get serviceRoleName from configuration
+
+
 # Release 1.0
 ## Major Features and Improvements
 >This version includes two new products of FATE, FATE-Board, and FATE-Flow respectively, FATE-Board as a visual tool for federation modeling, and FATE-Flow is an end to end pipeline platform for federated learning. This version contains important improvements to the FederatedML, which better tracks the running progress of federated learning algorithms.
