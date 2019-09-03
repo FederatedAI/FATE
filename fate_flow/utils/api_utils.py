@@ -66,7 +66,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body,
 
 def local_api(method, endpoint, json_body):
     try:
-        url = "{}{}".format(RuntimeConfig.SERVER_HOST_URL, endpoint)
+        url = "http://{}{}".format(RuntimeConfig.JOB_SERVER_HOST, endpoint)
         stat_logger.info('local api request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)
