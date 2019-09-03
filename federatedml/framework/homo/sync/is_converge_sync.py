@@ -14,28 +14,30 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.homo.util import scatter
-from federatedml.util import consts
+from federatedml.util.transfer_variable.base_transfer_variable import Variable
+import types
 
 
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_loss_transfer(self, host_loss_transfer, guest_loss_transfer):
-        self._loss_sync = scatter.Scatter(host_loss_transfer, guest_loss_transfer)
+    def _register_is_converge(self, is_converge_variable: Variable):
+        self._is_converge_variable = is_converge_variable
 
-    def get_losses(self, idx=None, suffix=tuple()):
-        return self._loss_sync.get(host_ids=idx, suffix=suffix)
+    def check_converge_status(self, converge_func: types.FunctionType, converge_args, suffix=tuple()):
+        is_converge = converge_func(*converge_args)
+        self._is_converge_variable.remote(is_converge, role=None, idx=-1, suffix=suffix)
+        return is_converge
 
 
 class _Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_loss_transfer(self, loss_transfer):
-        self._loss_sync = loss_transfer
+    def _register_is_converge(self, is_converge_variable: Variable):
+        self._is_converge_variable = is_converge_variable
 
-    def send_loss(self, loss, *suffix):
-        self._loss_sync.remote(obj=loss, role=consts.ARBITER, idx=0, suffix=suffix)
+    def get_converge_status(self, suffix=tuple()):
+        return self._is_converge_variable.get(idx=0, suffix=suffix)
 
 
 Guest = _Client

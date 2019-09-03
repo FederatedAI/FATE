@@ -16,7 +16,7 @@
 
 import uuid
 
-from federatedml.framework.homo import Scatter
+from federatedml.framework.homo.util.scatter import Scatter
 from federatedml.util import consts
 
 
@@ -26,6 +26,7 @@ class Arbiter(object):
     def _register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
         self._conflict_flag_trv = conflict_flag_trv
         self._scatter = Scatter(host_uuid_trv, guest_uuid_trv)
+        return self
 
     def validate_uuid(self):
         ind = 0
@@ -38,7 +39,9 @@ class Arbiter(object):
                     break
                 uuid_set.add(uid)
             else:
+                self._conflict_flag_trv.remote(obj=True, role=None, idx=-1, suffix=ind)
                 break
+        return uuid_set
 
 
 class Client(object):
@@ -47,6 +50,7 @@ class Client(object):
     def _register_identify_uuid(self, uuid_transfer_variable, conflict_flag_transfer_variable):
         self._conflict_flag_transfer_variable = conflict_flag_transfer_variable
         self._uuid_transfer_variable = uuid_transfer_variable
+        return self
 
     def generate_uuid(self):
         ind = -1

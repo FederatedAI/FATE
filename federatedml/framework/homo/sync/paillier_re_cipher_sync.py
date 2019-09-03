@@ -29,7 +29,7 @@ class Arbiter(object):
 
     def set_re_cipher_time(self, host_ciphers_dict, suffix=tuple()):
         re_encrypt_times = dict()
-        for idx, use_encryption in host_ciphers_dict.items():
+        for idx, _ in host_ciphers_dict.items():
             re_encrypt_times[idx] = self._re_encrypt_times_transfer.get(idx=idx, suffix=suffix)
         return re_encrypt_times
 

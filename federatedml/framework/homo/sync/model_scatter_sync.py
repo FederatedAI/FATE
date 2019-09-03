@@ -14,8 +14,8 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.homo import Parameters
-from federatedml.framework.homo import scatter
+from federatedml.framework.weights import Variables
+from federatedml.framework.homo.util import scatter
 from federatedml.util import consts
 
 
@@ -38,7 +38,7 @@ class _Client(object):
     def _register_model_scatter(self, model_transfer):
         self._models_sync = model_transfer
 
-    def _send_model(self, weights: Parameters, suffix=tuple()):
+    def _send_model(self, weights: Variables, suffix=tuple()):
         self._models_sync.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
 
 

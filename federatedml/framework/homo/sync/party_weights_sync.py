@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.homo import Scatter
+from federatedml.framework.homo.util.scatter import Scatter
 from federatedml.util import consts
 
 

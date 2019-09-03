@@ -1,119 +1,4 @@
 {
- "RawIntersectTransferVariable": {
-  "send_ids_host": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "send_ids_guest": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "intersect_ids_host": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "intersect_ids_guest": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
- "SampleTransferVariable": {
-  "sample_ids": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
- "HeteroWorkFlowTransferVariable": {
-  "train_data": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "test_data": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
- "SecureAddExampleTransferVariable": {
-  "guest_share": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "host_share": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "host_sum": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  }
- },
- "OneVsRestTransferVariable": {
-  "host_classes": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "aggregate_classes": {
-   "src": "guest",
-   "dst": [
-    "host",
-    "arbiter"
-   ]
-  }
- },
- "RsaIntersectTransferVariable": {
-  "rsa_pubkey": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "intersect_guest_ids": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "intersect_host_ids_process": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "intersect_guest_ids_process": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "intersect_ids": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
  "HeteroDecisionTreeTransferVariable": {
   "encrypted_grad_and_hess": {
    "src": "guest",
@@ -182,6 +67,72 @@
    ]
   },
   "predict_finish_tag": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "SecureAddExampleTransferVariable": {
+  "guest_share": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "host_share": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "host_sum": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+ "HeteroFeatureSelectionTransferVariable": {
+  "result_left_cols": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "host_select_cols": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+ "RsaIntersectTransferVariable": {
+  "rsa_pubkey": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "intersect_guest_ids": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "intersect_host_ids_process": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "intersect_guest_ids_process": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "intersect_ids": {
    "src": "guest",
    "dst": [
     "host"
@@ -387,14 +338,166 @@
    ]
   }
  },
- "HeteroFeatureSelectionTransferVariable": {
-  "result_left_cols": {
+ "HeteroLRTransferVariable": {
+  "paillier_pubkey": {
+   "src": "arbiter",
+   "dst": [
+    "host",
+    "guest"
+   ]
+  },
+  "batch_data_index": {
    "src": "guest",
    "dst": [
     "host"
    ]
   },
-  "host_select_cols": {
+  "host_forward_dict": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "fore_gradient": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "guest_gradient": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "guest_optim_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "guest"
+   ]
+  },
+  "host_loss_regular": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "loss": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "is_stopped": {
+   "src": "arbiter",
+   "dst": [
+    "host",
+    "guest"
+   ]
+  },
+  "batch_info": {
+   "src": "guest",
+   "dst": [
+    "host",
+    "arbiter"
+   ]
+  },
+  "host_optim_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  },
+  "host_gradient": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_prob": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+ "RawIntersectTransferVariable": {
+  "send_ids_host": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "send_ids_guest": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "intersect_ids_host": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "intersect_ids_guest": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "HeteroWorkFlowTransferVariable": {
+  "train_data": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "test_data": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "OneVsRestTransferVariable": {
+  "host_classes": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "aggregate_classes": {
+   "src": "guest",
+   "dst": [
+    "host",
+    "arbiter"
+   ]
+  }
+ },
+ "SampleTransferVariable": {
+  "sample_ids": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "HeteroFeatureBinningTransferVariable": {
+  "paillier_pubkey": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_label": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_bin_sum": {
    "src": "host",
    "dst": [
     "guest"
@@ -424,26 +527,6 @@
    "src": "host",
    "dst": [
     "arbiter"
-   ]
-  }
- },
- "HeteroFeatureBinningTransferVariable": {
-  "paillier_pubkey": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "encrypted_label": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "encrypted_bin_sum": {
-   "src": "host",
-   "dst": [
-    "guest"
    ]
   }
  },
@@ -538,89 +621,6 @@
    "src": "arbiter",
    "dst": [
     "host"
-   ]
-  }
- },
- "HeteroLRTransferVariable": {
-  "paillier_pubkey": {
-   "src": "arbiter",
-   "dst": [
-    "host",
-    "guest"
-   ]
-  },
-  "batch_data_index": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "host_forward_dict": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "fore_gradient": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "guest_gradient": {
-   "src": "guest",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "guest_optim_gradient": {
-   "src": "arbiter",
-   "dst": [
-    "guest"
-   ]
-  },
-  "host_loss_regular": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "loss": {
-   "src": "guest",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "is_stopped": {
-   "src": "arbiter",
-   "dst": [
-    "host",
-    "guest"
-   ]
-  },
-  "batch_info": {
-   "src": "guest",
-   "dst": [
-    "host",
-    "arbiter"
-   ]
-  },
-  "host_optim_gradient": {
-   "src": "arbiter",
-   "dst": [
-    "host"
-   ]
-  },
-  "host_gradient": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "host_prob": {
-   "src": "host",
-   "dst": [
-    "guest"
    ]
   }
  },
