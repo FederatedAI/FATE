@@ -80,6 +80,9 @@ Then all you need to do is running the following command:
 
 Please note this works only if you have finished the trainning task.
 
+###  Obtain Model and Check Out Results
+We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.md)
+
 
 ## Doc
 ## API doc

@@ -43,26 +43,62 @@ public class RuntimeUtils {
         }
     }
 
-    public String getMySiteLocalAddress() {
-        if (siteLocalAddress == null) {
-            Enumeration<NetworkInterface> networkInterfaces = null;
-            try {
-                networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
-                for (NetworkInterface ni : Collections.list(networkInterfaces)) {
-                    Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
-                    for (InetAddress ia : Collections.list(inetAddresses)) {
-                        if (ia.isSiteLocalAddress()) {
-                            siteLocalAddress = StringUtils.substringAfterLast(ia.toString(), "/");
-                        }
-                    }
-                }
-            } catch (SocketException e) {
-                siteLocalAddress = "127.0.0.1";
-            }
+    /**
+     * validation of InetAddress
+     * @param nif Network Interface
+     * @param adr Internet Protocol (IP) address
+     * @return valid or in valid
+     * @throws SocketException
+     */
+    private boolean checkAddrValid(NetworkInterface nif, InetAddress adr)
+        throws SocketException {
+      return adr != null && !adr.isLoopbackAddress() && (nif.isPointToPoint() || !adr.isLinkLocalAddress());
+    }
+
+    /**
+     * get valid local ip address
+     * @return Internet Protocol (IP) address
+     * @throws SocketException
+     * @throws UnknownHostException
+     */
+    private InetAddress getLocalAdr() throws SocketException, UnknownHostException {
+      String os = System.getProperty("os.name").toLowerCase();
+      if (os.contains("nix") || os.contains("nux")) {
+        Enumeration<NetworkInterface> nifs = null;
+        nifs = NetworkInterface.getNetworkInterfaces();
+
+        if (null == nifs) {
+          return null;
         }
+        while (nifs.hasMoreElements()) {
+          NetworkInterface nif = nifs.nextElement();
+          Enumeration<InetAddress> adrs = nif.getInetAddresses();
 
-        return siteLocalAddress;
+          while (adrs.hasMoreElements()) {
+            InetAddress adr = adrs.nextElement();
+            if (checkAddrValid(nif, adr)) {
+              return adr;
+            }
+          }
+        }
+      } else {
+        return InetAddress.getLocalHost();
+      }
+      return null;
+    }
+
+
+    public String getMySiteLocalAddress() {
+      if (siteLocalAddress == null) {
+        try {
+          InetAddress inetAddress = getLocalAdr();
+          siteLocalAddress = null == inetAddress ? "127.0.0.1" : inetAddress.getHostAddress();
+        } catch (SocketException | UnknownHostException e) {
+          siteLocalAddress = "127.0.0.1";
+        }
+      }
+      return siteLocalAddress;
     }
 
     public String getMySiteLocalIpAndPort() {
