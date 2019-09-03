@@ -142,7 +142,8 @@ if __name__ == "__main__":
                 table_name = _table_name
             eggroll.init(job_id=args.job_id, mode=work_mode)
             input_data = read_data(input_file_path, table_name, namespace, head)
-            data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=partition)
+            in_version = job_config.get('in_version', False)
+            data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=partition, in_version=in_version)
             print("------------load data finish!-----------------")
             print("file: {}".format(input_file_path))
             print("total data_count: {}".format(data_table.count()))

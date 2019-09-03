@@ -126,7 +126,3 @@ def get_commit_tmp_table(data_table_namespace):
                                       partition=1, create_if_missing=True, error_if_exist=False)
     return version_tmp_table
 
-
-def get_id_library_table_name():
-    id_library_info = eggroll.table('info', 'id_library', partition=10, create_if_missing=True, error_if_exist=False)
-    return id_library_info.get("use_data_id")
