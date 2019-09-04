@@ -1,4 +1,6 @@
 {
+  "initiator_role": "guest",
+  "initiator_party_id": 9999,
   "output_path": "./download_test.csv",
   "work_mode": 0,
   "namespace": "fate_flow_test_breast",

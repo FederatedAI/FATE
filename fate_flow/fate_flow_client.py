@@ -146,19 +146,10 @@ def call_fun(func, config_data, dsl_path, config_path):
     elif func in DATA_FUNC:
         if not config_path:
             raise Exception('the following arguments are required: {}'.format('runtime conf path'))
-        dsl_data = {
-            "components": {}
-        }
-        if func == 'upload':
-            dsl_data["components"]["upload_0"] = {
-                "module": "Upload"
-            }
-        if func == 'download':
-            dsl_data["components"]["download_0"] = {
-                "module": "Download"
-            }
+
+        job_runtime_conf, dsl_data = get_runtime_conf(config_data, func)
         post_data = {'job_dsl': dsl_data,
-                     'job_runtime_conf': config_data}
+                     'job_runtime_conf': job_runtime_conf}
         response = requests.post("/".join([server_url, "job", "submit"]), json=post_data)
 
     elif func in TABLE_FUNC:
@@ -182,6 +173,55 @@ def download_from_request(http_response, tar_file_name, extract_dir):
         tar.extract(file_name, extract_dir)
     tar.close()
     os.remove(tar_file_name)
+
+
+def get_runtime_conf(config_data, func):
+    job_runtime_conf = {
+        "initiator": {},
+        "job_parameters": {},
+        "role": {},
+        "role_parameters": {}
+    }
+    initiator_role = config_data.get("initiator_role", "")
+    initiator_party_id = config_data.get("initiator_party_id", "")
+    job_runtime_conf["initiator"]["role"] = initiator_role
+    job_runtime_conf["initiator"]["party_id"] = initiator_party_id
+    job_runtime_conf["job_parameters"]["work_mode"] = config_data.get("work_mode")
+    job_runtime_conf["role"][initiator_role] = [initiator_party_id]
+    dsl_data = {
+        "components": {}
+    }
+
+    if func == 'upload':
+        job_runtime_conf["role_parameters"][initiator_role] = {
+            "upload_0": {
+                "head": [config_data.get("head")],
+                "partition": [config_data.get("partition")],
+                "file": [config_data.get("file")],
+                "namespace": [config_data.get("namespace")],
+                "table_name": [config_data.get("table_name")]
+            }
+        }
+
+        dsl_data["components"]["upload_0"] = {
+            "module": "Upload"
+        }
+
+    if func == 'download':
+        job_runtime_conf["role_parameters"][initiator_role] = {
+            "download_0": {
+                "head": [config_data.get("head")],
+                "output_path": [config_data.get("file")],
+                "namespace": [config_data.get("namespace")],
+                "table_name": [config_data.get("table_name")]
+            }
+        }
+
+        dsl_data["components"]["download_0"] = {
+            "module": "Download"
+        }
+
+    return job_runtime_conf, dsl_data
 
 
 if __name__ == "__main__":
