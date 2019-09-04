@@ -26,9 +26,6 @@ from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.profile_util import log_elapsed
 import typing
-import warnings
-
-warnings.warn("eggroll is deprecated, use table_manager instead", DeprecationWarning, stacklevel=2)
 
 
 # noinspection PyProtectedMember

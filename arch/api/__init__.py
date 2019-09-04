@@ -40,7 +40,7 @@ class Backend(IntEnum):
 
 
 class RuntimeInstance(object):
-    EGGROLL = None
+    TABLE_MANAGER = None
     MODE: WorkMode = None
     FEDERATION = None
     Backend: Backend = None
