@@ -95,11 +95,9 @@ class HeteroLRGuest(HeteroLRBase):
 
                 # Start gradient procedure
                 optim_guest_gradient, loss = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
-                self.loss_computer.apply_procedure(loss)
+                self.loss_computer.sync_loss_info(self.lr_variables, loss, self.n_iter_, batch_index, self.optimizer)
 
-                self.optimizer.update_model()
-
-                # is converge of loss in arbiter
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_guest_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.syn_converge_info(self.is_converged)

@@ -112,10 +112,11 @@ class HeteroLRHost(HeteroLRBase):
                 self.renew_current_info(self.n_iter_, batch_index)
 
                 optim_host_gradient = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
-                self.loss_computer.apply_procedure(self.lr_variables)
+                self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
+                                                  self.cipher, self.optimizer)
 
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
                 batch_index += 1
-
 
             is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
                                         tag=self.transfer_variable.generate_transferid(

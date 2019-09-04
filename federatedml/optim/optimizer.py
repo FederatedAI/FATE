@@ -71,6 +71,9 @@ class _Optimizer(object):
             model_variables = self.__l1_updator(model_variables, grad)
         elif self.penalty == 'l2':
             model_variables = self.__l2_updator(model_variables, grad)
+        else:
+            new_vars = model_variables.for_remote().parameters - grad
+            model_variables = LogisticRegressionVariables(new_vars, model_variables.fit_intercept)
         self.iters += 1
         return model_variables
 
@@ -90,14 +93,12 @@ class _Optimizer(object):
         elif self.penalty == 'l2':
             loss_norm_value = self.__l2_loss_norm(model_variables)
         else:
-            loss_norm_value = 0
+            loss_norm_value = None
         return loss_norm_value
 
     def update_model(self, model_variables: LogisticRegressionVariables, grad):
         delta_grad = self.apply_gradients(grad)
-        new_weights = model_variables.parameter - delta_grad
-        model_variables = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
-        new_param = self.update(model_variables, grad)
+        new_param = self.update(model_variables, delta_grad)
         return new_param
 
 

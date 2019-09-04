@@ -106,7 +106,9 @@ class HomoLRHost(HomoLRBase):
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
                 if not self.use_encrypt:
                     loss /= n
-                    iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))
+                    loss_norm = self.optimizer.loss_norm(self.lr_variables)
+                    if loss_norm is not None:
+                        iter_loss += (loss + loss_norm)
                 batch_num += 1
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
                     w = self.cipher.re_cipher(w=self.lr_variables.for_remote().parameters,

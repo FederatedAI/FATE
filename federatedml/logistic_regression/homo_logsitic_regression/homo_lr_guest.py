@@ -70,7 +70,9 @@ class HomoLRGuest(HomoLRBase):
                 grad /= n
                 loss /= n
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
-                iter_loss += (loss + self.optimizer.loss_norm(self.lr_variables))
+                loss_norm = self.optimizer.loss_norm(self.lr_variables)
+                if loss_norm is not None:
+                    iter_loss += (loss + loss_norm)
                 batch_num += 1
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
