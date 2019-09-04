@@ -16,7 +16,7 @@
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, aggregator, convergence
+from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
@@ -125,16 +125,14 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        prob_guest = self.compute_wx(data_features, self.coef_, self.intercept_)
-        prob_host = federation.get(name=self.transfer_variable.host_prob.name,
-                                   tag=self.transfer_variable.generate_transferid(
-                                       self.transfer_variable.host_prob),
-                                   idx=0)
+        prob_guest = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        prob_host = self.transfer_variable.host_prob.get(idx=0)
+
         LOGGER.info("Get probability from Host")
 
         # guest probability
         pred_prob = prob_guest.join(prob_host, lambda g, h: activation.sigmoid(g + h))
-        pred_label = self.classified(pred_prob, self.predict_param.threshold)
+        pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))

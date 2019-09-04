@@ -14,12 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
+from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()

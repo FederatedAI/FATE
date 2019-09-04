@@ -141,11 +141,6 @@ class HeteroLRHost(HeteroLRBase):
 
         data_features = self.transform(data_instances)
 
-        prob_host = self.compute_wx(data_features, self.coef_, self.intercept_)
-        federation.remote(prob_host,
-                          name=self.transfer_variable.host_prob.name,
-                          tag=self.transfer_variable.generate_transferid(
-                              self.transfer_variable.host_prob),
-                          role=consts.GUEST,
-                          idx=0)
+        prob_host = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")

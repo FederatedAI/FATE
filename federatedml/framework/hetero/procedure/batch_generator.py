@@ -40,7 +40,7 @@ class Guest(batch_info_sync.Guest):
         index_generator = self.mini_batch_obj.mini_batch_data_generator(result='index')
         batch_index = 0
         for batch_data_index in index_generator:
-            batch_suffix = suffix + tuple(batch_index)
+            batch_suffix = suffix + (batch_index,)
             self.sync_batch_index(batch_data_index, batch_suffix)
             batch_index += 1
 
@@ -63,7 +63,7 @@ class Host(batch_info_sync.Host):
         batch_info = self.sync_batch_info(suffix)
         self.batch_nums = batch_info.get('batch_num')
         for batch_index in range(self.batch_nums):
-            batch_suffix = suffix + tuple(batch_index)
+            batch_suffix = suffix + (batch_index,)
             batch_data_index = self.sync_batch_index(suffix=batch_suffix)
             batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)
             self.batch_data_insts.append(batch_data_inst)

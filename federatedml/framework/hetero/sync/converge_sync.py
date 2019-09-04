@@ -22,7 +22,7 @@ class Arbiter(object):
     def _register_convergence(self, is_stopped_transfer):
         self._is_stopped_transfer = is_stopped_transfer
 
-    def syn_converge_info(self, is_converged, suffix=tuple()):
+    def sync_converge_info(self, is_converged, suffix=tuple()):
         self._is_stopped_transfer.remote(obj=is_converged, role=consts.HOST, idx=-1, suffix=suffix)
         self._is_stopped_transfer.remote(obj=is_converged, role=consts.GUEST, idx=-1, suffix=suffix)
 
@@ -32,7 +32,7 @@ class _Client(object):
     def _register_convergence(self, is_stopped_transfer):
         self._is_stopped_transfer = is_stopped_transfer
 
-    def syn_converge_info(self, suffix=tuple()):
+    def sync_converge_info(self, suffix=tuple()):
         is_converged = self._is_stopped_transfer.get(idx=0, suffix=suffix)
         return is_converged
 
