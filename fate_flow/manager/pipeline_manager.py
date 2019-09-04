@@ -18,7 +18,7 @@ from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils
 
 
-def pipeline_dag_dependency(job_id):
+def pipeline_dag_dependency(job_id, party_id, role):
     try:
         jobs = job_utils.query_job(job_id=job_id)
         if not jobs:
@@ -27,7 +27,21 @@ def pipeline_dag_dependency(job_id):
         job_dsl_parser = job_utils.get_job_dsl_parser(dsl=json_loads(job.f_dsl),
                                                       runtime_conf=json_loads(job.f_runtime_conf),
                                                       train_runtime_conf=json_loads(job.f_train_runtime_conf))
-        return job_dsl_parser.get_dependency()
+        dag_dependency = job_dsl_parser.get_dependency()
+        roles = json_loads(job.f_roles)
+        if role in roles:
+            if party_id in roles[role]:
+                party_index = roles[role].index(party_id)
+
+                return dag_dependency[role][party_index]
+
+            else:
+                stat_logger.exception("party_id {} no found".format(party_id))
+                raise "party_id {} no found".format(party_id)
+        else:
+            stat_logger.exception("role {} no found".format(role))
+            raise "role {} no found".format(role)
+
     except Exception as e:
         stat_logger.exception(e)
         raise e
