@@ -26,7 +26,7 @@ from arch.api.utils import log_utils, file_utils, dtable_utils
 LOGGER = log_utils.getLogger()
 
 
-class UpLoad(object):
+class Upload(object):
     def __init__(self):
         self.taskid = ''
         self.tracker = None

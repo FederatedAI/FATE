@@ -144,7 +144,23 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        if not config_path:
+            raise Exception('the following arguments are required: {}'.format('runtime conf path'))
+        dsl_data = {
+            "components": {}
+        }
+        if func == 'upload':
+            dsl_data["components"]["upload_0"] = {
+                "module": "Upload"
+            }
+        if func == 'download':
+            dsl_data["components"]["download_0"] = {
+                "module": "Download"
+            }
+        post_data = {'job_dsl': dsl_data,
+                     'job_runtime_conf': config_data}
+        response = requests.post("/".join([server_url, "job", "submit"]), json=post_data)
+
     elif func in TABLE_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([server_url, "table", func]), json=config_data)

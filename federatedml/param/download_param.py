@@ -15,7 +15,7 @@
 #
 
 
-class DownLoadParam:
+class DownloadParam:
     def __init__(self, output_path="", delimitor=",",
                  namespace="", table_name="",
                  data_type="", gen_table_info=False, work_mode=0):

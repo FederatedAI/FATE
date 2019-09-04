@@ -15,7 +15,7 @@
 #
 
 
-class UpLoadParam:
+class UploadParam:
     def __init__(self, file="", head=1, partition=10,
                  namespace="", table_name="",
                  data_type="", gen_table_info=False, work_mode=0):

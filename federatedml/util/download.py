@@ -22,7 +22,7 @@ from arch.api.utils import log_utils, dtable_utils
 LOGGER = log_utils.getLogger()
 
 
-class DownLoad(object):
+class Download(object):
     def __init__(self):
         self.taskid = ''
         self.tracker = None
