@@ -28,7 +28,6 @@ from werkzeug.wsgi import DispatcherMiddleware
 
 from arch.api import storage
 from arch.api.proto import proxy_pb2_grpc
-from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_app import manager as job_app_manager
 from fate_flow.apps.machine_learning_model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
@@ -64,7 +63,6 @@ if __name__ == '__main__':
     app = DispatcherMiddleware(
         manager,
         {
-            '/{}/data'.format(API_VERSION): data_access_app_manager,
             '/{}/model'.format(API_VERSION): model_app_manager,
             '/{}/job'.format(API_VERSION): job_app_manager,
             '/{}/table'.format(API_VERSION): table_app_manager,

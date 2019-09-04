@@ -1,7 +1,0 @@
-{
-    "components" : {
-        "upload_0": {
-            "module": "UpLoad"
-         }
-    }
-}

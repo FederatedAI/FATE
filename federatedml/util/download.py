@@ -29,7 +29,7 @@ class Download(object):
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
-        self.parameters = component_parameters["DownLoadParam"]
+        self.parameters = component_parameters["DownloadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,

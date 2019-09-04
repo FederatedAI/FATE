@@ -34,7 +34,7 @@ class Upload(object):
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
-        self.parameters = component_parameters["UpLoadParam"]
+        self.parameters = component_parameters["UploadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         if not os.path.isabs(self.parameters.get("file", "")):
