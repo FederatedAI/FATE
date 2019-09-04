@@ -14,17 +14,30 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import LoggerFactory
-from arch.api.utils import file_utils
-from typing import Iterable
-import uuid
 import os
-from arch.api import WorkMode, NamingPolicy
+import uuid
+from typing import Iterable
+
 from arch.api import RuntimeInstance
+from arch.api import WorkMode, NamingPolicy, Backend
 from arch.api.core import EggRollContext
+from arch.api.table.table import Table
+from arch.api.utils import file_utils
+from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils.profile_util import log_elapsed
+import typing
 
 
-def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: NamingPolicy = NamingPolicy.DEFAULT):
+# noinspection PyProtectedMember
+def init(job_id=None,
+         mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
+         naming_policy: NamingPolicy = NamingPolicy.DEFAULT,
+         backend: typing.Union[int, Backend] = Backend.EGGROLL):
+
+    if isinstance(mode, int):
+        mode = WorkMode(mode)
+    if isinstance(backend, int):
+        backend = Backend(backend)
     if RuntimeInstance.EGGROLL:
         return
     if job_id is None:
@@ -32,45 +45,154 @@ def init(job_id=None, mode: WorkMode = WorkMode.STANDALONE, naming_policy: Namin
         LoggerFactory.set_directory()
     else:
         LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
+        
     RuntimeInstance.MODE = mode
-
+    RuntimeInstance.Backend = backend
     eggroll_context = EggRollContext(naming_policy=naming_policy)
-    if mode == WorkMode.STANDALONE:
-        from arch.api.standalone.eggroll import Standalone
-        RuntimeInstance.EGGROLL = Standalone(job_id=job_id, eggroll_context=eggroll_context)
-    elif mode == WorkMode.CLUSTER:
-        from arch.api.cluster.eggroll import _EggRoll
-        from arch.api.cluster.eggroll import init as c_init
-        c_init(job_id, eggroll_context=eggroll_context)
-        RuntimeInstance.EGGROLL = _EggRoll.get_instance()
-    else:
-        from arch.api.cluster import simple_roll
-        simple_roll.init(job_id)
-        RuntimeInstance.EGGROLL = simple_roll.EggRoll.get_instance()
-    RuntimeInstance.EGGROLL.table("__federation__", job_id, partition=10)
+
+    if backend.is_eggroll():
+        if mode.is_standalone():
+            from arch.api.table.eggroll.standalone.table_manager import DTableManager
+            RuntimeInstance.EGGROLL = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
+        elif mode.is_cluster():
+            from arch.api.table.eggroll.cluster.table_manager import DTableManager
+            RuntimeInstance.EGGROLL = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
+        else:
+            raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")
+
+    elif backend.is_spark():
+        if mode.is_standalone():
+            from arch.api.table.pyspark.standalone.table_manager import RDDTableManager
+            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
+            RuntimeInstance.EGGROLL = rdd_manager
+        elif mode.is_cluster():
+            from arch.api.table.pyspark.cluster.table_manager import RDDTableManager
+            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
+            RuntimeInstance.EGGROLL = rdd_manager
+        else:
+            raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")
+
+    table("__federation__", job_id, partition=10)
 
 
-def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False, in_place_computing=False):
+@log_elapsed
+def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
+          in_place_computing=False) -> Table:
     return RuntimeInstance.EGGROLL.table(name=name,
                                          namespace=namespace,
                                          partition=partition,
                                          persistent=persistent,
-                                         in_place_computing=in_place_computing)
+                                         in_place_computing=in_place_computing,
+                                         create_if_missing=create_if_missing,
+                                         error_if_exist=error_if_exist)
 
 
+@log_elapsed
 def parallelize(data: Iterable, include_key=False, name=None, partition=1, namespace=None, persistent=False,
-                create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False):
+                create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False) -> Table:
     return RuntimeInstance.EGGROLL.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
                                                persistent=persistent,
                                                chunk_size=chunk_size,
-                                               in_place_computing=in_place_computing)
+                                               in_place_computing=in_place_computing,
+                                               create_if_missing=create_if_missing,
+                                               error_if_exist=error_if_exist)
+
 
 def cleanup(name, namespace, persistent=False):
     return RuntimeInstance.EGGROLL.cleanup(name=name, namespace=namespace, persistent=persistent)
 
+
+# noinspection PyPep8Naming
 def generateUniqueId():
     return RuntimeInstance.EGGROLL.generateUniqueId()
 
+
 def get_job_id():
     return RuntimeInstance.EGGROLL.job_id
+
+
+def get_data_table(name, namespace):
+    """
+    return data table instance by table name and table name space
+    :param name: table name of data table
+    :param namespace: table name space of data table
+    :return:
+        data table instance
+    """
+    return RuntimeInstance.EGGROLL.get_data_table(name=name, namespace=namespace)
+
+
+def save_data_table_meta(kv, data_table_name, data_table_namespace):
+    """
+    save data table meta information
+    :param kv: v should be serialized by JSON
+    :param data_table_name: table name of this data table
+    :param data_table_namespace: table name of this data table
+    :return:
+    """
+    return RuntimeInstance.EGGROLL.save_data_table_meta(kv=kv,
+                                                        data_table_name=data_table_name,
+                                                        data_table_namespace=data_table_namespace)
+
+
+def get_data_table_meta(key, data_table_name, data_table_namespace):
+    """
+    get data table meta information
+    :param key:
+    :param data_table_name: table name of this data table
+    :param data_table_namespace: table name of this data table
+    :return:
+    """
+    return RuntimeInstance.EGGROLL.get_data_table_meta(key=key,
+                                                       data_table_name=data_table_name,
+                                                       data_table_namespace=data_table_namespace)
+
+
+def get_data_table_metas(data_table_name, data_table_namespace):
+    """
+    get data table meta information
+    :param data_table_name: table name of this data table
+    :param data_table_namespace: table name of this data table
+    :return:
+    """
+    return RuntimeInstance.EGGROLL.get_data_table_metas(data_table_name=data_table_name,
+                                                        data_table_namespace=data_table_namespace)
+
+
+def clean_tables(namespace, regex_string='*'):
+    RuntimeInstance.EGGROLL.clean_table(namespace=namespace, regex_string=regex_string)
+
+
+def save_data(kv_data: Iterable,
+              name,
+              namespace,
+              partition=1,
+              persistent: bool = True,
+              create_if_missing=True,
+              error_if_exist=False,
+              in_version: bool = False,
+              version_log=None):
+    """
+    save data into data table
+    :param kv_data:
+    :param name: table name of data table
+    :param namespace: table namespace of data table
+    :param partition: number of partition
+    :param persistent
+    :param create_if_missing:
+    :param error_if_exist:
+    :param in_version:
+    :param version_log
+    :return:
+        data table instance
+    """
+    return RuntimeInstance.EGGROLL.save_data(kv_data=kv_data,
+                                             name=name,
+                                             namespace=namespace,
+                                             partition=partition,
+                                             persistent=persistent,
+                                             create_if_missing=create_if_missing,
+                                             error_if_exist=error_if_exist,
+                                             in_version=in_version,
+                                             version_log=version_log)

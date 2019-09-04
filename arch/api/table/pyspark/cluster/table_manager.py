@@ -30,7 +30,7 @@ class RDDTableManager(TableManager):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, job_id, eggroll_context, server_conf_path="arch/conf/server_conf.json", master=None):
+    def __init__(self, job_id, eggroll_context, server_conf_path="arch/conf/server_conf.json"):
 
         self.job_id = job_id
         self._eggroll_context = eggroll_context
@@ -39,8 +39,6 @@ class RDDTableManager(TableManager):
         # init PySpark
         from pyspark import SparkContext, SparkConf
         conf = SparkConf().setAppName(f"FATE-PySpark-{job_id}")
-        if master:
-            conf = conf.setMaster(master)
         sc = SparkContext.getOrCreate(conf=conf)
         self._sc = sc
 

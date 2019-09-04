@@ -18,10 +18,14 @@ from arch.api.utils.core import json_dumps, json_loads
 from arch.api.utils import version_control
 from arch.api import eggroll
 import datetime
+import warnings
+
+warnings.warn("the storage module is deprecated, use apis from Table/TableManager directly", DeprecationWarning,
+              stacklevel=2)
 
 
-def init_storage(work_mode, job_id=None):
-    eggroll.init(job_id=job_id, mode=work_mode)
+def init_storage(work_mode, backend=0, job_id=None):
+    eggroll.init(job_id=job_id, mode=work_mode, backend=backend)
 
 
 def table(name: str, namespace: str, partition: int = 1, persistent: bool = True, create_if_missing: bool = True,

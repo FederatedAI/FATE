@@ -14,9 +14,20 @@
 #  limitations under the License.
 #
 
+import time
 
-class BaseOperator:
-    operator_register = {}
+from arch.api.utils.log_utils import LoggerFactory
 
-    def execute(self, context):
-        pass
+LOGGER = LoggerFactory.get_logger("PROFILING")
+
+
+def log_elapsed(func):
+    func_name = func.__name__
+
+    def _fn(*args, **kwargs):
+        t = time.time()
+        name = f"{func_name}#{kwargs['func_tag']}" if 'func_tag' in kwargs else func_name
+        rtn = func(*args, **kwargs)
+        LOGGER.debug(f"{name} takes {time.time() - t}s")
+        return rtn
+    return _fn
