@@ -14,10 +14,14 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.splitable import segment_transfer_enabled
-from federatedml.secureprotol.encrypt import Encrypt
 import abc
 import operator
+import numpy as np
+from arch.api.utils import log_utils
+from arch.api.utils.splitable import segment_transfer_enabled
+from federatedml.secureprotol.encrypt import Encrypt
+
+LOGGER = log_utils.getLogger()
 
 
 class TransferableVariables(metaclass=segment_transfer_enabled()):
@@ -26,7 +30,6 @@ class TransferableVariables(metaclass=segment_transfer_enabled()):
 
 
 class Variables(object):
-
     def __init__(self, l):
         self._parameter = l
 
@@ -35,11 +38,12 @@ class Variables(object):
 
     @staticmethod
     def from_transferable(transferable_parameters: TransferableVariables):
-        if isinstance(transferable_parameters.parameters, list):
+        if isinstance(transferable_parameters.parameters, (list, np.ndarray)):
             return ListVariables(transferable_parameters.parameters)
         if isinstance(transferable_parameters.parameters, dict):
             return DictVariables(transferable_parameters.parameters)
 
+        LOGGER.debug("type of parameters: {}".format(type(transferable_parameters.parameters)))
         raise NotImplemented(f"build parameters from {type(transferable_parameters.parameters)}")
 
     @abc.abstractmethod
@@ -57,7 +61,7 @@ class Variables(object):
     def decrypted(self, cipher: Encrypt, inplace=True):
         return self.map_values(cipher.decrypt, inplace=inplace)
 
-    def encrypted(self, cipher: Encrypt, inplace=True) -> 'Parameters':
+    def encrypted(self, cipher: Encrypt, inplace=True):
         return self.map_values(cipher.encrypt, inplace=inplace)
 
     def __imul__(self, other):
@@ -85,8 +89,13 @@ class ListVariables(Variables):
 
     def map_values(self, func, inplace):
         if inplace:
+            LOGGER.debug("self._parameter: {}".format(self._parameter))
             for k, v in enumerate(self._parameter):
+                LOGGER.debug("In map_values, k: {}, v: {}, func: {}, type_v: {}".format(k, v, func, type(v)))
+
                 self._parameter[k] = func(v)
+                LOGGER.debug("Current self._parameter: {}".format(self._parameter))
+
             return self
         else:
             _w = []
@@ -111,7 +120,6 @@ class ListVariables(Variables):
 
 
 class DictVariables(Variables):
-
     def __init__(self, d):
         super().__init__(d)
 

@@ -78,7 +78,7 @@ class HomoLRGuest(HomoLRBase):
             self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
             self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_variables = LogisticRegressionVariables(weight, self.fit_intercept)
+            self.lr_variables = LogisticRegressionVariables(weight.parameters, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
@@ -101,37 +101,7 @@ class HomoLRGuest(HomoLRBase):
         lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         return lr_variables
 
-    # def run(self, component_parameters=None, args=None):
-    #     self._init_runtime_parameters(component_parameters)
-    #     train_data, eval_data = self._run_data(args["data"])
-    #     stage, has_eval = self._judge_stage(train_data, eval_data)
-    #     if self.need_cv:
-    #         LOGGER.info("Need cross validation.")
-    #         self.cross_validation(train_data)
-    #
-    #     elif self.need_one_vs_rest:
-    #         if "model" in args:
-    #             self._load_model(args)
-    #         self.one_vs_rest_logic(stage, train_data, eval_data)
-    #
-    #     elif stage == "fit":
-    #         self.fit(train_data)
-    #         self.data_output = self.predict(train_data)
-    #         self.data_output = self.data_output.mapValues(lambda value: value + ["train"])
-    #         if has_eval:
-    #             self.set_flowid('validate')
-    #             eval_data_output = self.data_output = self.predict(eval_data)
-    #             eval_data_output = eval_data_output.mapValues(lambda value: value + ["validation"])
-    #             self.data_output = self.data_output.union(eval_data_output)
-    #         self.set_predict_data_schema(self.data_output, train_data.schema)
-    #     else:
-    #         self.set_flowid('predict')
-    #         self.data_output = self.predict(eval_data)
-    #
-    #         if self.data_output:
-    #             self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
-    #
-    #         self.set_predict_data_schema(self.data_output, eval_data.schema)
+
 
 
 

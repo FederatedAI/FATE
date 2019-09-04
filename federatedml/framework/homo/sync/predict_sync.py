@@ -42,6 +42,8 @@ class Arbiter(object):
     def start_predict(self, host_ciphers, lr_variables, predict_threshold, suffix=tuple()):
         # Send encrypted model to hosts.
         for idx, cipher in host_ciphers.items():
+            if cipher is None:
+                continue
             encrypted_lr_variables = lr_variables.encrypted(cipher, inplace=False)
             self._final_model_variable.remote(obj=encrypted_lr_variables.for_remote(),
                                               role=consts.HOST,
@@ -50,10 +52,15 @@ class Arbiter(object):
 
         # Receive wx results
         for idx, cipher in host_ciphers.items():
+            if cipher is None:
+                continue
             encrypted_predict_wx = self._predict_wx_variable.get(idx=idx, suffix=suffix)
             predict_wx = cipher.distribute_decrypt(encrypted_predict_wx)
-            predict_table = classify(predict_wx, predict_threshold)
-            self._predict_result_variable.remote(predict_table, idx, suffix)
+            pred_prob, predict_table = classify(predict_wx, predict_threshold)
+            self._predict_result_variable.remote(predict_table,
+                                                 role=consts.HOST,
+                                                 idx=idx,
+                                                 suffix=suffix)
 
 
 class Host(object):
@@ -72,7 +79,7 @@ class Host(object):
                       use_encrypted, fit_intercept, suffix=tuple()):
         if use_encrypted:
             final_model = self._final_model_variable.get(idx=0, suffix=suffix)
-            lr_variables = LogisticRegressionVariables(final_model, fit_intercept)
+            lr_variables = LogisticRegressionVariables(final_model.parameters, fit_intercept)
 
         wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
         if use_encrypted:

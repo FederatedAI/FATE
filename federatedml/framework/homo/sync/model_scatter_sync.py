@@ -14,13 +14,15 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.weights import Variables
+from arch.api.utils import log_utils
 from federatedml.framework.homo.util import scatter
+from federatedml.framework.weights import Variables
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class Arbiter(object):
-
     # noinspection PyAttributeOutsideInit
     def _register_model_scatter(self, host_model_transfer, guest_model_transfer):
         self._models_sync = scatter.Scatter(host_model_transfer, guest_model_transfer)
@@ -28,6 +30,9 @@ class Arbiter(object):
 
     def _get_models(self, ciphers_dict=None, suffix=tuple()):
         models = [Variables.from_transferable(model) for model in self._models_sync.get(suffix=suffix)]
+        for i, m in enumerate(models):
+            LOGGER.debug("i: {}, model: {}".format(i, m._parameter))
+        LOGGER.debug("ciphers_dict: {}".format(ciphers_dict))
         if ciphers_dict:
             for i, cipher in ciphers_dict.items():
                 if cipher:

@@ -20,6 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -47,7 +48,7 @@ class HomoLRArbiter(HomoLRBase):
     def fit(self, data_instances):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
-        host_has_cipher_ids = list(host_ciphers.keys())
+        host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
 
@@ -60,8 +61,9 @@ class HomoLRArbiter(HomoLRBase):
 
             merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                    suffix=suffix)
-
-            total_loss = self.aggregator.aggregate_loss(idx=host_has_cipher_ids,
+            self.lr_variables = LogisticRegressionVariables(merged_model.for_remote().parameters,
+                                                            self.model_param.init_param.fit_intercept)
+            total_loss = self.aggregator.aggregate_loss(idx=host_has_no_cipher_ids,
                                                         suffix=suffix)
             self.callback_loss(self.n_iter_, total_loss)
             self.loss_history.append(total_loss)
@@ -70,7 +72,7 @@ class HomoLRArbiter(HomoLRBase):
             else:
                 converge_var = merged_model
             self.aggregator.check_converge_status(self.converge_func.is_converge,
-                                                  converge_var,
+                                                  (converge_var,),
                                                   suffix=(self.n_iter_,))
 
             LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
@@ -89,3 +91,5 @@ class HomoLRArbiter(HomoLRBase):
                                              self.lr_variables,
                                              self.model_param.predict_param.threshold,
                                              current_suffix)
+
+

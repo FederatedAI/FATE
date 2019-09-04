@@ -67,7 +67,7 @@ class Guest(three_parties_sync.Guest, Base):
         self.n_iter_ = n_iter
         self.batch_index = batch_index
 
-    def computer_intermediate(self, data_instances, lr_variables):
+    def compute_intermediate(self, data_instances, lr_variables):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -119,7 +119,7 @@ class Guest(three_parties_sync.Guest, Base):
     def apply_procedure(self, data_instances, lr_variables):
         current_suffix = (self.n_iter_, self.batch_index)
 
-        self.computer_intermediate(data_instances, lr_variables)
+        self.compute_intermediate(data_instances, lr_variables)
         host_forward = self.host_to_guest((self.host_forward_dict_transfer,),
                                           suffix=current_suffix)[0]
         LOGGER.info("Get host_forward from host")
@@ -186,7 +186,7 @@ class Host(three_parties_sync.Host, Base):
         self.n_iter_ = n_iter
         self.batch_index = batch_index
 
-    def computer_intermediate(self, data_instances, lr_variables):
+    def compute_intermediate(self, data_instances, lr_variables):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -210,7 +210,7 @@ class Host(three_parties_sync.Host, Base):
     def apply_procedure(self, data_instances, lr_variables):
         current_suffix = (self.n_iter_, self.batch_index)
 
-        host_forward = self.computer_intermediate(data_instances, lr_variables)
+        host_forward = self.compute_intermediate(data_instances, lr_variables)
         self.host_to_guest(variables=(host_forward,),
                            transfer_variables=(self.host_forward_dict_transfer,),
                            suffix=current_suffix)

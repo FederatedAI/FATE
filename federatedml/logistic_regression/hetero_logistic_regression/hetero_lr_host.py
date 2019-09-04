@@ -19,14 +19,12 @@ import numpy as np
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
-from federatedml.framework.hetero.procedure import loss_computer, aggregator, convergence
+from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.optim.gradient import hetero_gradient_procedure
-from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
-from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 

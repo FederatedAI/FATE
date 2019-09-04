@@ -54,14 +54,15 @@ class Host(batch_info_sync.Host):
     def __init__(self):
         self.finish_sycn = False
         self.batch_data_insts = []
+        self.batch_nums = None
 
     def register_batch_generator(self, transfer_variables):
         self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
 
     def initialize_batch_generator(self, data_instances, suffix=tuple()):
         batch_info = self.sync_batch_info(suffix)
-        batch_num = batch_info.get('batch_num')
-        for batch_index in range(batch_num):
+        self.batch_nums = batch_info.get('batch_num')
+        for batch_index in range(self.batch_nums):
             batch_suffix = suffix + tuple(batch_index)
             batch_data_index = self.sync_batch_index(suffix=batch_suffix)
             batch_data_inst = batch_data_index.join(data_instances, lambda g, d: d)

@@ -14,11 +14,13 @@
 #  limitations under the License.
 #
 
+from arch.api.utils import log_utils
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class Arbiter(object):
-
     # noinspection PyAttributeOutsideInit
     def _register_paillier_re_cipher(self, re_encrypt_times_transfer,
                                      model_to_re_encrypt_transfer,
@@ -38,12 +40,19 @@ class Arbiter(object):
         return re_encrypt_times
 
     def re_cipher(self, iter_num, re_encrypt_times, host_ciphers_dict, re_encrypt_batches, suffix=tuple()):
+
+        LOGGER.debug("Get in re_cipher, re_encrypt_times: {}".format(re_encrypt_times))
+
         left_re_encrypt_times = re_encrypt_times.copy()
         total = sum(left_re_encrypt_times.values())
         batch_iter_num = 0
         while total > 0:
             batch_iter_num += re_encrypt_batches
             idx_remind = [idx for idx, left_times in left_re_encrypt_times.items() if left_times > 0]
+            LOGGER.debug("Current idx_remind: {}, left_re_encrypt_times: {}, total: {}".format(idx_remind,
+                                                                                               left_re_encrypt_times,
+                                                                                               total))
+
             for idx in idx_remind:
                 re_encrypt_model = self._model_to_re_encrypt_transfer.get(idx=idx,
                                                                           suffix=(*suffix, iter_num, batch_iter_num))
@@ -59,7 +68,6 @@ class Arbiter(object):
 
 
 class Host(object):
-
     # noinspection PyAttributeOutsideInit
     def _register_paillier_re_cipher(self, re_encrypt_times_transfer,
                                      model_to_re_encrypt_transfer,

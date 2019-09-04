@@ -73,7 +73,7 @@ class Arbiter(party_weights_sync.Arbiter,
             suffix: tag suffix
         """
         model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self._send_model(model.for_remote(), ciphers_dict=ciphers_dict, suffix=suffix)
+        self._send_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
         return model
 
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
@@ -83,7 +83,7 @@ class Arbiter(party_weights_sync.Arbiter,
         self._send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
-        losses = self.get_losses(idx=idx, suffix=suffix)
+        losses = list(self.get_losses(idx=idx, suffix=suffix))
         if idx is None:
             return sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
         else:
@@ -129,7 +129,7 @@ class Guest(party_weights_sync.Guest,
         return self.get_aggregated_model(suffix=suffix)
 
     def get_aggregated_model(self, suffix=tuple()):
-        self._get_model(suffix=suffix)
+        return self._get_model(suffix=suffix)
 
     def send_model_for_aggregate(self, weights: Variables, suffix=tuple()):
         self._send_model(weights=weights, suffix=suffix)
