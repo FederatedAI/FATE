@@ -19,102 +19,42 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.sync import three_parties_sync
+from federatedml.framework.hetero.sync import gradient_sync
 from federatedml.framework.weights import ListVariables
-from federatedml.optim.gradient.logistic_gradient import HeteroLogisticGradientComputer
-
-# from federatedml.statistic.data_overview import rubbish_clear
-# from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
 
-class Base(HeteroLogisticGradientComputer):
-    def __init__(self):
-        self.n_iter_ = 0
-        self.batch_index = 0
-        self.cipher_operator = None
+# class Base(HeteroLogisticGradientComputer):
+#     def __init__(self):
+#         self.n_iter_ = 0
+#         self.batch_index = 0
+#         self.cipher_operator = None
+#
+# func part
+# self.compute_wx = None
+# self.update_local_model = None
 
-        # func part
-        self.compute_wx = None
-        self.update_local_model = None
 
-
-class Guest(three_parties_sync.Guest, Base):
+class Guest(gradient_sync.Guest, Base):
     def __init__(self):
         super().__init__()
         self.encrypted_calculator = None
         self.guest_forward = None
 
-    def _register_intermediate_transfer(self, transfer_variables):
-        self.host_forward_dict_transfer = transfer_variables.host_forward_dict
-        self.fore_gradient_transfer = transfer_variables.fore_gradient
-        self.guest_gradient_transfer = transfer_variables.guest_gradient
-        self.guest_optim_gradient_transfer = transfer_variables.guest_optim_gradient
-
-    def register_func(self, lr_model):
-        self.compute_wx = lr_model.compute_wx
-        self.update_local_model = lr_model.update_local_model
-
-    def register_attrs(self, lr_model):
-        self.encrypted_calculator = lr_model.encrypted_calculator
-        self.cipher_operator = lr_model.cipher_operator
+    # def register_func(self, lr_model):
+    #     self.compute_wx = lr_model.compute_wx
+    #     self.update_local_model = lr_model.update_local_model
+    #
+    # def register_attrs(self, lr_model):
+    #     self.encrypted_calculator = lr_model.encrypted_calculator
+    #     self.cipher_operator = lr_model.cipher_operator
 
     def register_gradient_procedure(self, transfer_variables):
-        self._register_intermediate_transfer(transfer_variables)
-
-    def renew_current_info(self, n_iter, batch_index):
-        self.n_iter_ = n_iter
-        self.batch_index = batch_index
-
-    def compute_intermediate(self, data_instances, lr_variables):
-        """
-        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
-        and b is the interception
-        Parameters
-        ----------
-        data_instances: DTable of Instance, input data
-
-        lr_variables: LogisticRegressionVariables
-            Stores coef_ and intercept_ of lr
-
-        """
-        wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
-
-        en_wx = self.encrypted_calculator[self.batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator[self.batch_index].encrypt(wx_square)
-
-        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        self.guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
-
-        # temporary resource recovery and will be removed in the future
-        # rubbish_list = [en_wx, wx_square, en_wx_square, en_wx_join_en_wx_square]
-        # rubbish_clear(rubbish_list)
-
-    def aggregate_forward(self, host_forward):
-        """
-        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h ,
-         where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
-        and en_wx_h is the encrypted W * X + b of host.
-        Parameters
-        ----------
-        host_forward: DTable, include encrypted W * X and (W * X)^2
-
-        Returns
-        ----------
-        aggregate_forward_res
-        list
-            include W * X and (W * X)^2 federate with guest and host
-        """
-        aggregate_forward_res = self.guest_forward.join(host_forward,
-                                                        lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
-
-        en_aggregate_wx = aggregate_forward_res.mapValues(lambda v: v[0])
-        en_aggregate_wx_square = aggregate_forward_res.mapValues(lambda v: v[1])
-
-        # self.rubbish_bin.append(aggregate_forward_res)
-        return en_aggregate_wx, en_aggregate_wx_square
+        self._register_gradient_sync(transfer_variables.host_forward_dict,
+                                     transfer_variables.fore_gradient,
+                                     transfer_variables.guest_gradient,
+                                     transfer_variables.guest_optim_gradient)
 
     def apply_procedure(self, data_instances, lr_variables):
         current_suffix = (self.n_iter_, self.batch_index)
