@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/util",
+    "default_runtime_conf": "upload_param.json",
+    "param_class" : "federatedml/param/upload_param.py/UpLoadParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "upload.py/UpLoad"
+        }
+    }
+}
