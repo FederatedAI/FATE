@@ -74,7 +74,6 @@ class _Optimizer(object):
         else:
             new_vars = model_variables.for_remote().parameters - grad
             model_variables = LogisticRegressionVariables(new_vars, model_variables.fit_intercept)
-        self.iters += 1
         return model_variables
 
     def __l1_loss_norm(self, model_variables: LogisticRegressionVariables):
@@ -96,19 +95,21 @@ class _Optimizer(object):
             loss_norm_value = None
         return loss_norm_value
 
-    def update_model(self, model_variables: LogisticRegressionVariables, grad):
-        delta_grad = self.apply_gradients(grad)
+    def update_model(self, model_variables: LogisticRegressionVariables, grad, has_applied=True):
+        if not has_applied:
+            delta_grad = self.apply_gradients(grad)
+        else:
+            self.iters += 1
+            delta_grad = grad
         new_param = self.update(model_variables, delta_grad)
         return new_param
 
 
 class _SgdOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty):
-        super().__init__(learning_rate, alpha, penalty)
-        self.opt_beta = 0.999
 
     def apply_gradients(self, grad):
-        self.learning_rate *= self.opt_beta
+        self.iters += 1
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
         delta_grad = self.learning_rate * grad
         return delta_grad
 
@@ -120,6 +121,9 @@ class _RMSPropOptimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
+        self.iters += 1
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
@@ -135,6 +139,9 @@ class _AdaGradOptimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
+        self.iters += 1
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         self.opt_m = self.opt_m + np.square(grad)
@@ -151,6 +158,9 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
+        self.iters += 1
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
@@ -173,6 +183,9 @@ class _AdamOptimizer(_Optimizer):
         self.opt_v = None
 
     def apply_gradients(self, grad):
+        self.iters += 1
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 

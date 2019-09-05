@@ -93,21 +93,20 @@ class HeteroLRArbiter(HeteroLRBase):
             batch_data_generator = self.batch_generator.generate_batch_data()
 
             for batch_index in batch_data_generator:
-                self.renew_current_info(self.n_iter_, batch_index)
-
                 # Compute and Transfer gradient info
-                self.gradient_procedure.apply_procedure()
+                self.gradient_procedure.compute_gradient_procedure(self.cipher_operator,
+                                                                   self.optimizer,
+                                                                   self.n_iter_,
+                                                                   batch_index)
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
-                loss = self.loss_computer.apply_procedure()
+                loss = self.loss_computer.sync_loss_info(self.n_iter_, batch_index)
 
                 de_loss = self.cipher_operator.decrypt(loss)
                 iter_loss += de_loss
                 # LOGGER.info("Get loss from guest:{}".format(de_loss))
-
-                batch_index += 1
 
             # if converge
             loss = iter_loss / self.batch_generator.batch_num
@@ -118,7 +117,7 @@ class HeteroLRArbiter(HeteroLRBase):
                 self.is_converged = True
             LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, loss, self.is_converged))
 
-            self.converge_procedure.syn_converge_info(self.is_converged)
+            self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
             self.n_iter_ += 1
             if self.is_converged:
                 break

@@ -20,14 +20,6 @@ import abc
 
 
 class Guest(object):
-
-    def _register_gradient_sync(self, host_forward_dict_transfer, fore_gradient_transfer,
-                                guest_gradient_transfer, guest_optim_gradient_transfer):
-        self.host_forward_dict_transfer = host_forward_dict_transfer
-        self.fore_gradient_transfer = fore_gradient_transfer
-        self.guest_gradient_transfer = guest_gradient_transfer
-        self.guest_optim_gradient_transfer = guest_optim_gradient_transfer
-
     @abc.abstractclassmethod
     def compute_intermediate(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
@@ -36,5 +28,40 @@ class Guest(object):
     def aggregate_host_result(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
 
-    def compute_gradient_and_loss(self, *args, **kwargs):
+    def compute_gradient_procedure(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
+
+
+class Host(object):
+    @abc.abstractclassmethod
+    def compute_intermediate(self, *args, **kwargs):
+        raise NotImplementedError("This method should be be called here")
+
+    def compute_gradient_procedure(self, *args, **kwargs):
+        raise NotImplementedError("This method should be be called here")
+
+
+class Arbiter(object):
+    def compute_gradient_procedure(self, *args, **kwargs):
+        raise NotImplementedError("This method should be be called here")
+
+    @staticmethod
+    def separate(value, size_list):
+        """
+        Separate value in order to several set according size_list
+        Parameters
+        ----------
+        value: list or ndarray, input data
+        size_list: list, each set size
+
+        Returns
+        ----------
+        list
+            set after separate
+        """
+        separate_res = []
+        cur = 0
+        for size in size_list:
+            separate_res.append(value[cur:cur + size])
+            cur += size
+        return separate_res

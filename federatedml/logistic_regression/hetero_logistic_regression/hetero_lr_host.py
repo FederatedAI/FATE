@@ -18,9 +18,9 @@ import numpy as np
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
@@ -91,9 +91,6 @@ class HeteroLRHost(HeteroLRBase):
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
                                      in range(self.batch_generator.batch_nums)]
 
-        self.gradient_procedure.register_func(self)
-        self.gradient_procedure.register_attrs(self)
-
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
@@ -108,25 +105,26 @@ class HeteroLRHost(HeteroLRBase):
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
+                optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                    batch_feat_inst, self.lr_variables, self.compute_wx,
+                    self.encrypted_calculator, self.n_iter_, batch_index)
 
-                self.renew_current_info(self.n_iter_, batch_index)
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
 
-                optim_host_gradient = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
                 self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
                                                   self.cipher, self.optimizer)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
                 batch_index += 1
 
-            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                        tag=self.transfer_variable.generate_transferid(
-                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                        idx=0)
-            LOGGER.info("Get is_stop flag from arbiter:{}".format(is_stopped))
+            self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
+
+            LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
             self.n_iter_ += 1
-            if is_stopped:
-                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
+            LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
+            if self.is_converged:
                 break
 
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))

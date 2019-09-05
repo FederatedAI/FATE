@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -73,9 +72,6 @@ class HeteroLRGuest(HeteroLRBase):
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
                                      in range(self.batch_generator.batch_nums)]
 
-        self.gradient_procedure.register_func(self)
-        self.gradient_procedure.register_attrs(self)
-
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
@@ -94,15 +90,25 @@ class HeteroLRGuest(HeteroLRBase):
                 self.renew_current_info(self.n_iter_, batch_index)
 
                 # Start gradient procedure
-                optim_guest_gradient, loss = self.gradient_procedure.apply_procedure(batch_feat_inst, self.lr_variables)
+                optim_guest_gradient, loss, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                    batch_feat_inst,
+                    self.lr_variables,
+                    self.compute_wx,
+                    self.encrypted_calculator,
+                    self.n_iter_,
+                    batch_index
+                )
+
+                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
+
                 self.loss_computer.sync_loss_info(self.lr_variables, loss, self.n_iter_, batch_index, self.optimizer)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_guest_gradient)
                 batch_index += 1
 
-            self.is_converged = self.converge_procedure.syn_converge_info(self.is_converged)
+            self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
-
             self.n_iter_ += 1
             if self.is_converged:
                 break
