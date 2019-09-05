@@ -178,13 +178,6 @@ class DenseFeatureReader(object):
                 self.missing_impute = imputer_processor.get_missing_value_list()
 
             self.missing_impute_rate = imputer_processor.get_impute_rate(mode)
-            # callback("missing_value_ratio",
-            #         missing_impute_rate,
-            #         self.tracker)
-
-            # callback("missing_value_list",
-            #           self.missing_impute,
-            #           self.tracker)
 
         return input_data_features
 
@@ -205,13 +198,6 @@ class DenseFeatureReader(object):
                                                                   transform_value=self.outlier_replace_value)
 
             self.outlier_replace_rate = imputer_processor.get_impute_rate(mode)
-            # callback("outlier_value_ratio",
-            #         outlier_replace_rate,
-            #         self.tracker)
-
-            # callback("outlier_value_list",
-            #          self.outlier_impute,
-            #          self.tracker)
 
         return input_data_features
 
@@ -250,6 +236,12 @@ class DenseFeatureReader(object):
             raise ValueError("output format {} is not define".format(output_format))
 
         if output_format == "dense":
+            if data_type in ["int", "int64", "long", "float", "float64", "double"]:
+                for i in range(len(features)):
+                    if (missing_impute is not None and features[i] in missing_impute) or \
+                            (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
+                        features[i] = np.nan
+
             return np.asarray(features, dtype=data_type)
 
         indices = []
@@ -260,9 +252,11 @@ class DenseFeatureReader(object):
         for i in range(column_shape):
             if (missing_impute is not None and features[i] in missing_impute) or \
                     (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
-                continue
+                indices.append(i)
+                data.append(np.nan)
+                non_zero += 1
 
-            if data_type in ['float', 'float64']:
+            if data_type in ['float', 'float64', "double"]:
                 if np.fabs(float(features[i])) < consts.FLOAT_ZERO:
                     continue
 
@@ -270,7 +264,7 @@ class DenseFeatureReader(object):
                 data.append(float(features[i]))
                 non_zero += 1
 
-            elif data_type in ['int']:
+            elif data_type in ['int', "int64", "long"]:
                 if int(features[i]) == 0:
                     continue
                 indices.append(i)

@@ -36,7 +36,9 @@ from federatedml.tree import FeatureHistogram
 from federatedml.util.transfer_variable.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import Node
+from federatedml.feature.fate_element_type import NoneType
 import functools
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -64,6 +66,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.tree_node_queue = None
         self.cur_split_nodes = None
         self.split_maskdict = {}
+        self.missing_dir_maskdict = {}
         self.tree_ = None
         self.runtime_idx = 0
         self.sitename = consts.HOST
@@ -72,10 +75,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
 
-    def set_runtime_idx(self, runtime_idx):
-        self.runtime_idx = runtime_idx
-        self.sitename = ".".join([consts.HOST, str(self.runtime_idx)])
-        LOGGER.info("runtime idx is {}, sitename is {}".format(self.runtime_idx, self.sitename))
+    # def set_runtime_idx(self, runtime_idx):
+    #     self.runtime_idx = runtime_idx
+    #     self.sitename = ":".join([consts.HOST, str(self.runtime_idx)])
 
     def set_inputinfo(self, data_bin=None, grad_and_hess=None, bin_split_points=None, bin_sparse_points=None):
         LOGGER.info("set input info")
@@ -96,16 +98,26 @@ class HeteroDecisionTreeHost(DecisionTree):
             self.split_maskdict[nid] = val
             return None
 
+        if etype == "missing_dir":
+            self.missing_dir_maskdict[nid] = val
+            return None
+
         raise TypeError("encode type %s is not support!" % (str(etype)))
 
     @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None):
+    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
         if dtype == "feature_idx":
             return val
 
         if dtype == "feature_val":
             if nid in split_maskdict:
                 return split_maskdict[nid]
+            else:
+                raise ValueError("decode val %s cause error, can't reconize it!" % (str(val)))
+
+        if dtype == "missing_dir":
+            if nid in missing_dir_maskdict:
+                return missing_dir_maskdict[nid]
             else:
                 raise ValueError("decode val %s cause error, can't reconize it!" % (str(val)))
 
@@ -138,7 +150,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         histograms = FeatureHistogram.calculate_histogram(
             self.data_bin_with_position, self.grad_and_hess,
             self.bin_split_points, self.bin_sparse_points,
-            self.valid_features, node_map)
+            self.valid_features, node_map,
+            self.use_missing, self.zero_as_missing)
         LOGGER.info("begin to accumulate histograms")
         acc_histograms = FeatureHistogram.accumulate_histogram(histograms)
         LOGGER.info("acc histogram shape is {}".format(len(acc_histograms)))
@@ -173,6 +186,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                 splitinfo.best_fid = self.encode("feature_idx", splitinfo.best_fid)
                 assert splitinfo.best_fid is not None
                 splitinfo.best_bid = self.encode("feature_val", splitinfo.best_bid, self.cur_split_nodes[i].id)
+                splitinfo.missing_dir = self.encode("missing_dir", splitinfo.missing_dir, self.cur_split_nodes[i].id)
                 splitinfo.gain = best_gain
             else:
                 splitinfo = SplitInfo(sitename=self.sitename, best_fid=-1, best_bid=-1, gain=best_gain)
@@ -196,7 +210,9 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def dispatch_node(value1, value2, sitename=None, decoder=None,
-                      split_maskdict=None, bin_sparse_points=None,):
+                      split_maskdict=None, bin_sparse_points=None,
+                      use_missing=False, zero_as_missing=False,
+                      missing_dir_maskdict=None):
 
         unleaf_state, fid, bid, node_sitename, nodeid, left_nodeid, right_nodeid = value1
         if node_sitename != sitename:
@@ -204,10 +220,32 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         fid = decoder("feature_idx", fid, split_maskdict=split_maskdict)
         bid = decoder("feature_val", bid, nodeid, split_maskdict=split_maskdict)
-        if value2.features.get_data(fid, bin_sparse_points[fid]) <= bid:
-            return unleaf_state, left_nodeid
+        if not use_missing:
+            if value2.features.get_data(fid, bin_sparse_points[fid]) <= bid:
+                return unleaf_state, left_nodeid
+            else:
+                return unleaf_state, right_nodeid
         else:
-            return unleaf_state, right_nodeid
+            missing_dir = decoder("missing_dir", 1, nodeid,
+                                  missing_dir_maskdict=missing_dir_maskdict)
+            missing_val = False
+            if zero_as_missing:
+                if value2.features.get_data(fid, None) is None or \
+                    value2.features.get_data(fid) == NoneType():
+                    missing_val = True
+            elif use_missing and value2.features.get_data(fid) == NoneType():
+                    missing_val = True
+
+            if missing_val:
+                if missing_dir == 1:
+                    return unleaf_state, right_nodeid
+                else:
+                    return unleaf_state, left_nodeid
+            else:
+                if value2.features.get_data(fid, bin_sparse_points[fid]) <= bid:
+                    return unleaf_state, left_nodeid
+                else:
+                    return unleaf_state, right_nodeid
 
     def sync_dispatch_node_host_result(self, dispatch_node_host_result, dep=-1):
         LOGGER.info("send host dispatch result, depth is {}".format(dep))
@@ -223,7 +261,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
                                                  split_maskdict=self.split_maskdict,
-                                                 bin_sparse_points=self.bin_sparse_points)
+                                                 bin_sparse_points=self.bin_sparse_points,
+                                                 use_missing=self.use_missing,
+                                                 zero_as_missing=self.zero_as_missing,
+                                                 missing_dir_maskdict=self.missing_dir_maskdict)
         dispatch_node_host_result = dispatch_node_host.join(self.data_bin, dispatch_node_method)
         self.sync_dispatch_node_host_result(dispatch_node_host_result, dep)
 
@@ -258,7 +299,9 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
-                      decoder=None, split_maskdict=None, sitename=consts.HOST):
+                      decoder=None, split_maskdict=None, sitename=consts.HOST,
+                      use_missing=False, zero_as_missing=False,
+                      missing_dir_maskdict=None):
 
         nid, _ = predict_state
         if tree_[nid].sitename != sitename:
@@ -268,12 +311,33 @@ class HeteroDecisionTreeHost(DecisionTree):
             fid = decoder("feature_idx", tree_[nid].fid, split_maskdict=split_maskdict)
             bid = decoder("feature_val", tree_[nid].bid, nid, split_maskdict)
 
-            if data_inst.features.get_data(fid, 0) <= bid:
+            if use_missing:
+                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
+            else:
+                missing_dir = 1
+
+            if use_missing and zero_as_missing:
+                missing_dir = decoder("missing_dir", 1, nid, missing_dir_maskdict=missing_dir_maskdict)
+                if data_inst.features.get_data(fid) == NoneType() or data_inst.features.get_data(fid, None) is None:
+                    if missing_dir == 1:
+                        nid = tree_[nid].right_nodeid
+                    else:
+                        nid = tree_[nid].left_nodeid
+                elif data_inst.features.get_data(fid) <= bid:
+                    nid = tree_[nid].left_nodeid
+                else:
+                    nid = tree_[nid].right_nodeid
+            elif data_inst.features.get_data(fid) == NoneType():
+                if missing_dir == 1:
+                    nid = tree_[nid].right_nodeid
+                else:
+                    nid = tree_[nid].left_nodeid
+            elif data_inst.features.get_data(fid, 0) <= bid:
                 nid = tree_[nid].left_nodeid
             else:
                 nid = tree_[nid].right_nodeid
 
-        return (nid, 0)
+        return nid, 0
 
     def sync_predict_finish_tag(self, recv_times):
         LOGGER.info("get the {}-th predict finish tag from guest".format(recv_times))
@@ -327,7 +391,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(acc_histograms,
                                                                                          self.valid_features,
                                                                                          self.data_bin._partitions,
-                                                                                         self.sitename)
+                                                                                         self.sitename,
+                                                                                         self.use_missing,
+                                                                                         self.zero_as_missing)
+
                 self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
                 federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
                 self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
@@ -356,7 +423,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                                               tree_=self.tree_,
                                               decoder=self.decode,
                                               split_maskdict=self.split_maskdict,
-                                              sitename=self.sitename)
+                                              sitename=self.sitename,
+                                              use_missing=self.use_missing,
+                                              zero_as_missing=self.zero_as_missing,
+                                              missing_dir_maskdict=self.missing_dir_maskdict)
             predict_data = predict_data.join(data_inst, traverse_tree)
 
             self.sync_data_predicted_by_host(predict_data, site_guest_send_times)
@@ -372,6 +442,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         model_meta.min_sample_split = self.min_sample_split
         model_meta.min_impurity_split = self.min_impurity_split
         model_meta.min_leaf_node = self.min_leaf_node
+        model_meta.use_missing = self.use_missing
+        model_meta.zero_as_missing = self.zero_as_missing
 
         return model_meta
 
@@ -380,6 +452,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.min_sample_split = model_meta.min_sample_split
         self.min_impurity_split = model_meta.min_impurity_split
         self.min_leaf_node = model_meta.min_leaf_node
+        self.use_missing = model_meta.use_missing
+        self.zero_as_missing = model_meta.zero_as_missing
 
     def get_model_param(self):
         model_param = DecisionTreeModelParam()
@@ -391,9 +465,11 @@ class HeteroDecisionTreeHost(DecisionTree):
                                   weight=node.weight,
                                   is_leaf=node.is_leaf,
                                   left_nodeid=node.left_nodeid,
-                                  right_nodeid=node.right_nodeid)
+                                  right_nodeid=node.right_nodeid,
+                                  missing_dir=node.missing_dir)
 
         model_param.split_maskdict.update(self.split_maskdict)
+        model_param.missing_dir_maskdict.update(self.missing_dir_maskdict)
 
         return model_param
 
@@ -407,11 +483,13 @@ class HeteroDecisionTreeHost(DecisionTree):
                          weight=node_param.weight,
                          is_leaf=node_param.is_leaf,
                          left_nodeid=node_param.left_nodeid,
-                         right_nodeid=node_param.right_nodeid)
+                         right_nodeid=node_param.right_nodeid,
+                         missing_dir=node_param.missing_dir)
 
             self.tree_.append(_node)
 
         self.split_maskdict = dict(model_param.split_maskdict)
+        self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
 
     def get_model(self):
         model_meta = self.get_model_meta()

@@ -26,6 +26,7 @@
 # =============================================================================
 
 from federatedml.feature.binning.quantile_binning import QuantileBinning
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.tree import BoostingTree
@@ -46,6 +47,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         super(HeteroSecureBoostingTreeHost, self).__init__()
 
         self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
+        # self.flowid = 0
         self.tree_dim = None
         self.feature_num = None
         self.trees_ = []
@@ -59,7 +61,11 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
         param_obj = FeatureBinningParam(bin_num=self.bin_num)
-        binning_obj = QuantileBinning(param_obj)
+        if self.use_missing:
+            binning_obj = QuantileBinning(param_obj, abnormal_list=[NoneType()])
+        else:
+            binning_obj = QuantileBinning(param_obj)
+
         binning_obj.fit_split_points(data_instance)
         self.data_bin, self.bin_split_points, self.bin_sparse_points = binning_obj.convert_feature_to_bin(data_instance)
 
@@ -107,6 +113,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.sync_tree_dim()
 
         for i in range(self.num_trees):
+            # n_tree = []
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
 
@@ -123,7 +130,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 self.trees_.append(tree_param)
                 if self.tree_meta is None:
                     self.tree_meta = tree_meta
+                # n_tree.append(tree_inst.get_tree_model())
 
+            # self.trees_.append(n_tree)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)
@@ -137,9 +146,11 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         data_inst = self.data_alignment(data_inst)
         rounds = len(self.trees_) // self.tree_dim
         for i in range(rounds):
+            # n_tree = self.trees_[i]
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
+                # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
                 tree_inst.set_runtime_idx(self.runtime_idx)
 
@@ -152,7 +163,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         model_meta.tree_meta.CopyFrom(self.tree_meta)
         model_meta.num_trees = self.num_trees
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
-        model_meta.tree_dim = self.tree_dim
+        # model_meta.tree_dim = self.tree_dim
         model_meta.need_run = self.need_run 
 
         meta_name = "HeteroSecureBoostingTreeHostMeta"
@@ -163,12 +174,14 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.tree_meta = model_meta.tree_meta
         self.num_trees = model_meta.num_trees
         self.bin_num = model_meta.quantile_meta.bin_num
-        self.tree_dim = model_meta.tree_dim
+        # self.tree_dim = model_meta.tree_dim
 
     def get_model_param(self):
         model_param = BoostingTreeModelParam()
         model_param.tree_num = len(list(self.trees_))
+        model_param.tree_dim = self.tree_dim
         model_param.trees_.extend(self.trees_)
+        LOGGER.debug("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
         param_name = "HeteroSecureBoostingTreeHostParam"
@@ -177,6 +190,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
+        self.tree_dim = model_param.tree_dim
 
     def export_model(self):
         meta_name, meta_protobuf = self.get_model_meta()
@@ -204,8 +218,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def run(self, component_parameters=None, args=None):
         local_role = component_parameters["local"]["role"]
         local_partyid = component_parameters["local"]["party_id"]
-        runtime_idx = component_parameters["role"][local_role].index(local_partyid)
-        self.set_runtime_idx(runtime_idx)
+        # runtime_idx = component_parameters["role"][local_role].index(local_partyid)
+        self.set_runtime_idx(local_partyid)
         
         self._init_runtime_parameters(component_parameters)
         LOGGER.debug("component_parameter: {}".format(component_parameters))
