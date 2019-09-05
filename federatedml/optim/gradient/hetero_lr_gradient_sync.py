@@ -200,7 +200,7 @@ class Arbiter(gradient_sync.Arbiter):
         host_gradient, guest_gradient = np.array(host_gradient), np.array(guest_gradient)
         gradient = np.hstack((host_gradient, guest_gradient))
 
-        grad = cipher_operator.decrypt_list(gradient)
+        grad = np.array(cipher_operator.decrypt_list(gradient))
         delta_grad = optimizer.apply_gradients(grad)
         separate_optim_gradient = self.separate(delta_grad,
                                                 [host_gradient.shape[0],

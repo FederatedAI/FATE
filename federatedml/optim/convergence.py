@@ -14,16 +14,15 @@
 #  limitations under the License.
 #
 
-from federatedml.util import consts
-from arch.api.utils import log_utils
-
-from federatedml.util import fate_operator
 import numpy as np
+
+from arch.api.utils import log_utils
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
-class _ConvergeFunction:
 
+class _ConvergeFunction:
     def __init__(self, eps):
         self.eps = eps
 
@@ -41,6 +40,8 @@ class _DiffConverge(_ConvergeFunction):
         self.pre_loss = None
 
     def is_converge(self, loss):
+        LOGGER.debug("In diff converge function, pre_loss: {}, current_loss: {}".format(self.pre_loss, loss))
+
         converge_flag = False
         if self.pre_loss is None:
             pass
@@ -100,5 +101,3 @@ def converge_func_factory(param):
         return _AbsConverge(eps)
     else:
         raise NotImplementedError("Converge Function method cannot be recognized: {}".format(optimizer_type))
-
-

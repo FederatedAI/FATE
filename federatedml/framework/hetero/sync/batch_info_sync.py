@@ -16,7 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from arch.api.utils import log_utils
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class Guest(object):
@@ -45,7 +48,8 @@ class Host(object):
         self.batch_data_index_transfer = batch_data_index_transfer
 
     def sync_batch_info(self, suffix=tuple()):
-        batch_info = self.batch_data_info_transfer.get(role=consts.GUEST,
+        LOGGER.debug("In sync_batch_info, suffix is :{}".format(suffix))
+        batch_info = self.batch_data_info_transfer.get(idx=0,
                                                        suffix=suffix)
         batch_size = batch_info.get('batch_size')
         if batch_size < consts.MIN_BATCH_SIZE and batch_size != -1:
@@ -55,7 +59,7 @@ class Host(object):
         return batch_info
 
     def sync_batch_index(self, suffix=tuple()):
-        batch_index = self.batch_data_index_transfer.get(role=consts.GUEST,
+        batch_index = self.batch_data_index_transfer.get(idx=0,
                                                          suffix=suffix)
         return batch_index
 
@@ -66,6 +70,6 @@ class Arbiter(object):
         self.batch_data_index_transfer = batch_data_index_transfer
 
     def sync_batch_info(self, suffix=tuple()):
-        batch_info = self.batch_data_info_transfer.get(role=consts.GUEST,
+        batch_info = self.batch_data_info_transfer.get(idx=0,
                                                        suffix=suffix)
         return batch_info

@@ -16,7 +16,6 @@
 
 import numpy as np
 
-from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -84,7 +83,7 @@ class HeteroLRHost(HeteroLRBase):
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,

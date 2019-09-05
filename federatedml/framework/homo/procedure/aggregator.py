@@ -17,9 +17,12 @@
 import operator
 from functools import reduce
 
+from arch.api.utils import log_utils
 from federatedml.framework.homo.sync import party_weights_sync, model_scatter_sync, \
     loss_transfer_sync, model_broadcast_sync, is_converge_sync
 from federatedml.framework.weights import Variables
+
+LOGGER = log_utils.getLogger()
 
 
 class Arbiter(party_weights_sync.Arbiter,
@@ -27,7 +30,6 @@ class Arbiter(party_weights_sync.Arbiter,
               model_broadcast_sync.Arbiter,
               loss_transfer_sync.Arbiter,
               is_converge_sync.Arbiter):
-
     # noinspection PyAttributeOutsideInit
     def initialize_aggregator(self, use_party_weight=True):
         if use_party_weight:
@@ -84,7 +86,10 @@ class Arbiter(party_weights_sync.Arbiter,
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
         losses = list(self.get_losses(idx=idx, suffix=suffix))
+        LOGGER.debug("In aggregate_loss, received losses: {}, _party_weights: {}".format(losses, self._party_weights))
         if idx is None:
+            total_loss = sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
+            LOGGER.debug('Total loss is : {}'.format(total_loss))
             return sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
         else:
             total_weights = self._party_weights[0]
@@ -100,7 +105,6 @@ class Guest(party_weights_sync.Guest,
             loss_transfer_sync.Guest,
             model_broadcast_sync.Guest,
             is_converge_sync.Guest):
-
     def initialize_aggregator(self, party_weight):
         self.send_party_weight(party_weight)
 
@@ -140,7 +144,6 @@ class Host(party_weights_sync.Host,
            loss_transfer_sync.Host,
            model_broadcast_sync.Host,
            is_converge_sync.Host):
-
     def initialize_aggregator(self, party_weight):
         self.send_party_weight(party_weight)
 

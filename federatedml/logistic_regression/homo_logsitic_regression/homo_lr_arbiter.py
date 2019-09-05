@@ -71,9 +71,9 @@ class HomoLRArbiter(HomoLRBase):
                 converge_var = total_loss
             else:
                 converge_var = merged_model
-            self.aggregator.check_converge_status(self.converge_func.is_converge,
-                                                  (converge_var,),
-                                                  suffix=(self.n_iter_,))
+            self.is_converged = self.aggregator.check_converge_status(self.converge_func.is_converge,
+                                                                      (converge_var,),
+                                                                      suffix=(self.n_iter_,))
 
             LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
                                                                                    total_loss,
@@ -91,5 +91,3 @@ class HomoLRArbiter(HomoLRBase):
                                              self.lr_variables,
                                              self.model_param.predict_param.threshold,
                                              current_suffix)
-
-

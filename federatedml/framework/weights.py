@@ -89,13 +89,8 @@ class ListVariables(Variables):
 
     def map_values(self, func, inplace):
         if inplace:
-            LOGGER.debug("self._parameter: {}".format(self._parameter))
             for k, v in enumerate(self._parameter):
-                LOGGER.debug("In map_values, k: {}, v: {}, func: {}, type_v: {}".format(k, v, func, type(v)))
-
                 self._parameter[k] = func(v)
-                LOGGER.debug("Current self._parameter: {}".format(self._parameter))
-
             return self
         else:
             _w = []

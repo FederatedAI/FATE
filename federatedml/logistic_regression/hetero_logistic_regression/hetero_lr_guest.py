@@ -87,8 +87,6 @@ class HeteroLRGuest(HeteroLRBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
 
-                self.renew_current_info(self.n_iter_, batch_index)
-
                 # Start gradient procedure
                 optim_guest_gradient, loss, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,

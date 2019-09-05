@@ -87,7 +87,3 @@ class HeteroLRBase(BaseLogisticRegression):
         :return: a table holding instances with transformed features
         """
         return data_inst
-
-    def renew_current_info(self, iter_num, batch_index):
-        self.gradient_procedure.renew_current_info(iter_num, batch_index)
-        self.loss_computer.renew_current_info(iter_num, batch_index)

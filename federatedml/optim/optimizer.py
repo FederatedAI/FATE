@@ -106,7 +106,6 @@ class _Optimizer(object):
 
 
 class _SgdOptimizer(_Optimizer):
-
     def apply_gradients(self, grad):
         self.iters += 1
         self.learning_rate = self.learning_rate / np.sqrt(self.iters)
@@ -158,7 +157,8 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        # self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        self.learning_rate = self.learning_rate / 0.9
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)

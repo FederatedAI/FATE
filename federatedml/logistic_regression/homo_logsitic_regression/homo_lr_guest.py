@@ -19,7 +19,6 @@
 import functools
 
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
@@ -55,10 +54,10 @@ class HomoLRGuest(HomoLRBase):
         max_iter = self.max_iter
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
         iter_loss = 0
-        batch_num = 0
         while self.n_iter_ < max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
+            batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
@@ -67,12 +66,16 @@ class HomoLRGuest(HomoLRBase):
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
+                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, loss: {}, n: {}, iter_loss :{}'.format(
+                    self.n_iter_, batch_num,
+                    grad, loss, n, iter_loss))
                 grad /= n
                 loss /= n
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, grad, has_applied=False)
                 loss_norm = self.optimizer.loss_norm(self.lr_variables)
+                iter_loss += loss
                 if loss_norm is not None:
-                    iter_loss += (loss + loss_norm)
+                    iter_loss += loss_norm
                 batch_num += 1
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
@@ -102,8 +105,3 @@ class HomoLRGuest(HomoLRBase):
 
         lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
         return lr_variables
-
-
-
-
-

@@ -58,6 +58,7 @@ class Arbiter(object):
                                                                           suffix=(*suffix, iter_num, batch_iter_num))
                 cipher = host_ciphers_dict[idx]
                 decrypt_model = cipher.decrypt_list(re_encrypt_model)
+                LOGGER.debug("Decrypted host model is : {}".format(decrypt_model))
                 re_encrypt_model = cipher.encrypt_list(decrypt_model)
                 self._model_re_encrypted_transfer.remote(obj=re_encrypt_model,
                                                          role=consts.HOST,
