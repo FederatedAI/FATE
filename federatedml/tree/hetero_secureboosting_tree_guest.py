@@ -35,7 +35,7 @@ from federatedml.util.classfiy_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim import DiffConverge
 from federatedml.tree import BoostingTree
-from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator

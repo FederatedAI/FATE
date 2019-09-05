@@ -23,12 +23,6 @@
 #
 ################################################################################
 
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
 
 
-# noinspection PyAttributeOutsideInit
-class HeteroWorkFlowTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.train_data = Variable(name='HeteroWorkFlowTransferVariable.train_data', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.test_data = Variable(name='HeteroWorkFlowTransferVariable.test_data', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        pass

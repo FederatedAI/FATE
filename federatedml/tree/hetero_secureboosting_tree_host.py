@@ -30,7 +30,7 @@ from federatedml.feature.fate_element_type import NoneType
 from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.tree import BoostingTree
-from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta

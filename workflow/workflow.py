@@ -53,7 +53,7 @@ from federatedml.util import consts
 from federatedml.util import param_checker
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.param_checker import AllChecker
-from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.util.transfer import HeteroWorkFlowTransferVariable
 from workflow import status_tracer_decorator
 
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest

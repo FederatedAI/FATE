@@ -28,14 +28,13 @@
 from arch.api.utils import log_utils
 
 import functools
-import numpy as np
 import copy
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.proto.boosting_tree_model_meta_pb2 import CriterionMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
-from federatedml.util.transfer_variable.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree

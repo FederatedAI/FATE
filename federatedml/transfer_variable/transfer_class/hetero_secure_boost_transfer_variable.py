@@ -23,15 +23,12 @@
 #
 ################################################################################
 
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
 
 
 # noinspection PyAttributeOutsideInit
-class RsaIntersectTransferVariable(BaseTransferVariable):
+class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.rsa_pubkey = Variable(name='RsaIntersectTransferVariable.rsa_pubkey', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_guest_ids = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.intersect_host_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_host_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_guest_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_ids = Variable(name='RsaIntersectTransferVariable.intersect_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.tree_dim = Variable(name='HeteroSecureBoostingTreeTransferVariable.tree_dim', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.stop_flag = Variable(name='HeteroSecureBoostingTreeTransferVariable.stop_flag', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass

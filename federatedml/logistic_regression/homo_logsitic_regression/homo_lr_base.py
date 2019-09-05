@@ -17,8 +17,7 @@
 #  limitations under the License.
 
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
-from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
-from federatedml.optim import Optimizer
+from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.util import consts
 from arch.api.utils import log_utils
 

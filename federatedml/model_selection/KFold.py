@@ -24,7 +24,7 @@ from federatedml.model_selection.cross_validate import BaseCrossValidator
 from federatedml.model_selection.indices import collect_index
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
-from federatedml.util.transfer_variable.hetero_workflow_transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_workflow_transfer_variable import HeteroWorkFlowTransferVariable
 
 LOGGER = log_utils.getLogger()
 

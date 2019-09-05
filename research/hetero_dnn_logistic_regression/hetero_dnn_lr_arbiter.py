@@ -5,7 +5,7 @@ from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from research.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
 from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRArbiter
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
+from federatedml.util.transfer import HeteroDNNLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
