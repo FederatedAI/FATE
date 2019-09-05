@@ -179,9 +179,6 @@ class ParameterUtil(object):
         with open(_module_setting_path, "r") as fin:
             _module_setting = json.loads(fin.read())
 
-        if not _module_setting:
-            raise Exception("{} is not set in setting_conf ".format(module))
-
         param_class_path = _module_setting["param_class"]
         param_class = param_class_path.split("/", -1)[-1]
 

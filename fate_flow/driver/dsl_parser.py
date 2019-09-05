@@ -96,6 +96,8 @@ class DSLParser(object):
         self.component_name_index = {}
         self.component_upstream = []
         self.component_downstream = []
+        self.component_upstream_data_relation_set = set()
+        self.component_upstream_model_relation_set = set()
         self.in_degree = []
         self.topo_rank = []
         self.predict_dsl = {}
@@ -253,9 +255,9 @@ class DSLParser(object):
                                     raise ValueError("Pipeline Model can not be used")
 
                                 idx_dependendy = self.component_name_index.get(module_name)
-                                # self.in_degree[idx] += 1
                                 self.component_downstream[idx_dependendy].append(name)
                                 self.component_upstream[idx].append(module_name)
+                                self.component_upstream_model_relation_set.add((name, module_name))
 
             if "data" in upstream_input:
                 data_dict = upstream_input.get("data")
@@ -273,6 +275,7 @@ class DSLParser(object):
                             # self.in_degree[idx] += 1
                             self.component_downstream[idx_dependendy].append(name)
                             self.component_upstream[idx].append(end_data_module)
+                            self.component_upstream_data_relation_set.add((name, end_data_module))
 
                         elif module_name not in self.component_name_index:
                             raise ValueError("unknown module input {}".format(module_name))
@@ -284,6 +287,7 @@ class DSLParser(object):
                             # self.in_degree[idx] += 1
                             self.component_downstream[idx_dependendy].append(name)
                             self.component_upstream[idx].append(module_name)
+                            self.component_upstream_data_relation_set.add((name, module_name))
 
         self.in_degree = [0 for i in range(len(self.components))]
         for i in range(len(self.components)):
@@ -294,29 +298,6 @@ class DSLParser(object):
                 self.component_upstream[i] = list(set(self.component_upstream[i]))
                 self.in_degree[self.component_name_index.get(self.components[i].get_name())] = len(
                     self.component_upstream[i])
-
-        """
-        dependencies = self.dsl.get("dependencies")
-        for name, dependency_list in dependencies.items():
-            if name not in self.component_name_index:
-                raise ValueError("{} is not a component's name".format(name))
-
-            if len(dependency_list) != len(set(dependency_list)):
-                raise ValueError("component in the same dependencies list should be unique, but {} " +
-                                 "violate this rule".format(dependency_list))
-
-            idx_name = self.component_name_index.get(name)
-            self.component_upstream[idx_name] = dependency_list
-
-            for dependency in dependency_list:
-                if dependency not in self.component_name_index:
-                    raise ValueError("dependency {} is not a component's name".format(dependency))
-
-                idx_dependendy = self.component_name_index.get(dependency)
-
-                self.in_degree[idx_name] += 1
-                self.component_downstream[idx_dependendy].append(name)
-        """
 
         self._check_dag_dependencies()
 
@@ -425,7 +406,15 @@ class DSLParser(object):
             component_module[name] = module
             upstream = self.component_upstream[self.component_name_index.get(name)]
             if upstream:
-                dependence_dict[name] = upstream
+                dependence_dict[name] = []
+                for up_component in upstream:
+                    if (name, up_component) in self.component_upstream_data_relation_set:
+                        dependence_dict[name].append({"component_name": up_component,
+                                                      "type": "data"})
+
+                    if (name, up_component) in self.component_upstream_model_relation_set:
+                        dependence_dict[name].append({"component_name": up_component,
+                                                      "type": "model"})
 
         component_list = [None for i in range(len(self.components))]
         topo_rank_reverse_mapping = {}
@@ -463,7 +452,7 @@ class DSLParser(object):
                                                                                     module)
                     for i in range(len(dependency_list)):
                         if parameters[role][i].get(param_class) is None \
-                            or parameters[role][i][param_class].get("need_run") is False:
+                                or parameters[role][i][param_class].get("need_run") is False:
                             dependency_list[i]["component_need_run"][name] = False
                         else:
                             dependency_list[i]["component_need_run"][name] = True
