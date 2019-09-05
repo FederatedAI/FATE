@@ -55,19 +55,11 @@ def submit_job():
         return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, STANDALONE_NODE_HTTP_PORT))
 
 
-@manager.route('/cancel', methods=['POST'])
-def cancel_waiting_job():
-    response_retmsg = JobController.cancel_waiting_job(job_id=request.json.get('job_id', ''))
-    if response_retmsg:
-        return get_json_result(retcode=101, retmsg=response_retmsg)
-    return get_json_result(retcode=0, retmsg='success')
-
-
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    response_retmsg = JobController.cancel_waiting_job(job_id=request.json.get('job_id', ''))
-    if response_retmsg:
+    response = TaskScheduler.cancel_waiting_job(job_id=request.json.get('job_id', ''))
+    if not response:
         TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
