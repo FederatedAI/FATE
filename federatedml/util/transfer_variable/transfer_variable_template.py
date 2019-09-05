@@ -24,6 +24,5 @@
 ################################################################################
 
 from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
 
 
