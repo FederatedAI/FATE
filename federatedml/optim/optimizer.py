@@ -154,7 +154,6 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
     def __init__(self, learning_rate, alpha, penalty):
         super().__init__(learning_rate, alpha, penalty)
         self.nesterov_momentum_coeff = 0.9
-        self.lr_decay = 0.9
         self.opt_m = None
 
     def apply_gradients(self, grad):
@@ -166,8 +165,6 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
         v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
         delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
         self.opt_m = v
-        if self.learning_rate > 0.01:
-            self.learning_rate *= self.lr_decay
         return delta_grad
 
 

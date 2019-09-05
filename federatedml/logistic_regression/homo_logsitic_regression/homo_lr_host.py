@@ -103,7 +103,7 @@ class HomoLRHost(HomoLRBase):
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad, has_applied=False)
                 if not self.use_encrypt:
                     loss /= n
                     loss_norm = self.optimizer.loss_norm(self.lr_variables)

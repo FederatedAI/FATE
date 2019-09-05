@@ -69,7 +69,7 @@ class HomoLRGuest(HomoLRBase):
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
                 loss /= n
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad)
+                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad, has_applied=False)
                 loss_norm = self.optimizer.loss_norm(self.lr_variables)
                 if loss_norm is not None:
                     iter_loss += (loss + loss_norm)
