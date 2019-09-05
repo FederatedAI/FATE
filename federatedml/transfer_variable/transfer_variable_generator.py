@@ -29,7 +29,7 @@ from arch.api.utils import file_utils
 
 BASE_DIR = file_utils.get_project_base_directory()
 TRANSFER_VARIABLE_TEMPLATE = os.path.join(BASE_DIR, "federatedml",
-                                          "util", "transfer_variable",
+                                          "transfer_variable",
                                           "transfer_variable_template.py")
 
 
@@ -64,9 +64,9 @@ class TransferVariableGenerator(object):
 
     def generate_all(self):
         global BASE_DIR
-        conf_dir = os.path.join(BASE_DIR, "federatedml", "transfer_variable_conf")
+        conf_dir = os.path.join(BASE_DIR, "federatedml", "transfer_variable", "definition")
         merge_conf_path = os.path.join(conf_dir, "transfer_conf.json")
-        trans_var_dir = os.path.join(BASE_DIR, "federatedml", "util", "transfer_variable")
+        trans_var_dir = os.path.join(BASE_DIR, "federatedml", "transfer_variable", "transfer_class")
 
         merge_dict = {}
         with open(merge_conf_path, "w") as fin:
@@ -116,8 +116,8 @@ class TransferVariableGenerator(object):
         merge_dict.update(var_dict)
 
         with open(merge_conf_path, "w") as fout:
-            jsonDumpsIndentStr = json.dumps(merge_dict, indent=1);
-            buffers = jsonDumpsIndentStr.split("\n", -1)
+            json_dumps_indent_str = json.dumps(merge_dict, indent=1);
+            buffers = json_dumps_indent_str.split("\n", -1)
             for buf in buffers:
                 fout.write(buf + "\n")
 

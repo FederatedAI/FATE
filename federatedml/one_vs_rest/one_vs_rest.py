@@ -16,16 +16,14 @@
 
 import copy
 import functools
-import numpy as np
 import time
 
 from arch.api import federation
 from arch.api.model_manager import manager as model_manager
 from arch.api.proto import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
 from federatedml.util import consts
-from federatedml.util.transfer_variable.one_vs_rest_transfer_variable import OneVsRestTransferVariable
+from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 
 LOGGER = log_utils.getLogger()
 

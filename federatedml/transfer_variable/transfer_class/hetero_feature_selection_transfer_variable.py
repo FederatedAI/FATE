@@ -23,11 +23,12 @@
 #
 ################################################################################
 
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
 
 
 # noinspection PyAttributeOutsideInit
-class SampleTransferVariable(BaseTransferVariable):
+class HeteroFeatureSelectionTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.sample_ids = Variable(name='SampleTransferVariable.sample_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.result_left_cols = Variable(name='HeteroFeatureSelectionTransferVariable.result_left_cols', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.host_select_cols = Variable(name='HeteroFeatureSelectionTransferVariable.host_select_cols', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         pass

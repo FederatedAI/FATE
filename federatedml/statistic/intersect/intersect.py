@@ -18,7 +18,7 @@ from arch.api.federation import remote, get
 from arch.api.utils import log_utils
 from federatedml.secureprotol.encode import Encode
 from federatedml.util import consts
-from federatedml.util.transfer_variable.raw_intersect_transfer_variable import RawIntersectTransferVariable
+from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
 

@@ -31,7 +31,7 @@ from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_feature_selection_transfer_variable import \
+from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 
 LOGGER = log_utils.getLogger()

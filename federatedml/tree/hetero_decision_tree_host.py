@@ -33,12 +33,11 @@ from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
 from federatedml.tree import FeatureHistogram
-from federatedml.util.transfer_variable.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import Node
 from federatedml.feature.fate_element_type import NoneType
 import functools
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 
