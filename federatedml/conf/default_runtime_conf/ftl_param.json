@@ -1,0 +1,13 @@
+{
+    "input_dim": 10,
+    "encode_dim": 32,
+    "eps": 0.1,
+    "alpha": 100,
+    "max_iter": 10,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "predict_param": {
+        "with_proba": true,
+        "threshold": 0.5
+    }
+}

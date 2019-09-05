@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+message FTLModelMeta {
+    int32 input_dim = 1;
+    int32 encode_dim = 2;
+    double learning_rate = 3;
+    double eps = 4;
+    double alpha = 5;
+    int64 batch_size = 6;
+    int64 max_iter = 7;
+}

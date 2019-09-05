@@ -15,9 +15,17 @@
 #
 
 from arch.api import federation
+from federatedml.model_base import ModelBase
+from federatedml.ftl.autoencoder import Autoencoder
 
 
-class HeteroFTLParty(object):
+class HeteroFTLParty(ModelBase):
+    @staticmethod
+    def _create_local_model(params):
+        autoencoder = Autoencoder("local_host_model_01")
+        autoencoder.build(input_dim=params.input_dim, hidden_dim=params.encode_dim,
+                          learning_rate=params.learning_rate)
+        return autoencoder
 
     def _do_remote(self, value=None, name=None, tag=None, role=None, idx=None):
         federation.remote(value, name=name, tag=tag, role=role, idx=idx)

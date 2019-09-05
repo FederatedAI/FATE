@@ -1,0 +1,30 @@
+{
+    "components": {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+        },
+        "faster_hetero_decentralized_encrypt_ftl_0": {
+              "module": "FasterHeteroDecentralizedEncryptFTL",
+              "input": {
+                  "data": {
+                      "train_data": ["dataio_0.train"]
+                  }
+              },
+              "output": {
+                  "data": ["train"],
+                  "model": ["hetero_plain_ftl"]
+              }
+          }
+    }
+}

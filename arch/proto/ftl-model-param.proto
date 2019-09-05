@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message FTLModelParam {
+    repeated double weight_hidden = 1;
+    repeated double bias_hidden = 2;
+    repeated double weight_output = 3;
+    repeated double bias_output = 4;
+}

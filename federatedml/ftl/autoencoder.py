@@ -156,18 +156,22 @@ class Autoencoder(object):
         hyperparameters = {"learning_rate": self.lr,
                            "input_dim": self.input_dim,
                            "hidden_dim": self.hidden_dim}
-        return {"Wh": _Wh, "bh": _bh, "Wo": _Wo, "bo": _bo, "hyperparameters": hyperparameters}
+        return {"Wh": list(_Wh.flat), "bh": list(_bh),
+                "Wo": list(_Wo.flat), "bo": list(_bo),
+                "hyperparameters": hyperparameters}
 
     def restore_model(self, model_parameters):
-        self.Wh_initializer = model_parameters["Wh"]
-        self.bh_initializer = model_parameters["bh"]
-        self.Wo_initializer = model_parameters["Wo"]
-        self.bo_initializer = model_parameters["bo"]
         model_meta = model_parameters["hyperparameters"]
 
         self.lr = model_meta["learning_rate"]
         self.input_dim = model_meta["input_dim"]
         self.hidden_dim = model_meta["hidden_dim"]
+
+        self.Wh_initializer = np.array(model_parameters["Wh"]).reshape(self.input_dim, self.hidden_dim)
+        self.bh_initializer = np.array(model_parameters["bh"])
+        self.Wo_initializer = np.array(model_parameters["Wo"]).reshape(self.hidden_dim, self.input_dim)
+        self.bo_initializer = np.array(model_parameters["bo"])
+
         self._build_model()
 
     def fit(self, X, batch_size=32, epoch=1, show_fig=False):

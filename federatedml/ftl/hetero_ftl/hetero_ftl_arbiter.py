@@ -21,25 +21,38 @@ from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from federatedml.ftl.encryption.encryption import decrypt_scalar, decrypt_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.optim.convergence import AbsConverge
-from federatedml.param.param import FTLModelParam
 from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.param.ftl_param import FTLParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroFTLArbiter(HeteroFTLParty):
-    def __init__(self, model_param: FTLModelParam):
+    def __init__(self):
         super(HeteroFTLArbiter, self).__init__()
-        self.max_iter = model_param.max_iter
-        self.converge_func = AbsConverge(model_param.eps)
 
+        self.model_param = FTLParam()
         self.transfer_variable = HeteroFTLTransferVariable()
         self.n_iter_ = 0
         self.private_key = None
 
-    def fit(self):
+    def _init_model(self, params):
+        self.max_iter = params.max_iter
+        self.converge_func = AbsConverge(params.eps)
+
+    def run(self, component_parameters=None, args=None):
+        self._init_runtime_parameters(component_parameters)
+
+        if not "model" in args:
+            LOGGER.info("Task is fit")
+            self.set_flowid('train')
+            self.fit()
+        else:
+            LOGGER.info("Task is transform")
+
+    def fit(self, data_inst=None):
         LOGGER.info("@ start arbiter fit")
         paillierEncrypt = PaillierEncrypt()
         paillierEncrypt.generate_key()

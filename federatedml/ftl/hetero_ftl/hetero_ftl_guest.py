@@ -17,10 +17,12 @@
 import time
 
 import numpy as np
+import tensorflow as tf
 
+from arch.api.proto import ftl_model_meta_pb2, ftl_model_param_pb2
 from arch.api.utils import log_utils
-from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, load_model_parameters, \
-    save_model_parameters, convert_instance_table_to_dict, convert_instance_table_to_array, \
+from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, convert_instance_table_to_dict, \
+    convert_instance_table_to_array, \
     add_random_mask_for_list_of_values, add_random_mask, remove_random_mask_from_list_of_values, remove_random_mask
 from federatedml.ftl.data_util.log_util import create_shape_msg
 from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
@@ -30,7 +32,7 @@ from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel
 from federatedml.optim.convergence import DiffConverge
-from federatedml.param.ftl_param import FTLModelParam
+from federatedml.param.ftl_param import FTLParam, FTLModelParam
 from federatedml.util import consts
 from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
@@ -39,15 +41,23 @@ LOGGER = log_utils.getLogger()
 
 class HeteroFTLGuest(HeteroFTLParty):
 
-    def __init__(self, guest: PlainFTLGuestModel, model_param: FTLModelParam,
-                 transfer_variable: HeteroFTLTransferVariable):
+    def __init__(self):
         super(HeteroFTLGuest, self).__init__()
-        self.guest_model = guest
-        self.model_param = model_param
-        self.transfer_variable = transfer_variable
-        self.max_iter = model_param.max_iter
+
+        self.model_param = FTLParam()
+        self.transfer_variable = HeteroFTLTransferVariable()
         self.n_iter_ = 0
-        self.converge_func = DiffConverge(eps=model_param.eps)
+        self.model_param_name = 'FTLModelParam'
+        self.model_meta_name = 'FTLModelMeta'
+
+    def _init_guest_model(self, params):
+        raise NotImplementedError("method init must be define")
+
+    def _init_model(self, params):
+        self.max_iter = params.max_iter
+        self.converge_func = DiffConverge(eps=params.eps)
+        self.local_model = self._create_local_model(params)
+        self.guest_model = self._init_guest_model(params)
 
     def set_converge_function(self, converge_func):
         self.converge_func = converge_func
@@ -72,43 +82,8 @@ class HeteroFTLGuest(HeteroFTLParty):
             guest_features_dict, guest_sample_indexes, host_sample_indexes, guest_label_dict)
         return guest_features, overlap_indexes, non_overlap_indexes, guest_label
 
-    def predict(self, guest_data):
-        LOGGER.info("@ start guest predict")
-        features, labels, instances_indexes = convert_instance_table_to_array(guest_data)
-        guest_x = np.squeeze(features)
-        guest_y = np.expand_dims(labels, axis=1)
-        LOGGER.debug("guest_x, guest_y: " + str(guest_x.shape) + ", " + str(guest_y.shape))
-
-        host_prob = self._do_get(name=self.transfer_variable.host_prob.name,
-                                 tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_prob),
-                                 idx=-1)[0]
-
-        self.guest_model.set_batch(guest_x, guest_y)
-        pred_prob = self.guest_model.predict(host_prob)
-        LOGGER.debug("pred_prob: " + str(pred_prob.shape))
-
-        self._do_remote(pred_prob,
-                        name=self.transfer_variable.pred_prob.name,
-                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.pred_prob),
-                        role=consts.HOST,
-                        idx=-1)
-        return None
-
-    def load_model(self, model_table_name, model_namespace):
-        LOGGER.info("@ load guest model from name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
-        model_parameters = load_model_parameters(model_table_name, model_namespace)
-        self.guest_model.restore_model(model_parameters)
-
-    def save_model(self, model_table_name, model_namespace):
-        LOGGER.info("@ save guest model to name/ns" + ", " + str(model_table_name) + ", " + str(model_namespace))
-        _ = save_model_parameters(self.guest_model.get_model_parameters(), model_table_name, model_namespace)
-
-
-class HeteroPlainFTLGuest(HeteroFTLGuest):
-
-    def __init__(self, guest: PlainFTLGuestModel, model_param: FTLModelParam,
-                 transfer_variable: HeteroFTLTransferVariable):
-        super(HeteroPlainFTLGuest, self).__init__(guest, model_param, transfer_variable)
+    def _fit(self, guest_x, guest_y, non_overlap_indexes, overlap_indexes):
+        raise NotImplementedError("method init must be define")
 
     def fit(self, guest_data):
         LOGGER.info("@ start guest fit")
@@ -120,9 +95,91 @@ class HeteroPlainFTLGuest(HeteroFTLGuest):
         LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
         LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
 
+        start_time = time.time()
+
+        init = tf.global_variables_initializer()
+        with tf.Session() as sess:
+            self.local_model.set_session(sess)
+            sess.run(init)
+
+            self._fit(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
+
+            self.model_parameters = self.local_model.get_model_parameters()
+        end_time = time.time()
+        LOGGER.info("@ running time: " + str(end_time - start_time))
+
+    def predict(self, guest_data):
+        LOGGER.info("@ start guest predict")
+        features, labels, instances_indexes = convert_instance_table_to_array(guest_data)
+        guest_x = np.squeeze(features)
+        guest_y = np.expand_dims(labels, axis=1)
+        LOGGER.debug("guest_x, guest_y: " + str(guest_x.shape) + ", " + str(guest_y.shape))
+
+        init = tf.global_variables_initializer()
+        with tf.Session() as sess:
+            self.local_model.set_session(sess)
+            sess.run(init)
+
+            host_prob = self._do_get(name=self.transfer_variable.host_prob.name,
+                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_prob),
+                                     idx=-1)[0]
+
+            self.guest_model.set_batch(guest_x, guest_y)
+            pred_prob = self.guest_model.predict(host_prob)
+            LOGGER.debug("pred_prob: " + str(pred_prob.shape))
+
+        self._do_remote(pred_prob,
+                        name=self.transfer_variable.pred_prob.name,
+                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.pred_prob),
+                        role=consts.HOST,
+                        idx=-1)
+        return None
+
+    def export_model(self):
+        hyperparameters = self.model_parameters['hyperparameters']
+
+        meta_obj = ftl_model_meta_pb2.FTLModelMeta(input_dim=hyperparameters['input_dim'],
+                                                   encode_dim=hyperparameters['hidden_dim'],
+                                                   learning_rate=hyperparameters['learning_rate'])
+        param_obj = ftl_model_param_pb2.FTLModelParam(weight_hidden=self.model_parameters['Wh'],
+                                                      bias_hidden=self.model_parameters['bh'],
+                                                      weight_output=self.model_parameters['Wo'],
+                                                      bias_output=self.model_parameters['bo'])
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
+
+    def _load_model(self, model_dict):
+        model = list(model_dict.get('model').values())[0]
+        meta_obj = model.get(self.model_meta_name)
+        param_obj = model.get(self.model_param_name)
+        self.model_parameters = {
+            'Wh': param_obj.weight_hidden,
+            'bh': param_obj.bias_hidden,
+            'Wo': param_obj.weight_output,
+            'bo': param_obj.bias_output,
+            'hyperparameters': {
+                'input_dim': meta_obj.input_dim,
+                'hidden_dim': meta_obj.encode_dim,
+                'learning_rate': meta_obj.learning_rate
+            }
+        }
+        self.local_model.restore_model(self.model_parameters)
+
+
+class HeteroPlainFTLGuest(HeteroFTLGuest):
+
+    def __init__(self):
+        super(HeteroPlainFTLGuest, self).__init__()
+
+    def _init_guest_model(self, params):
+        return PlainFTLGuestModel(local_model=self.local_model, model_param=params)
+
+    def _fit(self, guest_x, guest_y, non_overlap_indexes, overlap_indexes):
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
 
-        start_time = time.time()
         is_stop = False
         while self.n_iter_ < self.max_iter:
             guest_comp = self.guest_model.send_components()
@@ -157,9 +214,6 @@ class HeteroPlainFTLGuest(HeteroFTLGuest):
             if is_stop:
                 break
 
-        end_time = time.time()
-        LOGGER.info("@ running time: " + str(end_time - start_time))
-
 
 """
 Centralized encryption scheme with an arbiter in the loop for decryption.
@@ -168,31 +222,24 @@ Centralized encryption scheme with an arbiter in the loop for decryption.
 
 class HeteroEncryptFTLGuest(HeteroFTLGuest):
 
-    def __init__(self, guest, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
-        super(HeteroEncryptFTLGuest, self).__init__(guest, model_param, transfer_variable)
-        self.guest_model: EncryptedFTLGuestModel = guest
+    def __init__(self):
+        super(HeteroEncryptFTLGuest, self).__init__()
+
+    def _init_guest_model(self, params):
+        return EncryptedFTLGuestModel(local_model=self.local_model, model_param=params)
 
     def _precompute(self):
         pass
 
-    def fit(self, guest_data):
-        LOGGER.info("@ start guest fit")
+    def _fit(self, guest_x, guest_y, non_overlap_indexes, overlap_indexes):
         public_key = self._do_get(name=self.transfer_variable.paillier_pubkey.name,
                                   tag=self.transfer_variable.generate_transferid(
                                       self.transfer_variable.paillier_pubkey),
                                   idx=-1)[0]
 
-        guest_x, overlap_indexes, non_overlap_indexes, guest_y = self.prepare_data(guest_data)
-
-        LOGGER.debug("guest_x： " + str(guest_x.shape))
-        LOGGER.debug("guest_y： " + str(guest_y.shape))
-        LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
-        LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
-
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
         self.guest_model.set_public_key(public_key)
 
-        start_time = time.time()
         while self.n_iter_ < self.max_iter:
 
             guest_comp = self.guest_model.send_components()
@@ -244,15 +291,14 @@ class HeteroEncryptFTLGuest(HeteroFTLGuest):
             if is_stop:
                 break
 
-        end_time = time.time()
-        LOGGER.info("@ running time: " + str(end_time - start_time))
-
 
 class FasterHeteroEncryptFTLGuest(HeteroEncryptFTLGuest):
 
-    def __init__(self, guest, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
-        super(FasterHeteroEncryptFTLGuest, self).__init__(guest, model_param, transfer_variable)
-        self.guest_model: FasterEncryptedFTLGuestModel = guest
+    def __init__(self):
+        super(FasterHeteroEncryptFTLGuest, self).__init__()
+
+    def _init_guest_model(self, params):
+        return FasterEncryptedFTLGuestModel(local_model=self.local_model, model_param=params)
 
     def _precompute(self):
         LOGGER.info("@ start guest precompute")
@@ -279,12 +325,14 @@ Decentralized encryption scheme without arbiter in the loop.
 
 class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
 
-    def __init__(self, guest_model, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
-        super(HeteroDecentralizedEncryptFTLGuest, self).__init__(guest_model, model_param, transfer_variable)
-        self.guest_model: EncryptedFTLGuestModel = guest_model
+    def __init__(self):
+        super(HeteroDecentralizedEncryptFTLGuest, self).__init__()
         self.public_key = None
         self.private_key = None
         self.host_public_key = None
+
+    def _init_guest_model(self, params):
+        return EncryptedFTLGuestModel(local_model=self.local_model, model_param=params)
 
     def _precompute(self):
         pass
@@ -304,23 +352,14 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
                                                 self.transfer_variable.host_public_key, self.n_iter_),
                                             idx=-1)[0]
 
-    def fit(self, guest_data):
-        LOGGER.info("@ start guest fit")
+    def _fit(self, guest_x, guest_y, non_overlap_indexes, overlap_indexes):
         self.prepare_encryption_key_pair()
-        guest_x, overlap_indexes, non_overlap_indexes, guest_y = self.prepare_data(guest_data)
-
-        LOGGER.debug("guest_x： " + str(guest_x.shape))
-        LOGGER.debug("guest_y： " + str(guest_y.shape))
-        LOGGER.debug("overlap_indexes: " + str(len(overlap_indexes)))
-        LOGGER.debug("non_overlap_indexes: " + str(len(non_overlap_indexes)))
-        LOGGER.debug("converge eps: " + str(self.converge_func.eps))
 
         self.guest_model.set_batch(guest_x, guest_y, non_overlap_indexes, overlap_indexes)
         self.guest_model.set_public_key(self.public_key)
         self.guest_model.set_host_public_key(self.host_public_key)
         self.guest_model.set_private_key(self.private_key)
 
-        start_time = time.time()
         is_stop = False
         while self.n_iter_ < self.max_iter:
 
@@ -430,9 +469,6 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
             if is_stop:
                 break
 
-        end_time = time.time()
-        LOGGER.info("@ running time: " + str(end_time - start_time))
-
     def __decrypt_gradients(self, encrypt_gradients):
         return distribute_decrypt_matrix(self.private_key, encrypt_gradients[0]), decrypt_array(self.private_key,
                                                                                                 encrypt_gradients[1])
@@ -440,9 +476,11 @@ class HeteroDecentralizedEncryptFTLGuest(HeteroFTLGuest):
 
 class FasterHeteroDecentralizedEncryptFTLGuest(HeteroDecentralizedEncryptFTLGuest):
 
-    def __init__(self, guest_model, model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable):
-        super(FasterHeteroDecentralizedEncryptFTLGuest, self).__init__(guest_model, model_param, transfer_variable)
-        self.guest_model: FasterEncryptedFTLGuestModel = guest_model
+    def __init__(self):
+        super(FasterHeteroDecentralizedEncryptFTLGuest, self).__init__()
+
+    def _init_guest_model(self, params):
+        return FasterEncryptedFTLGuestModel(local_model=self.local_model, model_param=params)
 
     def _precompute(self):
         LOGGER.debug("@ start precompute")
@@ -465,31 +503,27 @@ class FasterHeteroDecentralizedEncryptFTLGuest(HeteroDecentralizedEncryptFTLGues
 class GuestFactory(object):
 
     @classmethod
-    def create(cls, ftl_model_param: FTLModelParam, transfer_variable: HeteroFTLTransferVariable, ftl_local_model):
+    def create(cls, ftl_param: FTLParam, ftl_model_param: FTLModelParam):
         if ftl_model_param.is_encrypt:
             if ftl_model_param.enc_ftl == "dct_enc_ftl":
                 # decentralized encrypted ftl guest
                 LOGGER.debug("@ create decentralized encrypted ftl_guest")
-                guest_model = EncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
-                guest = HeteroDecentralizedEncryptFTLGuest(guest_model, ftl_model_param, transfer_variable)
+                guest = HeteroDecentralizedEncryptFTLGuest()
             elif ftl_model_param.enc_ftl == "dct_enc_ftl2":
                 # decentralized encrypted faster ftl guest
                 LOGGER.debug("@ create decentralized encrypted faster ftl_guest")
-                guest_model = FasterEncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
-                guest = FasterHeteroDecentralizedEncryptFTLGuest(guest_model, ftl_model_param, transfer_variable)
+                guest = FasterHeteroDecentralizedEncryptFTLGuest()
             elif ftl_model_param.enc_ftl == "enc_ftl2":
                 # encrypted faster ftl guest
                 LOGGER.debug("@ create encrypt faster ftl_guest")
-                guest_model = FasterEncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
-                guest = FasterHeteroEncryptFTLGuest(guest_model, ftl_model_param, transfer_variable)
+                guest = FasterHeteroEncryptFTLGuest()
             else:
                 # encrypted ftl guest
                 LOGGER.debug("@ create encrypt ftl_guest")
-                guest_model = EncryptedFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
-                guest = HeteroEncryptFTLGuest(guest_model, ftl_model_param, transfer_variable)
+                guest = HeteroEncryptFTLGuest()
         else:
             # plain ftl guest
             LOGGER.debug("@ create plain ftl_guest")
-            guest_model = PlainFTLGuestModel(local_model=ftl_local_model, model_param=ftl_model_param)
-            guest = HeteroPlainFTLGuest(guest_model, ftl_model_param, transfer_variable)
+            guest = HeteroPlainFTLGuest()
+        guest._init_model(ftl_param)
         return guest

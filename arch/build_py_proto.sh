@@ -60,6 +60,8 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  data-io-
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  boosting-tree-model-meta.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  boosting-tree-model-param.proto
 
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  ftl-model-meta.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  ftl-model-param.proto
 
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_param.proto
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto  model_meta.proto

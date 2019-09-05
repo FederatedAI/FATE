@@ -16,10 +16,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+
 from federatedml.param.base_param import BaseParam
+from federatedml.param.predict_param import PredictParam
 
 
-class FTLModelParam(BaseParam):
+class FTLParam(BaseParam):
     """
     Defines parameters for FTL model
 
@@ -42,55 +45,50 @@ class FTLModelParam(BaseParam):
 
     """
 
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True, enc_ftl="dct_enc_ftl"):
-        self.max_iter = max_iteration
+    def __init__(self, input_dim=10, encode_dim=5, learning_rate=0.001,
+                 max_iter=10, batch_size=64, eps=1e-5,
+                 alpha=100, predict_param=PredictParam()):
+        self.input_dim = input_dim
+        self.encode_dim = encode_dim
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
         self.batch_size = batch_size
         self.eps = eps
         self.alpha = alpha
-        self.lr_decay = lr_decay
-        self.l2_para = l2_para
-        self.is_encrypt = is_encrypt
-        self.enc_ftl = enc_ftl
+        self.predict_param = copy.deepcopy(predict_param)
 
     def check(self):
-        model_param_descr = "ftl model param's "
+        model_param_descr = "ftl param's "
+        self.check_positive_integer(self.input_dim, model_param_descr + "input_dim")
+        self.check_positive_integer(self.encode_dim, model_param_descr + "encode_dim")
+        self.check_open_unit_interval(self.learning_rate, model_param_descr + "learning_rate")
         self.check_positive_integer(self.max_iter, model_param_descr + "max_iter")
         self.check_positive_number(self.eps, model_param_descr + "eps")
         self.check_positive_number(self.alpha, model_param_descr + "alpha")
-        self.check_boolean(self.is_encrypt, model_param_descr + "is_encrypt")
         return True
 
 
-class LocalModelParam(BaseParam):
+class FTLModelParam(BaseParam):
     """
     Defines parameters for FTL model
 
     Parameters
     ----------
-    input_dim: integer, default: None
-        The dimension of input samples, must be positive integer
+    is_encrypt: bool, default; True
+        The indicator indicating whether we use encrypted version of ftl or plain version, must be bool
 
-    encode_dim: integer, default: 5
-        The dimension of the encoded representation of input samples, must be positive integer
-
-    learning_rate: float, default: 0.001
-        The learning rate for training model, must between 0 and 1 exclusively
-
+    enc_ftl: str default "dct_enc_ftl"
+        The name for encrypted federated transfer learning algorithm
 
     """
 
-    def __init__(self, input_dim=None, encode_dim=5, learning_rate=0.001):
-        self.input_dim = input_dim
-        self.encode_dim = encode_dim
-        self.learning_rate = learning_rate
+    def __init__(self, is_encrypt=True, enc_ftl="dct_enc_ftl"):
+        self.is_encrypt = is_encrypt
+        self.enc_ftl = enc_ftl
 
     def check(self):
-        model_param_descr = "local model param's "
-        if self.input_dim is not None:
-            self.check_positive_integer(self.input_dim, model_param_descr + "input_dim")
-        self.check_positive_integer(self.encode_dim, model_param_descr + "encode_dim")
-        self.check_open_unit_interval(self.learning_rate, model_param_descr + "learning_rate")
+        model_param_descr = "ftl model param's "
+        self.check_boolean(self.is_encrypt, model_param_descr + "is_encrypt")
         return True
 
 
