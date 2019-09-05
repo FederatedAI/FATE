@@ -32,8 +32,8 @@ GUEST = 'guest'
 HOST = 'host'
 
 # You can set up your own configuration files here
-DSL_PATH = 'conf/test_faster_hetero_decentralized_encrypt_ftl_train_job_dsl.json'
-SUBMIT_CONF_PATH = 'conf/test_faster_hetero_decentralized_encrypt_ftl_train_job_conf.json'
+DSL_PATH = 'conf/test_hetero_plain_ftl_train_job_dsl.json'
+SUBMIT_CONF_PATH = 'conf/test_hetero_plain_ftl_train_job_conf.json'
 
 # Put your data to /examples/data folder and indicate the data names here
 GUEST_DATA_SET = 'UCI_Credit_Card_b.csv'
@@ -92,7 +92,7 @@ def exec_upload_task(config_dict, role):
     prefix = '_'.join(['upload', role])
     config_path = save_config_file(config_dict=config_dict, prefix=prefix)
 
-    subp = subprocess.Popen(["python3.6",
+    subp = subprocess.Popen(["python",
                              FATE_FLOW_PATH,
                              "-f",
                              "upload",
@@ -116,7 +116,7 @@ def exec_modeling_task(dsl_dict, config_dict):
     dsl_path = save_config_file(dsl_dict, 'train_dsl')
     conf_path = save_config_file(config_dict, 'train_conf')
     print("dsl_path: {}, conf_path: {}".format(dsl_path, conf_path))
-    subp = subprocess.Popen(["python3.6",
+    subp = subprocess.Popen(["python",
                              FATE_FLOW_PATH,
                              "-f",
                              "submit_job",
@@ -145,7 +145,7 @@ def exec_modeling_task(dsl_dict, config_dict):
 def job_status_checker(jobid):
     # check_counter = 0
     # while True:
-    subp = subprocess.Popen(["python3.6",
+    subp = subprocess.Popen(["python",
                              FATE_FLOW_PATH,
                              "-f",
                              "query_job",
