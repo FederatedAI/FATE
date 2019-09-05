@@ -86,7 +86,7 @@ Corresponding module name: HeteroSecureBoost
 Data Input: DTable, values are instances.
 Model Output: SecureBoost Model, consists of model-meta and model-param
 
-#### 11. Evaluation
+#### 11. Evaluation 
 Output the model evaluation metrics for user.
 
 Corresponding module name: Evaluation
