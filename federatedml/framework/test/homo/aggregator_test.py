@@ -15,12 +15,12 @@
 #
 
 from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.weights import ListVariables
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
-from federatedml.framework.weights import ListVariables
+
 
 class AggregatorTest(TestSyncBase):
-
     @classmethod
     def call(cls, role, transfer_variable, ind, *args):
         weights = args[0]
@@ -48,7 +48,9 @@ class AggregatorTest(TestSyncBase):
         weights = [random.random() for _ in range(num_hosts + 1)]
         total_weights = sum(weights)
         models = [np.random.rand(10) for _ in range(num_hosts + 1)]
-        expert = list(np.sum([m * w / total_weights for m, w in zip(models, weights)], 0))
+        expert = list(
+            np.sum([m * w / total_weights for m, w in zip(models, weights)],
+                   0))
 
         arbiter, guest, *hosts = self.run_results(num_hosts, weights, models)
         guest = guest.parameters

@@ -37,9 +37,9 @@ class Arbiter(identify_uuid_sync.Arbiter,
                                      conflict_flag_trv=transfer_variables.uuid_conflict_flag)
 
         self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                       dh_ciphertext_guest_trv=transfer_variables.dh_guest_ciphertext,
-                                       dh_ciphertext_host_trv=transfer_variables.dh_host_ciphertext,
-                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+                                       dh_ciphertext_guest_trv=transfer_variables.dh_ciphertext_guest,
+                                       dh_ciphertext_host_trv=transfer_variables.dh_ciphertext_host,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_ciphertext_bc)
 
     def exchange_secret_keys(self):
         LOGGER.info("synchronizing uuid")
@@ -69,7 +69,7 @@ class _Client(identify_uuid_sync.Client,
         return cipher
 
     def encrypt(self, transfer_weights):
-        transfer_weights.encrypted(self._cipher)
+        return self._cipher.encrypt(transfer_weights)
 
 
 class Guest(_Client):
@@ -78,8 +78,8 @@ class Guest(_Client):
         self._register_identify_uuid(uuid_transfer_variable=transfer_variables.guest_uuid,
                                      conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
         self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                       dh_ciphertext_trv=transfer_variables.dh_guest_ciphertext,
-                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+                                       dh_ciphertext_trv=transfer_variables.dh_ciphertext_guest,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_ciphertext_bc)
 
 
 class Host(_Client):
@@ -88,5 +88,5 @@ class Host(_Client):
         self._register_identify_uuid(uuid_transfer_variable=transfer_variables.host_uuid,
                                      conflict_flag_transfer_variable=transfer_variables.uuid_conflict_flag)
         self._register_dh_key_exchange(dh_pubkey_trv=transfer_variables.dh_pubkey,
-                                       dh_ciphertext_trv=transfer_variables.dh_host_ciphertext,
-                                       dh_ciphertext_bc_trv=transfer_variables.dh_bc_ciphertext)
+                                       dh_ciphertext_trv=transfer_variables.dh_ciphertext_host,
+                                       dh_ciphertext_bc_trv=transfer_variables.dh_ciphertext_bc)
