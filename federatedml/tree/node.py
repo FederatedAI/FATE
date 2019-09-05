@@ -31,7 +31,8 @@ from federatedml.util import consts
 class Node(object):
     def __init__(self, id=None, sitename=consts.GUEST, fid=None,
                  bid=None, weight=0, is_leaf=False, sum_grad=None,
-                 sum_hess=None, left_nodeid=-1, right_nodeid=-1):
+                 sum_hess=None, left_nodeid=-1, right_nodeid=-1,
+                 missing_dir=1):
         self.id = id
         self.sitename = sitename
         self.fid = fid
@@ -42,14 +43,16 @@ class Node(object):
         self.sum_hess = sum_hess
         self.left_nodeid = left_nodeid
         self.right_nodeid = right_nodeid
+        self.missing_dir = missing_dir
 
 
 class SplitInfo(object):
     def __init__(self, sitename=consts.GUEST, best_fid=None, best_bid=None,
-                 sum_grad=0, sum_hess=0, gain=None):
+                 sum_grad=0, sum_hess=0, gain=None, missing_dir=1):
         self.sitename = sitename
         self.best_fid = best_fid
         self.best_bid = best_bid
         self.sum_grad = sum_grad
         self.sum_hess = sum_hess
         self.gain = gain
+        self.missing_dir = missing_dir
