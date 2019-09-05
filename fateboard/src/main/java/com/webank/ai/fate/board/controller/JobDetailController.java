@@ -52,7 +52,7 @@ public class JobDetailController {
     @Autowired
     TaskManagerService taskManagerService;
 
-    @Value("${fate.url}")
+    @Value("${fateflow.url}")
     String fateUrl;
 
 
