@@ -19,11 +19,13 @@
 export PYTHONPATH=
 log_dir="${PYTHONPATH}/logs"
 venv=
+# FATE deployment suggested path
+# venv=/data/projects/fate/venv/
 
 module=fate_flow_server.py
 
 getpid() {
-    pid=`ps aux | grep "python fate_flow_server.py" | grep -v grep | awk '{print $2}'`
+    pid=`ps aux | grep "python ${run}$" | grep -v grep | awk '{print $2}'`
 
     if [[ -n ${pid} ]]; then
         return 1
@@ -55,7 +57,7 @@ start() {
     if [[ $? -eq 0 ]]; then
         mklogsdir
         source ${venv}/bin/activate
-        nohup python ${module} >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+        nohup python ${run} >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         if [[ $? -eq 0 ]]; then
             getpid
             echo "service start sucessfully. pid: ${pid}"
@@ -82,6 +84,12 @@ stop() {
         echo "service not running"
     fi
 }
+
+if [[ -n "$2" ]] ;then
+    run="${module} ${2}"
+else
+    run=${module}
+fi
 
 case "$1" in
     start)

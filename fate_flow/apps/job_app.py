@@ -19,13 +19,14 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core import base64_decode
 from arch.api.utils.core import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.settings import stat_logger
-from fate_flow.utils import job_utils
-from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import stat_logger, STANDALONE_NODE_HTTP_PORT
+from fate_flow.utils import job_utils, detect_utils
+from fate_flow.utils.api_utils import get_json_result, request_execute_server
+from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -36,18 +37,26 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
-# User interface
 @manager.route('/submit', methods=['POST'])
 def submit_job():
-    job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
-    return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
-                                                'job_runtime_conf_path': job_runtime_conf_path,
-                                                'model_info': model_info,
-                                                'board_url': board_url
-                                                })
+    work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
+    detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
+    if work_mode == RuntimeConfig.WORK_MODE:
+        job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
+        return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
+                                                    'job_runtime_conf_path': job_runtime_conf_path,
+                                                    'model_info': model_info,
+                                                    'board_url': board_url
+                                                    })
+    else:
+        if RuntimeConfig.WORK_MODE == WorkMode.STANDALONE:
+            raise Exception('server run on standalone can not support cluster mode job')
+        # use cluster standalone node server to execute standalone job
+        return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, STANDALONE_NODE_HTTP_PORT))
 
 
 @manager.route('/stop', methods=['POST'])
+@job_utils.job_server_routing()
 def stop_job():
     TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
     return get_json_result(retcode=0, retmsg='success')
@@ -80,6 +89,7 @@ def job_config():
 
 
 @manager.route('/log', methods=['get'])
+@job_utils.job_server_routing(307)
 def job_log():
     job_id = request.json.get('job_id', '')
     memory_file = io.BytesIO()
@@ -101,49 +111,3 @@ def query_task():
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
-
-
-# Scheduling interface
-@manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
-def create_job(job_id, role, party_id):
-    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
-                                    create=True)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
-def job_status(job_id, role, party_id):
-    JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
-                                    create=False)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
-def save_pipeline(job_id, role, party_id, model_id, model_version):
-    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_id=base64_decode(model_id), model_version=base64_decode(model_version))
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
-def kill_job(job_id, role, party_id):
-    JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
-                           job_initiator=request.json.get('job_initiator', {}))
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
-def clean(job_id, role, party_id):
-    JobController.clean_job(job_id=job_id, role=role, party_id=party_id)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run', methods=['POST'])
-def run_task(job_id, component_name, task_id, role, party_id):
-    TaskScheduler.start_task(job_id, component_name, task_id, role, party_id, request.json)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/status', methods=['POST'])
-def task_status(job_id, component_name, task_id, role, party_id):
-    JobController.update_task_status(job_id, component_name, task_id, role, party_id, request.json)
-    return get_json_result(retcode=0, retmsg='success')
