@@ -107,6 +107,54 @@ class Evaluation(ModelBase):
         else:
             LOGGER.warning("Evaluation has not transform, return")
 
+    def split_data_with_type(self, data: list) -> dict:
+        split_result = defaultdict(list)
+        for value in data:
+            mode = value[1][4]
+            split_result[mode].append(value)
+
+        return split_result
+
+    def evaluate_metircs(self, mode: str, data: list) -> dict:
+        labels = []
+        pred_scores = []
+        pred_labels = []
+
+        for d in data:
+            labels.append(d[1][0])
+            pred_labels.append(d[1][1])
+            pred_scores.append(d[1][2])
+
+        if self.eval_type == consts.BINARY or self.eval_type == consts.REGRESSION:
+            if self.pos_label and self.eval_type == consts.BINARY:
+                new_labels = []
+                for label in labels:
+                    if self.pos_label == label:
+                        new_labels.append(1)
+                    else:
+                        new_labels.append(0)
+                labels = new_labels
+
+            pred_results = pred_scores
+        else:
+            pred_results = pred_labels
+
+        eval_result = defaultdict(list)
+
+        if self.eval_type in self.metrics:
+            metrics = self.metrics[self.eval_type]
+        else:
+            LOGGER.warning("Unknown eval_type of {}".format(self.eval_type))
+            metrics = []
+
+        for eval_metric in metrics:
+            res = getattr(self, eval_metric)(labels, pred_results)
+            if res:
+                eval_result[eval_metric].append(mode)
+                eval_result[eval_metric].append(res)
+
+        return eval_result
+
     def fit(self, data):
         if len(data) <= 0:
             return
@@ -114,50 +162,10 @@ class Evaluation(ModelBase):
         self.eval_results.clear()
         for (key, eval_data) in data.items():
             eval_data_local = list(eval_data.collect())
-
-            labels = []
-            pred_scores = []
-            pred_labels = []
-
-            data_type = key
-            mode = "eval"
-            if len(eval_data_local[0][1]) >= 5:
-                mode = eval_data_local[0][1][4]
-
-            for d in eval_data_local:
-                labels.append(d[1][0])
-                pred_labels.append(d[1][1])
-                pred_scores.append(d[1][2])
-
-            if self.eval_type == consts.BINARY or self.eval_type == consts.REGRESSION:
-                if self.pos_label and self.eval_type == consts.BINARY:
-                    new_labels = []
-                    for label in labels:
-                        if self.pos_label == label:
-                            new_labels.append(1)
-                        else:
-                            new_labels.append(0)
-                    labels = new_labels
-
-                pred_results = pred_scores
-            else:
-                pred_results = pred_labels
-
-            eval_result = defaultdict(list)
-
-            if self.eval_type in self.metrics:
-                metrics = self.metrics[self.eval_type]
-            else:
-                LOGGER.warning("Unknown eval_type of {}".format(self.eval_type))
-                metrics = []
-
-            for eval_metric in metrics:
-                res = getattr(self, eval_metric)(labels, pred_results)
-                if res:
-                    eval_result[eval_metric].append(mode)
-                    eval_result[eval_metric].append(res)
-
-            self.eval_results[data_type] = eval_result
+            split_data_with_label = self.split_data_with_type(eval_data_local)
+            for mode, data in split_data_with_label.items():
+                eval_result = self.evaluate_metircs(mode, data)
+                self.eval_results[key] = eval_result
 
         self.callback_metric_data()
 
@@ -220,7 +228,7 @@ class Evaluation(ModelBase):
         # set roc edge value
         fpr.append(1.0)
         tpr.append(1.0)
-        
+
         fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
         edge_idx = idx_list[-1]
         if edge_idx == len(thresholds):
@@ -497,7 +505,6 @@ class Evaluation(ModelBase):
         if self.eval_type == consts.BINARY:
             fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
             fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
-
 
             filt_thresholds, cuts = self.__filt_threshold(thresholds=thresholds, step=0.01)
             new_thresholds = []
@@ -839,6 +846,7 @@ class BiClassPrecision(object):
     """
     Compute binary classification precision
     """
+
     def __init__(self):
         self.total_positives = 0
 

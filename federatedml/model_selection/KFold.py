@@ -183,7 +183,7 @@ class KFold(BaseCrossValidator):
                               name=transfer_id.name,
                               tag=transfer_variable.generate_transferid(transfer_id, flowid),
                               role=consts.HOST,
-                              idx=0)
+                              idx=-1)
             LOGGER.info("remote {} to host".format(data_application))
             return None
         elif self.role == consts.HOST:

@@ -38,8 +38,8 @@ bin_num = 30
 class TestQuantileBinning(unittest.TestCase):
     def setUp(self):
         # eggroll.init("123")
-        self.data_num = 1000
-        self.feature_num = 20
+        self.data_num = 10
+        self.feature_num = 5
         final_result = []
         numpy_array = []
         for i in range(self.data_num):
@@ -64,13 +64,13 @@ class TestQuantileBinning(unittest.TestCase):
         self.used_data_set = []
         # self.cols = -1
 
-    def _bin_obj_generator(self):
+    def _bin_obj_generator(self, abnormal_list=[]):
 
         bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
                                         error=error,
                                         cols=-1,
                                         bin_num=bin_num)
-        bin_obj = QuantileBinning(bin_param)
+        bin_obj = QuantileBinning(bin_param, abnormal_list=abnormal_list)
         return bin_obj
 
     def validate_result(self, table, bin_obj, numpy_table, is_sparse=False, all_data_shape=0):
@@ -133,16 +133,64 @@ class TestQuantileBinning(unittest.TestCase):
         bin_obj.fit_split_points(table)
         self.validate_result(table, bin_obj, numpy_table)
 
-    def test_sparse_data_prob(self):
+    # def test_sparse_data_prob(self):
+    #     final_result = []
+    #     numpy_array = []
+    #     sparse_inst_shape = self.feature_num + 15
+    #     indices = [x for x in range(self.feature_num + 10)]
+    #     for i in range(self.data_num):
+    #         tmp = 100 * np.random.rand(self.feature_num)
+    #         data_index = np.random.choice(indices, self.feature_num, replace=False)
+    #         data_index = sorted(data_index)
+    #         sparse_inst = SparseVector(data_index, tmp, shape=sparse_inst_shape)
+    #         inst = Instance(inst_id=i, features=sparse_inst, label=0)
+    #         tmp_pair = (str(i), inst)
+    #         final_result.append(tmp_pair)
+    #         n = 0
+    #         pointer = 0
+    #         tmp_array = []
+    #         while n < sparse_inst_shape:
+    #             if n in data_index:
+    #                 tmp_array.append(tmp[pointer])
+    #                 pointer += 1
+    #             else:
+    #                 tmp_array.append(0)
+    #             n += 1
+    #
+    #         numpy_array.append(tmp_array)
+    #     table = eggroll.parallelize(final_result,
+    #                                 include_key=True,
+    #                                 partition=1)
+    #     header = ['x' + str(i) for i in range(sparse_inst_shape)]
+    #     numpy_table = np.array(numpy_array)
+    #     table.schema = {'header': header}
+    #
+    #     self.used_data_set.append(table)
+    #
+    #     bin_obj = self._bin_obj_generator()
+    #     bin_obj.fit_split_points(table)
+    #     self.validate_result(table, bin_obj, numpy_table, is_sparse=True, all_data_shape=sparse_inst_shape)
+    #
+    #     test_array = numpy_table[:, (sparse_inst_shape - 2)]
+    #     null_array = np.array(test_array)
+    #     self.assertTrue(all(null_array == 0))
+
+    def test_sparse_abnormal_data(self):
         final_result = []
         numpy_array = []
         sparse_inst_shape = self.feature_num + 15
         indices = [x for x in range(self.feature_num + 10)]
         for i in range(self.data_num):
             tmp = 100 * np.random.rand(self.feature_num)
-            data_index = np.random.choice(indices, self.feature_num, replace=False)
-            data_index = sorted(data_index)
+            tmp = [ik for ik in range(self.feature_num)]
+            tmp[i % self.feature_num] = 'nan'
+            # data_index = np.random.choice(indices, self.feature_num, replace=False)
+            # data_index = sorted(data_index)
+            data_index = [idx for idx in range(self.feature_num)]
             sparse_inst = SparseVector(data_index, tmp, shape=sparse_inst_shape)
+            if i == 0:
+                aa = sparse_inst.get_data(0, 'a')
+                print('in for loop: {}, type: {}'.format(aa, type(aa)))
             inst = Instance(inst_id=i, features=sparse_inst, label=0)
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
@@ -156,24 +204,33 @@ class TestQuantileBinning(unittest.TestCase):
                 else:
                     tmp_array.append(0)
                 n += 1
-
             numpy_array.append(tmp_array)
+
+        abnormal_value = final_result[0][1].features.get_data(0, 'a')
+        print('abnormal_value: {}, type: {}'.format(abnormal_value, type(abnormal_value)))
         table = eggroll.parallelize(final_result,
                                     include_key=True,
                                     partition=1)
         header = ['x' + str(i) for i in range(sparse_inst_shape)]
         numpy_table = np.array(numpy_array)
         table.schema = {'header': header}
-
         self.used_data_set.append(table)
 
-        bin_obj = self._bin_obj_generator()
-        bin_obj.fit_split_points(table)
-        self.validate_result(table, bin_obj, numpy_table, is_sparse=True, all_data_shape=sparse_inst_shape)
+        bin_obj = self._bin_obj_generator(abnormal_list=['nan'])
+        split_points = bin_obj.fit_split_points(table)
+        print('split_points: {}'.format(split_points))
+        print(numpy_table)
 
-        test_array = numpy_table[:, (sparse_inst_shape - 2)]
-        null_array = np.array(test_array)
-        self.assertTrue(all(null_array == 0))
+        trans_result = bin_obj.transform(table, transform_cols_idx=-1, transform_type='bin_num')
+        trans_result = trans_result.collect()
+        print('transform result: ')
+        for k, v in trans_result:
+            value = v.features.get_all_data()
+            value_list = []
+            for value_k, value_v in value:
+                value_list.append((value_k, value_v))
+            print(k, value_list)
+        # self.validate_result(table, bin_obj, numpy_table, is_sparse=True, all_data_shape=sparse_inst_shape)
 
     def tearDown(self):
         self.table.destroy()

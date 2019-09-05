@@ -108,7 +108,7 @@ class ModelBase(object):
                         predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
 
                         if self.data_output:
-                            self.data_output.union(predict_output_res)
+                            self.data_output = self.data_output.union(predict_output_res)
                         else:
                             self.data_output = predict_output_res
 
@@ -137,7 +137,7 @@ class ModelBase(object):
                     eval_data_output = eval_data_output.mapValues(lambda value: value + ["validation"])
 
                 if self.data_output and eval_data_output:
-                    self.data_output.union(eval_data_output)
+                    self.data_output = self.data_output.union(eval_data_output)
                 elif not self.data_output and eval_data_output:
                     self.data_output = eval_data_output
 

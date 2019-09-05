@@ -33,9 +33,7 @@ from arch.api import federation
 from arch.api.proto.boosting_tree_model_meta_pb2 import CriterionMeta
 from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
-from arch.api.proto.boosting_tree_model_param_pb2 import NodeParam
 import copy
-import random
 from federatedml.util.transfer_variable.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import FeatureHistogram
@@ -408,7 +406,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if self.node_dispatch is None:
                 self.node_dispatch = dispatch_node_host_result[idx]
             else:
-                self.node_dispatch = dispatch_node_dispatch.join(dispatch_node_host_result[idx], \
+                self.node_dispatch = self.node_dispatch.join(dispatch_node_host_result[idx], \
                                                                  lambda unleaf_state_nodeid1, unleaf_state_nodeid2: \
                                                                  unleaf_state_nodeid1 if len(
                                                                  unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
