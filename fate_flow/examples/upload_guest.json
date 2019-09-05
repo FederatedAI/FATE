@@ -1,6 +1,4 @@
 {
-  "initiator_role": "guest",
-  "initiator_party_id": 9999,
   "file": "examples/data/breast_b.csv",
   "head": 1,
   "partition": 10,

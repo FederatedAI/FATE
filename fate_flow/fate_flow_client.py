@@ -182,8 +182,8 @@ def get_runtime_conf(config_data, func):
         "role": {},
         "role_parameters": {}
     }
-    initiator_role = config_data.get("initiator_role", "")
-    initiator_party_id = config_data.get("initiator_party_id", "")
+    initiator_role = "guest"
+    initiator_party_id = 0
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     job_runtime_conf["job_parameters"]["work_mode"] = config_data.get("work_mode")
@@ -195,11 +195,13 @@ def get_runtime_conf(config_data, func):
     if func == 'upload':
         job_runtime_conf["role_parameters"][initiator_role] = {
             "upload_0": {
-                "head": [config_data.get("head")],
-                "partition": [config_data.get("partition")],
+                "head": [config_data.get("head", 1)],
+                "partition": [config_data.get("partition", 10)],
                 "file": [config_data.get("file")],
                 "namespace": [config_data.get("namespace")],
-                "table_name": [config_data.get("table_name")]
+                "table_name": [config_data.get("table_name")],
+                "gen_tabel_info": [config_data.get("gen_tabel_info", False)],
+                "data_type": [config_data.get("data_type")],
             }
         }
 
@@ -210,10 +212,12 @@ def get_runtime_conf(config_data, func):
     if func == 'download':
         job_runtime_conf["role_parameters"][initiator_role] = {
             "download_0": {
-                "head": [config_data.get("head")],
-                "output_path": [config_data.get("file")],
+                "output_path": [config_data.get("output_path")],
                 "namespace": [config_data.get("namespace")],
-                "table_name": [config_data.get("table_name")]
+                "table_name": [config_data.get("table_name")],
+                "delimitor": [config_data.get("delimitor", ",")],
+                "data_type": [config_data.get("data_type")],
+                "gen_tabel_info": [config_data.get("gen_tabel_info", False)],
             }
         }
 
