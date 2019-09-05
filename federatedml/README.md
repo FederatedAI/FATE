@@ -78,7 +78,7 @@ Corresponding module name: HomoLR
 Data Input: Input DTable.
 Model Output: Logistic Regression model.
 
-#### 10. Hetero Secure Boosting
+#### 10. Hetero Secure Boosting 
 Build hetero secure boosting model through multiple parties.
 
 Corresponding module name: HeteroSecureBoost
