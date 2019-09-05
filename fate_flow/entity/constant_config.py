@@ -28,7 +28,7 @@ class JobStatus(object):
     FAILED = 'failed'
     PARTIAL = 'partial'
     DELETED = 'deleted'
-    CANCEL = 'canceled'
+    CANCELED = 'canceled'
 
 
 class TaskStatus(object):

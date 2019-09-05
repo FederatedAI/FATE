@@ -22,7 +22,7 @@ import redis
 
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
-from fate_flow.settings import WORK_MODE, REDIS, REDIS_QUEUE_DB_INDEX, stat_logger
+from fate_flow.settings import REDIS, REDIS_QUEUE_DB_INDEX, stat_logger
 
 
 class BaseQueue:
@@ -233,10 +233,10 @@ class ListQueue(BaseQueue):
 
 
 def init_job_queue():
-    if WORK_MODE == WorkMode.STANDALONE:
+    if RuntimeConfig.WORK_MODE == WorkMode.STANDALONE:
         job_queue = ListQueue()
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)
-    elif WORK_MODE == WorkMode.CLUSTER:
+    elif RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
         job_queue = RedisQueue(queue_name='fate_flow_job_queue', host=REDIS['host'], port=REDIS['port'],
                                password=REDIS['password'], max_connections=REDIS['max_connections'])
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)

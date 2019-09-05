@@ -240,7 +240,7 @@ class JobController(object):
             if is_failure:
                 return is_failure
             schedule_logger.info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
-            job_info = {'f_status': JobStatus.CANCEL}
+            job_info = {'f_status': JobStatus.CANCELED}
             roles = json_loads(job.f_roles)
             TaskScheduler.sync_job_status(job_id, roles, job.f_work_mode, job.f_initiator_party_id, job_info)
         else:
