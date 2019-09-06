@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1e\x62oosting-tree-model-meta.proto\"1\n\rObjectiveMeta\x12\x11\n\tobjective\x18\x01 \x01(\t\x12\r\n\x05param\x18\x02 \x03(\x01\"B\n\rCriterionMeta\x12\x18\n\x10\x63riterion_method\x18\x01 \x01(\t\x12\x17\n\x0f\x63riterion_param\x18\x02 \x03(\x01\"\xcd\x01\n\x15\x44\x65\x63isionTreeModelMeta\x12&\n\x0e\x63riterion_meta\x18\x01 \x01(\x0b\x32\x0e.CriterionMeta\x12\x11\n\tmax_depth\x18\x02 \x01(\x05\x12\x18\n\x10min_sample_split\x18\x03 \x01(\x05\x12\x1a\n\x12min_impurity_split\x18\x04 \x01(\x01\x12\x15\n\rmin_leaf_node\x18\x05 \x01(\x05\x12\x13\n\x0buse_missing\x18\x06 \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\x07 \x01(\x08\"8\n\x0cQuantileMeta\x12\x17\n\x0fquantile_method\x18\x01 \x01(\t\x12\x0f\n\x07\x62in_num\x18\x02 \x01(\x05\"\xb4\x02\n\x15\x42oostingTreeModelMeta\x12)\n\ttree_meta\x18\x01 \x01(\x0b\x32\x16.DecisionTreeModelMeta\x12\x15\n\rlearning_rate\x18\x02 \x01(\x01\x12\x11\n\tnum_trees\x18\x03 \x01(\x05\x12$\n\rquantile_meta\x18\x04 \x01(\x0b\x32\r.QuantileMeta\x12&\n\x0eobjective_meta\x18\x05 \x01(\x0b\x32\x0e.ObjectiveMeta\x12\x11\n\ttask_type\x18\x06 \x01(\t\x12\x18\n\x10n_iter_no_change\x18\x07 \x01(\x08\x12\x0b\n\x03tol\x18\x08 \x01(\x01\x12\x10\n\x08need_run\x18\t \x01(\x08\x12\x13\n\x0buse_missing\x18\n \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\x0b \x01(\x08\x62\x06proto3')
+  serialized_pb=_b('\n\x1e\x62oosting-tree-model-meta.proto\"1\n\rObjectiveMeta\x12\x11\n\tobjective\x18\x01 \x01(\t\x12\r\n\x05param\x18\x02 \x03(\x01\"B\n\rCriterionMeta\x12\x18\n\x10\x63riterion_method\x18\x01 \x01(\t\x12\x17\n\x0f\x63riterion_param\x18\x02 \x03(\x01\"\xcd\x01\n\x15\x44\x65\x63isionTreeModelMeta\x12&\n\x0e\x63riterion_meta\x18\x01 \x01(\x0b\x32\x0e.CriterionMeta\x12\x11\n\tmax_depth\x18\x02 \x01(\x05\x12\x18\n\x10min_sample_split\x18\x03 \x01(\x05\x12\x1a\n\x12min_impurity_split\x18\x04 \x01(\x01\x12\x15\n\rmin_leaf_node\x18\x05 \x01(\x05\x12\x13\n\x0buse_missing\x18\x06 \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\x07 \x01(\x08\"8\n\x0cQuantileMeta\x12\x17\n\x0fquantile_method\x18\x01 \x01(\t\x12\x0f\n\x07\x62in_num\x18\x02 \x01(\x05\"\xa2\x02\n\x15\x42oostingTreeModelMeta\x12)\n\ttree_meta\x18\x01 \x01(\x0b\x32\x16.DecisionTreeModelMeta\x12\x15\n\rlearning_rate\x18\x02 \x01(\x01\x12\x11\n\tnum_trees\x18\x03 \x01(\x05\x12$\n\rquantile_meta\x18\x04 \x01(\x0b\x32\r.QuantileMeta\x12&\n\x0eobjective_meta\x18\x05 \x01(\x0b\x32\x0e.ObjectiveMeta\x12\x11\n\ttask_type\x18\x06 \x01(\t\x12\x18\n\x10n_iter_no_change\x18\x07 \x01(\x08\x12\x0b\n\x03tol\x18\x08 \x01(\x01\x12\x13\n\x0buse_missing\x18\t \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\n \x01(\x08\x62\x06proto3')
 )
 
 
@@ -277,22 +277,15 @@ _BOOSTINGTREEMODELMETA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='need_run', full_name='BoostingTreeModelMeta.need_run', index=8,
+      name='use_missing', full_name='BoostingTreeModelMeta.use_missing', index=8,
       number=9, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='use_missing', full_name='BoostingTreeModelMeta.use_missing', index=9,
+      name='zero_as_missing', full_name='BoostingTreeModelMeta.zero_as_missing', index=9,
       number=10, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='zero_as_missing', full_name='BoostingTreeModelMeta.zero_as_missing', index=10,
-      number=11, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -310,7 +303,7 @@ _BOOSTINGTREEMODELMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=420,
-  serialized_end=728,
+  serialized_end=710,
 )
 
 _DECISIONTREEMODELMETA.fields_by_name['criterion_meta'].message_type = _CRITERIONMETA

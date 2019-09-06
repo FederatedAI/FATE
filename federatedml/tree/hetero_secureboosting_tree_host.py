@@ -170,7 +170,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         model_meta.num_trees = self.num_trees
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
         # model_meta.tree_dim = self.tree_dim
-        model_meta.need_run = self.need_run 
+        # model_meta.need_run = self.need_run
 
         meta_name = "HeteroSecureBoostingTreeHostMeta"
 
