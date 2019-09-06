@@ -74,7 +74,7 @@ class LinearGradient(Gradient):
         return grad, loss
 
 
-class HeteroLinearGradient(object):
+class HeteroLinearGradientComputer(object):
     """
     Class for compute hetero linear regression gradient and loss
     """

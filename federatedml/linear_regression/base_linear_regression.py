@@ -22,13 +22,14 @@ from google.protobuf import json_format
 
 from arch.api.proto import linr_model_meta_pb2, linr_model_param_pb2
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.linear_regression.linear_regression_variables import LinearRegressionVariables
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
-from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim import Initializer
+from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
-from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric
 
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
@@ -146,7 +147,8 @@ class BaseLinearRegression(ModelBase):
             learning_rate=self.model_param.learning_rate,
             max_iter=self.max_iter,
             converge_func=self.model_param.converge_func,
-            re_encrypt_batches=self.re_encrypt_batches)
+            re_encrypt_batches=self.re_encrypt_batches,
+            fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
     def _get_param(self):
@@ -158,14 +160,14 @@ class BaseLinearRegression(ModelBase):
 
         weight_dict = {}
         for idx, header_name in enumerate(header):
-            coef_i = self.coef_[idx]
+            coef_i = self.linR_variables.coef_[idx]
             weight_dict[header_name] = coef_i
-
+        intercept_ = self.linR_variables.intercept_
         param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,
                                                                  loss_history=self.loss_history,
                                                                  is_converged=self.is_converged,
                                                                  weight=weight_dict,
-                                                                 intercept=self.intercept_,
+                                                                 intercept=intercept_,
                                                                  header=header)
         json_result = json_format.MessageToJson(param_protobuf_obj)
         LOGGER.debug("json_result: {}".format(json_result))
@@ -184,6 +186,9 @@ class BaseLinearRegression(ModelBase):
         #LOGGER.debug("In load model, model_dict: {}".format(model_dict))
         result_obj = list(model_dict.get('model').values())[0].get(
             self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        fit_intercept = meta_obj.fit_intercept
+
         self.header = list(result_obj.header)
         #LOGGER.debug("In load model, header: {}".format(self.header))
         # For linear regression arbiter predict function
@@ -191,17 +196,16 @@ class BaseLinearRegression(ModelBase):
             return
 
         feature_shape = len(self.header)
-        self.coef_ = np.zeros(feature_shape)
+        tmp_vars = np.zeros(feature_shape)
         weight_dict = dict(result_obj.weight)
         self.intercept_ = result_obj.intercept
 
         for idx, header_name in enumerate(self.header):
-            self.coef_[idx] = weight_dict.get(header_name)
+            tmp_vars[idx] = weight_dict.get(header_name)
 
-        LOGGER.debug(
-            "In load model, coef_: {}, intercept: {}, weight_dict: {}".format(
-                self.coef_, self.intercept_, weight_dict
-            ))
+        if fit_intercept:
+            tmp_vars = np.append(tmp_vars, result_obj.intercept)
+        self.linR_variables = LinearRegressionVariables(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """
@@ -211,8 +215,6 @@ class BaseLinearRegression(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
 
     def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
         kflod_obj = KFold()
         cv_param = self._get_cv_param()
         kflod_obj.run(cv_param, data_instances, self)
