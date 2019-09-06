@@ -33,7 +33,8 @@ from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
 from federatedml.tree import FeatureHistogram
-from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import HeteroDecisionTreeTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
+    HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.tree import Node
 from federatedml.feature.fate_element_type import NoneType
@@ -124,25 +125,36 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_encrypted_grad_and_hess(self):
         LOGGER.info("get encrypted grad and hess")
+        self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
+        """
         self.grad_and_hess = federation.get(name=self.transfer_inst.encrypted_grad_and_hess.name,
                                             tag=self.transfer_inst.generate_transferid(
                                                 self.transfer_inst.encrypted_grad_and_hess),
                                             idx=0)
+        """
 
     def sync_node_positions(self, dep=-1):
         LOGGER.info("get tree node queue of depth {}".format(dep))
+        node_positions = self.transfer_inst.node_positions.get(idx=0,
+                                                               suffix=(dep,))
+        """
         node_positions = federation.get(name=self.transfer_inst.node_positions.name,
                                         tag=self.transfer_inst.generate_transferid(self.transfer_inst.node_positions,
                                                                                    dep),
                                         idx=0)
+        """
         return node_positions
 
     def sync_tree_node_queue(self, dep=-1):
         LOGGER.info("get tree node queue of depth {}".format(dep))
+        self.tree_node_queue = self.transfer_inst.tree_node_queue.get(idx=0,
+                                                                      suffix=(dep,))
+        """
         self.tree_node_queue = federation.get(name=self.transfer_inst.tree_node_queue.name,
                                               tag=self.transfer_inst.generate_transferid(
                                                   self.transfer_inst.tree_node_queue, dep),
                                               idx=0)
+        """
 
     def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
@@ -158,20 +170,32 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_encrypted_splitinfo_host(self, encrypted_splitinfo_host, dep=-1, batch=-1):
         LOGGER.info("send encrypted splitinfo of depth {}, batch {}".format(dep, batch))
+        self.transfer_inst.encrypted_splitinfo_host.remote(encrypted_splitinfo_host,
+                                                           role=consts.GUEST,
+                                                           idx=-1,
+                                                           suffix=(dep, batch,))
+
+        """
         federation.remote(obj=encrypted_splitinfo_host,
                           name=self.transfer_inst.encrypted_splitinfo_host.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.encrypted_splitinfo_host, dep,
                                                                      batch),
                           role=consts.GUEST,
                           idx=-1)
+        """
 
     def sync_federated_best_splitinfo_host(self, dep=-1, batch=-1):
         LOGGER.info("get federated best splitinfo of depth {}, batch {}".format(dep, batch))
+        federated_best_splitinfo_host = self.transfer_inst.federated_best_splitinfo_host.get(idx=0,
+                                                                                             suffix=(dep, batch,))
+        """
         federated_best_splitinfo_host = federation.get(name=self.transfer_inst.federated_best_splitinfo_host.name,
                                                        tag=self.transfer_inst.generate_transferid(
                                                            self.transfer_inst.federated_best_splitinfo_host, dep,
                                                            batch),
                                                        idx=0)
+        """
+
         return federated_best_splitinfo_host
 
     def sync_final_splitinfo_host(self, splitinfo_host, federated_best_splitinfo_host, dep=-1, batch=-1):
@@ -192,19 +216,30 @@ class HeteroDecisionTreeHost(DecisionTree):
 
             final_splitinfos.append(splitinfo)
 
+        self.transfer_inst.final_splitinfo_host.remote(final_splitinfos,
+                                                       role=consts.GUEST,
+                                                       idx=-1,
+                                                       suffix=(dep, batch,))
+
+        """
         federation.remote(obj=final_splitinfos,
                           name=self.transfer_inst.final_splitinfo_host.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.final_splitinfo_host, dep,
                                                                      batch),
                           role=consts.GUEST,
                           idx=-1)
+        """
 
     def sync_dispatch_node_host(self, dep):
         LOGGER.info("get node from host to dispath, depth is {}".format(dep))
+        dispatch_node_host = self.transfer_inst.dispatch_node_host.get(idx=0,
+                                                                       suffix=(dep,))
+        """
         dispatch_node_host = federation.get(name=self.transfer_inst.dispatch_node_host.name,
                                             tag=self.transfer_inst.generate_transferid(
                                                 self.transfer_inst.dispatch_node_host, dep),
                                             idx=0)
+        """
         return dispatch_node_host
 
     @staticmethod
@@ -230,10 +265,10 @@ class HeteroDecisionTreeHost(DecisionTree):
             missing_val = False
             if zero_as_missing:
                 if value2.features.get_data(fid, None) is None or \
-                    value2.features.get_data(fid) == NoneType():
+                        value2.features.get_data(fid) == NoneType():
                     missing_val = True
             elif use_missing and value2.features.get_data(fid) == NoneType():
-                    missing_val = True
+                missing_val = True
 
             if missing_val:
                 if missing_dir == 1:
@@ -248,11 +283,19 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_dispatch_node_host_result(self, dispatch_node_host_result, dep=-1):
         LOGGER.info("send host dispatch result, depth is {}".format(dep))
+
+        self.transfer_inst.dispatch_node_host.remote(dispatch_node_host_result,
+                                                     role=consts.GUEST,
+                                                     idx=-1,
+                                                     suffix=(dep,))
+
+        """
         federation.remote(obj=dispatch_node_host_result,
                           name=self.transfer_inst.dispatch_node_host_result.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.dispatch_node_host_result, dep),
                           role=consts.GUEST,
                           idx=-1)
+        """
 
     def find_dispatch(self, dispatch_node_host, dep=-1):
         LOGGER.info("start to find host dispath of depth {}".format(dep))
@@ -269,9 +312,12 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_tree(self):
         LOGGER.info("sync tree from guest")
+        self.tree_ = self.transfer_inst.tree.get(idx=0)
+        """
         self.tree_ = federation.get(name=self.transfer_inst.tree.name,
                                     tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree),
                                     idx=0)
+        """
 
     def remove_duplicated_split_nodes(self, split_nid_used):
         LOGGER.info("remove duplicated nodes from split mask dict")
@@ -340,29 +386,44 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_predict_finish_tag(self, recv_times):
         LOGGER.info("get the {}-th predict finish tag from guest".format(recv_times))
+        finish_tag = self.transfer_inst.predict_finish_tag.get(idx=0,
+                                                               suffix=(recv_times,))
+        """
         finish_tag = federation.get(name=self.transfer_inst.predict_finish_tag.name,
                                     tag=self.transfer_inst.generate_transferid(self.transfer_inst.predict_finish_tag,
                                                                                recv_times),
                                     idx=0)
+        """
+
         return finish_tag
 
     def sync_predict_data(self, recv_times):
         LOGGER.info("srecv predict data to host, recv times is {}".format(recv_times))
+        predict_data = self.transfer_inst.predict_data.get(idx=0)
+        """
         predict_data = federation.get(name=self.transfer_inst.predict_data.name,
                                       tag=self.transfer_inst.generate_transferid(self.transfer_inst.predict_data,
                                                                                  recv_times),
                                       idx=0)
+        """
 
         return predict_data
 
     def sync_data_predicted_by_host(self, predict_data, send_times):
         LOGGER.info("send predicted data by host, send times is {}".format(send_times))
+
+        self.transfer_inst.predict_data_by_host.remote(predict_data,
+                                                       role=consts.GUEST,
+                                                       idx=0,
+                                                       suffix=(send_times,))
+        """
         federation.remote(obj=predict_data,
                           name=self.transfer_inst.predict_data_by_host.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.predict_data_by_host,
                                                                      send_times),
                           role=consts.GUEST,
                           idx=0)
+        """
 
     def fit(self):
         LOGGER.info("begin to fit host decision tree")

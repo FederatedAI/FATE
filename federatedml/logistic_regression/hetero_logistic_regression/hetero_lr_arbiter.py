@@ -92,23 +92,37 @@ class HeteroLRArbiter(HeteroLRBase):
         public_key = self.encrypt_operator.get_public_key()
         public_key = public_key
         LOGGER.info("public_key:{}".format(public_key))
+        self.transfer_variable.paillier_pubkey.remote(public_key,
+                                                      role=consts.HOST,
+                                                      idx=0)
+        """
         federation.remote(public_key,
                           name=self.transfer_variable.paillier_pubkey.name,
                           tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
                           role=consts.HOST,
                           idx=0)
+        """
         LOGGER.info("remote public_key to host")
 
+        self.transfer_variable.paillier_pubkey.remote(public_key,
+                                                      role=consts.GUEST,
+                                                      idx=0)
+        """
         federation.remote(public_key,
                           name=self.transfer_variable.paillier_pubkey.name,
                           tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
                           role=consts.GUEST,
                           idx=0)
+        """
+
         LOGGER.info("remote public_key to guest")
 
+        batch_info = self.transfer_variable.batch_info.get(idx=0)
+        """
         batch_info = federation.get(name=self.transfer_variable.batch_info.name,
                                     tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
                                     idx=0)
+        """
         LOGGER.info("Get batch_info from guest:{}".format(batch_info))
         self.batch_num = batch_info["batch_num"]
 
@@ -120,16 +134,24 @@ class HeteroLRArbiter(HeteroLRBase):
             iter_loss = 0
             while batch_index < self.batch_num:
                 LOGGER.info("batch:{}".format(batch_index))
+                host_gradient = self.transfer_variable.host_gradient.get(idx=0,
+                                                                         suffix=(self.n_iter_, batch_index,))
+                """
                 host_gradient = federation.get(name=self.transfer_variable.host_gradient.name,
                                                tag=self.transfer_variable.generate_transferid(
                                                    self.transfer_variable.host_gradient, self.n_iter_, batch_index),
                                                idx=0)
+                """
                 LOGGER.info("Get host_gradient from Host")
 
+                guest_gradient = self.transfer_variable.guest_gradient.get(idx=0,
+                                                                           suffix=(self.n_iter_, batch_index,))
+                """
                 guest_gradient = federation.get(name=self.transfer_variable.guest_gradient.name,
                                                 tag=self.transfer_variable.generate_transferid(
                                                     self.transfer_variable.guest_gradient, self.n_iter_, batch_index),
                                                 idx=0)
+                """
                 LOGGER.info("Get guest_gradient from Guest")
 
                 # aggregate gradient
@@ -148,6 +170,11 @@ class HeteroLRArbiter(HeteroLRBase):
                 host_optim_gradient = separate_optim_gradient[0]
                 guest_optim_gradient = separate_optim_gradient[1]
 
+                self.transfer_variable.host_optim_gradient.remote(host_optim_gradient,
+                                                                  role=consts.HOST,
+                                                                  idx=0,
+                                                                  suffix=(self.n_iter_, batch_index,))
+                """
                 federation.remote(host_optim_gradient,
                                   name=self.transfer_variable.host_optim_gradient.name,
                                   tag=self.transfer_variable.generate_transferid(
@@ -156,8 +183,14 @@ class HeteroLRArbiter(HeteroLRBase):
                                       batch_index),
                                   role=consts.HOST,
                                   idx=0)
+                """
                 LOGGER.info("Remote host_optim_gradient to Host")
 
+                self.transfer_variable.guest_optim_gradient.remote(guest_optim_gradient,
+                                                                   role=consts.GUEST,
+                                                                   idx=0,
+                                                                   suffix=(self.n_iter_, batch_index))
+                """
                 federation.remote(guest_optim_gradient,
                                   name=self.transfer_variable.guest_optim_gradient.name,
                                   tag=self.transfer_variable.generate_transferid(
@@ -166,16 +199,20 @@ class HeteroLRArbiter(HeteroLRBase):
                                       batch_index),
                                   role=consts.GUEST,
                                   idx=0)
+                """
                 LOGGER.info("Remote guest_optim_gradient to Guest")
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
+                loss = self.transfer_variable.get(idx=0,
+                                                  suffix=(self.n_iter_, batch_index,))
+                """
                 loss = federation.get(name=self.transfer_variable.loss.name,
                                       tag=self.transfer_variable.generate_transferid(
                                           self.transfer_variable.loss, self.n_iter_, batch_index),
                                       idx=0)
-
+                """
                 de_loss = self.encrypt_operator.decrypt(loss)
                 iter_loss += de_loss
                 # LOGGER.info("Get loss from guest:{}".format(de_loss))
@@ -201,6 +238,11 @@ class HeteroLRArbiter(HeteroLRBase):
             if self.converge_func.is_converge(loss):
                 is_stop = True
 
+            self.transfer_variable.is_stopped.remote(is_stop,
+                                                     role=consts.HOST,
+                                                     idx=0,
+                                                     suffix=(self.n_iter_, batch_index,))
+            """
             federation.remote(is_stop,
                               name=self.transfer_variable.is_stopped.name,
                               tag=self.transfer_variable.generate_transferid(self.transfer_variable.is_stopped,
@@ -208,8 +250,14 @@ class HeteroLRArbiter(HeteroLRBase):
                                                                              batch_index),
                               role=consts.HOST,
                               idx=0)
+            """
             LOGGER.info("Remote is_stop to host:{}".format(is_stop))
 
+            self.transfer_variable.is_stopped.remote(is_stop,
+                                                     role=consts.GUEST,
+                                                     idx=0,
+                                                     suffix=(self.n_iter_, batch_index,))
+            """
             federation.remote(is_stop,
                               name=self.transfer_variable.is_stopped.name,
                               tag=self.transfer_variable.generate_transferid(self.transfer_variable.is_stopped,
@@ -217,6 +265,7 @@ class HeteroLRArbiter(HeteroLRBase):
                                                                              batch_index),
                               role=consts.GUEST,
                               idx=0)
+            """
             LOGGER.info("Remote is_stop to guest:{}".format(is_stop))
 
             self.n_iter_ += 1
