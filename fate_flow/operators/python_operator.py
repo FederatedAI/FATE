@@ -13,21 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core import get_lan_ip
+from fate_flow.operators.base_operator import BaseOperator
 
 
-class RuntimeConfig(object):
-    WORK_MODE = None
-    BACKEND = None
-    JOB_QUEUE = None
-    USE_LOCAL_DATABASE = False
-    HTTP_PORT = None
-    JOB_SERVER_HOST = None
+class PythonOperator(BaseOperator):
+    def __init__(self, python_callable, op_args=None, op_kwargs=None):
+        if not callable(python_callable):
+            raise TypeError('`python_callable` param must be callable')
+        self.python_callable = python_callable
+        self.op_args = op_args or []
+        self.op_kwargs = op_kwargs or {}
 
-    @staticmethod
-    def init_config(**kwargs):
-        for k, v in kwargs.items():
-            if hasattr(RuntimeConfig, k):
-                setattr(RuntimeConfig, k, v)
-                if k == 'HTTP_PORT':
-                    setattr(RuntimeConfig, 'JOB_SERVER_HOST', "{}:{}".format(get_lan_ip(), RuntimeConfig.HTTP_PORT))
+    def execute(self):
+        return self.python_callable(*self.op_args, **self.op_kwargs)

@@ -99,26 +99,6 @@ def component_metrics():
         return get_json_result(retcode=0, retmsg='no data', data={})
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
-def save_metric_data(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
-    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metrics=metrics, job_level=request_data['job_level'])
-    return get_json_result()
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
-def save_metric_meta(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metric_meta = deserialize_b64(request_data['metric_meta'])
-    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metric_meta=metric_meta, job_level=request_data['job_level'])
-    return get_json_result()
-
-
 @manager.route('/component/metric_data', methods=['post'])
 def component_metric_data():
     request_data = request.json
@@ -234,6 +214,7 @@ def component_output_data():
 
 
 @manager.route('/component/output/data/download', methods=['get'])
+@job_utils.job_server_routing(307)
 def component_output_data_download():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)
@@ -275,6 +256,26 @@ def component_output_data_download():
                                                                     request_data['component_name'],
                                                                     request_data['role'], request_data['party_id'])
         return send_file(memory_file, attachment_filename=tar_file_name, as_attachment=True)
+
+# api using by task executor
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
+def save_metric_data(job_id, component_name, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
+    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metrics=metrics, job_level=request_data['job_level'])
+    return get_json_result()
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
+def save_metric_meta(job_id, component_name, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    metric_meta = deserialize_b64(request_data['metric_meta'])
+    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
+                             metric_meta=metric_meta, job_level=request_data['job_level'])
+    return get_json_result()
 
 
 def get_component_output_data_table(task_data):
