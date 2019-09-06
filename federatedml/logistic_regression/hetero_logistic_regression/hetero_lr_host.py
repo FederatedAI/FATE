@@ -174,8 +174,8 @@ class HeteroLRHost(HeteroLRBase):
                 LOGGER.info("Remote host_forward to guest")
 
                 # compute host gradient
-                fore_gradient = self.transfer_variable.fore_gradient(idx=0,
-                                                                     suffix=(self.n_iter_, batch_index,))
+                fore_gradient = self.transfer_variable.fore_gradient.get(idx=0,
+                                                                         suffix=(self.n_iter_, batch_index,))
                 """
                 fore_gradient = federation.get(name=self.transfer_variable.fore_gradient.name,
                                                tag=self.transfer_variable.generate_transferid(
@@ -208,11 +208,11 @@ class HeteroLRHost(HeteroLRBase):
                     """
                     LOGGER.info("Remote host_loss_regular to guest")
 
-                self.transfer_variable.generate_transferid(host_gradient,
-                                                           role=consts.ARBITER,
-                                                           idx=0,
-                                                           suffix=(self.n_iter_,
-                                                                   batch_index))
+                self.transfer_variable.host_gradient.remote(host_gradient,
+                                                            role=consts.ARBITER,
+                                                            idx=0,
+                                                            suffix=(self.n_iter_,
+                                                                    batch_index))
                 """
                 federation.remote(host_gradient,
                                   name=self.transfer_variable.host_gradient.name,
@@ -226,7 +226,8 @@ class HeteroLRHost(HeteroLRBase):
 
                 # Get optimize host gradient and update model
                 optim_host_gradient = self.transfer_variable.host_optim_gradient.get(idx=0,
-                                                                                     suffix=(self.n_iter_, batch_index,))
+                                                                                     suffix=(
+                                                                                     self.n_iter_, batch_index,))
                 """
                 optim_host_gradient = federation.get(name=self.transfer_variable.host_optim_gradient.name,
                                                      tag=self.transfer_variable.generate_transferid(
