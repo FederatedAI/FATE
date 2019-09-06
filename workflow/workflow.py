@@ -30,7 +30,7 @@ import numpy as np
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.model_manager import manager as model_manager
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
