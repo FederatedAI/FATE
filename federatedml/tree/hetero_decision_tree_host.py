@@ -25,10 +25,9 @@
 # HeteroDecisionTreeHost
 # =============================================================================
 
-from arch.api import federation
 from arch.api.utils import log_utils
-from arch.api.proto.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
-from arch.api.proto.boosting_tree_model_param_pb2 import DecisionTreeModelParam
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo

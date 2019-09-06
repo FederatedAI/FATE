@@ -18,9 +18,8 @@ import copy
 import functools
 import time
 
-from arch.api import federation
 from arch.api.model_manager import manager as model_manager
-from arch.api.proto import one_vs_rest_param_pb2
+from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable

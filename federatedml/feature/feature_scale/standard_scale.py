@@ -18,9 +18,9 @@ import functools
 
 import numpy as np
 
-from arch.api.proto.feature_scale_meta_pb2 import ScaleMeta
-from arch.api.proto.feature_scale_param_pb2 import ScaleParam
-from arch.api.proto.feature_scale_param_pb2 import ColumnScaleParam
+from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
+from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
+from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
 from arch.api.utils import log_utils
 from federatedml.feature.feature_scale.base_scale import BaseScale
 from federatedml.statistic.statics import MultivariateStatisticalSummary

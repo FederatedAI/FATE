@@ -18,7 +18,7 @@ import functools
 
 import numpy as np
 
-from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
+from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
