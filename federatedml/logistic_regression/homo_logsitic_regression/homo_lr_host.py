@@ -17,8 +17,7 @@
 import functools
 import numpy as np
 
-from arch.api import federation
-from arch.api.proto import lr_model_param_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta

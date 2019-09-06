@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
+from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning.bucket_binning import BucketBinning

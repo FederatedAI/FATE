@@ -48,12 +48,11 @@ from federatedml.loss import TweedieLoss
 from federatedml.loss import LogCoshLoss
 from federatedml.loss import FairLoss
 
-from arch.api import federation
-from arch.api.proto.boosting_tree_model_meta_pb2 import ObjectiveMeta
-from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
-from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
-from arch.api.proto.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from arch.api.utils import log_utils
 import numpy as np
 import functools

@@ -27,6 +27,9 @@ import numpy as np
 
 LOGGER = log_utils.getLogger()
 
+import tensorflow as tf
+
+tf.exp
 
 class SecureAddGuest(ModelBase):
     def __init__(self):

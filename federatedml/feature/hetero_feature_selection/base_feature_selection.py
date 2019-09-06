@@ -22,7 +22,7 @@ import functools
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
+from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost

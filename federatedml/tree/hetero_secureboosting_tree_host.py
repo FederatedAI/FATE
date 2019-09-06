@@ -32,11 +32,10 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.tree import BoostingTree
 from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
-from arch.api.proto.boosting_tree_model_meta_pb2 import QuantileMeta
-from arch.api.proto.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
-from arch.api.proto.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from numpy import random
-from arch.api import federation
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()

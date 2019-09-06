@@ -24,7 +24,6 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
-from fate_flow.manager.tracking import Tracking 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.instance import Instance
@@ -33,12 +32,12 @@ from federatedml.util import consts
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
 from federatedml.model_base import ModelBase
-from arch.api.proto.data_io_meta_pb2 import DataIOMeta
-from arch.api.proto.data_io_param_pb2 import DataIOParam
-from arch.api.proto.data_io_meta_pb2 import ImputerMeta
-from arch.api.proto.data_io_param_pb2 import ImputerParam
-from arch.api.proto.data_io_meta_pb2 import OutlierMeta
-from arch.api.proto.data_io_param_pb2 import OutlierParam
+from federatedml.protobuf.generated.data_io_meta_pb2 import DataIOMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import DataIOParam
+from federatedml.protobuf.generated.data_io_meta_pb2 import ImputerMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import ImputerParam
+from federatedml.protobuf.generated.data_io_meta_pb2 import OutlierMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from arch.api import storage
 
 LOGGER = log_utils.getLogger()
