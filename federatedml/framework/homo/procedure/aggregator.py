@@ -96,7 +96,7 @@ class Arbiter(party_weights_sync.Arbiter,
             loss = losses[0]
             for party_id in idx:
                 total_weights += self._party_weights[party_id]
-                loss += losses[party_id]
+                loss += (losses[party_id] * self._party_weights[party_id])
             return loss / total_weights
 
 

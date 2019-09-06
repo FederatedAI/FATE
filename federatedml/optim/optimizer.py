@@ -18,7 +18,10 @@
 
 import numpy as np
 
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+
+LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):
@@ -71,6 +74,7 @@ class _Optimizer(object):
             model_variables = self.__l1_updator(model_variables, grad)
         elif self.penalty == 'l2':
             model_variables = self.__l2_updator(model_variables, grad)
+            # new_vars = model_variables.for_remote().parameters - grad
         else:
             new_vars = model_variables.for_remote().parameters - grad
             model_variables = LogisticRegressionVariables(new_vars, model_variables.fit_intercept)
@@ -98,11 +102,12 @@ class _Optimizer(object):
     def update_model(self, model_variables: LogisticRegressionVariables, grad, has_applied=True):
         if not has_applied:
             delta_grad = self.apply_gradients(grad)
+            # delta_grad = grad
         else:
             self.iters += 1
             delta_grad = grad
-        new_param = self.update(model_variables, delta_grad)
-        return new_param
+        model_variables = self.update(model_variables, delta_grad)
+        return model_variables
 
 
 class _SgdOptimizer(_Optimizer):
@@ -157,8 +162,8 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        # self.learning_rate = self.learning_rate / np.sqrt(self.iters)
-        self.learning_rate = self.learning_rate / 0.9
+        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        # self.learning_rate = self.learning_rate / 0.9
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)

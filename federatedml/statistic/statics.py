@@ -398,22 +398,26 @@ class MultivariateStatisticalSummary(object):
 
         return result
 
+    @staticmethod
+    def get_label_static_dict(data_instances):
+        result_dict = {}
+        for instance in data_instances:
+            label_key = instance[1].label
+            if label_key not in result_dict:
+                result_dict[label_key] = 1
+            else:
+                result_dict[label_key] += 1
+        return result_dict
+
+    @staticmethod
+    def merge_result_dict(dict_a, dict_b):
+        for k, v in dict_b.items():
+            if k in dict_a:
+                dict_a[k] += v
+            else:
+                dict_a[k] = v
+        return dict_a
+
     def get_label_histogram(self):
-
-        def get_label_static_dict(data_instances):
-            from collections import defaultdict
-            result_dict = defaultdict(lambda: 0)
-            for instance in data_instances:
-                result_dict[instance[1].label] += 1
-            return result_dict
-
-        def merge_result_dict(dict_a, dict_b):
-            for k, v in dict_b.items():
-                if k in dict_a:
-                    dict_a[k] += v
-                else:
-                    dict_a[k] = v
-            return dict_a
-
-        label_histogram = self.data_instances.mapPartitions(get_label_static_dict).reduce(merge_result_dict)
+        label_histogram = self.data_instances.mapPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
         return label_histogram

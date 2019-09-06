@@ -82,7 +82,7 @@ class Initializer(object):
         elif init_method == 'ones':
             w = self.ones(model_shape)
         elif init_method == 'zeros':
-            w = self.zeros(model_shape)
+            w = self.zeros(model_shape, fit_intercept, data_instance)
         elif init_method == 'const':
             init_const = init_params.init_const
             w = self.constant(model_shape, const=init_const)

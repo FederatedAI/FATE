@@ -179,6 +179,8 @@ class LogisticParam(BaseParam):
                     "logistic_param's optimizer not supported, optimizer should be"
                     " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
+        self.encrypt_param.check()
+
         if type(self.batch_size).__name__ != "int":
             raise ValueError(
                 "logistic_param's batch_size {} not supported, should be int type".format(self.batch_size))
@@ -213,7 +215,6 @@ class LogisticParam(BaseParam):
                     "logistic_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
-        self.encrypt_param.check()
 
         if type(self.re_encrypt_batches).__name__ != "int":
             raise ValueError(

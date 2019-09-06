@@ -19,6 +19,7 @@
 from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.optimizer import optimizer_factory
+from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
 
@@ -36,6 +37,11 @@ class HomoLRBase(BaseLogisticRegression):
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)
+
+        if params.encrypt_param.method == consts.PAILLIER:
+            if params.optimizer != 'sgd':
+                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
+
         self.transfer_variable = HomoLRTransferVariable()
         self.aggregator.register_aggregator(self.transfer_variable)
         self.aggregator.initialize_aggregator(params.party_weight)
@@ -46,28 +52,6 @@ class HomoLRBase(BaseLogisticRegression):
         if self.model_param.converge_func == 'weight_diff':
             return False
         return True
-
-    # def _judge_stage(self, args):
-    #     train_data = None
-    #     eval_data = None
-    #     data_sets = args['data']
-    #     for data_key in data_sets:
-    #         if data_sets[data_key].get("train_data", None):
-    #             train_data = data_sets[data_key]["train_data"]
-    #
-    #         if data_sets[data_key].get("eval_data", None):
-    #             eval_data = data_sets[data_key]["eval_data"]
-    #
-    #     if train_data is not None:
-    #         stage = 'fit'
-    #         if eval_data is not None:
-    #             has_eval = True
-    #         else:
-    #             has_eval = False
-    #     else:
-    #         stage = 'predict'
-    #         has_eval = False
-    #     return stage, has_eval
 
     def _judge_stage(self, args):
         data_sets = args['data']
@@ -93,6 +77,15 @@ class HomoLRBase(BaseLogisticRegression):
             if data_sets[data_key].get("eval_data", None):
                 eval_data = data_sets[data_key]["eval_data"]
         return train_data, eval_data
+
+    def _init_model_variables(self, data_instances):
+        model_shape = data_overview.get_features_shape(data_instances)
+
+        LOGGER.info("Initialized model shape is {}".format(model_shape))
+
+        lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
+                                                   data_instance=data_instances)
+        return lr_variables
 
     def run(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)

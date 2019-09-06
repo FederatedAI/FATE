@@ -49,15 +49,15 @@ class HomoLRGuest(HomoLRBase):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
 
-        self.lr_variables = self.__init_model(data_instances)
+        self.lr_variables = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
-        iter_loss = 0
         while self.n_iter_ < max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             batch_num = 0
+            iter_loss = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
@@ -98,10 +98,4 @@ class HomoLRGuest(HomoLRBase):
                                                               self.model_param.predict_param.threshold)
         return predict_result
 
-    def __init_model(self, data_instances):
-        model_shape = data_overview.get_features_shape(data_instances)
 
-        LOGGER.info("Initialized model shape is {}".format(model_shape))
-
-        lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        return lr_variables

@@ -22,6 +22,7 @@ from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
 from federatedml.util import consts
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -70,7 +71,7 @@ class HomoLRArbiter(HomoLRBase):
             if self.use_loss:
                 converge_var = total_loss
             else:
-                converge_var = merged_model
+                converge_var = np.array(merged_model.for_remote().parameters)
             self.is_converged = self.aggregator.check_converge_status(self.converge_func.is_converge,
                                                                       (converge_var,),
                                                                       suffix=(self.n_iter_,))

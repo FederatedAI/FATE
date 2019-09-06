@@ -19,12 +19,16 @@
 import numpy as np
 
 from federatedml.framework.weights import ListVariables
+from federatedml.framework.weights import TransferableVariables
 
 
 class LogisticRegressionVariables(ListVariables):
     def __init__(self, l, fit_intercept):
         super().__init__(l)
         self.fit_intercept = fit_intercept
+
+    def for_remote(self):
+        return TransferableVariables(np.array(self._parameter))
 
     @property
     def coef_(self):
@@ -39,5 +43,5 @@ class LogisticRegressionVariables(ListVariables):
         return 0.0
 
     @property
-    def parameter(self):
+    def parameters(self):
         return np.array(self._parameter)
