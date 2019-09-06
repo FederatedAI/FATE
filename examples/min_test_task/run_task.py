@@ -375,9 +375,9 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
 
 
 def get_table_count(name, namespace):
-    from arch.api import eggroll
-    eggroll.init("get_intersect_output", mode=work_mode)
-    table = eggroll.table(name, namespace)
+    from arch.api import table_manager
+    table_manager.init(job_id="get_intersect_output", mode=work_mode)
+    table = table_manager.table(name=name, namespace=namespace)
     count = table.count()
     print("table count:{}".format(count))
     return count
