@@ -29,7 +29,7 @@
       "dataio_0": {
         "with_label": [true],
         "label_idx": [0],
-        "label_type": ["int"],
+        "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
         "outlier_replace": [true]
@@ -50,7 +50,9 @@
         }
       },
       "dataio_0": {
-        "with_label": [false],
+        "with_label": [true],
+        "label_idx": [0],
+        "label_type": ["float"],
         "output_format": ["dense"],
         "outlier_replace": [true]
       },
