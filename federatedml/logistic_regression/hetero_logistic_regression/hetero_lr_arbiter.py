@@ -205,8 +205,8 @@ class HeteroLRArbiter(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
-                loss = self.transfer_variable.get(idx=0,
-                                                  suffix=(self.n_iter_, batch_index,))
+                loss = self.transfer_variable.loss.get(idx=0,
+                                                       suffix=(self.n_iter_, batch_index,))
                 """
                 loss = federation.get(name=self.transfer_variable.loss.name,
                                       tag=self.transfer_variable.generate_transferid(

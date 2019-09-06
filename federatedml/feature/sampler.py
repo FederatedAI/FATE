@@ -39,6 +39,7 @@ class RandomSampler(object):
     method: str, supported "upsample", "downsample" only in this version, default: "downsample"
 
     """
+
     def __init__(self, fraction=0.1, random_state=None, method="downsample"):
         self.fraction = fraction
         self.random_state = random_state
@@ -181,6 +182,7 @@ class StratifiedSampler(object):
     method: str, supported "upsample", "downsample" only in this version, default: "downsample"
 
     """
+
     def __init__(self, fractions=None, random_state=None, method="downsample"):
         self.fractions = fractions
         self.label_mapping = {}
@@ -191,7 +193,7 @@ class StratifiedSampler(object):
                 self.labels.append(label)
 
             # self.label_mapping = [label for (label, frac) in fractions]
-        
+
         self.random_state = random_state
         self.method = method
         self.tracker = None
@@ -265,7 +267,7 @@ class StratifiedSampler(object):
                 for label, fraction in self.fractions:
                     if fraction < 0 or fraction > 1:
                         raise ValueError("sapmle fractions should be a numeric number between 0 and 1inclusive")
-                
+
                 return_sample_ids = True
                 for key, inst in data_inst.collect():
                     label = inst.label
@@ -320,7 +322,7 @@ class StratifiedSampler(object):
                 for label, fraction in self.fractions:
                     if fraction <= 0:
                         raise ValueError("sapmle fractions should be a numeric number greater than 0")
-                
+
                 for key, inst in data_set:
                     label = inst.label
                     if label not in self.label_mapping:
@@ -333,7 +335,7 @@ class StratifiedSampler(object):
                 callback_metrics = []
                 for i in range(len(idset)):
                     label_name = self.labels[i]
-                    
+
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
 
@@ -343,16 +345,14 @@ class StratifiedSampler(object):
                                                random_state=self.random_state)
 
                         sample_ids.extend(_sample_ids)
-                        
+
                         callback_metrics.append(Metric(label_name, len(_sample_ids)))
                     else:
                         callback_metrics.append(Metric(label_name, 0))
 
-                
                 random.shuffle(sample_ids)
-                
-                callback(self.tracker, "stratified", callback_metrics)
 
+                callback(self.tracker, "stratified", callback_metrics)
 
             new_data = []
             for i in range(len(sample_ids)):
@@ -382,6 +382,7 @@ class Sampler(ModelBase):
         define in federatedml.param.param
 
     """
+
     def __init__(self):
         super(Sampler, self).__init__()
         self.task_type = None
@@ -447,9 +448,9 @@ class Sampler(ModelBase):
     def sync_sample_ids(self, sample_ids):
         transfer_inst = SampleTransferVariable()
 
-        self.transfer_inst.sample_ids.remote(sample_ids,
-                                             role="host",
-                                             suffix=(self.flowid,))
+        transfer_inst.sample_ids.remote(sample_ids,
+                                        role="host",
+                                        suffix=(self.flowid,))
         """
         federation.remote(obj=sample_ids,
                           name=transfer_inst.sample_ids.name,
@@ -460,8 +461,8 @@ class Sampler(ModelBase):
     def recv_sample_ids(self):
         transfer_inst = SampleTransferVariable()
 
-        sample_ids = self.transfer_inst.sample_ids.get(idx=0,
-                                                       suffix=(self.flowid,))
+        sample_ids = transfer_inst.sample_ids.get(idx=0,
+                                                  suffix=(self.flowid,))
         """
         sample_ids = federation.get(name=transfer_inst.sample_ids.name,
                                     tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
@@ -498,10 +499,10 @@ class Sampler(ModelBase):
         """
         if task_type not in [consts.HOMO, consts.HETERO]:
             raise ValueError("{} task type not support yet".format(task_type))
-        
+
         if task_type == consts.HOMO:
             return self.sample(data_inst)[0]
-        
+
         elif task_type == consts.HETERO:
             if task_role == consts.GUEST:
                 sample_data_inst, sample_ids = self.sample(data_inst)
@@ -510,7 +511,7 @@ class Sampler(ModelBase):
             elif task_role == consts.HOST:
                 sample_ids = self.recv_sample_ids()
                 sample_data_inst = self.sample(data_inst, sample_ids)
-            
+
             else:
                 raise ValueError("{} role not support yet".format(task_role))
 
@@ -541,11 +542,11 @@ def callback(tracker, method, callback_metrics):
         tracker.log_metric_data("sample_count",
                                 "random",
                                 callback_metrics)
-        
+
         tracker.set_metric_meta("sample_count",
                                 "random",
                                 MetricMeta(name="sample_count",
-                                            metric_type="SAMPLE_TEXT"))
+                                           metric_type="SAMPLE_TEXT"))
 
     else:
         print ("name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
@@ -559,6 +560,4 @@ def callback(tracker, method, callback_metrics):
         tracker.set_metric_meta("sample_count",
                                 "stratified",
                                 MetricMeta(name="sample_count",
-                                            metric_type="SAMPLE_TABLE"))
-
-
+                                           metric_type="SAMPLE_TABLE"))
