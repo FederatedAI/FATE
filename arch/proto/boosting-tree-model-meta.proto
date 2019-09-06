@@ -34,8 +34,7 @@ message BoostingTreeModelMeta {
     string task_type = 6;
     bool n_iter_no_change = 7;
     double tol = 8;
-    bool need_run = 9;
-    bool use_missing = 10;
-    bool zero_as_missing = 11;
+    bool use_missing = 9;
+    bool zero_as_missing = 10;
 }
 

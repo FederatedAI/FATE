@@ -439,7 +439,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_meta.tol = self.tol
         # model_meta.num_classes = self.num_classes
         # model_meta.classes_.extend(map(str, self.classes_))
-        model_meta.need_run = self.need_run 
+        # model_meta.need_run = self.need_run
         meta_name = "HeteroSecureBoostingTreeGuestMeta"
           
         return meta_name, model_meta
