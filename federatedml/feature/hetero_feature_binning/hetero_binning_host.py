@@ -91,8 +91,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.binning_result = iv_objs
 
     def __synchronize_encryption(self):
-        pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
-        pubkey_id = self.transfer_variable.paillier_pubkey.get(idx=0)
+        # pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
+        pubkey = self.transfer_variable.paillier_pubkey.get(idx=0)
         """
         pubkey = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                 tag=pubkey_id,

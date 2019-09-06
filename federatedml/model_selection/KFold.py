@@ -181,7 +181,7 @@ class KFold(BaseCrossValidator):
 
             transfer_id.remote(data_sid,
                                role=consts.HOST,
-                               idx=0,
+                               idx=-1,
                                suffix=(flowid,))
             """
             federation.remote(data_sid,
@@ -194,7 +194,7 @@ class KFold(BaseCrossValidator):
             LOGGER.info("remote {} to host".format(data_application))
             return None
         elif self.role == consts.HOST:
-            data_sid = transfer_id.get(idx=-1,
+            data_sid = transfer_id.get(idx=0,
                                        suffix=(flowid,))
             """
             data_sid = federation.get(name=transfer_id.name,

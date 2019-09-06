@@ -442,10 +442,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def sync_dispatch_node_host(self, dispatch_guest_data, dep=-1):
         LOGGER.info("send node to host to dispath, depth is {}".format(dep))
-        self.transfer_inst.dispatch_node_host(dispatch_guest_data,
-                                              role=consts.HOST,
-                                              idx=-1,
-                                              suffix=(dep,))
+        self.transfer_inst.dispatch_node_host.remote(dispatch_guest_data,
+                                                     role=consts.HOST,
+                                                     idx=-1,
+                                                     suffix=(dep,))
         """
         federation.remote(obj=dispatch_guest_data,
                           name=self.transfer_inst.dispatch_node_host.name,
@@ -664,8 +664,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def sync_data_predicted_by_host(self, send_times):
         LOGGER.info("get predicted data by host, recv times is {}".format(send_times))
-        predict_data = self.transfer_inst.predict_data.get(idx=-1,
-                                                           suffix=(send_times,))
+        predict_data = self.transfer_inst.predict_data_by_host.get(idx=-1,
+                                                                   suffix=(send_times,))
         """
         predict_data = federation.get(name=self.transfer_inst.predict_data_by_host.name,
                                       tag=self.transfer_inst.generate_transferid(
