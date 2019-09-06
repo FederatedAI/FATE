@@ -76,7 +76,7 @@ class LinearParam(BaseParam):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, cv_param=CrossValidationParam()):
+                cv_param=CrossValidationParam()):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -91,7 +91,6 @@ class LinearParam(BaseParam):
         self.re_encrypt_batches = re_encrypt_batches
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.need_run = need_run
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):

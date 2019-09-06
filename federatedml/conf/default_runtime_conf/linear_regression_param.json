@@ -23,8 +23,7 @@
     "encrypted_mode_calculator_param": {
         "mode": "strict",
         "re_encrypted_rate": 1
-    },
-    "need_run": true,
+    }
     "cv_param": {
         "n_splits": 5,
         "shuffle": true,
