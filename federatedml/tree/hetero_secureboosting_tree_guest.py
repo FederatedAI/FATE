@@ -274,19 +274,33 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def sync_tree_dim(self):
         LOGGER.info("sync tree dim to host")
+
+        self.transfer_inst.tree_dim.remote(self.tree_dim,
+                                           role=consts.HOST,
+                                           idx=-1)
+
+        """
         federation.remote(obj=self.tree_dim,
                           name=self.transfer_inst.tree_dim.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree_dim),
                           role=consts.HOST,
                           idx=-1)
+        """
 
     def sync_stop_flag(self, stop_flag, num_round):
         LOGGER.info("sync stop flag to host, boosting round is {}".format(num_round))
+
+        self.transfer_inst.stop_flag.remote(stop_flag,
+                                            role=consts.HOST,
+                                            idx=-1,
+                                            suffix=(num_round,))
+        """
         federation.remote(obj=stop_flag,
                           name=self.transfer_inst.stop_flag.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.stop_flag, num_round),
                           role=consts.HOST,
                           idx=-1)
+        """
 
     def fit(self, data_inst):
         LOGGER.info("begin to train secureboosting guest model")

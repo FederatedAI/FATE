@@ -446,19 +446,27 @@ class Sampler(ModelBase):
 
     def sync_sample_ids(self, sample_ids):
         transfer_inst = SampleTransferVariable()
-        
+
+        self.transfer_inst.sample_ids.remote(sample_ids,
+                                             role="host",
+                                             suffix=(self.flowid,))
+        """
         federation.remote(obj=sample_ids,
                           name=transfer_inst.sample_ids.name,
                           tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
                           role="host")
+        """
 
     def recv_sample_ids(self):
         transfer_inst = SampleTransferVariable()
-        
+
+        sample_ids = self.transfer_inst.sample_ids.get(idx=0,
+                                                       suffix=(self.flowid,))
+        """
         sample_ids = federation.get(name=transfer_inst.sample_ids.name,
                                     tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
                                     idx=0)
-
+        """
         return sample_ids
 
     def run_sample(self, data_inst, task_type, task_role):

@@ -131,60 +131,89 @@ class HomoLRHost(HomoLRBase):
                         self.transfer_variable.to_encrypt_model, iter_num, batch_num
                     )
 
+                    self.transfer_variable.to_encrypt_model.remote(w,
+                                                                   role=consts.ARBITER,
+                                                                   idx=0,
+                                                                   suffix=(iter_num, batch_num,))
+                    """
                     federation.remote(w,
                                       name=self.transfer_variable.to_encrypt_model.name,
                                       tag=to_encrypt_model_id,
                                       role=consts.ARBITER,
                                       idx=0)
+                    """
 
                     re_encrypted_model_id = self.transfer_variable.generate_transferid(
                         self.transfer_variable.re_encrypted_model, iter_num, batch_num
                     )
                     LOGGER.debug("re_encrypted_model_id: {}".format(re_encrypted_model_id))
+                    w = self.transfer_variable.re_encrypted_model.get(idx=0,
+                                                                      suffix=(iter_num, batch_num,))
+                    """
                     w = federation.get(name=self.transfer_variable.re_encrypted_model.name,
                                        tag=re_encrypted_model_id,
                                        idx=0)
+                    """
 
                     w = np.array(w)
                     self.set_coef_(w)
 
-            model_transfer_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.host_model, iter_num)
+            # model_transfer_id = self.transfer_variable.generate_transferid(
+            #     self.transfer_variable.host_model, iter_num)
+
+            self.transfer_variable.host_model.remote(w,
+                                                     role=consts.ARBITER,
+                                                     idx=0,
+                                                     suffix=(iter_num,))
+            """
             federation.remote(w,
                               name=self.transfer_variable.host_model.name,
                               tag=model_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            """
 
             if not self.use_encrypt:
                 loss_transfer_id = self.transfer_variable.generate_transferid(
                     self.transfer_variable.host_loss, iter_num)
 
+                self.transfer_variable.host_loss.remote(total_loss,
+                                                        role=consts.ARBITER,
+                                                        idx=0,
+                                                        suffix=(iter_num,))
+                """
                 federation.remote(total_loss,
                                   name=self.transfer_variable.host_loss.name,
                                   tag=loss_transfer_id,
                                   role=consts.ARBITER,
                                   idx=0)
+                """
 
             LOGGER.debug("model and loss sent")
 
             final_model_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.final_model, iter_num)
 
+            w = self.transfer_variable.final_model.get(idx=0,
+                                                       suffix=(iter_num,))
+            """
             w = federation.get(name=self.transfer_variable.final_model.name,
                                tag=final_model_id,
                                idx=0)
-
+            """
             w = np.array(w)
             self.set_coef_(w)
 
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag, iter_num)
 
+            converge_flag = self.transfer_variable.converge_flag.get(idx=0,
+                                                                     suffix=(iter_num,))
+            """
             converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
                                            tag=converge_flag_id,
                                            idx=0)
-
+            """
             self.n_iter_ = iter_num
             LOGGER.debug("converge_flag: {}".format(converge_flag))
             if converge_flag:
@@ -198,11 +227,16 @@ class HomoLRHost(HomoLRBase):
         )
         LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
 
+        self.transfer_variable.host_party_weight.remote(self.party_weight,
+                                                        role=consts.ARBITER,
+                                                        idx=0)
+        """
         federation.remote(self.party_weight,
                           name=self.transfer_variable.host_party_weight.name,
                           tag=party_weight_id,
                           role=consts.ARBITER,
                           idx=0)
+        """
 
         self.__synchronize_encryption()
 
@@ -215,11 +249,16 @@ class HomoLRHost(HomoLRBase):
             transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.re_encrypt_times)
             LOGGER.debug("Start to remote re_encrypt_times: {}, transfer_id: {}".format(re_encrypt_times, transfer_id))
 
+            self.transfer_variable.re_encrypt_times.remote(re_encrypt_times,
+                                                           role=consts.ARBITER,
+                                                           idx=0)
+            """
             federation.remote(re_encrypt_times,
                               name=self.transfer_variable.re_encrypt_times.name,
                               tag=transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            """
             LOGGER.info("sent re_encrypt_times: {}".format(re_encrypt_times))
 
     def __synchronize_encryption(self, mode='train'):
@@ -232,18 +271,28 @@ class HomoLRHost(HomoLRBase):
         )
         LOGGER.debug("Start to remote use_encrypt: {}, transfer_id: {}".format(self.use_encrypt, use_encryption_id))
 
+        self.transfer_variable.use_encrypt.remote(self.use_encrypt,
+                                                  role=consts.ARBITER,
+                                                  idx=0,
+                                                  suffix=(mode,))
+        """
         federation.remote(self.use_encrypt,
                           name=self.transfer_variable.use_encrypt.name,
                           tag=use_encryption_id,
                           role=consts.ARBITER,
                           idx=0)
+        """
 
         # Set public key
         if self.use_encrypt:
             pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey, mode)
+            pubkey = self.transfer_variable.paillier_pubkey.get(idx=0,
+                                                                suffix=(mode,))
+            """
             pubkey = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                     tag=pubkey_id,
                                     idx=0)
+            """
             LOGGER.debug("Received pubkey")
             self.encrypt_operator.set_public_key(pubkey)
         LOGGER.info("Finish synchronized ecryption")
@@ -269,17 +318,25 @@ class HomoLRHost(HomoLRBase):
             encrypted_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
             LOGGER.debug("Host encrypted wx id: {}".format(encrypted_wx_id))
             LOGGER.debug("Start to remote wx: {}, transfer_id: {}".format(wx, encrypted_wx_id))
+            self.transfer_variable.predict_wx.remote(wx,
+                                                     role=consts.ARBITER,
+                                                     idx=0)
+            """
             federation.remote(wx,
                               name=self.transfer_variable.predict_wx.name,
                               tag=encrypted_wx_id,
                               role=consts.ARBITER,
                               idx=0)
+            """
             predict_result_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_result)
             LOGGER.debug("predict_result_id: {}".format(predict_result_id))
 
+            predict_result = self.transfer_variable.predict_result.get(idx=0)
+            """
             predict_result = federation.get(name=self.transfer_variable.predict_result.name,
                                             tag=predict_result_id,
                                             idx=0)
+            """
             # local_predict_table = predict_result.collect()
             LOGGER.debug("predict_result count: {}, data_instances count: {}".format(predict_result.count(),
                                                                                      data_instances.count()))
@@ -320,9 +377,13 @@ class HomoLRHost(HomoLRBase):
 
     def __load_arbiter_model(self):
         final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, "predict")
+        final_model = self.transfer_variable.final_model.get(idx=0,
+                                                             suffix=("predict",))
+        """
         final_model = federation.get(name=self.transfer_variable.final_model.name,
                                      tag=final_model_id,
                                      idx=0)
+        """
         # LOGGER.info("Received arbiter's model")
         # LOGGER.debug("final_model: {}".format(final_model))
         self.set_coef_(final_model)

@@ -179,17 +179,28 @@ class KFold(BaseCrossValidator):
         if self.role == consts.GUEST:
             data_sid = data_instance.mapValues(lambda v: 1)
 
+            transfer_id.remote(data_sid,
+                               role=consts.HOST,
+                               idx=0,
+                               suffix=(flowid,))
+            """
             federation.remote(data_sid,
                               name=transfer_id.name,
                               tag=transfer_variable.generate_transferid(transfer_id, flowid),
                               role=consts.HOST,
                               idx=0)
+            """
+
             LOGGER.info("remote {} to host".format(data_application))
             return None
         elif self.role == consts.HOST:
+            data_sid = transfer_id.get(idx=-1,
+                                       suffix=(flowid,))
+            """
             data_sid = federation.get(name=transfer_id.name,
                                       tag=transfer_variable.generate_transferid(transfer_id, flowid),
                                       idx=-1)
+            """
 
             LOGGER.info("get {} from guest".format(data_application))
             join_data_insts = data_sid.join(data_instance, lambda s, d: d)

@@ -67,9 +67,13 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                               encryptor=self.encryptor)
         encrypted_label_table = label_table.mapValues(f)
 
-        encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
-        federation.remote(encrypted_label_table, name=self.transfer_variable.encrypted_label.name,
-                          tag=encrypted_label_table_id, role=consts.HOST, idx=0)
+        # encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
+
+        self.transfer_variable.encrypted_label.remote(encrypted_label_table,
+                                                      role=consts.HOST,
+                                                      idx=0)
+        # federation.remote(encrypted_label_table, name=self.transfer_variable.encrypted_label.name,
+        #                  tag=encrypted_label_table_id, role=consts.HOST, idx=0)
 
         LOGGER.info("Sent encrypted_label_table to host")
 
@@ -80,10 +84,12 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         # 5. Received host result and calculate iv value
         encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
 
+        encrypted_bin_sum = self.transfer_variable.encrypted_bin_sum.get(idx=0)
+        """
         encrypted_bin_sum = federation.get(name=self.transfer_variable.encrypted_bin_sum.name,
                                            tag=encrypted_bin_sum_id,
                                            idx=0)
-
+        """
         LOGGER.info("Get encrypted_bin_sum from host")
 
         result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
@@ -118,10 +124,15 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
     def __synchronize_encryption(self):
         pub_key = self.encryptor.get_public_key()
-        pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
+        # pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
 
+        self.transfer_variable.paillier_pubkey.remote(pub_key,
+                                                      role=consts.HOST,
+                                                      idx=0)
+        """
         federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
                           tag=pubkey_id, role=consts.HOST, idx=0)
+        """
 
         LOGGER.info("send pubkey to host")
         self.has_synchronized = True

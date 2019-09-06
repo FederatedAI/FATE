@@ -204,18 +204,30 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
     def _send_host_result_cols(self, filter_name):
         result_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.result_left_cols,
                                                                     filter_name)
+
+        self.transfer_variable.result_left_cols.remote(self.host_left_cols,
+                                                       role=consts.HOST,
+                                                       idx=0,
+                                                       suffix=(filter_name,))
+        """
         federation.remote(self.host_left_cols,
                           name=self.transfer_variable.result_left_cols.name,
                           tag=result_cols_id,
                           role=consts.HOST,
                           idx=0)
+        """
+
         LOGGER.info("Sent result cols from guest to host, result cols are: {}".format(self.host_left_cols))
 
     def _get_host_select_cols(self, filter_name):
         host_select_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_select_cols,
                                                                          filter_name)
+        host_select_cols = self.transfer_variable.host_select_cols.get(idx=0,
+                                                                       suffix=(filter_name,))
+        """
         host_select_cols = federation.get(name=self.transfer_variable.host_select_cols.name,
                                           tag=host_select_cols_id,
                                           idx=0)
+        """
         LOGGER.info("Received host_select_cols from host, host cols are: {}".format(host_select_cols))
         return host_select_cols
