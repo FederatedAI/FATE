@@ -18,7 +18,7 @@ import numpy as np
 
 from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import loss_computer_linR, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_gradient_procedure
@@ -44,17 +44,6 @@ class HeteroLinRHost(HeteroLinRBase):
         self.gradient_procedure = hetero_gradient_procedure.Host()
         self.loss_computer = loss_computer.Host()
         self.converge_procedure = convergence.Host()
-
-    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
-        #start = time.time()
-        #LOGGER.info("Start compute forward: {}".format(start))
-        wx = self.compute_wx(data_instances, coef_, intercept_)
-        self.wx = wx
-        #LOGGER.info("Finish computing wx: {}".format(time.time()-start))
-        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-        #LOGGER.info("Finish encryting wx: {}".format(time.time()-start))
-        #LOGGER.info("Finish running computing fowar: {}".format(time.time()-start))
-        return en_wx
 
     def fit(self, data_instances):
         """
@@ -92,11 +81,11 @@ class HeteroLinRHost(HeteroLinRBase):
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient = self.gradient_procedure.compute_gradient_procedure(
+                optim_host_gradient, loss = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst, self.lr_variables, self.compute_wx,
                     self.encrypted_calculator, self.n_iter_, batch_index)
 
-                self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
+                self.loss_computer.sync_loss_info(self.lr_variables, loss, self.n_iter_, batch_index,
                                                   self.cipher, self.optimizer)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)

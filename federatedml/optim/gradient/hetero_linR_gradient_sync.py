@@ -53,14 +53,8 @@ class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
 
         """
         wx = compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
-
-        en_wx = encrypted_calculator[batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = encrypted_calculator[batch_index].encrypt(wx_square)
-
-        en_wx_join_en_wx_square = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-        guest_forward = en_wx_join_en_wx_square.join(wx, lambda e, wx: (e[0], e[1], wx))
-        return guest_forward
+        wxy = wx.join(data_instances, lambda wx, d: wx - d.label)
+        return wx, wxy
 
     def aggregate_host_result(self, host_forward, guest_forward):
         """
@@ -80,7 +74,7 @@ class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
         list
             include W * X and (W * X)^2 federate with guest and host
         """
-        aggregate_forward_res = guest_forward.join(host_forward,
+        aggregate_forward_res = guest_forward.join(host_forward_loss,
                                                    lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
 
         en_aggregate_wx = aggregate_forward_res.mapValues(lambda v: v[0])
@@ -94,29 +88,25 @@ class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
                                    n_iter_, batch_index):
         current_suffix = (n_iter_, batch_index)
 
-        guest_forward = self.compute_intermediate(data_instances, lr_variables,
+        guest_wx, guest_wxy = self.compute_intermediate(data_instances, lr_variables,
                                                   compute_wx, encrypted_calculator, batch_index)
-        host_forward = self.host_forward_dict_transfer.get(idx=0, suffix=current_suffix)
+        host_forward_wx = self.host_forward_wx_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get host_forward from host")
 
-        en_aggregate_wx, en_aggregate_wx_square = self.aggregate_host_result(host_forward, guest_forward)
-
-        fore_gradient = self.compute_fore_gradient(data_instances, en_aggregate_wx)
-        self.fore_gradient_transfer.remote(fore_gradient, role=consts.HOST, idx=0, suffix=current_suffix)
+        residual = self.compute_residual(data_instances, guest_wx, host_forward_wx)
+        self.residual_transfer.remote(residual, role=consts.HOST, idx=0, suffix=current_suffix)
         LOGGER.info("Remote fore_gradient to Host")
 
-        guest_gradient, loss = self.compute_gradient_and_loss(data_instances,
-                                                              fore_gradient,
-                                                              en_aggregate_wx,
-                                                              en_aggregate_wx_square,
-                                                              lr_variables.fit_intercept)
+        guest_gradient = self.compute_gradient(data_instances, residual,
+                                               lr_variables.fit_intercept)
+        guest_loss = self.compute_loss(data_instances, guest_wx, consts.GUEST)
 
         self.guest_gradient_transfer.remote(guest_gradient, role=consts.ARBITER, idx=0, suffix=current_suffix)
         LOGGER.info("Remote guest_gradient to arbiter")
 
         optim_guest_gradient = self.optim_guest_gradient_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get optim_guest_gradient from arbiter")
-        return optim_guest_gradient, loss, fore_gradient
+        return optim_guest_gradient, guest_loss, residual
 
 
 class Host(gradient_sync.Host, HeteroLinearGradientComputer):
@@ -147,20 +137,23 @@ class Host(gradient_sync.Host, HeteroLinearGradientComputer):
         """
         wx = compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
 
-        en_wx = encrypted_calculator[batch_index].encrypt(wx)
 
-        return en_wx
+        return wx
 
     def compute_gradient_procedure(self, data_instances, lr_variables,
                                    compute_wx, encrypted_calculator,
                                    n_iter_, batch_index):
         current_suffix = (n_iter_, batch_index)
 
-        host_forward = self.compute_intermediate(data_instances, lr_variables, compute_wx,
+        host_wx = self.compute_intermediate(data_instances, lr_variables, compute_wx,
                                                  encrypted_calculator, batch_index)
+
+        host_forward = encrypted_calculator[batch_index].encrypt(host_wx)
 
         self.host_forward_wx_transfer.remote(host_forward, role=consts.GUEST, idx=0, suffix=current_suffix)
         LOGGER.info("Remote host_forward to guest")
+
+        loss = self.compute_loss(data_instances, host_forward, consts.HOST)
 
         residual = self.residual_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get residual from guest")
@@ -175,7 +168,7 @@ class Host(gradient_sync.Host, HeteroLinearGradientComputer):
         optim_host_gradient = self.optim_host_gradient_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get optim_guest_gradient from arbiter")
 
-        return optim_host_gradient
+        return optim_host_gradient, loss
 
 
 class Arbiter(gradient_sync.Arbiter):

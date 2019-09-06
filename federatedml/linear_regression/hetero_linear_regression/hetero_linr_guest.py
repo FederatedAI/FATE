@@ -40,10 +40,7 @@ class HeteroLinRGuest(HeteroLinRBase):
 
     def compute_intermediate(self, data_instances, coef_, intercept_):
         wx = self.compute_wx(data_instances, coef_, intercept_)
-        self.wx = wx
-        guest_loss = self.gradient_operator.compute_loss(data_instances, wx, consts.GUEST)
-        self.guest_wxy = wx.join(data_instances, lambda wx, d: wx - d.label)
-        self.guest_loss = self.encrypt_operator.encrypt(guest_loss)
+        wxy = wx.join(data_instances, lambda wx, d: wx - d.label)
         return
 
     def aggregate_loss(self, host_forward_wx, host_forward_loss):
