@@ -78,39 +78,43 @@ class RawIntersect(Intersect):
         LOGGER.info("Send id role is {}".format(self.role))
 
         if self.role == consts.GUEST:
-            send_ids_name = self.transfer_variable.send_ids_guest.name
-            send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_guest)
+            send_ids_federation = self.transfer_variable.send_ids_guest
+            # send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_guest)
             recv_role = consts.HOST
         elif self.role == consts.HOST:
-            send_ids_name = self.transfer_variable.send_ids_host.name
-            send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_host)
+            send_ids_federation = self.transfer_variable.send_ids_host
+            # send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_host)
             recv_role = consts.GUEST
         else:
             raise ValueError("Unknown intersect role, please check the code")
 
-        remote(data_sid,
-               name=send_ids_name,
-               tag=send_ids_tag,
-               role=recv_role,
-               idx=0)
+        send_ids_federation.remote(data_sid,
+                                   role=recv_role,
+                                   idx=0)
+        # remote(data_sid,
+        #        name=send_ids_name,
+        #        tag=send_ids_tag,
+        #        role=recv_role,
+        #        idx=0)
 
         LOGGER.info("Remote data_sid to role-join")
         intersect_ids = None
         if self.send_intersect_id_flag:
             if self.role == consts.HOST:
-                intersect_ids_name = self.transfer_variable.intersect_ids_guest.name
-                intersect_ids_tag = self.transfer_variable.generate_transferid(
-                    self.transfer_variable.intersect_ids_guest)
+                intersect_ids_federation = self.transfer_variable.intersect_ids_guest
+                #intersect_ids_tag = self.transfer_variable.generate_transferid(
+                #    self.transfer_variable.intersect_ids_guest)
             elif self.role == consts.GUEST:
-                intersect_ids_name = self.transfer_variable.intersect_ids_host.name
-                intersect_ids_tag = self.transfer_variable.generate_transferid(
-                    self.transfer_variable.intersect_ids_host)
+                intersect_ids_federation = self.transfer_variable.intersect_ids_host
+                # intersect_ids_tag = self.transfer_variable.generate_transferid(
+                #     self.transfer_variable.intersect_ids_host)
             else:
                 raise ValueError("Unknown intersect role, please check the code")
 
-            recv_intersect_ids = get(name=intersect_ids_name,
-                                     tag=intersect_ids_tag,
-                                     idx=0)
+            recv_intersect_ids = intersect_ids_federation.get(idx=0)
+            # recv_intersect_ids = get(name=intersect_ids_name,
+            #                          tag=intersect_ids_tag,
+            #                          idx=0)
 
             if sid_encode_pair:
                 encode_intersect_ids = recv_intersect_ids.join(sid_encode_pair, lambda r, s: s)
@@ -143,17 +147,18 @@ class RawIntersect(Intersect):
             data_sid = data_instances.mapValues(lambda v: 1)
 
         if self.role == consts.HOST:
-            send_ids_name = self.transfer_variable.send_ids_guest.name
-            send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_guest)
+            send_ids_federation = self.transfer_variable.send_ids_guest
+            # send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_guest)
         elif self.role == consts.GUEST:
-            send_ids_name = self.transfer_variable.send_ids_host.name
-            send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_host)
+            send_ids_federation = self.transfer_variable.send_ids_host
+            # send_ids_tag = self.transfer_variable.generate_transferid(self.transfer_variable.send_ids_host)
         else:
             raise ValueError("Unknown intersect role, please check the code")
 
-        recv_ids = get(name=send_ids_name,
-                       tag=send_ids_tag,
-                       idx=0)
+        recv_ids = send_ids_federation.get(idx=0)
+        # recv_ids = get(name=send_ids_name,
+        #                tag=send_ids_tag,
+        #                idx=0)
 
         LOGGER.info("Get intersect_host_ids from role-send")
         send_intersect_ids = recv_ids.join(data_sid, lambda i, d: "intersect_id")
@@ -161,23 +166,26 @@ class RawIntersect(Intersect):
 
         if self.send_intersect_id_flag:
             if self.role == consts.GUEST:
-                intersect_ids_name = self.transfer_variable.intersect_ids_guest.name
-                intersect_ids_tag = self.transfer_variable.generate_transferid(
-                    self.transfer_variable.intersect_ids_guest)
-                recv_role = consts.HOST
+                intersect_ids_federation = self.transfer_variable.intersect_ids_guest
+                # intersect_ids_tag = self.transfer_variable.generate_transferid(
+                #     self.transfer_variable.intersect_ids_guest)
+                send_role = consts.HOST
             elif self.role == consts.HOST:
-                intersect_ids_name = self.transfer_variable.intersect_ids_host.name
-                intersect_ids_tag = self.transfer_variable.generate_transferid(
-                    self.transfer_variable.intersect_ids_host)
-                recv_role = consts.GUEST
+                intersect_ids_federation = self.transfer_variable.intersect_ids_host
+                # intersect_ids_tag = self.transfer_variable.generate_transferid(
+                #     self.transfer_variable.intersect_ids_host)
+                send_role = consts.GUEST
             else:
                 raise ValueError("Unknown intersect role, please check the code")
 
-            remote(send_intersect_ids,
-                   name=intersect_ids_name,
-                   tag=intersect_ids_tag,
-                   role=recv_role,
-                   idx=0)
+            intersect_ids_federation.remote(send_intersect_ids,
+                                            role=send_role,
+                                            idx=0)
+            # remote(send_intersect_ids,
+            #        name=intersect_ids_name,
+            #        tag=intersect_ids_tag,
+            #        role=recv_role,
+            #        idx=0)
             LOGGER.info("Remote intersect ids to role-send")
 
         if sid_encode_pair:

@@ -50,11 +50,15 @@ class RsaIntersectionHost(RsaIntersect):
         self.e, self.d, self.n = encrypt_operator.get_key_pair()
         LOGGER.info("Generate rsa keys.")
         public_key = {"e": self.e, "n": self.n}
-        remote(public_key,
-               name=self.transfer_variable.rsa_pubkey.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
-               role=consts.GUEST,
-               idx=0)
+
+        self.transfer_variable.rsa_pubkey.remote(public_key,
+                                                 role=consts.GUEST,
+                                                 idx=0)
+        # remote(public_key,
+        #        name=self.transfer_variable.rsa_pubkey.name,
+        #        tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
+        #        role=consts.GUEST,
+        #        idx=0)
         LOGGER.info("Remote public key to Guest.")
 
         # (host_id_process, 1)
@@ -64,35 +68,45 @@ class RsaIntersectionHost(RsaIntersect):
         )
 
         host_ids_process = host_ids_process_pair.mapValues(lambda v: 1)
-        remote(host_ids_process,
-               name=self.transfer_variable.intersect_host_ids_process.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_host_ids_process),
-               role=consts.GUEST,
-               idx=0)
+
+        self.transfer_variable.intersect_host_ids_process.remote(host_ids_process,
+                                                                 role=consts.GUEST,
+                                                                 idx=0)
+        # remote(host_ids_process,
+        #        name=self.transfer_variable.intersect_host_ids_process.name,
+        #        tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_host_ids_process),
+        #        role=consts.GUEST,
+        #        idx=0)
         LOGGER.info("Remote host_ids_process to Guest.")
 
         # Recv guest ids
-        guest_ids = get(name=self.transfer_variable.intersect_guest_ids.name,
-                        tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids),
-                        idx=0)
+        guest_ids = self.transfer_variable.intersect_guest_ids.get(idx=0)
+        # guest_ids = get(name=self.transfer_variable.intersect_guest_ids.name,
+        #                 tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids),
+        #                 idx=0)
         LOGGER.info("Get guest_ids from guest")
 
         # Process guest ids and return to guest
         guest_ids_process = guest_ids.map(lambda k, v: (k, gmpy_math.powmod(int(k), self.d, self.n)))
-        remote(guest_ids_process,
-               name=self.transfer_variable.intersect_guest_ids_process.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids_process),
-               role=consts.GUEST,
-               idx=0)
+        self.transfer_variable.intersect_guest_ids_process.remote(guest_ids_process,
+                                                                  role=consts.GUEST,
+                                                                  idx=0)
+
+        # remote(guest_ids_process,
+        #        name=self.transfer_variable.intersect_guest_ids_process.name,
+        #        tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids_process),
+        #        role=consts.GUEST,
+        #        idx=0)
         LOGGER.info("Remote guest_ids_process to Guest.")
 
         # recv intersect ids
         intersect_ids = None
         if self.get_intersect_ids_flag:
-            encrypt_intersect_ids = get(name=self.transfer_variable.intersect_ids.name,
-                                        tag=self.transfer_variable.generate_transferid(
-                                            self.transfer_variable.intersect_ids),
-                                        idx=0)
+            encrypt_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
+            # encrypt_intersect_ids = get(name=self.transfer_variable.intersect_ids.name,
+            #                             tag=self.transfer_variable.generate_transferid(
+            #                                 self.transfer_variable.intersect_ids),
+            #                             idx=0)
 
             intersect_ids_pair = encrypt_intersect_ids.join(host_ids_process_pair, lambda e, h: h)
             intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "intersect_id"))
