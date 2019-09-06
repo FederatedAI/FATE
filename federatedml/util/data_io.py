@@ -39,7 +39,6 @@ from arch.api.proto.data_io_meta_pb2 import ImputerMeta
 from arch.api.proto.data_io_param_pb2 import ImputerParam
 from arch.api.proto.data_io_meta_pb2 import OutlierMeta
 from arch.api.proto.data_io_param_pb2 import OutlierParam
-from arch.api import storage
 
 LOGGER = log_utils.getLogger()
 
@@ -74,8 +73,8 @@ class DenseFeatureReader(object):
         self.tracker = tracker
 
     def generate_header(self, input_data, input_data_feature):
-        header = storage.get_data_table_meta_by_instance("header", input_data)
-        sid_name = storage.get_data_table_meta_by_instance("sid", input_data)
+        header = input_data.get_meta("header")
+        sid_name = input_data.get_meta("sid")
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(sid_name))
 

@@ -18,7 +18,6 @@ import os
 import sys
 import time
 
-from arch.api import storage
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
@@ -66,7 +65,6 @@ class TaskScheduler(object):
         job_args = dag.get_args_input()
         if not job_initiator:
             return False
-        storage.init_storage(job_id=job_id, work_mode=RuntimeConfig.WORK_MODE)
         job = Job()
         job.f_job_id = job_id
         job.f_start_time = current_timestamp()
