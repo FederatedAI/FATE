@@ -40,7 +40,7 @@ from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.manager import queue_manager
-from fate_flow.settings import IP, GRPC_PORT, STANDALONE_NODE_HTTP_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
+from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
     API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
-        RuntimeConfig.init_config(HTTP_PORT=STANDALONE_NODE_HTTP_PORT)
+        RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
 
     storage.init_storage(work_mode=RuntimeConfig.WORK_MODE)
     queue_manager.init_job_queue()
