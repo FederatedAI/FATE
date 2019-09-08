@@ -153,6 +153,7 @@ def component_parameters():
 
 
 @manager.route('/component/output/model', methods=['post'])
+@job_utils.job_server_routing()
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
@@ -191,6 +192,7 @@ def component_output_model():
 
 
 @manager.route('/component/output/data', methods=['post'])
+@job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)
