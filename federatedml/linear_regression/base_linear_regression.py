@@ -127,12 +127,6 @@ class BaseLinearRegression(ModelBase):
         return data_instances.mapValues(
             lambda v: np.dot(v.features, coef_) + intercept_)
 
-    def round_result(self, result):
-        """
-        round up the prediction result
-        """
-        return round(result)
-
     def fit(self, data_instance):
         pass
 

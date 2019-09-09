@@ -89,10 +89,10 @@ class HeteroLinearGradientComputer(object):
     def __compute_gradient(data, fit_intercept=True):
         """
         Compute hetero-linr gradient for:
-        gradient = ∑(wx-y)*x, where residual = (wx-y) has been computed, x is features
+        gradient = ∑(wx-y)*x, where fore_gradient = (wx-y) has been computed, x is features
         Parameters
         ----------
-        data: DTable, include residual and features
+        data: DTable, include fore_gradient and features
         fit_intercept: bool, if hetero-linr has interception or not. Default True
 
         Returns
@@ -101,24 +101,24 @@ class HeteroLinearGradientComputer(object):
             hetero-linr gradient
         """
         feature = []
-        residual = []
+        fore_gradient = []
 
         for key, value in data:
             feature.append(value[0])
-            residual.append(value[1])
+            fore_gradient.append(value[1])
         feature = np.array(feature)
-        residual = np.array(residual)
+        fore_gradient = np.array(fore_gradient)
 
         gradient = []
         if feature.shape[0] <= 0:
             return 0
         for j in range(feature.shape[1]):
             feature_col = feature[:, j]
-            gradient_j = fate_operator.dot(feature_col, residual)
+            gradient_j = fate_operator.dot(feature_col, fore_gradient)
             gradient.append(gradient_j)
 
         if fit_intercept:
-            bias_grad = np.sum(residual)
+            bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
         gradient.append(feature.shape[0])
         return np.array(gradient)
@@ -142,17 +142,16 @@ class HeteroLinearGradientComputer(object):
         if type == consts.HOST:
             loss_square = wx.mapValues(lambda v: np.square(v))
         elif type == consts.GUEST:
-            loss_square = wx.join(data_instances, lambda wx, d: wx - int(d.label))
-            loss_square = loss_square.mapValues(lambda v: np.square(v))
+            loss_square = wx.join(data_instances, lambda wx, d: np.square(wx - int(d.label)))
         else:
             loss_square = 0
             LOGGER.error("Wrong type of role given to compute_loss")
-        loss = loss_square.reduce(add)
+        loss = loss_square.reduce(add) / loss_square.count()
         return loss
 
-    def compute_residual(self, data_instances, wx, encrypted_wx):
+    def compute_fore_gradient(self, data_instances, wx, encrypted_wx):
         """
-        Compute residual = [[wx_h]] + [[wx_g - y]]
+        Compute fore_gradient = [[wx_h]] + [[wx_g - y]]
         Parameters
         ----------
         data_instance: DTable, input data
@@ -162,22 +161,22 @@ class HeteroLinearGradientComputer(object):
         Returns
         ----------
         DTable
-            residual
+            fore_gradient
         """
         d = wx.join(data_instances, lambda wx, d: wx - d.label)
         #LOGGER.debug(list(encrypted_wx.collect()))
-        residual = encrypted_wx.join(d, lambda wx,
+        fore_gradient = encrypted_wx.join(d, lambda wx,
                                                d: wx + self.encrypt_operator.encrypt(d))
-        #LOGGER.debug(list(residual.collect()))
-        return residual
+        #LOGGER.debug(list(fore_gradient.collect()))
+        return fore_gradient
 
-    def compute_gradient(self, data_instances, residual, fit_intercept):
+    def compute_gradient(self, data_instances, fore_gradient, fit_intercept):
         """
         Compute hetero-linr gradient
         Parameters
         ----------
         data_instance: DTable, input data
-        residual: DTable, residual =  [[wx_h]] + [[wx_g - y]]
+        fore_gradient: DTable, fore_gradient =  [[wx_h]] + [[wx_g - y]]
         fit_intercept: bool, if hetero-linr has interception or not
 
         Returns
@@ -185,8 +184,8 @@ class HeteroLinearGradientComputer(object):
         DTable
             the hetero-linr's gradient
         """
-        #LOGGER.debug(list(residual.collect()))
-        feat_join_grad = data_instances.join(residual,
+        #LOGGER.debug(list(fore_gradient.collect()))
+        feat_join_grad = data_instances.join(fore_gradient,
                                             lambda d, g: (d.features, g))
         f = functools.partial(self.__compute_gradient,
                               fit_intercept=fit_intercept)

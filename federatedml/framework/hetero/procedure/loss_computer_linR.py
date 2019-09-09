@@ -30,11 +30,11 @@ class Arbiter(loss_sync.Arbiter):
 
 class Guest(loss_sync.Guest):
     def register_loss_computer(self, transfer_variable):
-        self._register_loss_sync(transfer_variable.host_forward_loss,
+        self._register_loss_sync(transfer_variable.host_loss,
                                  transfer_variable.loss)
 
 
 class Host(loss_sync.Host):
     def register_loss_computer(self, transfer_variable):
-        self._register_loss_sync(transfer_variable.host_forward_loss,
+        self._register_loss_sync(transfer_variable.host_loss,
                                  transfer_variable.loss)

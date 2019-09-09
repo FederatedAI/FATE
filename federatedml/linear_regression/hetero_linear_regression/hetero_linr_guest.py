@@ -14,15 +14,13 @@
 #  limitations under the License.
 #
 
-from operator import add
-
-from arch.api import federation
 from arch.api.utils import log_utils
+from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.model_selection import MiniBatch
-from federatedml.optim.gradient import HeteroLinearGradient
+from federatedml.optim import activation
+from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic import data_overview
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -32,247 +30,106 @@ class HeteroLinRGuest(HeteroLinRBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
-
-        self.guest_loss = None
-        self.guest_wxy = None
-        self.wx = None
+        # self.guest_forward = None
         self.role = consts.GUEST
+        self.cipher = paillier_cipher.Guest()
+        self.batch_generator = batch_generator.Guest()
+        self.gradient_procedure = hetero_gradient_procedure.Guest()
+        self.loss_computer = loss_computer.Guest()
+        self.converge_procedure = convergence.Guest()
 
-    def compute_intermediate(self, data_instances, coef_, intercept_):
-        wx = self.compute_wx(data_instances, coef_, intercept_)
-        wxy = wx.join(data_instances, lambda wx, d: wx - d.label)
-        return
-
-    def aggregate_loss(self, host_forward_wx, host_forward_loss):
+    @staticmethod
+    def load_data(data_instance):
         """
-        Compute total loss = loss_host + loss_guest + loss_hg, where
-        loss_hg = 2 * [[wx_h]] * (wx_g - y)
+        set the negative label to -1
         Parameters
         ----------
-        host_forward_wx: DTable, include encrypted W * X
-        host_forward_loss: encrypted loss computed by host
-
-        Returns
-        ----------
-        aggregate_loss
+        data_instance: DTable of Instance, input data
         """
-
-        hg_loss = self.guest_wxy.join(host_forward_wx,
-                                      lambda g, h: (g * h))
-        hg_loss = 2 * hg_loss.reduce(add)
-        aggregate_loss = self.guest_loss + host_forward_loss + hg_loss
-        return aggregate_loss
+        if data_instance.label != 1:
+            data_instance.label = -1
+        return data_instance
 
     def fit(self, data_instances):
         """
-        Train linr model of role guest
+        Train linR model of role guest
         Parameters
         ----------
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_linr_guest fit")
+        LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
-
         self.header = self.get_header(data_instances)
+        data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
 
-        public_key = federation.get(name=self.transfer_variable.paillier_pubkey.name,
-                                    tag=self.transfer_variable.generate_transferid(
-                                        self.transfer_variable.paillier_pubkey),
-                                    idx=0)
-        LOGGER.info("Get public_key from arbiter:{}".format(public_key))
-        self.encrypt_operator.set_public_key(public_key)
+        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         LOGGER.info("Generate mini-batch from input data")
-        mini_batch_obj = MiniBatch(data_instances, batch_size=self.batch_size)
-        batch_num = mini_batch_obj.batch_nums
-        if self.batch_size == -1:
-            LOGGER.info("batch size is -1, set it to the number of data in data_instances")
-            self.batch_size = data_instances.count()
-
-        batch_info = {"batch_size": self.batch_size, "batch_num": batch_num}
-        LOGGER.info("batch_info:{}".format(batch_info))
-        federation.remote(batch_info,
-                          name=self.transfer_variable.batch_info.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
-                          role=consts.HOST,
-                          idx=0)
-        LOGGER.info("Remote batch_info to host")
-        federation.remote(batch_info,
-                          name=self.transfer_variable.batch_info.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
-                          role=consts.ARBITER,
-                          idx=0)
-        LOGGER.info("Remote batch_info to arbiter")
-
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(batch_num)]
+                                     in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
-        # LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
+        LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        weight = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        if self.init_param_obj.fit_intercept is True:
-            self.coef_ = weight[:-1]
-            self.intercept_ = weight[-1]
-        else:
-            self.coef_ = weight
-
-        is_send_all_batch_index = False
-        self.n_iter_ = 0
-        index_data_inst_map = {}
+        self.linR_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batach_data_generator
-            batch_data_generator = mini_batch_obj.mini_batch_data_generator(result='index')
+            batch_data_generator = self.batch_generator.generate_batch_data()
 
             batch_index = 0
-            for batch_data_index in batch_data_generator:
-                LOGGER.info("batch:{}".format(batch_index))
-                if not is_send_all_batch_index:
-                    LOGGER.info("remote mini-batch index to Host")
-                    federation.remote(batch_data_index,
-                                      name=self.transfer_variable.batch_data_index.name,
-                                      tag=self.transfer_variable.generate_transferid(
-                                          self.transfer_variable.batch_data_index,
-                                          self.n_iter_,
-                                          batch_index),
-                                      role=consts.HOST,
-                                      idx=0)
-                    if batch_index >= mini_batch_obj.batch_nums - 1:
-                        is_send_all_batch_index = True
-
-                # Get mini-batch train data
-                if len(index_data_inst_map) < batch_num:
-                    batch_data_inst = data_instances.join(batch_data_index, lambda data_inst, index: data_inst)
-                    index_data_inst_map[batch_index] = batch_data_inst
-                else:
-                    batch_data_inst = index_data_inst_map[batch_index]
-
+            for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data_inst)
+                batch_feat_inst = self.transform(batch_data)
 
-                # host forward
-                if self.gradient_operator is None:
-                    self.gradient_operator = HeteroLinearGradient(
-                        self.cipher_operator)
-                self.compute_intermediate(batch_feat_inst, self.coef_, self.intercept_)
-                host_forward_wx = federation.get(name=self.transfer_variable.host_forward_wx.name,
-                                                 tag=self.transfer_variable.generate_transferid(
-                                                     self.transfer_variable.host_forward_wx, self.n_iter_, batch_index),
-                                                 idx=0)
-                LOGGER.info("Get host_forward_wx from host")
+                # Start gradient procedure
+                optim_guest_gradient, loss, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                    batch_feat_inst,
+                    self.linR_variables,
+                    self.compute_wx,
+                    self.encrypted_calculator,
+                    self.n_iter_,
+                    batch_index
+                )
 
-                host_forward_loss = federation.get(
-                    name=self.transfer_variable.host_forward_loss.name,
-                    tag=self.transfer_variable.generate_transferid(
-                        self.transfer_variable.host_forward_loss, self.n_iter_,
-                        batch_index),
-                    idx=0)
-                LOGGER.info("Get host_forward_loss from host")
+                self.loss_computer.sync_loss_info(self.linR_variables, loss, self.n_iter_, batch_index, self.optimizer)
 
-                # compute [[d]]
-
-                residual = self.gradient_operator.compute_residual(batch_feat_inst, self.wx, host_forward_wx)
-                federation.remote(residual,
-                                  name=self.transfer_variable.residual.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.residual,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.HOST,
-                                  idx=0)
-
-                LOGGER.info("Remote residual to host")
-                # compute guest gradient and loss
-                guest_gradient = self.gradient_operator.compute_gradient(batch_feat_inst,
-                                                                         residual,
-                                                                         self.fit_intercept)
-
-                federation.remote(guest_gradient,
-                                  name=self.transfer_variable.guest_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.guest_gradient,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                LOGGER.info("Remote guest_gradient to arbiter")
-
-                optim_guest_gradient = federation.get(name=self.transfer_variable.optim_guest_gradient.name,
-                                                      tag=self.transfer_variable.generate_transferid(
-                                                          self.transfer_variable.optim_guest_gradient, self.n_iter_,
-                                                          batch_index),
-                                                      idx=0)
-                LOGGER.info("Get optim_guest_gradient from arbiter")
-
-                # update model
-                LOGGER.info("update_model")
-                self.update_model(optim_guest_gradient)
-
-                loss = self.aggregate_loss(host_forward_wx, host_forward_loss)
-                # loss regulation if necessary
-                if self.updater is not None:
-                    guest_loss_regular = self.updater.loss_norm(self.coef_)
-                    loss += self.encrypt_operator.encrypt(guest_loss_regular)
-
-                federation.remote(loss,
-                                  name=self.transfer_variable.loss.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.loss,
-                                                                                 self.n_iter_,
-                                                                                 batch_index),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                LOGGER.info("Remote loss to arbiter")
-
-                # is converge of loss in arbiter
+                self.linR_variables = self.optimizer.update_model(self.linR_variables, optim_guest_gradient)
                 batch_index += 1
 
-                # temporary resource recovery and will be removed in the future
-                rubbish_list = [host_forward_wx,
-                                residual,
-                                self.guest_wxy
-                                ]
-                data_overview.rubbish_clear(rubbish_list)
-
-            is_stopped = federation.get(name=self.transfer_variable.is_stopped.name,
-                                        tag=self.transfer_variable.generate_transferid(
-                                            self.transfer_variable.is_stopped, self.n_iter_, batch_index),
-                                        idx=0)
-            LOGGER.info("Get is_stopped flag from arbiter:{}".format(is_stopped))
-
+            self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
+            LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
             self.n_iter_ += 1
-            if is_stopped:
-                LOGGER.info("Get stop signal from arbiter, model is converged, iter:{}".format(self.n_iter_))
+            if self.is_converged:
                 break
-        LOGGER.info("guest model coef: {}, intercept {}".format(self.coef_, self.intercept_))
-        LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances):
         """
-        Prediction of linear regression
+        Prediction of linR
         Parameters
         ----------
         data_instances:DTable of Instance, input data
+        predict_param: PredictParam, the setting of prediction.
 
         Returns
         ----------
         DTable
-            include prediction result
+            include input data label, predict probably, label
         """
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        guest_partial_prediction = self.compute_wx(data_features, self.coef_, self.intercept_)
-        host_partial_prediction = federation.get(name=self.transfer_variable.host_partial_prediction.name,
-                                                 tag=self.transfer_variable.generate_transferid(
-                                                     self.transfer_variable.host_partial_prediction),
-                                                 idx=0)
-        LOGGER.info("Get partial predictions from host")
+        pred_guest = self.compute_wx(data_features, self.linR_variables.coef_, self.linR_variables.intercept_)
+        pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
-        prediction = guest_partial_prediction.join(host_partial_prediction, lambda g, h: g + h)
-        predict_result = data_instances.join(prediction,
-                                             lambda inst, pred: [inst.label, float(pred),
-                                                                 float(pred), {"label": round(pred)}])
+        LOGGER.info("Get prediction from Host")
+
+        pred = pred_guest.join(pred_host, lambda g, h: g + h)
+        predict_result = data_instances.join(pred, lambda x, y: [x.label, y])
+
         return predict_result

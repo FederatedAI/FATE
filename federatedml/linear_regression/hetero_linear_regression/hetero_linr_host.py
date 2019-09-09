@@ -94,7 +94,7 @@ class HeteroLinRHost(HeteroLinRBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.linR_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -105,13 +105,13 @@ class HeteroLinRHost(HeteroLinRBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
-                    batch_feat_inst, self.lr_variables, self.compute_wx,
+                    batch_feat_inst, self.linR_variables, self.compute_wx,
                     self.encrypted_calculator, self.n_iter_, batch_index)
 
-                self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
+                self.loss_computer.sync_loss_info(self.linR_variables, self.n_iter_, batch_index,
                                                   self.cipher, self.optimizer)
 
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
+                self.linR_variables = self.optimizer.update_model(self.linR_variables, optim_host_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
@@ -136,6 +136,6 @@ class HeteroLinRHost(HeteroLinRBase):
 
         data_features = self.transform(data_instances)
 
-        prob_host = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        prob_host = self.compute_wx(data_features, self.linR_variables.coef_, self.linR_variables.intercept_)
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")

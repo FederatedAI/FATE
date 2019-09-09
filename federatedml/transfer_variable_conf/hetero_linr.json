@@ -19,13 +19,13 @@
         "guest"
       ]
     },
-    "host_forward_loss": {
+    "host_loss": {
       "src": "host",
       "dst": [
         "guest"
       ]
     },
-    "residual": {
+    "fore_gradient": {
       "src": "guest",
       "dst": [
         "host"
