@@ -210,7 +210,7 @@ class TaskScheduler(object):
             return True
 
     @staticmethod
-    def check_task_status(job_id, component, interval=1):
+    def check_task_status(job_id, component, interval=0.25):
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component.get_name())
         while True:
             try:
