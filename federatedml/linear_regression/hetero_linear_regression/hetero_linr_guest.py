@@ -105,7 +105,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                           idx=0)
         LOGGER.info("Remote batch_info to arbiter")
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.encrypt_operator,
+        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
                                      in range(batch_num)]
@@ -158,7 +158,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 # host forward
                 if self.gradient_operator is None:
                     self.gradient_operator = HeteroLinearGradient(
-                        self.encrypt_operator)
+                        self.cipher_operator)
                 self.compute_intermediate(batch_feat_inst, self.coef_, self.intercept_)
                 host_forward_wx = federation.get(name=self.transfer_variable.host_forward_wx.name,
                                                  tag=self.transfer_variable.generate_transferid(
