@@ -207,3 +207,4 @@ class HeteroLinearGradientComputer(object):
         rubbish_clear(rubbish_list)
 
         return gradient
+
