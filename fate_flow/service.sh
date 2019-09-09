@@ -28,9 +28,9 @@ getpid() {
     pid=`ps aux | grep "python ${run}$" | grep -v grep | awk '{print $2}'`
 
     if [[ -n ${pid} ]]; then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
 
@@ -54,15 +54,20 @@ status() {
 
 start() {
     getpid
-    if [[ $? -eq 0 ]]; then
+    if [[ $? -eq 1 ]]; then
         mklogsdir
         source ${venv}/bin/activate
         nohup python ${run} >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         if [[ $? -eq 0 ]]; then
+            sleep 5
             getpid
-            echo "service start sucessfully. pid: ${pid}"
+            if [[ $? -eq 0 ]]; then
+                echo "service start sucessfully. pid: ${pid}"
+            else
+                echo "service start failed, please check ../logs/error.log and ../logs/fate_flow/fate_flow_stat.log"
+            fi
         else
-            echo "service start failed"
+            echo "service start failed, please check ../logs/error.log and ../logs/fate_flow/fate_flow_stat.log"
         fi
     else
         echo "service already started. pid: ${pid}"
