@@ -166,6 +166,7 @@ class HeteroFTLGuest(HeteroFTLParty):
                 'learning_rate': meta_obj.learning_rate
             }
         }
+        tf.reset_default_graph()
         self.local_model.restore_model(self.model_parameters)
 
 
