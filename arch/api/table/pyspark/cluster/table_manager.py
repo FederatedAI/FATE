@@ -30,15 +30,15 @@ class RDDTableManager(TableManager):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, job_id, eggroll_context, server_conf_path="arch/conf/server_conf.json"):
+    def __init__(self, eggroll_session, server_conf_path="eggroll/conf/server_conf.json"):
 
-        self.job_id = job_id
-        self._eggroll_context = eggroll_context
+        self.job_id = eggroll_session.get_session_id()
+        self._eggroll_session = eggroll_session
         self._init_eggroll(server_conf_path)
 
         # init PySpark
         from pyspark import SparkContext, SparkConf
-        conf = SparkConf().setAppName(f"FATE-PySpark-{job_id}")
+        conf = SparkConf().setAppName(f"FATE-PySpark-{self.job_id}")
         sc = SparkContext.getOrCreate(conf=conf)
         self._sc = sc
 
@@ -48,7 +48,7 @@ class RDDTableManager(TableManager):
         pickled_client = pickle.dumps(dict(job_id=self.job_id,
                                            host=self._roll_host,
                                            port=self._roll_port,
-                                           eggroll_context=self._eggroll_context)).hex()
+                                           eggroll_session=self.eggroll_session)).hex()
         sc.setLocalProperty(_EGGROLL_CLIENT, pickled_client)
         TableManager.set_instance(self)
 
@@ -65,10 +65,9 @@ class RDDTableManager(TableManager):
         if self._eggroll_context is None:
             self._eggroll_context = EggRollContext()
 
-        from arch.api.cluster.eggroll import init
-        from arch.api.cluster.eggroll import _EggRoll
+        from eggroll.api.cluster.eggroll import init, _EggRoll
         if _EggRoll.instance is None:
-            init(self.job_id, server_conf_path=server_conf_path, eggroll_context=self._eggroll_context)
+            init(server_conf_path=server_conf_path, eggroll_session=self._eggroll_session)
         self._eggroll: _EggRoll = _EggRoll.instance
 
     def table(self,

@@ -18,7 +18,6 @@ import uuid
 from typing import Iterable
 
 # noinspection PyProtectedMember
-from arch.api.standalone.eggroll import _DTable
 from arch.api.table.table import Table
 from arch.api.utils.profile_util import log_elapsed
 
@@ -26,7 +25,7 @@ from arch.api.utils.profile_util import log_elapsed
 # noinspection PyProtectedMember,SpellCheckingInspection,PyPep8Naming
 class DTable(Table):
 
-    def __init__(self, dtable: _DTable, job_id):
+    def __init__(self, dtable, job_id):
         self._dtable = dtable
         self._partitions = self._dtable._partitions
         self.schema = {}

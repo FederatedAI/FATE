@@ -15,8 +15,8 @@
 #
 
 # noinspection PyProtectedMember
-from arch.api.standalone.eggroll import _DTable
-from arch.api.standalone.federation import init
+from eggroll.api.standalone.eggroll import _DTable
+from eggroll.api.standalone.clustercomm import init
 from arch.api.table.eggroll.wrapped_dtable import DTable
 
 

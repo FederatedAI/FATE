@@ -20,7 +20,7 @@ from typing import Iterable
 from pyspark import SparkContext, RDD
 
 # noinspection PyProtectedMember
-from arch.api.cluster.eggroll import _DTable as DTable
+from eggroll.api.cluster.eggroll import _DTable as DTable
 from arch.api.table.pyspark import _RDD_ATTR_NAME
 from arch.api.table.pyspark import materialize, STORAGE_LEVEL
 from arch.api.table.table import Table

@@ -17,7 +17,7 @@
 from typing import Iterable
 
 # noinspection PyProtectedMember
-from arch.api.cluster.eggroll import init, _EggRoll
+from eggroll.api.cluster.eggroll import init, _EggRoll
 from arch.api.table.eggroll.wrapped_dtable import DTable
 from arch.api.table.table_manager import TableManager as TableManger
 
@@ -28,10 +28,10 @@ class DTableManager(TableManger):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, job_id, eggroll_context, server_conf_path="arch/conf/server_conf.json"):
-        init(job_id=job_id, server_conf_path=server_conf_path, eggroll_context=eggroll_context)
+    def __init__(self, eggroll_session, server_conf_path="eggroll/conf/server_conf.json"):
+        init(server_conf_path=server_conf_path, eggroll_session=eggroll_session)
         self._eggroll: _EggRoll = _EggRoll.instance
-        self.job_id = job_id
+        self.job_id = eggroll_session.get_session_id()
         TableManger.set_instance(self)
 
     def table(self,

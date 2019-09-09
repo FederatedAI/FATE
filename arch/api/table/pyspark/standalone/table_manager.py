@@ -18,7 +18,7 @@ from typing import Iterable
 
 from pyspark import SparkContext
 
-from arch.api.standalone.eggroll import Standalone
+from eggroll.api.standalone.eggroll import Standalone
 from arch.api.table.pyspark import materialize
 from arch.api.table.pyspark.standalone import _to_serializable
 from arch.api.table.pyspark.standalone.rddtable import RDDTable
@@ -31,14 +31,14 @@ class RDDTableManager(TableManger):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, job_id, eggroll_context):
-        self._eggroll = Standalone(job_id=job_id, eggroll_context=eggroll_context)
+    def __init__(self, eggroll_session):
+        self._eggroll = Standalone(eggroll_session=eggroll_session)
         self._eggroll = _to_serializable(self._eggroll)
 
         # init PySpark
         sc = SparkContext.getOrCreate()
         self._sc = sc
-        self.job_id = job_id
+        self.job_id = eggroll_session.get_session_id()
 
         # set eggroll info
         import pickle

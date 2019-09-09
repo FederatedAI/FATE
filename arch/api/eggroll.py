@@ -20,7 +20,7 @@ from typing import Iterable
 
 from arch.api import RuntimeInstance
 from arch.api import WorkMode, NamingPolicy, Backend
-from arch.api.core import EggRollContext
+from eggroll.api.core import EggrollSession
 from arch.api.table.table import Table
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
@@ -51,26 +51,27 @@ def init(job_id=None,
         
     RuntimeInstance.MODE = mode
     RuntimeInstance.Backend = backend
-    eggroll_context = EggRollContext(naming_policy=naming_policy)
+    eggroll_session = EggrollSession(session_id=job_id, naming_policy=naming_policy)
 
     if backend.is_eggroll():
         if mode.is_standalone():
             from arch.api.table.eggroll.standalone.table_manager import DTableManager
-            RuntimeInstance.TABLE_MANAGER = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
+
+            RuntimeInstance.TABLE_MANAGER = DTableManager(eggroll_session)
         elif mode.is_cluster():
             from arch.api.table.eggroll.cluster.table_manager import DTableManager
-            RuntimeInstance.TABLE_MANAGER = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
+            RuntimeInstance.TABLE_MANAGER = DTableManager(eggroll_session)
         else:
             raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")
 
     elif backend.is_spark():
         if mode.is_standalone():
             from arch.api.table.pyspark.standalone.table_manager import RDDTableManager
-            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
+            rdd_manager = RDDTableManager(eggroll_session)
             RuntimeInstance.TABLE_MANAGER = rdd_manager
         elif mode.is_cluster():
             from arch.api.table.pyspark.cluster.table_manager import RDDTableManager
-            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
+            rdd_manager = RDDTableManager(eggroll_session)
             RuntimeInstance.TABLE_MANAGER = rdd_manager
         else:
             raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")

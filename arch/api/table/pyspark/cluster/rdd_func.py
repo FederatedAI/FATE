@@ -30,7 +30,7 @@ def _get_or_create_eggroll_client():
     from arch.api.table.pyspark import _EGGROLL_CLIENT
     from pyspark.taskcontext import TaskContext
     # noinspection PyProtectedMember
-    from arch.api.cluster.eggroll import _EggRoll
+    from eggroll.api.cluster.eggroll import _EggRoll
     if not _EggRoll.instance:
         info = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
         _EggRoll(**info)

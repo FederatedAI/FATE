@@ -20,7 +20,7 @@ from typing import Iterable
 from pyspark import SparkContext, RDD
 
 # noinspection PyProtectedMember
-from arch.api.standalone.eggroll import _DTable as DTable
+from eggroll.api.standalone.eggroll import _DTable as DTable
 from arch.api.table.pyspark import _RDD_ATTR_NAME
 from arch.api.table.pyspark import materialize
 from arch.api.table.table import Table
@@ -54,7 +54,7 @@ class RDDTable(Table):
         self._rdd = rdd
         self._partitions = partitions
         self._dtable = dtable
-        self.schema = {}  # todo: ???
+        self.schema = {}
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace
         self._job_id = job_id
@@ -226,7 +226,6 @@ class RDDTable(Table):
         else:
             from arch.api.table.storage_enhance import split_get
             return split_get(k=k, use_serialize=use_serialize, get_call_back_func=self.dtable().get)
-
 
     def delete(self, k, use_serialize=True):
         rtn = self.dtable().delete(k, use_serialize)

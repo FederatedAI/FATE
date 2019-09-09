@@ -28,7 +28,7 @@ from arch.api.table.pyspark import _EGGROLL_CLIENT
 # noinspection PyProtectedMember
 def _get_or_create_eggroll_client():
     # noinspection PyProtectedMember
-    from arch.api.standalone.eggroll import Standalone
+    from eggroll.api.standalone.eggroll import Standalone
     if not Standalone._Standalone__instance:
         standalone = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
         Standalone._Standalone__instance = standalone

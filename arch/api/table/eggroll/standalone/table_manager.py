@@ -16,7 +16,7 @@
 
 from typing import Iterable
 
-from arch.api.standalone.eggroll import Standalone
+from eggroll.api.standalone.eggroll import Standalone
 from arch.api.table.eggroll.wrapped_dtable import DTable
 from arch.api.table.table_manager import TableManager as TableManger
 
@@ -27,9 +27,9 @@ class DTableManager(TableManger):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, job_id, eggroll_context):
-        self._eggroll = Standalone(job_id=job_id, eggroll_context=eggroll_context)
-        self.job_id = job_id
+    def __init__(self, eggroll_session):
+        self._eggroll = Standalone(eggroll_session=eggroll_session)
+        self.job_id = eggroll_session.get_session_id()
         TableManger.set_instance(self)
 
     def table(self,
