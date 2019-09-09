@@ -24,16 +24,16 @@ LOGGER = log_utils.getLogger()
 
 class Guest(hetero_linR_gradient_sync.Guest):
     def register_gradient_procedure(self, transfer_variables):
-        self._register_gradient_sync(transfer_variables.host_forward_wx,
-                                     transfer_variables.residual,
+        self._register_gradient_sync(transfer_variables.host_forward_dict,
+                                     transfer_variables.fore_gradient,
                                      transfer_variables.guest_gradient,
                                      transfer_variables.optim_guest_gradient)
 
 
 class Host(hetero_linR_gradient_sync.Host):
     def register_gradient_procedure(self, transfer_variables):
-        self._register_gradient_sync(transfer_variables.host_forward_wx,
-                                     transfer_variables.residual,
+        self._register_gradient_sync(transfer_variables.host_forward_dict,
+                                     transfer_variables.fore_gradient,
                                      transfer_variables.host_gradient,
                                      transfer_variables.optim_host_gradient)
 

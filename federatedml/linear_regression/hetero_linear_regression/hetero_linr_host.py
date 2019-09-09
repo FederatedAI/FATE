@@ -16,16 +16,14 @@
 
 import numpy as np
 
-from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer_linR, convergence
+from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_gradient_procedure
+from federatedml.optim.gradient import hetero_linR_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
-
-import time
 
 LOGGER = log_utils.getLogger()
 
@@ -35,15 +33,41 @@ class HeteroLinRHost(HeteroLinRBase):
         super(HeteroLinRHost, self).__init__()
         self.batch_num = None
         self.batch_index_list = []
-        self.wx = None
-        self.batch_index_list = []
         self.role = consts.HOST
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_procedure = hetero_gradient_procedure.Host()
+        self.gradient_procedure = hetero_linR_gradient_procedure.Host()
         self.loss_computer = loss_computer.Host()
         self.converge_procedure = convergence.Host()
+
+    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
+        """
+        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
+        and b is the interception
+        Parameters
+        ----------
+        data_instances: DTable of Instance, input data
+        coef_: list, coefficient of lr
+        intercept_: float, the interception of lr
+        """
+        wx = self.compute_wx(data_instances, coef_, intercept_)
+
+        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
+        wx_square = wx.mapValues(lambda v: np.square(v))
+        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
+
+        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
+
+        # temporary resource recovery and will be removed in the future
+        rubbish_list = [wx,
+                        en_wx,
+                        wx_square,
+                        en_wx_square
+                        ]
+        rubbish_clear(rubbish_list)
+
+        return host_forward
 
     def fit(self, data_instances):
         """
@@ -53,13 +77,13 @@ class HeteroLinRHost(HeteroLinRBase):
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_linr host")
+        LOGGER.info("Enter hetero_lr host")
         self._abnormal_detection(data_instances)
 
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
@@ -68,24 +92,23 @@ class HeteroLinRHost(HeteroLinRBase):
 
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
-        # host does not hold intercept
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
         self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
+
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
-
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient, loss = self.gradient_procedure.compute_gradient_procedure(
+                optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst, self.lr_variables, self.compute_wx,
                     self.encrypted_calculator, self.n_iter_, batch_index)
 
-                self.loss_computer.sync_loss_info(self.lr_variables, loss, self.n_iter_, batch_index,
+                self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
                                                   self.cipher, self.optimizer)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
@@ -99,12 +122,12 @@ class HeteroLinRHost(HeteroLinRBase):
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
                 break
-        #LOGGER.info("host model coef: {}".format(self.coef_))
+
         LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances):
         """
-        Prediction of linear regression
+        Prediction of lr
         Parameters
         ----------
         data_instances:DTable of Instance, input data
@@ -113,6 +136,6 @@ class HeteroLinRHost(HeteroLinRBase):
 
         data_features = self.transform(data_instances)
 
-        partial_prediction = self.compute_wx(data_features, self.coef_, self.intercept_)
-        self.transfer_variable.host_partial_prediction.remote(partial_prediction, role=consts.GUEST, idx=0)
-        LOGGER.info("Remote partial_prediction to Guest")
+        prob_host = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
+        LOGGER.info("Remote probability to Guest")
