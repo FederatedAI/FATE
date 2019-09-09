@@ -70,9 +70,7 @@ def call_fun(func, config_data, dsl_path, config_path):
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             if response.json()['retcode'] == 999:
-                print('use service.sh to start standalone node server....')
-                os.system('sh service.sh start --standalone_node')
-                time.sleep(5)
+                start_cluster_standalone_job_server()
                 response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
         else:
             if func != 'query_job':
@@ -144,6 +142,7 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
+<<<<<<< HEAD
         if not config_path:
             raise Exception('the following arguments are required: {}'.format('runtime conf path'))
 
@@ -152,6 +151,12 @@ def call_fun(func, config_data, dsl_path, config_path):
                      'job_runtime_conf': job_runtime_conf}
         response = requests.post("/".join([server_url, "job", "submit"]), json=post_data)
 
+=======
+        response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        if response.json()['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            response = requests.post("/".join([server_url, "data", func]), json=config_data)
+>>>>>>> fate_flow: can not upload data to cluster standalone job server
     elif func in TABLE_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([server_url, "table", func]), json=config_data)
@@ -175,57 +180,10 @@ def download_from_request(http_response, tar_file_name, extract_dir):
     os.remove(tar_file_name)
 
 
-def get_runtime_conf(config_data, func):
-    job_runtime_conf = {
-        "initiator": {},
-        "job_parameters": {},
-        "role": {},
-        "role_parameters": {}
-    }
-    initiator_role = "guest"
-    initiator_party_id = 0
-    job_runtime_conf["initiator"]["role"] = initiator_role
-    job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    job_runtime_conf["job_parameters"]["work_mode"] = config_data.get("work_mode")
-    job_runtime_conf["role"][initiator_role] = [initiator_party_id]
-    dsl_data = {
-        "components": {}
-    }
-
-    if func == 'upload':
-        job_runtime_conf["role_parameters"][initiator_role] = {
-            "upload_0": {
-                "head": [config_data.get("head", 1)],
-                "partition": [config_data.get("partition", 10)],
-                "file": [config_data.get("file")],
-                "namespace": [config_data.get("namespace")],
-                "table_name": [config_data.get("table_name")],
-                "gen_tabel_info": [config_data.get("gen_tabel_info", False)],
-                "data_type": [config_data.get("data_type")],
-            }
-        }
-
-        dsl_data["components"]["upload_0"] = {
-            "module": "Upload"
-        }
-
-    if func == 'download':
-        job_runtime_conf["role_parameters"][initiator_role] = {
-            "download_0": {
-                "output_path": [config_data.get("output_path")],
-                "namespace": [config_data.get("namespace")],
-                "table_name": [config_data.get("table_name")],
-                "delimitor": [config_data.get("delimitor", ",")],
-                "data_type": [config_data.get("data_type")],
-                "gen_tabel_info": [config_data.get("gen_tabel_info", False)],
-            }
-        }
-
-        dsl_data["components"]["download_0"] = {
-            "module": "Download"
-        }
-
-    return job_runtime_conf, dsl_data
+def start_cluster_standalone_job_server():
+    print('use service.sh to start standalone node server....')
+    os.system('sh service.sh start --standalone_node')
+    time.sleep(5)
 
 
 if __name__ == "__main__":
