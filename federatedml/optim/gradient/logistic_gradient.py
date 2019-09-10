@@ -115,7 +115,6 @@ class HeteroLogisticGradientComputer(object):
         if fit_intercept:
             bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
-        gradient.append(feature.shape[0])
         return np.array(gradient)
 
     @staticmethod
@@ -160,6 +159,9 @@ class HeteroLogisticGradientComputer(object):
     def compute_gradient(self, data_instance, fore_gradient, fit_intercept):
         """
         Compute hetero-lr gradient
+        gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x,
+         where y = 1 or -1 and N is batch size
+
         Parameters
         ----------
         data_instance: DTable, input data
@@ -175,15 +177,7 @@ class HeteroLogisticGradientComputer(object):
         f = functools.partial(self.__compute_gradient, fit_intercept=fit_intercept)
 
         gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
-        gradient = gradient_partition[:-1] / gradient_partition[-1]
-
-        # for i in range(len(gradient)):
-        #     if not isinstance(gradient[i], PaillierEncryptedNumber):
-        #         gradient[i] = self.encrypt_operator.encrypt(gradient[i])
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [feat_join_grad]
-        rubbish_clear(rubbish_list)
+        gradient = gradient_partition / data_instance.count()
 
         return gradient
 

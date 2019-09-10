@@ -100,4 +100,4 @@ def converge_func_factory(param):
     elif converge_func == 'abs':
         return _AbsConverge(eps)
     else:
-        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(optimizer_type))
+        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(converge_func))

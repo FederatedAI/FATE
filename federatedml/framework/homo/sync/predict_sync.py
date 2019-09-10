@@ -92,7 +92,7 @@ class Host(object):
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
             predict_result_table = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
-                                                                                 {"1": x[1], "0": (1 - x[1])}])
+                                                                                  {"1": x[1], "0": (1 - x[1])}])
 
         return predict_result_table
 
