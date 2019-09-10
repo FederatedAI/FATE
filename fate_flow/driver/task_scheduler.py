@@ -26,7 +26,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
+from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
@@ -88,7 +88,7 @@ class TaskScheduler(object):
                                                          job_args, dag,
                                                          component)
             except Exception as e:
-                schedule_logger.info(e)
+                schedule_logger.exception(e)
                 run_status = False
             top_level_task_status.add(run_status)
             if not run_status:
@@ -181,7 +181,7 @@ class TaskScheduler(object):
                     else:
                         run_status = False
                 except Exception as e:
-                    schedule_logger.info(e)
+                    schedule_logger.exception(e)
                     run_status = False
                 if not run_status:
                     return False
@@ -191,13 +191,19 @@ class TaskScheduler(object):
 
     @staticmethod
     def check_dependencies(job_id, dag, component):
-        dependencies = dag.get_dependency().get('dependencies', {})
+        jobs = query_job(job_id=job_id)
+        party_id = None
+        if jobs:
+            job = jobs[0]
+            party_id = job.f_party_id
+        dependencies = dag.get_dependency(role="guest", party_id=party_id).get('dependencies', {})
         if not dependencies:
             return False
         dependent_component_names = dependencies.get(component.get_name(), [])
         schedule_logger.info('job {} component {} all dependent component: {}'.format(job_id, component.get_name(),
                                                                                       dependent_component_names))
-        for dependent_component_name in dependent_component_names:
+        for dependent_component in dependent_component_names:
+            dependent_component_name = dependent_component["component_name"]
             dependent_component = dag.get_component_info(dependent_component_name)
             dependent_component_task_status = TaskScheduler.check_task_status(job_id, dependent_component)
             schedule_logger.info('job {} component {} dependency {} status is {}'.format(job_id, component.get_name(),

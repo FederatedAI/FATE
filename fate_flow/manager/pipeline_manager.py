@@ -27,20 +27,7 @@ def pipeline_dag_dependency(job_id, party_id, role):
         job_dsl_parser = job_utils.get_job_dsl_parser(dsl=json_loads(job.f_dsl),
                                                       runtime_conf=json_loads(job.f_runtime_conf),
                                                       train_runtime_conf=json_loads(job.f_train_runtime_conf))
-        dag_dependency = job_dsl_parser.get_dependency()
-        roles = json_loads(job.f_roles)
-        if role in roles:
-            if party_id in roles[role]:
-                party_index = roles[role].index(party_id)
-
-                return dag_dependency[role][party_index]
-
-            else:
-                stat_logger.exception("party_id {} no found".format(party_id))
-                raise "party_id {} no found".format(party_id)
-        else:
-            stat_logger.exception("role {} no found".format(role))
-            raise "role {} no found".format(role)
+        return job_dsl_parser.get_dependency(role=role, party_id=party_id)
 
     except Exception as e:
         stat_logger.exception(e)

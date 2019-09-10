@@ -210,7 +210,12 @@ def success_task_count(job_id):
 
 
 def update_job_progress(job_id, dag, current_task_id):
-    component_count = len(dag.get_dependency()['component_list'])
+    jobs = query_job(job_id=job_id)
+    party_id = None
+    if jobs:
+        job = jobs[0]
+        party_id = int(job.f_party_id)
+    component_count = len(dag.get_dependency(role="guest", party_id=party_id)['component_list'])
     success_count = success_task_count(job_id=job_id)
     job = Job()
     job.f_progress = float(success_count) / component_count * 100
