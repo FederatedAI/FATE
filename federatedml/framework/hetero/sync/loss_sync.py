@@ -57,15 +57,17 @@ class Host(object):
         self.loss_transfer = loss_transfer
         self.wx_square_transfer = wx_square_transfer
 
-    def sync_loss_info(self, lr_variables, n_iter_, batch_index, cipher, optimizer, loss=0):
+    # def sync_loss_info(self, lr_variables, n_iter_, batch_index, cipher, optimizer, loss=0):
+    def sync_loss_info(self, lr_variables, loss, n_iter_, batch_index, cipher, optimizer):
         current_suffix = (n_iter_, batch_index)
 
         loss_regular = optimizer.loss_norm(lr_variables.coef_)
 
         if loss_regular is not None:
-            loss += loss_regular
-        en_loss_regular = cipher.encrypt(loss)
-        self.loss_transfer.remote(en_loss_regular, role=consts.GUEST, idx=0, suffix=current_suffix)
+            loss = loss + loss_regular
+        en_loss = cipher.encrypt(loss)
+        self.host_loss_regular_transfer.remote(en_loss, role=consts.GUEST, idx=0, suffix=current_suffix)
+
 
     def remote_wx_square(self, wx_square, suffix=tuple()):
         self.wx_square_transfer.remote(obj=wx_square, role=consts.GUEST, idx=0, suffix=suffix)

@@ -24,7 +24,56 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.util import consts
-from federatedml.param.logistic_regression_param import InitParam
+
+class InitParam(BaseParam):
+    """
+    Initialize Parameters used in initializing a model.
+
+    Parameters
+    ----------
+    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
+        Initial method.
+
+    init_const : int or float, default: 1
+        Required when init_method is 'const'. Specify the constant.
+
+    fit_intercept : bool, default: True
+        Whether to initialize the intercept or not.
+
+    """
+
+    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True, random_seed=None):
+        super().__init__()
+        self.init_method = init_method
+        self.init_const = init_const
+        self.fit_intercept = fit_intercept
+        self.random_seed = random_seed
+
+    def check(self):
+        if type(self.init_method).__name__ != "str":
+            raise ValueError(
+                "Init param's init_method {} not supported, should be str type".format(self.init_method))
+        else:
+            self.init_method = self.init_method.lower()
+            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'zeros', 'const']:
+                raise ValueError(
+                    "Init param's init_method {} not supported, init_method should in 'random_uniform',"
+                    " 'random_normal' 'ones', 'zeros' or 'const'".format(self.init_method))
+
+        if type(self.init_const).__name__ not in ['int', 'float']:
+            raise ValueError(
+                "Init param's init_const {} not supported, should be int or float type".format(self.init_const))
+
+        if type(self.fit_intercept).__name__ != 'bool':
+            raise ValueError(
+                "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
+
+        if self.random_seed is not None:
+            if type(self.random_seed).__name__ not in ['int', 'float']:
+                raise ValueError(
+                    "Init param's random_seed {} not supported, should be int or float type".format(self.random_seed))
+
+        return True
 
 class LinearParam(BaseParam):
     """
@@ -74,9 +123,9 @@ class LinearParam(BaseParam):
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, cv_param=CrossValidationParam()):
+                cv_param=CrossValidationParam()):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -88,10 +137,8 @@ class LinearParam(BaseParam):
         self.max_iter = max_iter
         self.converge_func = converge_func
         self.encrypt_param = copy.deepcopy(encrypt_param)
-        self.re_encrypt_batches = re_encrypt_batches
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.need_run = need_run
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
@@ -159,14 +206,6 @@ class LinearParam(BaseParam):
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
-
-        if type(self.re_encrypt_batches).__name__ != "int":
-            raise ValueError(
-                "linear_param's re_encrypt_batches {} not supported, should be int type".format(
-                    self.re_encrypt_batches))
-        elif self.re_encrypt_batches < 0:
-            raise ValueError(
-                "linear_param's re_encrypt_batches must be greater or equal to 0")
 
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(

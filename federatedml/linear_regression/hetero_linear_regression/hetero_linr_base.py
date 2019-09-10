@@ -27,7 +27,23 @@ class HeteroLinRBase(BaseLinearRegression):
         self.model_param_name = 'HeteroLinearRegressionParam'
         self.model_meta_name = 'HeteroLinearRegressionMeta'
         self.mode = consts.HETERO
+        self.aggregator = None
+        self.cipher = None
+        self.batch_generator = None
+        self.loss_computer = None
+        self.gradient_procedure = None
+        self.converge_procedure = None
 
     def _init_model(self, params):
         super(HeteroLinRBase, self)._init_model(params)
         self.transfer_variable = HeteroLinRTransferVariable()
+        self.aggregator.register_aggregator(self.transfer_variable)
+        self.cipher.register_paillier_cipher(self.transfer_variable)
+        self.converge_procedure.register_convergence(self.transfer_variable)
+        self.batch_generator.register_batch_generator(self.transfer_variable)
+        self.gradient_procedure.register_gradient_procedure(self.transfer_variable)
+        self.loss_computer.register_loss_procedure(self.transfer_variable, self)
+
+    def renew_current_info(self, iter_num, batch_index):
+        self.gradient_procedure.renew_current_info(iter_num, batch_index)
+        self.loss_computer.renew_current_info(iter_num, batch_index)
