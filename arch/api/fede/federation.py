@@ -42,7 +42,7 @@ class FederationWrapped(object):
         return isinstance(obj, self._wrapper_table_cls)
 
     def _as_wrapped_table(self, obj):
-        return self._wrapper_table_cls(dtable=obj, job_id=self.job_id)
+        return self._wrapper_table_cls.from_dtable(dtable=obj, job_id=self.job_id)
 
     @staticmethod
     def _as_raw_table(obj: Table):

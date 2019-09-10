@@ -36,6 +36,10 @@ class Table(object):
     def dtable(self):
         pass
 
+    @classmethod
+    def from_dtable(cls, job_id, dtable):
+        pass
+
     @abc.abstractmethod
     def save_as(self, name, namespace, partition=None, use_serialize=True):
         pass

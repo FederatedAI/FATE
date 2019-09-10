@@ -33,6 +33,10 @@ class DTable(Table):
         self._namespace = self._dtable._namespace
         self._job_id = job_id
 
+    @classmethod
+    def from_dtable(cls, job_id, dtable):
+        return DTable(dtable=dtable, job_id=job_id)
+
     def get_name(self):
         return self._name
 
