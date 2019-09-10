@@ -55,7 +55,7 @@ def save_pipeline(job_id, role, party_id, model_id, model_version):
 @manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
 def kill_job(job_id, role, party_id):
     JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
-                           job_initiator=request.json.get('job_initiator', {}))
+                           job_initiator=request.json.get('job_initiator', {}), timeout =request.json.get('timeout', False))
     return get_json_result(retcode=0, retmsg='success')
 
 

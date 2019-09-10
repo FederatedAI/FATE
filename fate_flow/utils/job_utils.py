@@ -361,3 +361,13 @@ def job_server_routing(routing_type=0):
             return func(*args, **kwargs)
         return _wrapper
     return _out_wrapper
+
+
+def job_default_timeout(runtime_conf, dsl):
+    # future versions will improve
+    timeout = 60*60*24*7
+    return timeout
+
+
+def job_handler():
+    raise  AssertionError

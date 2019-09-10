@@ -93,7 +93,7 @@ class JobController(object):
                                                                  'model_version']}, board_url
 
     @staticmethod
-    def kill_job(job_id, role, party_id, job_initiator):
+    def kill_job(job_id, role, party_id, job_initiator, timeout=False):
         schedule_logger.info('{} {} get kill job {} command'.format(role, party_id, job_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
@@ -107,8 +107,12 @@ class JobController(object):
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
+            status = TaskStatus.FAILED
+            if timeout:
+                status = TaskStatus.TIMEOUT
+
             if task.f_status != TaskStatus.SUCCESS:
-                task.f_status = TaskStatus.FAILED
+                task.f_status = status
             TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
                                           role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
