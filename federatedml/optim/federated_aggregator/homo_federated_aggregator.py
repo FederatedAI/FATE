@@ -29,17 +29,26 @@ class HomoFederatedAggregator:
 
         model_transfer_id = transfer_variable.generate_transferid(transfer_variable.guest_model,
                                                                   iter_num)
+        guest_model = transfer_variable.guest_model.get(idx=0,
+                                                        suffix=(iter_num,))
+        """
         guest_model = federation.get(name=transfer_variable.guest_model.name,
                                      tag=model_transfer_id,
                                      idx=0)
+        """
 
         guest_model = np.array(guest_model)
         LOGGER.info("received guest model")
         host_model_transfer_id = transfer_variable.generate_transferid(transfer_variable.host_model,
                                                                        iter_num)
+
+        host_models = transfer_variable.host_model.get(idx=-1,
+                                                       suffix=(iter_num,))
+        """
         host_models = federation.get(name=transfer_variable.host_model.name,
                                      tag=host_model_transfer_id,
                                      idx=-1)
+        """
         LOGGER.info("recevied host model")
         final_model = guest_model * party_weights[0]
 
@@ -54,9 +63,13 @@ class HomoFederatedAggregator:
 
     def aggregate_loss(self, transfer_variable, iter_num, party_weights, host_use_encryption):
         guest_loss_id = transfer_variable.generate_transferid(transfer_variable.guest_loss, iter_num)
+        guest_loss = transfer_variable.guest_loss.get(idx=0,
+                                                      suffix=(iter_num,))
+        """
         guest_loss = federation.get(name=transfer_variable.guest_loss.name,
                                     tag=guest_loss_id,
                                     idx=0)
+        """
         LOGGER.info("Received guest loss")
         # LOGGER.debug("guest_loss: {}".format(guest_loss))
 
@@ -68,9 +81,13 @@ class HomoFederatedAggregator:
             if use_encryption:
                 loss_party_weight[idx] = 0
                 continue
+            host_loss = transfer_variable.host_loss.get(idx=idx,
+                                                        suffix=(iter_num,))
+            """
             host_loss = federation.get(name=transfer_variable.host_loss.name,
                                        tag=host_loss_id,
                                        idx=idx)
+            """
             LOGGER.info("Received loss from {}th host".format(idx))
             total_loss += loss_party_weight[idx] * host_loss
 

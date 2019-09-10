@@ -58,4 +58,4 @@ def dump_json_conf(config_data, conf_path):
 
 if __name__ == "__main__":
     print(get_project_base_directory())
-    print(load_json_conf('federatedml/transfer_variable_conf/transfer_conf.json'))
+    print(load_json_conf('federatedml/transfer_variable/definition/transfer_conf.json'))

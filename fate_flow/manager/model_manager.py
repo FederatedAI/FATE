@@ -112,8 +112,8 @@ def get_pipeline_model_meta(party_model_id, model_version):
 
 
 def get_proto_buffer_class(class_name):
-    package_path = os.path.join(file_utils.get_project_base_directory(), 'arch', 'api', 'proto')
-    package_python_path = 'arch.api.proto'
+    package_path = os.path.join(file_utils.get_project_base_directory(), 'federatedml', 'protobuf', 'generated')
+    package_python_path = 'federatedml.protobuf.generated'
     for f in os.listdir(package_path):
         if f.startswith('.'):
             continue

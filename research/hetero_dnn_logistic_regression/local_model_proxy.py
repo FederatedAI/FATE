@@ -7,7 +7,7 @@ from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import add_random_mask, remove_random_mask
 from research.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
+from federatedml.util.transfer import HeteroDNNLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 

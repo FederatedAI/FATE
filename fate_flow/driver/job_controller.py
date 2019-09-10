@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
-from arch.api.utils.core import current_timestamp, json_dumps, json_loads, get_lan_ip
+from arch.api.utils.core import current_timestamp, json_dumps, json_loads
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
@@ -125,7 +125,7 @@ class JobController(object):
     @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
-        job_info['f_run_ip'] = get_lan_ip()
+        job_info['f_run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if create:
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])

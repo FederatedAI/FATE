@@ -22,7 +22,7 @@ import functools
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
+from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
@@ -31,7 +31,7 @@ from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_feature_selection_transfer_variable import \
+from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 
 LOGGER = log_utils.getLogger()
