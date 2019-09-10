@@ -18,7 +18,6 @@ package com.webank.ai.fate.board.services;
 
 import com.google.common.base.Preconditions;
 import com.webank.ai.fate.board.dao.JobMapper;
-import com.webank.ai.fate.board.dao.TaskMapper;
 import com.webank.ai.fate.board.disruptor.LogFileTransferEventProducer;
 import com.webank.ai.fate.board.log.LogFileService;
 import com.webank.ai.fate.board.pojo.JobExample;
@@ -26,13 +25,11 @@ import com.webank.ai.fate.board.pojo.JobWithBLOBs;
 import com.webank.ai.fate.board.pojo.SshInfo;
 import com.webank.ai.fate.board.ssh.SshService;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -57,6 +54,9 @@ public class LogSshLoadService {
         jobWithBLOBs.forEach(job -> {
             String jobId = job.getfJobId();
             String runIp = job.getfRunIp();
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(runIp));
+            String[] splits = runIp.split(":");
+            runIp=splits[0];
 
             Preconditions.checkArgument(StringUtils.isNotEmpty(jobId));
             String jobDir = logFileService.getJobDir(jobId);

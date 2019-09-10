@@ -68,7 +68,7 @@ Key configuration item description:
 | - | - | - |
 | IP | listen address for FATE-Flow | default 0.0.0.0 |
 | GRPC_PORT | listen port for the grpc server of FATE-Flow | default 9360 |
-| HTTP_PORT | listen port for the grpc server of FATE-Flow | default 9380 |
+| HTTP_PORT | listen port for the http server of FATE-Flow | default 9380 |
 | WORK_MODE | the work mode of FATE-Flow | 0 for standalone, 1 for cluster |
 | USE_LOCAL_DATABASE | Whether to use a local database(sqlite) | False for no, True for yes |
 | MAX_CONCURRENT_JOB_RUN | Pipeline jobs that are executed in parallel at the same time | default 5 |

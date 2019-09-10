@@ -187,8 +187,8 @@ public class InferenceManager {
         federatedParams.put("role", modelNamespaceData.getRole());
         federatedParams.put("feature_id", featureIds);
         predictParams.put("federatedParams", federatedParams);
-
-        Map<String, Object> modelResult = model.predict(context,featureData, predictParams);
+        Map<String, Object> modelFeatureData = Maps.newHashMap(featureData);
+        Map<String, Object> modelResult = model.predict(context,modelFeatureData, predictParams);
 
 
        // boolean getRemotePartyResult = (boolean) federatedParams.getOrDefault("getRemotePartyResult", false);

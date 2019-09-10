@@ -50,7 +50,9 @@ HEADERS = {
 IP = '0.0.0.0'
 GRPC_PORT = 9360
 HTTP_PORT = 9380
-STANDALONE_NODE_HTTP_PORT = 9381
+# standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
+# but not the port for FATE-Flow on standalone deploy mode.
+CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
 
