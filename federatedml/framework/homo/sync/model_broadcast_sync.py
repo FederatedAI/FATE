@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.weights import Variables
+from federatedml.framework.weights import Weights
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.base_transfer_variable import Variable
 
@@ -26,7 +26,7 @@ class Arbiter(object):
         self._models_broadcast = model_transfer
         return self
 
-    def _send_model(self, model: Variables, ciphers_dict=None, suffix=tuple()):
+    def _send_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
         if ciphers_dict:
             self._models_broadcast.remote(obj=model.for_remote(),
                                           role=consts.GUEST,

@@ -15,7 +15,7 @@
 #
 
 from federatedml.framework.homo.procedure import aggregator
-from federatedml.framework.weights import ListVariables
+from federatedml.framework.weights import ListWeights
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
 
@@ -35,12 +35,12 @@ class AggregatorTest(TestSyncBase):
             agg = aggregator.Host()
             agg.register_aggregator(transfer_variable)
             agg.initialize_aggregator(weights[ind + 1])
-            return agg.aggregate_and_get(ListVariables(list(models[ind + 1])))
+            return agg.aggregate_and_get(ListWeights(list(models[ind + 1])))
         else:
             agg = aggregator.Guest()
             agg.register_aggregator(transfer_variable)
             agg.initialize_aggregator(weights[0])
-            return agg.aggregate_and_get(ListVariables(list(models[0])))
+            return agg.aggregate_and_get(ListWeights(list(models[0])))
 
     def run_with_num_hosts(self, num_hosts):
         import numpy as np

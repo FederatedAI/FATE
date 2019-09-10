@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.weights import Variables
+from federatedml.framework.weights import Weights
 from federatedml.framework.homo.util import scatter
 from federatedml.util import consts
 
@@ -27,7 +27,7 @@ class Arbiter(object):
         return self
 
     def _get_models(self, ciphers_dict=None, suffix=tuple()):
-        models = [Variables.from_transferable(model) for model in self._models_sync.get(suffix=suffix)]
+        models = [model.weights for model in self._models_sync.get(suffix=suffix)]
         if ciphers_dict:
             for i, cipher in ciphers_dict.items():
                 if cipher:
@@ -41,7 +41,7 @@ class _Client(object):
         self._models_sync = model_transfer
         return self
 
-    def _send_model(self, weights: Variables, suffix=tuple()):
+    def _send_model(self, weights: Weights, suffix=tuple()):
         self._models_sync.remote(obj=weights.for_remote(), role=consts.ARBITER, idx=0, suffix=suffix)
         return weights
 

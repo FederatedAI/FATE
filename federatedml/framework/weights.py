@@ -14,33 +14,37 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.splitable import segment_transfer_enabled
-from federatedml.secureprotol.encrypt import Encrypt
 import abc
 import operator
 
-
-class TransferableVariables(metaclass=segment_transfer_enabled()):
-    def __init__(self, parameters):
-        self.parameters = parameters
+from arch.api.utils.splitable import segment_transfer_enabled
+from federatedml.secureprotol.encrypt import Encrypt
 
 
-class Variables(object):
+class TransferableWeights(metaclass=segment_transfer_enabled()):
+    def __init__(self, weights):
+        self._weights = weights
+
+    @property
+    def unboxed(self):
+        return self._weights
+
+    @property
+    def weights(self):
+        return Weights(self._weights)
+
+
+class Weights(object):
 
     def __init__(self, l):
-        self._parameter = l
+        self._weights = l
 
     def for_remote(self):
-        return TransferableVariables(self._parameter)
+        return TransferableWeights(self._weights)
 
-    @staticmethod
-    def from_transferable(transferable_parameters: TransferableVariables):
-        if isinstance(transferable_parameters.parameters, list):
-            return ListVariables(transferable_parameters.parameters)
-        if isinstance(transferable_parameters.parameters, dict):
-            return DictVariables(transferable_parameters.parameters)
-
-        raise NotImplemented(f"build parameters from {type(transferable_parameters.parameters)}")
+    @property
+    def unboxed(self):
+        return self._weights
 
     @abc.abstractmethod
     def map_values(self, func, inplace):
@@ -57,7 +61,7 @@ class Variables(object):
     def decrypted(self, cipher: Encrypt, inplace=True):
         return self.map_values(cipher.decrypt, inplace=inplace)
 
-    def encrypted(self, cipher: Encrypt, inplace=True) -> 'Parameters':
+    def encrypted(self, cipher: Encrypt, inplace=True):
         return self.map_values(cipher.encrypt, inplace=inplace)
 
     def __imul__(self, other):
@@ -79,64 +83,64 @@ class Variables(object):
         return self.map_values(lambda x: x / other, inplace=True)
 
 
-class ListVariables(Variables):
+class ListWeights(Weights):
     def __init__(self, l):
         super().__init__(l)
 
     def map_values(self, func, inplace):
         if inplace:
-            for k, v in enumerate(self._parameter):
-                self._parameter[k] = func(v)
+            for k, v in enumerate(self._weights):
+                self._weights[k] = func(v)
             return self
         else:
             _w = []
-            for v in self._parameter:
+            for v in self._weights:
                 _w.append(func(v))
-            return ListVariables(_w)
+            return ListWeights(_w)
 
-    def binary_op(self, other: 'ListVariables', func, inplace):
+    def binary_op(self, other: 'ListWeights', func, inplace):
         if inplace:
-            for k, v in enumerate(self._parameter):
-                self._parameter[k] = func(self._parameter[k], other._parameter[k])
+            for k, v in enumerate(self._weights):
+                self._weights[k] = func(self._weights[k], other._weights[k])
             return self
         else:
             _w = []
-            for k, v in enumerate(self._parameter):
-                _w.append(func(self._parameter[k], other._parameter[k]))
-            return ListVariables(_w)
+            for k, v in enumerate(self._weights):
+                _w.append(func(self._weights[k], other._weights[k]))
+            return ListWeights(_w)
 
-    def axpy(self, a, y: 'ListVariables'):
-        for k, v in enumerate(self._parameter):
-            self._parameter[k] += a * y._parameter[k]
+    def axpy(self, a, y: 'ListWeights'):
+        for k, v in enumerate(self._weights):
+            self._weights[k] += a * y._weights[k]
 
 
-class DictVariables(Variables):
+class DictWeights(Weights):
 
     def __init__(self, d):
         super().__init__(d)
 
     def map_values(self, func, inplace):
         if inplace:
-            for k, v in self._parameter.items():
-                self._parameter[k] = func(v)
+            for k, v in self._weights.items():
+                self._weights[k] = func(v)
             return self
         else:
             _w = dict()
-            for k, v in self._parameter.items():
+            for k, v in self._weights.items():
                 _w[k] = func(v)
-            return DictVariables(_w)
+            return DictWeights(_w)
 
-    def binary_op(self, other: 'DictVariables', func, inplace):
+    def binary_op(self, other: 'DictWeights', func, inplace):
         if inplace:
-            for k, v in self._parameter.items():
-                self._parameter[k] = func(other._parameter, v)
+            for k, v in self._weights.items():
+                self._weights[k] = func(other._weights, v)
             return self
         else:
             _w = dict()
-            for k, v in self._parameter.items():
-                _w[k] = func(other._parameter, v)
-            return DictVariables(_w)
+            for k, v in self._weights.items():
+                _w[k] = func(other._weights, v)
+            return DictWeights(_w)
 
-    def axpy(self, a, y: 'DictVariables'):
-        for k, v in self._parameter.items():
-            self._parameter[k] += a * y._parameter[k]
+    def axpy(self, a, y: 'DictWeights'):
+        for k, v in self._weights.items():
+            self._weights[k] += a * y._weights[k]

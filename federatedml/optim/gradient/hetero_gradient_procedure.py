@@ -20,7 +20,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import three_parties_sync
-from federatedml.framework.weights import ListVariables
+from federatedml.framework.weights import ListWeights
 from federatedml.optim.gradient.logistic_gradient import HeteroLogisticGradientComputer
 
 # from federatedml.statistic.data_overview import rubbish_clear
@@ -134,7 +134,7 @@ class Guest(three_parties_sync.Guest, Base):
                                                               en_aggregate_wx,
                                                               en_aggregate_wx_square,
                                                               lr_variables.fit_intercept)
-        gradient_var = ListVariables(guest_gradient)
+        gradient_var = ListWeights(guest_gradient)
 
         self.guest_to_arbiter(variables=(gradient_var.for_remote(),),
                               transfer_variables=(self.guest_gradient_transfer,),
@@ -225,7 +225,7 @@ class Host(three_parties_sync.Host, Base):
                                               fore_gradient,
                                               fit_intercept=False)
 
-        gradient_var = ListVariables(host_gradient)
+        gradient_var = ListWeights(host_gradient)
 
         self.host_to_arbiter(variables=(gradient_var.for_remote(),),
                              transfer_variables=(self.host_gradient_transfer,),
@@ -299,7 +299,7 @@ class Arbiter(three_parties_sync.Arbiter, Base):
         host_gradient, guest_gradient = np.array(host_gradient), np.array(guest_gradient)
         gradient = np.hstack((host_gradient, guest_gradient))
 
-        gradient_var = ListVariables(gradient)
+        gradient_var = ListWeights(gradient)
         gradient_var.decrypted(self.cipher_operator, True)
         grad = gradient_var.for_remote().parameters
         delta_grad = self.optimizer.apply_gradients(grad)

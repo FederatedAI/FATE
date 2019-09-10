@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.weights import ListVariables
+from federatedml.framework.weights import ListWeights
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
 from federatedml.framework.homo.procedure import paillier_cipher
