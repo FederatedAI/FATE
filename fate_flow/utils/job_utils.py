@@ -369,5 +369,4 @@ def job_default_timeout(runtime_conf, dsl):
     return timeout
 
 
-def job_handler():
-    raise  AssertionError
+

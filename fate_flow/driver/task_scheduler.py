@@ -18,6 +18,7 @@ import os
 import signal
 import sys
 import time
+from threading import Timer
 
 from arch.api import storage
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
@@ -27,7 +28,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, job_default_timeout, job_handler
+from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, job_default_timeout
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
@@ -71,58 +72,57 @@ class TaskScheduler(object):
         timeout = job_parameters.get("timeout", "")
         if not timeout:
             timeout = job_default_timeout(runtime_conf=job_runtime_conf, dsl=job_dsl)
-        try:
-            signal.signal(signal.SIGALRM, job_handler)
-            signal.alarm(timeout)
 
-            storage.init_storage(job_id=job_id, work_mode=RuntimeConfig.WORK_MODE)
-            job = Job()
-            job.f_job_id = job_id
-            job.f_start_time = current_timestamp()
-            job.f_status = JobStatus.RUNNING
-            job.f_update_time = current_timestamp()
-            TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
-                                          work_mode=job_parameters['work_mode'],
-                                          initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
+        t = Timer(timeout, TaskScheduler.job_handler, [job_id])
+        t.start()
 
-            top_level_task_status = set()
-            components = dag.get_next_components(None)
-            schedule_logger.info(
-                'job {} root components is {}'.format(job.f_job_id, [component.get_name() for component in components],
-                                                      None))
-            for component in components:
-                try:
-                    # run a component as task
-                    run_status = TaskScheduler.run_component(job_id, job_runtime_conf, job_parameters, job_initiator,
-                                                             job_args, dag,
-                                                             component)
-                except Exception as e:
-                    schedule_logger.info(e)
-                    run_status = False
-                top_level_task_status.add(run_status)
-                if not run_status:
-                    break
-            if len(top_level_task_status) == 2:
-                job.f_status = JobStatus.PARTIAL
-            elif True in top_level_task_status:
-                job.f_status = JobStatus.SUCCESS
-            else:
-                job.f_status = JobStatus.FAILED
-            job.f_end_time = current_timestamp()
-            job.f_elapsed = job.f_end_time - job.f_start_time
-            if job.f_status == JobStatus.SUCCESS:
-                job.f_progress = 100
-            job.f_update_time = current_timestamp()
-            TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
-                                          work_mode=job_parameters['work_mode'],
-                                          initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
-            TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
-            schedule_logger.info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
-        except AssertionError:
-            schedule_logger.info('job {} timeout, running time is more than {} seconds '.format(job_id, timeout))
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, signal.SIG_DFL)
-            TaskScheduler.stop_job(job_id)
+        storage.init_storage(job_id=job_id, work_mode=RuntimeConfig.WORK_MODE)
+        job = Job()
+        job.f_job_id = job_id
+        job.f_start_time = current_timestamp()
+        job.f_status = JobStatus.RUNNING
+        job.f_update_time = current_timestamp()
+        TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                      work_mode=job_parameters['work_mode'],
+                                      initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
+
+        top_level_task_status = set()
+        components = dag.get_next_components(None)
+        schedule_logger.info(
+            'job {} root components is {}'.format(job.f_job_id, [component.get_name() for component in components],
+                                                  None))
+        for component in components:
+            try:
+                # run a component as task
+                run_status = TaskScheduler.run_component(job_id, job_runtime_conf, job_parameters, job_initiator,
+                                                         job_args, dag,
+                                                         component)
+            except Exception as e:
+                schedule_logger.info(e)
+                run_status = False
+            top_level_task_status.add(run_status)
+            if not run_status:
+                break
+        if len(top_level_task_status) == 2:
+            job.f_status = JobStatus.PARTIAL
+        elif True in top_level_task_status:
+            job.f_status = JobStatus.SUCCESS
+        else:
+            job.f_status = JobStatus.FAILED
+        job.f_end_time = current_timestamp()
+        job.f_elapsed = job.f_end_time - job.f_start_time
+        if job.f_status == JobStatus.SUCCESS:
+            job.f_progress = 100
+        job.f_update_time = current_timestamp()
+        TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                      work_mode=job_parameters['work_mode'],
+                                      initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
+        TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
+        schedule_logger.info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
+        t.cancel()
+
+
+
 
 
 
@@ -385,3 +385,9 @@ class TaskScheduler(object):
         else:
             schedule_logger.info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
+
+
+    @staticmethod
+    def job_handler(*args, **kwargs):
+        job_id = args[0]
+        TaskScheduler.stop_job(job_id)
