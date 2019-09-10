@@ -30,9 +30,10 @@ class Arbiter(object):
 
 
 class Guest(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, wx_square_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
+        self.wx_square_transfer = wx_square_transfer
 
     def sync_loss_info(self, lr_variables, loss, n_iter_, batch_index, optimizer):
         current_suffix = (n_iter_, batch_index)
@@ -45,11 +46,16 @@ class Guest(object):
 
         self.loss_transfer.remote(loss, role=consts.ARBITER, idx=0, suffix=current_suffix)
 
+    def get_host_wx_square(self, suffix=tuple()):
+        wx_squares = self.wx_square_transfer.get(idx=-1, suffix=suffix)
+        return wx_squares
+
 
 class Host(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, wx_square_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
+        self.wx_square_transfer = wx_square_transfer
 
     def sync_loss_info(self, lr_variables, n_iter_, batch_index, cipher, optimizer, loss=0):
         current_suffix = (n_iter_, batch_index)
@@ -59,4 +65,7 @@ class Host(object):
         if loss_regular is not None:
             loss += loss_regular
         en_loss_regular = cipher.encrypt(loss)
-        self.host_loss_transfer.remote(en_loss_regular, role=consts.GUEST, idx=0, suffix=current_suffix)
+        self.loss_transfer.remote(en_loss_regular, role=consts.GUEST, idx=0, suffix=current_suffix)
+
+    def remote_wx_square(self, wx_square, suffix=tuple()):
+        self.wx_square_transfer.remote(obj=wx_square, role=consts.GUEST, idx=0, suffix=suffix)

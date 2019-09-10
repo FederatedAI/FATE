@@ -55,32 +55,6 @@ class Host(gradient_sync.Host, HeteroLogisticGradientComputer):
         self.unilateral_gradient_transfer = host_gradient_transfer
         self.unilateral_optim_gradient_transfer = host_optim_gradient_transfer
 
-    def compute_gradient_procedure(self, data_instances, lr_variables,
-                                   compute_wx, encrypted_calculator,
-                                   n_iter_, batch_index):
-        current_suffix = (n_iter_, batch_index)
-
-        host_forward = self.compute_intermediate(data_instances, lr_variables, compute_wx,
-                                                 encrypted_calculator, batch_index)
-
-        self.host_forward_dict_transfer.remote(host_forward, role=consts.GUEST, idx=0, suffix=current_suffix)
-        LOGGER.info("Remote host_forward to guest")
-
-        fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
-        LOGGER.info("Get fore_gradient from guest")
-
-        host_gradient = self.compute_gradient(data_instances,
-                                              fore_gradient,
-                                              fit_intercept=False)
-
-        self.host_gradient_transfer.remote(host_gradient, role=consts.ARBITER, idx=0, suffix=current_suffix)
-        LOGGER.info("Remote host_gradient to arbiter")
-
-        optim_host_gradient = self.host_optim_gradient_transfer.get(idx=0, suffix=current_suffix)
-        LOGGER.info("Get optim_guest_gradient from arbiter")
-
-        return optim_host_gradient, fore_gradient
-
     def remote_host_forward(self, host_forward, suffix=tuple()):
         self.host_forward_dict_transfer.remote(object=host_forward, role=consts.GUEST, idx=0, suffix=suffix)
 
@@ -136,3 +110,23 @@ class Arbiter(gradient_sync.Arbiter):
                                                   role=consts.GUEST,
                                                   idx=0,
                                                   suffix=current_suffix)
+
+    def get_local_gradient(self, suffix=tuple()):
+        host_gradients = self.host_gradient_transfer.get(idx=-1, suffix=suffix)
+        LOGGER.info("Get host_gradient from Host")
+
+        guest_gradient = self.guest_gradient_transfer.get(idx=0, suffix=suffix)
+        LOGGER.info("Get guest_gradient from Guest")
+        return host_gradients, guest_gradient
+
+    def remote_local_gradient(self, host_optim_gradients, guest_optim_gradient, suffix=tuple()):
+        for idx, host_optim_gradient in enumerate(host_optim_gradients):
+            self.host_optim_gradient_transfer.remote(host_optim_gradient,
+                                                     role=consts.HOST,
+                                                     idx=idx,
+                                                     suffix=suffix)
+
+        self.guest_optim_gradient_transfer.remote(guest_optim_gradient,
+                                                  role=consts.GUEST,
+                                                  idx=0,
+                                                  suffix=suffix)

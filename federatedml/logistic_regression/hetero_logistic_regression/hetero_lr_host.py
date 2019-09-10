@@ -40,6 +40,7 @@ class HeteroLRHost(HeteroLRBase):
         self.gradient_procedure = hetero_gradient_procedure.Host()
         self.loss_computer = loss_computer.Host()
         self.converge_procedure = convergence.Host()
+        self.encrypted_calculator = None
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -105,8 +106,7 @@ class HeteroLRHost(HeteroLRBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
-                    batch_feat_inst, self.lr_variables, self.compute_wx,
-                    self.encrypted_calculator, self.n_iter_, batch_index)
+                    batch_feat_inst, self.lr_variables, self.encrypted_calculator, self.n_iter_, batch_index)
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)

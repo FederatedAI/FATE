@@ -14,13 +14,14 @@
 #  limitations under the License.
 #
 
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_gradient_procedure
-from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -67,10 +68,6 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
@@ -88,11 +85,11 @@ class HeteroLRGuest(HeteroLRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient, loss, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+
+                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.lr_variables,
-                    self.compute_wx,
-                    self.encrypted_calculator,
+                    wx,
+                    self.lr_variables.fit_intercept,
                     self.n_iter_,
                     batch_index
                 )
