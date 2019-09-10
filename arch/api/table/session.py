@@ -21,24 +21,43 @@ from typing import Iterable
 
 import six
 
+from arch.api import WorkMode, Backend
 from arch.api.table.table import Table
 
 
+def build_session(job_id=None, work_mode: WorkMode = WorkMode.STANDALONE, backend: Backend = Backend.EGGROLL):
+    from arch.api.table import eggroll_util
+    eggroll_session = eggroll_util.build_eggroll_session(work_mode=work_mode, job_id=job_id)
+
+    if backend.is_eggroll():
+        from arch.api.table.eggroll import session_impl
+        session = session_impl.FateSessionImpl(eggroll_session, work_mode)
+
+    elif backend.is_spark():
+        from arch.api.table.pyspark import session_impl
+        session = session_impl.FateSessionImpl(eggroll_session, work_mode)
+
+    else:
+        raise ValueError(f"work_mode: {work_mode} not supported")
+
+    return session
+
+
 @six.add_metaclass(abc.ABCMeta)
-class TableManager(object):
-    _instance: 'TableManager' = None
+class FateSession(object):
+    _instance: 'FateSession' = None
     __lock = threading.Lock()
 
     @staticmethod
     def set_instance(instance):
-        if not TableManager._instance:
-            with TableManager.__lock:
-                if not TableManager._instance:
-                    TableManager._instance = instance
+        if not FateSession._instance:
+            with FateSession.__lock:
+                if not FateSession._instance:
+                    FateSession._instance = instance
 
     @staticmethod
     def get_instance():
-        return TableManager._instance
+        return FateSession._instance
 
     @abc.abstractmethod
     def table(self,
@@ -83,13 +102,13 @@ class TableManager(object):
         :return:
             data table instance
         """
-        return TableManager.get_instance().table(name=name,
-                                                 namespace=namespace,
-                                                 create_if_missing=False,
-                                                 persistent=True,
-                                                 error_if_exist=False,
-                                                 in_place_computing=False,
-                                                 partition=1)
+        return FateSession.get_instance().table(name=name,
+                                                namespace=namespace,
+                                                create_if_missing=False,
+                                                persistent=True,
+                                                error_if_exist=False,
+                                                in_place_computing=False,
+                                                partition=1)
 
     @staticmethod
     def save_data_table_meta(kv, data_table_name, data_table_namespace):
@@ -101,13 +120,13 @@ class TableManager(object):
         :return:
         """
         from arch.api.utils.core import json_dumps
-        data_meta_table = TableManager.get_instance().table(name="%s.meta" % data_table_name,
-                                                            namespace=data_table_namespace,
-                                                            partition=1,
-                                                            create_if_missing=True,
-                                                            error_if_exist=False,
-                                                            persistent=True,
-                                                            in_place_computing=False)
+        data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
+                                                           namespace=data_table_namespace,
+                                                           partition=1,
+                                                           create_if_missing=True,
+                                                           error_if_exist=False,
+                                                           persistent=True,
+                                                           in_place_computing=False)
         for k, v in kv.items():
             data_meta_table.put(k, json_dumps(v), use_serialize=False)
 
@@ -121,13 +140,13 @@ class TableManager(object):
         :return:
         """
         from arch.api.utils.core import json_loads
-        data_meta_table = TableManager.get_instance().table(name="%s.meta" % data_table_name,
-                                                            namespace=data_table_namespace,
-                                                            create_if_missing=True,
-                                                            error_if_exist=False,
-                                                            in_place_computing=False,
-                                                            persistent=True,
-                                                            partition=1)
+        data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
+                                                           namespace=data_table_namespace,
+                                                           create_if_missing=True,
+                                                           error_if_exist=False,
+                                                           in_place_computing=False,
+                                                           persistent=True,
+                                                           partition=1)
         if data_meta_table:
             value_bytes = data_meta_table.get(key, use_serialize=False)
             if value_bytes:
@@ -146,13 +165,13 @@ class TableManager(object):
         :return:
         """
         from arch.api.utils.core import json_loads
-        data_meta_table = TableManager.get_instance().table(name="%s.meta" % data_table_name,
-                                                            namespace=data_table_namespace,
-                                                            partition=1,
-                                                            persistent=True,
-                                                            in_place_computing=False,
-                                                            create_if_missing=True,
-                                                            error_if_exist=False)
+        data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
+                                                           namespace=data_table_namespace,
+                                                           partition=1,
+                                                           persistent=True,
+                                                           in_place_computing=False,
+                                                           create_if_missing=True,
+                                                           error_if_exist=False)
         if data_meta_table:
             metas = dict()
             for k, v in data_meta_table.collect(use_serialize=False):
@@ -164,7 +183,7 @@ class TableManager(object):
     @staticmethod
     def clean_table(namespace, regex_string='*'):
         try:
-            TableManager.get_instance().cleanup(name=regex_string, namespace=namespace, persistent=False)
+            FateSession.get_instance().cleanup(name=regex_string, namespace=namespace, persistent=False)
         except Exception as e:
             print(e)
 
@@ -193,13 +212,13 @@ class TableManager(object):
             data table instance
         """
         from arch.api.utils import version_control
-        data_table = TableManager.get_instance().table(name=name,
-                                                       namespace=namespace,
-                                                       partition=partition,
-                                                       persistent=persistent,
-                                                       in_place_computing=False,
-                                                       create_if_missing=create_if_missing,
-                                                       error_if_exist=error_if_exist)
+        data_table = FateSession.get_instance().table(name=name,
+                                                      namespace=namespace,
+                                                      partition=partition,
+                                                      persistent=persistent,
+                                                      in_place_computing=False,
+                                                      create_if_missing=create_if_missing,
+                                                      error_if_exist=error_if_exist)
         data_table.put_all(kv_data)
         if in_version:
             version_log = "[AUTO] save data at %s." % datetime.datetime.now() if not version_log else version_log

@@ -20,7 +20,6 @@ from typing import Iterable
 from pyspark import SparkContext, RDD
 
 # noinspection PyProtectedMember
-from eggroll.api.cluster.eggroll import _DTable as DTable
 from arch.api.table.pyspark import _RDD_ATTR_NAME
 from arch.api.table.pyspark import materialize, STORAGE_LEVEL
 from arch.api.table.table import Table
@@ -31,7 +30,7 @@ class RDDTable(Table):
 
     # noinspection PyProtectedMember
     @classmethod
-    def from_dtable(cls, job_id: str, dtable: DTable):
+    def from_dtable(cls, job_id: str, dtable):
         namespace = dtable._namespace
         name = dtable._name
         partitions = dtable._partitions
@@ -47,7 +46,7 @@ class RDDTable(Table):
                  name: str = None,
                  partitions: int = 1,
                  rdd: RDD = None,
-                 dtable: DTable = None):
+                 dtable=None):
 
         self._valid_param_check(rdd, dtable, namespace, partitions)
         setattr(self, _RDD_ATTR_NAME, rdd)
@@ -143,19 +142,19 @@ class RDDTable(Table):
 
     @log_elapsed
     def map(self, func, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _map
+        from arch.api.table.pyspark.rdd_func import _map
         rtn_rdd = _map(self.rdd(), func)
         return self._tmp_table_from_rdd(rtn_rdd)
 
     @log_elapsed
     def mapValues(self, func, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _map_value
+        from arch.api.table.pyspark.rdd_func import _map_value
         rtn_rdd = _map_value(self.rdd(), func)
         return self._tmp_table_from_rdd(rtn_rdd)
 
     @log_elapsed
     def mapPartitions(self, func, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _map_partitions
+        from arch.api.table.pyspark.rdd_func import _map_partitions
         rtn_rdd = _map_partitions(self.rdd(), func)
         return self._tmp_table_from_rdd(rtn_rdd)
 
@@ -169,39 +168,39 @@ class RDDTable(Table):
 
         @log_elapsed
         def _join(rdda, rddb, **kwargs):
-            from arch.api.table.pyspark.cluster.rdd_func import _join
+            from arch.api.table.pyspark.rdd_func import _join
             return self._tmp_table_from_rdd(_join(rdda, rddb, func))
 
         return _join(rdd1, rdd2, **kwargs)
 
     @log_elapsed
     def glom(self, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _glom
+        from arch.api.table.pyspark.rdd_func import _glom
         return self._tmp_table_from_rdd(_glom(self.rdd()))
 
     @log_elapsed
     def sample(self, fraction, seed=None, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _sample
+        from arch.api.table.pyspark.rdd_func import _sample
         return self._tmp_table_from_rdd(_sample(self.rdd(), fraction, seed))
 
     @log_elapsed
     def subtractByKey(self, other, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _subtract_by_key
+        from arch.api.table.pyspark.rdd_func import _subtract_by_key
         return self._tmp_table_from_rdd(_subtract_by_key(self.rdd(), other.rdd))
 
     @log_elapsed
     def filter(self, func, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _filter
+        from arch.api.table.pyspark.rdd_func import _filter
         return self._tmp_table_from_rdd(_filter(self.rdd(), func))
 
     @log_elapsed
     def union(self, other, func=lambda v1, v2: v1, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _union
+        from arch.api.table.pyspark.rdd_func import _union
         return self._tmp_table_from_rdd(_union(self.rdd(), other.rdd, func))
 
     @log_elapsed
     def flatMap(self, func, **kwargs):
-        from arch.api.table.pyspark.cluster.rdd_func import _flat_map
+        from arch.api.table.pyspark.rdd_func import _flat_map
         return self._tmp_table_from_rdd(_flat_map(self.rdd(), func))
 
     @log_elapsed
@@ -280,5 +279,5 @@ class RDDTable(Table):
             _dtable = self._dtable.save_as(name, namespace, partition, use_serialize=use_serialize)
             return RDDTable.from_dtable(job_id=self._job_id, dtable=_dtable)
         else:
-            from arch.api.table.pyspark.cluster.rdd_func import _save_as_func
+            from arch.api.table.pyspark.rdd_func import _save_as_func
             return _save_as_func(self._rdd, name=name, namespace=namespace, partition=partition, persistent=persistent)

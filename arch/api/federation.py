@@ -15,6 +15,7 @@
 #
 
 from arch.api import RuntimeInstance
+from arch.api.federation import FederationBuilder
 from arch.api.utils.profile_util import log_elapsed
 
 
@@ -43,33 +44,19 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
         raise EnvironmentError(
             "table manager should be initialized before federation")
 
-    if RuntimeInstance.MODE.is_standalone():
+    if RuntimeInstance.Backend.is_eggroll():
+        RuntimeInstance.FEDERATION = \
+            FederationBuilder.build_eggroll_backend(job_id=job_id,
+                                                    runtime_conf=runtime_conf,
+                                                    work_mode=RuntimeInstance.MODE,
+                                                    server_conf_path=server_conf_path)
 
-        if RuntimeInstance.Backend.is_eggroll():
-            from arch.api.table.eggroll.standalone.federation import FederationRuntime
-            RuntimeInstance.FEDERATION = FederationRuntime(
-                job_id=job_id, runtime_conf=runtime_conf)
-
-        elif RuntimeInstance.Backend.is_spark():
-            from arch.api.table.pyspark.standalone.federation import FederationRuntime
-            RuntimeInstance.FEDERATION = FederationRuntime(
-                job_id=job_id, runtime_conf=runtime_conf)
-
-    elif RuntimeInstance.MODE.is_cluster():
-
-        if RuntimeInstance.Backend.is_eggroll():
-            from arch.api.table.eggroll.cluster.federation import FederationRuntime
-            RuntimeInstance.FEDERATION = FederationRuntime(
-                job_id=job_id,
-                runtime_conf=runtime_conf,
-                server_conf_path=server_conf_path)
-
-        elif RuntimeInstance.Backend.is_spark():
-            from arch.api.table.pyspark.cluster.federation import FederationRuntime
-            RuntimeInstance.FEDERATION = FederationRuntime(
-                job_id=job_id,
-                runtime_conf=runtime_conf,
-                server_conf_path=server_conf_path)
+    elif RuntimeInstance.Backend.is_spark():
+        RuntimeInstance.FEDERATION = \
+            FederationBuilder.build_spark_backend(job_id=job_id,
+                                                  runtime_conf=runtime_conf,
+                                                  work_mode=RuntimeInstance.MODE,
+                                                  server_conf_path=server_conf_path)
 
 
 @log_elapsed

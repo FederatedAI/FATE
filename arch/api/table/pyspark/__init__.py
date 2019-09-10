@@ -21,7 +21,7 @@ from pyspark.storagelevel import StorageLevel
 STORAGE_LEVEL = StorageLevel.MEMORY_AND_DISK
 
 _RDD_ATTR_NAME = "_rdd"
-_EGGROLL_CLIENT = "_eggroll_client"
+
 
 
 def materialize(rdd: RDD):

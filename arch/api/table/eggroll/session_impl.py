@@ -16,19 +16,20 @@
 
 from typing import Iterable
 
-from eggroll.api.standalone.eggroll import Standalone
-from arch.api.table.eggroll.wrapped_dtable import DTable
-from arch.api.table.table_manager import TableManager as TableManger
+from arch.api.table import eggroll_util
+# noinspection PyProtectedMember
+from arch.api.table.eggroll.table_impl import DTable
+from arch.api.table.session import FateSession as TableManger
 
 
 # noinspection PyProtectedMember
-class DTableManager(TableManger):
+class FateSessionImpl(TableManger):
     """
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session):
-        self._eggroll = Standalone(eggroll_session=eggroll_session)
+    def __init__(self, eggroll_session, work_mode):
+        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
         self.job_id = eggroll_session.get_session_id()
         TableManger.set_instance(self)
 
@@ -39,15 +40,10 @@ class DTableManager(TableManger):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist
-              ):
-        dtable = self._eggroll.table(name=name,
-                                     namespace=namespace,
-                                     partition=partition,
-                                     persistent=persistent,
-                                     in_place_computing=in_place_computing,
-                                     create_if_missing=create_if_missing,
-                                     error_if_exist=error_if_exist)
+              error_if_exist):
+        dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
+                                     persistent=persistent, in_place_computing=in_place_computing,
+                                     create_if_missing=create_if_missing, error_if_exist=error_if_exist)
         return DTable(dtable=dtable, job_id=self.job_id)
 
     def parallelize(self,

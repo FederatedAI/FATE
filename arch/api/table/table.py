@@ -33,6 +33,10 @@ class Table(object):
         pass
 
     @abc.abstractmethod
+    def dtable(self):
+        pass
+
+    @abc.abstractmethod
     def save_as(self, name, namespace, partition=None, use_serialize=True):
         pass
 
@@ -154,12 +158,12 @@ class Table(object):
     """
 
     def get_meta(self, key):
-        from arch.api.table.table_manager import TableManager
-        return TableManager.get_data_table_meta(key,
-                                                data_table_name=self.get_name(),
-                                                data_table_namespace=self.get_namespace())
+        from arch.api.table.session import FateSession
+        return FateSession.get_data_table_meta(key,
+                                               data_table_name=self.get_name(),
+                                               data_table_namespace=self.get_namespace())
 
     def get_metas(self):
-        from arch.api.table.table_manager import TableManager
-        return TableManager.get_data_table_metas(data_table_name=self.get_name(),
-                                                 data_table_namespace=self.get_namespace())
+        from arch.api.table.session import FateSession
+        return FateSession.get_data_table_metas(data_table_name=self.get_name(),
+                                                data_table_namespace=self.get_namespace())

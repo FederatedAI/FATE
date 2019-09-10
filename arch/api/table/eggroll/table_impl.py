@@ -39,6 +39,9 @@ class DTable(Table):
     def get_namespace(self):
         return self._namespace
 
+    def dtable(self):
+        return self._dtable
+
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
         return self._dtable.save_as(name=name, namespace=namespace, partition=partition, use_serialize=use_serialize)

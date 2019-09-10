@@ -15,32 +15,19 @@
 #
 
 
-import pickle
 import uuid
 
 from pyspark import RDD
-from pyspark.taskcontext import TaskContext
 from pyspark.util import fail_on_stopiteration
-
-from arch.api.table.pyspark import _EGGROLL_CLIENT
-
-
-# noinspection PyProtectedMember
-def _get_or_create_eggroll_client():
-    # noinspection PyProtectedMember
-    from eggroll.api.standalone.eggroll import Standalone
-    if not Standalone._Standalone__instance:
-        standalone = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
-        Standalone._Standalone__instance = standalone
-    return Standalone._Standalone__instance
+from arch.api.table import eggroll_util
 
 
 def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
-    from arch.api import eggroll
-    dup = eggroll.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+    from arch.api import table_manager
+    dup = table_manager.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
 
     def _func(_, it):
-        _get_or_create_eggroll_client()
+        eggroll_util.maybe_create_eggroll_client()
         dup.put_all(it)
         return 1,
 
@@ -53,7 +40,6 @@ def _map(rdd: RDD, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        _get_or_create_eggroll_client()
         return map(fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
@@ -64,7 +50,6 @@ def _map_value(rdd: RDD, func):
         return x[0], func(x[1])
 
     def _func(_, iterator):
-        _get_or_create_eggroll_client()
         return map(fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
@@ -72,7 +57,6 @@ def _map_value(rdd: RDD, func):
 
 def _map_partitions(rdd: RDD, func):
     def _func(_, iterator):
-        _get_or_create_eggroll_client()
         return [(str(uuid.uuid1()), func(iterator))]
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
@@ -88,7 +72,6 @@ def _join(rdd: RDD, other: RDD, func=None):
 
 def _glom(rdd: RDD):
     def _func(_, iterator):
-        _get_or_create_eggroll_client()
         yield list(iterator)
 
     return rdd.mapPartitionsWithIndex(_func)
@@ -101,7 +84,6 @@ def _sample(rdd: RDD, fraction: float, seed: int):
     _sample_func = RDDSampler(False, fraction, seed).func
 
     def _func(split, iterator):
-        _get_or_create_eggroll_client()
         return _sample_func(split, iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
@@ -112,7 +94,6 @@ def _filter(rdd: RDD, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        _get_or_create_eggroll_client()
         return filter(fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)

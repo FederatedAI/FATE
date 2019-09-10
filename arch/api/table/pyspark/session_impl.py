@@ -16,23 +16,36 @@
 
 from typing import Iterable
 
-# noinspection PyProtectedMember
-from eggroll.api.cluster.eggroll import init, _EggRoll
-from arch.api.table.eggroll.wrapped_dtable import DTable
-from arch.api.table.table_manager import TableManager as TableManger
+from arch.api import WorkMode
+from arch.api.table import eggroll_util
+from arch.api.table.pyspark import materialize
+from arch.api.table.pyspark.table_impl import RDDTable
+from arch.api.table.session import FateSession
 
 
 # noinspection PyProtectedMember
-class DTableManager(TableManger):
+class FateSessionImpl(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session, server_conf_path="eggroll/conf/server_conf.json"):
-        init(server_conf_path=server_conf_path, eggroll_session=eggroll_session)
-        self._eggroll: _EggRoll = _EggRoll.instance
+    def __init__(self, eggroll_session, work_mode: WorkMode):
         self.job_id = eggroll_session.get_session_id()
-        TableManger.set_instance(self)
+        self._eggroll_session = eggroll_session
+        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
+
+        self._sc = self._build_spark_context(job_id=self.job_id)
+        eggroll_util.broadcast_eggroll_session(self._sc, work_mode, eggroll_session)
+
+        FateSession.set_instance(self)
+
+    @staticmethod
+    def _build_spark_context(job_id):
+        # init PySpark
+        from pyspark import SparkContext, SparkConf
+        conf = SparkConf().setAppName(f"FATE-PySpark-{job_id}")
+        sc = SparkContext.getOrCreate(conf=conf)
+        return sc
 
     def table(self,
               name,
@@ -45,39 +58,28 @@ class DTableManager(TableManger):
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist)
-        return DTable(dtable=dtable, job_id=self.job_id)
+        return RDDTable.from_dtable(job_id=self.job_id, dtable=dtable)
 
     def parallelize(self,
                     data: Iterable,
-                    include_key,
                     name,
-                    partition,
                     namespace,
+                    partition,
+                    include_key,
                     persistent,
                     chunk_size,
                     in_place_computing,
                     create_if_missing,
                     error_if_exist):
-        dtable = self._eggroll.parallelize(data=data,
-                                           include_key=include_key,
-                                           name=name,
-                                           partition=partition,
-                                           namespace=namespace,
-                                           persistent=persistent,
-                                           chunk_size=chunk_size,
-                                           in_place_computing=in_place_computing,
-                                           create_if_missing=create_if_missing,
-                                           error_if_exist=error_if_exist)
-
-        rdd_inst = DTable(dtable, job_id=self.job_id)
-
-        return rdd_inst
+        _iter = data if include_key else enumerate(data)
+        rdd = self._sc.parallelize(_iter, partition)
+        rdd = materialize(rdd)
+        if namespace is None:
+            namespace = self.job_id
+        return RDDTable.from_rdd(rdd=rdd, job_id=self.job_id, namespace=namespace, name=name)
 
     def cleanup(self, name, namespace, persistent):
-        self._eggroll.cleanup(name=name, namespace=namespace, persistent=persistent)
+        return self._eggroll.cleanup(name=name, namespace=namespace, persistent=persistent)
 
     def generateUniqueId(self):
-        self._eggroll.generateUniqueId()
-
-    def get_job_id(self):
-        return self.job_id
+        return self._eggroll.generateUniqueId()

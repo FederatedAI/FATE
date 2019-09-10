@@ -15,62 +15,42 @@
 #
 
 import os
+import typing
 import uuid
+import warnings
 from typing import Iterable
 
 from arch.api import RuntimeInstance
-from arch.api import WorkMode, NamingPolicy, Backend
-from arch.api.core import EggRollContext
+from arch.api import WorkMode, Backend
 from arch.api.table.table import Table
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.profile_util import log_elapsed
-import typing
+
+warnings.warn("eggroll is deprecated, use table_manager instead", DeprecationWarning, stacklevel=2)
 
 
 # noinspection PyProtectedMember
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
-         naming_policy: NamingPolicy = NamingPolicy.DEFAULT,
          backend: typing.Union[int, Backend] = Backend.EGGROLL):
-
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):
         backend = Backend(backend)
-    if RuntimeInstance.TABLE_MANAGER:
+    if RuntimeInstance.SESSION:
         return
     if job_id is None:
         job_id = str(uuid.uuid1())
         LoggerFactory.set_directory()
     else:
         LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
-        
+
     RuntimeInstance.MODE = mode
     RuntimeInstance.Backend = backend
-    eggroll_context = EggRollContext(naming_policy=naming_policy)
 
-    if backend.is_eggroll():
-        if mode.is_standalone():
-            from arch.api.table.eggroll.standalone.table_manager import DTableManager
-            RuntimeInstance.TABLE_MANAGER = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
-        elif mode.is_cluster():
-            from arch.api.table.eggroll.cluster.table_manager import DTableManager
-            RuntimeInstance.TABLE_MANAGER = DTableManager(job_id=job_id, eggroll_context=eggroll_context)
-        else:
-            raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")
-
-    elif backend.is_spark():
-        if mode.is_standalone():
-            from arch.api.table.pyspark.standalone.table_manager import RDDTableManager
-            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
-            RuntimeInstance.TABLE_MANAGER = rdd_manager
-        elif mode.is_cluster():
-            from arch.api.table.pyspark.cluster.table_manager import RDDTableManager
-            rdd_manager = RDDTableManager(job_id=job_id, eggroll_context=eggroll_context)
-            RuntimeInstance.TABLE_MANAGER = rdd_manager
-        else:
-            raise NotImplemented(f"Backend {backend} with WorkMode {mode} is not supported")
+    from arch.api.table.session import build_session
+    build_session(job_id=job_id, work_mode=mode, backend=backend)
 
     table("__federation__", job_id, partition=10)
 
@@ -78,38 +58,38 @@ def init(job_id=None,
 @log_elapsed
 def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
           in_place_computing=False) -> Table:
-    return RuntimeInstance.TABLE_MANAGER.table(name=name,
-                                               namespace=namespace,
-                                               partition=partition,
-                                               persistent=persistent,
-                                               in_place_computing=in_place_computing,
-                                               create_if_missing=create_if_missing,
-                                               error_if_exist=error_if_exist)
+    return RuntimeInstance.SESSION.table(name=name,
+                                         namespace=namespace,
+                                         partition=partition,
+                                         persistent=persistent,
+                                         in_place_computing=in_place_computing,
+                                         create_if_missing=create_if_missing,
+                                         error_if_exist=error_if_exist)
 
 
 @log_elapsed
 def parallelize(data: Iterable, include_key=False, name=None, partition=1, namespace=None, persistent=False,
                 create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False) -> Table:
-    return RuntimeInstance.TABLE_MANAGER.parallelize(data=data, include_key=include_key, name=name, partition=partition,
-                                                     namespace=namespace,
-                                                     persistent=persistent,
-                                                     chunk_size=chunk_size,
-                                                     in_place_computing=in_place_computing,
-                                                     create_if_missing=create_if_missing,
-                                                     error_if_exist=error_if_exist)
+    return RuntimeInstance.SESSION.parallelize(data=data, include_key=include_key, name=name, partition=partition,
+                                               namespace=namespace,
+                                               persistent=persistent,
+                                               chunk_size=chunk_size,
+                                               in_place_computing=in_place_computing,
+                                               create_if_missing=create_if_missing,
+                                               error_if_exist=error_if_exist)
 
 
 def cleanup(name, namespace, persistent=False):
-    return RuntimeInstance.TABLE_MANAGER.cleanup(name=name, namespace=namespace, persistent=persistent)
+    return RuntimeInstance.SESSION.cleanup(name=name, namespace=namespace, persistent=persistent)
 
 
 # noinspection PyPep8Naming
 def generateUniqueId():
-    return RuntimeInstance.TABLE_MANAGER.generateUniqueId()
+    return RuntimeInstance.SESSION.generateUniqueId()
 
 
 def get_job_id():
-    return RuntimeInstance.TABLE_MANAGER.job_id
+    return RuntimeInstance.SESSION.job_id
 
 
 def get_data_table(name, namespace):
@@ -120,7 +100,7 @@ def get_data_table(name, namespace):
     :return:
         data table instance
     """
-    return RuntimeInstance.TABLE_MANAGER.get_data_table(name=name, namespace=namespace)
+    return RuntimeInstance.SESSION.get_data_table(name=name, namespace=namespace)
 
 
 def save_data_table_meta(kv, data_table_name, data_table_namespace):
@@ -131,9 +111,9 @@ def save_data_table_meta(kv, data_table_name, data_table_namespace):
     :param data_table_namespace: table name of this data table
     :return:
     """
-    return RuntimeInstance.TABLE_MANAGER.save_data_table_meta(kv=kv,
-                                                              data_table_name=data_table_name,
-                                                              data_table_namespace=data_table_namespace)
+    return RuntimeInstance.SESSION.save_data_table_meta(kv=kv,
+                                                        data_table_name=data_table_name,
+                                                        data_table_namespace=data_table_namespace)
 
 
 def get_data_table_meta(key, data_table_name, data_table_namespace):
@@ -144,9 +124,9 @@ def get_data_table_meta(key, data_table_name, data_table_namespace):
     :param data_table_namespace: table name of this data table
     :return:
     """
-    return RuntimeInstance.TABLE_MANAGER.get_data_table_meta(key=key,
-                                                             data_table_name=data_table_name,
-                                                             data_table_namespace=data_table_namespace)
+    return RuntimeInstance.SESSION.get_data_table_meta(key=key,
+                                                       data_table_name=data_table_name,
+                                                       data_table_namespace=data_table_namespace)
 
 
 def get_data_table_metas(data_table_name, data_table_namespace):
@@ -156,12 +136,12 @@ def get_data_table_metas(data_table_name, data_table_namespace):
     :param data_table_namespace: table name of this data table
     :return:
     """
-    return RuntimeInstance.TABLE_MANAGER.get_data_table_metas(data_table_name=data_table_name,
-                                                              data_table_namespace=data_table_namespace)
+    return RuntimeInstance.SESSION.get_data_table_metas(data_table_name=data_table_name,
+                                                        data_table_namespace=data_table_namespace)
 
 
 def clean_tables(namespace, regex_string='*'):
-    RuntimeInstance.TABLE_MANAGER.clean_table(namespace=namespace, regex_string=regex_string)
+    RuntimeInstance.SESSION.clean_table(namespace=namespace, regex_string=regex_string)
 
 
 def save_data(kv_data: Iterable,
@@ -187,12 +167,12 @@ def save_data(kv_data: Iterable,
     :return:
         data table instance
     """
-    return RuntimeInstance.TABLE_MANAGER.save_data(kv_data=kv_data,
-                                                   name=name,
-                                                   namespace=namespace,
-                                                   partition=partition,
-                                                   persistent=persistent,
-                                                   create_if_missing=create_if_missing,
-                                                   error_if_exist=error_if_exist,
-                                                   in_version=in_version,
-                                                   version_log=version_log)
+    return RuntimeInstance.SESSION.save_data(kv_data=kv_data,
+                                             name=name,
+                                             namespace=namespace,
+                                             partition=partition,
+                                             persistent=persistent,
+                                             create_if_missing=create_if_missing,
+                                             error_if_exist=error_if_exist,
+                                             in_version=in_version,
+                                             version_log=version_log)

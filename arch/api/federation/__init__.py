@@ -13,17 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-
-def _to_serializable(obj):
-    """
-    make obj with type :class:`arch.api.standalone.eggroll.Standalone`serializable by
-    implementing slot `__getstate__`, in which attribute `pool` is intercepted.
-    :param obj: obj of :class:`arch.api.standalone.eggroll.Standalone`
-    :return: same obj as that passed in, with a special implement of `__getstate__`
-    """
-    _dict = dict(obj.__dict__)
-    if "pool" in _dict:
-        del _dict["pool"]
-    obj.__getstate__ = lambda: _dict
-    return obj
+from .federation import FederationBuilder
+__all__ = ["FederationBuilder"]
