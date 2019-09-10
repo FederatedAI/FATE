@@ -106,6 +106,7 @@ class DSLParser(object):
         self.pipeline_modules = {}
         self.pipeline_module_alias = None
         self.setting_conf_prefix = None
+        self.graph_dependency = None
 
     def _init_components(self, pipeline_dsl=None, mode="train"):
         components = self.dsl.get("components")
@@ -397,7 +398,7 @@ class DSLParser(object):
 
         raise ValueError("No end data of pipeline dsl, check it plz")
 
-    def get_dependency(self):
+    def prepare_graph_dependency_info(self):
         dependence_dict = {}
         component_module = {}
         for component in self.components:
@@ -435,8 +436,9 @@ class DSLParser(object):
         else:
             runtime_conf = self.pipeline_runtime_conf
 
-        dependency = {}
+        self.graph_dependency = {}
         for role in runtime_conf["role"]:
+            self.graph_dependency[role] = {}
             dependency_list = [copy.deepcopy(base_dependency) for i in range(len(runtime_conf["role"].get(role)))]
 
             for component in self.components:
@@ -457,9 +459,18 @@ class DSLParser(object):
                         else:
                             dependency_list[i]["component_need_run"][name] = True
 
-            dependency[role] = dependency_list
+            for i in range(len(runtime_conf["role"].get(role))):
+                party_id = runtime_conf["role"].get(role)[i]
+                self.graph_dependency[role][party_id] = dependency_list[i]
 
-        return dependency
+    def get_dependency(self, role, party_id):
+        if role not in self.graph_dependency:
+            raise ValueError("role {} is unknown, can not extract component dependency".format(role))
+
+        if party_id not in self.graph_dependency[role]:
+            raise ValueError("party id {} is unknown, can not extract component dependency".format(party_id))
+
+        return self.graph_dependency[role][party_id]
 
     def _auto_deduction(self, setting_conf_prefix):
         self.predict_dsl = {"components": {}}
@@ -611,6 +622,8 @@ class DSLParser(object):
         if mode == "train":
             # if pipeline_runtime_conf is None and pipeline_dsl is None:
             self._auto_deduction(setting_conf_prefix)
+
+        self.prepare_graph_dependency_info()
 
         return self.components
 
