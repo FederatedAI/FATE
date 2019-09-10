@@ -34,17 +34,15 @@ class FateSessionImpl(FateSession):
         self._eggroll_session = eggroll_session
         self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
 
-        self._sc = self._build_spark_context(job_id=self.job_id)
+        self._sc = self._build_spark_context()
         eggroll_util.broadcast_eggroll_session(self._sc, work_mode, eggroll_session)
 
         FateSession.set_instance(self)
 
     @staticmethod
-    def _build_spark_context(job_id):
-        # init PySpark
-        from pyspark import SparkContext, SparkConf
-        conf = SparkConf().setAppName(f"FATE-PySpark-{job_id}")
-        sc = SparkContext.getOrCreate(conf=conf)
+    def _build_spark_context():
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
         return sc
 
     def table(self,

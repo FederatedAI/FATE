@@ -274,7 +274,7 @@ class TaskScheduler(object):
                 spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
                 process_cmd = [
                     spark_submit_cmd,
-                    f'--name={component_name}',
+                    f'--name={task_id}#{role}',
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
