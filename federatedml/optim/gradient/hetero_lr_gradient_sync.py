@@ -38,6 +38,9 @@ class Guest(gradient_sync.Guest, HeteroLogisticGradientComputer):
         host_forward = self.host_forward_dict_transfer.get(idx=-1, suffix=suffix)
         return host_forward
 
+    def remote_fore_gradient(self, fore_gradient, suffix=tuple()):
+        self.fore_gradient_transfer.remote(object=fore_gradient, role=consts.HOST, idx=-1, suffix=suffix)
+
     def update_gradient(self, unilateral_gradient, suffix=tuple()):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
         optimized_gradient = self.unilateral_optim_gradient_transfer.get(idx=0, suffix=suffix)
@@ -81,6 +84,9 @@ class Host(gradient_sync.Host, HeteroLogisticGradientComputer):
     def remote_host_forward(self, host_forward, suffix=tuple()):
         self.host_forward_dict_transfer.remote(object=host_forward, role=consts.GUEST, idx=0, suffix=suffix)
 
+    def get_fore_gradient(self, suffix=tuple()):
+        host_forward = self.fore_gradient_transfer.get(idx=0, suffix=suffix)
+        return host_forward
 
     def update_gradient(self, unilateral_gradient, suffix=tuple()):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
