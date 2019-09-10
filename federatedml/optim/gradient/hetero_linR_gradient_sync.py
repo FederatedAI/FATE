@@ -22,19 +22,19 @@ from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import gradient_sync
 from federatedml.optim.gradient.linear_gradient import HeteroLinearGradientComputer
 from federatedml.util import consts
+from operator import add
 
 LOGGER = log_utils.getLogger()
 
-# @TODO: update sync
 class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
-    def _register_gradient_sync(self, host_forward_wx_transfer, residual_transfer,
+    def _register_gradient_sync(self, host_forward_wx_transfer, fore_gradient_transfer,
                                 guest_gradient_transfer, optim_guest_gradient_transfer):
         self.host_forward_wx_transfer = host_forward_wx_transfer
-        self.residual_transfer = residual_transfer
+        self.fore_gradient_transfer = fore_gradient_transfer
         self.guest_gradient_transfer = guest_gradient_transfer
         self.optim_guest_gradient_transfer = optim_guest_gradient_transfer
 
-    def compute_intermediate(self, data_instances, lr_variables, compute_wx, encrypted_calculator, batch_index):
+    def compute_intermediate(self, data_instances, linR_variables, compute_wx, encrypted_calculator, batch_index):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -42,7 +42,7 @@ class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_variables: LogisticRegressionVariables
+        linR_variables: LogisticRegressionVariables
             Stores coef_ and intercept_ of lr
 
         compute_wx: Function Type, a compute_wx func
@@ -52,72 +52,47 @@ class Guest(gradient_sync.Guest, HeteroLinearGradientComputer):
         batch_index: int, use to obtain current encrypted_calculator
 
         """
-        wx = compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
+        wx = compute_wx(data_instances, linR_variables.coef_, linR_variables.intercept_)
         wxy = wx.join(data_instances, lambda wx, d: wx - d.label)
         return wx, wxy
 
-    def aggregate_host_result(self, host_forward, guest_forward):
-        """
-        Compute (en_wx_g + en_wx_h)^2 = en_wx_g^2 + en_wx_h^2 + 2 * wx_g * en_wx_h ,
-         where en_wx_g is the encrypted W * X + b of guest, wx_g is unencrypted W * X + b,
-        and en_wx_h is the encrypted W * X + b of host.
-        Parameters
-        ----------
-        host_forward: DTable, include encrypted W * X and (W * X)^2
-
-        guest_forward: DTable, include encrypted W * X + b, (W * X + b)^2 and unencrypted wx
-
-
-        Returns
-        ----------
-        aggregate_forward_res
-        list
-            include W * X and (W * X)^2 federate with guest and host
-        """
-        aggregate_forward_res = guest_forward.join(host_forward_loss,
-                                                   lambda g, h: (g[0] + h[0], g[1] + h[1] + 2 * g[2] * h[0]))
-
-        en_aggregate_wx = aggregate_forward_res.mapValues(lambda v: v[0])
-        en_aggregate_wx_square = aggregate_forward_res.mapValues(lambda v: v[1])
-
-        # self.rubbish_bin.append(aggregate_forward_res)
-        return en_aggregate_wx, en_aggregate_wx_square
-
-    def compute_gradient_procedure(self, data_instances, lr_variables,
+    def compute_gradient_procedure(self, data_instances, linR_variables,
                                    compute_wx, encrypted_calculator,
                                    n_iter_, batch_index):
         current_suffix = (n_iter_, batch_index)
 
-        guest_wx, guest_wxy = self.compute_intermediate(data_instances, lr_variables,
+        guest_wx, guest_wxy = self.compute_intermediate(data_instances, linR_variables,
                                                   compute_wx, encrypted_calculator, batch_index)
         host_forward_wx = self.host_forward_wx_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get host_forward from host")
 
-        residual = self.compute_residual(data_instances, guest_wx, host_forward_wx)
-        self.residual_transfer.remote(residual, role=consts.HOST, idx=0, suffix=current_suffix)
+        fore_gradient = self.compute_fore_gradient(data_instances, guest_wx, host_forward_wx)
+        self.fore_gradient_transfer.remote(fore_gradient, role=consts.HOST, idx=0, suffix=current_suffix)
         LOGGER.info("Remote fore_gradient to Host")
 
-        guest_gradient = self.compute_gradient(data_instances, residual,
-                                               lr_variables.fit_intercept)
+        guest_gradient = self.compute_gradient(data_instances, fore_gradient,
+                                               linR_variables.fit_intercept)
+        gh_loss = (host_forward_wx.join(guest_wx, lambda h, g: 2*h*g).reduce(add)) / guest_wx.count()
         guest_loss = self.compute_loss(data_instances, guest_wx, consts.GUEST)
+        loss = guest_loss  + gh_loss
 
         self.guest_gradient_transfer.remote(guest_gradient, role=consts.ARBITER, idx=0, suffix=current_suffix)
         LOGGER.info("Remote guest_gradient to arbiter")
 
         optim_guest_gradient = self.optim_guest_gradient_transfer.get(idx=0, suffix=current_suffix)
         LOGGER.info("Get optim_guest_gradient from arbiter")
-        return optim_guest_gradient, guest_loss, residual
+        return optim_guest_gradient, loss
 
 
 class Host(gradient_sync.Host, HeteroLinearGradientComputer):
-    def _register_gradient_sync(self, host_forward_wx_transfer, residual_transfer,
+    def _register_gradient_sync(self, host_forward_wx_transfer, fore_gradient_transfer,
                                 host_gradient_transfer, optim_host_gradient_transfer):
         self.host_forward_wx_transfer = host_forward_wx_transfer
-        self.residual_transfer = residual_transfer
+        self.fore_gradient_transfer = fore_gradient_transfer
         self.host_gradient_transfer = host_gradient_transfer
         self.optim_host_gradient_transfer = optim_host_gradient_transfer
 
-    def compute_intermediate(self, data_instances, lr_variables, compute_wx, encrypted_calculator, batch_index):
+    def compute_intermediate(self, data_instances, linR_variables, compute_wx, encrypted_calculator, batch_index):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -125,7 +100,7 @@ class Host(gradient_sync.Host, HeteroLinearGradientComputer):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_variables: LogisticRegressionVariables
+        linR_variables: LogisticRegressionVariables
             Stores coef_ and intercept_ of lr
 
         compute_wx: Function Type, a compute_wx func
@@ -135,17 +110,15 @@ class Host(gradient_sync.Host, HeteroLinearGradientComputer):
         batch_index: int, use to obtain current encrypted_calculator
 
         """
-        wx = compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
-
-
+        wx = compute_wx(data_instances, linR_variables.coef_, linR_variables.intercept_)
         return wx
 
-    def compute_gradient_procedure(self, data_instances, lr_variables,
+    def compute_gradient_procedure(self, data_instances, linR_variables,
                                    compute_wx, encrypted_calculator,
                                    n_iter_, batch_index):
         current_suffix = (n_iter_, batch_index)
 
-        host_wx = self.compute_intermediate(data_instances, lr_variables, compute_wx,
+        host_wx = self.compute_intermediate(data_instances, linR_variables, compute_wx,
                                                  encrypted_calculator, batch_index)
 
         host_forward = encrypted_calculator[batch_index].encrypt(host_wx)
@@ -155,11 +128,11 @@ class Host(gradient_sync.Host, HeteroLinearGradientComputer):
 
         loss = self.compute_loss(data_instances, host_forward, consts.HOST)
 
-        residual = self.residual_transfer.get(idx=0, suffix=current_suffix)
-        LOGGER.info("Get residual from guest")
+        fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
+        LOGGER.info("Get fore_gradient from guest")
 
         host_gradient = self.compute_gradient(data_instances,
-                                              residual,
+                                              fore_gradient,
                                               fit_intercept=False)
 
         self.host_gradient_transfer.remote(host_gradient, role=consts.ARBITER, idx=0, suffix=current_suffix)

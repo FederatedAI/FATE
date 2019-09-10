@@ -52,22 +52,9 @@ class HeteroLinRHost(HeteroLinRBase):
         intercept_: float, the interception of lr
         """
         wx = self.compute_wx(data_instances, coef_, intercept_)
-
         en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
 
-        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [wx,
-                        en_wx,
-                        wx_square,
-                        en_wx_square
-                        ]
-        rubbish_clear(rubbish_list)
-
-        return host_forward
+        return en_wx
 
     def fit(self, data_instances):
         """
@@ -104,11 +91,11 @@ class HeteroLinRHost(HeteroLinRBase):
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                optim_host_gradient, host_loss = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst, self.linR_variables, self.compute_wx,
                     self.encrypted_calculator, self.n_iter_, batch_index)
 
-                self.loss_computer.sync_loss_info(self.linR_variables, self.n_iter_, batch_index,
+                self.loss_computer.sync_loss_info(self.linR_variables, host_loss, self.n_iter_, batch_index,
                                                   self.cipher, self.optimizer)
 
                 self.linR_variables = self.optimizer.update_model(self.linR_variables, optim_host_gradient)

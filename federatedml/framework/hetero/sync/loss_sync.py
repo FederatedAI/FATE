@@ -51,10 +51,11 @@ class Host(object):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
 
-    def sync_loss_info(self, lr_variables, n_iter_, batch_index, cipher, optimizer):
+    def sync_loss_info(self, lr_variables, loss, n_iter_, batch_index, cipher, optimizer):
         current_suffix = (n_iter_, batch_index)
 
         loss_regular = optimizer.loss_norm(lr_variables.coef_)
         if loss_regular is not None:
-            en_loss_regular = cipher.encrypt(loss_regular)
-            self.host_loss_regular_transfer.remote(en_loss_regular, role=consts.GUEST, idx=0, suffix=current_suffix)
+            loss = loss + loss_regular
+        en_loss = cipher.encrypt(loss)
+        self.host_loss_regular_transfer.remote(en_loss, role=consts.GUEST, idx=0, suffix=current_suffix)

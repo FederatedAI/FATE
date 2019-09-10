@@ -18,7 +18,6 @@ from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
@@ -88,7 +87,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient, loss, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                optim_guest_gradient, loss = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,
                     self.linR_variables,
                     self.compute_wx,
