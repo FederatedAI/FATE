@@ -2,8 +2,9 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
 <https://www.fedai.org/>
 
@@ -85,12 +86,12 @@ We provided functions such as tracking component output models or logs etc. thro
 
 
 ## Doc
-## API doc
+### API doc
 FATE provides some API documents in [doc-api](./doc/api/), including federatedml, eggroll, federation.
-## Develop Guide doc
+### Develop Guide doc
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
-## Other doc
+### Other doc
 FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
-## License
+### License
 [Apache License 2.0](LICENSE)
 
