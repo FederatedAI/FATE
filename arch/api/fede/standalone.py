@@ -14,8 +14,8 @@
 #  limitations under the License.
 #
 
-from eggroll.api.standalone.eggroll import _DTable
-from eggroll.api.standalone.eggroll import Standalone
+from arch.api.standalone.eggroll import _DTable
+from arch.api.standalone.eggroll import Standalone
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import getLogger
 import asyncio
@@ -163,5 +163,5 @@ class FederationRuntime(object):
                 rtn.append(_object_table.get(r))
 
         if 0 <= idx < len(src_party_ids):
-            return rtn[0], idx
+            return rtn[0]
         return rtn,

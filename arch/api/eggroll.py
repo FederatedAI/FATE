@@ -50,7 +50,7 @@ def init(job_id=None,
     RuntimeInstance.Backend = backend
 
     from arch.api.table.session import build_session
-    build_session(job_id=job_id, work_mode=mode, backend=backend)
+    RuntimeInstance.SESSION = build_session(job_id=job_id, work_mode=mode, backend=backend)
 
     table("__federation__", job_id, partition=10)
 

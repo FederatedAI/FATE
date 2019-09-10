@@ -30,7 +30,7 @@ class FateSessionImpl(TableManger):
 
     def __init__(self, eggroll_session, work_mode):
         self._eggroll = eggroll_util.build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
-        self.job_id = eggroll_session.get_session_id()
+        self.job_id = ["job_id"]
         TableManger.set_instance(self)
 
     def table(self,

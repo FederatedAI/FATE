@@ -23,7 +23,6 @@ STORAGE_LEVEL = StorageLevel.MEMORY_AND_DISK
 _RDD_ATTR_NAME = "_rdd"
 
 
-
 def materialize(rdd: RDD):
     rdd.persist(STORAGE_LEVEL)
     rdd.mapPartitionsWithIndex(lambda ind, it: (1,)).collect()
@@ -46,4 +45,4 @@ class JobDesc(object):
         pyspark.SparkContext.getOrCreate().setLocalProperty("spark.job.description", "")
 
 
-__all__ = ["STORAGE_LEVEL", "materialize", "_RDD_ATTR_NAME", "_EGGROLL_CLIENT", "JobDesc"]
+__all__ = ["STORAGE_LEVEL", "materialize", "_RDD_ATTR_NAME", "JobDesc"]

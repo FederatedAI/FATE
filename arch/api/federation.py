@@ -15,7 +15,7 @@
 #
 
 from arch.api import RuntimeInstance
-from arch.api.federation import FederationBuilder
+from arch.api.fede import FederationBuilder
 from arch.api.utils.profile_util import log_elapsed
 
 
