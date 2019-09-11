@@ -243,14 +243,17 @@ class PadsCipher(Encrypt):
         self._uuid = uuid
 
     def set_exchanged_keys(self, keys):
+        self._seeds = {uid: v & 0xffffffff for uid, v in keys.items() if uid != self._uuid}
         self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
 
     def encrypt(self, value):
+        ret = value
         for uid, rand in self._rands.items():
             if uid > self._uuid:
-                return rand.add_rand_pads(value, 1.0)
+                ret = rand.add_rand_pads(ret, 1.0)
             else:
-                return rand.add_rand_pads(value, -1.0)
+                ret = rand.add_rand_pads(ret, -1.0)
+        return ret
 
     def decrypt(self, value):
         return value

@@ -21,7 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.param.ftl_param import FTLModelParam, LocalModelParam, FTLDataParam, FTLValidDataParam
 from federatedml.param.workflow_param import WorkFlowParam
 from federatedml.util.param_extract import ParamExtract
-from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 

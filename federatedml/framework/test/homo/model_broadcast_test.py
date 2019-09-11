@@ -54,8 +54,8 @@ class ModelBroadcastTest(TestSyncBase):
             else:
                 cipher_dict[i] = None
 
-        from federatedml.framework.weights import ListVariables
-        variables = ListVariables([random.random() for _ in range(10)])
+        from federatedml.framework.weights import ListWeights
+        variables = ListWeights([random.random() for _ in range(10)])
 
         arbiter, guest, *hosts = self.run_results(num_hosts, cipher_dict, variables)
         guest = guest.parameters

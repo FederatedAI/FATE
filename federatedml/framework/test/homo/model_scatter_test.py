@@ -17,7 +17,7 @@
 from federatedml.framework.homo.sync import model_scatter_sync
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
-from federatedml.framework.weights import ListVariables
+from federatedml.framework.weights import ListWeights
 import random
 
 
@@ -35,12 +35,12 @@ class ModelScatterTest(TestSyncBase):
             model = [random.random() for _ in range(random.randint(1, 10))]
             if cipher_dict[ind]:
                 model = cipher_dict[ind].encrypt_list(model)
-            model = ListVariables(model)
+            model = ListWeights(model)
             return model_scatter_sync.Host() \
                 ._register_model_scatter(transfer_variable.host_model)\
                 ._send_model(model)
         else:
-            model = ListVariables([random.random() for _ in range(random.randint(1, 10))])
+            model = ListWeights([random.random() for _ in range(random.randint(1, 10))])
             return model_scatter_sync.Guest() \
                 ._register_model_scatter(transfer_variable.guest_model)\
                 ._send_model(model)

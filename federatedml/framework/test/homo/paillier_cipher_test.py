@@ -14,52 +14,43 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.homo.sync import paillier_re_cipher_sync, paillier_keygen_sync
+from federatedml.framework.weights import ListWeights
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
+from federatedml.framework.homo.procedure import paillier_cipher
 
 
-class PaillierReCipherTest(TestSyncBase):
-
+class PaillierCipherTest(TestSyncBase):
     @classmethod
     def call(cls, role, transfer_variable, ind, *args):
-        iter_num = 4
-        re_encrypt_batches = 2
+        iter_num = 7
+        re_encrypt_batches = 3
         encrypt_rate = 0.3
         key_size = 1024
 
         if role == consts.ARBITER:
-            host_ciphers = paillier_keygen_sync.Arbiter() \
-                ._register_paillier_keygen(transfer_variable.use_encrypt,
-                                           transfer_variable.paillier_pubkey) \
-                .paillier_keygen(key_size)
-            re_cipher = paillier_re_cipher_sync.Arbiter() \
-                ._register_paillier_re_cipher(transfer_variable.re_encrypt_times,
-                                              transfer_variable.model_to_re_encrypt,
-                                              transfer_variable.model_re_encrypted)
-            re_cipher_time = re_cipher.set_re_cipher_time(host_ciphers_dict=host_ciphers)
-            re_cipher.re_cipher(iter_num, re_cipher_time, host_ciphers, re_encrypt_batches)
-            return re_cipher_time, host_ciphers
+            agg = paillier_cipher.Arbiter()
+            agg.register_paillier_cipher(transfer_variable)
+            cipher_dict = agg.paillier_keygen(key_size)
+            re_cipher_time = agg.set_re_cipher_time(cipher_dict)
+            agg.re_cipher(iter_num, re_cipher_time, cipher_dict, re_encrypt_batches)
+            return re_cipher_time, cipher_dict
+
         elif role == consts.HOST:
             import random
             enable = random.random() > encrypt_rate
-            host_cipher = paillier_keygen_sync.Host() \
-                ._register_paillier_keygen(transfer_variable.use_encrypt,
-                                           transfer_variable.paillier_pubkey) \
-                .gen_paillier_pubkey(enable=enable)
+            agg = paillier_cipher.Host()
+            agg.register_paillier_cipher(transfer_variable)
+            host_cipher = agg.gen_paillier_pubkey(enable)
             if enable:
-                re_cipher = paillier_re_cipher_sync.Host() \
-                    ._register_paillier_re_cipher(transfer_variable.re_encrypt_times,
-                                                  transfer_variable.model_to_re_encrypt,
-                                                  transfer_variable.model_re_encrypted)
                 re_cipher_time = random.randint(1, 5)
-                re_cipher.set_re_cipher_time(re_cipher_time)
-
+                agg.set_re_cipher_time(re_encrypt_times=re_cipher_time)
                 init_w = [random.random()]
                 w = [host_cipher.encrypt(v) for v in init_w]
                 for i in range(re_cipher_time):
-                    w = re_cipher.re_cipher(w, iter_num, (i+1) * re_encrypt_batches)
+                    w = agg.re_cipher(w, iter_num, (i + 1) * re_encrypt_batches)
                 return re_cipher_time, init_w, w
+
         else:
             pass
 

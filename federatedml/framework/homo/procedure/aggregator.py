@@ -20,7 +20,7 @@ from functools import reduce
 from arch.api.utils import log_utils
 from federatedml.framework.homo.sync import party_weights_sync, model_scatter_sync, \
     loss_transfer_sync, model_broadcast_sync, is_converge_sync
-from federatedml.framework.weights import Variables
+from federatedml.framework.weights import Weights
 
 LOGGER = log_utils.getLogger()
 
@@ -57,7 +57,7 @@ class Arbiter(party_weights_sync.Arbiter,
 
         self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
-    def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Variables:
+    def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Weights:
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
         num_clients = len(models)
         if not self._party_weights:
@@ -81,7 +81,7 @@ class Arbiter(party_weights_sync.Arbiter,
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
         return self._get_models(ciphers_dict=ciphers_dict, suffix=suffix)
 
-    def send_aggregated_model(self, model: Variables, ciphers_dict=None, suffix=tuple()):
+    def send_aggregated_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
         self._send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
@@ -128,14 +128,14 @@ class Guest(party_weights_sync.Guest,
 
         self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
-    def aggregate_and_get(self, model: Variables, suffix=tuple()):
+    def aggregate_and_get(self, model: Weights, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
 
     def get_aggregated_model(self, suffix=tuple()):
         return self._get_model(suffix=suffix)
 
-    def send_model_for_aggregate(self, weights: Variables, suffix=tuple()):
+    def send_model_for_aggregate(self, weights: Weights, suffix=tuple()):
         self._send_model(weights=weights, suffix=suffix)
 
 
@@ -167,11 +167,11 @@ class Host(party_weights_sync.Host,
 
         self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
 
-    def aggregate_and_get(self, model: Variables, suffix=tuple()):
+    def aggregate_and_get(self, model: Weights, suffix=tuple()):
         self.send_model_for_aggregate(weights=model, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
 
-    def send_model_for_aggregate(self, weights: Variables, suffix=tuple()):
+    def send_model_for_aggregate(self, weights: Weights, suffix=tuple()):
         self._send_model(weights=weights, suffix=suffix)
 
     def get_aggregated_model(self, suffix=tuple()):

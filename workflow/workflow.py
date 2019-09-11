@@ -30,7 +30,7 @@ import numpy as np
 from arch.api import eggroll
 from arch.api import federation
 from arch.api.model_manager import manager as model_manager
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
@@ -53,7 +53,7 @@ from federatedml.util import consts
 from federatedml.util import param_checker
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.param_checker import AllChecker
-from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.util.transfer import HeteroWorkFlowTransferVariable
 from workflow import status_tracer_decorator
 
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest

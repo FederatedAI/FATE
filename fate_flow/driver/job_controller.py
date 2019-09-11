@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads
 from fate_flow.db.db_models import Job

@@ -24,7 +24,7 @@ from federatedml.util.transfer_variable.homo_transfer_variable import HomoTransf
 class TestSyncBase(unittest.TestCase):
 
     @classmethod
-    def init(cls, job_id, role, num_hosts, host_ind=0):
+    def init_table_manager_and_federation(cls, job_id, role, num_hosts, host_ind=0):
         from arch.api import eggroll
         from arch.api import federation
 
@@ -48,13 +48,29 @@ class TestSyncBase(unittest.TestCase):
                             "role": role_id
                         })
 
+    def clean_tables(self):
+        from arch.api import eggroll
+        eggroll.init(job_id=self.job_id)
+        try:
+            eggroll.cleanup("*", self.job_id, True)
+        except EnvironmentError:
+            pass
+        try:
+            eggroll.cleanup("*", self.job_id, False)
+        except EnvironmentError:
+            pass
+
     def setUp(self) -> None:
         self.transfer_variable = HomoTransferVariable()
         self.job_id = str(uuid.uuid1())
+        self.transfer_variable.set_flowid(self.job_id)
+
+    def tearDown(self) -> None:
+        self.clean_tables()
 
     @classmethod
     def _call(cls, job_id, role, transfer_variable, num_hosts, ind, *args):
-        cls.init(job_id, role, num_hosts, ind)
+        cls.init_table_manager_and_federation(job_id, role, num_hosts, ind)
         return cls.call(role, transfer_variable, ind, *args)
 
     @classmethod
