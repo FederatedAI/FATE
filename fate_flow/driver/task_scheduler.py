@@ -374,7 +374,8 @@ class TaskScheduler(object):
                                              src_party_id=initiator_party_id,
                                              dest_party_id=party_id,
                                              json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
-                                                                          'role': initiator_job.f_role}, 'timeout': timeout},
+                                                                          'role': initiator_job.f_role},
+                                                        'timeout': timeout},
                                              work_mode=job_work_mode)
                     if response['retcode'] == 0:
                         schedule_logger.info(
@@ -390,4 +391,4 @@ class TaskScheduler(object):
     @staticmethod
     def job_handler(*args, **kwargs):
         job_id = args[0]
-        TaskScheduler.stop_job(job_id)
+        TaskScheduler.stop_job(job_id, timeout=True)
