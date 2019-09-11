@@ -19,6 +19,7 @@ import operator
 
 from arch.api.utils.splitable import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
+import numpy as np
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
@@ -122,6 +123,7 @@ class ListWeights(Weights):
     def axpy(self, a, y: 'ListWeights'):
         for k, v in enumerate(self._weights):
             self._weights[k] += a * y._weights[k]
+        return self
 
 
 class DictWeights(Weights):
@@ -154,3 +156,42 @@ class DictWeights(Weights):
     def axpy(self, a, y: 'DictWeights'):
         for k, v in self._weights.items():
             self._weights[k] += a * y._weights[k]
+        return self
+
+
+class NumpyWeights(Weights):
+    def __init__(self, arr):
+        super().__init__(arr)
+
+    def map_values(self, func, inplace):
+        if inplace:
+            size = self._weights.size
+            view = self._weights.view.reshape(size)
+            for i in range(size):
+                view[i] = func(view[i])
+            return self
+        else:
+            vec_func = np.vectorize(func)
+            weights = vec_func(self._weights)
+            return DictWeights(weights)
+
+    def binary_op(self, other: 'NumpyWeights', func, inplace):
+        if inplace:
+            size = self._weights.size
+            view = self._weights.view.reshape(size)
+            view_other = other._weights.view.reshpae(size)
+            for i in range(size):
+                view[i] = func(view[i], view_other[i])
+            return self
+        else:
+            vec_func = np.vectorize(func)
+            weights = vec_func(self._weights, other._weights)
+            return DictWeights(weights)
+
+    def axpy(self, a, y: 'NumpyWeights'):
+        size = self._weights.size
+        view = self._weights.view.reshape(size)
+        view_other = y._weights.view.reshpae(size)
+        for i in range(size):
+            view[i] += a * view_other[i]
+        return self
