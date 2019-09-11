@@ -22,9 +22,11 @@ from federatedml.secureprotol.encrypt import Encrypt
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
-    def __init__(self, weights, cls=None):
+    def __init__(self, weights, cls, *additional):
         self._weights = weights
         self._cls = cls
+        if additional:
+            self._additional = additional
 
     @property
     def unboxed(self):
@@ -32,7 +34,10 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
 
     @property
     def weights(self):
-        return self._cls(self._weights)
+        if not hasattr(self, "_additional"):
+            return self._cls(self._weights)
+        else:
+            return self._cls(self._weights, *self._additional)
 
 
 class Weights(object):
@@ -145,4 +150,3 @@ class DictWeights(Weights):
     def axpy(self, a, y: 'DictWeights'):
         for k, v in self._weights.items():
             self._weights[k] += a * y._weights[k]
-
