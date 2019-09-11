@@ -1,5 +1,5 @@
 {
-  "HeteroLinRTransferVariable": {
+  "HeteroPoissonTransferVariable": {
     "paillier_pubkey": {
       "src": "arbiter",
       "dst": [

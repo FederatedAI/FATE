@@ -17,7 +17,7 @@
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
+from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_gradient_procedure
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
@@ -25,27 +25,16 @@ from federatedml.util import consts
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLinRGuest(HeteroLinRBase):
+class HeteroPoissonGuest(HeteroPoissonBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
-        # self.guest_forward = None
         self.role = consts.GUEST
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
         self.gradient_procedure = hetero_gradient_procedure.Guest()
         self.loss_computer = loss_computer.Guest()
         self.converge_procedure = convergence.Guest()
-
-    @staticmethod
-    def load_data(data_instance):
-        """
-        return data_instance as original
-        Parameters
-        ----------
-        data_instance: DTable of Instance, input data
-        """
-        return data_instance
 
     def fit(self, data_instances):
         """
@@ -55,10 +44,12 @@ class HeteroLinRGuest(HeteroLinRBase):
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_linR_guest fit")
+        LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-        #data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
+
+        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -72,7 +63,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.linR_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.poisson_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -87,16 +79,16 @@ class HeteroLinRGuest(HeteroLinRBase):
                 # Start gradient procedure
                 optim_guest_gradient, loss = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.linR_variables,
-                    self.compute_wx,
+                    self.poisson_variables,
                     self.encrypted_calculator,
                     self.n_iter_,
-                    batch_index
+                    batch_index,
+                    exposure
                 )
 
-                self.loss_computer.sync_loss_info(self.linR_variables, loss, self.n_iter_, batch_index, self.optimizer)
+                self.loss_computer.sync_loss_info(self.poisson_variables, loss, self.n_iter_, batch_index, self.optimizer)
 
-                self.linR_variables = self.optimizer.update_model(self.linR_variables, optim_guest_gradient)
+                self.poisson_variables = self.optimizer.update_model(self.poisson_variables, optim_guest_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
@@ -120,8 +112,11 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         LOGGER.info("Start predict ...")
 
+        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+
         data_features = self.transform(data_instances)
-        pred_guest = self.compute_wx(data_features, self.linR_variables.coef_, self.linR_variables.intercept_)
+        pred_guest = self.compute_mu(data_features, self.poisson_variables.coef_, self.poisson_variables.intercept_, exposure)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")

@@ -30,7 +30,7 @@ class HeteroLinRTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
         self.paillier_pubkey = Variable(name="HeteroLinRTransferVariable.paillier_pubkey", auth={'src': "arbiter", 'dst': ['host', 'guest']})
         self.batch_data_index = Variable(name="HeteroLinRTransferVariable.batch_data_index", auth={'src': "guest", 'dst': ['host']})
-        self.host_forward_wx = Variable(name="HeteroLinRTransferVariable.host_forward_wx", auth={'src': "host", 'dst': ['guest']})
+        self.host_forward_wx = Variable(name="HeteroLinRTransferVariable.host_forward", auth={'src': "host", 'dst': ['guest']})
         self.host_loss = Variable(name="HeteroLinRTransferVariable.host_loss", auth={'src': "host", 'dst': ['guest']})
         self.fore_gradient = Variable(name="HeteroLinRTransferVariable.fore_gradient", auth={'src': "guest", 'dst': ['host']})
         self.guest_gradient = Variable(name="HeteroLinRTransferVariable.guest_gradient", auth={'src': "guest", 'dst': ['arbiter']})
