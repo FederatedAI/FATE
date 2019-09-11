@@ -54,9 +54,10 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         ----------
         data_instances: DTable of Instance, input data
 
-        wx: wx of each sample.
+        encrypted_calculator: Use for different encrypted methods
 
-        fit_intercept: whether fit intercept or not
+        lr_weights: LogisticRegressionWeights
+            Stores coef_ and intercept_ of lr
 
         n_iter_: int, current number of iter.
 
@@ -85,7 +86,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient, fore_gradient, host_forwards
 
-    def compute_loss(self, data_instances, n_iter_, batch_index, loss_regular=None):
+    def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
         """
         Compute hetero-lr loss for:
         loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
@@ -103,7 +104,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         loss_list = []
         wx_squares = self.get_host_wx_square(suffix=current_suffix)
 
-        if loss_regular is not None:
+        if loss_norm is not None:
             host_loss_regular = self.get_host_loss(suffix=current_suffix)
         else:
             host_loss_regular = []
@@ -112,8 +113,8 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
             wxg_wxh = self.half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
                                 (self_wx_square + wx_squares[host_idx] + 2 * wxg_wxh)
-            if loss_regular is not None:
-                loss += loss_regular
+            if loss_norm is not None:
+                loss += loss_norm
                 loss += host_loss_regular[host_idx]
             loss_list.append(loss)
         self.sync_loss_info(loss_list, suffix=current_suffix)
@@ -143,10 +144,12 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_weights: LogisticRegressionVariables
+        lr_weights: LogisticRegressionWeights
             Stores coef_ and intercept_ of lr
 
         encrypted_calculator: Use for different encrypted methods
+
+        optimizer: optimizer obj
 
         n_iter_: int, current iter nums
 

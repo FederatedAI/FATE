@@ -83,9 +83,9 @@ class HomoLRBase(BaseLogisticRegression):
 
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
-        lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
+        lr_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
                                                    data_instance=data_instances)
-        return lr_variables
+        return lr_weights
 
     def run(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)

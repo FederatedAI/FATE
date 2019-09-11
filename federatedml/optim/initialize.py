@@ -90,5 +90,5 @@ class Initializer(object):
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
 
         LOGGER.debug("Initialed model: {}".format(w))
-        lr_variables = LogisticRegressionWeights(w, init_params.fit_intercept)
-        return lr_variables
+        lr_weights = LogisticRegressionWeights(w, init_params.fit_intercept)
+        return lr_weights

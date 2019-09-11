@@ -49,7 +49,7 @@ class HomoLRGuest(HomoLRBase):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
 
-        self.lr_variables = self._init_model_variables(data_instances)
+        self.lr_weights = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
@@ -61,8 +61,8 @@ class HomoLRGuest(HomoLRBase):
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.lr_variables.coef_,
-                                      intercept=self.lr_variables.intercept_,
+                                      coef=self.lr_weights.coef_,
+                                      intercept=self.lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
@@ -71,8 +71,8 @@ class HomoLRGuest(HomoLRBase):
                     grad, loss, n, iter_loss))
                 grad /= n
                 loss /= n
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad, has_applied=False)
-                loss_norm = self.optimizer.loss_norm(self.lr_variables)
+                self.lr_weights = self.optimizer.update_model(self.lr_weights, grad, has_applied=False)
+                loss_norm = self.optimizer.loss_norm(self.lr_weights)
                 iter_loss += loss
                 if loss_norm is not None:
                     iter_loss += loss_norm
@@ -80,10 +80,10 @@ class HomoLRGuest(HomoLRBase):
             iter_loss /= batch_num
             self.callback_loss(self.n_iter_, iter_loss)
             self.loss_history.append(iter_loss)
-            self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
+            self.aggregator.send_model_for_aggregate(self.lr_weights, self.n_iter_)
             self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_variables = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
+            self.lr_weights = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
@@ -94,7 +94,7 @@ class HomoLRGuest(HomoLRBase):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
         predict_result = self.predict_procedure.start_predict(data_instances,
-                                                              self.lr_variables,
+                                                              self.lr_weights,
                                                               self.model_param.predict_param.threshold)
         return predict_result
 

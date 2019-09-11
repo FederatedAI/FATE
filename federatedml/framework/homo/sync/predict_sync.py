@@ -39,13 +39,13 @@ class Arbiter(object):
         self._final_model_variable = final_model_variable
         self._predict_result_variable = predict_result_variable
 
-    def start_predict(self, host_ciphers, lr_variables, predict_threshold, suffix=tuple()):
+    def start_predict(self, host_ciphers, lr_weights, predict_threshold, suffix=tuple()):
         # Send encrypted model to hosts.
         for idx, cipher in host_ciphers.items():
             if cipher is None:
                 continue
-            encrypted_lr_variables = lr_variables.encrypted(cipher, inplace=False)
-            self._final_model_variable.remote(obj=encrypted_lr_variables.for_remote(),
+            encrypted_lr_weights = lr_weights.encrypted(cipher, inplace=False)
+            self._final_model_variable.remote(obj=encrypted_lr_weights.for_remote(),
                                               role=consts.HOST,
                                               idx=idx,
                                               suffix=suffix)
@@ -75,13 +75,13 @@ class Host(object):
     def _register_func(self, compute_wx):
         self.compute_wx = compute_wx
 
-    def start_predict(self, data_instances, lr_variables, predict_threshold,
+    def start_predict(self, data_instances, lr_weights, predict_threshold,
                       use_encrypted, fit_intercept, suffix=tuple()):
         if use_encrypted:
             final_model = self._final_model_variable.get(idx=0, suffix=suffix)
-            lr_variables = LogisticRegressionWeights(final_model.parameters, fit_intercept)
+            lr_weights = LogisticRegressionWeights(final_model.parameters, fit_intercept)
 
-        wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
+        wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
         if use_encrypted:
             self._predict_wx_variable.remote(wx, consts.ARBITER, 0, suffix)
             predict_result = self._predict_result_variable.get(idx=0, suffix=suffix)
@@ -109,8 +109,8 @@ class Guest(object):
     def _register_func(self, compute_wx):
         self.compute_wx = compute_wx
 
-    def start_predict(self, data_instances, lr_variables, predict_threshold):
-        wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
+    def start_predict(self, data_instances, lr_weights, predict_threshold):
+        wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
         pred_prob, pred_label = classify(wx, predict_threshold)
 
         predict_result = data_instances.mapValues(lambda x: x.label)

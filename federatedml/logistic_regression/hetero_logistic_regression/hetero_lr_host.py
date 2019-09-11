@@ -95,7 +95,7 @@ class HeteroLRHost(HeteroLRBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.lr_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -106,14 +106,15 @@ class HeteroLRHost(HeteroLRBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
-                    batch_feat_inst, self.lr_variables, self.encrypted_calculator, self.n_iter_, batch_index)
+                    batch_feat_inst, self.lr_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
+                    batch_index)
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
+                self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
-                self.gradient_procedure.compute_loss(self.lr_variables, self.optimizer, self.n_iter_, batch_index)
+                self.gradient_procedure.compute_loss(self.lr_weights, self.optimizer, self.n_iter_, batch_index)
 
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
+                self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_host_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
@@ -138,6 +139,6 @@ class HeteroLRHost(HeteroLRBase):
 
         data_features = self.transform(data_instances)
 
-        prob_host = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        prob_host = self.compute_wx(data_features, self.lr_weights.coef_, self.lr_weights.intercept_)
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")

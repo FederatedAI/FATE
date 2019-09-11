@@ -64,7 +64,7 @@ class BaseLogisticRegression(ModelBase):
         self.need_one_vs_rest = False
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
-        self.lr_variables = None
+        self.lr_weights = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -152,24 +152,24 @@ class BaseLogisticRegression(ModelBase):
         for idx, header_name in enumerate(header):
             if self.need_one_vs_rest:
                 for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
-                    coef = class_obj.lr_variables.coef_[idx]
+                    coef = class_obj.lr_weights.coef_[idx]
                     class_type = one_vs_rest_class[class_idx]
                     class_and_header_name = "_".join(["class", str(class_type), header_name])
                     weight_dict[class_and_header_name] = coef
             else:
-                coef_i = self.lr_variables.coef_[idx]
+                coef_i = self.lr_weights.coef_[idx]
                 weight_dict[header_name] = coef_i
 
         if self.need_one_vs_rest:
             for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
-                intercept = class_obj.lr_variables.intercept_
+                intercept = class_obj.lr_weights.intercept_
                 class_type = one_vs_rest_class[class_idx]
                 intercept_name = "_".join(["class", str(class_type), "intercept"])
                 weight_dict[intercept_name] = intercept
 
             intercept_ = 0
         else:
-            intercept_ = self.lr_variables.intercept_
+            intercept_ = self.lr_weights.intercept_
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
                                                              loss_history=self.loss_history,
@@ -221,7 +221,7 @@ class BaseLogisticRegression(ModelBase):
                 tmp_intercept_ = weight_dict.get(intercept_name)
                 if fit_intercept:
                     tmp_vars = np.append(tmp_vars, tmp_intercept_)
-                classifier.lr_variables = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+                classifier.lr_weights = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
                 self.one_vs_rest_obj.models.append(classifier)
         else:
             tmp_vars = np.zeros(feature_shape)
@@ -232,7 +232,7 @@ class BaseLogisticRegression(ModelBase):
 
             if fit_intercept:
                 tmp_vars = np.append(tmp_vars, result_obj.intercept)
-            self.lr_variables = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+            self.lr_weights = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """

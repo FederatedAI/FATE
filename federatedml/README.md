@@ -1,5 +1,12 @@
 ### Federated Machine Learning
-This module provides various federated machine learning algorithms for users. 
+
+Federatedml includes implementation of many common machine learning algorithms as well as necessary utility tools. All modules are developed in a decoupling modular approach to enhance scalability. Specifically, we provide:
+
+1. FML Algorithms: Federated machine learning algorithms serving for DataIO, Data-preprocessing, feature engineering and modeling. More details are listed below.
+
+2. Utilities: Tools that enable federated learning such as encryption tools, statistic modules, parameter definitions, and transfer variable autogenerator etc.
+
+3. Framework: Kits and base models for developing new algorithm modules. Framework provides reusable functions to standardize modules and make them compact.
 
 ### Algorithm List
 

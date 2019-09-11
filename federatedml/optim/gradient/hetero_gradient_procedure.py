@@ -67,7 +67,7 @@ class Guest(three_parties_sync.Guest, Base):
         self.n_iter_ = n_iter
         self.batch_index = batch_index
 
-    def computer_intermediate(self, data_instances, lr_variables):
+    def computer_intermediate(self, data_instances, lr_weights):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -75,11 +75,11 @@ class Guest(three_parties_sync.Guest, Base):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_variables: LogisticRegressionVariables
+        lr_weights: LogisticRegressionVariables
             Stores coef_ and intercept_ of lr
 
         """
-        wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
+        wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
 
         en_wx = self.encrypted_calculator[self.batch_index].encrypt(wx)
         wx_square = wx.mapValues(lambda v: np.square(v))
@@ -116,10 +116,10 @@ class Guest(three_parties_sync.Guest, Base):
         # self.rubbish_bin.append(aggregate_forward_res)
         return en_aggregate_wx, en_aggregate_wx_square
 
-    def apply_procedure(self, data_instances, lr_variables):
+    def apply_procedure(self, data_instances, lr_weights):
         current_suffix = (self.n_iter_, self.batch_index)
 
-        self.computer_intermediate(data_instances, lr_variables)
+        self.computer_intermediate(data_instances, lr_weights)
         host_forward = self.host_to_guest((self.host_forward_dict_transfer,),
                                           suffix=current_suffix)[0]
         LOGGER.info("Get host_forward from host")
@@ -133,7 +133,7 @@ class Guest(three_parties_sync.Guest, Base):
                                                               fore_gradient,
                                                               en_aggregate_wx,
                                                               en_aggregate_wx_square,
-                                                              lr_variables.fit_intercept)
+                                                              lr_weights.fit_intercept)
         gradient_var = ListWeights(guest_gradient)
 
         self.guest_to_arbiter(variables=(gradient_var.for_remote(),),
@@ -146,7 +146,7 @@ class Guest(three_parties_sync.Guest, Base):
         LOGGER.info("Get optim_guest_gradient from arbiter")
 
         training_info = {"iteration": self.n_iter_, "batch_index": self.batch_index}
-        self.update_local_model(fore_gradient, data_instances, lr_variables.coef_, **training_info)
+        self.update_local_model(fore_gradient, data_instances, lr_weights.coef_, **training_info)
 
         # self.rubbish_bin.extend([en_aggregate_wx,
         #                          host_forward,
@@ -186,7 +186,7 @@ class Host(three_parties_sync.Host, Base):
         self.n_iter_ = n_iter
         self.batch_index = batch_index
 
-    def computer_intermediate(self, data_instances, lr_variables):
+    def computer_intermediate(self, data_instances, lr_weights):
         """
         Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
         and b is the interception
@@ -194,11 +194,11 @@ class Host(three_parties_sync.Host, Base):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_variables: LogisticRegressionVariables
+        lr_weights: LogisticRegressionVariables
             Stores coef_ and intercept_ of lr
 
         """
-        wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
+        wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
 
         en_wx = self.encrypted_calculator[self.batch_index].encrypt(wx)
         wx_square = wx.mapValues(lambda v: np.square(v))
@@ -207,10 +207,10 @@ class Host(three_parties_sync.Host, Base):
 
         return host_forward
 
-    def apply_procedure(self, data_instances, lr_variables):
+    def apply_procedure(self, data_instances, lr_weights):
         current_suffix = (self.n_iter_, self.batch_index)
 
-        host_forward = self.computer_intermediate(data_instances, lr_variables)
+        host_forward = self.computer_intermediate(data_instances, lr_weights)
         self.host_to_guest(variables=(host_forward,),
                            transfer_variables=(self.host_forward_dict_transfer,),
                            suffix=current_suffix)
@@ -237,7 +237,7 @@ class Host(three_parties_sync.Host, Base):
         LOGGER.info("Get optim_guest_gradient from arbiter")
 
         training_info = {"iteration": self.n_iter_, "batch_index": self.batch_index}
-        self.update_local_model(fore_gradient, data_instances, lr_variables.coef_, **training_info)
+        self.update_local_model(fore_gradient, data_instances, lr_weights.coef_, **training_info)
 
         return optim_host_gradient
 

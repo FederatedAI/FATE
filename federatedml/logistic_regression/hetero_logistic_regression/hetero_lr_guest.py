@@ -22,6 +22,8 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
+from federatedml.secureprotol import EncryptModeCalculator
+
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -37,6 +39,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.batch_generator = batch_generator.Guest()
         self.gradient_procedure = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
+        self.encrypted_calculator = None
 
     @staticmethod
     def load_data(data_instance):
@@ -68,10 +71,15 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
 
+        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
+                                                           self.encrypted_mode_calculator_param.mode,
+                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
+                                     in range(self.batch_generator.batch_nums)]
+
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.lr_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.lr_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -87,18 +95,20 @@ class HeteroLRGuest(HeteroLRBase):
 
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.lr_variables,
+                    self.encrypted_calculator,
+                    self.lr_weights,
+                    self.optimizer,
                     self.n_iter_,
                     batch_index
                 )
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
+                self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
-                loss_regular = self.optimizer.loss_norm(self.lr_variables)
-                self.gradient_procedure.compute_loss(data_instances, self.n_iter_, batch_index, loss_regular)
+                loss_norm = self.optimizer.loss_norm(self.lr_weights)
+                self.gradient_procedure.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
 
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_guest_gradient)
+                self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_guest_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
@@ -123,7 +133,7 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        prob_guest = self.compute_wx(data_features, self.lr_variables.coef_, self.lr_variables.intercept_)
+        prob_guest = self.compute_wx(data_features, self.lr_weights.coef_, self.lr_weights.intercept_)
         prob_host = self.transfer_variable.host_prob.get(idx=0)
 
         LOGGER.info("Get probability from Host")

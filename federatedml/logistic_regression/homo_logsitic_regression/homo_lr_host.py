@@ -40,7 +40,7 @@ class HomoLRHost(HomoLRBase):
         self.is_converged = False
         self.role = consts.HOST
         self.aggregator = aggregator.Host()
-        self.lr_variables = None
+        self.lr_weights = None
         self.cipher = paillier_cipher.Host()
         self.predict_procedure = predict_procedure.Host()
 
@@ -66,14 +66,14 @@ class HomoLRHost(HomoLRBase):
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
-        self.lr_variables = self._init_model_variables(data_instances)
-        w = self.lr_variables.parameters
+        self.lr_weights = self._init_model_variables(data_instances)
+        w = self.lr_weights.parameters
         w = self.cipher_operator.encrypt_list(w)
-        self.lr_variables = LogisticRegressionWeights(w, self.lr_variables.fit_intercept)
+        self.lr_weights = LogisticRegressionWeights(w, self.lr_weights.fit_intercept)
 
-        LOGGER.debug("After init, lr_variable params: {}".format(self.lr_variables.parameters))
+        LOGGER.debug("After init, lr_variable params: {}".format(self.lr_weights.parameters))
 
-        # self.lr_variables = self.lr_variables.encrypted(cipher=self.cipher_operator)
+        # self.lr_weights = self.lr_weights.encrypted(cipher=self.cipher_operator)
 
         max_iter = self.max_iter
 
@@ -96,16 +96,16 @@ class HomoLRHost(HomoLRBase):
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.lr_variables.coef_,
-                                      intercept=self.lr_variables.intercept_,
+                                      coef=self.lr_weights.coef_,
+                                      intercept=self.lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad_loss = batch_data.mapPartitions(f)
                 grad, loss = grad_loss.reduce(fate_operator.reduce_add)
                 grad /= n
-                self.lr_variables = self.optimizer.update_model(self.lr_variables, grad, has_applied=False)
+                self.lr_weights = self.optimizer.update_model(self.lr_weights, grad, has_applied=False)
                 if not self.use_encrypt:
                     loss /= n
-                    loss_norm = self.optimizer.loss_norm(self.lr_variables)
+                    loss_norm = self.optimizer.loss_norm(self.lr_weights)
                     iter_loss += loss
                     if loss_norm is not None:
                         iter_loss += loss_norm
@@ -116,20 +116,20 @@ class HomoLRHost(HomoLRBase):
 
                 batch_num += 1
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
-                    w = self.cipher.re_cipher(w=self.lr_variables.parameters,
+                    w = self.cipher.re_cipher(w=self.lr_weights.parameters,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
-                    self.lr_variables = LogisticRegressionWeights(w, self.fit_intercept)
+                    self.lr_weights = LogisticRegressionWeights(w, self.fit_intercept)
 
-            LOGGER.debug("Before aggregate, lr_variable params: {}".format(self.lr_variables.parameters))
-            self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
+            LOGGER.debug("Before aggregate, lr_variable params: {}".format(self.lr_weights.parameters))
+            self.aggregator.send_model_for_aggregate(self.lr_weights, self.n_iter_)
             if not self.use_encrypt:
                 iter_loss /= batch_num
                 self.callback_loss(self.n_iter_, iter_loss)
                 self.loss_history.append(iter_loss)
                 self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_variables = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
+            self.lr_weights = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
@@ -145,7 +145,7 @@ class HomoLRHost(HomoLRBase):
             self.cipher_operator.set_public_key(pubkey)
 
         predict_result = self.predict_procedure.start_predict(data_instances,
-                                                              self.lr_variables,
+                                                              self.lr_weights,
                                                               self.model_param.predict_param.threshold,
                                                               self.use_encrypt,
                                                               self.fit_intercept,
@@ -169,11 +169,11 @@ class HomoLRHost(HomoLRBase):
         weight_dict = {}
         intercept = 0
         if not self.use_encrypt:
-            lr_vars = self.lr_variables.coef_
+            lr_vars = self.lr_weights.coef_
             for idx, header_name in enumerate(header):
                 coef_i = lr_vars[idx]
                 weight_dict[header_name] = coef_i
-            intercept = self.lr_variables.intercept_
+            intercept = self.lr_weights.intercept_
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
                                                              loss_history=self.loss_history,

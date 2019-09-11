@@ -36,7 +36,7 @@ class HomoLRArbiter(HomoLRBase):
         self.is_converged = False
         self.role = consts.ARBITER
         self.aggregator = aggregator.Arbiter()
-        self.lr_variables = None
+        self.lr_weights = None
         self.cipher = paillier_cipher.Arbiter()
         self.predict_procedure = predict_procedure.Arbiter()
 
@@ -62,7 +62,7 @@ class HomoLRArbiter(HomoLRBase):
 
             merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                    suffix=suffix)
-            self.lr_variables = LogisticRegressionWeights(merged_model.for_remote().parameters,
+            self.lr_weights = LogisticRegressionWeights(merged_model.for_remote().parameters,
                                                           self.model_param.init_param.fit_intercept)
             total_loss = self.aggregator.aggregate_loss(idx=host_has_no_cipher_ids,
                                                         suffix=suffix)
@@ -89,6 +89,6 @@ class HomoLRArbiter(HomoLRBase):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=current_suffix)
         self.predict_procedure.start_predict(host_ciphers,
-                                             self.lr_variables,
+                                             self.lr_weights,
                                              self.model_param.predict_param.threshold,
                                              current_suffix)
