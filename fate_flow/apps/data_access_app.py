@@ -19,10 +19,12 @@ from flask import Flask, request
 
 from arch.api.utils import file_utils
 from fate_flow.settings import JOB_MODULE_CONF
-from fate_flow.settings import stat_logger
-from fate_flow.utils.api_utils import get_json_result
+from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
+from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, run_subprocess
 from fate_flow.utils import detect_utils
+from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -49,6 +51,15 @@ def download_upload(data_func):
     else:
         raise Exception('can not support this operating: {}'.format(module))
     detect_utils.check_config(request_config, required_arguments=required_arguments)
+    job_work_mode = request_config['work_mode']
+    # todo: The current code here is redundant with job_app/submit_job, the next version of this function will be implemented by job_app/submit_job
+    if job_work_mode != RuntimeConfig.WORK_MODE:
+        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and job_work_mode == WorkMode.STANDALONE:
+            # use cluster standalone job server to execute standalone job
+            return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, CLUSTER_STANDALONE_JOB_SERVER_PORT))
+        else:
+            raise Exception('server run on standalone can not support cluster mode job')
+
     if module == "upload":
         if not os.path.isabs(request_config['file']):
             request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])

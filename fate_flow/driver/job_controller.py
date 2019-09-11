@@ -75,14 +75,27 @@ class JobController(object):
         job.f_progress = 0
         job.f_create_time = current_timestamp()
 
+        initiator_role = job_initiator['role']
+        initiator_party_id = job_initiator['party_id']
+        if initiator_party_id not in job_runtime_conf['role'][initiator_role]:
+            schedule_logger.info("initiator party id error:{}".format(initiator_party_id))
+            raise Exception("initiator party id error {}".format(initiator_party_id))
+
+        get_job_dsl_parser(dsl=job_dsl,
+                                 runtime_conf=job_runtime_conf,
+                                 train_runtime_conf=train_runtime_conf)
+
         # save job info
-        TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
+        response_error_info = TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
+        if response_error_info:
+            schedule_logger.info("save job {} info failed:{}".format(job_id, response_error_info))
+            raise Exception(response_error_info)
 
         # push into queue
         RuntimeConfig.JOB_QUEUE.put_event({
             'job_id': job_id,
-            "initiator_role": job_initiator['role'],
-            "initiator_party_id": job_initiator['party_id']
+            "initiator_role": initiator_role,
+            "initiator_party_id": initiator_party_id
         }
         )
         schedule_logger.info(
@@ -205,3 +218,25 @@ class JobController(object):
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
                 schedule_logger.exception(e)
         schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
+
+
+    @staticmethod
+    def cancel_job(job_id, role, party_id, job_initiator):
+        schedule_logger.info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if jobs:
+            job = jobs[0]
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = dict()
+            event['job_id'] = job.f_job_id
+            event['initiator_role'] = job_runtime_conf['initiator']['role']
+            event['initiator_party_id'] = job_runtime_conf['initiator']['party_id']
+            is_failure = RuntimeConfig.JOB_QUEUE.del_event(event)
+            if is_failure:
+                return is_failure
+
+            schedule_logger.info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            job_info = {'f_status': JobStatus.CANCELED}
+            roles = json_loads(job.f_roles)
+            TaskScheduler.sync_job_status(job_id, roles, job.f_work_mode, job.f_initiator_party_id, job_info)
+
