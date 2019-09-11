@@ -1,7 +1,7 @@
 {
-    "module_path":  "federatedml/util",
+    "module_path":  "fate_flow/utils",
     "default_runtime_conf": "upload_param.json",
-    "param_class" : "federatedml/param/upload_param.py/UploadParam",
+    "param_class" : "fate_flow/param/upload_param.py/UploadParam",
     "role":
     {
         "local":

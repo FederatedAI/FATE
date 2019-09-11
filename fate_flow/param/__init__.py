@@ -13,19 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-
-class DownloadParam:
-    def __init__(self, output_path="", delimitor=",",
-                 namespace="", table_name="",
-                 data_type="", gen_table_info=False, work_mode=0):
-        self.output_path = output_path
-        self.delimitor = delimitor
-        self.namespace = namespace
-        self.table_name = table_name
-        self.data_type = data_type
-        self.gen_tabel_info = gen_table_info
-        self.work_mode = work_mode
-
-    def check(self):
-        return True

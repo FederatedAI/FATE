@@ -1,6 +1,5 @@
 {
   "head": 1,
   "partition": 10,
-  "gen_table_info": false,
   "work_mode": 0
 }
