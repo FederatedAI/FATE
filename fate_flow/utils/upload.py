@@ -40,7 +40,7 @@ class Upload(object):
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
-            print("%s is not exist, please check the configure" % (self.parameters["file"]))
+            raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
                                                             create=True)
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
@@ -61,7 +61,6 @@ class Upload(object):
         try:
             if partition <=0 or partition >= self.MAX_PARTITION_NUM :
                 print("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-                sys.exit()
         except:
             print("set partition to 1")
             self.parameters["partition"] = 1
