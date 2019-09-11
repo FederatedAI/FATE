@@ -41,8 +41,8 @@ class Guest(object):
         loss_immediate = self.loss_immediate_transfer.get(idx=-1, suffix=suffix)
         return loss_immediate
 
-    def get_host_loss(self, suffix=tuple()):
-        losses = self.loss_transfer.get(idx=-1, suffix=suffix)
+    def get_host_loss_regular(self, suffix=tuple()):
+        losses = self.host_loss_regular_transfer.get(idx=-1, suffix=suffix)
         return losses
 
 
@@ -55,5 +55,7 @@ class Host(object):
     def remote_loss_immediate(self, loss_immediate, suffix=tuple()):
         self.loss_immediate_transfer.remote(obj=loss_immediate, role=consts.GUEST, idx=0, suffix=suffix)
 
-    def remote_loss(self, loss, suffix=tuple()):
-        self.loss_transfer.remote(obj=loss, role=consts.GUEST, idx=0, suffix=suffix)
+    def remote_loss_regular(self, loss_regular, suffix=tuple()):
+        self.host_loss_regular_transfer.remote(obj=loss_regular, role=consts.GUEST, idx=0, suffix=suffix)
+
+

@@ -109,7 +109,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         wx_squares = self.get_host_loss_immediate(suffix=current_suffix)
 
         if loss_norm is not None:
-            host_loss_regular = self.get_host_loss(suffix=current_suffix)
+            host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
         else:
             host_loss_regular = []
 
@@ -195,7 +195,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         self.remote_loss_immediate(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_weights.coef_)
-        self.remote_loss(loss_regular, suffix=current_suffix)
+        self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
