@@ -22,11 +22,13 @@ from federatedml.secureprotol.encrypt import Encrypt
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
-    def __init__(self, weights, cls, *additional):
+    def __init__(self, weights, cls, *args, **kwargs):
         self._weights = weights
         self._cls = cls
-        if additional:
-            self._additional = additional
+        if args:
+            self._args = args
+        if kwargs:
+            self._kwargs = kwargs
 
     @property
     def unboxed(self):
@@ -34,10 +36,12 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
 
     @property
     def weights(self):
-        if not hasattr(self, "_additional"):
+        if not hasattr(self, "_args") and not hasattr(self, "_kwargs"):
             return self._cls(self._weights)
         else:
-            return self._cls(self._weights, *self._additional)
+            args = self._args if hasattr(self, "_args") else ()
+            kwargs = self._kwargs if hasattr(self, "_kwargs") else {}
+            return self._cls(self._weights, *args, **kwargs)
 
 
 class Weights(object):
