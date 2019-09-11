@@ -84,11 +84,11 @@ class RedisQueue(BaseQueue):
             ret = conn.lrem(self.queue_name, 1, json.dumps(event))
             stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
             if not ret:
-                return 'delete event from redis queue failed:job not in redis queue'
+                raise Exception('delete event from redis queue failed:job not in redis queue')
         except Exception as e:
             stat_logger.exception(e)
             stat_logger.error('delete event from redis queue failed')
-            return 'delete event from redis queue failed'
+            raise Exception('delete event from redis queue failed')
 
     def parse_event(self, content):
         return json.loads(content.decode())
@@ -174,7 +174,8 @@ class ListQueue(BaseQueue):
         except Exception as e:
             stat_logger.exception(e)
             stat_logger.error('delete event from  queue failed')
-            return '{} not in queue'.format(event)
+            raise Exception('{} not in ListQueue'.format(event))
+
 
     def dell(self, event):
         with self.not_empty:
@@ -182,7 +183,6 @@ class ListQueue(BaseQueue):
                 self.queue.remove(event)
                 self.not_full.notify()
             else:
-                stat_logger.error('{} not in queue'.format(event))
                 raise Exception('{} not in queue'.format(event))
 
     def put(self, item, block=True, timeout=None):

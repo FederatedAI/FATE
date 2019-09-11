@@ -26,7 +26,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
+from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
@@ -53,9 +53,7 @@ class TaskScheduler(object):
                               json_body=job.to_json(),
                               work_mode=job.f_work_mode)
                 if response_json["retcode"]:
-                    return response_json["retmsg"]
-        return None
-
+                    raise Exception(response_json["retmsg"])
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -195,12 +193,8 @@ class TaskScheduler(object):
 
     @staticmethod
     def check_dependencies(job_id, dag, component):
-        jobs = query_job(job_id=job_id)
-        party_id = None
-        if jobs:
-            job = jobs[0]
-            party_id = job.f_party_id
-        dependencies = dag.get_dependency(role="guest", party_id=party_id).get('dependencies', {})
+        role, party_id = job_utils.query_job_info(job_id)
+        dependencies = dag.get_dependency(role=role, party_id=int(party_id)).get('dependencies', {})
         if not dependencies:
             return False
         dependent_component_names = dependencies.get(component.get_name(), [])
@@ -337,52 +331,14 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def stop_job(job_id):
-        schedule_logger.info('get stop job {} command'.format(job_id))
+    def stop_job(job_id, is_cancel=False):
+        schedule_logger.info('get {} job {} command'.format("cancel" if is_cancel else "stop", job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
-        if jobs:
-            initiator_job = jobs[0]
-            job_info = {'f_job_id': job_id, 'f_status': JobStatus.FAILED}
-            roles = json_loads(initiator_job.f_roles)
-            job_work_mode = initiator_job.f_work_mode
-            initiator_party_id = initiator_job.f_party_id
-
-            # set status first
-            TaskScheduler.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
-                                          work_mode=job_work_mode,
-                                          job_info=job_info)
-            for role, partys in roles.items():
-                for party_id in partys:
-                    response = federated_api(job_id=job_id,
-                                             method='POST',
-                                             endpoint='/{}/schedule/{}/{}/{}/kill'.format(
-                                                 API_VERSION,
-                                                 job_id,
-                                                 role,
-                                                 party_id),
-                                             src_party_id=initiator_party_id,
-                                             dest_party_id=party_id,
-                                             json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
-                                                                          'role': initiator_job.f_role}},
-                                             work_mode=job_work_mode)
-                    if response['retcode'] == 0:
-                        schedule_logger.info(
-                            'send {} {} kill job {} command successfully'.format(role, party_id, job_id))
-                    else:
-                        schedule_logger.info(
-                            'send {} {} kill job {} command failed: {}'.format(role, party_id, job_id, response['retmsg']))
-        else:
-            schedule_logger.info('send stop job {} command failed'.format(job_id))
-            raise Exception('can not found job: {}'.format(job_id))
-
-    @staticmethod
-    def cancel_waiting_job(job_id):
-        schedule_logger.info('get cancel waiting job {} command'.format(job_id))
-        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        f_status = JobStatus.CANCELED if is_cancel else JobStatus.FAILED
         CANCEL = False
         if jobs:
             initiator_job = jobs[0]
-            job_info = {'f_job_id': job_id, 'f_status': JobStatus.CANCELED}
+            job_info = {'f_job_id': job_id, 'f_status': f_status}
             roles = json_loads(initiator_job.f_roles)
             job_work_mode = initiator_job.f_work_mode
             initiator_party_id = initiator_job.f_party_id
@@ -391,16 +347,17 @@ class TaskScheduler(object):
             TaskScheduler.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
                                           work_mode=job_work_mode,
                                           job_info=job_info)
-
             for role, partys in roles.items():
                 for party_id in partys:
                     response = federated_api(job_id=job_id,
                                              method='POST',
-                                             endpoint='/{}/schedule/{}/{}/{}/cancel'.format(
+                                             endpoint='/{}/schedule/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  job_id,
                                                  role,
-                                                 party_id),
+                                                 party_id,
+                                                 "cancel" if is_cancel else "kill"
+                                             ),
                                              src_party_id=initiator_party_id,
                                              dest_party_id=party_id,
                                              json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
@@ -409,14 +366,14 @@ class TaskScheduler(object):
                     if response['retcode'] == 0:
                         CANCEL = True
                         schedule_logger.info(
-                            'send {} {} cancel job {} command successfully'.format(role, party_id, job_id))
+                            'send {} {} {} job {} command successfully'.format(role, party_id,"cancel" if is_cancel else "kill", job_id))
                     else:
                         schedule_logger.info(
-                            'send {} {} cancel job {} command failed: {}'.format(role, party_id, job_id,
-                                                                               response['retmsg']))
-                    return CANCEL
+                            'send {} {} {} job {} command failed: {}'.format(role, party_id, "cancel" if is_cancel else "kill", job_id, response['retmsg']))
+                    if is_cancel:
+                        return CANCEL
         else:
-            schedule_logger.info('send cancel job {} command failed'.format(job_id))
+            schedule_logger.info('send {} job {} command failed'.format("cancel" if is_cancel else "kill", job_id))
             raise Exception('can not found job: {}'.format(job_id))
 
 

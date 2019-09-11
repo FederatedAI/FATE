@@ -210,12 +210,8 @@ def success_task_count(job_id):
 
 
 def update_job_progress(job_id, dag, current_task_id):
-    jobs = query_job(job_id=job_id)
-    party_id = None
-    if jobs:
-        job = jobs[0]
-        party_id = int(job.f_party_id)
-    component_count = len(dag.get_dependency(role="guest", party_id=party_id)['component_list'])
+    role, party_id = query_job_info(job_id)
+    component_count = len(dag.get_dependency(role=role, party_id=int(party_id))['component_list'])
     success_count = success_task_count(job_id=job_id)
     job = Job()
     job.f_progress = float(success_count) / component_count * 100
@@ -366,3 +362,23 @@ def job_server_routing(routing_type=0):
             return func(*args, **kwargs)
         return _wrapper
     return _out_wrapper
+
+
+def job_event(job_id, initiator_role,  initiator_party_id):
+    event = {'job_id': job_id,
+             "initiator_role": initiator_role,
+             "initiator_party_id": initiator_party_id
+             }
+    return event
+
+
+def query_job_info(job_id):
+    jobs = query_job(job_id=job_id, is_initiator=1)
+    party_id = None
+    role = None
+    if jobs:
+        job = jobs[0]
+        role = job.f_role
+        party_id = job.f_party_id
+    return role, party_id
+
