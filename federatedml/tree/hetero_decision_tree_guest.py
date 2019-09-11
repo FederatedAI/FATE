@@ -525,7 +525,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         for i in range(len(self.tree_)):
             if self.tree_[i].is_leaf is True:
                 continue
-            if self.tree_[i].sitename == consts.GUEST:
+            if self.tree_[i].sitename == self.sitename:
                 fid = self.decode("feature_idx", self.tree_[i].fid, split_maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_[i].bid, self.tree_[i].id, self.split_maskdict)
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_[i].id)
