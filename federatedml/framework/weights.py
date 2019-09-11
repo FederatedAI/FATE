@@ -24,8 +24,9 @@ LOGGER = log_utils.getLogger()
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
-    def __init__(self, weights):
+    def __init__(self, weights, cls=None):
         self._weights = weights
+        self._cls = cls
 
     @property
     def unboxed(self):
@@ -33,7 +34,7 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
 
     @property
     def weights(self):
-        return Weights(self._weights)
+        return self._cls(self._weights)
 
 
 class Weights(object):
@@ -42,7 +43,7 @@ class Weights(object):
         self._weights = l
 
     def for_remote(self):
-        return TransferableWeights(self._weights)
+        return TransferableWeights(self._weights, self.__class__)
 
     @property
     def unboxed(self):
@@ -151,3 +152,4 @@ class DictWeights(Weights):
     def axpy(self, a, y: 'DictWeights'):
         for k, v in self._weights.items():
             self._weights[k] += a * y._weights[k]
+
