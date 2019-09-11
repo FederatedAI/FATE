@@ -24,9 +24,13 @@ LOGGER = log_utils.getLogger()
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
-    def __init__(self, weights, cls=None):
+    def __init__(self, weights, cls, *args, **kwargs):
         self._weights = weights
         self._cls = cls
+        if args:
+            self._args = args
+        if kwargs:
+            self._kwargs = kwargs
 
     @property
     def unboxed(self):
@@ -34,7 +38,12 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
 
     @property
     def weights(self):
-        return self._cls(self._weights)
+        if not hasattr(self, "_args") and not hasattr(self, "_kwargs"):
+            return self._cls(self._weights)
+        else:
+            args = self._args if hasattr(self, "_args") else ()
+            kwargs = self._kwargs if hasattr(self, "_kwargs") else {}
+            return self._cls(self._weights, *args, **kwargs)
 
 
 class Weights(object):
@@ -152,4 +161,3 @@ class DictWeights(Weights):
     def axpy(self, a, y: 'DictWeights'):
         for k, v in self._weights.items():
             self._weights[k] += a * y._weights[k]
-

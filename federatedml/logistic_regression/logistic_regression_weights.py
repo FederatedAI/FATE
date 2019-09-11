@@ -18,13 +18,17 @@
 
 import numpy as np
 
-from federatedml.framework.weights import ListWeights
+from federatedml.framework.weights import ListWeights, TransferableWeights
 
 
 class LogisticRegressionWeights(ListWeights):
     def __init__(self, l, fit_intercept):
         super().__init__(l)
         self.fit_intercept = fit_intercept
+
+    def for_remote(self):
+        return TransferableWeights(self._weights, self.__class__, self.fit_intercept)
+
 
     @property
     def coef_(self):

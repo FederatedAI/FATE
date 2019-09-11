@@ -31,7 +31,7 @@ class HeteroLRBase(BaseLogisticRegression):
         self.aggregator = None
         self.cipher = None
         self.batch_generator = None
-        self.gradient_procedure = None
+        self.gradient_loss_operator = None
         self.converge_procedure = None
 
     def _init_model(self, params):
@@ -40,7 +40,7 @@ class HeteroLRBase(BaseLogisticRegression):
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
-        self.gradient_procedure.register_gradient_procedure(self.transfer_variable)
+        self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
 
 
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):

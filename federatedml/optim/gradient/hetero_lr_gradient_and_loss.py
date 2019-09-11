@@ -48,8 +48,8 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         Compute gradients.
         gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x, where y = 1 or -1
 
-        Define ∑wx as guest_forward or host_forward
-        Define ∑(0.25 * wx - 0.5 * y) as fore_gradient
+        Define wx as guest_forward or host_forward
+        Define (0.25 * wx - 0.5 * y) as fore_gradient
 
         Then, gradient = fore_gradient * x
 

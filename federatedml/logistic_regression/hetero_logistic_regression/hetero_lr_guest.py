@@ -37,7 +37,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.role = consts.GUEST
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
-        self.gradient_procedure = hetero_lr_gradient_and_loss.Guest()
+        self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
 
@@ -93,7 +93,7 @@ class HeteroLRGuest(HeteroLRBase):
 
                 # Start gradient procedure
 
-                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_procedure.compute_gradient_procedure(
+                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
                     self.lr_weights,
@@ -106,7 +106,7 @@ class HeteroLRGuest(HeteroLRBase):
                 self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
                 loss_norm = self.optimizer.loss_norm(self.lr_weights)
-                self.gradient_procedure.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
 
                 self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_guest_gradient)
                 batch_index += 1

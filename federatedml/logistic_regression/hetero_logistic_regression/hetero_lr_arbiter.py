@@ -36,7 +36,7 @@ class HeteroLRArbiter(HeteroLRBase):
 
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
-        self.gradient_procedure = hetero_lr_gradient_and_loss.Arbiter()
+        self.gradient_loss_operator = hetero_lr_gradient_and_loss.Arbiter()
         self.converge_procedure = convergence.Arbiter()
 
     def perform_subtasks(self, **training_info):

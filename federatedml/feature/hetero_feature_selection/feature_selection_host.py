@@ -119,9 +119,8 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
                 self.left_cols))
 
     def _received_result_cols(self, filter_name):
-        result_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.result_left_cols,
-                                                                    filter_name)
-        lef_cols = self.transfer_variable.result_left_cols.get(idx=0,
+
+        left_cols = self.transfer_variable.result_left_cols.get(idx=0,
                                                                suffix=(filter_name,))
         """
         left_cols = federation.get(name=self.transfer_variable.result_left_cols.name,
@@ -157,8 +156,6 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         LOGGER.info("Received Left cols are {}".format(self.left_cols))
 
     def _send_select_cols(self, filter_name):
-        host_select_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_select_cols,
-                                                                         filter_name)
 
         LOGGER.debug("Before send select cols, self.left_cols: {}".format(self.left_cols))
 

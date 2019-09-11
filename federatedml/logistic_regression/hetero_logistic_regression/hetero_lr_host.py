@@ -37,7 +37,7 @@ class HeteroLRHost(HeteroLRBase):
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_procedure = hetero_lr_gradient_and_loss.Host()
+        self.gradient_loss_operator = hetero_lr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
 
