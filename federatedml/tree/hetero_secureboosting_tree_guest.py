@@ -38,6 +38,7 @@ from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable im
     HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import AffineEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
@@ -177,6 +178,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         LOGGER.info("generate encrypter")
         if self.encrypt_param.method == consts.PAILLIER:
             self.encrypter = PaillierEncrypt()
+            self.encrypter.generate_key(self.encrypt_param.key_length)
+        elif self.encrypt_param.method == consts.AFFINE:
+            self.encrypter = AffineEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
             raise NotImplementedError("encrypt method not supported yes!!!")

@@ -23,6 +23,7 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
+AFFINE = 'Affine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
