@@ -14,6 +14,3 @@
 #  limitations under the License.
 #
 
-from federatedml.optim.gradient.linear_gradient import LinearGradient, HeteroLinearGradient
-
-__all__ = ["LinearGradient", "HeteroLinearGradient"]

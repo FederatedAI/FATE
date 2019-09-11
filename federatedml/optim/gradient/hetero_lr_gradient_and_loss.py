@@ -38,6 +38,10 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
                                      transfer_variables.guest_gradient,
                                      transfer_variables.guest_optim_gradient)
 
+        self._register_loss_sync(transfer_variables.host_loss_regular,
+                                 transfer_variables.loss,
+                                 transfer_variables.loss_immediate)
+
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, lr_weights, optimizer,
                                    n_iter_, batch_index):
         """
@@ -102,7 +106,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
         loss_list = []
-        wx_squares = self.get_host_wx_square(suffix=current_suffix)
+        wx_squares = self.get_host_loss_immediate(suffix=current_suffix)
 
         if loss_norm is not None:
             host_loss_regular = self.get_host_loss(suffix=current_suffix)
@@ -130,6 +134,10 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
                                      transfer_variables.fore_gradient,
                                      transfer_variables.host_gradient,
                                      transfer_variables.host_optim_gradient)
+
+        self._register_loss_sync(transfer_variables.host_loss_regular,
+                                 transfer_variables.loss,
+                                 transfer_variables.loss_immediate)
 
     def compute_gradient_procedure(self, data_instances, lr_weights,
                                    encrypted_calculator, optimizer,
@@ -184,7 +192,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         """
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_wx_square(self_wx_square, suffix=current_suffix)
+        self.remote_loss_immediate(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_weights.coef_)
         self.remote_loss(loss_regular, suffix=current_suffix)
@@ -196,6 +204,7 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
                                      transfer_variables.host_gradient,
                                      transfer_variables.guest_optim_gradient,
                                      transfer_variables.host_optim_gradient)
+        self._register_loss_sync(transfer_variables.loss)
 
     def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
         """

@@ -17,7 +17,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
@@ -38,7 +38,6 @@ class HeteroLRHost(HeteroLRBase):
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
         self.gradient_procedure = hetero_lr_gradient_and_loss.Host()
-        self.loss_computer = loss_computer.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
 

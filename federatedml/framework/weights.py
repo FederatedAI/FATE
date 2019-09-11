@@ -16,9 +16,11 @@
 
 import abc
 import operator
+from arch.api.utils import log_utils
 
 from arch.api.utils.splitable import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
+LOGGER = log_utils.getLogger()
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
@@ -74,6 +76,8 @@ class Weights(object):
         return self.binary_op(other, operator.add, inplace=True)
 
     def __add__(self, other):
+        LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
+
         return self.binary_op(other, operator.add, inplace=False)
 
     def __truediv__(self, other):
@@ -102,11 +106,14 @@ class ListWeights(Weights):
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(self._weights[k], other._weights[k])
+            LOGGER.debug("In binary_op1, _w: {}".format(self._weights))
+            LOGGER.debug("In binary_op1, self: {}".format(self))
             return self
         else:
             _w = []
             for k, v in enumerate(self._weights):
                 _w.append(func(self._weights[k], other._weights[k]))
+            LOGGER.debug("In binary_op2, _w: {}".format(_w))
             return ListWeights(_w)
 
     def axpy(self, a, y: 'ListWeights'):

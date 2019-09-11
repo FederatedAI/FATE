@@ -15,7 +15,7 @@
 #
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
@@ -37,7 +37,6 @@ class HeteroLRArbiter(HeteroLRBase):
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
         self.gradient_procedure = hetero_lr_gradient_and_loss.Arbiter()
-        self.loss_computer = loss_computer.Arbiter()
         self.converge_procedure = convergence.Arbiter()
 
     def perform_subtasks(self, **training_info):

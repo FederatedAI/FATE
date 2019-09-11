@@ -18,12 +18,12 @@
 
 import functools
 
-from arch.api.proto import lr_model_param_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.logistic_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.util import consts
@@ -67,11 +67,11 @@ class HomoLRHost(HomoLRBase):
             self.cipher_operator.set_public_key(pubkey)
 
         self.lr_weights = self._init_model_variables(data_instances)
-        w = self.lr_weights.parameters
+        w = self.lr_weights.unboxed
         w = self.cipher_operator.encrypt_list(w)
         self.lr_weights = LogisticRegressionWeights(w, self.lr_weights.fit_intercept)
 
-        LOGGER.debug("After init, lr_variable params: {}".format(self.lr_weights.parameters))
+        LOGGER.debug("After init, lr_weights: {}".format(self.lr_weights.unboxed))
 
         # self.lr_weights = self.lr_weights.encrypted(cipher=self.cipher_operator)
 
@@ -116,12 +116,12 @@ class HomoLRHost(HomoLRBase):
 
                 batch_num += 1
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
-                    w = self.cipher.re_cipher(w=self.lr_weights.parameters,
+                    w = self.cipher.re_cipher(w=self.lr_weights.unboxed,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
                     self.lr_weights = LogisticRegressionWeights(w, self.fit_intercept)
 
-            LOGGER.debug("Before aggregate, lr_variable params: {}".format(self.lr_weights.parameters))
+            LOGGER.debug("Before aggregate, lr_weights : {}".format(self.lr_weights.unboxed))
             self.aggregator.send_model_for_aggregate(self.lr_weights, self.n_iter_)
             if not self.use_encrypt:
                 iter_loss /= batch_num
@@ -129,7 +129,7 @@ class HomoLRHost(HomoLRBase):
                 self.loss_history.append(iter_loss)
                 self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_weights = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
+            self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

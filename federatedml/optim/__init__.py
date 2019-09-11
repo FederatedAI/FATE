@@ -14,10 +14,3 @@
 #  limitations under the License.
 #
 
-from federatedml.optim import gradient
-from federatedml.optim.initialize import Initializer
-from federatedml.optim import federated_aggregator
-from federatedml.optim import activation
-
-__all__ = ['gradient', 'federated_aggregator', 'Initializer',
-           'federated_aggregator', 'activation']

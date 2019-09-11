@@ -19,7 +19,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 
 LOGGER = log_utils.getLogger()
 

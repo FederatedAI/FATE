@@ -21,7 +21,7 @@ from federatedml.logistic_regression.base_logistic_regression import BaseLogisti
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-from federatedml.util.transfer_variable.homo_lr_transfer_variable import HomoLRTransferVariable
+from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 

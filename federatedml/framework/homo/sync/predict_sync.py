@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.optim import activation
 from federatedml.util import consts
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
+from federatedml.transfer_variable.transfer_class.base_transfer_variable import Variable
 
 
 def classify(predict_wx, threshold):

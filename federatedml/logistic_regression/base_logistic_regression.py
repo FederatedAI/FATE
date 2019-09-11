@@ -22,11 +22,11 @@ from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim import Initializer
+from federatedml.optim.initialize import Initializer
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import LogisticParam

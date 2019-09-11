@@ -23,17 +23,17 @@ LOGGER = LoggerFactory.get_logger()
 class Host(converge_sync.Host):
 
     def register_convergence(self, transfer_variables):
-        self._register_convergence(is_stopped_transfer=transfer_variables.is_stopped)
+        self._register_convergence(is_stopped_transfer=transfer_variables.converge_flag)
 
 
 class Guest(converge_sync.Guest):
 
     def register_convergence(self, transfer_variables):
-        self._register_convergence(is_stopped_transfer=transfer_variables.is_stopped)
+        self._register_convergence(is_stopped_transfer=transfer_variables.converge_flag)
 
 
 class Arbiter(converge_sync.Arbiter):
 
     def register_convergence(self, transfer_variables):
-        self._register_convergence(is_stopped_transfer=transfer_variables.is_stopped)
+        self._register_convergence(is_stopped_transfer=transfer_variables.converge_flag)
 

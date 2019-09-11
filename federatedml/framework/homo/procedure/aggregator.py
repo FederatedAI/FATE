@@ -59,11 +59,17 @@ class Arbiter(party_weights_sync.Arbiter,
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Weights:
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
+        LOGGER.debug("aggregate_model, models: {}".format(models))
         num_clients = len(models)
         if not self._party_weights:
             return reduce(operator.add, models) / num_clients
         for m, w in zip(models, self._party_weights):
             m *= w
+        LOGGER.debug("aggregate_model, models: {}, weights_values: {}".format(models, [m.unboxed for m in models]))
+        LOGGER.debug("model add : {}".format(models[0] + models[1]))
+
+        LOGGER.debug("aggregate_model, before return, models: {}".format(reduce(operator.add, models)))
+
         return reduce(operator.add, models)
 
     def aggregate_and_broadcast(self, ciphers_dict=None, suffix=tuple()):

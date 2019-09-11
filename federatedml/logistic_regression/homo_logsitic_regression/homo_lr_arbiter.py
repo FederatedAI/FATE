@@ -20,7 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.util import consts
 import numpy as np
 
@@ -62,7 +62,7 @@ class HomoLRArbiter(HomoLRBase):
 
             merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                    suffix=suffix)
-            self.lr_weights = LogisticRegressionWeights(merged_model.for_remote().parameters,
+            self.lr_weights = LogisticRegressionWeights(merged_model.unboxed,
                                                           self.model_param.init_param.fit_intercept)
             total_loss = self.aggregator.aggregate_loss(idx=host_has_no_cipher_ids,
                                                         suffix=suffix)
@@ -71,7 +71,7 @@ class HomoLRArbiter(HomoLRBase):
             if self.use_loss:
                 converge_var = total_loss
             else:
-                converge_var = np.array(merged_model.for_remote().parameters)
+                converge_var = np.array(merged_model.unboxed)
             self.is_converged = self.aggregator.check_converge_status(self.converge_func.is_converge,
                                                                       (converge_var,),
                                                                       suffix=(self.n_iter_,))

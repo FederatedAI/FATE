@@ -29,17 +29,17 @@ class Arbiter(object):
 
 
 class Guest(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, wx_square_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_immediate_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
-        self.wx_square_transfer = wx_square_transfer
+        self.loss_immediate_transfer = loss_immediate_transfer
 
     def sync_loss_info(self, loss, suffix=tuple()):
         self.loss_transfer.remote(loss, role=consts.ARBITER, idx=0, suffix=suffix)
 
-    def get_host_wx_square(self, suffix=tuple()):
-        wx_squares = self.wx_square_transfer.get(idx=-1, suffix=suffix)
-        return wx_squares
+    def get_host_loss_immediate(self, suffix=tuple()):
+        loss_immediate = self.loss_immediate_transfer.get(idx=-1, suffix=suffix)
+        return loss_immediate
 
     def get_host_loss(self, suffix=tuple()):
         losses = self.loss_transfer.get(idx=-1, suffix=suffix)
@@ -47,13 +47,13 @@ class Guest(object):
 
 
 class Host(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, wx_square_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_immediate_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
-        self.wx_square_transfer = wx_square_transfer
+        self.loss_immediate_transfer = loss_immediate_transfer
 
-    def remote_wx_square(self, wx_square, suffix=tuple()):
-        self.wx_square_transfer.remote(obj=wx_square, role=consts.GUEST, idx=0, suffix=suffix)
+    def remote_loss_immediate(self, loss_immediate, suffix=tuple()):
+        self.loss_immediate_transfer.remote(obj=loss_immediate, role=consts.GUEST, idx=0, suffix=suffix)
 
     def remote_loss(self, loss, suffix=tuple()):
         self.loss_transfer.remote(obj=loss, role=consts.GUEST, idx=0, suffix=suffix)
