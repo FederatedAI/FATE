@@ -4,7 +4,7 @@
     "param_class" : "federatedml/param/upload_param.py/UploadParam",
     "role":
     {
-        "guest|host":
+        "local":
         {
             "program": "upload.py/Upload"
         }

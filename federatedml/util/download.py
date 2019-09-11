@@ -44,7 +44,7 @@ class Download(object):
                 if not value:
                     fout.write(key + "\n")
                 else:
-                    fout.write(key + self.parameters["delimitor"] + str(value) + "\n")
+                    fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
                 lines += 1
                 if lines % 2000 == 0:
                     print("===== export {} lines =====".format(lines))

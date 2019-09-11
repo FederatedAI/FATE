@@ -4,7 +4,7 @@
     "param_class" : "federatedml/param/download_param.py/DownloadParam",
     "role":
     {
-        "guest|host":
+        "local":
         {
             "program": "download.py/Download"
         }

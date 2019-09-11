@@ -142,21 +142,10 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-<<<<<<< HEAD
-        if not config_path:
-            raise Exception('the following arguments are required: {}'.format('runtime conf path'))
-
-        job_runtime_conf, dsl_data = get_runtime_conf(config_data, func)
-        post_data = {'job_dsl': dsl_data,
-                     'job_runtime_conf': job_runtime_conf}
-        response = requests.post("/".join([server_url, "job", "submit"]), json=post_data)
-
-=======
         response = requests.post("/".join([server_url, "data", func]), json=config_data)
         if response.json()['retcode'] == 999:
             start_cluster_standalone_job_server()
             response = requests.post("/".join([server_url, "data", func]), json=config_data)
->>>>>>> fate_flow: can not upload data to cluster standalone job server
     elif func in TABLE_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([server_url, "table", func]), json=config_data)

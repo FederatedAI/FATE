@@ -23,6 +23,10 @@ from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.utils.job_utils import generate_job_id, get_job_directory, new_runtime_conf, run_subprocess
 from fate_flow.utils import detect_utils
+<<<<<<< HEAD
+=======
+from fate_flow.driver.job_controller import JobController
+>>>>>>> fate_flow: improve data access interface
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -35,6 +39,7 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
+<<<<<<< HEAD
 @manager.route('/<data_func>', methods=['post'])
 def download_upload(data_func):
     request_config = request.json
@@ -84,3 +89,76 @@ def download_upload(data_func):
     except Exception as e:
         stat_logger.exception(e)
         return get_json_result(retcode=-104, retmsg="failed", job_id=_job_id)
+=======
+@manager.route('/<access_module>', methods=['post'])
+def download_upload(access_module):
+    request_config = request.json
+    required_arguments = ['work_mode', 'namespace', 'table_name']
+    if access_module == 'upload':
+        required_arguments.extend(['file', 'head', 'partition'])
+    elif access_module == 'download':
+        required_arguments.extend(['output_path'])
+    else:
+        raise Exception('can not support this operating: {}'.format(access_module))
+    detect_utils.check_config(request_config, required_arguments=required_arguments)
+
+    if access_module == "upload":
+        if not os.path.isabs(request_config['file']):
+            request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])
+    job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
+    job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
+    return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
+                                                'job_runtime_conf_path': job_runtime_conf_path,
+                                                'board_url': board_url
+                                                })
+
+
+def gen_data_access_job_config(config_data, access_module):
+    job_runtime_conf = {
+        "initiator": {},
+        "job_parameters": {},
+        "role": {},
+        "role_parameters": {}
+    }
+    initiator_role = "local"
+    initiator_party_id = 0
+    job_runtime_conf["initiator"]["role"] = initiator_role
+    job_runtime_conf["initiator"]["party_id"] = initiator_party_id
+    job_runtime_conf["job_parameters"]["work_mode"] = config_data["work_mode"]
+    job_runtime_conf["role"][initiator_role] = [initiator_party_id]
+    job_dsl = {
+        "components": {}
+    }
+
+    if access_module == 'upload':
+        if not os.path.isabs(config_data["file"]):
+            config_data["file"] = os.path.join(file_utils.get_project_base_directory(), config_data["file"])
+        job_runtime_conf["role_parameters"][initiator_role] = {
+            "upload_0": {
+                "head": [config_data["head"]],
+                "partition": [config_data["partition"]],
+                "file": [config_data.get("file")],
+                "namespace": [config_data["namespace"]],
+                "table_name": [config_data["table_name"]],
+            }
+        }
+
+        job_dsl["components"]["upload_0"] = {
+            "module": "Upload"
+        }
+
+    if access_module == 'download':
+        job_runtime_conf["role_parameters"][initiator_role] = {
+            "download_0": {
+                "output_path": [config_data.get("output_path")],
+                "namespace": [config_data.get("namespace")],
+                "table_name": [config_data.get("table_name")]
+            }
+        }
+
+        job_dsl["components"]["download_0"] = {
+            "module": "Download"
+        }
+
+    return job_dsl, job_runtime_conf
+>>>>>>> fate_flow: improve data access interface
