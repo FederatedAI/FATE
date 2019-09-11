@@ -15,21 +15,24 @@
 #
 
 
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
-
-
 class Scatter(object):
 
-    def __init__(self, host_variable: Variable, guest_variable: Variable):
+    def __init__(self, host_variable, guest_variable):
         """
-            scatter values from guest and hosts
+        scatter values from guest and hosts
 
-            Args:
-                host_variable: a variable represents `Host -> Arbiter`
-                guest_variable: a variable represent `Guest -> Arbiter`
+        Args:
+            host_variable: a variable represents `Host -> Arbiter`
+            guest_variable: a variable represent `Guest -> Arbiter`
 
-            Returns:
-                return a generator of scatted values
+        Examples:
+
+            >>> from federatedml.framework.homo.util import scatter
+            >>> s = scatter.Scatter(host_variable, guest_variable)
+            >>> for v in s.get():
+                    print(v)
+
+
         """
         self._host_variable = host_variable
         self._guest_variable = guest_variable
@@ -37,12 +40,18 @@ class Scatter(object):
     def get(self, suffix=tuple(), host_ids=None):
         """
         create a generator of values from guest and hosts.
+
         Args:
             suffix: tag suffix
             host_ids: ids of hosts to get value from.
                 If None provided, get values from all hosts.
                 If a list of int provided, get values from all hosts listed.
-                Otherwise, ValueError raised
+
+        Returns:
+            a generator of scatted values
+
+        Raises:
+            if host_ids is neither None nor a list of int, ValueError raised
         """
         yield self._guest_variable.get(idx=0, suffix=suffix)
         if host_ids is None:
