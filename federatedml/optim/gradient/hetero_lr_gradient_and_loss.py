@@ -38,7 +38,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
                                      transfer_variables.guest_gradient,
                                      transfer_variables.guest_optim_gradient)
 
-    def compute_gradient_procedure(self, data_instances, lr_variables,
+    def compute_gradient_procedure(self, data_instances, lr_variables, optimizer,
                                    n_iter_, batch_index):
         """
         Compute gradients.
@@ -83,7 +83,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient, fore_gradient, host_forwards
 
-    def compute_loss(self, data_instances, n_iter_, batch_index):
+    def compute_loss(self, data_instances, n_iter_, batch_index, loss_regular=None):
         """
         Compute hetero-lr loss for:
         loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
@@ -94,21 +94,28 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
         """
         current_suffix = (n_iter_, batch_index)
-
         n = data_instances.count()
         ywx = self.aggregated_wx.join(data_instances, lambda wx, d: wx * int(d.label)).reduce(reduce_add)
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
         loss_list = []
-
         wx_squares = self.get_host_wx_square(suffix=current_suffix)
+
+        if loss_regular is not None:
+            host_loss_regular = self.get_host_loss(suffix=current_suffix)
+        else:
+            host_loss_regular = []
 
         for host_idx, host_forward in enumerate(self.host_forwards):
             wxg_wxh = self.half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
                                 (self_wx_square + wx_squares[host_idx] + 2 * wxg_wxh)
+            if loss_regular is not None:
+                loss += loss_regular
+                loss += host_loss_regular[host_idx]
             loss_list.append(loss)
-        return loss_list
+        self.sync_loss_info(loss_list, suffix=current_suffix)
+
 
 
 class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
@@ -174,10 +181,10 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         self.remote_wx_square(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_variables.coef_)
+        self.remote_loss(loss_regular, suffix=current_suffix)
 
 
-
-class Arbiter(hetero_lr_gradient_sync.Arbiter):
+class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.guest_gradient,
                                      transfer_variables.host_gradient,
@@ -222,3 +229,19 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter):
         guest_optim_gradient = separate_optim_gradient[-1]
 
         self.remote_local_gradient(host_optim_gradients, guest_optim_gradient, current_suffix)
+        return delta_grad
+
+    def compute_loss(self, cipher, n_iter_, batch_index):
+        """
+        Compute hetero-lr loss for:
+        loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
+        where (wx)^2 = (Wg * Xg + Wh * Xh)^2 = (Wg*Xg)^2 + (Wh*Xh)^2 + 2 * Wg*Xg * Wh*Xh
+
+        Then loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
+
+        where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
+        """
+        current_suffix = (n_iter_, batch_index)
+        loss_list = self.sync_loss_info(suffix=current_suffix)
+        de_loss_list = cipher.decrypt_list(loss_list)
+        return de_loss_list

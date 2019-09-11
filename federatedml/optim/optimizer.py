@@ -39,7 +39,7 @@ class _Optimizer(object):
     def apply_gradients(self, grad):
         raise NotImplementedError("Should not call here")
 
-    def __l1_updator(self, model_variables: LogisticRegressionVariables, gradient):
+    def _l1_updator(self, model_variables: LogisticRegressionVariables, gradient):
         coef_ = model_variables.coef_
         if model_variables.fit_intercept:
             gradient_without_intercept = gradient[: -1]
@@ -55,7 +55,11 @@ class _Optimizer(object):
         new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
         return new_param
 
-    def __l2_updator(self, model_variables: LogisticRegressionVariables, gradient):
+    def _l2_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        """
+
+        """
+
         coef_ = model_variables.coef_
         if model_variables.fit_intercept:
             gradient_without_intercept = gradient[: -1]
@@ -69,11 +73,13 @@ class _Optimizer(object):
         new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
         return new_param
 
+    def local_regular(self, grad, coef_):
+
     def update(self, model_variables: LogisticRegressionVariables, grad):
         if self.penalty == 'l1':
-            model_variables = self.__l1_updator(model_variables, grad)
+            model_variables = self._l1_updator(model_variables, grad)
         elif self.penalty == 'l2':
-            model_variables = self.__l2_updator(model_variables, grad)
+            model_variables = self._l2_updator(model_variables, grad)
             # new_vars = model_variables.for_remote().parameters - grad
         else:
             new_vars = model_variables.for_remote().parameters - grad
@@ -116,6 +122,20 @@ class _SgdOptimizer(_Optimizer):
         self.learning_rate = self.learning_rate / np.sqrt(self.iters)
         delta_grad = self.learning_rate * grad
         return delta_grad
+
+    def _l2_updator(self, model_variables: LogisticRegressionVariables, gradient):
+        coef_ = model_variables.coef_
+        if model_variables.fit_intercept:
+            gradient_without_intercept = gradient[: -1]
+        else:
+            gradient_without_intercept = gradient
+
+        new_weights = coef_ - gradient_without_intercept - self.learning_rate * self.alpha * coef_
+        if model_variables.fit_intercept:
+            new_weights = np.append(new_weights, model_variables.intercept_)
+            new_weights[-1] -= gradient[-1]
+        new_param = LogisticRegressionVariables(new_weights, model_variables.fit_intercept)
+        return new_param
 
 
 class _RMSPropOptimizer(_Optimizer):

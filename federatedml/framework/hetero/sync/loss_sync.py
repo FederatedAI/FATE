@@ -23,9 +23,8 @@ class Arbiter(object):
     def _register_loss_sync(self, loss_transfer):
         self.loss_transfer = loss_transfer
 
-    def sync_loss_info(self, n_iter_, batch_index):
-        current_suffix = (n_iter_, batch_index)
-        loss = self.loss_transfer.get(idx=0, suffix=current_suffix)
+    def sync_loss_info(self, suffix=tuple()):
+        loss = self.loss_transfer.get(idx=0, suffix=suffix)
         return loss
 
 
@@ -35,20 +34,16 @@ class Guest(object):
         self.loss_transfer = loss_transfer
         self.wx_square_transfer = wx_square_transfer
 
-    def sync_loss_info(self, lr_variables, loss, n_iter_, batch_index, optimizer):
-        current_suffix = (n_iter_, batch_index)
-
-        guest_loss_regular = optimizer.loss_norm(lr_variables.coef_)
-        if guest_loss_regular is not None:
-            en_host_loss_regular = self.host_loss_regular_transfer.get(idx=0, suffix=current_suffix)
-            loss += guest_loss_regular
-            loss += en_host_loss_regular
-
-        self.loss_transfer.remote(loss, role=consts.ARBITER, idx=0, suffix=current_suffix)
+    def sync_loss_info(self, loss, suffix=tuple()):
+        self.loss_transfer.remote(loss, role=consts.ARBITER, idx=0, suffix=suffix)
 
     def get_host_wx_square(self, suffix=tuple()):
         wx_squares = self.wx_square_transfer.get(idx=-1, suffix=suffix)
         return wx_squares
+
+    def get_host_loss(self, suffix=tuple()):
+        losses = self.loss_transfer.get(idx=-1, suffix=suffix)
+        return losses
 
 
 class Host(object):
@@ -57,17 +52,8 @@ class Host(object):
         self.loss_transfer = loss_transfer
         self.wx_square_transfer = wx_square_transfer
 
-    # def sync_loss_info(self, lr_variables, n_iter_, batch_index, cipher, optimizer, loss=0):
-    def sync_loss_info(self, lr_variables, loss, n_iter_, batch_index, cipher, optimizer):
-        current_suffix = (n_iter_, batch_index)
-
-        loss_regular = optimizer.loss_norm(lr_variables.coef_)
-
-        if loss_regular is not None:
-            loss = loss + loss_regular
-        en_loss = cipher.encrypt(loss)
-        self.host_loss_regular_transfer.remote(en_loss, role=consts.GUEST, idx=0, suffix=current_suffix)
-
-
     def remote_wx_square(self, wx_square, suffix=tuple()):
         self.wx_square_transfer.remote(obj=wx_square, role=consts.GUEST, idx=0, suffix=suffix)
+
+    def remote_loss(self, loss, suffix=tuple()):
+        self.loss_transfer.remote(obj=loss, role=consts.GUEST, idx=0, suffix=suffix)

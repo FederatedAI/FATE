@@ -20,7 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import loss_computer, convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
-from federatedml.optim.gradient import hetero_gradient_procedure
+from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
@@ -37,7 +37,7 @@ class HeteroLRHost(HeteroLRBase):
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_procedure = hetero_gradient_procedure.Host()
+        self.gradient_procedure = hetero_lr_gradient_and_loss.Host()
         self.loss_computer = loss_computer.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
@@ -111,8 +111,7 @@ class HeteroLRHost(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
 
-                self.loss_computer.sync_loss_info(self.lr_variables, self.n_iter_, batch_index,
-                                                  self.cipher, self.optimizer)
+                self.gradient_procedure.compute_loss(self.lr_variables, self.optimizer, self.n_iter_, batch_index)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_host_gradient)
                 batch_index += 1

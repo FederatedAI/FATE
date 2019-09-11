@@ -17,11 +17,11 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
-from federatedml.optim.gradient import hetero_gradient_procedure
+from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -35,8 +35,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.role = consts.GUEST
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
-        self.gradient_procedure = hetero_gradient_procedure.Guest()
-        self.loss_computer = loss_computer.Guest()
+        self.gradient_procedure = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
 
     @staticmethod
@@ -88,8 +87,7 @@ class HeteroLRGuest(HeteroLRBase):
 
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_procedure.compute_gradient_procedure(
                     batch_feat_inst,
-                    wx,
-                    self.lr_variables.fit_intercept,
+                    self.lr_variables,
                     self.n_iter_,
                     batch_index
                 )
@@ -97,7 +95,8 @@ class HeteroLRGuest(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_variables.coef_, **training_info)
 
-                self.loss_computer.sync_loss_info(self.lr_variables, loss, self.n_iter_, batch_index, self.optimizer)
+                loss_regular = self.optimizer.loss_norm(self.lr_variables)
+                self.gradient_procedure.compute_loss(data_instances, self.n_iter_, batch_index, loss_regular)
 
                 self.lr_variables = self.optimizer.update_model(self.lr_variables, optim_guest_gradient)
                 batch_index += 1
