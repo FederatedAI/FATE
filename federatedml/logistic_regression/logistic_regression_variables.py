@@ -21,7 +21,7 @@ import numpy as np
 from federatedml.framework.weights import ListWeights
 
 
-class LogisticRegressionVariables(ListWeights):
+class LogisticRegressionWeights(ListWeights):
     def __init__(self, l, fit_intercept):
         super().__init__(l)
         self.fit_intercept = fit_intercept
@@ -38,6 +38,3 @@ class LogisticRegressionVariables(ListWeights):
             return self._weights[-1]
         return 0.0
 
-    @property
-    def parameter(self):
-        return np.array(self._weights)

@@ -23,7 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.logistic_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.util import consts
@@ -69,7 +69,7 @@ class HomoLRHost(HomoLRBase):
         self.lr_variables = self._init_model_variables(data_instances)
         w = self.lr_variables.parameters
         w = self.cipher_operator.encrypt_list(w)
-        self.lr_variables = LogisticRegressionVariables(w, self.lr_variables.fit_intercept)
+        self.lr_variables = LogisticRegressionWeights(w, self.lr_variables.fit_intercept)
 
         LOGGER.debug("After init, lr_variable params: {}".format(self.lr_variables.parameters))
 
@@ -119,7 +119,7 @@ class HomoLRHost(HomoLRBase):
                     w = self.cipher.re_cipher(w=self.lr_variables.parameters,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
-                    self.lr_variables = LogisticRegressionVariables(w, self.fit_intercept)
+                    self.lr_variables = LogisticRegressionWeights(w, self.fit_intercept)
 
             LOGGER.debug("Before aggregate, lr_variable params: {}".format(self.lr_variables.parameters))
             self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
@@ -129,7 +129,7 @@ class HomoLRHost(HomoLRBase):
                 self.loss_history.append(iter_loss)
                 self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_variables = LogisticRegressionVariables(weight.parameters, self.fit_intercept)
+            self.lr_variables = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

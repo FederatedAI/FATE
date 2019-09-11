@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
 from federatedml.optim import activation
 from federatedml.util import consts
 from federatedml.util.transfer_variable.base_transfer_variable import Variable
@@ -79,7 +79,7 @@ class Host(object):
                       use_encrypted, fit_intercept, suffix=tuple()):
         if use_encrypted:
             final_model = self._final_model_variable.get(idx=0, suffix=suffix)
-            lr_variables = LogisticRegressionVariables(final_model.parameters, fit_intercept)
+            lr_variables = LogisticRegressionWeights(final_model.parameters, fit_intercept)
 
         wx = self.compute_wx(data_instances, lr_variables.coef_, lr_variables.intercept_)
         if use_encrypted:

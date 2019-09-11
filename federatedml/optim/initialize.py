@@ -17,7 +17,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
 from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
@@ -90,5 +90,5 @@ class Initializer(object):
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
 
         LOGGER.debug("Initialed model: {}".format(w))
-        lr_variables = LogisticRegressionVariables(w, init_params.fit_intercept)
+        lr_variables = LogisticRegressionWeights(w, init_params.fit_intercept)
         return lr_variables

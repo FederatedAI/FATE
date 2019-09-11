@@ -38,7 +38,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
                                      transfer_variables.guest_gradient,
                                      transfer_variables.guest_optim_gradient)
 
-    def compute_gradient_procedure(self, data_instances, lr_variables, optimizer,
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, lr_weights, optimizer,
                                    n_iter_, batch_index):
         """
         Compute gradients.
@@ -66,10 +66,10 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         host_forwards = self.get_host_forward(suffix=current_suffix)
         self.host_forwards = host_forwards
         wx = data_instances.mapValues(
-            lambda v: np.dot(v.features, lr_variables.coef_) + lr_variables.intercept_)
+            lambda v: np.dot(v.features, lr_weights.coef_) + lr_weights.intercept_)
 
         self.half_wx = wx
-        self.aggregated_wx = wx
+        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(wx)
 
         for host_forward in host_forwards:
             self.aggregated_wx = self.aggregated_wx.join(host_forward, lambda g, h: g + h)
@@ -79,7 +79,9 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
 
         unilateral_gradient = self.compute_gradient(data_instances,
                                                     fore_gradient,
-                                                    lr_variables.fit_intercept)
+                                                    lr_weights.fit_intercept)
+        unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, lr_weights)
+
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient, fore_gradient, host_forwards
 
@@ -117,7 +119,6 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 
-
 class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
     def __init__(self):
@@ -129,8 +130,8 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
                                      transfer_variables.host_gradient,
                                      transfer_variables.host_optim_gradient)
 
-    def compute_gradient_procedure(self, data_instances, lr_variables,
-                                   encrypted_calculator,
+    def compute_gradient_procedure(self, data_instances, lr_weights,
+                                   encrypted_calculator, optimizer,
                                    n_iter_, batch_index):
         """
         Compute gradients.
@@ -142,7 +143,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         ----------
         data_instances: DTable of Instance, input data
 
-        lr_variables: LogisticRegressionVariables
+        lr_weights: LogisticRegressionVariables
             Stores coef_ and intercept_ of lr
 
         encrypted_calculator: Use for different encrypted methods
@@ -153,7 +154,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
         """
         current_suffix = (n_iter_, batch_index)
-        wx = data_instances.mapValues(lambda v: np.dot(v.features, lr_variables.coef_) + lr_variables.intercept_)
+        wx = data_instances.mapValues(lambda v: np.dot(v.features, lr_weights.coef_) + lr_weights.intercept_)
         self.half_wx = wx
         host_forward = encrypted_calculator[batch_index].encrypt(wx)
         self.remote_host_forward(host_forward, suffix=current_suffix)
@@ -162,11 +163,13 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
         unilateral_gradient = self.compute_gradient(data_instances,
                                                     fore_gradient,
-                                                    lr_variables.fit_intercept)
+                                                    lr_weights.fit_intercept)
+        unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, lr_weights)
+
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient, fore_gradient
 
-    def compute_loss(self, lr_variables, optimizer, n_iter_, batch_index):
+    def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index):
         """
         Compute hetero-lr loss for:
         loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
@@ -180,7 +183,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         self.remote_wx_square(self_wx_square, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(lr_variables.coef_)
+        loss_regular = optimizer.loss_norm(lr_weights.coef_)
         self.remote_loss(loss_regular, suffix=current_suffix)
 
 

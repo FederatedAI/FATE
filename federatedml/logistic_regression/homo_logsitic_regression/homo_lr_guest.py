@@ -21,7 +21,7 @@ import functools
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.logistic_gradient import LogisticGradient
 from federatedml.statistic import data_overview
@@ -83,7 +83,7 @@ class HomoLRGuest(HomoLRBase):
             self.aggregator.send_model_for_aggregate(self.lr_variables, self.n_iter_)
             self.aggregator.send_loss(iter_loss, self.n_iter_)
             weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_variables = LogisticRegressionVariables(weight.parameters, self.fit_intercept)
+            self.lr_variables = LogisticRegressionWeights(weight.parameters, self.fit_intercept)
             self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
             LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

@@ -22,7 +22,7 @@ from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionVariables
+from federatedml.logistic_regression.logistic_regression_variables import LogisticRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
@@ -221,7 +221,7 @@ class BaseLogisticRegression(ModelBase):
                 tmp_intercept_ = weight_dict.get(intercept_name)
                 if fit_intercept:
                     tmp_vars = np.append(tmp_vars, tmp_intercept_)
-                classifier.lr_variables = LogisticRegressionVariables(l=tmp_vars, fit_intercept=fit_intercept)
+                classifier.lr_variables = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
                 self.one_vs_rest_obj.models.append(classifier)
         else:
             tmp_vars = np.zeros(feature_shape)
@@ -232,7 +232,7 @@ class BaseLogisticRegression(ModelBase):
 
             if fit_intercept:
                 tmp_vars = np.append(tmp_vars, result_obj.intercept)
-            self.lr_variables = LogisticRegressionVariables(l=tmp_vars, fit_intercept=fit_intercept)
+            self.lr_variables = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """
