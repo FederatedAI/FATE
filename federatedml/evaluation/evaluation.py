@@ -45,7 +45,7 @@ class Evaluation(ModelBase):
     def __init__(self):
         super().__init__()
         self.model_param = EvaluateParam()
-        self.eval_results = {}
+        self.eval_results = defaultdict(list)
 
         self.save_single_value_metric_list = [consts.AUC,
                                               consts.EXPLAINED_VARIANCE,
@@ -165,7 +165,7 @@ class Evaluation(ModelBase):
             split_data_with_label = self.split_data_with_type(eval_data_local)
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metircs(mode, data)
-                self.eval_results[key] = eval_result
+                self.eval_results[key].append(eval_result)
 
         self.callback_metric_data()
 
@@ -241,137 +241,138 @@ class Evaluation(ModelBase):
                                curve_name=data_type, thresholds=thresholds)
 
     def callback_metric_data(self):
-        for (data_type, eval_res) in self.eval_results.items():
+        for (data_type, eval_res_list) in self.eval_results.items():
             precision_recall = {}
-            for (metric, metric_res) in eval_res.items():
-                metric_namespace = metric_res[0]
-                metric_name = '_'.join([data_type, metric])
+            for eval_res in eval_res_list:
+                for (metric, metric_res) in eval_res.items():
+                    metric_namespace = metric_res[0]
+                    metric_name = '_'.join([data_type, metric])
 
-                if metric in self.save_single_value_metric_list:
-                    self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace,
-                                             eval_name=metric)
-                elif metric == consts.KS:
-                    best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
-                    self.__save_single_value(best_ks, metric_name=data_type,
-                                             metric_namespace=metric_namespace,
-                                             eval_name=metric)
-
-                    metric_name_fpr = '_'.join([metric_name, "fpr"])
-                    curve_name_fpr = "_".join([data_type, "fpr"])
-                    self.__save_curve_data(cuts, fpr, metric_name_fpr, metric_namespace)
-                    self.__save_curve_meta(metric_name=metric_name_fpr, metric_namespace=metric_namespace,
-                                           metric_type=metric.upper(), unit_name="",
-                                           curve_name=curve_name_fpr, pair_type=data_type, thresholds=thresholds)
-
-                    metric_name_tpr = '_'.join([metric_name, "tpr"])
-                    curve_name_tpr = "_".join([data_type, "tpr"])
-                    self.__save_curve_data(cuts, tpr, metric_name_tpr, metric_namespace)
-                    self.__save_curve_meta(metric_name_tpr, metric_namespace, metric.upper(), unit_name="",
-                                           curve_name=curve_name_tpr, pair_type=data_type, thresholds=thresholds)
-
-                elif metric == consts.ROC:
-                    self.__save_roc(data_type, metric_name, metric_namespace, metric_res[1])
-
-                elif metric in [consts.ACCURACY, consts.LIFT, consts.GAIN]:
-                    if self.eval_type == consts.MULTY and metric == consts.ACCURACY:
-                        self.__save_single_value(metric_res[1], metric_name=data_type,
+                    if metric in self.save_single_value_metric_list:
+                        self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace,
+                                                 eval_name=metric)
+                    elif metric == consts.KS:
+                        best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
+                        self.__save_single_value(best_ks, metric_name=data_type,
                                                  metric_namespace=metric_namespace,
                                                  eval_name=metric)
-                        continue
 
-                    score, cuts, thresholds = metric_res[1]
+                        metric_name_fpr = '_'.join([metric_name, "fpr"])
+                        curve_name_fpr = "_".join([data_type, "fpr"])
+                        self.__save_curve_data(cuts, fpr, metric_name_fpr, metric_namespace)
+                        self.__save_curve_meta(metric_name=metric_name_fpr, metric_namespace=metric_namespace,
+                                               metric_type=metric.upper(), unit_name="",
+                                               curve_name=curve_name_fpr, pair_type=data_type, thresholds=thresholds)
 
-                    if metric in [consts.LIFT, consts.GAIN]:
-                        score = [float(s[1]) for s in score]
-                        cuts = [float(c[1]) for c in cuts]
-                        cuts, score, idx_list = self.__filt_override_unit_ordinate_coordinate(cuts, score)
-                        thresholds = [thresholds[idx] for idx in idx_list]
+                        metric_name_tpr = '_'.join([metric_name, "tpr"])
+                        curve_name_tpr = "_".join([data_type, "tpr"])
+                        self.__save_curve_data(cuts, tpr, metric_name_tpr, metric_namespace)
+                        self.__save_curve_meta(metric_name_tpr, metric_namespace, metric.upper(), unit_name="",
+                                               curve_name=curve_name_tpr, pair_type=data_type, thresholds=thresholds)
 
-                        score.append(1.0)
-                        cuts.append(1.0)
-                        thresholds.append(0.0)
+                    elif metric == consts.ROC:
+                        self.__save_roc(data_type, metric_name, metric_namespace, metric_res[1])
 
-                    self.__save_curve_data(cuts, score, metric_name, metric_namespace)
-                    self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
-                                           metric_type=metric.upper(), unit_name="",
-                                           curve_name=data_type, thresholds=thresholds)
-                elif metric in [consts.PRECISION, consts.RECALL]:
-                    precision_recall[metric] = metric_res
-                    if len(precision_recall) < 2:
-                        continue
+                    elif metric in [consts.ACCURACY, consts.LIFT, consts.GAIN]:
+                        if self.eval_type == consts.MULTY and metric == consts.ACCURACY:
+                            self.__save_single_value(metric_res[1], metric_name=data_type,
+                                                     metric_namespace=metric_namespace,
+                                                     eval_name=metric)
+                            continue
 
-                    precision_res = precision_recall.get(consts.PRECISION)
-                    recall_res = precision_recall.get(consts.RECALL)
+                        score, cuts, thresholds = metric_res[1]
 
-                    if precision_res[0] != recall_res[0]:
-                        LOGGER.warning(
-                            "precision mode:{} is not equal to recall mode:{}".format(precision_res[0], recall_res[0]))
-                        continue
+                        if metric in [consts.LIFT, consts.GAIN]:
+                            score = [float(s[1]) for s in score]
+                            cuts = [float(c[1]) for c in cuts]
+                            cuts, score, idx_list = self.__filt_override_unit_ordinate_coordinate(cuts, score)
+                            thresholds = [thresholds[idx] for idx in idx_list]
 
-                    metric_namespace = precision_res[0]
-                    metric_name_precision = '_'.join([data_type, "precision"])
-                    metric_name_recall = '_'.join([data_type, "recall"])
+                            score.append(1.0)
+                            cuts.append(1.0)
+                            thresholds.append(0.0)
 
-                    pos_precision_score = precision_res[1][0]
-                    precision_cuts = precision_res[1][1]
-                    if len(precision_res[1]) >= 3:
-                        precision_thresholds = precision_res[1][2]
+                        self.__save_curve_data(cuts, score, metric_name, metric_namespace)
+                        self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
+                                               metric_type=metric.upper(), unit_name="",
+                                               curve_name=data_type, thresholds=thresholds)
+                    elif metric in [consts.PRECISION, consts.RECALL]:
+                        precision_recall[metric] = metric_res
+                        if len(precision_recall) < 2:
+                            continue
+
+                        precision_res = precision_recall.get(consts.PRECISION)
+                        recall_res = precision_recall.get(consts.RECALL)
+
+                        if precision_res[0] != recall_res[0]:
+                            LOGGER.warning(
+                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0], recall_res[0]))
+                            continue
+
+                        metric_namespace = precision_res[0]
+                        metric_name_precision = '_'.join([data_type, "precision"])
+                        metric_name_recall = '_'.join([data_type, "recall"])
+
+                        pos_precision_score = precision_res[1][0]
+                        precision_cuts = precision_res[1][1]
+                        if len(precision_res[1]) >= 3:
+                            precision_thresholds = precision_res[1][2]
+                        else:
+                            precision_thresholds = None
+
+                        pos_recall_score = recall_res[1][0]
+                        recall_cuts = recall_res[1][1]
+
+                        if len(recall_res[1]) >= 3:
+                            recall_thresholds = recall_res[1][2]
+                        else:
+                            recall_thresholds = None
+
+                        precision_curve_name = data_type
+                        recall_curve_name = data_type
+                        if self.eval_type == consts.BINARY:
+                            pos_precision_score = [score[1] for score in pos_precision_score]
+                            pos_recall_score = [score[1] for score in pos_recall_score]
+
+                            pos_recall_score, pos_precision_score, idx_list = self.__filt_override_unit_ordinate_coordinate(
+                                pos_recall_score, pos_precision_score)
+
+                            precision_cuts = [precision_cuts[idx] for idx in idx_list]
+                            recall_cuts = [recall_cuts[idx] for idx in idx_list]
+
+                            edge_idx = idx_list[-1]
+                            if edge_idx == len(precision_thresholds) - 1:
+                                idx_list = idx_list[:-1]
+                            precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
+                            recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
+
+                        elif self.eval_type == consts.MULTY:
+                            average_precision = float(np.array(pos_precision_score).mean())
+                            average_recall = float(np.array(pos_recall_score).mean())
+                            self.__save_single_value(average_precision, metric_name=data_type,
+                                                     metric_namespace=metric_namespace,
+                                                     eval_name="precision")
+                            self.__save_single_value(average_recall, metric_name=data_type,
+                                                     metric_namespace=metric_namespace,
+                                                     eval_name="recall")
+                            precision_curve_name = metric_name_precision
+                            recall_curve_name = metric_name_recall
+
+                        self.__save_curve_data(precision_cuts, pos_precision_score, metric_name_precision,
+                                               metric_namespace)
+                        self.__save_curve_meta(metric_name_precision, metric_namespace,
+                                               "_".join([consts.PRECISION.upper(), self.eval_type.upper()]),
+                                               unit_name="", ordinate_name="Precision", curve_name=precision_curve_name,
+                                               pair_type=data_type, thresholds=precision_thresholds)
+
+                        self.__save_curve_data(recall_cuts, pos_recall_score, metric_name_recall,
+                                               metric_namespace)
+                        self.__save_curve_meta(metric_name_recall, metric_namespace,
+                                               "_".join([consts.RECALL.upper(), self.eval_type.upper()]),
+                                               unit_name="", ordinate_name="Recall", curve_name=recall_curve_name,
+                                               pair_type=data_type, thresholds=recall_thresholds)
                     else:
-                        precision_thresholds = None
-
-                    pos_recall_score = recall_res[1][0]
-                    recall_cuts = recall_res[1][1]
-
-                    if len(recall_res[1]) >= 3:
-                        recall_thresholds = recall_res[1][2]
-                    else:
-                        recall_thresholds = None
-
-                    precision_curve_name = data_type
-                    recall_curve_name = data_type
-                    if self.eval_type == consts.BINARY:
-                        pos_precision_score = [score[1] for score in pos_precision_score]
-                        pos_recall_score = [score[1] for score in pos_recall_score]
-
-                        pos_recall_score, pos_precision_score, idx_list = self.__filt_override_unit_ordinate_coordinate(
-                            pos_recall_score, pos_precision_score)
-
-                        precision_cuts = [precision_cuts[idx] for idx in idx_list]
-                        recall_cuts = [recall_cuts[idx] for idx in idx_list]
-
-                        edge_idx = idx_list[-1]
-                        if edge_idx == len(precision_thresholds) - 1:
-                            idx_list = idx_list[:-1]
-                        precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
-                        recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
-
-                    elif self.eval_type == consts.MULTY:
-                        average_precision = float(np.array(pos_precision_score).mean())
-                        average_recall = float(np.array(pos_recall_score).mean())
-                        self.__save_single_value(average_precision, metric_name=data_type,
-                                                 metric_namespace=metric_namespace,
-                                                 eval_name="precision")
-                        self.__save_single_value(average_recall, metric_name=data_type,
-                                                 metric_namespace=metric_namespace,
-                                                 eval_name="recall")
-                        precision_curve_name = metric_name_precision
-                        recall_curve_name = metric_name_recall
-
-                    self.__save_curve_data(precision_cuts, pos_precision_score, metric_name_precision,
-                                           metric_namespace)
-                    self.__save_curve_meta(metric_name_precision, metric_namespace,
-                                           "_".join([consts.PRECISION.upper(), self.eval_type.upper()]),
-                                           unit_name="", ordinate_name="Precision", curve_name=precision_curve_name,
-                                           pair_type=data_type, thresholds=precision_thresholds)
-
-                    self.__save_curve_data(recall_cuts, pos_recall_score, metric_name_recall,
-                                           metric_namespace)
-                    self.__save_curve_meta(metric_name_recall, metric_namespace,
-                                           "_".join([consts.RECALL.upper(), self.eval_type.upper()]),
-                                           unit_name="", ordinate_name="Recall", curve_name=recall_curve_name,
-                                           pair_type=data_type, thresholds=recall_thresholds)
-                else:
-                    LOGGER.warning("Unknown metric:{}".format(metric))
+                        LOGGER.warning("Unknown metric:{}".format(metric))
 
     def __filt_threshold(self, thresholds, step):
         cuts = list(map(float, np.arange(0, 1, step)))
