@@ -29,7 +29,9 @@ def internal_server_error(e):
 
 @manager.route('/dag/dependency', methods=['post'])
 def pipeline_dag_dependency():
-    dependency = pipeline_manager.pipeline_dag_dependency(job_id=request.json.get('job_id', ''))
+    dependency = pipeline_manager.pipeline_dag_dependency(job_id=request.json.get('job_id', ''),
+                                                          party_id=request.json.get('party_id', ''),
+                                                          role=request.json.get('role', ''))
     if dependency:
         return get_json_result(retcode=0, retmsg='success', data=dependency)
     else:
