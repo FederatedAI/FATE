@@ -208,6 +208,12 @@ class TaskScheduler(object):
                     return False
             return True
         else:
+            for role in job_runtime_conf['role']:
+                for party_id_index in range(len(role)):
+                    task_info = {"f_status":JobStatus.FAILED if component_task_status==False else JobStatus.TIMEOUT}
+                    TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
+                              party_id=role[party_id_index], initiator_party_id=job_initiator.get('party_id'),
+                              task_info=task_info)
             return False
 
     @staticmethod
@@ -252,7 +258,7 @@ class TaskScheduler(object):
                 if 'failed' in status_collect:
                     return False
                 if 'timeout' in status_collect:
-                    return False
+                    return None
                 elif len(status_collect) == 1 and 'success' in status_collect:
                     return True
                 else:
