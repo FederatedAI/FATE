@@ -28,7 +28,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, schedule_logger
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, job_default_timeout
+from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 
 
@@ -69,9 +69,11 @@ class TaskScheduler(object):
         if not job_initiator:
             return False
 
-        timeout = job_parameters.get("timeout", "")
-        if not timeout:
-            timeout = job_default_timeout(runtime_conf=job_runtime_conf, dsl=job_dsl)
+        timeout = job_parameters.get("timeout", job_utils.job_default_timeout(runtime_conf=job_runtime_conf, dsl=job_dsl))
+        if timeout < 20:
+            schedule_logger.info('job {} timeout {}  cannot be less than 20 seconds'.format(job_id, timeout))
+            timeout = 20
+            schedule_logger.info('set the job {} timeout to {}s'.format(job_id, timeout))
 
         t = Timer(timeout, TaskScheduler.job_handler, [job_id])
         t.start()
@@ -248,6 +250,8 @@ class TaskScheduler(object):
                                                                                    _party_id, task_status))
                         status_collect.add(task_status)
                 if 'failed' in status_collect:
+                    return False
+                if 'timeout' in status_collect:
                     return False
                 elif len(status_collect) == 1 and 'success' in status_collect:
                     return True

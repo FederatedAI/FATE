@@ -297,6 +297,8 @@ class Tracking(object):
             if jobs:
                 job = jobs[0]
                 is_insert = False
+                if job.f_status == JobStatus.TIMEOUT:
+                    return None
             elif create:
                 job = Job()
                 job.f_create_time = current_timestamp()
