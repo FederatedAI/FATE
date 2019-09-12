@@ -23,8 +23,7 @@ import random
 
 from google.protobuf import json_format
 
-from arch.api.proto import feature_selection_meta_pb2
-from arch.api.proto import feature_selection_param_pb2
+from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.param.feature_selection_param import UniqueValueParam
 from federatedml.statistic.data_overview import get_header

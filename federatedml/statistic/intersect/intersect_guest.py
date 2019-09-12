@@ -24,7 +24,7 @@ from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
-from federatedml.util.transfer_variable.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
+from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -46,9 +46,11 @@ class RsaIntersectionGuest(RsaIntersect):
 
     def run(self, data_instances):
         LOGGER.info("Start rsa intersection")
-        public_key = get(name=self.transfer_variable.rsa_pubkey.name,
-                         tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
-                         idx=0)
+
+        public_key = self.transfer_variable.rsa_pubkey.get(idx=0)
+        # public_key = get(name=self.transfer_variable.rsa_pubkey.name,
+        #                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.rsa_pubkey),
+        #                  idx=0)
 
         LOGGER.info("Get RSA public_key:{} from Host".format(public_key))
         self.e = public_key["e"]
@@ -68,11 +70,15 @@ class RsaIntersectionGuest(RsaIntersect):
                                                                                                    self.n))
         # table(r^e % n *hash(sid), 1)
         table_send_guest_id = table_guest_id.map(lambda k, v: (v, 1))
-        remote(table_send_guest_id,
-               name=self.transfer_variable.intersect_guest_ids.name,
-               tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids),
-               role=consts.HOST,
-               idx=0)
+
+        self.transfer_variable.intersect_guest_ids.remote(table_send_guest_id,
+                                                          role=consts.HOST,
+                                                          idx=0)
+        # remote(table_send_guest_id,
+        #        name=self.transfer_variable.intersect_guest_ids.name,
+        #        tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_guest_ids),
+        #        role=consts.HOST,
+        #        idx=0)
         LOGGER.info("Remote guest_id to Host")
 
         # table(r^e % n *hash(sid), sid)
@@ -80,19 +86,21 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # Recv host_ids_process
         # table(host_id_process, 1)
-        table_host_ids_process = get(name=self.transfer_variable.intersect_host_ids_process.name,
-                                     tag=self.transfer_variable.generate_transferid(
-                                         self.transfer_variable.intersect_host_ids_process),
-                                     idx=0)
+        table_host_ids_process = self.transfer_variable.intersect_host_ids_process.get(idx=0)
+        # table_host_ids_process = get(name=self.transfer_variable.intersect_host_ids_process.name,
+        #                              tag=self.transfer_variable.generate_transferid(
+        #                                  self.transfer_variable.intersect_host_ids_process),
+        #                              idx=0)
         LOGGER.info("Get host_ids_process from Host")
 
         # Recv process guest ids
         # table(r^e % n *hash(sid), guest_id_process)
-        table_recv_guest_ids_process = get(name=self.transfer_variable.intersect_guest_ids_process.name,
-                                           tag=self.transfer_variable.generate_transferid(
-                                               self.transfer_variable.intersect_guest_ids_process),
-                                           # role=consts.HOST,
-                                           idx=0)
+        table_recv_guest_ids_process = self.transfer_variable.intersect_guest_ids_process.get(idx=0)
+        # table_recv_guest_ids_process = get(name=self.transfer_variable.intersect_guest_ids_process.name,
+        #                                    tag=self.transfer_variable.generate_transferid(
+        #                                        self.transfer_variable.intersect_guest_ids_process),
+        #                                    # role=consts.HOST,
+        #                                    idx=0)
         LOGGER.info("Get guest_ids_process from Host")
 
         # table(r^e % n *hash(sid), sid, guest_ids_process)
@@ -123,11 +131,14 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # send intersect id
         if self.send_intersect_id_flag:
-            remote(table_send_intersect_ids,
-                   name=self.transfer_variable.intersect_ids.name,
-                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
-                   role=consts.HOST,
-                   idx=0)
+            self.transfer_variable.intersect_ids.remote(table_send_intersect_ids,
+                                                        role=consts.HOST,
+                                                        idx=0)
+            # remote(table_send_intersect_ids,
+            #        name=self.transfer_variable.intersect_ids.name,
+            #        tag=self.transfer_variable.generate_transferid(self.transfer_variable.intersect_ids),
+            #        role=consts.HOST,
+            #        idx=0)
             LOGGER.info("Remote intersect ids to Host!")
         else:
             LOGGER.info("Not send intersect ids to Host!")

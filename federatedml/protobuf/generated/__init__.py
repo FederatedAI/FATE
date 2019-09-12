@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,14 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-################################################################################
-#
-# AUTO GENERATED TRANSFER VARIABLE CLASS. DO NOT MODIFY
-#
-################################################################################
-
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
-
-

@@ -16,16 +16,13 @@
 
 import copy
 import functools
-import numpy as np
 import time
 
-from arch.api import federation
 from arch.api.model_manager import manager as model_manager
-from arch.api.proto import one_vs_rest_param_pb2
+from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
 from federatedml.util import consts
-from federatedml.util.transfer_variable.one_vs_rest_transfer_variable import OneVsRestTransferVariable
+from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -117,26 +114,38 @@ class OneVsRest(object):
         synchronize all of class of data, include guest, host and arbiter, from guest to the others
         """
         if self.role == consts.GUEST:
+            self.transfer_variable.aggregate_classes.remote(self.classes,
+                                                            role=consts.HOST,
+                                                            idx=0)
+            """
             federation.remote(self.classes,
                               name=self.transfer_variable.aggregate_classes.name,
                               tag=self.transfer_variable.generate_transferid(self.transfer_variable.aggregate_classes),
                               role=consts.HOST,
                               idx=0)
+            """
 
             if self.has_arbiter:
+                self.transfer_variable.aggregate_classes.remote(self.classes,
+                                                                role=consts.ARBITER,
+                                                                idx=0)
+                """
                 federation.remote(self.classes,
                                   name=self.transfer_variable.aggregate_classes.name,
                                   tag=self.transfer_variable.generate_transferid(
                                       self.transfer_variable.aggregate_classes),
                                   role=consts.ARBITER,
                                   idx=0)
+                """
 
         elif self.role == consts.HOST or self.role == consts.ARBITER:
+            self.classes = self.transfer_variable.aggregate_classes.get(idx=0)
+            """
             self.classes = federation.get(name=self.transfer_variable.aggregate_classes.name,
                                           tag=self.transfer_variable.generate_transferid(
                                               self.transfer_variable.aggregate_classes),
                                           idx=0)
-
+            """
         else:
             raise ValueError("Unknown role:{}".format(self.role))
 
@@ -147,20 +156,27 @@ class OneVsRest(object):
         """
         if self.mode == consts.HOMO:
             if self.role == consts.GUEST:
+                host_classes_list = self.transfer_variable.host_classes.get(idx=0)
+                """
                 host_classes_list = federation.get(name=self.transfer_variable.host_classes.name,
                                                    tag=self.transfer_variable.generate_transferid(
                                                        self.transfer_variable.host_classes),
                                                    idx=0)
-
+                """
                 for host_class in host_classes_list:
                     self.classes.add(host_class)
 
             elif self.role == consts.HOST:
+                self.transfer_variable.host_classes.remote(self.classes,
+                                                           role=consts.GUEST,
+                                                           idx=0)
+                """
                 federation.remote(self.classes,
                                   name=self.transfer_variable.host_classes.name,
                                   tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_classes),
                                   role=consts.GUEST,
                                   idx=0)
+                """
 
         self.__synchronize_aggregate_classed_list()
 

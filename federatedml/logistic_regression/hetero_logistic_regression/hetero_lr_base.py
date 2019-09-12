@@ -18,7 +18,7 @@
 
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_lr_transfer_variable import HeteroLRTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 
 class HeteroLRBase(BaseLogisticRegression):
     def __init__(self):

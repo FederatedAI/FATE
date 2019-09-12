@@ -23,13 +23,12 @@
 #
 ################################################################################
 
-from federatedml.util.transfer_variable.base_transfer_variable import BaseTransferVariable, Variable
-from federatedml.util.transfer_variable.base_transfer_variable import Variable
+from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
 
 
-class HeteroFeatureBinningTransferVariable(BaseTransferVariable):
+# noinspection PyAttributeOutsideInit
+class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.paillier_pubkey = Variable(name="HeteroFeatureBinningTransferVariable.paillier_pubkey", auth={'src': "guest", 'dst': ['host']})
-        self.encrypted_label = Variable(name="HeteroFeatureBinningTransferVariable.encrypted_label", auth={'src': "guest", 'dst': ['host']})
-        self.encrypted_bin_sum = Variable(name="HeteroFeatureBinningTransferVariable.encrypted_bin_sum", auth={'src': "host", 'dst': ['guest']})
+        self.tree_dim = Variable(name='HeteroSecureBoostingTreeTransferVariable.tree_dim', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.stop_flag = Variable(name='HeteroSecureBoostingTreeTransferVariable.stop_flag', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass

@@ -18,7 +18,7 @@ import copy
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import lr_model_meta_pb2, lr_model_param_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold

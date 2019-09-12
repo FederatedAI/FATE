@@ -21,10 +21,10 @@ from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
 from federatedml.ftl.encryption.encryption import decrypt_scalar, decrypt_array
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.optim.convergence import AbsConverge
-from federatedml.param.param import FTLModelParam
+from federatedml.param.ftl_param import FTLModelParam
 from federatedml.secureprotol.encrypt import PaillierEncrypt
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 
