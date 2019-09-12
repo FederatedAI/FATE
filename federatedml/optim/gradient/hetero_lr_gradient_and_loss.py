@@ -40,7 +40,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
 
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
-                                 transfer_variables.loss_immediate)
+                                 transfer_variables.loss_intermediate)
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, lr_weights, optimizer,
                                    n_iter_, batch_index):
@@ -52,7 +52,6 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         Define (0.25 * wx - 0.5 * y) as fore_gradient
 
         Then, gradient = fore_gradient * x
-
 
         Parameters
         ----------
@@ -70,11 +69,11 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         host_forwards = self.get_host_forward(suffix=current_suffix)
         self.host_forwards = host_forwards
-        wx = data_instances.mapValues(
+        half_wx = data_instances.mapValues(
             lambda v: np.dot(v.features, lr_weights.coef_) + lr_weights.intercept_)
 
-        self.half_wx = wx
-        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(wx)
+        self.half_wx = half_wx
+        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(half_wx)
 
         for host_forward in host_forwards:
             self.aggregated_wx = self.aggregated_wx.join(host_forward, lambda g, h: g + h)
@@ -106,7 +105,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
         loss_list = []
-        wx_squares = self.get_host_loss_immediate(suffix=current_suffix)
+        wx_squares = self.get_host_loss_intermediate(suffix=current_suffix)
 
         if loss_norm is not None:
             host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
@@ -121,6 +120,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
                 loss += loss_norm
                 loss += host_loss_regular[host_idx]
             loss_list.append(loss)
+        LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 
@@ -137,7 +137,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
-                                 transfer_variables.loss_immediate)
+                                 transfer_variables.loss_intermediate)
 
     def compute_gradient_procedure(self, data_instances, lr_weights,
                                    encrypted_calculator, optimizer,
@@ -192,7 +192,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         """
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_loss_immediate(self_wx_square, suffix=current_suffix)
+        self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_weights.coef_)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
@@ -238,8 +238,20 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
         gradient = np.hstack((gradient, guest_gradient))
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
+            grad, size_list
+        ))
+
         delta_grad = optimizer.apply_gradients(grad)
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
+            delta_grad
+        ))
         separate_optim_gradient = self.separate(delta_grad, size_list)
+        LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
+            separate_optim_gradient
+        ))
         host_optim_gradients = separate_optim_gradient[: -1]
         guest_optim_gradient = separate_optim_gradient[-1]
 

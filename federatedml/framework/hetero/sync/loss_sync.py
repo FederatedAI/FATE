@@ -29,17 +29,17 @@ class Arbiter(object):
 
 
 class Guest(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_immediate_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_intermediate_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
-        self.loss_immediate_transfer = loss_immediate_transfer
+        self.loss_intermediate_transfer = loss_intermediate_transfer
 
     def sync_loss_info(self, loss, suffix=tuple()):
         self.loss_transfer.remote(loss, role=consts.ARBITER, idx=0, suffix=suffix)
 
-    def get_host_loss_immediate(self, suffix=tuple()):
-        loss_immediate = self.loss_immediate_transfer.get(idx=-1, suffix=suffix)
-        return loss_immediate
+    def get_host_loss_intermediate(self, suffix=tuple()):
+        loss_intermediate = self.loss_intermediate_transfer.get(idx=-1, suffix=suffix)
+        return loss_intermediate
 
     def get_host_loss_regular(self, suffix=tuple()):
         losses = self.host_loss_regular_transfer.get(idx=-1, suffix=suffix)
@@ -47,13 +47,13 @@ class Guest(object):
 
 
 class Host(object):
-    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_immediate_transfer):
+    def _register_loss_sync(self, host_loss_regular_transfer, loss_transfer, loss_intermediate_transfer):
         self.host_loss_regular_transfer = host_loss_regular_transfer
         self.loss_transfer = loss_transfer
-        self.loss_immediate_transfer = loss_immediate_transfer
+        self.loss_intermediate_transfer = loss_intermediate_transfer
 
-    def remote_loss_immediate(self, loss_immediate, suffix=tuple()):
-        self.loss_immediate_transfer.remote(obj=loss_immediate, role=consts.GUEST, idx=0, suffix=suffix)
+    def remote_loss_intermediate(self, loss_intermediate, suffix=tuple()):
+        self.loss_intermediate_transfer.remote(obj=loss_intermediate, role=consts.GUEST, idx=0, suffix=suffix)
 
     def remote_loss_regular(self, loss_regular, suffix=tuple()):
         self.host_loss_regular_transfer.remote(obj=loss_regular, role=consts.GUEST, idx=0, suffix=suffix)

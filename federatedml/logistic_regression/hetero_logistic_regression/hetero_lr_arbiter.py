@@ -94,7 +94,7 @@ class HeteroLRArbiter(HeteroLRBase):
             total_gradient = None
             for batch_index in batch_data_generator:
                 # Compute and Transfer gradient info
-                gradient = self.gradient_procedure.compute_gradient_procedure(self.cipher_operator,
+                gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
                                                                               self.optimizer,
                                                                               self.n_iter_,
                                                                               batch_index)
@@ -105,7 +105,7 @@ class HeteroLRArbiter(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
-                loss_list = self.gradient_procedure.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
+                loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
 
                 if len(loss_list) == 1:
                     iter_loss += loss_list[0]

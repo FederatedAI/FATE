@@ -220,6 +220,10 @@ def optimizer_factory(param):
     except AttributeError:
         raise AttributeError("Optimizer parameters has not been totally set")
 
+    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {}".format(
+        optimizer_type, learning_rate, alpha, penalty
+    ))
+
     if optimizer_type == 'sgd':
         return _SgdOptimizer(learning_rate, alpha, penalty)
     elif optimizer_type == 'nesterov_momentum_sgd':

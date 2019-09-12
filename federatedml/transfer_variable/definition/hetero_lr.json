@@ -49,7 +49,7 @@
         "arbiter"
       ]
     },
-    "loss_immediate": {
+    "loss_intermediate": {
       "src": "host",
       "dst": [
         "guest"

@@ -101,7 +101,7 @@ class HeteroLRGuest(HeteroLRBase):
                     self.n_iter_,
                     batch_index
                 )
-
+                LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
@@ -110,12 +110,15 @@ class HeteroLRGuest(HeteroLRBase):
 
                 self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_guest_gradient)
                 batch_index += 1
+                LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.lr_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
             self.n_iter_ += 1
             if self.is_converged:
                 break
+
+        LOGGER.debug("Final lr weights: {}".format(self.lr_weights.unboxed))
 
     def predict(self, data_instances):
         """

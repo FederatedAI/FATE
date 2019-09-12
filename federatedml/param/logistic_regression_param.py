@@ -19,11 +19,11 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.util import consts
 
 
@@ -129,7 +129,8 @@ class LogisticParam(BaseParam):
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam(), one_vs_rest_param=OneVsRestParam()):
+                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 one_vs_rest_param=OneVsRestParam()):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -165,9 +166,9 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's eps {} not supported, should be float type".format(self.eps))
 
-        if type(self.alpha).__name__ != "float":
+        if type(self.alpha).__name__ not in  ["float", 'int']:
             raise ValueError(
-                "logistic_param's alpha {} not supported, should be float type".format(self.alpha))
+                "logistic_param's alpha {} not supported, should be float or int type".format(self.alpha))
 
         if type(self.optimizer).__name__ != "str":
             raise ValueError(
@@ -214,7 +215,6 @@ class LogisticParam(BaseParam):
                 raise ValueError(
                     "logistic_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
-
 
         if type(self.re_encrypt_batches).__name__ != "int":
             raise ValueError(

@@ -29,7 +29,6 @@ class LogisticRegressionWeights(ListWeights):
     def for_remote(self):
         return TransferableWeights(self._weights, self.__class__, self.fit_intercept)
 
-
     @property
     def coef_(self):
         if self.fit_intercept:
