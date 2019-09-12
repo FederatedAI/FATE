@@ -24,7 +24,7 @@ from arch.api.proto import linr_model_meta_pb2, linr_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-from federatedml.linear_regression.linear_regression_variables import LinearRegressionVariables
+from federatedml.linear_regression.linear_regression_weights import LinearRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.optim import Initializer
@@ -66,7 +66,7 @@ class BaseLinearRegression(ModelBase):
         self.role = ''
         self.mode = ''
         self.schema = {}
-        # self.header = []
+        self.cipher_operator = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -86,13 +86,9 @@ class BaseLinearRegression(ModelBase):
         else:
             self.cipher_operator = FakeEncrypt()
 
-        self.encrypt_params = params.encrypt_param
-        self.encrypt_method = self.encrypt_params.method
         self.converge_func = converge_func_factory(params)
 
         self.re_encrypt_batches = params.re_encrypt_batches
-        self.predict_param = params.predict_param
-        self.key_length = params.encrypt_param.key_length
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -154,9 +150,9 @@ class BaseLinearRegression(ModelBase):
 
         weight_dict = {}
         for idx, header_name in enumerate(header):
-            coef_i = self.linR_variables.coef_[idx]
+            coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
-        intercept_ = self.linR_variables.intercept_
+        intercept_ = self.model_weights.intercept_
         param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,
                                                                  loss_history=self.loss_history,
                                                                  is_converged=self.is_converged,
@@ -199,7 +195,7 @@ class BaseLinearRegression(ModelBase):
 
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
-        self.linR_variables = LinearRegressionVariables(l=tmp_vars, fit_intercept=fit_intercept)
+        self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """

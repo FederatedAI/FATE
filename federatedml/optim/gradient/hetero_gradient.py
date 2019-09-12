@@ -19,59 +19,12 @@ import functools
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.optim.gradient.base_gradient import Gradient
 from federatedml.util import fate_operator
-
-from operator import add
 
 LOGGER = log_utils.getLogger()
 
 
-class LinearGradient(Gradient):
-    """
-    compute gradient and loss in general setting
-    """
-    def compute_loss(self, X, Y, coef, intercept):
-        """
-        compute total loss of a given linear regression model
-        :param X: feature matrix
-        :param Y: dependent variable
-        :param coef: coefficients of given model
-        :param intercept: intercept of given model
-        :return: total loss value
-        """
-        tot_loss = np.square(np.add(-Y.transpose(), X.dot(coef) + intercept)).sum()
-        return tot_loss
-
-    def compute(self, values, coef, intercept, fit_intercept=True):
-        """
-        compute gradient and loss of a given linear regression model
-        :param values: X, Y matrices
-        :param coef: coefficients of given model
-        :param intercept: intercept if given model
-        :param fit_intercept: boolean, if model has interception or not
-        :return: gradient and total loss
-        """
-        X, Y = self.load_data(values)
-
-        batch_size = len(X)
-
-        if batch_size == 0:
-            LOGGER.warning("This partition got 0 data")
-            return None, None
-
-        b_gradient = np.add(-Y.transpose(), X.dot(coef) + intercept)
-        m_gradient = np.multiply(b_gradient, X)
-        if fit_intercept:
-            gradient = np.c_[m_gradient, b_gradient]
-        else:
-            gradient = m_gradient
-        grad = sum(gradient)
-        loss = self.compute_loss(X, Y, coef, intercept)
-        return grad, loss
-
-
-class HeteroLinearGradientComputer(object):
+class HeteroGradientComputer(object):
     """
     Class for compute hetero linear regression gradient and loss
     """

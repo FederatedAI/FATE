@@ -17,14 +17,13 @@
 #  limitations under the License.
 #
 
-import numpy as np
-
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_gradient_procedure
+from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.util import consts
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -39,12 +38,8 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
-        self.gradient_procedure = hetero_gradient_procedure.Arbiter()
-        self.loss_computer = loss_computer.Arbiter()
+        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Arbiter()
         self.converge_procedure = convergence.Arbiter()
-
-    def perform_subtasks(self, **training_info):
-        pass
 
     def run(self, component_parameters=None, args=None):
         """
@@ -59,6 +54,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
             LOGGER.info("Task is cross validation")
             self.cross_validation(None)
             return
+
         if "model" not in args:
             LOGGER.info("Task is fit")
             self.set_flowid('train')
@@ -82,27 +78,36 @@ class HeteroLinRArbiter(HeteroLinRBase):
             LOGGER.info("iter:{}".format(self.n_iter_))
             iter_loss = 0
             batch_data_generator = self.batch_generator.generate_batch_data()
+            total_gradient = None
             for batch_index in batch_data_generator:
                 # Compute and Transfer gradient info
-                self.gradient_procedure.compute_gradient_procedure(self.cipher_operator,
+                gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
                                                                    self.optimizer,
                                                                    self.n_iter_,
                                                                    batch_index)
-                training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                if total_gradient is None:
+                    total_gradient = gradient
+                else:
+                    total_gradient = total_gradient + gradient
 
-                loss = self.loss_computer.sync_loss_info(self.n_iter_, batch_index)
-                de_loss = self.cipher_operator.decrypt(loss)
-                iter_loss += de_loss
-                self.perform_subtasks(**training_info)
+                loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
+                if len(loss_list) == 1:
+                    iter_loss = iter_loss + loss_list[0]
 
             # if converge
             loss = iter_loss / self.batch_generator.batch_num
 
             self.callback_loss(self.n_iter_, loss)
 
-            if self.converge_func.is_converge(loss):
-                self.is_converged = True
-            LOGGER.info("iter:{}, loss:{}, is_converged:{}".format(self.n_iter_, loss, self.is_converged))
+            if self.model_param.converge_func == 'weight_diff':
+                weight_diff = fate_operator.norm(total_gradient)
+                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
+                                                                                weight_diff, self.is_converged))
+                if weight_diff < self.model_param.eps:
+                    self.is_converged = True
+            else:
+                self.is_converged = self.converge_func.is_converge(loss)
+                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
             self.n_iter_ += 1

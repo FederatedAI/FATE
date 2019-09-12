@@ -1,5 +1,5 @@
 {
-  "HeteroPoissonTransferVariable": {
+  "HeteroLinRTransferVariable": {
     "paillier_pubkey": {
       "src": "arbiter",
       "dst": [
@@ -19,12 +19,6 @@
         "guest"
       ]
     },
-    "host_loss": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
     "fore_gradient": {
       "src": "guest",
       "dst": [
@@ -37,8 +31,14 @@
         "arbiter"
       ]
     },
-    "optim_guest_gradient": {
+    "guest_optim_gradient": {
       "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_loss_regular": {
+      "src": "host",
       "dst": [
         "guest"
       ]
@@ -49,7 +49,13 @@
         "arbiter"
       ]
     },
-    "is_stopped": {
+    "loss_immediate": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "converge_flag": {
       "src": "arbiter",
       "dst": [
         "host",
@@ -63,7 +69,7 @@
         "arbiter"
       ]
     },
-    "optim_host_gradient": {
+    "host_optim_gradient": {
       "src": "arbiter",
       "dst": [
         "host"

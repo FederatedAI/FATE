@@ -15,10 +15,10 @@
 #
 
 from arch.api.utils import log_utils
-from federatedml.framework.hetero.procedure import loss_computer, convergence
+from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_gradient_procedure
+from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 
@@ -33,9 +33,9 @@ class HeteroLinRGuest(HeteroLinRBase):
         self.role = consts.GUEST
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
-        self.gradient_procedure = hetero_gradient_procedure.Guest()
-        self.loss_computer = loss_computer.Guest()
+        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
+        self.encrypted_calculator = None
 
     @staticmethod
     def load_data(data_instance):
@@ -85,11 +85,11 @@ class HeteroLinRGuest(HeteroLinRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient, loss = self.gradient_procedure.compute_gradient_procedure(
+                optim_guest_gradient, loss = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.linR_variables,
-                    self.compute_wx,
+                    self.model_weights,
                     self.encrypted_calculator,
+                    self.optimizer,
                     self.n_iter_,
                     batch_index
                 )
