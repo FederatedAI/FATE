@@ -115,38 +115,57 @@ class HomoLRGuest(HomoLRBase):
                                                                            iter_num)
             LOGGER.debug("Start to remote model: {}, transfer_id: {}".format(w, model_transfer_id))
 
+            self.transfer_variable.guest_model.remote(w,
+                                                      role=consts.ARBITER,
+                                                      idx=0,
+                                                      suffix=(iter_num,))
+            """
             federation.remote(w,
                               name=self.transfer_variable.guest_model.name,
                               tag=model_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            """
 
             # send loss
             # if self.use_loss:
             loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
             LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
+            self.transfer_variable.guest_loss.remote(total_loss,
+                                                     role=consts.ARBITER,
+                                                     idx=0,
+                                                     suffix=(iter_num,))
+            """
             federation.remote(total_loss,
                               name=self.transfer_variable.guest_loss.name,
                               tag=loss_transfer_id,
                               role=consts.ARBITER,
                               idx=0)
+            """
 
             # recv model
-            model_transfer_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.final_model, iter_num)
+            # model_transfer_id = self.transfer_variable.generate_transferid(
+            #     self.transfer_variable.final_model, iter_num)
+            w = self.transfer_variable.final_model.get(idx=0,
+                                                       suffix=(iter_num,))
+            """
             w = federation.get(name=self.transfer_variable.final_model.name,
                                tag=model_transfer_id,
                                idx=0)
-
+            """
             w = np.array(w)
             self.set_coef_(w)
 
             # recv converge flag
             converge_flag_id = self.transfer_variable.generate_transferid(self.transfer_variable.converge_flag,
                                                                           iter_num)
+            converge_flag = self.transfer_variable.converge_flag.get(idx=0,
+                                                                     suffix=(iter_num,))
+            """
             converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
                                            tag=converge_flag_id,
                                            idx=0)
+            """
 
             self.n_iter_ = iter_num
             LOGGER.debug("converge flag is :{}".format(converge_flag))
@@ -160,11 +179,17 @@ class HomoLRGuest(HomoLRBase):
             self.transfer_variable.guest_party_weight
         )
         LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
+
+        self.transfer_variable.guest_party_weight.remote(self.party_weight,
+                                                         role=consts.ARBITER,
+                                                         idx=0)
+        """
         federation.remote(self.party_weight,
                           name=self.transfer_variable.guest_party_weight.name,
                           tag=party_weight_id,
                           role=consts.ARBITER,
                           idx=0)
+        """
 
         # LOGGER.debug("party weight sent")
         LOGGER.info("Finish initialize parameters")

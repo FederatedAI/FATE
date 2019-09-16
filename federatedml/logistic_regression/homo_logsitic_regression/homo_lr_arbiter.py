@@ -96,38 +96,67 @@ class HomoLRArbiter(HomoLRBase):
             # send model
             final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
             # LOGGER.debug("Sending final_model, model id: {}, final_model: {}".format(final_model_id, final_model))
+            self.transfer_variable.final_model.remote(final_model,
+                                                      role=consts.GUEST,
+                                                      idx=0,
+                                                      suffix=(iter_num,))
+            """
             federation.remote(final_model,
                               name=self.transfer_variable.final_model.name,
                               tag=final_model_id,
                               role=consts.GUEST,
                               idx=0)
+            """
             for idx, encrypter in enumerate(self.host_encrypter):
                 encrypted_model = encrypter.encrypt_list(final_model)
 
+                self.transfer_variable.final_model.remote(encrypted_model,
+                                                          role=consts.HOST,
+                                                          idx=idx,
+                                                          suffix=(iter_num,))
+                """
                 federation.remote(encrypted_model,
                                   name=self.transfer_variable.final_model.name,
                                   tag=final_model_id,
                                   role=consts.HOST,
                                   idx=idx)
+                """
 
             if self.use_loss:
                 converge_flag = self.converge_func.is_converge(total_loss)
             else:
                 converge_flag = self.converge_func.is_converge(final_model)
+
+            """
             converge_flag_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.converge_flag,
                 iter_num)
+            """
 
+            self.transfer_variable.converge_flag.remote(converge_flag,
+                                                        role=consts.GUEST,
+                                                        idx=0,
+                                                        suffix=(iter_num,))
+            """
             federation.remote(converge_flag,
                               name=self.transfer_variable.converge_flag.name,
                               tag=converge_flag_id,
                               role=consts.GUEST,
                               idx=0)
+            """
+
+            self.transfer_variable.converge_flag.remote(converge_flag,
+                                                        role=consts.HOST,
+                                                        idx=-1,
+                                                        suffix=(iter_num,))
+            """
             federation.remote(converge_flag,
                               name=self.transfer_variable.converge_flag.name,
                               tag=converge_flag_id,
                               role=consts.HOST,
                               idx=-1)
+            """
+
             self.set_coef_(final_model)
             self.n_iter_ = iter_num
             if converge_flag:
@@ -152,10 +181,13 @@ class HomoLRArbiter(HomoLRBase):
                 predict_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
                 LOGGER.debug("Arbiter encrypted wx id: {}".format(predict_wx_id))
 
+                predict_wx = self.transfer_variable.predict_wx.get(idx=idx)
+                """
                 predict_wx = federation.get(name=self.transfer_variable.predict_wx.name,
                                             tag=predict_wx_id,
                                             idx=idx
                                             )
+                """
                 decrypted_wx = encrypter.distribute_decrypt(predict_wx)
                 pred_prob = decrypted_wx.mapValues(lambda x: activation.sigmoid(x))
                 pred_label = self.classified(pred_prob, self.predict_param.threshold)
@@ -164,11 +196,18 @@ class HomoLRArbiter(HomoLRBase):
 
                 LOGGER.debug(
                     "Start to remote pred_label: {}, transfer_id: {}".format(pred_label, predict_result_id))
+
+                self.transfer_variable.predict_result.remote(pred_label,
+                                                             role=consts.HOST,
+                                                             idx=idx)
+                """
                 federation.remote(pred_label,
                                   name=self.transfer_variable.predict_result.name,
                                   tag=predict_result_id,
                                   role=consts.HOST,
                                   idx=idx)
+                """
+
         LOGGER.info("Finish predicting, result has been sent back")
         return
 
@@ -182,17 +221,23 @@ class HomoLRArbiter(HomoLRBase):
         party_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.guest_party_weight
         )
+        guest_weight = self.transfer_variable.guest_party_weight.get(idx=0)
+        """
         guest_weight = federation.get(name=self.transfer_variable.guest_party_weight.name,
                                       tag=party_weight_id,
                                       idx=0)
+        """
 
         # LOGGER.debug("Received guest_weight: {}".format(guest_weight))
         host_weight_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.host_party_weight
         )
+        host_weights = self.transfer_variable.host_party_weight.get(idx=-1)
+        """
         host_weights = federation.get(name=self.transfer_variable.host_party_weight.name,
                                       tag=host_weight_id,
                                       idx=-1)
+        """
         weights = [guest_weight]
         weights.extend(host_weights)
 
@@ -210,9 +255,12 @@ class HomoLRArbiter(HomoLRBase):
             re_encrypt_times_id = self.transfer_variable.generate_transferid(
                 self.transfer_variable.re_encrypt_times
             )
+            re_encrypt_times = self.transfer_variable.re_encrypt_times.get(idx=idx)
+            """
             re_encrypt_times = federation.get(name=self.transfer_variable.re_encrypt_times.name,
                                               tag=re_encrypt_times_id,
                                               idx=idx)
+            """
             self.re_encrypt_times[idx] = re_encrypt_times
         LOGGER.info("re encrypt times for all parties: {}".format(self.re_encrypt_times))
 
@@ -224,9 +272,13 @@ class HomoLRArbiter(HomoLRBase):
         host_use_encryption_id = self.transfer_variable.generate_transferid(
             self.transfer_variable.use_encrypt, mode
         )
+        host_use_encryption = self.transfer_variable.use_encrypt.get(idx=-1,
+                                                                     suffix=(mode,))
+        """
         host_use_encryption = federation.get(name=self.transfer_variable.use_encrypt.name,
                                              tag=host_use_encryption_id,
                                              idx=-1)
+        """
         self.host_use_encryption = host_use_encryption
 
         LOGGER.info("host use encryption: {}".format(self.host_use_encryption))
@@ -238,11 +290,19 @@ class HomoLRArbiter(HomoLRBase):
                 encrypter = PaillierEncrypt()
                 encrypter.generate_key(self.encrypt_param.key_length)
                 pub_key = encrypter.get_public_key()
+                """
                 pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey,
                                                                        mode)
+                """
                 # LOGGER.debug("Start to remote pub_key: {}, transfer_id: {}".format(pub_key, pubkey_id))
+                self.transfer_variable.paillier_pubkey.remote(pub_key,
+                                                              role=consts.HOST,
+                                                              idx=idx,
+                                                              suffix=(mode,))
+                """
                 federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
                                   tag=pubkey_id, role=consts.HOST, idx=idx)
+                """
                 LOGGER.info("send pubkey to host: {}".format(idx))
 
             self.host_encrypter.append(encrypter)
@@ -261,11 +321,17 @@ class HomoLRArbiter(HomoLRBase):
             else:
                 final_model = model
             LOGGER.debug("Start to remote final_model: {}, transfer_id: {}".format(final_model, final_model_id))
+            self.transfer_variable.final_model.remote(final_model,
+                                                      role=consts.HOST,
+                                                      idx=idx,
+                                                      suffix=("predict",))
+            """
             federation.remote(final_model,
                               name=self.transfer_variable.final_model.name,
                               tag=final_model_id,
                               role=consts.HOST,
                               idx=idx)
+            """
 
     def __re_encrypt(self, iter_num):
         # If use encrypt, model weight need to be re-encrypt every several batches.
@@ -285,19 +351,29 @@ class HomoLRArbiter(HomoLRBase):
             for idx, left_times in enumerate(self.curt_re_encrypt_times):
                 if left_times <= 0:
                     continue
+                re_encrypt_model = self.transfer_variable.to_encrypt_model.get(idx=idx,
+                                                                               suffix=(iter_num, batch_num,))
+                """
                 re_encrypt_model = federation.get(
                     name=self.transfer_variable.to_encrypt_model.name,
                     tag=to_encrypt_model_id,
                     idx=idx
                 )
+                """
                 encrypter = self.host_encrypter[idx]
                 decrypt_model = encrypter.decrypt_list(re_encrypt_model)
                 re_encrypt_model = encrypter.encrypt_list(decrypt_model)
                 LOGGER.debug("Start to remote re_encrypt_model: {}, transfer_id: {}".format(re_encrypt_model,
                                                                                             re_encrypted_model_id))
 
+                self.transfer_variable.re_encrypted_model(re_encrypt_model,
+                                                          role=consts.HOST,
+                                                          idx=idx,
+                                                          suffix=(iter_num, batch_num))
+                """
                 federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
                                   tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
+                """
 
                 left_times -= 1
                 self.curt_re_encrypt_times[idx] = left_times

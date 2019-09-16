@@ -16,8 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api import federation
-from arch.api.proto import feature_selection_param_pb2
+from federatedml.protobuf.generated import feature_selection_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
@@ -122,9 +121,13 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
     def _received_result_cols(self, filter_name):
         result_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.result_left_cols,
                                                                     filter_name)
+        lef_cols = self.transfer_variable.result_left_cols.get(idx=0,
+                                                               suffix=(filter_name,))
+        """
         left_cols = federation.get(name=self.transfer_variable.result_left_cols.name,
                                    tag=result_cols_id,
                                    idx=0)
+        """
         LOGGER.info("Received left columns from guest, received left_cols: {}".format(left_cols))
         # self.left_cols = left_cols
         LOGGER.debug("Before renew: self.left_cols: {}".format(self.left_cols))
@@ -158,9 +161,17 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
                                                                          filter_name)
 
         LOGGER.debug("Before send select cols, self.left_cols: {}".format(self.left_cols))
+
+        self.transfer_variable.host_select_cols.remote(self.left_cols,
+                                                       role=consts.GUEST,
+                                                       idx=0,
+                                                       suffix=(filter_name,))
+        """
         federation.remote(self.left_cols,
                           name=self.transfer_variable.host_select_cols.name,
                           tag=host_select_cols_id,
                           role=consts.GUEST,
                           idx=0)
+        """
+
         LOGGER.info("Sent select cols to guest")

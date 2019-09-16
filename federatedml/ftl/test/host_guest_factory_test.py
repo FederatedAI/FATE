@@ -24,7 +24,7 @@ from federatedml.ftl.hetero_ftl.hetero_ftl_host import HostFactory, HeteroEncryp
     FasterHeteroEncryptFTLHost, HeteroPlainFTLHost
 from federatedml.ftl.test.mock_models import MockAutoencoder
 from federatedml.param.ftl_param import FTLModelParam
-from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 
 class TestHostGuestConstructor(unittest.TestCase):

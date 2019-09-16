@@ -28,6 +28,7 @@ import functools
 import copy
 import numpy as np
 from arch.api.utils import log_utils
+from federatedml.feature.fate_element_type import NoneType
 
 LOGGER = log_utils.getLogger()
 
@@ -49,12 +50,14 @@ class FeatureHistogram(object):
     @staticmethod
     def calculate_histogram(data_bin, grad_and_hess,
                             bin_split_points, bin_sparse_points,
-                            valid_features=None, node_map=None):
+                            valid_features=None, node_map=None,
+                            use_missing=False, zero_as_missing=False):
         LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
         batch_histogram_cal = functools.partial(
             FeatureHistogram.batch_calculate_histogram,
             bin_split_points=bin_split_points, bin_sparse_points=bin_sparse_points,
-            valid_features=valid_features, node_map=node_map)
+            valid_features=valid_features, node_map=node_map,
+            use_missing=use_missing, zero_as_missing=zero_as_missing)
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
 
@@ -76,7 +79,7 @@ class FeatureHistogram(object):
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
                                   bin_sparse_points=None, valid_features=None,
-                                  node_map=None):
+                                  node_map=None, use_missing=False, zero_as_missing=False):
         data_bins = []
         node_ids = []
         grad = []
@@ -99,6 +102,8 @@ class FeatureHistogram(object):
 
         LOGGER.info("begin batch calculate histogram, data count is {}".format(data_record))
         node_num = len(node_map)
+
+        missing_bin = 1 if use_missing else 0
         zero_optim = [[[0 for i in range(3)]
                        for j in range(bin_split_points.shape[0])]
                       for k in range(node_num)]
@@ -114,7 +119,7 @@ class FeatureHistogram(object):
                     continue
                 else:
                     feature_histogram_template.append([[0 for i in range(3)]
-                                                       for j in range(bin_split_points[fid].shape[0] + 1)])
+                                                       for j in range(bin_split_points[fid].shape[0] + 1 + missing_bin)])
 
             node_histograms.append(feature_histogram_template)
 
@@ -129,6 +134,9 @@ class FeatureHistogram(object):
                 if valid_features is not None and valid_features[fid] is False:
                     continue
 
+                if use_missing and value == NoneType():
+                    value = -1
+
                 node_histograms[nid][fid][value][0] += grad[rid]
                 node_histograms[nid][fid][value][1] += hess[rid]
                 node_histograms[nid][fid][value][2] += 1
@@ -140,9 +148,14 @@ class FeatureHistogram(object):
         for nid in range(node_num):
             for fid in range(bin_split_points.shape[0]):
                 if valid_features is not None and valid_features[fid] is True:
-                    sparse_point = bin_sparse_points[fid]
-                    node_histograms[nid][fid][sparse_point][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][0]
-                    node_histograms[nid][fid][sparse_point][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
-                    node_histograms[nid][fid][sparse_point][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
+                    if not use_missing or (use_missing and not zero_as_missing):
+                        sparse_point = bin_sparse_points[fid]
+                        node_histograms[nid][fid][sparse_point][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][0]
+                        node_histograms[nid][fid][sparse_point][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
+                        node_histograms[nid][fid][sparse_point][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
+                    else:
+                        node_histograms[nid][fid][-1][0] += zero_opt_node_sum[nid][0] - zero_optim[nid][fid][0]
+                        node_histograms[nid][fid][-1][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
+                        node_histograms[nid][fid][-1][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
 
         return node_histograms

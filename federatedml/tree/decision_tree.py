@@ -34,9 +34,17 @@ class DecisionTree(object):
         self.feature_importance_type = tree_param.feature_importance_type
         self.n_iter_no_change = tree_param.n_iter_no_change
         self.tol = tree_param.tol
+        self.use_missing = tree_param.use_missing
+        self.zero_as_missing = tree_param.zero_as_missing
+        self.sitename = ''
 
     def fit(self):
         raise NotImplementedError("fit method should overload")
 
     def predict(self, data_inst):
         raise NotImplementedError("fit method should overload")
+    
+    def set_runtime_idx(self, runtime_idx):
+        self.runtime_idx = runtime_idx
+        self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
+
