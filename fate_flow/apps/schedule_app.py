@@ -59,6 +59,13 @@ def kill_job(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
+def cancel_job(job_id, role, party_id):
+    JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id),
+                             job_initiator=request.json.get('job_initiator', {}))
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
 def clean(job_id, role, party_id):
     JobController.clean_job(job_id=job_id, role=role, party_id=party_id)
