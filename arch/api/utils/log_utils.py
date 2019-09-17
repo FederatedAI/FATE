@@ -109,9 +109,9 @@ class LoggerFactory(object):
         else:
             log_file = os.path.join(log_dir, "{}.log".format(class_name))
         handler = TimedRotatingFileHandler(log_file,
-                                           when='H',
-                                           interval=4,
-                                           backupCount=7,
+                                           when='D',
+                                           interval=1,
+                                           backupCount=14,
                                            delay=True)
 
         if level:
