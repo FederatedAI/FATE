@@ -23,7 +23,7 @@ from federatedml.util import consts
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
+    def register_identify_uuid(self, guest_uuid_trv, host_uuid_trv, conflict_flag_trv):
         self._conflict_flag_trv = conflict_flag_trv
         self._scatter = Scatter(host_uuid_trv, guest_uuid_trv)
         return self
@@ -47,7 +47,7 @@ class Arbiter(object):
 class Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_identify_uuid(self, uuid_transfer_variable, conflict_flag_transfer_variable):
+    def register_identify_uuid(self, uuid_transfer_variable, conflict_flag_transfer_variable):
         self._conflict_flag_transfer_variable = conflict_flag_transfer_variable
         self._uuid_transfer_variable = uuid_transfer_variable
         return self

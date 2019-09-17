@@ -22,11 +22,11 @@ from federatedml.transfer_variable.transfer_class.base_transfer_variable import 
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_model_broadcaster(self, model_transfer: Variable):
+    def register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
         return self
 
-    def _send_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
+    def send_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
         if ciphers_dict:
             self._models_broadcast.remote(obj=model.for_remote(),
                                           role=consts.GUEST,
@@ -52,11 +52,11 @@ class Arbiter(object):
 
 class Client(object):
     # noinspection PyAttributeOutsideInit
-    def _register_model_broadcaster(self, model_transfer: Variable):
+    def register_model_broadcaster(self, model_transfer: Variable):
         self._models_broadcast = model_transfer
         return self
 
-    def _get_model(self, suffix=tuple()):
+    def get_model(self, suffix=tuple()):
         return self._models_broadcast.get(idx=0, suffix=suffix)
 
 
