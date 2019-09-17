@@ -128,7 +128,6 @@ class HeteroLRHost(HeteroLRBase):
 
         LOGGER.debug("Final lr weights: {}".format(self.lr_weights.unboxed))
 
-
     def predict(self, data_instances):
         """
         Prediction of lr
