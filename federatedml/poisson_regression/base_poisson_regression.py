@@ -27,7 +27,7 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.poisson_regression.poisson_regression_weights import PoissonRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
-from federatedml.optim import Initializer
+from federatedml.optim.initialize import Initializer
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
 
@@ -172,7 +172,8 @@ class BasePoissonRegression(ModelBase):
             max_iter=self.max_iter,
             converge_func=self.model_param.converge_func,
             re_encrypt_batches=self.re_encrypt_batches,
-            fit_intercept=self.fit_intercept)
+            fit_intercept=self.fit_intercept,
+            exposure_index=self.exposure_index)
         return meta_protobuf_obj
 
     def _get_param(self):
@@ -212,6 +213,7 @@ class BasePoissonRegression(ModelBase):
             self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         fit_intercept = meta_obj.fit_intercept
+        self.exposure_index = meta_obj.exposure_index
 
         self.header = list(result_obj.header)
         #LOGGER.debug("In load model, header: {}".format(self.header))

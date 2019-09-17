@@ -18,7 +18,7 @@
 
 from federatedml.poisson_regression.base_poisson_regression import BasePoissonRegression
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_poisson_transfer_variable import HeteroPoissonTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_poisson_transfer_variable import HeteroPoissonTransferVariable
 
 class HeteroPoissonBase(BasePoissonRegression):
     def __init__(self):
@@ -30,8 +30,7 @@ class HeteroPoissonBase(BasePoissonRegression):
         self.aggregator = None
         self.cipher = None
         self.batch_generator = None
-        self.loss_computer = None
-        self.gradient_procedure = None
+        self.gradient_loss_operator = None
         self.converge_procedure = None
 
     def _init_model(self, params):
@@ -41,9 +40,7 @@ class HeteroPoissonBase(BasePoissonRegression):
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
-        self.gradient_procedure.register_gradient_procedure(self.transfer_variable)
-        self.loss_computer.register_loss_procedure(self.transfer_variable, self)
+        self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
 
-    def renew_current_info(self, iter_num, batch_index):
-        self.gradient_procedure.renew_current_info(iter_num, batch_index)
-        self.loss_computer.renew_current_info(iter_num, batch_index)
+    def transform(self, data_inst):
+        return data_inst

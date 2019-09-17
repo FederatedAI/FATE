@@ -37,24 +37,9 @@ class HeteroLinRHost(HeteroLinRBase):
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Guest()
+        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
-
-    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
-        """
-        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
-        and b is the interception
-        Parameters
-        ----------
-        data_instances: DTable of Instance, input data
-        coef_: list, coefficient of lr
-        intercept_: float, the interception of lr
-        """
-        wx = self.compute_wx(data_instances, coef_, intercept_)
-        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-
-        return en_wx
 
     def fit(self, data_instances):
         """
@@ -64,7 +49,7 @@ class HeteroLinRHost(HeteroLinRBase):
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_lr host")
+        LOGGER.info("Enter hetero_linR host")
         self._abnormal_detection(data_instances)
 
         self.header = self.get_header(data_instances)

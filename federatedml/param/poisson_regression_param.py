@@ -126,7 +126,7 @@ class PoissonParam(BaseParam):
                  exposure_index = -1,
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                cv_param=CrossValidationParam()):
+                 cv_param=CrossValidationParam()):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.eps = eps

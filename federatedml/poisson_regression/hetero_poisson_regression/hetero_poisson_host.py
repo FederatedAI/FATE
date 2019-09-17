@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-
 import numpy as np
 
 from arch.api.utils import log_utils
@@ -23,112 +22,96 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroPoissonGuest(HeteroPoissonBase):
+class HeteroPoissonHost(HeteroPoissonBase):
     def __init__(self):
-        super().__init__()
-        self.data_batch_count = []
-        self.role = consts.GUEST
-        self.cipher = paillier_cipher.Guest()
-        self.batch_generator = batch_generator.Guest()
-        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Guest()
-        self.converge_procedure = convergence.Guest()
+        super(HeteroPoissonHost, self).__init__()
+        self.batch_num = None
+        self.batch_index_list = []
+        self.role = consts.HOST
+
+        self.cipher = paillier_cipher.Host()
+        self.batch_generator = batch_generator.Host()
+        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Host()
+        self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
 
     def fit(self, data_instances):
         """
-        Train linR model of role guest
+        Train poisson regression model of role host
         Parameters
         ----------
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_poisson_guest fit")
+        LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
+
         self.header = self.get_header(data_instances)
-
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
-
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
-        LOGGER.info("Generate mini-batch from input data")
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances)
+
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
                                                            self.encrypted_mode_calculator_param.re_encrypted_rate) for _
                                      in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
-        LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
+        if self.init_param_obj.fit_intercept:
+            self.init_param_obj.fit_intercept = False
         self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-
         while self.n_iter_ < self.max_iter:
-            LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            LOGGER.info("iter:" + str(self.n_iter_))
 
+            batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
-                # compute offset of this batch
-                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: np.log(ei))
-
-                # Start gradient procedure
-                optimized_gradient, fore_gradient, host_forwards = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_host_gradient, host_loss = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.model_weights,
                     self.encrypted_calculator,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index,
-                    batch_offset
-                )
-                loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_,
-                                                         batch_index, batch_offset, loss_norm)
+                    batch_index)
 
-                self.model_weights = self.optimizer.update_model(self.model_weights, optimized_gradient)
+                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights,
+                                                         self.encrypted_calculator, self.optimizer,
+                                                         self.n_iter_, batch_index)
+
+                self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
-            LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
+
             self.n_iter_ += 1
+            LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
                 break
 
+        LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+
     def predict(self, data_instances):
         """
-        Prediction of linR
+        Prediction of lr
         Parameters
         ----------
         data_instances:DTable of Instance, input data
-        predict_param: PredictParam, the setting of prediction.
-
-        Returns
-        ----------
-        DTable
-            include input data label, predict probably, label
         """
         LOGGER.info("Start predict ...")
 
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
-
         data_features = self.transform(data_instances)
-        pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
-        pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
-        LOGGER.info("Get prediction from Host")
-
-        pred = pred_guest.join(pred_host, lambda g, h: g * h)
-        predict_result = data_instances.join(pred, lambda x, y: [x.label, y])
-
-        return predict_result
+        pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
+        LOGGER.info("Remote partial prediction to Guest")

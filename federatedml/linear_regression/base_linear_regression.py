@@ -27,7 +27,7 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.linear_regression.linear_regression_weights import LinearRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
-from federatedml.optim import Initializer
+from federatedml.optim.initialize import Initializer
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
 

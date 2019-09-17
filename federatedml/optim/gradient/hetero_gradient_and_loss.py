@@ -29,7 +29,7 @@ LOGGER = log_utils.getLogger()
 class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
     def __init__(self):
         self.host_forwards = None
-        self.wx = None
+        self.half_wx = None
         self.aggregated_wx = None
 
     def register_gradient_procedure(self, transfer_variables):
@@ -42,124 +42,73 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
-    def compute_gradient_procedure(self, data_instances, model_weights, encrypted_calculator,
-                                   optimizer, n_iter_, batch_index):
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
+                                   n_iter_, batch_index):
         """
-        Compute gradients:
-        gradient = (1/N)*\sum(wx -y)*x
+        Compute gradients.
 
-        Define wx as guest_forward or host_forward
-        Define (wx-y) as fore_gradient
-
-        Then, gradient = fore_gradeint * x
         Parameters
         ----------
         data_instances: DTable of Instance, input data
 
-        model_weights: LinearRegressionWeights
-            Stores coef_ and intercept_ of lr
-
         encrypted_calculator: Use for different encrypted methods
 
-        optimizer: optimizer object
+        model_weights: LogisticRegressionWeights
+            Stores coef_ and intercept_ of lr
 
         n_iter_: int, current number of iter.
 
-        batch_index: int, use to obtain current encrypted_calculator index:
+        batch_index: int, use to obtain current encrypted_calculator
         """
-        current_suffix = (n_iter_, batch_index)
-
-        host_forwards = self.get_host_forward(suffix=current_suffix)
-        self.host_forwards = host_forwards
-        LOGGER.info("Get host_forwards from host")
-
-        wx = data_instances.mapValues(
-            lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        self.wx = wx
-        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(wx)
-
-        for host_forward in host_forwards:
-            self.aggregated_wx = self.aggregated_wx.join(host_forward, lambda g, h: g + h)
-        fore_gradient = self.aggregated_wx.join(data_instances, lambda wx, d: wx - d.label)
-
-        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
-        LOGGER.info("Remote fore_gradient to Host")
-
-        unilateral_gradient = self.compute_gradient(data_instances,
-                                                    fore_gradient,
-                                                    model_weights.fit_intercept)
-        unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
-        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-
-        return optimized_gradient, fore_gradient, host_forwards
+        pass
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
         """
-        Compute hetero linr loss:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-        (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
+        Compute loss
         """
-        current_suffix = (n_iter_, batch_index)
-        n = data_instances.count()
-        self_wx_square = self.wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        loss_list = []
-        host_wx_squares = self.get_host_loss_intermediate(current_suffix)
-        if loss_norm is not None:
-            host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
-        else:
-            host_loss_regular = []
-        for host_idx, host_forward in enumerate(self.host_forwards):
-            loss_gh = self.wx.join(host_forward, lambda g, h: g*h).reduce(reduce_add)
-            loss = (self_wx_square + host_wx_squares[host_idx] + 2 * loss_gh) / n
-            if loss_norm is not None:
-                loss = loss + loss_norm
-                loss = loss + host_loss_regular[host_idx]
-            loss_list.append(loss)
-        self.sync_loss_info(loss_list, suffix=current_suffix)
+        pass
+
 
 class Host(hetero_gradient_sync.Host, loss_sync.Host):
+
     def __init__(self):
-        self.wx = None
+        self.half_wx = None
 
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward,
                                      transfer_variables.fore_gradient,
                                      transfer_variables.host_gradient,
                                      transfer_variables.host_optim_gradient)
+
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
-    def compute_gradient_procedure(self, data_instances, model_weights, encrypted_calculator,
-                                   optimizer, n_iter_, batch_index):
+    def compute_gradient_procedure(self, data_instances, model_weights,
+                                   encrypted_calculator, optimizer,
+                                   n_iter_, batch_index):
         """
-                Compute gradients:
-                gradient = (1/N)*\sum(wx -y)*x
+        Compute gradients.
 
-                Define wx as guest_forward or host_forward
-                Define (wx-y) as fore_gradient
+        Parameters
+        ----------
+        data_instances: DTable of Instance, input data
 
-                Then, gradient = fore_gradeint * x
-               Parameters
-                ----------
-                data_instances: DTable of Instance, input data
+        model_weights: LogisticRegressionWeights
+            Stores coef_ and intercept_ of lr
 
-                model_weights: LinearRegressionWeights
-                    Stores coef_ and intercept_ of lr
+        encrypted_calculator: Use for different encrypted methods
 
-                encrypted_calculator: Use for different encrypted methods
+        optimizer: optimizer obj
 
-                optimizer: optimizer object
+        n_iter_: int, current iter nums
 
-                n_iter_: int, current number of iter.
+        batch_index: int, use to obtain current encrypted_calculator
 
-                batch_index: int, use to obtain current encrypted_calculator index:
-                """
+        """
         current_suffix = (n_iter_, batch_index)
-
         wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        self.wx = wx
-
+        self.half_wx = wx
         host_forward = encrypted_calculator[batch_index].encrypt(wx)
         self.remote_host_forward(host_forward, suffix=current_suffix)
 
@@ -168,20 +117,23 @@ class Host(hetero_gradient_sync.Host, loss_sync.Host):
         unilateral_gradient = self.compute_gradient(data_instances,
                                                     fore_gradient,
                                                     model_weights.fit_intercept)
-        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
+        unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
+        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient, fore_gradient
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
         """
-        Compute htero linr loss for:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
+        Compute hetero-lr loss for:
+        loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
+        where (wx)^2 = (Wg * Xg + Wh * Xh)^2 = (Wg*Xg)^2 + (Wh*Xh)^2 + 2 * Wg*Xg * Wh*Xh
 
-            Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
+        Then loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
+
+        where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
         """
-
         current_suffix = (n_iter_, batch_index)
-        self_wx_square = self.wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
+        self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights.coef_)
@@ -198,7 +150,10 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
 
     def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
         """
-        Decrypt gradients.
+        Compute gradients.
+        gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x, where y = 1 or -1
+
+        Received local_gradients from guest and hosts. Merge and optimize, then separate and remote back.
 
         Parameters
         ----------
@@ -235,7 +190,13 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
 
     def compute_loss(self, cipher, n_iter_, batch_index):
         """
-        Decrypt loss from guest
+        Compute hetero-lr loss for:
+        loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
+        where (wx)^2 = (Wg * Xg + Wh * Xh)^2 = (Wg*Xg)^2 + (Wh*Xh)^2 + 2 * Wg*Xg * Wh*Xh
+
+        Then loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
+
+        where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
         """
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)

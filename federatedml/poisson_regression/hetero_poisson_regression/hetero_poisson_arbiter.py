@@ -20,17 +20,17 @@
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_linr_gradient_and_loss
+from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
+from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLinRArbiter(HeteroLinRBase):
+class HeteroPoissonArbiter(HeteroPoissonBase):
     def __init__(self):
-        super(HeteroLinRArbiter, self).__init__()
+        super(HeteroPoissonArbiter, self).__init__()
         self.role = consts.ARBITER
 
         # attribute
@@ -38,7 +38,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Arbiter()
+        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Arbiter()
         self.converge_procedure = convergence.Arbiter()
 
     def run(self, component_parameters=None, args=None):
@@ -64,12 +64,12 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
     def fit(self, data_instances=None):
         """
-        Train linear regression model of role arbiter
+        Train poisson regression model of role arbiter
         Parameters
         ----------
         data_instances: DTable of Instance, input data
         """
-        LOGGER.info("Enter hetero_linR_arbiter fit")
+        LOGGER.info("Enter hetero_poisson_arbiter fit")
 
         self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
