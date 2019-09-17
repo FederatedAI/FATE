@@ -487,7 +487,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.trees_ = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
-        self.classes_ = list(model_meta.classes_)
+        self.classes_ = list(model_param.classes_)
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
 
@@ -513,6 +513,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
+        self.set_loss(self.objective_param)
     
     def run(self, component_parameters=None, args=None):
         host_party_idlist = component_parameters["role"]["host"] 
