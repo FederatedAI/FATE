@@ -81,24 +81,24 @@ The following steps will illustrate how to deploy two parties on different hosts
 ##### Generate startup files
 Before starting the FATE system, the user needs to define their parties in configuration file `./docker-configuration.sh`. 
 
-The following sample of `docker-configuration.sh` defines two parities, they are party `10000` hosted on a machine *192.10.7.1* and `9999` hosted on a machine *192.10.7.2*.
+The following sample of `docker-configuration.sh` defines two parities, they are party `10000` hosted on a machine *192.168.7.1* and `9999` hosted on a machine *192.168.7.2*.
 ```bash
 user=root
 dir=/data/projects/fate
 partylist=(10000 9999)
-partyiplist=(192.10.7.1 192.10.7.2)
+partyiplist=(192.168.7.1 192.168.7.2)
 venvdir=/data/projects/fate/venv
 exchangeip=proxy
 
 # user: The user name to log in host defined in partyiplist
 ```
 
-Use the following command to deploy each party. Before running the command, ***please make sure host 192.10.7.1 and 192.10.7.2 allow password-less SSH access with SSH key, otherwise you have to input password for each host manually***:
+Use the following command to deploy each party. Before running the command, ***please make sure host 192.168.7.1 and 192.168.7.2 allow password-less SSH access with SSH key, otherwise you have to input password for each host manually***:
 ```bash
 $ bash docker-auto-deploy.sh
 ```
 
-The script will copy "10000-confs.tar" and "9999-confs.tar" to host 192.10.7.1 and 192.10.7.2.
+The script will copy "10000-confs.tar" and "9999-confs.tar" to host 192.168.7.1 and 192.168.7.2.
 
 Afterward the script will log in to these hosts and use docker-compose command to start the FATE cluster.
 
