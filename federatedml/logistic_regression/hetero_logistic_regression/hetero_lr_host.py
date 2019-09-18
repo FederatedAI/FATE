@@ -98,7 +98,7 @@ class HeteroLRHost(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-
+            self.optimizer.set_iters(self.n_iter_ + 1)
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
             for batch_data in batch_data_generator:

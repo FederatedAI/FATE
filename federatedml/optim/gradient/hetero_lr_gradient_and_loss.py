@@ -112,20 +112,24 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         else:
             host_loss_regular = []
 
-        for host_idx, host_forward in enumerate(self.host_forwards):
+        # for host_idx, host_forward in enumerate(self.host_forwards):
+        if len(self.host_forwards) > 1:
+            LOGGER.info("More than one host exist, loss is not available")
+        else:
+            host_forward = self.host_forwards[0]
+            wx_square = wx_squares[0]
             wxg_wxh = self.half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                                (self_wx_square + wx_squares[host_idx] + 2 * wxg_wxh)
+                                (self_wx_square + wx_square + 2 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
-                loss += host_loss_regular[host_idx]
+                loss += host_loss_regular[0]
             loss_list.append(loss)
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 
 class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
-
     def __init__(self):
         self.half_wx = None
 
@@ -199,6 +203,9 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
 
 class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
+    def __init__(self):
+        self.has_multiple_hosts = False
+
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.guest_gradient,
                                      transfer_variables.host_gradient,
@@ -227,6 +234,9 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
         current_suffix = (n_iter_, batch_index)
 
         host_gradients, guest_gradient = self.get_local_gradient(current_suffix)
+
+        if len(host_gradients) > 1:
+            self.has_multiple_hosts = True
 
         host_gradients = [np.array(h) for h in host_gradients]
         guest_gradient = np.array(guest_gradient)
@@ -268,6 +278,10 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
 
         where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
         """
+        if self.has_multiple_hosts:
+            LOGGER.info("Has more than one host, loss is not available")
+            return []
+
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)

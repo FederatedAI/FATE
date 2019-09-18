@@ -62,6 +62,9 @@ class Host(gradient_sync.Host, HeteroLogisticGradientComputer):
         host_forward = self.fore_gradient_transfer.get(idx=0, suffix=suffix)
         return host_forward
 
+    def compute_intermediate(self):
+        pass
+
     def update_gradient(self, unilateral_gradient, suffix=tuple()):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
         optimized_gradient = self.unilateral_optim_gradient_transfer.get(idx=0, suffix=suffix)
