@@ -15,50 +15,51 @@
 #
 
 from federatedml.framework.homo.procedure import aggregator
-from federatedml.framework.weights import ListWeights
+from federatedml.framework.weights import OrderDictWeights
 from federatedml.util import consts
 from .homo_test_sync_base import TestSyncBase
+import numpy as np
+import random
+import copy
 
 
 class AggregatorTest(TestSyncBase):
     @classmethod
     def call(cls, role, transfer_variable, ind, *args):
-        weights = args[0]
-        models = args[1]
+        agg = aggregator.with_role(role, transfer_variable, enable_secure_aggregate=True)
         if role == consts.ARBITER:
-            agg = aggregator.Arbiter()
-            agg.register_aggregator(transfer_variable)
-            agg.initialize_aggregator(True)
             agg.aggregate_and_broadcast()
-
-        elif role == consts.HOST:
-            agg = aggregator.Host()
-            agg.register_aggregator(transfer_variable)
-            agg.initialize_aggregator(weights[ind + 1])
-            return agg.aggregate_and_get(ListWeights(list(models[ind + 1])))
+            print(agg.aggregate_loss())
         else:
-            agg = aggregator.Guest()
-            agg.register_aggregator(transfer_variable)
-            agg.initialize_aggregator(weights[0])
-            return agg.aggregate_and_get(ListWeights(list(models[0])))
+            # disorder dit
+            order = list(range(5))
+            np.random.seed(random.SystemRandom().randint(1, 100))
+            np.random.shuffle(order)
+            raw = {k: np.random.rand(10, 10) for k in order}
+
+            w = OrderDictWeights(copy.deepcopy(raw))
+            d = random.random()
+            aggregated = agg.aggregate_then_get(w, degree=d)
+
+            agg.send_loss(2.0)
+            return aggregated, raw, d
 
     def run_with_num_hosts(self, num_hosts):
-        import numpy as np
-        import random
-        weights = [random.random() for _ in range(num_hosts + 1)]
-        total_weights = sum(weights)
-        models = [np.random.rand(10) for _ in range(num_hosts + 1)]
-        expert = list(
-            np.sum([m * w / total_weights for m, w in zip(models, weights)],
-                   0))
+        _, guest, *hosts = self.run_results(num_hosts)
+        expert = OrderDictWeights(guest[1]) * guest[2]
+        total_weights = guest[2]
+        aggregated = [guest[0]]
+        for host in hosts:
+            expert += OrderDictWeights(host[1]) * host[2]
+            total_weights += host[2]
+            aggregated.append(host[0])
+        expert /= total_weights
+        expert = expert.unboxed
+        aggregated = [w.unboxed for w in aggregated]
 
-        arbiter, guest, *hosts = self.run_results(num_hosts, weights, models)
-        guest = guest.parameters
-        hosts = [host.parameters for host in hosts]
-        for i in range(10):
-            self.assertAlmostEqual(guest[i], expert[i])
-            for host in hosts:
-                self.assertAlmostEqual(host[i], expert[i])
+        for k in expert:
+            for w in aggregated:
+                self.assertAlmostEqual(np.linalg.norm(expert[k] - w[k]), 0.0)
 
     def test_host_1(self):
         self.run_with_num_hosts(1)

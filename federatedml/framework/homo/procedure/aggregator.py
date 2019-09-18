@@ -13,64 +13,56 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import operator
+import functools
+import types
+import typing
 from functools import reduce
 
+from federatedml.framework.homo.procedure import random_padding_cipher
+from federatedml.framework.homo.sync import model_scatter_sync, \
 from arch.api.utils import log_utils
 from federatedml.framework.homo.sync import party_weights_sync, model_scatter_sync, \
     loss_transfer_sync, model_broadcast_sync, is_converge_sync
-from federatedml.framework.weights import Weights
+from federatedml.framework.weights import Weights, NumericWeights
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class Arbiter(party_weights_sync.Arbiter,
-              model_scatter_sync.Arbiter,
-              model_broadcast_sync.Arbiter,
-              loss_transfer_sync.Arbiter,
-              is_converge_sync.Arbiter):
-    # noinspection PyAttributeOutsideInit
-    def initialize_aggregator(self, use_party_weight=True):
-        if use_party_weight:
-            self._party_weights = self.get_party_weights()
+class Arbiter(object):
 
-    def register_aggregator(self, transfer_variables):
-        """
-        register transfer of party_weights, models and losses.
-        Args:
-            transfer_variables: assuming transfer_variable has variables:
-                1. guest_party_weight,  host_party_weight for party_weights scatter
-                2. guest_model, host_model for model scatter
-                3. aggregated_model for broadcast aggregated model
-                4. guest_loss, host_loss for loss scatter
-        """
-        self._register_party_weights_transfer(guest_party_weight_transfer=transfer_variables.guest_party_weight,
-                                              host_party_weight_transfer=transfer_variables.host_party_weight)
+    def __init__(self):
+        self._model_scatter = None
+        self._model_broadcaster = None
+        self._loss_sync = None
+        self._converge_sync = None
 
-        self._register_model_scatter(host_model_transfer=transfer_variables.host_model,
-                                     guest_model_transfer=transfer_variables.guest_model)
-        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
+    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
 
-        self._register_loss_transfer(host_loss_transfer=transfer_variables.host_loss,
-                                     guest_loss_transfer=transfer_variables.guest_loss)
+        if enable_secure_aggregate:
+            random_padding_cipher.Arbiter().register_random_padding_cipher(transfer_variables).exchange_secret_keys()
 
-        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
+        self._model_scatter = model_scatter_sync.Arbiter().register_model_scatter(
+            host_model_transfer=transfer_variables.host_model,
+            guest_model_transfer=transfer_variables.guest_model)
+
+        self._model_broadcaster = model_broadcast_sync.Arbiter(). \
+            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+
+        self._loss_sync = loss_transfer_sync.Arbiter().register_loss_transfer(
+            host_loss_transfer=transfer_variables.host_loss,
+            guest_loss_transfer=transfer_variables.guest_loss)
+
+        self._converge_sync = is_converge_sync.Arbiter().register_is_converge(
+            is_converge_variable=transfer_variables.is_converge)
+
+        return self
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Weights:
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
-        LOGGER.debug("aggregate_model, models: {}".format(models))
-        num_clients = len(models)
-        if not self._party_weights:
-            return reduce(operator.add, models) / num_clients
-        for m, w in zip(models, self._party_weights):
-            m *= w
-        LOGGER.debug("aggregate_model, models: {}, weights_values: {}".format(models, [m.unboxed for m in models]))
-        LOGGER.debug("model add : {}".format(models[0] + models[1]))
-
-        LOGGER.debug("aggregate_model, before return, models: {}".format(reduce(operator.add, models)))
-
-        return reduce(operator.add, models)
+        total_model, total_degree = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), models)
+        total_model /= total_degree
+        return total_model
 
     def aggregate_and_broadcast(self, ciphers_dict=None, suffix=tuple()):
         """
@@ -81,104 +73,125 @@ class Arbiter(party_weights_sync.Arbiter,
             suffix: tag suffix
         """
         model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self._send_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
+        self.send_aggregated_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
         return model
 
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
-        return self._get_models(ciphers_dict=ciphers_dict, suffix=suffix)
+        return self._model_scatter.get_models(ciphers_dict=ciphers_dict, suffix=suffix)
 
     def send_aggregated_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
-        self._send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
+        self._model_broadcaster.send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
-        losses = list(self.get_losses(idx=idx, suffix=suffix))
-        LOGGER.debug("In aggregate_loss, received losses: {}, _party_weights: {}".format(losses, self._party_weights))
-        if idx is None:
-            total_loss = sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
-            LOGGER.debug('Total loss is : {}'.format(total_loss))
-            return sum(map(lambda pair: pair[0] * pair[1], zip(losses, self._party_weights)))
-        else:
-            total_weights = self._party_weights[0]
-            loss = losses[0]
-            for party_id in idx:
-                total_weights += self._party_weights[party_id]
-                loss += (losses[party_id] * self._party_weights[party_id])
-            return loss / total_weights
+        losses = self._loss_sync.get_losses(idx=idx, suffix=suffix)
+        total_loss = 0.0
+        total_degree = 0.0
+        for loss in losses:
+            total_loss += loss.unboxed
+            total_degree += loss.get_degree(1.0)
+        return total_loss / total_degree
+
+    def send_converge_status(self, converge_func: types.FunctionType, converge_args, suffix=tuple()):
+        return self._converge_sync.check_converge_status(converge_func=converge_func, converge_args=converge_args,
+                                                         suffix=suffix)
 
 
-class Guest(party_weights_sync.Guest,
-            model_scatter_sync.Guest,
-            loss_transfer_sync.Guest,
-            model_broadcast_sync.Guest,
-            is_converge_sync.Guest):
-    def initialize_aggregator(self, party_weight):
-        self.send_party_weight(party_weight)
+class Client(object):
 
-    def register_aggregator(self, transfer_variables):
-        """
-           register transfer of party_weights, models and losses.
-           Args:
-               transfer_variables: assuming transfer_variable has variables:
-                   1. guest_party_weight to send party_weights
-                   2. guest_model to send model for aggregate
-                   3. aggregated_model to get aggregated model
-                   4. guest_loss for loss send
-        """
-        self._register_party_weights_transfer(transfer_variable=transfer_variables.guest_party_weight)
+    def __init__(self):
+        self._secure_aggregate_cipher = None
+        self._model_scatter = None
+        self._model_broadcaster = None
+        self._loss_sync = None
+        self._converge_sync = None
+        self._enable_secure_aggregate = False
 
-        self._register_model_scatter(model_transfer=transfer_variables.guest_model)
+    def secure_aggregate(self, send_func, weights: Weights, degree: float = None, enable_secure_aggregate=True):
+        # w -> w * degree
+        if degree:
+            weights *= degree
+        # w * degree -> w * degree + \sum(\delta(i, j) * r_{ij}), namely， adding random mask.
+        if enable_secure_aggregate:
+            weights = weights.encrypted(cipher=self._secure_aggregate_cipher, inplace=True)
+        # maybe remote degree
+        remote_weights = weights.for_remote().with_degree(degree) if degree else weights.for_remote()
 
-        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
+        send_func(remote_weights)
 
-        self._register_loss_transfer(loss_transfer=transfer_variables.guest_loss)
-
-        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
-
-    def aggregate_and_get(self, model: Weights, suffix=tuple()):
-        self.send_model_for_aggregate(weights=model, suffix=suffix)
-        return self.get_aggregated_model(suffix=suffix)
+    def send_model(self, weights: Weights, degree: float = None, suffix=tuple()):
+        return self.secure_aggregate(send_func=functools.partial(self._model_scatter.send_model, suffix=suffix),
+                                     weights=weights, degree=degree,
+                                     enable_secure_aggregate=self._enable_secure_aggregate)
 
     def get_aggregated_model(self, suffix=tuple()):
-        return self._get_model(suffix=suffix)
+        return self._model_broadcaster.get_model(suffix=suffix)
 
-    def send_model_for_aggregate(self, weights: Weights, suffix=tuple()):
-        self._send_model(weights=weights, suffix=suffix)
-
-
-class Host(party_weights_sync.Host,
-           model_scatter_sync.Host,
-           loss_transfer_sync.Host,
-           model_broadcast_sync.Host,
-           is_converge_sync.Host):
-    def initialize_aggregator(self, party_weight):
-        self.send_party_weight(party_weight)
-
-    def register_aggregator(self, transfer_variables):
-        """
-           register transfer of party_weights, models and losses.
-           Args:
-               transfer_variables: assuming transfer_variable has variables:
-                    1. host_party_weight to send party_weights
-                    2. host_model to send model for aggregate
-                    3. aggregated_model to get aggregated model
-                    4. host_loss for loss send
-        """
-        self._register_party_weights_transfer(transfer_variable=transfer_variables.host_party_weight)
-
-        self._register_model_scatter(model_transfer=transfer_variables.host_model)
-
-        self._register_model_broadcaster(model_transfer=transfer_variables.final_model)
-
-        self._register_loss_transfer(loss_transfer=transfer_variables.host_loss)
-
-        self._register_is_converge(is_converge_variable=transfer_variables.converge_flag)
-
-    def aggregate_and_get(self, model: Weights, suffix=tuple()):
-        self.send_model_for_aggregate(weights=model, suffix=suffix)
+    def aggregate_then_get(self, model: Weights, degree: float = None, suffix=tuple()):
+        self.send_model(weights=model, degree=degree, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
 
-    def send_model_for_aggregate(self, weights: Weights, suffix=tuple()):
-        self._send_model(weights=weights, suffix=suffix)
+    def send_loss(self, loss: typing.Union[float, Weights], degree: float = None, suffix=tuple()):
+        if isinstance(loss, float):
+            loss = NumericWeights(loss)
+        return self.secure_aggregate(send_func=functools.partial(self._loss_sync.send_loss, suffix=suffix),
+                                     weights=loss, degree=degree,
+                                     enable_secure_aggregate=False)
 
-    def get_aggregated_model(self, suffix=tuple()):
-        return self._get_model(suffix=suffix)
+    def get_converge_status(self, suffix=tuple()):
+        return self._converge_sync.get_converge_status(suffix=suffix)
+
+
+class Guest(Client):
+    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+        self._enable_secure_aggregate = enable_secure_aggregate
+        if enable_secure_aggregate:
+            self._secure_aggregate_cipher = random_padding_cipher.Guest().register_random_padding_cipher(
+                transfer_variables).create_cipher()
+
+        self._model_scatter = model_scatter_sync.Guest().register_model_scatter(
+            model_transfer=transfer_variables.guest_model)
+
+        self._model_broadcaster = model_broadcast_sync.Guest(). \
+            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+
+        self._loss_sync = loss_transfer_sync.Guest().register_loss_transfer(
+            loss_transfer=transfer_variables.guest_loss)
+
+        self._converge_sync = is_converge_sync.Guest().register_is_converge(
+            is_converge_variable=transfer_variables.is_converge)
+
+        return self
+
+
+class Host(Client):
+
+    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+        self._enable_secure_aggregate = enable_secure_aggregate
+        if enable_secure_aggregate:
+            self._secure_aggregate_cipher = random_padding_cipher.Host().register_random_padding_cipher(
+                transfer_variables).create_cipher()
+
+        self._model_scatter = model_scatter_sync.Host().register_model_scatter(
+            model_transfer=transfer_variables.host_model)
+
+        self._model_broadcaster = model_broadcast_sync.Host(). \
+            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
+
+        self._loss_sync = loss_transfer_sync.Host().register_loss_transfer(
+            loss_transfer=transfer_variables.host_loss)
+
+        self._converge_sync = is_converge_sync.Host().register_is_converge(
+            is_converge_variable=transfer_variables.is_converge)
+
+        return self
+
+
+def with_role(role, transfer_variable, enable_secure_aggregate=True):
+    if role == consts.GUEST:
+        return Guest().register_aggregator(transfer_variable, enable_secure_aggregate)
+    elif role == consts.HOST:
+        return Host().register_aggregator(transfer_variable, enable_secure_aggregate)
+    elif role == consts.ARBITER:
+        return Arbiter().register_aggregator(transfer_variable, enable_secure_aggregate)
+    else:
+        raise ValueError(f"role {role} not found")
