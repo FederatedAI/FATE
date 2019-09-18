@@ -3,13 +3,13 @@
 1.服务器配置
 ============
 
-| 服务器   |                                                              |
-| -------- | ------------------------------------------------------------ |
-| 数量     | \>1(根据实际提供的服务器规划部署模块)                        |
-| 配置     | 16 core /32GB memory / 300GB硬盘/50M带宽                     |
+|  服务器  |                                                              |
+| :------: | ------------------------------------------------------------ |
+|   数量   | \>1(根据实际提供的服务器规划部署模块)                        |
+|   配置   | 16 core /32GB memory / 300GB硬盘/50M带宽                     |
 | 操作系统 | CentOS linux 7.2及以上                                       |
-| 依赖包   | yum源： gcc gcc-c ++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev（可以使用初始化脚本env.sh安装） |
-| 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
+|  依赖包  | yum源： gcc gcc-c ++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev<br />（可以使用初始化脚本env.sh安装） |
+|   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1. 300G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
 2.集群规划
