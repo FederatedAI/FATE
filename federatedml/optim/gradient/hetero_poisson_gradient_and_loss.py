@@ -25,8 +25,6 @@ from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_gradient_sync
 from federatedml.util.fate_operator import reduce_add
 
-import math
-
 LOGGER = log_utils.getLogger()
 
 

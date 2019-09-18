@@ -209,7 +209,7 @@ class PoissonParam(BaseParam):
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs']:
+            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "poisson_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
