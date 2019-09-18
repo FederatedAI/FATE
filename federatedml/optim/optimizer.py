@@ -36,6 +36,9 @@ class _Optimizer(object):
         this_step_size = self.learning_rate / np.sqrt(self.iters)
         return self.alpha * this_step_size
 
+    def set_iters(self, iters):
+        self.iters = iters
+
     def apply_gradients(self, grad):
         raise NotImplementedError("Should not call here")
 
@@ -118,7 +121,6 @@ class _Optimizer(object):
 
 class _SgdOptimizer(_Optimizer):
     def apply_gradients(self, grad):
-        self.iters += 1
         learning_rate = self.learning_rate / np.sqrt(self.iters)
         delta_grad = learning_rate * grad
         return delta_grad
@@ -131,7 +133,6 @@ class _RMSPropOptimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        self.iters += 1
         learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
@@ -149,7 +150,6 @@ class _AdaGradOptimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        self.iters += 1
         learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
@@ -167,7 +167,6 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        self.iters += 1
         learning_rate = self.learning_rate / np.sqrt(self.iters)
         # self.learning_rate = self.learning_rate / 0.9
 
@@ -191,7 +190,6 @@ class _AdamOptimizer(_Optimizer):
         self.opt_v = None
 
     def apply_gradients(self, grad):
-        self.iters += 1
         learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
