@@ -18,10 +18,9 @@ import types
 import typing
 from functools import reduce
 
+from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import random_padding_cipher
 from federatedml.framework.homo.sync import model_scatter_sync, \
-from arch.api.utils import log_utils
-from federatedml.framework.homo.sync import party_weights_sync, model_scatter_sync, \
     loss_transfer_sync, model_broadcast_sync, is_converge_sync
 from federatedml.framework.weights import Weights, NumericWeights
 from federatedml.util import consts
@@ -30,7 +29,6 @@ LOGGER = log_utils.getLogger()
 
 
 class Arbiter(object):
-
     def __init__(self):
         self._model_scatter = None
         self._model_broadcaster = None
@@ -97,7 +95,6 @@ class Arbiter(object):
 
 
 class Client(object):
-
     def __init__(self):
         self._secure_aggregate_cipher = None
         self._model_scatter = None
@@ -164,7 +161,6 @@ class Guest(Client):
 
 
 class Host(Client):
-
     def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
         self._enable_secure_aggregate = enable_secure_aggregate
         if enable_secure_aggregate:
