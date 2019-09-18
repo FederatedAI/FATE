@@ -315,9 +315,9 @@ redispass=fate_dev
 
 partylist=(10000)
 
-JDBC0=(192.168.0.1 eggroll_meta root fate_dev)
+JDBC0=(192.168.0.1 eggroll_meta fate_dev fate_dev)
 
-fateflowdb0=(192.168.0.1 fate_flow root fate_dev)
+fateflowdb0=(192.168.0.1 fate_flow fate_dev fate_dev)
 
 iplist=(192.168.0.1)
 
@@ -365,9 +365,9 @@ redispass=fate_dev
 
 partylist=(9999)
 
-JDBC0=(192.168.0.2 eggroll_meta root fate_dev)
+JDBC0=(192.168.0.2 eggroll_meta fate_dev fate_dev)
 
-fateflowdb0=(192.168.0.2 fate_flow root fate_dev)
+fateflowdb0=(192.168.0.2 fate_flow fate_dev fate_dev)
 
 iplist=(192.168.0.2)
 
@@ -415,13 +415,13 @@ redispass=fate_dev
 
 partylist=(10000 9999)
 
-JDBC0=(192.168.0.1 eggroll_meta root fate_dev)
+JDBC0=(192.168.0.1 eggroll_meta fate_dev fate_dev)
 
-JDBC1=(192.168.0.2 eggroll_meta root fate_dev)
+JDBC1=(192.168.0.2 eggroll_meta fate_dev fate_dev)
 
-fateflowdb0=(192.168.0.1 fate_flow root fate_dev)
+fateflowdb0=(192.168.0.1 fate_flow fate_dev fate_dev)
 
-fateflowdb1=(192.168.0.1 fate_flow root fate_dev)
+fateflowdb1=(192.168.0.1 fate_flow fate_dev fate_dev)
 
 iplist=(192.168.0.1 192.168.0.2)
 
