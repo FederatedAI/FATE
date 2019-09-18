@@ -119,8 +119,8 @@ class _Optimizer(object):
 class _SgdOptimizer(_Optimizer):
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
-        delta_grad = self.learning_rate * grad
+        learning_rate = self.learning_rate / np.sqrt(self.iters)
+        delta_grad = learning_rate * grad
         return delta_grad
 
 
@@ -132,14 +132,14 @@ class _RMSPropOptimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
 
         self.opt_m = self.rho * self.opt_m + (1 - self.rho) * np.square(grad)
         self.opt_m = np.array(self.opt_m, dtype=np.float64)
-        delta_grad = self.learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
+        delta_grad = learning_rate * grad / np.sqrt(self.opt_m + 1e-6)
         return delta_grad
 
 
@@ -150,13 +150,13 @@ class _AdaGradOptimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
         self.opt_m = self.opt_m + np.square(grad)
         self.opt_m = np.array(self.opt_m, dtype=np.float64)
-        delta_grad = self.learning_rate * grad / (np.sqrt(self.opt_m) + 1e-7)
+        delta_grad = learning_rate * grad / (np.sqrt(self.opt_m) + 1e-7)
         return delta_grad
 
 
@@ -168,12 +168,12 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.learning_rate / np.sqrt(self.iters)
         # self.learning_rate = self.learning_rate / 0.9
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
-        v = self.nesterov_momentum_coeff * self.opt_m - self.learning_rate * grad
+        v = self.nesterov_momentum_coeff * self.opt_m - learning_rate * grad
         delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
         self.opt_m = v
         return delta_grad
@@ -192,7 +192,7 @@ class _AdamOptimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         self.iters += 1
-        self.learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.learning_rate / np.sqrt(self.iters)
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
@@ -207,7 +207,7 @@ class _AdamOptimizer(_Optimizer):
         opt_m_hat = self.opt_m / (1 - self.opt_beta1_decay)
         opt_v_hat = self.opt_v / (1 - self.opt_beta2_decay)
         opt_v_hat = np.array(opt_v_hat, dtype=np.float64)
-        delta_grad = self.learning_rate * opt_m_hat / (np.sqrt(opt_v_hat) + 1e-8)
+        delta_grad = learning_rate * opt_m_hat / (np.sqrt(opt_v_hat) + 1e-8)
         return delta_grad
 
 
@@ -219,6 +219,10 @@ def optimizer_factory(param):
         penalty = param.penalty
     except AttributeError:
         raise AttributeError("Optimizer parameters has not been totally set")
+
+    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {}".format(
+        optimizer_type, learning_rate, alpha, penalty
+    ))
 
     if optimizer_type == 'sgd':
         return _SgdOptimizer(learning_rate, alpha, penalty)

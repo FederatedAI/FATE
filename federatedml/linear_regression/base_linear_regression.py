@@ -20,7 +20,7 @@
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import linr_model_meta_pb2, linr_model_param_pb2
+from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -112,12 +112,11 @@ class BaseLinearRegression(ModelBase):
                                      extra_metas={
                                          "unit_name": "iters",
                                      })
-        self.tracker.set_meta(metric_name='loss',
-                              metric_namespace='train',
-                              metric_meta=metric_meta)
-        self.tracker.set_metric(metric_name='loss',
-                                metric_namespace='train',
-                                metric_data=[Metric(iter_num, loss)])
+
+        self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='loss',
+                             metric_namespace='train',
+                             metric_data=[Metric(iter_num, loss)])
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(
@@ -127,18 +126,17 @@ class BaseLinearRegression(ModelBase):
         pass
 
     def _get_meta(self):
-        meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(
-            penalty=self.model_param.penalty,
-            eps=self.model_param.eps,
-            alpha=self.alpha,
-            optimizer=self.model_param.optimizer,
-            party_weight=self.model_param.party_weight,
-            batch_size=self.batch_size,
-            learning_rate=self.model_param.learning_rate,
-            max_iter=self.max_iter,
-            converge_func=self.model_param.converge_func,
-            re_encrypt_batches=self.re_encrypt_batches,
-            fit_intercept=self.fit_intercept)
+        meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,
+                                                              eps=self.model_param.eps,
+                                                              alpha=self.alpha,
+                                                              optimizer=self.model_param.optimizer,
+                                                              party_weight=self.model_param.party_weight,
+                                                              batch_size=self.batch_size,
+                                                              learning_rate=self.model_param.learning_rate,
+                                                              max_iter=self.max_iter,
+                                                              converge_func=self.model_param.converge_func,
+                                                              re_encrypt_batches=self.re_encrypt_batches,
+                                                              fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
     def _get_param(self):

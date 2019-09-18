@@ -27,15 +27,15 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(gradient_sync.Guest, HeteroGradientComputer):
-    def _register_gradient_sync(self, host_forward_dict_transfer, fore_gradient_transfer,
+    def _register_gradient_sync(self, host_forward_transfer, fore_gradient_transfer,
                                 guest_gradient_transfer, guest_optim_gradient_transfer):
-        self.host_forward_dict_transfer = host_forward_dict_transfer
+        self.host_forward_transfer = host_forward_transfer
         self.fore_gradient_transfer = fore_gradient_transfer
         self.unilateral_gradient_transfer = guest_gradient_transfer
         self.unilateral_optim_gradient_transfer = guest_optim_gradient_transfer
 
     def get_host_forward(self, suffix=tuple()):
-        host_forward = self.host_forward_dict_transfer.get(idx=-1, suffix=suffix)
+        host_forward = self.host_forward_transfer.get(idx=-1, suffix=suffix)
         return host_forward
 
     def remote_fore_gradient(self, fore_gradient, suffix=tuple()):
@@ -48,15 +48,15 @@ class Guest(gradient_sync.Guest, HeteroGradientComputer):
 
 
 class Host(gradient_sync.Host, HeteroGradientComputer):
-    def _register_gradient_sync(self, host_forward_dict_transfer, fore_gradient_transfer,
+    def _register_gradient_sync(self, host_forward_transfer, fore_gradient_transfer,
                                 host_gradient_transfer, host_optim_gradient_transfer):
-        self.host_forward_dict_transfer = host_forward_dict_transfer
+        self.host_forward_transfer = host_forward_transfer
         self.fore_gradient_transfer = fore_gradient_transfer
         self.unilateral_gradient_transfer = host_gradient_transfer
         self.unilateral_optim_gradient_transfer = host_optim_gradient_transfer
 
     def remote_host_forward(self, host_forward, suffix=tuple()):
-        self.host_forward_dict_transfer.remote(obj=host_forward, role=consts.GUEST, idx=0, suffix=suffix)
+        self.host_forward_transfer.remote(obj=host_forward, role=consts.GUEST, idx=0, suffix=suffix)
 
     def get_fore_gradient(self, suffix=tuple()):
         host_forward = self.fore_gradient_transfer.get(idx=0, suffix=suffix)
