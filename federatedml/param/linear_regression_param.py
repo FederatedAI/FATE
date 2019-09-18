@@ -113,7 +113,7 @@ class LinearParam(BaseParam):
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
     re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
+        Required when using encrypted version Homo. Since multiple batch updating coefficient may cause
         overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
         this parameter. Too large batches may cause training failure.
 
@@ -123,9 +123,9 @@ class LinearParam(BaseParam):
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
-                 encrypt_param=EncryptParam(),
+                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                cv_param=CrossValidationParam()):
+                 cv_param=CrossValidationParam()):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -137,6 +137,7 @@ class LinearParam(BaseParam):
         self.max_iter = max_iter
         self.converge_func = converge_func
         self.encrypt_param = copy.deepcopy(encrypt_param)
+        self.re_encrypt_batches = re_encrypt_batches
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
@@ -200,12 +201,20 @@ class LinearParam(BaseParam):
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs']:
+            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "linear_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
+
+        if type(self.re_encrypt_batches).__name__ != "int":
+            raise ValueError(
+                "linear_param's re_encrypt_batches {} not supported, should be int type".format(
+                    self.re_encrypt_batches))
+        elif self.re_encrypt_batches < 0:
+            raise ValueError(
+                "linear_param's re_encrypt_batches must be greater or equal to 0")
 
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(

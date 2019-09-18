@@ -82,16 +82,21 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
             self.aggregated_wx = self.aggregated_wx.join(host_forward, lambda g, h: g + h)
         fore_gradient = self.aggregated_wx.join(data_instances, lambda wx, d: wx - d.label)
 
+        #LOGGER.debug("fore_gradient's type is {}".format(type(list(fore_gradient.collect())[0])))
+
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
         LOGGER.info("Remote fore_gradient to Host")
 
         unilateral_gradient = self.compute_gradient(data_instances,
                                                     fore_gradient,
                                                     model_weights.fit_intercept)
+        #LOGGER.debug("Guest gradient's type is {}".format(type(unilateral_gradient[0])))
+
         unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+        #LOGGER.debug("After add regular, Guest gradient's type is {}".format(type(unilateral_gradient[0])))
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
 
-        return optimized_gradient, fore_gradient, host_forwards
+        return optimized_gradient
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
         """
@@ -164,13 +169,19 @@ class Host(hetero_gradient_sync.Host, loss_sync.Host):
         self.remote_host_forward(host_forward, suffix=current_suffix)
 
         fore_gradient = self.get_fore_gradient(suffix=current_suffix)
+        #LOGGER.debug("fore_gradient's type is {}".format(type(list(fore_gradient.collect())[0])))
 
         unilateral_gradient = self.compute_gradient(data_instances,
                                                     fore_gradient,
                                                     model_weights.fit_intercept)
+        #LOGGER.debug("Host gradient's type is {}".format(type(unilateral_gradient[0])))
+
+        unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+        LOGGER.debug("After add regular, Host gradient's type is {}".format(type(unilateral_gradient[0])))
+
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
 
-        return optimized_gradient, fore_gradient
+        return optimized_gradient
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
         """
@@ -214,6 +225,8 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
         current_suffix = (n_iter_, batch_index)
 
         host_gradients, guest_gradient = self.get_local_gradient(current_suffix)
+        #LOGGER.debug("at Arbiter's end, Guest gradient's type is {}".format(type(guest_gradient[0])))
+
 
         host_gradients = [np.array(h) for h in host_gradients]
         guest_gradient = np.array(guest_gradient)
@@ -223,6 +236,7 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
 
         gradient = np.hstack((h for h in host_gradients))
         gradient = np.hstack((gradient, guest_gradient))
+        #LOGGER.debug("after stacking, gradient's type is {}".format(type(gradient[0])))
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
         delta_grad = optimizer.apply_gradients(grad)

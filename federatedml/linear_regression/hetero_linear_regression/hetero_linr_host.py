@@ -22,7 +22,6 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -37,7 +36,7 @@ class HeteroLinRHost(HeteroLinRBase):
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Guest()
+        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
 
@@ -90,7 +89,7 @@ class HeteroLinRHost(HeteroLinRBase):
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient, host_loss = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.model_weights,
                     self.encrypted_calculator,

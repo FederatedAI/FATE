@@ -30,19 +30,16 @@ class HeteroLinRBase(BaseLinearRegression):
         self.aggregator = None
         self.cipher = None
         self.batch_generator = None
-        self.loss_computer = None
         self.gradient_loss_operator = None
         self.converge_procedure = None
 
     def _init_model(self, params):
         super(HeteroLinRBase, self)._init_model(params)
         self.transfer_variable = HeteroLinRTransferVariable()
-        self.aggregator.register_aggregator(self.transfer_variable)
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
-        self.loss_computer.register_loss_procedure(self.transfer_variable, self)
 
     def transform(self, data_inst):
         return data_inst

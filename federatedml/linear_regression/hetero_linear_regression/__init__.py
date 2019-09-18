@@ -13,9 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_arbiter import HeteroLRArbiter
-from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
-from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
-
-__all__ = ["HeteroLinRHost", "HeteroLinRGuest", "HeteroLinRArbiter"]

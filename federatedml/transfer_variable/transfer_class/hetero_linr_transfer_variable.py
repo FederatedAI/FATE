@@ -37,7 +37,7 @@ class HeteroLinRTransferVariable(BaseTransferVariable):
         self.guest_optim_gradient = Variable(name='HeteroLinRTransferVariable.guest_optim_gradient', auth=dict(src='arbiter', dst=['guest']), transfer_variable=self)
         self.host_loss_regular = Variable(name='HeteroLinRTransferVariable.host_loss_regular', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.loss = Variable(name='HeteroLinRTransferVariable.loss', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.loss_immediate = Variable(name='HeteroLinRTransferVariable.loss_immediate', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.loss_intermediate = Variable(name='HeteroLinRTransferVariable.loss_intermediate', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.converge_flag = Variable(name='HeteroLinRTransferVariable.converge_flag', auth=dict(src='arbiter', dst=['host', 'guest']), transfer_variable=self)
         self.batch_info = Variable(name='HeteroLinRTransferVariable.batch_info', auth=dict(src='guest', dst=['host', 'arbiter']), transfer_variable=self)
         self.host_optim_gradient = Variable(name='HeteroLinRTransferVariable.host_optim_gradient', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)

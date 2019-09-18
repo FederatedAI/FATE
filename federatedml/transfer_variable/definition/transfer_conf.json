@@ -765,19 +765,19 @@
         "host"
       ]
     },
-    "host_forward_wx": {
+    "host_forward": {
       "src": "host",
       "dst": [
         "guest"
       ]
     },
-    "host_forward_loss": {
+    "loss_intermediate": {
       "src": "host",
       "dst": [
         "guest"
       ]
     },
-    "residual": {
+    "fore_gradient": {
       "src": "guest",
       "dst": [
         "host"
@@ -789,11 +789,17 @@
         "arbiter"
       ]
     },
-    "optim_guest_gradient": {
+    "guest_optim_gradient": {
       "src": "arbiter",
       "dst": [
         "guest"
       ]
+    },
+    "host_loss_regular": {
+    "src": "host",
+    "dst": [
+        "guest"
+    ]
     },
     "loss": {
       "src": "guest",
@@ -801,7 +807,7 @@
         "arbiter"
       ]
     },
-    "is_stopped": {
+    "converge_flag": {
       "src": "arbiter",
       "dst": [
         "host",
@@ -815,7 +821,7 @@
         "arbiter"
       ]
     },
-    "optim_host_gradient": {
+    "host_optim_gradient": {
       "src": "arbiter",
       "dst": [
         "host"

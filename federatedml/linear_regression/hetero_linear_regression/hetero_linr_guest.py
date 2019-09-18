@@ -72,7 +72,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.linR_variables = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -85,7 +85,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient, loss = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.model_weights,
                     self.encrypted_calculator,
@@ -94,10 +94,13 @@ class HeteroLinRGuest(HeteroLinRBase):
                     batch_index
                 )
 
-                self.loss_computer.sync_loss_info(self.linR_variables, loss, self.n_iter_, batch_index, self.optimizer)
+                loss_norm = self.optimizer.loss_norm(self.model_weights)
+                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
 
-                self.linR_variables = self.optimizer.update_model(self.linR_variables, optim_guest_gradient)
+                self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
+                LOGGER.debug("model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
+
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -121,12 +124,13 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        pred_guest = self.compute_wx(data_features, self.linR_variables.coef_, self.linR_variables.intercept_)
+        pred_guest = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")
 
         pred = pred_guest.join(pred_host, lambda g, h: g + h)
-        predict_result = data_instances.join(pred, lambda x, y: [x.label, y])
+        LOGGER.debug("prediction: {}".format(pred))
+        predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
 
         return predict_result

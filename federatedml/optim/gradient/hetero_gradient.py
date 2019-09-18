@@ -70,7 +70,6 @@ class HeteroGradientComputer(object):
         if fit_intercept:
             bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
-        gradient.append(feature.shape[0])
         return np.array(gradient)
 
     def compute_gradient(self, data_instances, fore_gradient, fit_intercept):
