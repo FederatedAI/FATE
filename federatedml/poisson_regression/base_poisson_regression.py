@@ -20,7 +20,7 @@
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import poisson_model_meta_pb2, poisson_model_param_pb2
+from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta

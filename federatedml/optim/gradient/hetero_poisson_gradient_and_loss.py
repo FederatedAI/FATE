@@ -81,7 +81,6 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
         self.mu = copy.deepcopy(mu)
         self.aggregated_mu = mu
 
-        #@TODO: paillier does not support multiplication, consider Arbiter to perform this step when multi-host
         for host_forward in host_forwards:
             self.aggregated_mu = self.aggregated_mu.join(host_forward, lambda g, h: g * h)
         fore_gradient = self.aggregated_mu.join(data_instances, lambda mu, d: mu - d.label)
@@ -96,7 +95,7 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
         unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
 
-        return optimized_gradient, fore_gradient, host_forwards
+        return optimized_gradient
 
     def compute_loss(self, data_instances, model_weights, n_iter_, batch_index, offset, loss_norm=None):
         """
@@ -174,7 +173,7 @@ class Host(hetero_gradient_sync.Host, loss_sync.Host):
                                                     fore_gradient,
                                                     model_weights.fit_intercept)
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-        return optimized_gradient, fore_gradient
+        return optimized_gradient
 
     def compute_loss(self, data_instances, model_weights, encrypted_calculator,
                      optimizer, n_iter_, batch_index):
