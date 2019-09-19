@@ -115,7 +115,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
                                      "You should use 'weight_diff' instead.")
 
                 self.is_converged = self.converge_func.is_converge(iter_loss)
-                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, loss, self.is_converged))
+                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
             self.n_iter_ += 1
