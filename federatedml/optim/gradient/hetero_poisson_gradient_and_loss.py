@@ -126,14 +126,18 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
             host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
         else:
             host_loss_regular = []
-        for host_idx, host_mu in enumerate(self.host_forwards):
-            loss_wx = guest_wx_y.join(host_wxs[host_idx], lambda g, h: g[1] * (g[0] + h)).reduce(reduce_add)
-            loss_mu = self.mu.join(host_mu, lambda  g, h: g * h).reduce(reduce_add)
-            loss = (loss_wx + loss_mu + offset_sum) / n
-            if loss_norm is not None:
-                loss = loss + loss_norm
-                loss = loss + host_loss_regular[host_idx]
-            loss_list.append(loss)
+
+        if len(self.host_forwards) > 1:
+            raise ValueError("More than one host exist. Poisson regression does not support multi-host.")
+
+        host_mu = self.host_forwards[0]
+        host_wx = host_wxs[0]
+        loss_wx = guest_wx_y.join(host_wx, lambda g, h: g[1] * (g[0] + h)).reduce(reduce_add)
+        loss_mu = self.mu.join(host_mu, lambda  g, h: g * h).reduce(reduce_add)
+        loss = (loss_wx + loss_mu + offset_sum) / n
+        if loss_norm is not None:
+            loss = loss + loss_norm + host_loss_regular[0]
+        loss_list.append(loss)
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 class Host(hetero_gradient_sync.Host, loss_sync.Host):
