@@ -19,6 +19,7 @@ import com.webank.ai.fate.board.dao.JobMapper;
 import com.webank.ai.fate.board.pojo.Job;
 import com.webank.ai.fate.board.pojo.JobExample;
 import com.webank.ai.fate.board.pojo.JobWithBLOBs;
+import com.webank.ai.fate.board.utils.Dict;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,5 +132,91 @@ public class JobManagerService {
         return jobWithBLOBs;
     }
 
+    public List<JobWithBLOBs> queryPageByCondition(String jobId,
+                                                   List<String> roles,
+                                                   String partyId,
+                                                   List<String> jobStatus,
+                                                   String startTime,
+                                                   String endTime,
+                                                   long startIndex,
+                                                   long pageSize) {
+        JobExample jobExample = new JobExample();
+        JobExample.Criteria criteria = jobExample.createCriteria();
+        logger.info("start create criteria");
+
+        if (!(jobId == null || jobId.equals(""))) {
+            jobId = "%" + jobId + "%";
+            criteria.andFJobIdLike(jobId);
+            logger.info("add jobid " + jobId);
+        }
+        if (!(partyId == null || partyId.equals(""))) {
+
+            partyId = "%" + partyId + "%";
+            criteria.andFPartyIdLike(partyId);
+            logger.info("add partyid " + partyId);
+        }
+        if (!(roles == null || roles.size() == 0)) {
+
+            criteria.andFRoleIn(roles);
+            logger.info("add roles "+ roles);
+        }
+
+        if (!(jobStatus == null || jobStatus.size() == 0)) {
+
+            criteria.andFStatusIn(jobStatus);
+            logger.info("add status" + jobStatus);
+        }
+
+        if (!(startTime == null || startTime.equals(""))) {
+            String order = Dict.FIELD_START_TIME + " " + startTime;
+            jobExample.setOrderByClause(order);
+            logger.info("add start" + order);
+        }
+
+        if (!(endTime == null || endTime.equals(""))) {
+            String order = Dict.FILED_END_TIME + " " + endTime;
+            jobExample.setOrderByClause(order);
+            logger.warn("add end" + order);
+        }
+        String limit = startIndex + "," + pageSize;
+        jobExample.setLimitClause(limit);
+
+
+        return jobMapper.selectByExampleWithBLOBs(jobExample);
+
+    }
+
+    public long totalCount(String jobId,
+                           List<String> roles,
+                           String partyId,
+                           List<String> jobStatus
+    ) {
+
+        JobExample jobExample = new JobExample();
+        JobExample.Criteria criteria = jobExample.createCriteria();
+
+        if (!(jobId == null || jobId.equals(""))) {
+            jobId = "%" + jobId + "%";
+            criteria.andFJobIdLike(jobId);
+            logger.info("jobid ok");
+        }
+
+        if (!(partyId == null || partyId.equals(""))) {
+            partyId = "%" + partyId + "%";
+            criteria.andFPartyIdLike(partyId);
+            logger.info("partyid ok");
+        }
+
+        if (!(roles == null || roles.size() == 0)) {
+            criteria.andFRoleIn(roles);
+            logger.info("role ok");
+        }
+        if (!(jobStatus == null || jobStatus.size() == 0)) {
+            criteria.andFStatusIn(jobStatus);
+            logger.info("status ok");
+        }
+
+        return jobMapper.countByExample(jobExample);
+    }
 
 }

@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Preconditions;
 import com.webank.ai.fate.board.global.ErrorCode;
 import com.webank.ai.fate.board.global.ResponseResult;
+import com.webank.ai.fate.board.pojo.Task;
 import com.webank.ai.fate.board.services.TaskManagerService;
 import com.webank.ai.fate.board.utils.Dict;
 import com.webank.ai.fate.board.utils.HttpClientPool;
@@ -109,6 +110,42 @@ public class JobDetailController {
     }
 
 
+//    @RequestMapping(value = "/pipeline/dag/dependencies", method = RequestMethod.POST)
+//    @ResponseBody
+//    public ResponseResult getDagDependencies(@RequestBody String param) {
+//        JSONObject jsonObject = JSON.parseObject(param);
+//        String jobId = jsonObject.getString(Dict.JOBID);
+//        String role = jsonObject.getString(Dict.ROLE);
+//        String partyId = jsonObject.getString(Dict.PARTY_ID);
+//        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+//        jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
+//        String result = httpClientPool.post(fateUrl + Dict.URL_DAG_DEPENDENCY, jsonObject);
+//        Preconditions.checkArgument(result != null);
+//        JSONObject resultObject = JSON.parseObject(result);
+//        Integer retcode = resultObject.getInteger(Dict.RETCODE);
+//
+//        if (retcode == 0) {
+//            JSONObject data = resultObject.getJSONObject(Dict.DATA);
+//            JSONArray components_list = data.getJSONArray(Dict.COMPONENT_LIST);
+//            ArrayList<Map> componentList = new ArrayList<>();
+//            for (Object o : components_list) {
+//                HashMap<String, String> component = new HashMap<>();
+//                component.put(Dict.COMPONENT_NAME, (String) o);
+//                String taskStatus = taskManagerService.findTaskStatus(jobId, role,(String) o);
+//
+//                component.put(Dict.STATUS, taskStatus);
+//                componentList.add(component);
+//            }
+//            data.put(Dict.COMPONENT_LIST, componentList);
+//            return new ResponseResult<>(ErrorCode.SUCCESS, data);
+//
+//        } else {
+//            return new ResponseResult<>(retcode, resultObject);
+//        }
+//
+
+//    }
+
     @RequestMapping(value = "/pipeline/dag/dependencies", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getDagDependencies(@RequestBody String param) {
@@ -117,9 +154,12 @@ public class JobDetailController {
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
         Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+
+
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_DAG_DEPENDENCY, jsonObject);
+        String result = httpClientPool.post(fateUrl + Dict.URL_DAG_DEPENDENCY, jsonObject.toJSONString());
         Preconditions.checkArgument(result != null);
+
         JSONObject resultObject = JSON.parseObject(result);
         Integer retcode = resultObject.getInteger(Dict.RETCODE);
 
@@ -127,23 +167,30 @@ public class JobDetailController {
             JSONObject data = resultObject.getJSONObject(Dict.DATA);
             JSONArray components_list = data.getJSONArray(Dict.COMPONENT_LIST);
             ArrayList<Map> componentList = new ArrayList<>();
+
             for (Object o : components_list) {
-                HashMap<String, String> component = new HashMap<>();
+                HashMap<String, Object> component = new HashMap<>();
                 component.put(Dict.COMPONENT_NAME, (String) o);
-                String taskStatus = taskManagerService.findTaskStatus(jobId, role,(String) o);
+                Task task = taskManagerService.findTask(jobId, role, (String) o);
+                String taskStatus =null;
+                Long elapsed=null;
+                if(task!=null){
+                     taskStatus = task.getfStatus();
+                     elapsed = task.getfElapsed();
+                }
+
                 component.put(Dict.STATUS, taskStatus);
+                component.put(Dict.TIME,elapsed);
                 componentList.add(component);
             }
+
             data.put(Dict.COMPONENT_LIST, componentList);
             return new ResponseResult<>(ErrorCode.SUCCESS, data);
 
         } else {
             return new ResponseResult<>(retcode, resultObject);
         }
-
-
     }
-
     @RequestMapping(value = "/tracking/component/output/model", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getModel(@RequestBody String param) {
