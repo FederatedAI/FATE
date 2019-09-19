@@ -106,19 +106,26 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
         """
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
-        self_wx_square = self.wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         loss_list = []
         host_wx_squares = self.get_host_loss_intermediate(current_suffix)
+
         if loss_norm is not None:
             host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
         else:
             host_loss_regular = []
-        for host_idx, host_forward in enumerate(self.host_forwards):
-            loss_gh = self.wx.join(host_forward, lambda g, h: g*h).reduce(reduce_add)
-            loss = (self_wx_square + host_wx_squares[host_idx] + 2 * loss_gh) / n
+        if len(self.host_forwards) > 1:
+            LOGGER.info("More than one host exist, loss is not available")
+        else:
+            host_forward = self.host_forwards[0]
+            host_wx_square = host_wx_squares[0]
+
+            wxy = self.wx.join(data_instances, lambda wx, d: wx - d.label)
+            wxy_square = wxy.mapValues(lambda x: np.square(x)).reduce(reduce_add)
+
+            loss_gh = wxy.join(host_forward, lambda g, h: g*h).reduce(reduce_add)
+            loss = (wxy_square + host_wx_square + 2 * loss_gh) / n
             if loss_norm is not None:
-                loss = loss + loss_norm
-                loss = loss + host_loss_regular[host_idx]
+                loss = loss + loss_norm + host_loss_regular[0]
             loss_list.append(loss)
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
