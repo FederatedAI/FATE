@@ -104,10 +104,11 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
 
             if self.model_param.converge_func == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
-                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
-                                                                                weight_diff, self.is_converged))
                 if weight_diff < self.model_param.eps:
                     self.is_converged = True
+                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
+                                                                                weight_diff, self.is_converged))
+
             else:
                 self.is_converged = self.converge_func.is_converge(iter_loss)
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))

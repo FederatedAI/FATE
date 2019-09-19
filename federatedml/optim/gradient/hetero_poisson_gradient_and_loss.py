@@ -147,6 +147,9 @@ class Host(hetero_gradient_sync.Host, loss_sync.Host):
                                      transfer_variables.fore_gradient,
                                      transfer_variables.host_gradient,
                                      transfer_variables.host_optim_gradient)
+        self._register_loss_sync(transfer_variables.host_loss_regular,
+                                 transfer_variables.loss,
+                                 transfer_variables.loss_intermediate)
 
     def compute_gradient_procedure(self, data_instances, model_weights, encrypted_calculator,
                                    optimizer, n_iter_, batch_index):
@@ -213,6 +216,7 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
                                      transfer_variables.host_gradient,
                                      transfer_variables.guest_optim_gradient,
                                      transfer_variables.host_optim_gradient)
+        self._register_loss_sync(transfer_variables.loss)
 
     def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
         """

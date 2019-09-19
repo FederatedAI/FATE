@@ -37,7 +37,7 @@ class HeteroPoissonTransferVariable(BaseTransferVariable):
         self.guest_optim_gradient = Variable(name='HeteroPoissonTransferVariable.guest_optim_gradient', auth=dict(src='arbiter', dst=['guest']), transfer_variable=self)
         self.host_loss_regular = Variable(name='HeteroPoissonTransferVariable.host_loss_regular', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.loss = Variable(name='HeteroPoissonTransferVariable.loss', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.loss_immediate = Variable(name='HeteroPoissonTransferVariable.loss_immediate', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.loss_intermediate = Variable(name='HeteroPoissonTransferVariable.loss_intermediate', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.converge_flag = Variable(name='HeteroPoissonTransferVariable.converge_flag', auth=dict(src='arbiter', dst=['host', 'guest']), transfer_variable=self)
         self.batch_info = Variable(name='HeteroPoissonTransferVariable.batch_info', auth=dict(src='guest', dst=['host', 'arbiter']), transfer_variable=self)
         self.host_optim_gradient = Variable(name='HeteroPoissonTransferVariable.host_optim_gradient', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)

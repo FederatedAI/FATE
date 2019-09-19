@@ -141,12 +141,10 @@ class BasePoissonRegression(ModelBase):
                                      extra_metas={
                                          "unit_name": "iters",
                                      })
-        self.tracker.set_meta(metric_name='loss',
-                              metric_namespace='train',
-                              metric_meta=metric_meta)
-        self.tracker.set_metric(metric_name='loss',
-                                metric_namespace='train',
-                                metric_data=[Metric(iter_num, loss)])
+        self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='loss',
+                             metric_namespace='train',
+                             metric_data=[Metric(iter_num, loss)])
 
     def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:

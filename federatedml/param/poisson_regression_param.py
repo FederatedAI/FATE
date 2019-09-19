@@ -55,10 +55,10 @@ class InitParam(BaseParam):
                 "Init param's init_method {} not supported, should be str type".format(self.init_method))
         else:
             self.init_method = self.init_method.lower()
-            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'zeros', 'const']:
+            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'const', 'zeros']:
                 raise ValueError(
                     "Init param's init_method {} not supported, init_method should in 'random_uniform',"
-                    " 'random_normal' 'ones', 'zeros' or 'const'".format(self.init_method))
+                    " 'random_normal' 'ones', 'zeros', or 'const'".format(self.init_method))
 
         if type(self.init_const).__name__ not in ['int', 'float']:
             raise ValueError(
@@ -124,7 +124,7 @@ class PoissonParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  exposure_index = -1,
-                 encrypt_param=EncryptParam(),
+                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam()):
         super(PoissonParam, self).__init__()
@@ -138,6 +138,7 @@ class PoissonParam(BaseParam):
         self.max_iter = max_iter
         self.converge_func = converge_func
         self.encrypt_param = copy.deepcopy(encrypt_param)
+        self.re_encrypt_batches = re_encrypt_batches
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
@@ -177,7 +178,7 @@ class PoissonParam(BaseParam):
             raise ValueError(
                 "poisson_param's batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
+            if type(self.batch_size).__name__ != "int" \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))

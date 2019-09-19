@@ -176,7 +176,7 @@ class LinearParam(BaseParam):
             raise ValueError(
                 "linear_param's batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
+            if type(self.batch_size).__name__ != "int" \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))

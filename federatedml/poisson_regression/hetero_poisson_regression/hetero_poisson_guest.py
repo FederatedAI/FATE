@@ -68,7 +68,6 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         model_shape = self.get_features_shape(data_instances)
         self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
@@ -96,6 +95,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                                                          batch_index, batch_offset, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optimized_gradient)
+
                 batch_index += 1
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))

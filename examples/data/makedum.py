@@ -1,31 +1,32 @@
 import csv
 import numpy as np
-from arch.api import eggroll
 from sklearn import linear_model
 from sklearn import metrics
 import time
 from sklearn.model_selection import cross_validate
 from math import sqrt
 
-n_samples, n_features = 100, 5
+n_samples, n_features = 300, 5
 idx = np.array(list(range(n_samples)))
 rng = np.random.RandomState(0)
-X = rng.randint(low = 0, high = 3, size=(n_samples, n_features))
-y = np.dot(X, np.array([1, 2, 1, 1, 2])) + 2
+X = rng.randint(low = 0, high = 6, size=(n_samples, n_features))
+y = np.exp(np.dot(X, np.array([-1, 0, 1, 2, 3])) - 26)
+
 f = round
 f = np.vectorize(f)
 y = f(y)
+print(np.max(y))
 X = f(X)
 idx = f(idx)
-np.savetxt("dum_int_X.csv", X, delimiter=",", fmt='%d')
-np.savetxt("dum_int_y.csv", y, delimiter=",", fmt='%d')
+np.savetxt("dum_exp_X.csv", X, delimiter=",", fmt='%d')
+np.savetxt("dum_exp_y.csv", y, delimiter=",", fmt='%d')
 
 X_host = X[...,:3]
 data_guest = np.concatenate((idx.reshape(-1, 1), y.reshape(-1, 1), X_host), axis = 1)
 data_host = X[...,3:]
 data_host = np.concatenate((idx.reshape(-1, 1), data_host), axis = 1)
-np.savetxt("dum_int_a.csv", data_host, delimiter=",", fmt='%d')
-np.savetxt("dum_int_b.csv", data_guest, delimiter=",", fmt='%d')
+np.savetxt("dum_exp_a.csv", data_host, delimiter=",", fmt='%d')
+np.savetxt("dum_exp_b.csv", data_guest, delimiter=",", fmt='%d')
 
 # Least Square
 linr = linear_model.LinearRegression()
