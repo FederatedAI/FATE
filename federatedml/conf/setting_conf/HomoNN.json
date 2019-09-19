@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/nn/homo_nn",
+    "default_runtime_conf": "homo_nn_param.json",
+    "param_class" : "federatedml/param/homo_nn_param.py/HomoNNParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "enter_point.py/HomoNNGuest"
+        },
+        "host":
+        {
+            "program": "enter_point.py/HomoNNHost"
+        },
+        "arbiter":
+        {
+            "program": "enter_point.py/HomoNNArbiter"
+        }
+    }
+}
