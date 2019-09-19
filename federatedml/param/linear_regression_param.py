@@ -170,7 +170,7 @@ class LinearParam(BaseParam):
             if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
                 raise ValueError(
                     "linear_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam' or 'adagrad' or 'nesterov_momentum_sgd'")
+                    " 'sgd', 'rmsprop', 'adam', 'adagrad' or 'nesterov_momentum_sgd'")
 
         if type(self.batch_size).__name__ != "int":
             raise ValueError(

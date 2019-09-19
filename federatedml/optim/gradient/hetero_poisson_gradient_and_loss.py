@@ -128,7 +128,7 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
             host_loss_regular = []
 
         if len(self.host_forwards) > 1:
-            raise ValueError("More than one host exist. Poisson regression does not support multi-host.")
+            raise ValueError("More than one host exists. Poisson regression does not support multi-host.")
 
         host_mu = self.host_forwards[0]
         host_wx = host_wxs[0]

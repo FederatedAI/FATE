@@ -113,7 +113,6 @@ class _Optimizer(object):
             delta_grad = self.apply_gradients(grad)
             # delta_grad = grad
         else:
-            self.iters += 1
             delta_grad = grad
         model_weights = self.regularization_update(model_weights, delta_grad)
         return model_weights
@@ -175,6 +174,9 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
         v = self.nesterov_momentum_coeff * self.opt_m - learning_rate * grad
         delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
         self.opt_m = v
+        LOGGER.debug('In nesterov_momentum, opt_m: {}, v: {}, delta_grad: {}'.format(
+            self.opt_m, v, delta_grad
+        ))
         return delta_grad
 
 

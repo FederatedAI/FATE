@@ -72,6 +72,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
             LOGGER.info("iter:" + str(self.n_iter_))
 
             batch_data_generator = self.batch_generator.generate_batch_data()
+            self.optimizer.set_iters(self.n_iter_ + 1)
+
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = self.transform(batch_data)

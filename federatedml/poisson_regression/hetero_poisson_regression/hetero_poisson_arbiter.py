@@ -92,13 +92,10 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
                     total_gradient = total_gradient + gradient
 
                 loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
-                if len(loss_list) == 1:
-                    if iter_loss is None:
-                        iter_loss = loss_list[0]
-                    else:
-                        iter_loss = iter_loss + loss_list[0]
-                if len(loss_list) > 1:
-                    raise ValueError("Poisson regression does not support multi-host.")
+                if iter_loss is None:
+                    iter_loss = loss_list[0]
+                else:
+                    iter_loss = iter_loss + loss_list[0]
 
             # if converge
             if iter_loss is not None:
@@ -112,8 +109,6 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
                 if weight_diff < self.model_param.eps:
                     self.is_converged = True
             else:
-                if iter_loss is None:
-                    raise ValueError("Poisson regression does not support multi-host.")
                 self.is_converged = self.converge_func.is_converge(iter_loss)
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
