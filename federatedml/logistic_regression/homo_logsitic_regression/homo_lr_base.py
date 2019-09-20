@@ -16,15 +16,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 import functools
+
+from arch.api.utils import log_utils
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.optimizer import optimizer_factory
-from federatedml.statistic import data_overview
-from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.param.logistic_regression_param import HomoLogisticParam
+from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.statistic import data_overview
+from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
+from federatedml.util import consts
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -91,7 +92,7 @@ class HomoLRBase(BaseLogisticRegression):
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
         lr_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
-                                                   data_instance=data_instances)
+                                                 data_instance=data_instances)
         return lr_weights
 
     def run(self, component_parameters=None, args=None):
@@ -137,6 +138,7 @@ class HomoLRBase(BaseLogisticRegression):
         loss_norm = self.optimizer.loss_norm(self.lr_weights)
         if loss_norm is not None:
             loss += loss_norm
+        loss /= data_instances.count()
         self.callback_loss(self.n_iter_, loss)
         self.loss_history.append(loss)
         return loss

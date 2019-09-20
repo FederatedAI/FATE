@@ -60,7 +60,7 @@ class HomoLRGuest(HomoLRBase):
 
             self.optimizer.set_iters(self.n_iter_)
             if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
-                weight = self.aggregator.aggregate_then_get(self.lr_weights, degree=total_data_num,
+                weight = self.aggregator.aggregate_then_get(lr_weights, degree=total_data_num,
                                                             suffix=self.n_iter_)
                 self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 loss = self._compute_loss(data_instances)
@@ -74,12 +74,12 @@ class HomoLRGuest(HomoLRBase):
             batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
+                LOGGER.debug("In each batch, lr_weight: {}".format(lr_weights.unboxed))
                 f = functools.partial(self.gradient_operator.compute_gradient,
                                       coef=lr_weights.coef_,
                                       intercept=lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
-
                 LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                     self.n_iter_, batch_num, grad, n))
                 grad /= n

@@ -132,6 +132,7 @@ class _SgdOptimizer(_Optimizer):
         learning_rate = self.decay_learning_rate()
 
         delta_grad = learning_rate * grad
+        LOGGER.debug("In sgd optimizer, learning_rate: {}, delta_grad: {}".format(learning_rate, delta_grad))
         return delta_grad
 
 

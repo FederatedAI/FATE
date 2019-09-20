@@ -60,6 +60,7 @@ class Arbiter(object):
         models = self.get_models_for_aggregate(ciphers_dict, suffix=suffix)
         total_model, total_degree = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]), models)
         total_model /= total_degree
+        LOGGER.debug("In aggregate model, total_model: {}, total_degree: {}".format(total_model.unboxed, total_degree))
         return total_model
 
     def aggregate_and_broadcast(self, ciphers_dict=None, suffix=tuple()):
@@ -84,6 +85,7 @@ class Arbiter(object):
         losses = self._loss_sync.get_losses(idx=idx, suffix=suffix)
         total_loss = 0.0
         total_degree = 0.0
+        LOGGER.debug()
         for loss in losses:
             total_loss += loss.unboxed
             total_degree += loss.get_degree(1.0)

@@ -146,14 +146,6 @@ class ListWeights(Weights):
                 _w.append(func(v))
             return ListWeights(_w)
 
-    def encrypted(self, cipher: Encrypt, inplace=True):
-        if inplace:
-            self._weights = cipher.encrypt(np.array(self._weights))
-            return self
-        else:
-            return cipher.encrypt(np.array(self._weights))
-        # return self.map_values(cipher.encrypt, inplace=inplace)
-
     def binary_op(self, other: 'ListWeights', func, inplace):
         if inplace:
             for k, v in enumerate(self._weights):

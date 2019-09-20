@@ -63,6 +63,8 @@ def reduce_add(x, y):
         return x
     if not isinstance(x, Iterable):
         result = x + y
+    elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+        result = x + y
     else:
         result = []
         for idx, acc in enumerate(x):

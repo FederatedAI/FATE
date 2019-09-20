@@ -90,7 +90,7 @@ class HomoLRHost(HomoLRBase):
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
-                weight = self.aggregator.aggregate_then_get(self.lr_weights, degree=total_data_num,
+                weight = self.aggregator.aggregate_then_get(lr_weights, degree=total_data_num,
                                                             suffix=self.n_iter_)
                 self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 if not self.use_encrypt:

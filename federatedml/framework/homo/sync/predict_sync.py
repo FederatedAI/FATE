@@ -79,7 +79,7 @@ class Host(object):
                       use_encrypted, fit_intercept, suffix=tuple()):
         if use_encrypted:
             final_model = self._final_model_variable.get(idx=0, suffix=suffix)
-            lr_weights = LogisticRegressionWeights(final_model.parameters, fit_intercept)
+            lr_weights = LogisticRegressionWeights(final_model.unboxed, fit_intercept)
 
         wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
         if use_encrypted:
