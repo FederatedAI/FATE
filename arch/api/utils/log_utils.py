@@ -20,7 +20,6 @@ import os
 import inspect
 from threading import RLock
 from arch.api.utils import file_utils
-from fate_flow.utils import job_utils
 
 
 class LoggerFactory(object):
@@ -160,10 +159,11 @@ class LoggerFactory(object):
     @staticmethod
     def get_schedule_logger(job_id):
 
-        job_log_dir = job_utils.get_job_log_directory(job_id=job_id)
+        job_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
         os.makedirs(job_log_dir, exist_ok=True)
         logger = logging.getLogger(job_id)
-        handler = LoggerFactory.get_handler(class_name=None, log_dir=job_log_dir, is_schedule=True)
+        logger.setLevel(LoggerFactory.LEVEL)
+        handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL, log_dir=job_log_dir, is_schedule=True)
         logger.addHandler(handler)
         with LoggerFactory.lock:
             LoggerFactory.schedule_logger_dict[job_id] = logger
