@@ -20,6 +20,7 @@ import os
 import inspect
 from threading import RLock
 from arch.api.utils import file_utils
+from fate_flow.utils import job_utils
 
 
 class LoggerFactory(object):
@@ -43,6 +44,7 @@ class LoggerFactory(object):
     # DEBUG = 10
     # NOTSET = 0
     levels = (10, 20, 30, 40)
+    schedule_logger_dict = {}
 
     @staticmethod
     def set_directory(directory=None, parent_log_dir=None, append_to_parent_log=None, force=False):
@@ -100,14 +102,18 @@ class LoggerFactory(object):
         return LoggerFactory.global_handler_dict[logger_name_key]
 
     @staticmethod
-    def get_handler(class_name, level=None, log_dir=None):
-        if not LoggerFactory.LOG_DIR or not class_name:
-            return logging.StreamHandler()
-        formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
-        if not log_dir:
-            log_file = os.path.join(LoggerFactory.LOG_DIR, "{}.log".format(class_name))
+    def get_handler(class_name, level=None, log_dir=None, is_schedule=False):
+        if not is_schedule:
+            if not LoggerFactory.LOG_DIR or not class_name:
+                return logging.StreamHandler()
+
+            if not log_dir:
+                log_file = os.path.join(LoggerFactory.LOG_DIR, "{}.log".format(class_name))
+            else:
+                log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
-            log_file = os.path.join(log_dir, "{}.log".format(class_name))
+            log_file = os.path.join(log_dir, "fate_flow_schedule.log")
+        formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
                                            interval=1,
@@ -151,6 +157,18 @@ class LoggerFactory(object):
                     level_logger_name = logging._levelToName[level]
                     logger.addHandler(LoggerFactory.get_global_hanlder(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
 
+    @staticmethod
+    def get_schedule_logger(job_id):
+
+        job_log_dir = job_utils.get_job_log_directory(job_id=job_id)
+        os.makedirs(job_log_dir, exist_ok=True)
+        logger = logging.getLogger(job_id)
+        handler = LoggerFactory.get_handler(class_name=None, log_dir=job_log_dir, is_schedule=True)
+        logger.addHandler(handler)
+        with LoggerFactory.lock:
+            LoggerFactory.schedule_logger_dict[job_id] = logger
+        return logger
+
 
 def setDirectory(directory=None):
     LoggerFactory.set_directory(directory)
@@ -166,3 +184,18 @@ def getLogger(className=None, useLevelFile=False):
         module = inspect.getmodule(frame[0])
         className = 'stat'
     return LoggerFactory.get_logger(className)
+
+
+def schedule_logger(job_id=None, delete=False):
+    if not job_id:
+        return getLogger("fate_flow_schedule")
+    else:
+        if delete:
+            with LoggerFactory.lock:
+                del LoggerFactory.schedule_logger_dict[job_id]
+            return True
+        if job_id in LoggerFactory.schedule_logger_dict:
+            return LoggerFactory.schedule_logger_dict[job_id]
+
+        return LoggerFactory.get_schedule_logger(job_id)
+

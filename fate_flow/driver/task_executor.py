@@ -21,10 +21,11 @@ from arch.api import federation
 from arch.api import storage
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, get_lan_ip
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import API_VERSION, schedule_logger
+from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.entity.constant_config import TaskStatus
@@ -46,8 +47,8 @@ class TaskExecutor(object):
             parser.add_argument('-c', '--config', required=True, type=str, help="task config")
             parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
-            schedule_logger.info('enter task process')
-            schedule_logger.info(args)
+            schedule_logger(args.job_id).info('enter task process')
+            schedule_logger(args.job_id).info(args)
             # init function args
             if args.job_server:
                 RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
@@ -65,7 +66,7 @@ class TaskExecutor(object):
             parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
-            schedule_logger.exception(e)
+            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
             return
         try:
@@ -106,9 +107,9 @@ class TaskExecutor(object):
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
                                           task_info=task.to_json())
 
-            schedule_logger.info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger.info(parameters)
-            schedule_logger.info(task_input_dsl)
+            schedule_logger(job_id).info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
+            schedule_logger(job_id).info(parameters)
+            schedule_logger(job_id).info(task_input_dsl)
             run_object.run(parameters, task_run_args)
             if task_output_dsl:
                 if task_output_dsl.get('data', []):
@@ -120,7 +121,7 @@ class TaskExecutor(object):
                     tracker.save_output_model(output_model, task_output_dsl['model'][0])
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
-            schedule_logger.exception(e)
+            schedule_logger(job_id).exception(e)
             task.f_status = TaskStatus.FAILED
         finally:
             try:
@@ -132,8 +133,8 @@ class TaskExecutor(object):
                                               initiator_party_id=job_initiator.get('party_id', None),
                                               task_info=task.to_json())
             except Exception as e:
-                schedule_logger.exception(e)
-        schedule_logger.info(
+                schedule_logger(job_id).exception(e)
+        schedule_logger(job_id).info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
 

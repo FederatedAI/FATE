@@ -16,13 +16,14 @@
 from arch.api.proto import pipeline_pb2
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL
+from fate_flow.settings import BOARD_DASHBOARD_URL
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
@@ -38,7 +39,7 @@ class JobController(object):
     @staticmethod
     def submit_job(job_data):
         job_id = generate_job_id()
-        schedule_logger.info('submit job, job_id {}, body {}'.format(job_id, job_data))
+        schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
@@ -85,7 +86,7 @@ class JobController(object):
             "initiator_party_id": job_initiator['party_id']
         }
         )
-        schedule_logger.info(
+        schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
         return job_id, job_dsl_path, job_runtime_conf_path, {'model_id': job_parameters['model_id'],
@@ -94,16 +95,16 @@ class JobController(object):
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator, timeout=False):
-        schedule_logger.info('{} {} get kill job {} command'.format(role, party_id, job_id))
+        schedule_logger(job_id).info('{} {} get kill job {} command'.format(role, party_id, job_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False
             try:
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
             except Exception as e:
-                schedule_logger.exception(e)
+                schedule_logger(job_id).exception(e)
             finally:
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
@@ -122,7 +123,7 @@ class JobController(object):
     def update_task_status(job_id, component_name, task_id, role, party_id, task_info):
         tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name, task_id=task_id)
         tracker.save_task(role=role, party_id=party_id, task_info=task_info)
-        schedule_logger.info(
+        schedule_logger(job_id).info(
             'job {} component {} {} {} status {}'.format(job_id, component_name, role, party_id,
                                                          task_info.get('f_status', '')))
 
@@ -197,15 +198,15 @@ class JobController(object):
 
     @staticmethod
     def clean_job(job_id, role, party_id):
-        schedule_logger.info('job {} on {} {} start to clean'.format(job_id, role, party_id))
+        schedule_logger(job_id).info('job {} on {} {} start to clean'.format(job_id, role, party_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             try:
                 Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task()
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} clean done'.format(job_id, task.f_component_name, role, party_id))
             except Exception as e:
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
-                schedule_logger.exception(e)
-        schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
+                schedule_logger(job_id).exception(e)
+        schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
