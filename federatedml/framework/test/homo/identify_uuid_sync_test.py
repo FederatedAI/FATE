@@ -24,9 +24,9 @@ class IdentifyUUIDTest(TestSyncBase):
     def call(cls, role, transfer_variable, ind, *args):
         if role == consts.ARBITER:
             sync = identify_uuid_sync.Arbiter()
-            sync._register_identify_uuid(transfer_variable.guest_uuid,
-                                         transfer_variable.host_uuid,
-                                         transfer_variable.uuid_conflict_flag)
+            sync.register_identify_uuid(transfer_variable.guest_uuid,
+                                        transfer_variable.host_uuid,
+                                        transfer_variable.uuid_conflict_flag)
             return sync.validate_uuid()
         elif role == consts.HOST:
             sync = identify_uuid_sync.Host()

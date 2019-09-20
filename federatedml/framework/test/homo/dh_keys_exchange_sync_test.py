@@ -25,15 +25,15 @@ class DHKeyExchangeTest(TestSyncBase):
     def call(cls, role, transfer_variable, ind, *args):
         if role == consts.ARBITER:
             identify_uuid_sync.Arbiter() \
-                ._register_identify_uuid(transfer_variable.guest_uuid,
-                                         transfer_variable.host_uuid,
-                                         transfer_variable.uuid_conflict_flag) \
+                .register_identify_uuid(transfer_variable.guest_uuid,
+                                        transfer_variable.host_uuid,
+                                        transfer_variable.uuid_conflict_flag) \
                 .validate_uuid()
             return dh_keys_exchange_sync.Arbiter() \
-                ._register_dh_key_exchange(transfer_variable.dh_pubkey,
-                                           transfer_variable.dh_ciphertext_host,
-                                           transfer_variable.dh_ciphertext_guest,
-                                           transfer_variable.dh_ciphertext_bc) \
+                .register_dh_key_exchange(transfer_variable.dh_pubkey,
+                                          transfer_variable.dh_ciphertext_host,
+                                          transfer_variable.dh_ciphertext_guest,
+                                          transfer_variable.dh_ciphertext_bc) \
                 .key_exchange()
         elif role == consts.HOST:
             uid = identify_uuid_sync.Host() \

@@ -27,8 +27,8 @@ class ModelBroadcastTest(TestSyncBase):
         vars_to_broadcast = args[1]
         if role == consts.ARBITER:
             return model_broadcast_sync.Arbiter() \
-                ._register_model_broadcaster(transfer_variable.aggregated_model) \
-                ._send_model(vars_to_broadcast, cipher_dict)
+                .register_model_broadcaster(transfer_variable.aggregated_model) \
+                .send_model(vars_to_broadcast, cipher_dict)
         elif role == consts.HOST:
             return model_broadcast_sync.Host() \
                 ._register_model_broadcaster(transfer_variable.aggregated_model) \

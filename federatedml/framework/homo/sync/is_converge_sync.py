@@ -21,7 +21,7 @@ import types
 class Arbiter(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_is_converge(self, is_converge_variable: Variable):
+    def register_is_converge(self, is_converge_variable: Variable):
         self._is_converge_variable = is_converge_variable
         return self
 
@@ -34,7 +34,7 @@ class Arbiter(object):
 class _Client(object):
 
     # noinspection PyAttributeOutsideInit
-    def _register_is_converge(self, is_converge_variable: Variable):
+    def register_is_converge(self, is_converge_variable: Variable):
         self._is_converge_variable = is_converge_variable
         return self
 

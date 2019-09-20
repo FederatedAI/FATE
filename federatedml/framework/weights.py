@@ -17,9 +17,10 @@
 import abc
 import operator
 
+import numpy as np
+
 from arch.api.utils.splitable import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
-import numpy as np
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):
@@ -30,6 +31,13 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
             self._args = args
         if kwargs:
             self._kwargs = kwargs
+
+    def with_degree(self, degree):
+        setattr(self, "_degree", degree)
+        return self
+
+    def get_degree(self, default=None):
+        return getattr(self, "_degree", default)
 
     @property
     def unboxed(self):
@@ -94,6 +102,31 @@ class Weights(object):
         return self.map_values(lambda x: x / other, inplace=True)
 
 
+class NumericWeights(Weights):
+    def __init__(self, v):
+        super().__init__(v)
+
+    def map_values(self, func, inplace):
+        v = func(self._weights)
+        if inplace:
+            self._weights = v
+            return self
+        else:
+            return NumericWeights(v)
+
+    def binary_op(self, other: 'NumpyWeights', func, inplace):
+        v = func(self._weights, other._weights)
+        if inplace:
+            self._weights = v
+            return self
+        else:
+            return NumericWeights(v)
+
+    def axpy(self, a, y: 'NumpyWeights'):
+        self._weights = self._weights + a * y._weights
+        return self
+
+
 class ListWeights(Weights):
     def __init__(self, l):
         super().__init__(l)
@@ -145,16 +178,54 @@ class DictWeights(Weights):
     def binary_op(self, other: 'DictWeights', func, inplace):
         if inplace:
             for k, v in self._weights.items():
-                self._weights[k] = func(other._weights, v)
+                self._weights[k] = func(other._weights[k], v)
             return self
         else:
             _w = dict()
             for k, v in self._weights.items():
-                _w[k] = func(other._weights, v)
+                _w[k] = func(other._weights[k], v)
             return DictWeights(_w)
 
     def axpy(self, a, y: 'DictWeights'):
         for k, v in self._weights.items():
+            self._weights[k] += a * y._weights[k]
+        return self
+
+
+class OrderDictWeights(Weights):
+    """
+    This class provide a dict container same as `DictWeights` but with fixed key order.
+    This feature is useful in secure aggregation random padding generation, which is order sensitive.
+    """
+
+    def __init__(self, d):
+        super().__init__(d)
+        self.walking_order = sorted(d.keys(), key=str)
+
+    def map_values(self, func, inplace):
+        if inplace:
+            for k in self.walking_order:
+                self._weights[k] = func(self._weights[k])
+            return self
+        else:
+            _w = dict()
+            for k in self.walking_order:
+                _w[k] = func(self._weights[k])
+            return DictWeights(_w)
+
+    def binary_op(self, other: 'OrderDictWeights', func, inplace):
+        if inplace:
+            for k in self.walking_order:
+                self._weights[k] = func(other._weights[k], self._weights[k])
+            return self
+        else:
+            _w = dict()
+            for k in self.walking_order:
+                _w[k] = func(other._weights[k], self._weights[k])
+            return DictWeights(_w)
+
+    def axpy(self, a, y: 'OrderDictWeights'):
+        for k in self.walking_order:
             self._weights[k] += a * y._weights[k]
         return self
 
