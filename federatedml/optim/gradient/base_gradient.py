@@ -23,10 +23,10 @@ import numpy as np
 
 
 class Gradient:
-    def compute(self, values, coef, intercept, fit_intercept):
+    def compute_gradient(self, values, coef, intercept, fit_intercept):
         raise NotImplementedError("Method not implemented")
 
-    def compute_loss(self, X, Y, coef, intercept):
+    def compute_loss(self, values, coef, intercept):
         raise NotImplementedError("Method not implemented")
 
     def load_data(self, data_instance):

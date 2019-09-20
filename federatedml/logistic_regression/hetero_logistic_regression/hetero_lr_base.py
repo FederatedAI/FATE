@@ -17,8 +17,10 @@
 #  limitations under the License.
 
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
-from federatedml.util import consts
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
+from federatedml.param.logistic_regression_param import HeteroLogisticParam
+from federatedml.util import consts
 
 
 class HeteroLRBase(BaseLogisticRegression):
@@ -33,15 +35,17 @@ class HeteroLRBase(BaseLogisticRegression):
         self.batch_generator = None
         self.gradient_loss_operator = None
         self.converge_procedure = None
+        self.model_param = HeteroLogisticParam()
 
     def _init_model(self, params):
         super(HeteroLRBase, self)._init_model(params)
+        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
+        self.cipher_operator = PaillierEncrypt()
         self.transfer_variable = HeteroLRTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
-
 
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
         """

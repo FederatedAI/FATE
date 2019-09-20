@@ -25,11 +25,20 @@ LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):
-    def __init__(self, learning_rate, alpha, penalty):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
         self.learning_rate = learning_rate
         self.iters = 0
         self.alpha = alpha
         self.penalty = penalty
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
+
+    def decay_learning_rate(self):
+        if self.decay_sqrt:
+            lr = self.learning_rate / np.sqrt(1 + self.decay * self.iters)
+        else:
+            lr = self.learning_rate / (1 + self.decay * self.iters)
+        return lr
 
     @property
     def shrinkage_val(self):
@@ -120,19 +129,20 @@ class _Optimizer(object):
 
 class _SgdOptimizer(_Optimizer):
     def apply_gradients(self, grad):
-        learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.decay_learning_rate()
+
         delta_grad = learning_rate * grad
         return delta_grad
 
 
 class _RMSPropOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty):
-        super().__init__(learning_rate, alpha, penalty)
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.rho = 0.99
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.decay_learning_rate()
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
@@ -144,12 +154,12 @@ class _RMSPropOptimizer(_Optimizer):
 
 
 class _AdaGradOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty):
-        super().__init__(learning_rate, alpha, penalty)
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.decay_learning_rate()
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
@@ -160,14 +170,13 @@ class _AdaGradOptimizer(_Optimizer):
 
 
 class _NesterovMomentumSGDOpimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty):
-        super().__init__(learning_rate, alpha, penalty)
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.nesterov_momentum_coeff = 0.9
         self.opt_m = None
 
     def apply_gradients(self, grad):
-        learning_rate = self.learning_rate / np.sqrt(self.iters)
-        # self.learning_rate = self.learning_rate / 0.9
+        learning_rate = self.decay_learning_rate()
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
@@ -181,8 +190,8 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
 
 
 class _AdamOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty):
-        super().__init__(learning_rate, alpha, penalty)
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.opt_beta1 = 0.9
         self.opt_beta2 = 0.999
         self.opt_beta1_decay = 1.0
@@ -192,7 +201,7 @@ class _AdamOptimizer(_Optimizer):
         self.opt_v = None
 
     def apply_gradients(self, grad):
-        learning_rate = self.learning_rate / np.sqrt(self.iters)
+        learning_rate = self.decay_learning_rate()
 
         if self.opt_m is None:
             self.opt_m = np.zeros_like(grad)
@@ -217,22 +226,24 @@ def optimizer_factory(param):
         learning_rate = param.learning_rate
         alpha = param.alpha
         penalty = param.penalty
+        decay = param.decay
+        decay_sqrt = param.decay_sqrt
+        init_params = [learning_rate, alpha, penalty, decay, decay_sqrt]
     except AttributeError:
         raise AttributeError("Optimizer parameters has not been totally set")
 
-    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {}".format(
-        optimizer_type, learning_rate, alpha, penalty
-    ))
+    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {},"
+                 "decay: {}, decay_sqrt: {}".format(optimizer_type, *init_params))
 
     if optimizer_type == 'sgd':
-        return _SgdOptimizer(learning_rate, alpha, penalty)
+        return _SgdOptimizer(*init_params)
     elif optimizer_type == 'nesterov_momentum_sgd':
-        return _NesterovMomentumSGDOpimizer(learning_rate, alpha, penalty)
+        return _NesterovMomentumSGDOpimizer(*init_params)
     elif optimizer_type == 'rmsprop':
-        return _RMSPropOptimizer(learning_rate, alpha, penalty)
+        return _RMSPropOptimizer(*init_params)
     elif optimizer_type == 'adam':
-        return _AdamOptimizer(learning_rate, alpha, penalty)
+        return _AdamOptimizer(*init_params)
     elif optimizer_type == 'adagrad':
-        return _AdaGradOptimizer(learning_rate, alpha, penalty)
+        return _AdaGradOptimizer(*init_params)
     else:
         raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))

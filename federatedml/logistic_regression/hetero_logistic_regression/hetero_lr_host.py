@@ -98,9 +98,9 @@ class HeteroLRHost(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-            self.optimizer.set_iters(self.n_iter_ + 1)
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
+            self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)

@@ -1,5 +1,49 @@
 {
   "HomoLRTransferVariable": {
+    "guest_uuid": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_uuid": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "uuid_conflict_flag": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_ciphertext_host": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_guest": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_bc": {
+      "src": "arbiter",
+      "dst": [
+        "guest", "host"
+      ]
+    },
     "paillier_pubkey": {
       "src": "arbiter",
       "dst": [
@@ -18,11 +62,10 @@
         "arbiter"
       ]
     },
-    "final_model": {
-      "src": "arbiter",
+    "aggregated_model": {
+      "src" : "arbiter",
       "dst": [
-        "guest",
-        "host"
+        "guest", "host"
       ]
     },
     "to_encrypt_model": {
@@ -43,7 +86,7 @@
         "arbiter"
       ]
     },
-    "converge_flag": {
+    "is_converge": {
       "src": "arbiter",
       "dst": [
         "guest",

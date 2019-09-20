@@ -24,13 +24,12 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_base import ModelBase
-from federatedml.model_selection.KFold import KFold
+# from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection import start_cross_validation
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
-from federatedml.param.logistic_regression_param import LogisticParam
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
@@ -41,7 +40,6 @@ LOGGER = log_utils.getLogger()
 class BaseLogisticRegression(ModelBase):
     def __init__(self):
         super(BaseLogisticRegression, self).__init__()
-        self.model_param = LogisticParam()
         # attribute:
         self.n_iter_ = 0
         self.classes_ = None
@@ -71,7 +69,6 @@ class BaseLogisticRegression(ModelBase):
         self.alpha = params.alpha
         self.init_param_obj = params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept
-        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.encrypted_calculator = None
 
         self.batch_size = params.batch_size
@@ -79,12 +76,8 @@ class BaseLogisticRegression(ModelBase):
         self.party_weight = params.party_weight
         self.optimizer = optimizer_factory(params)
 
-        if params.encrypt_param.method == consts.PAILLIER:
-            self.cipher_operator = PaillierEncrypt()
-        else:
-            self.cipher_operator = FakeEncrypt()
+
         self.converge_func = converge_func_factory(params)
-        self.re_encrypt_batches = params.re_encrypt_batches
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -242,14 +235,7 @@ class BaseLogisticRegression(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
 
     def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
-        kflod_obj = KFold()
-        self.init_schema(data_instances)
-        cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self)
-        LOGGER.debug("Finish kflod run")
-        return data_instances
+        return start_cross_validation.run(self, data_instances)
 
     def one_vs_rest_fit(self, train_data=None):
         self.need_one_vs_rest = True

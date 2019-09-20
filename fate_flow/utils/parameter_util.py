@@ -39,7 +39,7 @@ class ParameterOverride(object):
         param_module_path = ".".join(param_class_path.split("/", -1)[:-1]).replace(".py", "")
         param_module = importlib.import_module(param_module_path)
         param_obj = getattr(param_module, param_class)()
-        default_runtime_dict = ParameterOverride.change_object_to_dict(param_obj) 
+        default_runtime_dict = ParameterOverride.change_object_to_dict(param_obj)
 
         default_runtime_conf_suf = _module_setting["default_runtime_conf"]
         try:
@@ -47,7 +47,7 @@ class ParameterOverride(object):
                 default_runtime_dict = ParameterOverride.merge_parameters(default_runtime_dict, json.loads(fin.read()), param_obj);
         except:
             raise Exception("default runtime conf should be a json file")
-        
+
 
         if not submit_dict:
             raise ValueError("submit conf does exist or format is wrong")
@@ -81,14 +81,14 @@ class ParameterOverride(object):
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
                         merge_dict = ParameterOverride.merge_parameters(runtime_dict[param_class], common_parameters, param_obj)
                         runtime_dict[param_class] = merge_dict
-                
+
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
                     if module_alias in role_dict:
                         role_parameters = role_dict.get(module_alias)
                         merge_dict = ParameterOverride.merge_parameters(runtime_dict[param_class], role_parameters, param_obj, idx)
                         runtime_dict[param_class] = merge_dict
-                
+
                 runtime_dict['local'] = submit_dict.get('local', {})
                 my_local = {
                     "role": role, "party_id": partyid_list[idx]
@@ -98,7 +98,7 @@ class ParameterOverride(object):
                 runtime_dict['module'] = module
 
                 runtime_role_parameters[role].append(runtime_dict)
-        
+
         return runtime_role_parameters
 
     @staticmethod
@@ -140,7 +140,7 @@ class ParameterOverride(object):
 
             args_parameters = submit_dict["role_parameters"][role].get(module)
             args_input[role] = []
-  
+
             if "data" in args_parameters:
                 dataset = args_parameters.get("data")
                 for data_key in dataset:
@@ -148,8 +148,8 @@ class ParameterOverride(object):
                     for i in range(len(datalist)):
                         value = datalist[i];
                         if len(args_input[role]) <= i:
-                            args_input[role].append({module: 
-                                                      {"data": 
+                            args_input[role].append({module:
+                                                      {"data":
                                                         {}
                                                       }
                                                     })
@@ -157,11 +157,11 @@ class ParameterOverride(object):
                         args_input[role][i][module]["data"][data_key] = value
 
         return args_input
-  
+
     @staticmethod
     def change_object_to_dict(obj):
         ret_dict = {}
-        
+
         variable_dict = obj.__dict__
         for variable in variable_dict:
             attr = getattr(obj, variable)

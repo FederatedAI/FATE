@@ -17,11 +17,15 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
+import functools
 from federatedml.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
+from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.param.logistic_regression_param import HomoLogisticParam
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -33,19 +37,22 @@ class HomoLRBase(BaseLogisticRegression):
         self.model_param_name = 'HomoLogisticRegressionParam'
         self.model_meta_name = 'HomoLogisticRegressionMeta'
         self.mode = consts.HOMO
+        self.model_param = HomoLogisticParam()
         self.aggregator = None
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)
+        self.re_encrypt_batches = params.re_encrypt_batches
 
         if params.encrypt_param.method == consts.PAILLIER:
-            if params.optimizer != 'sgd':
-                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
+            self.cipher_operator = PaillierEncrypt()
+        else:
+            self.cipher_operator = FakeEncrypt()
 
         self.transfer_variable = HomoLRTransferVariable()
         self.aggregator.register_aggregator(self.transfer_variable)
-        self.aggregator.initialize_aggregator(params.party_weight)
         self.optimizer = optimizer_factory(params)
+        self.aggregate_iters = params.aggregate_iters
 
     @property
     def use_loss(self):
@@ -121,3 +128,15 @@ class HomoLRBase(BaseLogisticRegression):
 
             if eval_data is not None:
                 self.set_predict_data_schema(self.data_output, eval_data.schema)
+
+    def _compute_loss(self, data_instances):
+        f = functools.partial(self.gradient_operator.compute_loss,
+                              coef=self.lr_weights.coef_,
+                              intercept=self.lr_weights.intercept_)
+        loss = data_instances.mapPartitions(f).reduce(fate_operator.reduce_add)
+        loss_norm = self.optimizer.loss_norm(self.lr_weights)
+        if loss_norm is not None:
+            loss += loss_norm
+        self.callback_loss(self.n_iter_, loss)
+        self.loss_history.append(loss)
+        return loss
