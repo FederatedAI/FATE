@@ -26,11 +26,11 @@ class RandomPads(object):
     def __init__(self, init_seed=None):
         self._rand = RandomState(init_seed)
 
-    def rand(self, d0, d1, *more, **kwargs):
-        return self._rand.rand(d0, d1, *more, **kwargs)
+    def rand(self, d0, *more, **kwargs):
+        return self._rand.rand(d0, *more, **kwargs)
 
-    def randn(self, d0, d1, *more, **kwargs):
-        return self._rand.randn(d0, d1, *more, **kwargs)
+    def randn(self, d0, *more, **kwargs):
+        return self._rand.randn(d0, *more, **kwargs)
 
     def add_randn_pads(self, a, w):
         """a + r * w,
