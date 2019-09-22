@@ -25,6 +25,7 @@ from federatedml.secureprotol.fate_paillier import PaillierKeypair
 
 
 # LOGGER = log_utils.getLogger()
+from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
 
 
 class Encrypt(object):
@@ -217,6 +218,26 @@ class AffineEncrypt(SymmetricEncrypt):
 
     def generate_key(self, key_size=1024):
         self.key = AffineCipher.generate_keypair(key_size=key_size)
+
+    def encrypt(self, plaintext):
+        if self.key is not None:
+            return self.key.encrypt(plaintext)
+        else:
+            return None
+
+    def decrypt(self, ciphertext):
+        if self.key is not None:
+            return self.key.decrypt(ciphertext)
+        else:
+            return None
+
+
+class IterativeAffineEncrypt(SymmetricEncrypt):
+    def __init__(self):
+        super(IterativeAffineEncrypt, self).__init__()
+
+    def generate_key(self, key_size=1024, key_round=5):
+        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size, key_round=key_round)
 
     def encrypt(self, plaintext):
         if self.key is not None:
