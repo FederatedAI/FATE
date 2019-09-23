@@ -71,7 +71,7 @@ class TaskScheduler(object):
             return False
 
         timeout = job_parameters.get("timeout", job_utils.job_default_timeout(runtime_conf=job_runtime_conf, dsl=job_dsl))
-
+        schedule_logger(job_id).info('setting job {} timeout {}'.format(job_id, timeout))
         t = Timer(timeout, TaskScheduler.job_handler, [job_id])
         t.start()
 
@@ -395,8 +395,8 @@ class TaskScheduler(object):
             schedule_logger(job_id).info('send stop job {} command failed'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
 
-
     @staticmethod
     def job_handler(*args, **kwargs):
         job_id = args[0]
+        schedule_logger(job_id).info('job {} running timeout, start stop job'.format(job_id))
         TaskScheduler.stop_job(job_id, timeout=True)
