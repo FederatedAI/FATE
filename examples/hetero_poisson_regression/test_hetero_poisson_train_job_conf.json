@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "exp_b",
-              "namespace": "exp"
+              "name": "auto_b",
+              "namespace": "insurance"
             }
           ]
         }
@@ -38,7 +38,8 @@
         "outlier_replace": [true]
       },
       "feature_scale_0": {
-        "method": ["min_max_scale"]
+        "method": ["standard_scale"],
+        "need_run": [true]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -91,8 +92,8 @@
         "data": {
           "train_data": [
             {
-              "name": "exp_a",
-              "namespace": "exp"
+              "name": "auto_a",
+              "namespace": "insurance"
             }
           ]
         }
@@ -104,7 +105,7 @@
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
-        "need_run": [false]
+        "need_run": [true]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -155,16 +156,16 @@
   "algorithm_parameters": {
     "hetero_poisson_0": {
       "penalty": "L2",
-      "optimizer": "sgd",
+      "optimizer": "rmsprop",
       "eps": 1e-3,
       "alpha": 0.01,
       "max_iter": 300,
       "converge_func": "weight_diff",
-      "batch_size": -1,
+      "batch_size": 2000,
       "learning_rate": 0.15,
       "exposure_index": -1,
       "init_param": {
-        "init_method": "zeros"
+        "init_method": "random_uniform"
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"

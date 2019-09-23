@@ -24,7 +24,7 @@
           "train_data": [
             {
               "name": "exp_b",
-              "namespace": "exp"
+              "namespace": "dum_exp_perfect"
             }
           ]
         }
@@ -92,7 +92,7 @@
           "train_data": [
             {
               "name": "exp_a",
-              "namespace": "exp"
+              "namespace": "dum_exp_perfect"
             }
           ]
         }
@@ -164,7 +164,7 @@
       "learning_rate": 0.15,
       "exposure_index": -1,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "random_"
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"

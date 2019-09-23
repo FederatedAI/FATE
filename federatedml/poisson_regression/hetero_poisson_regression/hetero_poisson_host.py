@@ -22,7 +22,6 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()

@@ -155,6 +155,11 @@ class BasePoissonRegression(ModelBase):
                                      lambda v, ei: np.exp(np.dot(v.features, coef_) + intercept_) / ei)
         return mu
 
+    def safe_log(self, v):
+        if v == 0:
+            return np.log(1e-7)
+        return np.log(v)
+
     def fit(self, data_instance):
         pass
 

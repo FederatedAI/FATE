@@ -77,12 +77,10 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
         self.host_forwards = host_forwards
         LOGGER.info("Get host_forwards from host")
 
-        mu = data_instances.join(offset, lambda d, m: np.exp(np.dot(d.features, model_weights.coef_) + model_weights.intercept_) / np.exp(m))
-        self.mu = copy.deepcopy(mu)
-        self.aggregated_mu = mu
+        mu = data_instances.join(offset, lambda d, m: np.exp(np.dot(d.features, model_weights.coef_) + model_weights.intercept_ - m))
+        self.mu = mu
 
-        for host_forward in host_forwards:
-            self.aggregated_mu = self.aggregated_mu.join(host_forward, lambda g, h: g * h)
+        self.aggregated_mu = self.mu.join(host_forwards[0], lambda g, h: g * h)
         fore_gradient = self.aggregated_mu.join(data_instances, lambda mu, d: mu - d.label)
 
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
@@ -134,7 +132,7 @@ class Guest(hetero_gradient_sync.Guest, loss_sync.Guest):
         host_wx = host_wxs[0]
         loss_wx = guest_wx_y.join(host_wx, lambda g, h: g[1] * (g[0] + h)).reduce(reduce_add)
         loss_mu = self.mu.join(host_mu, lambda  g, h: g * h).reduce(reduce_add)
-        loss = (loss_wx + loss_mu + offset_sum) / n
+        loss = (loss_mu - loss_wx + offset_sum) / n
         if loss_norm is not None:
             loss = loss + loss_norm + host_loss_regular[0]
         loss_list.append(loss)
@@ -169,7 +167,11 @@ class Host(hetero_gradient_sync.Host, loss_sync.Host):
         """
         current_suffix = (n_iter_, batch_index)
 
+        #LOGGER.debug("iter: {}, model weights: {} {}".format(n_iter_, list(model_weights.coef_), model_weights.intercept_))
+
         mu = data_instances.mapValues(lambda v: np.exp(np.dot(v.features, model_weights.coef_) + model_weights.intercept_))
+
+        #LOGGER.debug("iter: {}, mu: {}".format(n_iter_, list(mu.collect())))
 
         host_forward = encrypted_calculator[batch_index].encrypt(mu)
         self.remote_host_forward(host_forward, suffix=current_suffix)
@@ -245,6 +247,8 @@ class Arbiter(hetero_gradient_sync.Arbiter, loss_sync.Arbiter):
 
         gradient = np.hstack((h for h in host_gradients))
         gradient = np.hstack((gradient, guest_gradient))
+        #LOGGER.debug("host gradient type: {}".format(type(gradient[1])))
+        #LOGGER.debug("guest gradient type: {}".format(type(gradient[-1])))
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
         delta_grad = optimizer.apply_gradients(grad)
