@@ -21,6 +21,7 @@ from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.util import consts
+from federatedml.protobuf.generated import lr_model_meta_pb2
 
 
 class HeteroLRBase(BaseLogisticRegression):
@@ -89,3 +90,17 @@ class HeteroLRBase(BaseLogisticRegression):
         :return: a table holding instances with transformed features
         """
         return data_inst
+
+    def _get_meta(self):
+        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
+                                                          eps=self.model_param.eps,
+                                                          alpha=self.alpha,
+                                                          optimizer=self.model_param.optimizer,
+                                                          party_weight=self.model_param.party_weight,
+                                                          batch_size=self.batch_size,
+                                                          learning_rate=self.model_param.learning_rate,
+                                                          max_iter=self.max_iter,
+                                                          converge_func=self.model_param.converge_func,
+                                                          fit_intercept=self.fit_intercept,
+                                                          need_one_vs_rest=self.need_one_vs_rest)
+        return meta_protobuf_obj

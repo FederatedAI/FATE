@@ -76,7 +76,7 @@ class LogisticParam(BaseParam):
     def __init__(self, penalty='L2',
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
+                 max_iter=100, converge_func='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
                  ):
@@ -90,6 +90,7 @@ class LogisticParam(BaseParam):
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.converge_func = converge_func
+        self.encrypt_param = encrypt_param
         self.party_weight = party_weight
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
@@ -158,6 +159,8 @@ class LogisticParam(BaseParam):
                     "logistic_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
+        self.encrypt_param.check()
+
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(
                 "logistic_param's party_weight {} not supported, should be 'int' or 'float'".format(
@@ -201,16 +204,14 @@ class HomoLogisticParam(LogisticParam):
                                                 party_weight=party_weight, batch_size=batch_size,
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, converge_func=converge_func,
-                                                predict_param=predict_param, cv_param=cv_param,
+                                                encrypt_param=encrypt_param, predict_param=predict_param,
+                                                cv_param=cv_param,
                                                 one_vs_rest_param=one_vs_rest_param, decay=decay, decay_sqrt=decay_sqrt)
-
-        self.encrypt_param = copy.deepcopy(encrypt_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
     def check(self):
         super().check()
-        self.encrypt_param.check()
         if type(self.re_encrypt_batches).__name__ != "int":
             raise ValueError(
                 "logistic_param's re_encrypt_batches {} not supported, should be int type".format(

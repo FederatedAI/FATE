@@ -22,6 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_lr_gradient_sync
 from federatedml.util.fate_operator import reduce_add
+import os
 
 LOGGER = log_utils.getLogger()
 

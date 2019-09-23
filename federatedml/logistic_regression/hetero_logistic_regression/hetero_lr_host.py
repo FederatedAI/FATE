@@ -69,7 +69,7 @@ class HeteroLRHost(HeteroLRBase):
 
         return host_forward
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, *args):
         """
         Train lr model of role host
         Parameters

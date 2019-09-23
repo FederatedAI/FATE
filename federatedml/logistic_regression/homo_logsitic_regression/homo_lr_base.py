@@ -27,6 +27,7 @@ from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.protobuf.generated import lr_model_meta_pb2
 
 LOGGER = log_utils.getLogger()
 
@@ -142,3 +143,18 @@ class HomoLRBase(BaseLogisticRegression):
         self.callback_loss(self.n_iter_, loss)
         self.loss_history.append(loss)
         return loss
+
+    def _get_meta(self):
+        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
+                                                          eps=self.model_param.eps,
+                                                          alpha=self.alpha,
+                                                          optimizer=self.model_param.optimizer,
+                                                          party_weight=self.model_param.party_weight,
+                                                          batch_size=self.batch_size,
+                                                          learning_rate=self.model_param.learning_rate,
+                                                          max_iter=self.max_iter,
+                                                          converge_func=self.model_param.converge_func,
+                                                          fit_intercept=self.fit_intercept,
+                                                          re_encrypt_batches=self.re_encrypt_batches,
+                                                          need_one_vs_rest=self.need_one_vs_rest)
+        return meta_protobuf_obj

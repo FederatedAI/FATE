@@ -18,7 +18,7 @@ import copy
 import numpy as np
 from google.protobuf import json_format
 
-from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -115,20 +115,7 @@ class BaseLogisticRegression(ModelBase):
     def fit(self, data_instance):
         pass
 
-    def _get_meta(self):
-        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
-                                                          eps=self.model_param.eps,
-                                                          alpha=self.alpha,
-                                                          optimizer=self.model_param.optimizer,
-                                                          party_weight=self.model_param.party_weight,
-                                                          batch_size=self.batch_size,
-                                                          learning_rate=self.model_param.learning_rate,
-                                                          max_iter=self.max_iter,
-                                                          converge_func=self.model_param.converge_func,
-                                                          re_encrypt_batches=self.re_encrypt_batches,
-                                                          fit_intercept=self.fit_intercept,
-                                                          need_one_vs_rest=self.need_one_vs_rest)
-        return meta_protobuf_obj
+
 
     def _get_param(self):
         header = self.header
