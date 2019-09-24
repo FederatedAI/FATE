@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.operator.base_operator import BaseOperator
+from fate_flow.operators.base_operator import BaseOperator
 
 
 class PythonOperator(BaseOperator):

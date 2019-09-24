@@ -26,20 +26,28 @@ rm -rf init.sh requirments.txt requirements.txt
 
 cp ../requirements.txt ./docker/python
 
-sed -i "s/'user':.*/'user': 'fate_dev',/g" ./fate_flow/settings.py
-sed -i "s/'passwd':.*/'passwd': 'fate_dev',/g" ./fate_flow/settings.py
-sed -i "s/'host':.*/'host': 'mysql',/g" ./fate_flow/settings.py
+#sed -i "s/'user':.*/'user': 'fate_dev',/g" ./fate_flow/settings.py
+#sed -i "s/'passwd':.*/'passwd': 'fate_dev',/g" ./fate_flow/settings.py
+#sed -i "s/'host':.*/'host': 'mysql',/g" ./fate_flow/settings.py
 
 tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research
 
-logPath="/var/log/fate/"
+logPath="/var/lib/fate/log"
 if [ ! -d "$logPath" ]; then
-   mkdir -p "$logPath" 
-fi 
-sed -i "s#^fate.url=.*#fate.url=http://python:9380#g" ./fateboard/conf/application.properties
-sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://mysql:3306/fate_flow?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./fateboard/conf/application.properties
-sed -i "s/^spring.datasource.username=.*/spring.datasource.username=fate_dev/g" ./fateboard/conf/application.properties
-sed -i "s/^spring.datasource.password=.*/spring.datasource.password=fate_dev/g" ./fateboard/conf/application.properties
+   mkdir -p "$logPath"
+fi
+
+dataPath="/var/lib/fate/data"
+if [ ! -d "$dataPath" ]; then
+   mkdir -p "$dataPath"
+fi
+cp -r ./fate_flow/* /var/lib/fate/data
+
+
+sed -i "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
+sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+#sed -i "s/^spring.datasource.username=.*/spring.datasource.username=fate_dev/g" ./fateboard/conf/application.properties
+#sed -i "s/^spring.datasource.password=.*/spring.datasource.password=fate_dev/g" ./fateboard/conf/application.properties
 cd fateboard
 ln -s fateboard-1.0.jar fateboard.jar
 cd ..
@@ -47,9 +55,9 @@ tar -cf ./docker/fateboard/fateboard.tar fateboard
 
 docker-compose -f ./docker/docker-compose-build.yml up -d
 
-sleep 15
+#sleep 15
 docker restart fate_python
-sleep 10
+sleep 5
 docker restart fate_fateboard
 
 rm -rf examples workflow arch federatedml fateboard fate_flow research fate.tar.gz data

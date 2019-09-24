@@ -140,7 +140,7 @@ eeooff
 	ssh -tt $user@$fbip << eeooff
 cd $dir
 
-sed -i "s#^fate.url=.*#fate.url=http://$flip:9380#g" ./fateboard/conf/application.properties
+sed -i "s#^fateflow.url=.*#fateflow.url=http://$flip:9380#g" ./fateboard/conf/application.properties
 
 sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://$fldbip:3306/$fldbname?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./fateboard/conf/application.properties
 sed -i "s/^spring.datasource.username=.*/spring.datasource.username=$fldbuser/g" ./fateboard/conf/application.properties
