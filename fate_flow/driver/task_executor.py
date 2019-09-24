@@ -37,36 +37,39 @@ class TaskExecutor(object):
         task.f_create_time = current_timestamp()
         try:
             parser = argparse.ArgumentParser()
-            parser.add_argument('-j', '--job_id', required=True, type=str, help="Specify a config json file path")
+            parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
             parser.add_argument('-n', '--component_name', required=True, type=str,
-                                help="Specify a config json file path")
-            parser.add_argument('-t', '--task_id', required=True, type=str, help="Specify a config json file path")
-            parser.add_argument('-r', '--role', required=True, type=str, help="Specify a config json file path")
-            parser.add_argument('-p', '--party_id', required=True, type=str, help="Specify a config json file path")
-            parser.add_argument('-c', '--config', required=True, type=str, help="Specify a config json file path")
+                                help="component name")
+            parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
+            parser.add_argument('-r', '--role', required=True, type=str, help="role")
+            parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
+            parser.add_argument('-c', '--config', required=True, type=str, help="task config")
+            parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
             schedule_logger.info('enter task process')
             schedule_logger.info(args)
             # init function args
+            if args.job_server:
+                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id
             role = args.role
             party_id = int(args.party_id)
             task_config = file_utils.load_json_conf(args.config)
-            job_parameters = task_config.get('job_parameters', None)
-            job_initiator = task_config.get('job_initiator', None)
-            job_args = task_config.get('job_args', {})
-            task_input_dsl = task_config.get('input', {})
-            task_output_dsl = task_config.get('output', {})
-            parameters = task_config.get('parameters', {})
-            module_name = task_config.get('module_name', '')
+            job_parameters = task_config['job_parameters']
+            job_initiator = task_config['job_initiator']
+            job_args = task_config['job_args']
+            task_input_dsl = task_config['input']
+            task_output_dsl = task_config['output']
+            parameters = task_config['parameters']
+            module_name = task_config['module_name']
         except Exception as e:
             schedule_logger.exception(e)
             task.f_status = TaskStatus.FAILED
             return
         try:
-            # init environment
+            # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'])
             storage.init_storage(job_id=task_id, work_mode=RuntimeConfig.WORK_MODE)
             federation.init(job_id=task_id, runtime_conf=parameters)
@@ -185,7 +188,7 @@ class TaskExecutor(object):
                 task_info['f_run_ip'] = ''
             federated_api(job_id=job_id,
                           method='POST',
-                          endpoint='/{}/job/{}/{}/{}/{}/{}/status'.format(
+                          endpoint='/{}/schedule/{}/{}/{}/{}/{}/status'.format(
                               API_VERSION,
                               job_id,
                               component_name,
