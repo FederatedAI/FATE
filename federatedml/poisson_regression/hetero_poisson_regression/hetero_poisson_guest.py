@@ -50,7 +50,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-
+        self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
+        if self.exposure_index > -1:
+            self.header.pop(self.exposure_index)
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 

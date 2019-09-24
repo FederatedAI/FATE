@@ -31,5 +31,5 @@ message PoissonModelMeta {
     string converge_func = 9;
     int64 re_encrypt_batches = 10;
     bool fit_intercept = 11;
-    int64 exposure_index = 12;
+    string exposure_colname = 12;
 }

@@ -80,8 +80,7 @@ class BasePoissonRegression(ModelBase):
         self.max_iter = params.max_iter
         self.party_weight = params.party_weight
         self.optimizer = optimizer_factory(params)
-
-        self.exposure_index = params.exposure_index
+        self.exposure_colname = params.exposure_colname
 
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
@@ -89,7 +88,6 @@ class BasePoissonRegression(ModelBase):
             self.cipher_operator = FakeEncrypt()
 
         self.converge_func = converge_func_factory(params)
-        self.re_encrypt_batches = params.re_encrypt_batches
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -107,6 +105,13 @@ class BasePoissonRegression(ModelBase):
             return self.header
         return data_instances.schema.get("header")
 
+    def get_exposure_index(self, header, exposure_colname):
+        try:
+            exposure_index = header.index(exposure_colname)
+        except:
+            exposure_index = -1
+        return exposure_index
+
     def load_instance(self, data_instance):
         """
         return data_instance without exposure
@@ -119,7 +124,7 @@ class BasePoissonRegression(ModelBase):
         if self.exposure_index >= len(data_instance.features):
             raise ValueError(
                 "exposure_index {} out of features' range".format(self.exposure_index))
-        data_instance.features = data_instance.features.pop(self.exposure_index)
+        data_instance.features = np.delete(data_instance.features, self.exposure_index)
         return data_instance
 
     def load_exposure(self, data_instance):
@@ -174,9 +179,8 @@ class BasePoissonRegression(ModelBase):
             learning_rate=self.model_param.learning_rate,
             max_iter=self.max_iter,
             converge_func=self.model_param.converge_func,
-            re_encrypt_batches=self.re_encrypt_batches,
             fit_intercept=self.fit_intercept,
-            exposure_index=self.exposure_index)
+            exposure_colname=self.exposure_colname)
         return meta_protobuf_obj
 
     def _get_param(self):

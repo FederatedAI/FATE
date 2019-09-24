@@ -88,8 +88,6 @@ class BaseLinearRegression(ModelBase):
 
         self.converge_func = converge_func_factory(params)
 
-        self.re_encrypt_batches = params.re_encrypt_batches
-
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
 
@@ -135,7 +133,6 @@ class BaseLinearRegression(ModelBase):
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
                                                               converge_func=self.model_param.converge_func,
-                                                              re_encrypt_batches=self.re_encrypt_batches,
                                                               fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 

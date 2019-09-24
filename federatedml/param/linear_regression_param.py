@@ -23,57 +23,10 @@ from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.param.init_model_param import InitParam
+from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
-class InitParam(BaseParam):
-    """
-    Initialize Parameters used in initializing a model.
-
-    Parameters
-    ----------
-    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
-        Initial method.
-
-    init_const : int or float, default: 1
-        Required when init_method is 'const'. Specify the constant.
-
-    fit_intercept : bool, default: True
-        Whether to initialize the intercept or not.
-
-    """
-
-    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True, random_seed=None):
-        super().__init__()
-        self.init_method = init_method
-        self.init_const = init_const
-        self.fit_intercept = fit_intercept
-        self.random_seed = random_seed
-
-    def check(self):
-        if type(self.init_method).__name__ != "str":
-            raise ValueError(
-                "Init param's init_method {} not supported, should be str type".format(self.init_method))
-        else:
-            self.init_method = self.init_method.lower()
-            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'zeros', 'const']:
-                raise ValueError(
-                    "Init param's init_method {} not supported, init_method should in 'random_uniform',"
-                    " 'random_normal' 'ones', 'zeros' or 'const'".format(self.init_method))
-
-        if type(self.init_const).__name__ not in ['int', 'float']:
-            raise ValueError(
-                "Init param's init_const {} not supported, should be int or float type".format(self.init_const))
-
-        if type(self.fit_intercept).__name__ != 'bool':
-            raise ValueError(
-                "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
-
-        if self.random_seed is not None:
-            if type(self.random_seed).__name__ not in ['int', 'float']:
-                raise ValueError(
-                    "Init param's random_seed {} not supported, should be int or float type".format(self.random_seed))
-
-        return True
 
 class LinearParam(BaseParam):
     """
@@ -111,21 +64,22 @@ class LinearParam(BaseParam):
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+            c)  weight_diff: Use difference between weights of two consecutive iterations
 
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version Homo. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
+    decay: int or float, default: 1
+        Decay rate for learning rate. learning rate will follow the following decay schedule:
+        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
+        where t is the iter number.
 
     """
 
     def __init__(self, penalty='L2',
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 max_iter=100, converge_func='diff', predict_param=PredictParam(),
+                 encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam()):
+                cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -136,11 +90,13 @@ class LinearParam(BaseParam):
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.converge_func = converge_func
-        self.encrypt_param = copy.deepcopy(encrypt_param)
-        self.re_encrypt_batches = re_encrypt_batches
+        self.encrypt_param = encrypt_param
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.predict_param = copy.deepcopy(predict_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
 
     def check(self):
         descr = "linear_param's"
@@ -167,16 +123,16 @@ class LinearParam(BaseParam):
                 "linear_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
                 raise ValueError(
                     "linear_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'adagrad' or 'nesterov_momentum_sgd'")
+                    " 'sgd', 'rmsprop', 'adam' or 'adagrad'")
 
         if type(self.batch_size).__name__ != "int":
             raise ValueError(
                 "linear_param's batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
-            if type(self.batch_size).__name__ != "int" \
+            if type(self.batch_size).__name__ not in ["int", "long"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
@@ -201,23 +157,24 @@ class LinearParam(BaseParam):
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
+            if self.converge_func not in ['diff', 'abs']:
                 raise ValueError(
                     "linear_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
 
-        if type(self.re_encrypt_batches).__name__ != "int":
-            raise ValueError(
-                "linear_param's re_encrypt_batches {} not supported, should be int type".format(
-                    self.re_encrypt_batches))
-        elif self.re_encrypt_batches < 0:
-            raise ValueError(
-                "linear_param's re_encrypt_batches must be greater or equal to 0")
-
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(
                 "linear_param's party_weight {} not supported, should be 'int' or 'float'".format(
                     self.party_weight))
+
+        if type(self.decay).__name__ not in ["int", "float"]:
+            raise ValueError(
+                "regression param's decay {} not support, should be 'int' or 'float'".format(self.decay)
+            )
+        if type(self.decay_sqrt).__name__ not in ['bool']:
+            raise ValueError(
+                "regression param's decay_sqrt {} not support, should be 'bool'".format(self.decay)
+            )
         return True

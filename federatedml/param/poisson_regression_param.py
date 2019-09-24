@@ -23,57 +23,10 @@ from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.param.init_model_param import InitParam
+from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
-class InitParam(BaseParam):
-    """
-    Initialize Parameters used in initializing a model.
-
-    Parameters
-    ----------
-    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
-        Initial method.
-
-    init_const : int or float, default: 1
-        Required when init_method is 'const'. Specify the constant.
-
-    fit_intercept : bool, default: True
-        Whether to initialize the intercept or not.
-
-    """
-
-    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True, random_seed=None):
-        super().__init__()
-        self.init_method = init_method
-        self.init_const = init_const
-        self.fit_intercept = fit_intercept
-        self.random_seed = random_seed
-
-    def check(self):
-        if type(self.init_method).__name__ != "str":
-            raise ValueError(
-                "Init param's init_method {} not supported, should be str type".format(self.init_method))
-        else:
-            self.init_method = self.init_method.lower()
-            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'const', 'zeros']:
-                raise ValueError(
-                    "Init param's init_method {} not supported, init_method should in 'random_uniform',"
-                    " 'random_normal' 'ones', 'zeros', or 'const'".format(self.init_method))
-
-        if type(self.init_const).__name__ not in ['int', 'float']:
-            raise ValueError(
-                "Init param's init_const {} not supported, should be int or float type".format(self.init_const))
-
-        if type(self.fit_intercept).__name__ != 'bool':
-            raise ValueError(
-                "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
-
-        if self.random_seed is not None:
-            if type(self.random_seed).__name__ not in ['int', 'float']:
-                raise ValueError(
-                    "Init param's random_seed {} not supported, should be int or float type".format(self.random_seed))
-
-        return True
 
 class PoissonParam(BaseParam):
     """
@@ -112,21 +65,16 @@ class PoissonParam(BaseParam):
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
-
     """
 
     def __init__(self, penalty='L2',
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
-                 exposure_index = -1,
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 exposure_colname = None, predict_param=PredictParam(),
+                 encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam()):
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -135,14 +83,18 @@ class PoissonParam(BaseParam):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
+
         self.max_iter = max_iter
         self.converge_func = converge_func
-        self.encrypt_param = copy.deepcopy(encrypt_param)
-        self.re_encrypt_batches = re_encrypt_batches
+        self.encrypt_param = encrypt_param
         self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.exposure_index = exposure_index
+        self.predict_param = copy.deepcopy(predict_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
+        self.exposure_colname = exposure_colname
+
 
     def check(self):
         descr = "poisson_param's"
@@ -197,12 +149,10 @@ class PoissonParam(BaseParam):
             raise ValueError(
                 "poisson_param's max_iter must be greater or equal to 1")
 
-        if type(self.exposure_index).__name__ != "int":
-            raise ValueError(
-                "poisson_param's exposure_index {} not supported, should be int type".format(self.exposure_index))
-        elif self.exposure_index < -1:
-            raise ValueError(
-                "poisson_param's exposure_index must be greater or equal to -1")
+        if self.exposure_colname is not None:
+            if type(self.exposure_colname).__name__ != "str":
+                raise ValueError(
+                    "poisson_param's exposure_colname {} not supported, should be string type".format(self.exposure_colname))
 
         if type(self.converge_func).__name__ != "str":
             raise ValueError(
@@ -221,4 +171,12 @@ class PoissonParam(BaseParam):
             raise ValueError(
                 "poisson_param's party_weight {} not supported, should be 'int' or 'float'".format(
                     self.party_weight))
+        if type(self.decay).__name__ not in ["int", "float"]:
+            raise ValueError(
+                "regression param's decay {} not support, should be 'int' or 'float'".format(self.decay)
+            )
+        if type(self.decay_sqrt).__name__ not in ['bool']:
+            raise ValueError(
+                "regression param's decay_sqrt {} not support, should be 'bool'".format(self.decay)
+            )
         return True

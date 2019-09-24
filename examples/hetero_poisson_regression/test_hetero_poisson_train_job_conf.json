@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "auto_b",
-              "namespace": "insurance"
+              "name": "nmes_exposure_b",
+              "namespace": "nmes"
             }
           ]
         }
@@ -39,7 +39,7 @@
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
-        "need_run": [true]
+        "need_run": [false]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -92,8 +92,8 @@
         "data": {
           "train_data": [
             {
-              "name": "auto_a",
-              "namespace": "insurance"
+              "name": "nmes_exposure_a",
+              "namespace": "nmes"
             }
           ]
         }
@@ -105,7 +105,7 @@
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
-        "need_run": [true]
+        "need_run": [false]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -159,11 +159,11 @@
       "optimizer": "rmsprop",
       "eps": 1e-3,
       "alpha": 0.01,
-      "max_iter": 300,
+      "max_iter": 20,
       "converge_func": "weight_diff",
-      "batch_size": 2000,
+      "batch_size": -1,
       "learning_rate": 0.15,
-      "exposure_index": -1,
+      "exposure_colname": "exposure",
       "init_param": {
         "init_method": "random_uniform"
       },
