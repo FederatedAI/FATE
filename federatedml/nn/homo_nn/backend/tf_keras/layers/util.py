@@ -15,8 +15,19 @@
 #
 
 
-class BaseOperator:
-    operator_register = {}
+from tensorflow.python.keras import initializers
 
-    def execute(self, context):
-        pass
+
+def _get_initializer(initializer, seed):
+    if not seed:
+        return initializer
+
+    initializer_class = getattr(initializers, initializer, None)
+    if initializer_class:
+        initializer_instance = initializer_class()
+        if hasattr(initializer_instance, "seed"):
+            initializer_instance.seed = seed
+        return initializer_instance
+
+    return initializer
+

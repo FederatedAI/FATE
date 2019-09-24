@@ -34,6 +34,7 @@ class Arbiter(object):
         self._model_broadcaster = None
         self._loss_sync = None
         self._converge_sync = None
+        self.model = None
 
     def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
 
@@ -71,9 +72,9 @@ class Arbiter(object):
             ciphers_dict: a dict of host id to host cipher
             suffix: tag suffix
         """
-        model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self.send_aggregated_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
-        return model
+        self.model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
+        self.send_aggregated_model(self.model, ciphers_dict=ciphers_dict, suffix=suffix)
+        return self.model
 
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
         return self._model_scatter.get_models(ciphers_dict=ciphers_dict, suffix=suffix)
@@ -125,7 +126,7 @@ class Client(object):
     def get_aggregated_model(self, suffix=tuple()):
         return self._model_broadcaster.get_model(suffix=suffix)
 
-    def aggregate_then_get(self, model: Weights, degree: float = None, suffix=tuple()):
+    def aggregate_then_get(self, model: Weights, degree: float = None, suffix=tuple()) -> Weights:
         self.send_model(weights=model, degree=degree, suffix=suffix)
         return self.get_aggregated_model(suffix=suffix)
 

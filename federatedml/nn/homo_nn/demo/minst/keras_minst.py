@@ -13,16 +13,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.operators.base_operator import BaseOperator
 
 
-class PythonOperator(BaseOperator):
-    def __init__(self, python_callable, op_args=None, op_kwargs=None):
-        if not callable(python_callable):
-            raise TypeError('`python_callable` param must be callable')
-        self.python_callable = python_callable
-        self.op_args = op_args or []
-        self.op_kwargs = op_kwargs or {}
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
 
-    def execute(self):
-        return self.python_callable(*self.op_args, **self.op_kwargs)
+model = Sequential()
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)))
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(10, activation='softmax'))
+
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
