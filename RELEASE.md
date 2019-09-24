@@ -1,6 +1,8 @@
 # Release 1.0.2
 ## Major Features and Improvements
 * Python and JDK environment are required only for running standalone version quick experiment
+* Support cluster version docker deployment
+* Add deployment guide in Chinese
 * Standalone version job for quick experiment is supported when cluster version deployed. 
 * Python service log will remain for 14 days now.
 
