@@ -18,7 +18,8 @@ import uuid
 from multiprocessing import Pool
 
 from federatedml.util import consts
-from federatedml.util.transfer_variable.homo_transfer_variable import HomoTransferVariable
+from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
+import time
 
 
 class TestSyncBase(unittest.TestCase):
@@ -79,17 +80,29 @@ class TestSyncBase(unittest.TestCase):
 
     @classmethod
     def results(cls, job_id, transfer_variable, num_hosts, *args):
-        result = []
+        tasks = []
         with Pool(num_hosts + 2) as p:
-            result.append(p.apply_async(func=cls._call,
+            tasks.append(p.apply_async(func=cls._call,
                                         args=(job_id, consts.ARBITER, transfer_variable, num_hosts, 0, *args)))
-            result.append(p.apply_async(func=cls._call,
+            tasks.append(p.apply_async(func=cls._call,
                                         args=(job_id, consts.GUEST, transfer_variable, num_hosts, 0, *args)))
             for i in range(num_hosts):
-                result.append(
+                tasks.append(
                     p.apply_async(func=cls._call,
                                   args=(job_id, consts.HOST, transfer_variable, num_hosts, i, *args)))
-            return [r.get() for r in result]
+
+            left = list(range(len(tasks)))
+            while len(left) > 0:
+                time.sleep(0.1)
+                tmp = []
+                for i in left:
+                    if tasks[i].ready():
+                        tasks[i] = tasks[i].get()
+                    else:
+                        tmp.append(i)
+                left = tmp
+
+            return tasks
 
     def run_results(self, num_hosts, *args):
         return self.results(self.job_id, self.transfer_variable, num_hosts, *args)

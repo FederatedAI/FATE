@@ -22,6 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_lr_gradient_sync
 from federatedml.util.fate_operator import reduce_add
+import os
 
 LOGGER = log_utils.getLogger()
 
@@ -40,7 +41,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
 
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
-                                 transfer_variables.loss_immediate)
+                                 transfer_variables.loss_intermediate)
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, lr_weights, optimizer,
                                    n_iter_, batch_index):
@@ -52,7 +53,6 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         Define (0.25 * wx - 0.5 * y) as fore_gradient
 
         Then, gradient = fore_gradient * x
-
 
         Parameters
         ----------
@@ -70,11 +70,11 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         host_forwards = self.get_host_forward(suffix=current_suffix)
         self.host_forwards = host_forwards
-        wx = data_instances.mapValues(
+        half_wx = data_instances.mapValues(
             lambda v: np.dot(v.features, lr_weights.coef_) + lr_weights.intercept_)
 
-        self.half_wx = wx
-        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(wx)
+        self.half_wx = half_wx
+        self.aggregated_wx = encrypted_calculator[batch_index].encrypt(half_wx)
 
         for host_forward in host_forwards:
             self.aggregated_wx = self.aggregated_wx.join(host_forward, lambda g, h: g + h)
@@ -106,26 +106,31 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
         loss_list = []
-        wx_squares = self.get_host_loss_immediate(suffix=current_suffix)
+        wx_squares = self.get_host_loss_intermediate(suffix=current_suffix)
 
         if loss_norm is not None:
             host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
         else:
             host_loss_regular = []
 
-        for host_idx, host_forward in enumerate(self.host_forwards):
+        # for host_idx, host_forward in enumerate(self.host_forwards):
+        if len(self.host_forwards) > 1:
+            LOGGER.info("More than one host exist, loss is not available")
+        else:
+            host_forward = self.host_forwards[0]
+            wx_square = wx_squares[0]
             wxg_wxh = self.half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                                (self_wx_square + wx_squares[host_idx] + 2 * wxg_wxh)
+                                (self_wx_square + wx_square + 2 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
-                loss += host_loss_regular[host_idx]
+                loss += host_loss_regular[0]
             loss_list.append(loss)
+        LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 
 class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
-
     def __init__(self):
         self.half_wx = None
 
@@ -137,7 +142,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
 
         self._register_loss_sync(transfer_variables.host_loss_regular,
                                  transfer_variables.loss,
-                                 transfer_variables.loss_immediate)
+                                 transfer_variables.loss_intermediate)
 
     def compute_gradient_procedure(self, data_instances, lr_weights,
                                    encrypted_calculator, optimizer,
@@ -192,13 +197,16 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         """
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.half_wx.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_loss_immediate(self_wx_square, suffix=current_suffix)
+        self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_weights.coef_)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
+    def __init__(self):
+        self.has_multiple_hosts = False
+
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.guest_gradient,
                                      transfer_variables.host_gradient,
@@ -228,6 +236,9 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
 
         host_gradients, guest_gradient = self.get_local_gradient(current_suffix)
 
+        if len(host_gradients) > 1:
+            self.has_multiple_hosts = True
+
         host_gradients = [np.array(h) for h in host_gradients]
         guest_gradient = np.array(guest_gradient)
 
@@ -238,8 +249,20 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
         gradient = np.hstack((gradient, guest_gradient))
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
+            grad, size_list
+        ))
+
         delta_grad = optimizer.apply_gradients(grad)
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
+            delta_grad
+        ))
         separate_optim_gradient = self.separate(delta_grad, size_list)
+        LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
+            separate_optim_gradient
+        ))
         host_optim_gradients = separate_optim_gradient[: -1]
         guest_optim_gradient = separate_optim_gradient[-1]
 
@@ -256,6 +279,10 @@ class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
 
         where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
         """
+        if self.has_multiple_hosts:
+            LOGGER.info("Has more than one host, loss is not available")
+            return []
+
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)

@@ -28,16 +28,14 @@ LOGGER = log_utils.getLogger()
 
 
 class LogisticGradient(Gradient):
-    def compute_loss(self, X, Y, coef, intercept):
+    def compute_loss(self, values, coef, intercept):
+        X, Y = self.load_data(values)
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
         return tot_loss
 
-    def compute(self, values, coef, intercept, fit_intercept):
-
+    def compute_gradient(self, values, coef, intercept, fit_intercept):
         X, Y = self.load_data(values)
-
         batch_size = len(X)
-
         if batch_size == 0:
             LOGGER.warning("This partition got 0 data")
             return None, None
@@ -48,20 +46,19 @@ class LogisticGradient(Gradient):
             grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
-        loss = self.compute_loss(X, Y, coef, intercept)
-        return grad, loss
+        return grad
 
 
 class TaylorLogisticGradient(Gradient):
-    def compute_loss(self, X, Y, w, intercept):
+    def compute_loss(self, values, w, intercept):
         LOGGER.warning("Taylor Logistic Gradient cannot compute loss in encrypted mode")
         return 0
 
-    def compute(self, values, coef, intercept, fit_intercept):
+    def compute_gradient(self, values, coef, intercept, fit_intercept):
         X, Y = self.load_data(values)
         batch_size = len(X)
         if batch_size == 0:
-            return None, None
+            return None
 
         one_d_y = Y.reshape([-1, ])
         d = (0.25 * np.array(fate_operator.dot(X, coef) + intercept).transpose() + 0.5 * one_d_y * -1)
@@ -72,7 +69,7 @@ class TaylorLogisticGradient(Gradient):
             grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
-        return grad, None
+        return grad
 
 
 class HeteroLogisticGradientComputer(object):

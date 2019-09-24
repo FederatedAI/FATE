@@ -247,13 +247,22 @@ class PadsCipher(Encrypt):
         self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
 
     def encrypt(self, value):
-        ret = value
-        for uid, rand in self._rands.items():
-            if uid > self._uuid:
-                ret = rand.add_rand_pads(ret, 1.0)
-            else:
-                ret = rand.add_rand_pads(ret, -1.0)
-        return ret
+        if isinstance(value, np.ndarray):
+            ret = value
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret = rand.add_rand_pads(ret, 1.0)
+                else:
+                    ret = rand.add_rand_pads(ret, -1.0)
+            return ret
+        else:
+            ret = value
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret += rand.rand(1)[0]
+                else:
+                    ret -= rand.rand(1)[0]
+            return ret
 
     def decrypt(self, value):
         return value

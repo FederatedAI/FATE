@@ -205,8 +205,6 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             # self._renew_left_col_names()
 
     def _send_host_result_cols(self, filter_name):
-        result_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.result_left_cols,
-                                                                    filter_name)
 
         self.transfer_variable.result_left_cols.remote(self.host_left_cols,
                                                        role=consts.HOST,

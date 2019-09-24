@@ -18,7 +18,6 @@
 
 import functools
 
-from federatedml.protobuf.generated import lr_model_param_pb2
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
@@ -26,6 +25,7 @@ from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base impor
 from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.logistic_gradient import LogisticGradient, TaylorLogisticGradient
+from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
@@ -67,17 +67,11 @@ class HomoLRHost(HomoLRBase):
             self.cipher_operator.set_public_key(pubkey)
 
         self.lr_weights = self._init_model_variables(data_instances)
-        w = self.lr_weights.unboxed
-        w = self.cipher_operator.encrypt_list(w)
+        w = self.cipher_operator.encrypt_list(self.lr_weights.unboxed)
         self.lr_weights = LogisticRegressionWeights(w, self.lr_weights.fit_intercept)
 
         LOGGER.debug("After init, lr_weights: {}".format(self.lr_weights.unboxed))
 
-        # self.lr_weights = self.lr_weights.encrypted(cipher=self.cipher_operator)
-
-        max_iter = self.max_iter
-
-        LOGGER.debug("Current data count: {}".format(data_instances.count()))
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
 
         total_batch_num = mini_batch_obj.batch_nums
@@ -88,52 +82,43 @@ class HomoLRHost(HomoLRBase):
                 re_encrypt_times, self.batch_size, total_batch_num, self.re_encrypt_batches))
             self.cipher.set_re_cipher_time(re_encrypt_times)
 
-        while self.n_iter_ < max_iter:
+        total_data_num = data_instances.count()
+        LOGGER.debug("Current data count: {}".format(total_data_num))
+
+        lr_weights = self.lr_weights
+        while self.n_iter_ < self.max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
+            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+                weight = self.aggregator.aggregate_then_get(lr_weights, degree=total_data_num,
+                                                            suffix=self.n_iter_)
+                self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
+                if not self.use_encrypt:
+                    loss = self._compute_loss(data_instances)
+                    self.aggregator.send_loss(loss, degree=total_data_num, suffix=(self.n_iter_,))
+                    LOGGER.info("n_iters: {}, loss: {}".format(self.n_iter_, loss))
+                self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
+                LOGGER.info("n_iters: {}, is_converge: {}".format(self.n_iter_, self.is_converged))
+                if self.is_converged:
+                    break
+                lr_weights = self.lr_weights
+
             batch_num = 0
-            iter_loss = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-                f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.lr_weights.coef_,
-                                      intercept=self.lr_weights.intercept_,
+                f = functools.partial(self.gradient_operator.compute_gradient,
+                                      coef=lr_weights.coef_,
+                                      intercept=lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
-                grad_loss = batch_data.mapPartitions(f)
-                grad, loss = grad_loss.reduce(fate_operator.reduce_add)
+                grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                self.lr_weights = self.optimizer.update_model(self.lr_weights, grad, has_applied=False)
-                if not self.use_encrypt:
-                    loss /= n
-                    loss_norm = self.optimizer.loss_norm(self.lr_weights)
-                    iter_loss += loss
-                    if loss_norm is not None:
-                        iter_loss += loss_norm
-
-                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, loss: {}, n: {}, iter_loss :{}'.format(
-                    self.n_iter_, batch_num,
-                    grad, loss, n, iter_loss))
-
+                lr_weights = self.optimizer.update_model(lr_weights, grad, has_applied=False)
                 batch_num += 1
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
-                    w = self.cipher.re_cipher(w=self.lr_weights.unboxed,
+                    w = self.cipher.re_cipher(w=lr_weights.unboxed,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
-                    self.lr_weights = LogisticRegressionWeights(w, self.fit_intercept)
-
-            LOGGER.debug("Before aggregate, lr_weights : {}".format(self.lr_weights.unboxed))
-            self.aggregator.send_model_for_aggregate(self.lr_weights, self.n_iter_)
-            if not self.use_encrypt:
-                iter_loss /= batch_num
-                self.callback_loss(self.n_iter_, iter_loss)
-                self.loss_history.append(iter_loss)
-                self.aggregator.send_loss(iter_loss, self.n_iter_)
-            weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
-            self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
-            LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
-            if self.is_converged:
-                break
+                    lr_weights = LogisticRegressionWeights(w, self.fit_intercept)
             self.n_iter_ += 1
 
     def predict(self, data_instances):

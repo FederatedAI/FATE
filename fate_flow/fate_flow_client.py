@@ -30,7 +30,7 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job']
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job']
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
@@ -70,9 +70,7 @@ def call_fun(func, config_data, dsl_path, config_path):
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             if response.json()['retcode'] == 999:
-                print('use service.sh to start standalone node server....')
-                os.system('sh service.sh start --standalone_node')
-                time.sleep(5)
+                start_cluster_standalone_job_server()
                 response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
         else:
             if func != 'query_job':
@@ -145,6 +143,9 @@ def call_fun(func, config_data, dsl_path, config_path):
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
         response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        if response.json()['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            response = requests.post("/".join([server_url, "data", func]), json=config_data)
     elif func in TABLE_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
         response = requests.post("/".join([server_url, "table", func]), json=config_data)
@@ -166,6 +167,12 @@ def download_from_request(http_response, tar_file_name, extract_dir):
         tar.extract(file_name, extract_dir)
     tar.close()
     os.remove(tar_file_name)
+
+
+def start_cluster_standalone_job_server():
+    print('use service.sh to start standalone node server....')
+    os.system('sh service.sh start --standalone_node')
+    time.sleep(5)
 
 
 if __name__ == "__main__":

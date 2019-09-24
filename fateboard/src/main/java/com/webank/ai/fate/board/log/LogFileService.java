@@ -266,6 +266,9 @@ public class LogFileService implements InitializingBean{
         Preconditions.checkArgument(jobWithBLOBs != null, "job info " + jobId + " is not exist");
 
         String ip = jobWithBLOBs.getfRunIp();
+        Preconditions.checkArgument(StringUtils.isNoneEmpty(ip));
+        String[] splits = ip.split(":");
+        ip=splits[0];
 
         jobTaskInfo.jobStatus = jobWithBLOBs.getfStatus();
 
@@ -282,10 +285,12 @@ public class LogFileService implements InitializingBean{
             Task task = tasks.get(0);
 
             ip = task.getfRunIp();
+            logger.info("task ip:{}",ip);
 
             jobTaskInfo.taskStatus = task.getfStatus();
 
         }
+        logger.info("ssh ip:{}",ip);
         jobTaskInfo.ip = ip;
         return jobTaskInfo;
 

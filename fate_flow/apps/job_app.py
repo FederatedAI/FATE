@@ -22,7 +22,7 @@ from flask import Flask, request, send_file
 from arch.api.utils.core import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.settings import stat_logger, STANDALONE_NODE_HTTP_PORT
+from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode
@@ -49,17 +49,21 @@ def submit_job():
                                                     'board_url': board_url
                                                     })
     else:
-        if RuntimeConfig.WORK_MODE == WorkMode.STANDALONE:
+        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
+            # use cluster standalone job server to execute standalone job
+            return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, CLUSTER_STANDALONE_JOB_SERVER_PORT))
+        else:
             raise Exception('server run on standalone can not support cluster mode job')
-        # use cluster standalone node server to execute standalone job
-        return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, STANDALONE_NODE_HTTP_PORT))
 
 
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
-    return get_json_result(retcode=0, retmsg='success')
+    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), is_cancel=True)
+    if not response:
+        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
+        return get_json_result(retcode=0, retmsg='kill job success')
+    return get_json_result(retcode=0, retmsg='cancel job success')
 
 
 @manager.route('/query', methods=['POST'])

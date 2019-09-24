@@ -29,8 +29,8 @@ class LossTransferTest(TestSyncBase):
 
         if role == consts.ARBITER:
             return list(loss_transfer_sync.Arbiter()
-                        ._register_loss_transfer(transfer_variable.host_loss,
-                                                 transfer_variable.guest_loss)
+                        .register_loss_transfer(transfer_variable.host_loss,
+                                                transfer_variable.guest_loss)
                         .get_losses(host_list))
         elif role == consts.HOST:
             import random

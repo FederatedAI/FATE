@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-import numpy as np
-
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -85,7 +83,7 @@ class HeteroLRGuest(HeteroLRBase):
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batach_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
-
+            self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
@@ -93,15 +91,16 @@ class HeteroLRGuest(HeteroLRBase):
 
                 # Start gradient procedure
 
-                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
-                    self.encrypted_calculator,
-                    self.lr_weights,
-                    self.optimizer,
-                    self.n_iter_,
-                    batch_index
-                )
-
+                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
+                    compute_gradient_procedure(
+                        batch_feat_inst,
+                        self.encrypted_calculator,
+                        self.lr_weights,
+                        self.optimizer,
+                        self.n_iter_,
+                        batch_index
+                        )
+                LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
@@ -110,12 +109,15 @@ class HeteroLRGuest(HeteroLRBase):
 
                 self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_guest_gradient)
                 batch_index += 1
+                LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.lr_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
             self.n_iter_ += 1
             if self.is_converged:
                 break
+
+        LOGGER.debug("Final lr weights: {}".format(self.lr_weights.unboxed))
 
     def predict(self, data_instances):
         """

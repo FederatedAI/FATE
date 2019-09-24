@@ -62,6 +62,9 @@ class Host(gradient_sync.Host, HeteroGradientComputer):
         host_forward = self.fore_gradient_transfer.get(idx=0, suffix=suffix)
         return host_forward
 
+    def compute_intermediate(self):
+        pass
+
     def update_gradient(self, unilateral_gradient, suffix=tuple()):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
         optimized_gradient = self.unilateral_optim_gradient_transfer.get(idx=0, suffix=suffix)
@@ -95,8 +98,8 @@ class Arbiter(gradient_sync.Arbiter):
         gradient = np.hstack((gradient, guest_gradient))
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
-        delta_grad = optimizer.apply_gradients(grad)
-        separate_optim_gradient = self.separate(delta_grad, size_list)
+        # delta_grad = optimizer.apply_gradients(grad)
+        separate_optim_gradient = self.separate(grad, size_list)
         host_optim_gradients = separate_optim_gradient[: -1]
         guest_optim_gradient = separate_optim_gradient[-1]
 

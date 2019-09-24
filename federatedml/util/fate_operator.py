@@ -14,13 +14,13 @@
 #  limitations under the License.
 #
 
-import types
 from collections import Iterable
 
 import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+
 
 def _one_dimension_dot(X, w):
     res = 0
@@ -30,9 +30,7 @@ def _one_dimension_dot(X, w):
         res += w[i] * X[i]
 
     if res == 0:
-        if isinstance(X[0], PaillierEncryptedNumber):
-            res = 0 * X[0]
-        elif isinstance(w[0], PaillierEncryptedNumber):
+        if isinstance(w[0], PaillierEncryptedNumber):
             res = 0 * w[0]
     return res
 
@@ -99,5 +97,3 @@ def norm(vector, p=2):
         vector = np.array(vector)
 
     return np.linalg.norm(vector, p)
-
-

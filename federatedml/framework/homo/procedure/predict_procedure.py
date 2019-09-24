@@ -23,7 +23,7 @@ class Host(predict_sync.Host):
 
     def register_predict_sync(self, transfer_variables, lr_model):
         self._register_predict_sync(transfer_variables.predict_wx,
-                                    transfer_variables.final_model,
+                                    transfer_variables.aggregated_model,
                                     transfer_variables.predict_result)
         self._register_func(lr_model.compute_wx)
 
@@ -32,7 +32,7 @@ class Arbiter(predict_sync.Arbiter):
 
     def register_predict_sync(self, transfer_variables):
         self._register_predict_sync(transfer_variables.predict_wx,
-                                    transfer_variables.final_model,
+                                    transfer_variables.aggregated_model,
                                     transfer_variables.predict_result)
 
 
@@ -40,6 +40,6 @@ class Guest(predict_sync.Guest):
 
     def register_predict_sync(self, transfer_variables, lr_model):
         self._register_predict_sync(transfer_variables.predict_wx,
-                                    transfer_variables.final_model,
+                                    transfer_variables.aggregated_model,
                                     transfer_variables.predict_result)
         self._register_func(lr_model.compute_wx)

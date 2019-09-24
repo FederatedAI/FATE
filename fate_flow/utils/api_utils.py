@@ -37,6 +37,8 @@ def error_response(response_code, retmsg):
 
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+    if dest_party_id == 0:
+        return local_api(method=method, endpoint=endpoint, json_body=json_body)
     if work_mode == WorkMode.STANDALONE:
         return local_api(method=method, endpoint=endpoint, json_body=json_body)
     elif work_mode == WorkMode.CLUSTER:

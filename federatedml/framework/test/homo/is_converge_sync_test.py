@@ -31,7 +31,7 @@ class IsConvergeTest(TestSyncBase):
         ]
         if role == consts.ARBITER:
             status = []
-            is_converge = is_converge_sync.Arbiter()._register_is_converge(transfer_variable.is_converge)
+            is_converge = is_converge_sync.Arbiter().register_is_converge(transfer_variable.is_converge)
             for i in range(2):
                 for j in range(2):
                     status.append(is_converge.check_converge_status(funcs[i], args[j][i], suffix=(i, j)))

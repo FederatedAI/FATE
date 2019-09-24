@@ -190,7 +190,7 @@ class ModelBase(object):
     def predict(self, data_inst):
         pass
 
-    def fit(self, data_inst):
+    def fit(self, *args):
         pass
 
     def transform(self, data_inst):

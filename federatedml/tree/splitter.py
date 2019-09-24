@@ -106,13 +106,13 @@ class Splitter(object):
 
                 """ missing value handle: dispatch to left child"""
                 if use_missing:
-                    sum_grad_l += histogram[fid][-1][0]
-                    sum_hess_l += histogram[fid][-1][1]
-                    node_cnt_l += histogram[fid][-1][2]
+                    sum_grad_l += histogram[fid][-1][0] - histogram[fid][-2][0]
+                    sum_hess_l += histogram[fid][-1][1] - histogram[fid][-2][1]
+                    node_cnt_l += histogram[fid][-1][2] - histogram[fid][-2][2]
 
-                    sum_grad_r -= histogram[fid][-1][0]
-                    sum_hess_r -= histogram[fid][-1][1]
-                    node_cnt_r -= histogram[fid][-1][2]
+                    sum_grad_r -= histogram[fid][-1][0] - histogram[fid][-2][0]
+                    sum_hess_r -= histogram[fid][-1][1] - histogram[fid][-2][1]
+                    node_cnt_r -= histogram[fid][-1][2] - histogram[fid][-2][2]
 
                     if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
@@ -182,9 +182,9 @@ class Splitter(object):
                     node_grad_hess.append((sum_grad_l, sum_hess_l))
 
                 if use_missing:
-                    sum_grad_l += histogram[fid][-1][0]
-                    sum_hess_l += histogram[fid][-1][1]
-                    node_cnt_l += histogram[fid][-1][2]
+                    sum_grad_l += histogram[fid][-1][0] - histogram[fid][-2][0]
+                    sum_hess_l += histogram[fid][-1][1] - histogram[fid][-2][1]
+                    node_cnt_l += histogram[fid][-1][2] - histogram[fid][-2][2]
 
                     splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
                                           best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,

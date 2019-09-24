@@ -24,19 +24,19 @@ class IdentifyUUIDTest(TestSyncBase):
     def call(cls, role, transfer_variable, ind, *args):
         if role == consts.ARBITER:
             sync = identify_uuid_sync.Arbiter()
-            sync._register_identify_uuid(transfer_variable.guest_uuid,
-                                         transfer_variable.host_uuid,
-                                         transfer_variable.uuid_conflict_flag)
+            sync.register_identify_uuid(transfer_variable.guest_uuid,
+                                        transfer_variable.host_uuid,
+                                        transfer_variable.uuid_conflict_flag)
             return sync.validate_uuid()
         elif role == consts.HOST:
             sync = identify_uuid_sync.Host()
-            return sync._register_identify_uuid(transfer_variable.host_uuid,
-                                                conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag) \
+            return sync.register_identify_uuid(transfer_variable.host_uuid,
+                                               conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag) \
                 .generate_uuid()
         else:
             sync = identify_uuid_sync.Guest()
-            sync._register_identify_uuid(transfer_variable.guest_uuid,
-                                         conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag)
+            sync.register_identify_uuid(transfer_variable.guest_uuid,
+                                        conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag)
             return sync.generate_uuid()
 
     def run_with_num_hosts(self, num_hosts):

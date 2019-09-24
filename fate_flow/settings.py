@@ -48,9 +48,11 @@ HEADERS = {
 }
 
 IP = '0.0.0.0'
-GRPC_PORT = 9362
-HTTP_PORT = 9382
-STANDALONE_NODE_HTTP_PORT = 9381
+GRPC_PORT = 9360
+HTTP_PORT = 9380
+# standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
+# but not the port for FATE-Flow on standalone deploy mode.
+CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
 
@@ -72,7 +74,6 @@ REDIS = {
 }
 
 REDIS_QUEUE_DB_INDEX = 0
-JOB_MODULE_CONF = file_utils.load_json_conf("fate_flow/job_module_conf.json")
 
 """
 Services

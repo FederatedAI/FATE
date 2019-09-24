@@ -89,15 +89,16 @@ class HeteroLRArbiter(HeteroLRBase):
         self.batch_generator.initialize_batch_generator()
 
         while self.n_iter_ < self.max_iter:
-            iter_loss = 0
+            iter_loss = None
             batch_data_generator = self.batch_generator.generate_batch_data()
             total_gradient = None
+            self.optimizer.set_iters(self.n_iter_)
             for batch_index in batch_data_generator:
                 # Compute and Transfer gradient info
-                gradient = self.gradient_procedure.compute_gradient_procedure(self.cipher_operator,
-                                                                              self.optimizer,
-                                                                              self.n_iter_,
-                                                                              batch_index)
+                gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
+                                                                                  self.optimizer,
+                                                                                  self.n_iter_,
+                                                                                  batch_index)
                 if total_gradient is None:
                     total_gradient = gradient
                 else:
@@ -105,16 +106,19 @@ class HeteroLRArbiter(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
-                loss_list = self.gradient_procedure.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
+                loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
 
                 if len(loss_list) == 1:
-                    iter_loss += loss_list[0]
-                    # LOGGER.info("Get loss from guest:{}".format(de_loss))
+                    if iter_loss is None:
+                        iter_loss = loss_list[0]
+                    else:
+                        iter_loss += loss_list[0]
+                        # LOGGER.info("Get loss from guest:{}".format(de_loss))
 
             # if converge
-            loss = iter_loss / self.batch_generator.batch_num
-
-            self.callback_loss(self.n_iter_, loss)
+            if iter_loss is not None:
+                iter_loss /= self.batch_generator.batch_num
+                self.callback_loss(self.n_iter_, iter_loss)
 
             if self.model_param.converge_func == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
@@ -123,8 +127,11 @@ class HeteroLRArbiter(HeteroLRBase):
                 if weight_diff < self.model_param.eps:
                     self.is_converged = True
             else:
-                self.is_converged = self.converge_func.is_converge(loss)
-                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, loss, self.is_converged))
+                if iter_loss is None:
+                    raise ValueError("More multiple host situation, loss converge function is not available."
+                                     "You should use 'weight_diff' instead")
+                self.is_converged = self.converge_func.is_converge(iter_loss)
+                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
             self.n_iter_ += 1

@@ -139,7 +139,7 @@ def component_parameters():
         for role, partys_parameters in parameters.items():
             for party_parameters in partys_parameters:
                 if party_parameters.get('local', {}).get('role', '') == request_data['role'] and party_parameters.get(
-                        'local', {}).get('party_id', '') == request_data['party_id']:
+                        'local', {}).get('party_id', '') == int(request_data['party_id']):
                     output_parameters = {}
                     output_parameters['module'] = party_parameters.get('module', '')
                     for p_k, p_v in party_parameters.items():
@@ -153,6 +153,7 @@ def component_parameters():
 
 
 @manager.route('/component/output/model', methods=['post'])
+@job_utils.job_server_routing()
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
@@ -191,6 +192,7 @@ def component_output_model():
 
 
 @manager.route('/component/output/data', methods=['post'])
+@job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)

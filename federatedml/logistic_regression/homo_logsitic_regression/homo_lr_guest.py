@@ -51,42 +51,40 @@ class HomoLRGuest(HomoLRBase):
         self.lr_weights = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
+        total_data_num = data_instances.count()
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
+
+        lr_weights = self.lr_weights
         while self.n_iter_ < max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
+            self.optimizer.set_iters(self.n_iter_)
+            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+                weight = self.aggregator.aggregate_then_get(lr_weights, degree=total_data_num,
+                                                            suffix=self.n_iter_)
+                self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
+                loss = self._compute_loss(data_instances)
+                self.aggregator.send_loss(loss, degree=total_data_num, suffix=(self.n_iter_,))
+                self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
+                LOGGER.info("n_iters: {}, loss: {} converge flag is :{}".format(self.n_iter_, loss, self.is_converged))
+                if self.is_converged:
+                    break
+                lr_weights = self.lr_weights
+
             batch_num = 0
-            iter_loss = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-                f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.lr_weights.coef_,
-                                      intercept=self.lr_weights.intercept_,
+                LOGGER.debug("In each batch, lr_weight: {}".format(lr_weights.unboxed))
+                f = functools.partial(self.gradient_operator.compute_gradient,
+                                      coef=lr_weights.coef_,
+                                      intercept=lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
-                grad_loss = batch_data.mapPartitions(f)
-                grad, loss = grad_loss.reduce(fate_operator.reduce_add)
-                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, loss: {}, n: {}, iter_loss :{}'.format(
-                    self.n_iter_, batch_num,
-                    grad, loss, n, iter_loss))
+                grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
+                    self.n_iter_, batch_num, grad, n))
                 grad /= n
-                loss /= n
-                self.lr_weights = self.optimizer.update_model(self.lr_weights, grad, has_applied=False)
-                loss_norm = self.optimizer.loss_norm(self.lr_weights)
-                iter_loss += loss
-                if loss_norm is not None:
-                    iter_loss += loss_norm
+                lr_weights = self.optimizer.update_model(lr_weights, grad, has_applied=False)
                 batch_num += 1
-            iter_loss /= batch_num
-            self.callback_loss(self.n_iter_, iter_loss)
-            self.loss_history.append(iter_loss)
-            self.aggregator.send_model_for_aggregate(self.lr_weights, self.n_iter_)
-            self.aggregator.send_loss(iter_loss, self.n_iter_)
-            weight = self.aggregator.get_aggregated_model(self.n_iter_)
-            self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
-            self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
-            LOGGER.info("n_iters: {}, converge flag is :{}".format(self.n_iter_, self.is_converged))
-            if self.is_converged:
-                break
             self.n_iter_ += 1
 
     def predict(self, data_instances):
@@ -96,3 +94,5 @@ class HomoLRGuest(HomoLRBase):
                                                               self.lr_weights,
                                                               self.model_param.predict_param.threshold)
         return predict_result
+
+

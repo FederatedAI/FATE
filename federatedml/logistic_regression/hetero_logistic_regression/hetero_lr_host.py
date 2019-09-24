@@ -69,7 +69,7 @@ class HeteroLRHost(HeteroLRBase):
 
         return host_forward
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, *args):
         """
         Train lr model of role host
         Parameters
@@ -98,20 +98,21 @@ class HeteroLRHost(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
+            self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
-                optim_host_gradient, fore_gradient = self.gradient_procedure.compute_gradient_procedure(
+                optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.lr_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
                     batch_index)
+                LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)
 
-                self.gradient_procedure.compute_loss(self.lr_weights, self.optimizer, self.n_iter_, batch_index)
+                self.gradient_loss_operator.compute_loss(self.lr_weights, self.optimizer, self.n_iter_, batch_index)
 
                 self.lr_weights = self.optimizer.update_model(self.lr_weights, optim_host_gradient)
                 batch_index += 1
@@ -125,7 +126,7 @@ class HeteroLRHost(HeteroLRBase):
             if self.is_converged:
                 break
 
-        LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+        LOGGER.debug("Final lr weights: {}".format(self.lr_weights.unboxed))
 
     def predict(self, data_instances):
         """

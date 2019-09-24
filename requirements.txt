@@ -12,6 +12,7 @@ cloudpickle==0.6.1
 colorama==0.3.9
 coverage==4.5.2
 cycler==0.10.0
+cryptography==2.7
 decorator==4.3.0
 dill==0.2.8.2
 entrypoints==0.2.3
@@ -118,7 +119,7 @@ socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
 tensorboard==1.12.2
-tensorflow==1.12.2
+tensorflow==1.14
 termcolor==1.1.0
 terminado==0.8.1
 testpath==0.3.1

@@ -28,9 +28,9 @@ class ModelScatterTest(TestSyncBase):
         cipher_dict = args[0]
         if role == consts.ARBITER:
             return model_scatter_sync.Arbiter() \
-                ._register_model_scatter(transfer_variable.host_model,
-                                         transfer_variable.guest_model)\
-                ._get_models(cipher_dict)
+                .register_model_scatter(transfer_variable.host_model,
+                                        transfer_variable.guest_model)\
+                .get_models(cipher_dict)
         elif role == consts.HOST:
             model = [random.random() for _ in range(random.randint(1, 10))]
             if cipher_dict[ind]:
@@ -38,12 +38,12 @@ class ModelScatterTest(TestSyncBase):
             model = ListWeights(model)
             return model_scatter_sync.Host() \
                 ._register_model_scatter(transfer_variable.host_model)\
-                ._send_model(model)
+                .send_model(model)
         else:
             model = ListWeights([random.random() for _ in range(random.randint(1, 10))])
             return model_scatter_sync.Guest() \
                 ._register_model_scatter(transfer_variable.guest_model)\
-                ._send_model(model)
+                .send_model(model)
 
     def run_with_num_hosts(self, num_hosts):
         ratio = 0.3

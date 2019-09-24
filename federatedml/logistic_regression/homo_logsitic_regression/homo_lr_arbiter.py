@@ -16,13 +16,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.util import consts
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -43,7 +44,6 @@ class HomoLRArbiter(HomoLRBase):
     def _init_model(self, params):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
-        self.converge_flag_transfer = self.transfer_variable.converge_flag
         self.predict_procedure.register_predict_sync(self.transfer_variable)
 
     def fit(self, data_instances):
@@ -54,33 +54,35 @@ class HomoLRArbiter(HomoLRBase):
         max_iter = self.max_iter
 
         while self.n_iter_ < max_iter:
+            suffix = (self.n_iter_,)
+
+            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+                merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
+                                                                       suffix=suffix)
+
+                total_loss = self.aggregator.aggregate_loss(host_has_no_cipher_ids, suffix)
+                self.callback_loss(self.n_iter_, total_loss)
+                self.loss_history.append(total_loss)
+                if self.use_loss:
+                    converge_var = total_loss
+                else:
+                    converge_var = np.array(merged_model.unboxed)
+
+                self.is_converged = self.aggregator.send_converge_status(self.converge_func.is_converge,
+                                                                         (converge_var,),
+                                                                         suffix=(self.n_iter_,))
+                LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
+                                                                                       total_loss,
+                                                                                       self.is_converged))
+                if self.is_converged:
+                    break
+                self.lr_weights = LogisticRegressionWeights(merged_model.unboxed,
+                                                            self.model_param.init_param.fit_intercept)
+
             self.cipher.re_cipher(iter_num=self.n_iter_,
                                   re_encrypt_times=self.re_encrypt_times,
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
-            suffix = (self.n_iter_,)
-
-            merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
-                                                                   suffix=suffix)
-            self.lr_weights = LogisticRegressionWeights(merged_model.unboxed,
-                                                          self.model_param.init_param.fit_intercept)
-            total_loss = self.aggregator.aggregate_loss(idx=host_has_no_cipher_ids,
-                                                        suffix=suffix)
-            self.callback_loss(self.n_iter_, total_loss)
-            self.loss_history.append(total_loss)
-            if self.use_loss:
-                converge_var = total_loss
-            else:
-                converge_var = np.array(merged_model.unboxed)
-            self.is_converged = self.aggregator.check_converge_status(self.converge_func.is_converge,
-                                                                      (converge_var,),
-                                                                      suffix=(self.n_iter_,))
-
-            LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
-                                                                                   total_loss,
-                                                                                   self.is_converged))
-            if self.is_converged:
-                break
             self.n_iter_ += 1
 
     def predict(self, data_instantces):
