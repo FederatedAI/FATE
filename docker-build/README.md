@@ -65,13 +65,13 @@ federatedai/base-image                1.0-release
 ##### Push Images to a Registry (optional)
 If you need to push the images to a registry (such as Docker Hub), please use the following command to log in first: 
 
-`$ docker log in` 
+`$ docker login` 
 
 After that use this command to push the images: 
 
 `$ bash build_cluster_docker.sh push` 
 
-### Package the docker images for transfer (optional)
+##### Package the docker images for transfer (optional)
 In the machine with all docker images are ready, use the following commands to package images:
 ```bash
 # Pull mysql and redis first if you don't have those images in your machine.
