@@ -14,24 +14,24 @@
 #  limitations under the License.
 #
 
-import typing
-
 from tensorflow.python.keras import Sequential
 
 from federatedml.nn.homo_nn.backend.tf_keras.layers import get_builder, has_builder
-from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
-    KerasSequenceDataConverter
+from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel
 
 
-def build_nn(nn_define, loss, optimizer, metrics,
-             is_supported_layer=has_builder,
-             default_layer=None) -> typing.Tuple[KerasNNModel, KerasSequenceDataConverter]:
+def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
+                   is_supported_layer=has_builder,
+                   default_layer=None) -> KerasNNModel:
     model = Sequential()
+    is_first_layer = True
     for layer_config in nn_define:
         layer = layer_config.get("layer", default_layer)
         if layer and is_supported_layer(layer):
             del layer_config["layer"]
-
+            if is_first_layer:
+                layer_config["input_shape"] = input_shape
+                is_first_layer = False
             builder = get_builder(layer)
             model.add(builder(**layer_config))
 
@@ -41,4 +41,4 @@ def build_nn(nn_define, loss, optimizer, metrics,
     return from_keras_sequential_model(model=model,
                                        loss=loss,
                                        optimizer=optimizer,
-                                       metrics=metrics), KerasSequenceDataConverter()
+                                       metrics=metrics)

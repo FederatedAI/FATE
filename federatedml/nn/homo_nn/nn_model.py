@@ -56,19 +56,12 @@ class DataConverter(object):
         pass
 
 
-def parse(config_type, nn_define, **kwargs) -> typing.Tuple[NNModel, DataConverter]:
-    if config_type == "keras":
-        from federatedml.nn.homo_nn.backend.tf_keras.nn_model import build_keras
-        return build_keras(nn_define, **kwargs)
+def get_data_converter(config_type) -> DataConverter:
+    from federatedml.nn.homo_nn.backend.tf_keras.nn_model import KerasSequenceDataConverter
+    return KerasSequenceDataConverter()
 
-    elif config_type == "nn":
-        from federatedml.nn.homo_nn.zoo.nn import build_nn
-        return build_nn(nn_define, **kwargs)
 
-    elif config_type == "dnn":
-        from federatedml.nn.homo_nn.zoo.dnn import build_dnn
-        return build_dnn(nn_define, **kwargs)
-
-    # if config_type == "tf":
-    #     from federatedml.nn.homo_nn.backend.tf.nn_model import TFFitDictDataConverter
-    #     return None, TFFitDictDataConverter()
+def get_nn_builder(config_type):
+    if config_type:
+        from federatedml.nn.homo_nn.zoo.nn import build_nn_model
+        return build_nn_model

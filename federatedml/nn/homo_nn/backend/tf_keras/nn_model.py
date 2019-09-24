@@ -26,21 +26,7 @@ Logger = LoggerFactory.get_logger()
 
 
 def _compile_model(model, loss, optimizer, metrics):
-
-    # todo: move to homo_nn_param, fails fast
-    if isinstance(optimizer, str):
-        optimizer_instance = getattr(tf.keras.optimizers, optimizer)()
-    elif isinstance(optimizer, dict):
-        optimizer_name = optimizer.get("name", None)
-        if not None and hasattr(tf.keras.optimizers, optimizer_name):
-            kwargs = copy.deepcopy(optimizer)
-            del kwargs["name"]
-            optimizer_instance = getattr(tf.keras.optimizers, optimizer_name)(**kwargs)
-        else:
-            raise ValueError(f"optimizer format error: {optimizer}")
-    else:
-        raise ValueError(f"optimizer format error: type of {type(optimizer)} not support")
-
+    optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(**optimizer.kwargs)
     losses = getattr(tf.keras.losses, loss)
     model.compile(loss=losses,
                   optimizer=optimizer_instance,
@@ -83,8 +69,8 @@ def from_keras_sequential_model(model, loss, optimizer, metrics):
 
 class KerasNNModel(NNModel):
     def __init__(self, sess, model):
-        self._sess = sess
-        self._model = model
+        self._sess: tf.Session = sess
+        self._model: tf.keras.Sequential = model
         self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
 
     @staticmethod
@@ -99,8 +85,12 @@ class KerasNNModel(NNModel):
         self._sess.run([tf.assign(v, unboxed[name]) for name, v in self._trainable_weights.items()])
 
     def train(self, data: tf.keras.utils.Sequence, **kwargs):
-        epochs = kwargs.get("num_epoch_to_aggregate", 1)
-        self._model.fit(x=data, epochs=1, verbose=1, shuffle=True, **kwargs)
+        epochs = 1
+        left_kwargs = copy.deepcopy(kwargs)
+        if "aggregate_every_n_epoch" in kwargs:
+            epochs = kwargs["aggregate_every_n_epoch"]
+            del left_kwargs["aggregate_every_n_epoch"]
+        self._model.fit(x=data, epochs=epochs, verbose=1, shuffle=True, **left_kwargs)
         return epochs * len(data)
 
     def evaluate(self, data: tf.keras.utils.Sequence, **kwargs):
@@ -111,27 +101,33 @@ class KerasNNModel(NNModel):
         return dict(zip(names, values))
 
     def predict(self, data: tf.keras.utils.Sequence, **kwargs):
-        return self._model.predict()
+        return self._model.predict(data)
 
 
 class KerasSequenceData(tf.keras.utils.Sequence):
+
+    def get_shape(self):
+        return self.x_shape, self.y_shape
 
     def __init__(self, data_instances, batch_size):
         self.size = data_instances.count()
         if self.size <= 0:
             raise ValueError("empty data")
 
-        one_data = data_instances.first()
-        x_shape = one_data[1][0].shape
-        y_shape = one_data[1][1].shape
-        self.x = np.zeros((self.size, *x_shape))
-        self.y = np.zeros((self.size, *y_shape))
+        _, one_data = data_instances.first()
+        self.x_shape = one_data.features.shape
+        self.y_shape = getattr(one_data.label, "shape", (1,))
+        self.x = np.zeros((self.size, *self.x_shape))
+        self.y = np.zeros((self.size, *self.y_shape))
         index = 0
-        for k, v in data_instances.collect():
-            self.x[index] = v[0]
-            self.y[index] = v[1]
+        self._keys = []
+        for k, inst in data_instances.collect():
+            self._keys.append(k)
+            self.x[index] = inst.features
+            self.y[index] = inst.label
             index += 1
-        self.batch_size = batch_size
+
+        self.batch_size = batch_size if batch_size > 0 else self.size
 
     def __getitem__(self, index):
         """Gets batch at position `index`.
@@ -153,6 +149,9 @@ class KerasSequenceData(tf.keras.utils.Sequence):
             The number of batches in the Sequence.
         """
         return int(np.ceil(self.size / float(self.batch_size)))
+
+    def get_keys(self):
+        return self._keys
 
 
 class KerasSequenceDataConverter(DataConverter):
