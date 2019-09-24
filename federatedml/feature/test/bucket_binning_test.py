@@ -36,8 +36,10 @@ class TestBucketBinning(unittest.TestCase):
         final_result = []
         numpy_array = []
         for i in range(self.data_num):
+            if 100 < i < 500:
+                continue
             tmp = i * np.ones(self.feature_num)
-            inst = Instance(inst_id=i, features=tmp, label=0)
+            inst = Instance(inst_id=i, features=tmp, label=i%2)
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
@@ -57,7 +59,13 @@ class TestBucketBinning(unittest.TestCase):
         bin_param = FeatureBinningParam(bin_num=self.bin_num, cols=self.cols)
         bucket_bin = BucketBinning(bin_param)
         split_points = bucket_bin.fit_split_points(self.table)
-        print(split_points)
+        split_point = list(split_points.values())[0]
+        for kth, s_p in enumerate(split_point):
+            expect_s_p = (self.data_num - 1) / self.bin_num * (kth + 1)
+            self.assertEqual(s_p, expect_s_p)
+        iv_attrs = bucket_bin.cal_local_iv(self.table)
+        for col_name, iv_attr in iv_attrs.items():
+            print('col_name: {}, iv: {}, woe_array: {}'.format(col_name, iv_attr.iv, iv_attr.woe_array))
 
     def tearDown(self):
         self.table.destroy()

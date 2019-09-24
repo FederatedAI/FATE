@@ -68,6 +68,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.iv_percentile_meta = None
         self.variance_coe_meta = None
         self.outlier_meta = None
+        self.cols_list = []
+        self.host_cols_list = []
 
         # Use to save each model's result
         self.results = []
@@ -104,11 +106,48 @@ class BaseHeteroFeatureSelection(ModelBase):
         left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.header,
                                                             left_cols=left_col_name_dict)
 
+        col_names = self.__make_cols_list(self.cols_list)
+        host_col_names = self.__make_cols_list(self.host_cols_list)
+
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results,
-                                                                       final_left_cols=left_col_obj)
+                                                                       final_left_cols=left_col_obj,
+                                                                       col_names=col_names,
+                                                                       host_col_names=host_col_names)
         json_result = json_format.MessageToJson(result_obj)
         LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
+
+    def __make_cols_list(self, cols_list):
+        result_list = []
+        idx = len(cols_list) - 1
+        while idx >= 0:
+            this_left_list = cols_list[idx]
+            for col_name in this_left_list:
+                if col_name not in result_list:
+                    result_list.append(str(col_name))
+            idx -= 1
+        LOGGER.debug('in make_cols_list, cols_list: {}, result_list: {}'.format(cols_list, result_list))
+        return result_list
+
+    def _add_left_cols(self):
+        this_filter_left = set()
+        for col_idx, is_left in self.left_cols.items():
+            if is_left:
+                this_filter_left.add(self.header[col_idx])
+                LOGGER.debug('col_idx: {}, is_left: {}, this_filter_left: {}'.format(
+                    col_idx, is_left, this_filter_left
+                ))
+        self.cols_list.append(this_filter_left)
+        LOGGER.debug("In _add_left_cols, left_cols: {}, col_list: {}".format(
+            self.left_cols, self.cols_list
+        ))
+
+    def _add_host_left_cols(self, host_left_cols):
+        this_filter_left = set()
+        for col_idx, is_left in host_left_cols.items():
+            if is_left:
+                this_filter_left.add('.'.join(['host', str(col_idx)]))
+        self.host_cols_list.append(this_filter_left)
 
     def save_data(self):
         return self.data_output
@@ -275,6 +314,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         for col_idx in self.cols:
             self.left_cols[col_idx] = True
         self.header = header
+        self.cols_list.append(set(header))
 
     def _generate_result_idx(self):
         self.left_col_names = []

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -12,18 +15,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
 import numpy as np
 
-from arch.api import federation
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.framework.homo.procedure import aggregator, predict_procedure
+from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
-from federatedml.optim import activation
-from federatedml.optim.federated_aggregator import HomoFederatedAggregator
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -32,394 +31,66 @@ LOGGER = log_utils.getLogger()
 class HomoLRArbiter(HomoLRBase):
     def __init__(self):
         super(HomoLRArbiter, self).__init__()
-        self.aggregator = HomoFederatedAggregator()
-
-        self.classes_ = [0, 1]
-
-        # To be initialized
-        self.host_use_encryption = []
         self.re_encrypt_times = []  # Record the times needed for each host
-        self.curt_re_encrypt_times = []
-        self.host_encrypter = []
-        self.party_weights = []  # The first one is guest weight, host weights for otherwise
-        self.has_sychronized_encryption = False
+
         self.loss_history = []
         self.is_converged = False
-        self.header = []
         self.role = consts.ARBITER
+        self.aggregator = aggregator.Arbiter()
+        self.lr_weights = None
+        self.cipher = paillier_cipher.Arbiter()
+        self.predict_procedure = predict_procedure.Arbiter()
 
     def _init_model(self, params):
-        super(HomoLRArbiter, self)._init_model(params)
-        self.encrypt_param = params.encrypt_param
+        super()._init_model(params)
+        self.cipher.register_paillier_cipher(self.transfer_variable)
+        self.predict_procedure.register_predict_sync(self.transfer_variable)
 
-    def fit(self, data=None):
-        if not self.need_run:
-            return data
+    def fit(self, data_instances):
+        host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
+                                                   suffix=('fit',))
+        host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
+        self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
+        max_iter = self.max_iter
 
-        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
-        self.__init_parameters()
-        LOGGER.debug("self.has_sychronized_encryption: {}".format(self.has_sychronized_encryption))
+        while self.n_iter_ < max_iter:
+            suffix = (self.n_iter_,)
 
-        LOGGER.info("Finish init parameters")
+            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+                merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
+                                                                       suffix=suffix)
 
-        for iter_num in range(self.max_iter):
-            # re_encrypt host models
-            self.__re_encrypt(iter_num)
+                total_loss = self.aggregator.aggregate_loss(host_has_no_cipher_ids, suffix)
+                self.callback_loss(self.n_iter_, total_loss)
+                self.loss_history.append(total_loss)
+                if self.use_loss:
+                    converge_var = total_loss
+                else:
+                    converge_var = np.array(merged_model.unboxed)
 
-            # Part3: Aggregate models receive from each party
-            final_model = self.aggregator.aggregate_model(transfer_variable=self.transfer_variable,
-                                                          iter_num=iter_num,
-                                                          party_weights=self.party_weights,
-                                                          host_encrypter=self.host_encrypter)
-            total_loss = self.aggregator.aggregate_loss(transfer_variable=self.transfer_variable,
-                                                        iter_num=iter_num,
-                                                        party_weights=self.party_weights,
-                                                        host_use_encryption=self.host_use_encryption)
-            # else:
-            #     total_loss = np.linalg.norm(final_model)
+                self.is_converged = self.aggregator.send_converge_status(self.converge_func.is_converge,
+                                                                         (converge_var,),
+                                                                         suffix=(self.n_iter_,))
+                LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
+                                                                                       total_loss,
+                                                                                       self.is_converged))
+                if self.is_converged:
+                    break
+                self.lr_weights = LogisticRegressionWeights(merged_model.unboxed,
+                                                            self.model_param.init_param.fit_intercept)
 
-            self.loss_history.append(total_loss)
+            self.cipher.re_cipher(iter_num=self.n_iter_,
+                                  re_encrypt_times=self.re_encrypt_times,
+                                  host_ciphers_dict=host_ciphers,
+                                  re_encrypt_batches=self.re_encrypt_batches)
+            self.n_iter_ += 1
 
-            if not self.need_one_vs_rest:
-                metric_meta = MetricMeta(name='train',
-                                         metric_type="LOSS",
-                                         extra_metas={
-                                             "unit_name": "iters"
-                                         })
-                metric_name = self.get_metric_name('loss')
-                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-                self.callback_metric(metric_name=metric_name,
-                                     metric_namespace='train',
-                                     metric_data=[Metric(iter_num, total_loss)])
+    def predict(self, data_instantces):
+        current_suffix = ('predict',)
 
-            LOGGER.info("Iter: {}, loss: {}".format(iter_num, total_loss))
-            # send model
-            final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, iter_num)
-            # LOGGER.debug("Sending final_model, model id: {}, final_model: {}".format(final_model_id, final_model))
-            self.transfer_variable.final_model.remote(final_model,
-                                                      role=consts.GUEST,
-                                                      idx=0,
-                                                      suffix=(iter_num,))
-            """
-            federation.remote(final_model,
-                              name=self.transfer_variable.final_model.name,
-                              tag=final_model_id,
-                              role=consts.GUEST,
-                              idx=0)
-            """
-            for idx, encrypter in enumerate(self.host_encrypter):
-                encrypted_model = encrypter.encrypt_list(final_model)
-
-                self.transfer_variable.final_model.remote(encrypted_model,
-                                                          role=consts.HOST,
-                                                          idx=idx,
-                                                          suffix=(iter_num,))
-                """
-                federation.remote(encrypted_model,
-                                  name=self.transfer_variable.final_model.name,
-                                  tag=final_model_id,
-                                  role=consts.HOST,
-                                  idx=idx)
-                """
-
-            if self.use_loss:
-                converge_flag = self.converge_func.is_converge(total_loss)
-            else:
-                converge_flag = self.converge_func.is_converge(final_model)
-
-            """
-            converge_flag_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.converge_flag,
-                iter_num)
-            """
-
-            self.transfer_variable.converge_flag.remote(converge_flag,
-                                                        role=consts.GUEST,
-                                                        idx=0,
-                                                        suffix=(iter_num,))
-            """
-            federation.remote(converge_flag,
-                              name=self.transfer_variable.converge_flag.name,
-                              tag=converge_flag_id,
-                              role=consts.GUEST,
-                              idx=0)
-            """
-
-            self.transfer_variable.converge_flag.remote(converge_flag,
-                                                        role=consts.HOST,
-                                                        idx=-1,
-                                                        suffix=(iter_num,))
-            """
-            federation.remote(converge_flag,
-                              name=self.transfer_variable.converge_flag.name,
-                              tag=converge_flag_id,
-                              role=consts.HOST,
-                              idx=-1)
-            """
-
-            self.set_coef_(final_model)
-            self.n_iter_ = iter_num
-            if converge_flag:
-                self.is_converged = True
-                break
-        self._set_header()
-        self.data_output = data
-
-    def predict(self, data=None):
-        LOGGER.debug("In arbiter's predict, need run: {}".format(self.need_run))
-        if not self.need_run:
-            return data
-
-        # synchronize encryption information
-        if not self.has_sychronized_encryption:
-            self.__synchronize_encryption(mode='predict')
-            self.__send_host_mode()
-
-        for idx, use_encrypt in enumerate(self.host_use_encryption):
-            if use_encrypt:
-                encrypter = self.host_encrypter[idx]
-                predict_wx_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_wx)
-                LOGGER.debug("Arbiter encrypted wx id: {}".format(predict_wx_id))
-
-                predict_wx = self.transfer_variable.predict_wx.get(idx=idx)
-                """
-                predict_wx = federation.get(name=self.transfer_variable.predict_wx.name,
-                                            tag=predict_wx_id,
-                                            idx=idx
-                                            )
-                """
-                decrypted_wx = encrypter.distribute_decrypt(predict_wx)
-                pred_prob = decrypted_wx.mapValues(lambda x: activation.sigmoid(x))
-                pred_label = self.classified(pred_prob, self.predict_param.threshold)
-                predict_result_id = self.transfer_variable.generate_transferid(self.transfer_variable.predict_result)
-                LOGGER.debug("predict_result_id: {}".format(predict_result_id))
-
-                LOGGER.debug(
-                    "Start to remote pred_label: {}, transfer_id: {}".format(pred_label, predict_result_id))
-
-                self.transfer_variable.predict_result.remote(pred_label,
-                                                             role=consts.HOST,
-                                                             idx=idx)
-                """
-                federation.remote(pred_label,
-                                  name=self.transfer_variable.predict_result.name,
-                                  tag=predict_result_id,
-                                  role=consts.HOST,
-                                  idx=idx)
-                """
-
-        LOGGER.info("Finish predicting, result has been sent back")
-        return
-
-    def __init_parameters(self):
-        """
-        This function is used to synchronized the parameters from each guest and host.
-        :return:
-        """
-        # 1. Receive the party weight of each party
-        # LOGGER.debug("To receive guest party weight")
-        party_weight_id = self.transfer_variable.generate_transferid(
-            self.transfer_variable.guest_party_weight
-        )
-        guest_weight = self.transfer_variable.guest_party_weight.get(idx=0)
-        """
-        guest_weight = federation.get(name=self.transfer_variable.guest_party_weight.name,
-                                      tag=party_weight_id,
-                                      idx=0)
-        """
-
-        # LOGGER.debug("Received guest_weight: {}".format(guest_weight))
-        host_weight_id = self.transfer_variable.generate_transferid(
-            self.transfer_variable.host_party_weight
-        )
-        host_weights = self.transfer_variable.host_party_weight.get(idx=-1)
-        """
-        host_weights = federation.get(name=self.transfer_variable.host_party_weight.name,
-                                      tag=host_weight_id,
-                                      idx=-1)
-        """
-        weights = [guest_weight]
-        weights.extend(host_weights)
-
-        self.party_weights = [x / sum(weights) for x in weights]
-
-        # 2. Synchronize encryption information
-        self.__synchronize_encryption()
-
-        # 3. Receive re-encrypt-times
-        self.re_encrypt_times = [0] * len(self.host_use_encryption)
-        for idx, use_encryption in enumerate(self.host_use_encryption):
-            if not use_encryption:
-                self.re_encrypt_times[idx] = 0
-                continue
-            re_encrypt_times_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.re_encrypt_times
-            )
-            re_encrypt_times = self.transfer_variable.re_encrypt_times.get(idx=idx)
-            """
-            re_encrypt_times = federation.get(name=self.transfer_variable.re_encrypt_times.name,
-                                              tag=re_encrypt_times_id,
-                                              idx=idx)
-            """
-            self.re_encrypt_times[idx] = re_encrypt_times
-        LOGGER.info("re encrypt times for all parties: {}".format(self.re_encrypt_times))
-
-    def __synchronize_encryption(self, mode='train'):
-        """
-        Communicate with hosts. Specify whether use encryption or not and transfer the public keys.
-        """
-        # 1. Use Encrypt: Specify which host use encryption
-        host_use_encryption_id = self.transfer_variable.generate_transferid(
-            self.transfer_variable.use_encrypt, mode
-        )
-        host_use_encryption = self.transfer_variable.use_encrypt.get(idx=-1,
-                                                                     suffix=(mode,))
-        """
-        host_use_encryption = federation.get(name=self.transfer_variable.use_encrypt.name,
-                                             tag=host_use_encryption_id,
-                                             idx=-1)
-        """
-        self.host_use_encryption = host_use_encryption
-
-        LOGGER.info("host use encryption: {}".format(self.host_use_encryption))
-        # 2. Send pubkey to those use-encryption hosts
-        for idx, use_encryption in enumerate(self.host_use_encryption):
-            if not use_encryption:
-                encrypter = FakeEncrypt()
-            else:
-                encrypter = PaillierEncrypt()
-                encrypter.generate_key(self.encrypt_param.key_length)
-                pub_key = encrypter.get_public_key()
-                """
-                pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey,
-                                                                       mode)
-                """
-                # LOGGER.debug("Start to remote pub_key: {}, transfer_id: {}".format(pub_key, pubkey_id))
-                self.transfer_variable.paillier_pubkey.remote(pub_key,
-                                                              role=consts.HOST,
-                                                              idx=idx,
-                                                              suffix=(mode,))
-                """
-                federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
-                                  tag=pubkey_id, role=consts.HOST, idx=idx)
-                """
-                LOGGER.info("send pubkey to host: {}".format(idx))
-
-            self.host_encrypter.append(encrypter)
-        self.has_sychronized_encryption = True
-
-    def __send_host_mode(self):
-        model = self.merge_model()
-        final_model_id = self.transfer_variable.generate_transferid(self.transfer_variable.final_model, "predict")
-        for idx, use_encrypt in enumerate(self.host_use_encryption):
-            if use_encrypt:
-                encrypter = self.host_encrypter[idx]
-                LOGGER.debug("Before send host model, encrypter length: {}, idx: {}".format(
-                    len(self.host_encrypter), idx
-                ))
-                final_model = encrypter.encrypt_list(model)
-            else:
-                final_model = model
-            LOGGER.debug("Start to remote final_model: {}, transfer_id: {}".format(final_model, final_model_id))
-            self.transfer_variable.final_model.remote(final_model,
-                                                      role=consts.HOST,
-                                                      idx=idx,
-                                                      suffix=("predict",))
-            """
-            federation.remote(final_model,
-                              name=self.transfer_variable.final_model.name,
-                              tag=final_model_id,
-                              role=consts.HOST,
-                              idx=idx)
-            """
-
-    def __re_encrypt(self, iter_num):
-        # If use encrypt, model weight need to be re-encrypt every several batches.
-        self.curt_re_encrypt_times = self.re_encrypt_times.copy()
-
-        # Part2: re-encrypt model weight from each host
-        batch_num = 0
-        while True:
-            batch_num += self.re_encrypt_batches
-
-            to_encrypt_model_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.to_encrypt_model, iter_num, batch_num
-            )
-            re_encrypted_model_id = self.transfer_variable.generate_transferid(
-                self.transfer_variable.re_encrypted_model, iter_num, batch_num
-            )
-            for idx, left_times in enumerate(self.curt_re_encrypt_times):
-                if left_times <= 0:
-                    continue
-                re_encrypt_model = self.transfer_variable.to_encrypt_model.get(idx=idx,
-                                                                               suffix=(iter_num, batch_num,))
-                """
-                re_encrypt_model = federation.get(
-                    name=self.transfer_variable.to_encrypt_model.name,
-                    tag=to_encrypt_model_id,
-                    idx=idx
-                )
-                """
-                encrypter = self.host_encrypter[idx]
-                decrypt_model = encrypter.decrypt_list(re_encrypt_model)
-                re_encrypt_model = encrypter.encrypt_list(decrypt_model)
-                LOGGER.debug("Start to remote re_encrypt_model: {}, transfer_id: {}".format(re_encrypt_model,
-                                                                                            re_encrypted_model_id))
-
-                self.transfer_variable.re_encrypted_model.remote(re_encrypt_model,
-                                                                 role=consts.HOST,
-                                                                 idx=idx,
-                                                                 suffix=(iter_num, batch_num))
-                """
-                federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
-                                  tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
-                """
-
-                left_times -= 1
-                self.curt_re_encrypt_times[idx] = left_times
-
-            if sum(self.curt_re_encrypt_times) == 0:
-                break
-
-    def _set_header(self):
-        self.header = ['head_' + str(x) for x in range(len(self.coef_))]
-
-    def run(self, component_parameters=None, args=None):
-        """
-        Rewrite run function so that it can start fit and predict without input data.
-        """
-        self._init_runtime_parameters(component_parameters)
-        data_sets = args["data"]
-
-        need_eval = False
-        for data_key in data_sets:
-
-            if "eval_data" in data_sets[data_key]:
-                need_eval = True
-            else:
-                need_eval = False
-
-        if self.need_cv:
-            self.cross_validation(None)
-        elif self.need_one_vs_rest:
-            if "model" in args:
-                self._load_model(args)
-                self.one_vs_rest_predict(None)
-            else:
-                self.one_vs_rest_fit()
-                self.data_output = self.one_vs_rest_predict(None)
-                if need_eval:
-                    self.data_output = self.one_vs_rest_predict(None)
-        elif "model" in args:
-            self._load_model(args)
-            self.set_flowid('predict')
-            self.predict()
-        else:
-            self.set_flowid('train')
-            self.fit()
-            self.set_flowid('predict')
-            self.data_output = self.predict()
-
-            if need_eval:
-                self.set_flowid('validate')
-                self.predict()
+        host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
+                                                   suffix=current_suffix)
+        self.predict_procedure.start_predict(host_ciphers,
+                                             self.lr_weights,
+                                             self.model_param.predict_param.threshold,
+                                             current_suffix)

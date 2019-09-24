@@ -138,6 +138,10 @@ class OneHotEncoder(ModelBase):
         Returns
         -------
         col_maps: a dict in which keys are original header, values are dicts. The dicts in value
+        e.g.
+        cols_map = {"x1": {1 : "x1_1"},
+                    ...}
+
         """
         col_maps = {}
         for col_name in cols:

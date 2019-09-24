@@ -62,12 +62,11 @@ class BucketBinning(Binning):
         statistics = MultivariateStatisticalSummary(data_instances, self.cols_index, abnormal_list=self.abnormal_list)
         max_dict = statistics.get_max()
         min_dict = statistics.get_min()
-        n = data_instances.count()
         final_split_points = {}
         for col_name, max_value in max_dict.items():
             min_value = min_dict.get(col_name)
             split_point = []
-            L = (max_value - min_value) / n
+            L = (max_value - min_value) / self.bin_num
             for k in range(self.bin_num - 1):
                 s_p = min_value + (k + 1) * L
                 split_point.append(s_p)

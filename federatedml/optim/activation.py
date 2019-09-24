@@ -15,6 +15,9 @@
 #
 
 import numpy as np
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def hard_sigmoid(x):

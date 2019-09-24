@@ -28,16 +28,14 @@ LOGGER = log_utils.getLogger()
 
 
 class LogisticGradient(Gradient):
-    def compute_loss(self, X, Y, coef, intercept):
+    def compute_loss(self, values, coef, intercept):
+        X, Y = self.load_data(values)
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
         return tot_loss
 
-    def compute(self, values, coef, intercept, fit_intercept):
-
+    def compute_gradient(self, values, coef, intercept, fit_intercept):
         X, Y = self.load_data(values)
-
         batch_size = len(X)
-
         if batch_size == 0:
             LOGGER.warning("This partition got 0 data")
             return None, None
@@ -48,20 +46,19 @@ class LogisticGradient(Gradient):
             grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
-        loss = self.compute_loss(X, Y, coef, intercept)
-        return grad, loss
+        return grad
 
 
 class TaylorLogisticGradient(Gradient):
-    def compute_loss(self, X, Y, w, intercept):
+    def compute_loss(self, values, w, intercept):
         LOGGER.warning("Taylor Logistic Gradient cannot compute loss in encrypted mode")
         return 0
 
-    def compute(self, values, coef, intercept, fit_intercept):
+    def compute_gradient(self, values, coef, intercept, fit_intercept):
         X, Y = self.load_data(values)
         batch_size = len(X)
         if batch_size == 0:
-            return None, None
+            return None
 
         one_d_y = Y.reshape([-1, ])
         d = (0.25 * np.array(fate_operator.dot(X, coef) + intercept).transpose() + 0.5 * one_d_y * -1)
@@ -72,21 +69,13 @@ class TaylorLogisticGradient(Gradient):
             grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
-        return grad, None
+        return grad
 
 
-class HeteroLogisticGradient(object):
+class HeteroLogisticGradientComputer(object):
     """
     Class for compute hetero-lr gradient and loss
     """
-
-    def __init__(self, encrypt_method=None):
-        """
-        Parameters
-        ----------
-        encrypt_obj: Object, encrypt object set in hetero-lr, like Paillier, it should be inited before.
-        """
-        self.encrypt_operator = encrypt_method
 
     @staticmethod
     def __compute_gradient(data, fit_intercept=True):
@@ -123,7 +112,6 @@ class HeteroLogisticGradient(object):
         if fit_intercept:
             bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
-        gradient.append(feature.shape[0])
         return np.array(gradient)
 
     @staticmethod
@@ -168,6 +156,9 @@ class HeteroLogisticGradient(object):
     def compute_gradient(self, data_instance, fore_gradient, fit_intercept):
         """
         Compute hetero-lr gradient
+        gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x,
+         where y = 1 or -1 and N is batch size
+
         Parameters
         ----------
         data_instance: DTable, input data
@@ -183,15 +174,7 @@ class HeteroLogisticGradient(object):
         f = functools.partial(self.__compute_gradient, fit_intercept=fit_intercept)
 
         gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
-        gradient = gradient_partition[:-1] / gradient_partition[-1]
-
-        for i in range(len(gradient)):
-            if not isinstance(gradient[i], PaillierEncryptedNumber):
-                gradient[i] = self.encrypt_operator.encrypt(gradient[i])
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [feat_join_grad]
-        rubbish_clear(rubbish_list)
+        gradient = gradient_partition / data_instance.count()
 
         return gradient
 

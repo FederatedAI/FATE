@@ -34,7 +34,7 @@ class MiniBatch:
         else:
             self.batch_size = batch_size
 
-        self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
+        self.__mini_batch_data_seperator(data_inst, batch_size)
         # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
 
     def mini_batch_data_generator(self, result='data'):
@@ -96,4 +96,3 @@ class MiniBatch:
             all_index_data.append(index_table)
         self.all_batch_data = all_batch_data
         self.all_index_data = all_index_data
-        return batch_data_sids

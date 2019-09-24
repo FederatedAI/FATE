@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 
-import numpy as np
-
-from arch.api import federation
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import MetricMeta, Metric
+from federatedml.framework.hetero.procedure import convergence
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
-from federatedml.optim.federated_aggregator import HeteroFederatedAggregator
+from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.util import consts
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -34,7 +33,11 @@ class HeteroLRArbiter(HeteroLRBase):
 
         # attribute
         self.pre_loss = None
-        self.batch_num = None
+
+        self.cipher = paillier_cipher.Arbiter()
+        self.batch_generator = batch_generator.Arbiter()
+        self.gradient_loss_operator = hetero_lr_gradient_and_loss.Arbiter()
+        self.converge_procedure = convergence.Arbiter()
 
     def perform_subtasks(self, **training_info):
         """
@@ -81,196 +84,56 @@ class HeteroLRArbiter(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr_arbiter fit")
-        if data_instances:
-            # self.header = data_instance.schema.get('header')
-            self.header = self.get_header(data_instances)
-        else:
-            self.header = []
 
-        # Generate encrypt keys
-        self.encrypt_operator.generate_key(self.key_length)
-        public_key = self.encrypt_operator.get_public_key()
-        public_key = public_key
-        LOGGER.info("public_key:{}".format(public_key))
-        self.transfer_variable.paillier_pubkey.remote(public_key,
-                                                      role=consts.HOST,
-                                                      idx=0)
-        """
-        federation.remote(public_key,
-                          name=self.transfer_variable.paillier_pubkey.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
-                          role=consts.HOST,
-                          idx=0)
-        """
-        LOGGER.info("remote public_key to host")
+        self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
+        self.batch_generator.initialize_batch_generator()
 
-        self.transfer_variable.paillier_pubkey.remote(public_key,
-                                                      role=consts.GUEST,
-                                                      idx=0)
-        """
-        federation.remote(public_key,
-                          name=self.transfer_variable.paillier_pubkey.name,
-                          tag=self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey),
-                          role=consts.GUEST,
-                          idx=0)
-        """
-
-        LOGGER.info("remote public_key to guest")
-
-        batch_info = self.transfer_variable.batch_info.get(idx=0)
-        """
-        batch_info = federation.get(name=self.transfer_variable.batch_info.name,
-                                    tag=self.transfer_variable.generate_transferid(self.transfer_variable.batch_info),
-                                    idx=0)
-        """
-        LOGGER.info("Get batch_info from guest:{}".format(batch_info))
-        self.batch_num = batch_info["batch_num"]
-
-        is_stop = False
-        self.n_iter_ = 0
         while self.n_iter_ < self.max_iter:
-            LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_index = 0
-            iter_loss = 0
-            while batch_index < self.batch_num:
-                LOGGER.info("batch:{}".format(batch_index))
-                host_gradient = self.transfer_variable.host_gradient.get(idx=0,
-                                                                         suffix=(self.n_iter_, batch_index,))
-                """
-                host_gradient = federation.get(name=self.transfer_variable.host_gradient.name,
-                                               tag=self.transfer_variable.generate_transferid(
-                                                   self.transfer_variable.host_gradient, self.n_iter_, batch_index),
-                                               idx=0)
-                """
-                LOGGER.info("Get host_gradient from Host")
-
-                guest_gradient = self.transfer_variable.guest_gradient.get(idx=0,
-                                                                           suffix=(self.n_iter_, batch_index,))
-                """
-                guest_gradient = federation.get(name=self.transfer_variable.guest_gradient.name,
-                                                tag=self.transfer_variable.generate_transferid(
-                                                    self.transfer_variable.guest_gradient, self.n_iter_, batch_index),
-                                                idx=0)
-                """
-                LOGGER.info("Get guest_gradient from Guest")
-
-                # aggregate gradient
-                host_gradient, guest_gradient = np.array(host_gradient), np.array(guest_gradient)
-                gradient = np.hstack((host_gradient, guest_gradient))
-                # decrypt gradient
-                for i in range(gradient.shape[0]):
-                    gradient[i] = self.encrypt_operator.decrypt(gradient[i])
-
-                # optimization
-                optim_gradient = self.optimizer.apply_gradients(gradient)
-                # separate optim_gradient according gradient size of Host and Guest
-                separate_optim_gradient = HeteroFederatedAggregator.separate(optim_gradient,
-                                                                             [host_gradient.shape[0],
-                                                                              guest_gradient.shape[0]])
-                host_optim_gradient = separate_optim_gradient[0]
-                guest_optim_gradient = separate_optim_gradient[1]
-
-                self.transfer_variable.host_optim_gradient.remote(host_optim_gradient,
-                                                                  role=consts.HOST,
-                                                                  idx=0,
-                                                                  suffix=(self.n_iter_, batch_index,))
-                """
-                federation.remote(host_optim_gradient,
-                                  name=self.transfer_variable.host_optim_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(
-                                      self.transfer_variable.host_optim_gradient,
-                                      self.n_iter_,
-                                      batch_index),
-                                  role=consts.HOST,
-                                  idx=0)
-                """
-                LOGGER.info("Remote host_optim_gradient to Host")
-
-                self.transfer_variable.guest_optim_gradient.remote(guest_optim_gradient,
-                                                                   role=consts.GUEST,
-                                                                   idx=0,
-                                                                   suffix=(self.n_iter_, batch_index))
-                """
-                federation.remote(guest_optim_gradient,
-                                  name=self.transfer_variable.guest_optim_gradient.name,
-                                  tag=self.transfer_variable.generate_transferid(
-                                      self.transfer_variable.guest_optim_gradient,
-                                      self.n_iter_,
-                                      batch_index),
-                                  role=consts.GUEST,
-                                  idx=0)
-                """
-                LOGGER.info("Remote guest_optim_gradient to Guest")
-
+            iter_loss = None
+            batch_data_generator = self.batch_generator.generate_batch_data()
+            total_gradient = None
+            self.optimizer.set_iters(self.n_iter_)
+            for batch_index in batch_data_generator:
+                # Compute and Transfer gradient info
+                gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
+                                                                                  self.optimizer,
+                                                                                  self.n_iter_,
+                                                                                  batch_index)
+                if total_gradient is None:
+                    total_gradient = gradient
+                else:
+                    total_gradient += gradient
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.perform_subtasks(**training_info)
 
-                loss = self.transfer_variable.loss.get(idx=0,
-                                                       suffix=(self.n_iter_, batch_index,))
-                """
-                loss = federation.get(name=self.transfer_variable.loss.name,
-                                      tag=self.transfer_variable.generate_transferid(
-                                          self.transfer_variable.loss, self.n_iter_, batch_index),
-                                      idx=0)
-                """
-                de_loss = self.encrypt_operator.decrypt(loss)
-                iter_loss += de_loss
-                # LOGGER.info("Get loss from guest:{}".format(de_loss))
+                loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
 
-                batch_index += 1
+                if len(loss_list) == 1:
+                    if iter_loss is None:
+                        iter_loss = loss_list[0]
+                    else:
+                        iter_loss += loss_list[0]
+                        # LOGGER.info("Get loss from guest:{}".format(de_loss))
 
             # if converge
-            loss = iter_loss / self.batch_num
-            LOGGER.info("iter loss:{}".format(loss))
+            if iter_loss is not None:
+                iter_loss /= self.batch_generator.batch_num
+                self.callback_loss(self.n_iter_, iter_loss)
 
-            if not self.need_one_vs_rest:
-                metric_meta = MetricMeta(name='train',
-                                         metric_type="LOSS",
-                                         extra_metas={
-                                             "unit_name": "iters"
-                                         })
-                metric_name = 'loss'
-                self.callback_meta(metric_name=metric_name, metric_namespace='train', metric_meta=metric_meta)
-                self.callback_metric(metric_name=metric_name,
-                                     metric_namespace='train',
-                                     metric_data=[Metric(self.n_iter_, float(loss))])
+            if self.model_param.converge_func == 'weight_diff':
+                weight_diff = fate_operator.norm(total_gradient)
+                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
+                                                                                weight_diff, self.is_converged))
+                if weight_diff < self.model_param.eps:
+                    self.is_converged = True
+            else:
+                if iter_loss is None:
+                    raise ValueError("More multiple host situation, loss converge function is not available."
+                                     "You should use 'weight_diff' instead")
+                self.is_converged = self.converge_func.is_converge(iter_loss)
+                LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
-            if self.converge_func.is_converge(loss):
-                is_stop = True
-
-            self.transfer_variable.is_stopped.remote(is_stop,
-                                                     role=consts.HOST,
-                                                     idx=0,
-                                                     suffix=(self.n_iter_, batch_index,))
-            """
-            federation.remote(is_stop,
-                              name=self.transfer_variable.is_stopped.name,
-                              tag=self.transfer_variable.generate_transferid(self.transfer_variable.is_stopped,
-                                                                             self.n_iter_,
-                                                                             batch_index),
-                              role=consts.HOST,
-                              idx=0)
-            """
-            LOGGER.info("Remote is_stop to host:{}".format(is_stop))
-
-            self.transfer_variable.is_stopped.remote(is_stop,
-                                                     role=consts.GUEST,
-                                                     idx=0,
-                                                     suffix=(self.n_iter_, batch_index,))
-            """
-            federation.remote(is_stop,
-                              name=self.transfer_variable.is_stopped.name,
-                              tag=self.transfer_variable.generate_transferid(self.transfer_variable.is_stopped,
-                                                                             self.n_iter_,
-                                                                             batch_index),
-                              role=consts.GUEST,
-                              idx=0)
-            """
-            LOGGER.info("Remote is_stop to guest:{}".format(is_stop))
-
+            self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
             self.n_iter_ += 1
-            if is_stop:
-                LOGGER.info("Model is converged, iter:{}".format(self.n_iter_))
+            if self.is_converged:
                 break
-
-        LOGGER.info("Reach max iter {} or converge, train model finish!".format(self.max_iter))

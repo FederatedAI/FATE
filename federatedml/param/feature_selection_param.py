@@ -56,8 +56,9 @@ class IVValueSelectionParam(BaseParam):
         self.value_threshold = value_threshold
 
     def check(self):
-        descr = "IV selection param's"
-        self.check_decimal_float(self.value_threshold, descr)
+        if not isinstance(self.value_threshold, (float, int)):
+            raise ValueError("IV selection param's value_threshold should be float or int")
+
         return True
 
 

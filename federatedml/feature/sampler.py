@@ -25,7 +25,6 @@ from federatedml.transfer_variable.transfer_class.sample_transfer_variable impor
 from federatedml.model_base import ModelBase
 import random
 
-
 class RandomSampler(object):
     """
     Random Sampling Method

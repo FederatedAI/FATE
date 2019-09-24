@@ -156,8 +156,6 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
         LOGGER.info("Received Left cols are {}".format(self.left_cols))
 
     def _send_select_cols(self, filter_name):
-        host_select_cols_id = self.transfer_variable.generate_transferid(self.transfer_variable.host_select_cols,
-                                                                         filter_name)
 
         LOGGER.debug("Before send select cols, self.left_cols: {}".format(self.left_cols))
 

@@ -18,21 +18,21 @@ import copy
 import numpy as np
 from google.protobuf import json_format
 
-from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_base import ModelBase
-from federatedml.model_selection.KFold import KFold
+# from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection import start_cross_validation
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
-from federatedml.optim import Optimizer
-from federatedml.optim import convergence
-from federatedml.optim import Initializer
-from federatedml.optim import L1Updater
-from federatedml.optim import L2Updater
-from federatedml.param.logistic_regression_param import LogisticParam
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.optim.initialize import Initializer
+from federatedml.optim.convergence import converge_func_factory
+from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
-from federatedml.util import consts
 from federatedml.util import abnormal_detection
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -40,72 +40,44 @@ LOGGER = log_utils.getLogger()
 class BaseLogisticRegression(ModelBase):
     def __init__(self):
         super(BaseLogisticRegression, self).__init__()
-        self.model_param = LogisticParam()
         # attribute:
         self.n_iter_ = 0
-        self.coef_ = None
-        self.intercept_ = 0
         self.classes_ = None
         self.feature_shape = None
-
         self.gradient_operator = None
         self.initializer = Initializer()
         self.transfer_variable = None
         self.loss_history = []
         self.is_converged = False
         self.header = None
-        self.class_name = self.__class__.__name__
         self.model_name = 'LogisticRegression'
         self.model_param_name = 'LogisticRegressionParam'
         self.model_meta_name = 'LogisticRegressionMeta'
         self.role = ''
         self.mode = ''
         self.schema = {}
+        self.cipher_operator = None
 
         # one_ve_rest parameter
         self.need_one_vs_rest = False
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
+        self.lr_weights = None
 
     def _init_model(self, params):
         self.model_param = params
         self.alpha = params.alpha
         self.init_param_obj = params.init_param
         self.fit_intercept = self.init_param_obj.fit_intercept
-        self.learning_rate = params.learning_rate
-        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.encrypted_calculator = None
 
-        if params.penalty == consts.L1_PENALTY:
-            self.updater = L1Updater(self.alpha, self.learning_rate)
-        elif params.penalty == consts.L2_PENALTY:
-            self.updater = L2Updater(self.alpha, self.learning_rate)
-        else:
-            self.updater = None
-
-        self.eps = params.eps
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
-        self.learning_rate = params.learning_rate
         self.party_weight = params.party_weight
-        self.penalty = params.penalty
+        self.optimizer = optimizer_factory(params)
 
-        if params.encrypt_param.method == consts.PAILLIER:
-            self.encrypt_operator = PaillierEncrypt()
-        else:
-            self.encrypt_operator = FakeEncrypt()
 
-        if params.converge_func == 'diff':
-            self.converge_func = convergence.DiffConverge(eps=self.eps)
-        elif params.converge_func == 'weight_diff':
-            self.converge_func = convergence.WeightDiffConverge(eps=self.eps)
-        else:
-            self.converge_func = convergence.AbsConverge(eps=self.eps)
-
-        self.re_encrypt_batches = params.re_encrypt_batches
-        self.predict_param = params.predict_param
-        self.optimizer = Optimizer(params.learning_rate, params.optimizer)
-        self.key_length = params.encrypt_param.key_length
+        self.converge_func = converge_func_factory(params)
 
     def set_feature_shape(self, feature_shape):
         self.feature_shape = feature_shape
@@ -123,65 +95,27 @@ class BaseLogisticRegression(ModelBase):
             return self.header
         return data_instances.schema.get("header")
 
+    def callback_loss(self, iter_num, loss):
+        if not self.need_one_vs_rest:
+            metric_meta = MetricMeta(name='train',
+                                     metric_type="LOSS",
+                                     extra_metas={
+                                         "unit_name": "iters",
+                                     })
+            # metric_name = self.get_metric_name('loss')
+
+            self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+            self.callback_metric(metric_name='loss',
+                                 metric_namespace='train',
+                                 metric_data=[Metric(iter_num, loss)])
+
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
-
-    def update_model(self, gradient):
-        if self.fit_intercept:
-            if self.updater is not None:
-                self.coef_ = self.updater.update_coef(self.coef_, gradient[:-1])
-            else:
-                self.coef_ = self.coef_ - gradient[:-1]
-            self.intercept_ -= gradient[-1]
-
-        else:
-            if self.updater is not None:
-                self.coef_ = self.updater.update_coef(self.coef_, gradient)
-            else:
-                self.coef_ = self.coef_ - gradient
-
-    def merge_model(self):
-        w = self.coef_.copy()
-        if self.fit_intercept:
-            w = np.append(w, self.intercept_)
-        return w
-
-    def set_coef_(self, w):
-        self.coef_ = []
-        self.intercept_ = []
-        if self.fit_intercept:
-            self.coef_ = w[: -1]
-            self.intercept_ = w[-1]
-        else:
-            self.coef_ = w
-            self.intercept_ = 0
-
-        LOGGER.debug("In set_coef_, coef: {}, intercept: {}, fit_intercept: {}".format(
-            self.coef_, self.intercept_, self.fit_intercept
-        ))
-
-    def classified(self, prob_table, threshold):
-        """
-        convert a probability table into a predicted class table.
-        """
-        predict_table = prob_table.mapValues(lambda x: 1 if x > threshold else 0)
-        return predict_table
 
     def fit(self, data_instance):
         pass
 
-    def _get_meta(self):
-        meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
-                                                          eps=self.eps,
-                                                          alpha=self.alpha,
-                                                          optimizer=self.model_param.optimizer,
-                                                          party_weight=self.model_param.party_weight,
-                                                          batch_size=self.batch_size,
-                                                          learning_rate=self.learning_rate,
-                                                          max_iter=self.max_iter,
-                                                          converge_func=self.model_param.converge_func,
-                                                          re_encrypt_batches=self.re_encrypt_batches)
-        return meta_protobuf_obj
+
 
     def _get_param(self):
         header = self.header
@@ -198,28 +132,30 @@ class BaseLogisticRegression(ModelBase):
         for idx, header_name in enumerate(header):
             if self.need_one_vs_rest:
                 for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
-                    coef = class_obj.coef_[idx]
+                    coef = class_obj.lr_weights.coef_[idx]
                     class_type = one_vs_rest_class[class_idx]
                     class_and_header_name = "_".join(["class", str(class_type), header_name])
                     weight_dict[class_and_header_name] = coef
             else:
-                coef_i = self.coef_[idx]
+                coef_i = self.lr_weights.coef_[idx]
                 weight_dict[header_name] = coef_i
 
         if self.need_one_vs_rest:
             for class_idx, class_obj in enumerate(self.one_vs_rest_obj.models):
-                intercept = class_obj.intercept_
+                intercept = class_obj.lr_weights.intercept_
                 class_type = one_vs_rest_class[class_idx]
                 intercept_name = "_".join(["class", str(class_type), "intercept"])
                 weight_dict[intercept_name] = intercept
 
-            self.intercept_ = 0
+            intercept_ = 0
+        else:
+            intercept_ = self.lr_weights.intercept_
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
                                                              loss_history=self.loss_history,
                                                              is_converged=self.is_converged,
                                                              weight=weight_dict,
-                                                             intercept=self.intercept_,
+                                                             intercept=intercept_,
                                                              header=header,
                                                              need_one_vs_rest=self.need_one_vs_rest,
                                                              one_vs_rest_classes=one_vs_rest_class
@@ -239,6 +175,9 @@ class BaseLogisticRegression(ModelBase):
 
     def _load_model(self, model_dict):
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        fit_intercept = meta_obj.fit_intercept
+
         self.header = list(result_obj.header)
         # For hetero-lr arbiter predict function
         if self.header is None:
@@ -254,20 +193,26 @@ class BaseLogisticRegression(ModelBase):
             self.one_vs_rest_obj.classes = self.one_vs_rest_classes
             for class_type in self.one_vs_rest_obj.classes:
                 classifier = copy.deepcopy(self)
-                classifier.coef_ = np.zeros(feature_shape)
+                tmp_vars = np.zeros(feature_shape)
                 for i, feature_name in enumerate(self.header):
                     feature_name = "_".join(["class", str(class_type), feature_name])
-                    classifier.coef_[i] = weight_dict.get(feature_name)
-                intercept_name =  "_".join(["class", str(class_type), "intercept"])
-                classifier.intercept_ = weight_dict.get(intercept_name)
+                    tmp_vars[i] = weight_dict.get(feature_name)
+                intercept_name = "_".join(["class", str(class_type), "intercept"])
+                tmp_intercept_ = weight_dict.get(intercept_name)
+                if fit_intercept:
+                    tmp_vars = np.append(tmp_vars, tmp_intercept_)
+                classifier.lr_weights = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
                 self.one_vs_rest_obj.models.append(classifier)
         else:
-            self.coef_ = np.zeros(feature_shape)
+            tmp_vars = np.zeros(feature_shape)
             weight_dict = dict(result_obj.weight)
-            self.intercept_ = result_obj.intercept
 
             for idx, header_name in enumerate(self.header):
-                self.coef_[idx] = weight_dict.get(header_name)
+                tmp_vars[idx] = weight_dict.get(header_name)
+
+            if fit_intercept:
+                tmp_vars = np.append(tmp_vars, result_obj.intercept)
+            self.lr_weights = LogisticRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """
@@ -276,65 +221,15 @@ class BaseLogisticRegression(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
-        """
-        update local model that transforms features of raw input
-
-        This 'update_local_model' function serves as a handler on updating local model that transforms features of raw
-        input into more representative features. We typically adopt neural networks as the local model, which is
-        typically updated/trained based on stochastic gradient descent algorithm. For concrete implementation, please
-        refer to 'hetero_dnn_logistic_regression' folder.
-
-        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
-        hetero-logistic-regression model, the 'update_local_model' function will do nothing. In other words, no updating
-        performed on the local model since there is no one.
-
-        Parameters:
-        ___________
-        :param fore_gradient: a table holding fore gradient
-        :param data_inst: a table holding instances of raw input of guest side
-        :param coef: coefficients of logistic regression model
-        :param training_info: a dictionary holding training information
-        """
-        pass
-
-    def transform(self, data_inst):
-        """
-        transform features of instances held by 'data_inst' table into more representative features
-
-        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
-        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
-        transform features. Particularly, we would adopt neural network models such as auto-encoder or CNN to perform
-        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
-        folder.
-
-        For this particular class (i.e., 'BaseLogisticRegression') that serves as a base class for neural-networks-based
-        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
-        passed to it. In other words, no feature transformation performed on the raw input of guest.
-
-        Parameters:
-        ___________
-        :param data_inst: a table holding instances of raw input of guest side
-        :return: a table holding instances with transformed features
-        """
-        return data_inst
-
     def cross_validation(self, data_instances):
-        if not self.need_run:
-            return data_instances
-        kflod_obj = KFold()
-        self.init_schema(data_instances)
-        cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self)
-        LOGGER.debug("Finish kflod run")
-        return data_instances
+        return start_cross_validation.run(self, data_instances)
 
     def one_vs_rest_fit(self, train_data=None):
         self.need_one_vs_rest = True
         if self.role != consts.ARBITER:
             self.header = self.get_header(train_data)
         self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode,
-                                    one_vs_rest_param=self._get_one_vs_rest_param())
+                                         one_vs_rest_param=self._get_one_vs_rest_param())
         self.one_vs_rest_obj.fit(data_instances=train_data)
 
     def one_vs_rest_predict(self, validate_data):
@@ -350,6 +245,32 @@ class BaseLogisticRegression(ModelBase):
         self.model_param.cv_param.role = self.role
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
+
+    def one_vs_rest_logic(self, stage, train_data=None, eval_data=None):
+        LOGGER.info("Need one_vs_rest.")
+        if stage == 'fit':
+            self.one_vs_rest_fit(train_data)
+            self.data_output = self.one_vs_rest_predict(train_data)
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
+
+            if eval_data:
+                eval_data_predict_res = self.one_vs_rest_predict(eval_data)
+                if eval_data_predict_res:
+                    predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
+
+                    if self.data_output:
+                        self.data_output.union(predict_output_res)
+                    else:
+                        self.data_output = predict_output_res
+
+            self.set_predict_data_schema(self.data_output, train_data.schema)
+
+        elif stage == 'predict':
+            self.data_output = self.one_vs_rest_predict(eval_data)
+            if self.data_output:
+                self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
+                self.set_predict_data_schema(self.data_output, eval_data.schema)
 
     def set_schema(self, data_instance, header=None):
         if header is None:

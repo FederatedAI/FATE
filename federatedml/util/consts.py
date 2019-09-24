@@ -18,11 +18,17 @@ ARBITER = 'arbiter'
 HOST = 'host'
 GUEST = 'guest'
 
+
+MODEL_AGG = "model_agg"
+GRAD_AGG = "grad_agg"
+
 BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
+RANDOM_PADS = "RandomPads"
+NONE = "None"
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 

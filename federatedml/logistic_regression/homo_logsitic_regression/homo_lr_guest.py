@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -12,25 +15,17 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
 import functools
 
-import numpy as np
-
-from arch.api import federation
 from arch.api.utils import log_utils
-from federatedml.evaluation import Evaluation
+from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
+from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
-from federatedml.optim import Initializer
-from federatedml.optim import activation
-from federatedml.optim.federated_aggregator.homo_federated_aggregator import HomoFederatedAggregator
-from federatedml.optim.gradient import LogisticGradient
-from fate_flow.entity.metric import MetricMeta
-from fate_flow.entity.metric import Metric
+from federatedml.optim.gradient.logistic_gradient import LogisticGradient
 from federatedml.util import consts
-from federatedml.statistic import data_overview
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -38,188 +33,66 @@ LOGGER = log_utils.getLogger()
 class HomoLRGuest(HomoLRBase):
     def __init__(self):
         super(HomoLRGuest, self).__init__()
-        self.aggregator = HomoFederatedAggregator
         self.gradient_operator = LogisticGradient()
-
-        self.initializer = Initializer()
-        self.classes_ = [0, 1]
-
-        self.evaluator = Evaluation()
         self.loss_history = []
-        self.is_converged = False
         self.role = consts.GUEST
+        self.aggregator = aggregator.Guest()
+        self.predict_procedure = predict_procedure.Guest()
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        self.predict_procedure.register_predict_sync(self.transfer_variable, self)
 
     def fit(self, data_instances):
-        if not self.need_run:
-            return data_instances
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        self.__init_parameters()
 
-        self.__init_model(data_instances)
+        self.lr_weights = self._init_model_variables(data_instances)
 
+        max_iter = self.max_iter
+        total_data_num = data_instances.count()
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
 
-        for iter_num in range(self.max_iter):
-            # mini-batch
+        lr_weights = self.lr_weights
+        while self.n_iter_ < max_iter:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
-            total_loss = 0
-            batch_num = 0
 
+            self.optimizer.set_iters(self.n_iter_)
+            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+                weight = self.aggregator.aggregate_then_get(lr_weights, degree=total_data_num,
+                                                            suffix=self.n_iter_)
+                self.lr_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
+                loss = self._compute_loss(data_instances)
+                self.aggregator.send_loss(loss, degree=total_data_num, suffix=(self.n_iter_,))
+                self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
+                LOGGER.info("n_iters: {}, loss: {} converge flag is :{}".format(self.n_iter_, loss, self.is_converged))
+                if self.is_converged:
+                    break
+                lr_weights = self.lr_weights
+
+            batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-
-                f = functools.partial(self.gradient_operator.compute,
-                                      coef=self.coef_,
-                                      intercept=self.intercept_,
+                LOGGER.debug("In each batch, lr_weight: {}".format(lr_weights.unboxed))
+                f = functools.partial(self.gradient_operator.compute_gradient,
+                                      coef=lr_weights.coef_,
+                                      intercept=lr_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
-                grad_loss = batch_data.mapPartitions(f)
-
-                grad, loss = grad_loss.reduce(self.aggregator.aggregate_grad_loss)
-
+                grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
+                    self.n_iter_, batch_num, grad, n))
                 grad /= n
-                loss /= n
-
-                if self.updater is not None:
-                    loss_norm = self.updater.loss_norm(self.coef_)
-                    total_loss += (loss + loss_norm)
-                delta_grad = self.optimizer.apply_gradients(grad)
-
-                self.update_model(delta_grad)
+                lr_weights = self.optimizer.update_model(lr_weights, grad, has_applied=False)
                 batch_num += 1
-
-            total_loss /= batch_num
-
-            # if not self.use_loss:
-            #     total_loss = np.linalg.norm(self.coef_)
-
-            w = self.merge_model()
-            if not self.need_one_vs_rest:
-                metric_meta = MetricMeta(name='train',
-                                         metric_type="LOSS",
-                                         extra_metas={
-                                             "unit_name": "iters",
-                                         })
-                # metric_name = self.get_metric_name('loss')
-
-                self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
-                self.callback_metric(metric_name='loss',
-                                     metric_namespace='train',
-                                     metric_data=[Metric(iter_num, total_loss)])
-
-            self.loss_history.append(total_loss)
-            LOGGER.info("iter: {}, loss: {}".format(iter_num, total_loss))
-            # send model
-            model_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_model,
-                                                                           iter_num)
-            LOGGER.debug("Start to remote model: {}, transfer_id: {}".format(w, model_transfer_id))
-
-            self.transfer_variable.guest_model.remote(w,
-                                                      role=consts.ARBITER,
-                                                      idx=0,
-                                                      suffix=(iter_num,))
-            """
-            federation.remote(w,
-                              name=self.transfer_variable.guest_model.name,
-                              tag=model_transfer_id,
-                              role=consts.ARBITER,
-                              idx=0)
-            """
-
-            # send loss
-            # if self.use_loss:
-            loss_transfer_id = self.transfer_variable.generate_transferid(self.transfer_variable.guest_loss, iter_num)
-            LOGGER.debug("Start to remote total_loss: {}, transfer_id: {}".format(total_loss, loss_transfer_id))
-            self.transfer_variable.guest_loss.remote(total_loss,
-                                                     role=consts.ARBITER,
-                                                     idx=0,
-                                                     suffix=(iter_num,))
-            """
-            federation.remote(total_loss,
-                              name=self.transfer_variable.guest_loss.name,
-                              tag=loss_transfer_id,
-                              role=consts.ARBITER,
-                              idx=0)
-            """
-
-            # recv model
-            # model_transfer_id = self.transfer_variable.generate_transferid(
-            #     self.transfer_variable.final_model, iter_num)
-            w = self.transfer_variable.final_model.get(idx=0,
-                                                       suffix=(iter_num,))
-            """
-            w = federation.get(name=self.transfer_variable.final_model.name,
-                               tag=model_transfer_id,
-                               idx=0)
-            """
-            w = np.array(w)
-            self.set_coef_(w)
-
-            # recv converge flag
-            converge_flag_id = self.transfer_variable.generate_transferid(self.transfer_variable.converge_flag,
-                                                                          iter_num)
-            converge_flag = self.transfer_variable.converge_flag.get(idx=0,
-                                                                     suffix=(iter_num,))
-            """
-            converge_flag = federation.get(name=self.transfer_variable.converge_flag.name,
-                                           tag=converge_flag_id,
-                                           idx=0)
-            """
-
-            self.n_iter_ = iter_num
-            LOGGER.debug("converge flag is :{}".format(converge_flag))
-
-            if converge_flag:
-                self.is_converged = True
-                break
-
-    def __init_parameters(self):
-        party_weight_id = self.transfer_variable.generate_transferid(
-            self.transfer_variable.guest_party_weight
-        )
-        LOGGER.debug("Start to remote party_weight: {}, transfer_id: {}".format(self.party_weight, party_weight_id))
-
-        self.transfer_variable.guest_party_weight.remote(self.party_weight,
-                                                         role=consts.ARBITER,
-                                                         idx=0)
-        """
-        federation.remote(self.party_weight,
-                          name=self.transfer_variable.guest_party_weight.name,
-                          tag=party_weight_id,
-                          role=consts.ARBITER,
-                          idx=0)
-        """
-
-        # LOGGER.debug("party weight sent")
-        LOGGER.info("Finish initialize parameters")
-
-    def __init_model(self, data_instances):
-        model_shape = data_overview.get_features_shape(data_instances)
-
-        LOGGER.info("Initialized model shape is {}".format(model_shape))
-
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        if self.fit_intercept:
-            self.coef_ = w[:-1]
-            self.intercept_ = w[-1]
-        else:
-            self.coef_ = w
-            self.intercept_ = 0
-
-        # LOGGER.debug("Initialed model")
-        return w
+            self.n_iter_ += 1
 
     def predict(self, data_instances):
-
-        if not self.need_run:
-            return data_instances
-        LOGGER.debug("homo_lr guest need run predict, coef: {}, instercept: {}".format(len(self.coef_), self.intercept_))
-        wx = self.compute_wx(data_instances, self.coef_, self.intercept_)
-        pred_prob = wx.mapValues(lambda x: activation.sigmoid(x))
-        pred_label = self.classified(pred_prob, self.predict_param.threshold)
-
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1], {"1": x[1], "0": (1 - x[1])}])
+        self._abnormal_detection(data_instances)
+        self.init_schema(data_instances)
+        predict_result = self.predict_procedure.start_predict(data_instances,
+                                                              self.lr_weights,
+                                                              self.model_param.predict_param.threshold)
         return predict_result
+
+
