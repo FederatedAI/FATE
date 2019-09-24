@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-import numpy as np
-
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -93,14 +91,15 @@ class HeteroLRGuest(HeteroLRBase):
 
                 # Start gradient procedure
 
-                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
-                    self.encrypted_calculator,
-                    self.lr_weights,
-                    self.optimizer,
-                    self.n_iter_,
-                    batch_index
-                )
+                optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
+                    compute_gradient_procedure(
+                        batch_feat_inst,
+                        self.encrypted_calculator,
+                        self.lr_weights,
+                        self.optimizer,
+                        self.n_iter_,
+                        batch_index
+                        )
                 LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.lr_weights.coef_, **training_info)

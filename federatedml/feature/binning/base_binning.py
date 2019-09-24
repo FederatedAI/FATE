@@ -490,8 +490,7 @@ class Binning(object):
         iv_array = []
 
         for event_count, non_event_count in data_event_count:
-            if event_count == 0 and non_event_count == 0:
-                continue
+
             if event_count == 0 or non_event_count == 0:
                 event_rate = 1.0 * (event_count + adjustment_factor) / event_total
                 non_event_rate = 1.0 * (non_event_count + adjustment_factor) / non_event_total

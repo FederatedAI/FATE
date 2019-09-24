@@ -126,6 +126,7 @@ class BaseHeteroFeatureSelection(ModelBase):
                 if col_name not in result_list:
                     result_list.append(str(col_name))
             idx -= 1
+        LOGGER.debug('in make_cols_list, cols_list: {}, result_list: {}'.format(cols_list, result_list))
         return result_list
 
     def _add_left_cols(self):
@@ -133,7 +134,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         for col_idx, is_left in self.left_cols.items():
             if is_left:
                 this_filter_left.add(self.header[col_idx])
+                LOGGER.debug('col_idx: {}, is_left: {}, this_filter_left: {}'.format(
+                    col_idx, is_left, this_filter_left
+                ))
         self.cols_list.append(this_filter_left)
+        LOGGER.debug("In _add_left_cols, left_cols: {}, col_list: {}".format(
+            self.left_cols, self.cols_list
+        ))
 
     def _add_host_left_cols(self, host_left_cols):
         this_filter_left = set()
