@@ -20,14 +20,14 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
-from federatedml.optim.gradient import hetero_lr_gradient_sync
+from federatedml.optim.gradient import hetero_regression_gradient_sync
 from federatedml.util.fate_operator import reduce_add
 import os
 
 LOGGER = log_utils.getLogger()
 
 
-class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
+class Guest(hetero_regression_gradient_sync.Guest, loss_sync.Guest):
     def __init__(self):
         self.host_forwards = None
         self.half_wx = None
@@ -130,7 +130,7 @@ class Guest(hetero_lr_gradient_sync.Guest, loss_sync.Guest):
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
 
-class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
+class Host(hetero_regression_gradient_sync.Host, loss_sync.Host):
     def __init__(self):
         self.half_wx = None
 
@@ -203,7 +203,7 @@ class Host(hetero_lr_gradient_sync.Host, loss_sync.Host):
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
-class Arbiter(hetero_lr_gradient_sync.Arbiter, loss_sync.Arbiter):
+class Arbiter(hetero_regression_gradient_sync.Arbiter, loss_sync.Arbiter):
     def __init__(self):
         self.has_multiple_hosts = False
 
