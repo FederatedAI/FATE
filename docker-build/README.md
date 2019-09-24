@@ -84,3 +84,6 @@ After the `images.tar.gz` file was generated, it needs to be transferred to the 
 ```bash
 $ docker load -i images.tar.gz
 ```
+
+### Deployment
+To deploy FATE using Docker Compose and Kubernetes, please refer to [KubeFATE](https://github.com/FederatedAI/KubeFATE) for more details
