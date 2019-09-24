@@ -2,9 +2,7 @@
 
 #                      **FATE-V1.0 Deployment Guide**
 
-
-
-
+You can also refer to:[Chinese deployment guide](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
 
 ## 1.     Module Information
 
