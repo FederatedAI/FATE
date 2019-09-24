@@ -24,6 +24,7 @@ CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 AFFINE = 'Affine'
+ITERATIVEAFFINE = 'IterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
