@@ -82,7 +82,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         data_instances = self.fit_local(data_instances, label_table)
 
         # 5. Received host result and calculate iv value
-        encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
 
         encrypted_bin_sum = self.transfer_variable.encrypted_bin_sum.get(idx=0)
         """
