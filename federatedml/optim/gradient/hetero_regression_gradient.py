@@ -26,7 +26,7 @@ LOGGER = log_utils.getLogger()
 
 class HeteroGradientComputer(object):
     """
-    Class for compute hetero linear regression gradient and loss
+    Class for compute hetero regression gradient and loss
     """
     def __init__(self, encrypt_method=None):
        self.encrypt_operator = encrypt_method
@@ -38,17 +38,17 @@ class HeteroGradientComputer(object):
     @staticmethod
     def __compute_gradient(data, fit_intercept=True):
         """
-        Compute hetero-linr gradient for:
+        Compute hetero regression gradient for:
         gradient = ∑(wx-y)*x, where fore_gradient = (wx-y) has been computed, x is features
         Parameters
         ----------
         data: DTable, include fore_gradient and features
-        fit_intercept: bool, if hetero-linr has interception or not. Default True
+        fit_intercept: bool, if model has interception or not. Default True
 
         Returns
         ----------
         numpy.ndarray
-            hetero-linr gradient
+            hetero regression model gradient
         """
         feature = []
         fore_gradient = []
@@ -74,17 +74,17 @@ class HeteroGradientComputer(object):
 
     def compute_gradient(self, data_instances, fore_gradient, fit_intercept):
         """
-        Compute hetero-linr gradient
+        Compute hetero-regression gradient
         Parameters
         ----------
         data_instance: DTable, input data
-        fore_gradient: DTable, fore_gradient =  [[wx_h]] + [[wx_g]] - y
-        fit_intercept: bool, if hetero-linr has interception or not
+        fore_gradient: DTable, fore_gradient
+        fit_intercept: bool, if model has interception or not
 
         Returns
         ----------
         DTable
-            the hetero-linr's gradient
+            the hetero regression model's gradient
         """
         #LOGGER.debug(list(fore_gradient.collect()))
         feat_join_grad = data_instances.join(fore_gradient,

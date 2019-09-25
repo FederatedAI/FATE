@@ -79,41 +79,6 @@ class Arbiter(gradient_sync.Arbiter):
         self.guest_optim_gradient_transfer = guest_optim_gradient_transfer
         self.host_optim_gradient_transfer = host_optim_gradient_transfer
 
-    def update_gradient(self, cipher_operator, optimizer, n_iter_, batch_index):
-        current_suffix = (n_iter_, batch_index)
-
-        host_gradients = self.host_gradient_transfer.get(idx=-1, suffix=current_suffix)
-        LOGGER.info("Get host_gradient from Host")
-
-        guest_gradient = self.guest_gradient_transfer.get(idx=0, suffix=current_suffix)
-        LOGGER.info("Get guest_gradient from Guest")
-
-        host_gradients = [np.array(h) for h in host_gradients]
-        guest_gradient = np.array(guest_gradient)
-
-        size_list = [h_g.shape[0] for h_g in host_gradients]
-        size_list.append(guest_gradient.shape[0])
-
-        gradient = np.hstack((h for h in host_gradients))
-        gradient = np.hstack((gradient, guest_gradient))
-
-        grad = np.array(cipher_operator.decrypt_list(gradient))
-        # delta_grad = optimizer.apply_gradients(grad)
-        separate_optim_gradient = self.separate(grad, size_list)
-        host_optim_gradients = separate_optim_gradient[: -1]
-        guest_optim_gradient = separate_optim_gradient[-1]
-
-        for idx, host_optim_gradient in enumerate(host_optim_gradients):
-            self.host_optim_gradient_transfer.remote(host_optim_gradient,
-                                                     role=consts.HOST,
-                                                     idx=idx,
-                                                     suffix=current_suffix)
-
-        self.guest_optim_gradient_transfer.remote(guest_optim_gradient,
-                                                  role=consts.GUEST,
-                                                  idx=0,
-                                                  suffix=current_suffix)
-
     def get_local_gradient(self, suffix=tuple()):
         host_gradients = self.host_gradient_transfer.get(idx=-1, suffix=suffix)
         LOGGER.info("Get host_gradient from Host")
