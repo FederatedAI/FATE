@@ -122,6 +122,18 @@
       "dst": [
         "arbiter"
       ]
+    },
+    "to_encrypt_model": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "re_encrypted_model": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
     }
   }
 }

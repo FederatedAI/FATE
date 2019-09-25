@@ -27,23 +27,24 @@ class ModelScatterTest(TestSyncBase):
     def call(cls, role, transfer_variable, ind, *args):
         cipher_dict = args[0]
         if role == consts.ARBITER:
-            return model_scatter_sync.Arbiter() \
+            models = model_scatter_sync.Arbiter() \
                 .register_model_scatter(transfer_variable.host_model,
                                         transfer_variable.guest_model)\
                 .get_models(cipher_dict)
+            return list(models)
         elif role == consts.HOST:
             model = [random.random() for _ in range(random.randint(1, 10))]
             if cipher_dict[ind]:
                 model = cipher_dict[ind].encrypt_list(model)
             model = ListWeights(model)
             return model_scatter_sync.Host() \
-                ._register_model_scatter(transfer_variable.host_model)\
-                .send_model(model)
+                .register_model_scatter(transfer_variable.host_model)\
+                .send_model(model.for_remote())
         else:
             model = ListWeights([random.random() for _ in range(random.randint(1, 10))])
             return model_scatter_sync.Guest() \
-                ._register_model_scatter(transfer_variable.guest_model)\
-                .send_model(model)
+                .register_model_scatter(transfer_variable.guest_model)\
+                .send_model(model.for_remote())
 
     def run_with_num_hosts(self, num_hosts):
         ratio = 0.3
@@ -63,9 +64,9 @@ class ModelScatterTest(TestSyncBase):
 
         arbiter, guest, *hosts = self.run_results(num_hosts, cipher_dict)
 
-        arbiter = [x._parameter for x in arbiter]
-        guest = guest._parameter
-        hosts = [hosts[i].decrypted(cipher_dict[i])._parameter if cipher_dict[i] else hosts[i]._parameter
+        arbiter = [x[0].unboxed for x in arbiter]
+        guest = guest.unboxed
+        hosts = [hosts[i].weights.decrypted(cipher_dict[i]).unboxed if cipher_dict[i] else hosts[i].unboxed
                  for i in range(num_hosts)]
 
         self.assertListEqual(arbiter[0], guest)
