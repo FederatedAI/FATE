@@ -254,6 +254,8 @@ https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/third_party.tar.gz
 tar -xzvf third_party.tar.gz -C
 FATE/arch/eggroll/storage-service-cxx/third_party
 
+解压缩完成后检查是否正确放置到FATE/arch/eggroll/storage-service-cxx/third_party目录下。
+
 4.3 修改配置文件
 ----------------
 
@@ -337,8 +339,6 @@ roll0=(192.168.0.1)
 
 egglist0=(192.168.0.1)
 
-tmlist0=(192.168.0.1)
-
 fllist0=(192.168.0.1)
 
 serving0=(192.168.0.1)
@@ -387,13 +387,11 @@ roll0=(192.168.0.2)
 
 egglist0=(192.168.0.2)
 
-tmlist0=(192.168.0.2)
-
 fllist0=(192.168.0.2)
 
 serving0=(192.168.0.2)
 
-exchangeip=
+exchangeip=192.168.0.1
 
 **2）partyA+partyB同时部署**
 
@@ -425,7 +423,9 @@ fateflowdb1=(192.168.0.1 fate_flow fate_dev fate_dev)
 
 iplist=(192.168.0.1 192.168.0.2)
 
-iplist0=(192.168.0.1 192.168.0.2)
+iplist0=(192.168.0.1)
+
+iplist1=(192.168.0.2)
 
 fateboard0=(192.168.0.1)
 
@@ -453,10 +453,6 @@ egglist0=(192.168.0.1)
 
 egglist1=(192.168.0.2)
 
-tmlist0=(192.168.0.1)
-
-tmlist1=(192.168.0.2)
-
 fllist0=(192.168.0.1)
 
 fllist1=(192.168.0.2)
@@ -482,7 +478,7 @@ bash auto-deploy.sh
 5.配置检查
 ==========
 
-执行后可到各个目标服务器上进行检查对应模块的配置是否准确，每个模块的对应配置文件所在路径可在此配置文件下查看cluster-deploy/doc。
+执行后可到各个目标服务器上进行检查对应模块的配置是否准确，每个模块的对应配置文件所在路径可在此配置文件下查看[cluster-deploy/doc](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc) 。
 
 6.启动和停止服务
 ================
@@ -507,8 +503,6 @@ sh service.sh start
 cd /data/projects/fate/python/fate_flow
 
 sh service.sh start
-
-说明：若目标环境无法安装c++环境，则可将services.sh文件中的storage-serivice-cxx替换为storage-serivice再启动即可使用java版本的storage-service模块。
 
 6.2 检查服务状态
 ----------------
@@ -556,8 +550,7 @@ cd /data/projects/fate/python/fate_flow
 
 sh service.sh stop
 
-注：若有对单个服务进行启停操作则将上述命令中的all替换为相应的模块名称即可，若要启动fate_flow和Serving-server两个服务则需要到对应目录/data/projects/fate/python/fate_flow和/data/projects/fate/serving-server下执行sh
-service.sh start。
+注：若有对单个服务进行启停操作则将上述命令中的all替换为相应的模块名称即可，若要启动fate_flow和Serving-server两个服务则需要到对应目录/data/projects/fate/python/fate_flow和/data/projects/fate/serving-server下执行sh service.sh start。
 
 7.测试
 ======
@@ -575,23 +568,14 @@ cd \$PYTHONPATH
 
 sh ./federatedml/test/run_test.sh
 
-请参阅“确定”字段以指示操作成功。在其他情况下，如果失败或卡住，则表示失败，程序应在一分钟内生成结果。
+显示“ok”表示成功，显示 “FAILED”则表示失败，程序一般在一分钟内显示执行结果。
 
 7.2 Toy_example部署验证
 -----------------------
 
-要运行测试，您需要设置3个参数：guest_partyid，host_partyid，work_mode。
+此测试您需要设置3个参数：guest_partyid，host_partyid，work_mode。
 
-对于独立版本：
-
-work_mode为0. guest_partyid和host_partyid应该相同，并且对应于运行测试的partyid。
-
-对于分布式版本：
-
-work_mode为1，guest_partyid和host_partyid应对应于您的分布式版本设置。
-请注意分发版测试只在guest 9999:192.168.0.2进行
-
-将不同版本的正确值传递给以下命令，然后运行：
+此测试只需在guest方egg节点执行，选定9999为guest方，在192.168.0.2上执行：
 
 export PYTHONPATH = /data /projects/fat /python
 
@@ -606,11 +590,11 @@ python run_toy_example.py 9999 10000 1
 7.3 最小化测试
 --------------
 
-快速模式
+##### **快速模式：**
 
-在guest和host部分的节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
 
-该文件位于/data/projects/fate/python/examples/min_test_task /中。
+该文件在/data/projects/fate/python/examples/min_test_task /目录下。
 
 **在Host的节点192.168.0.1中，运行：**
 
@@ -622,7 +606,7 @@ cd /data/projects/fate/python/examples/min_test_task /
 
 sh run.sh host fast
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们传递给以下命令。
+从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
 **在Guest的节点：192.168.0.2中，运行：**
 
@@ -636,9 +620,9 @@ sh run.sh guest fast \$ {host_table} \$ {host_namespace}
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
 
-正常模式
+##### **正常模式**：
 
-只需在所有命令中将“fast”替换为“normal”，其余部分与快速模式相同。
+只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
 7.4. Fateboard testing
 ----------------------
