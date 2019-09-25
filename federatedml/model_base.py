@@ -121,7 +121,7 @@ class ModelBase(object):
                     self.set_predict_data_schema(self.data_output, eval_data.schema)
 
         elif train_data is not None:
-            self.set_flowid('train')
+            self.set_flowid('fit')
             self.fit(train_data)
             self.set_flowid('predict')
             self.data_output = self.predict(train_data)

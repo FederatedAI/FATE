@@ -27,8 +27,6 @@ from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.profile_util import log_elapsed
 
-warnings.warn("eggroll is deprecated, use table_manager instead", DeprecationWarning, stacklevel=2)
-
 
 # noinspection PyProtectedMember
 def init(job_id=None,
@@ -50,7 +48,8 @@ def init(job_id=None,
     RuntimeInstance.Backend = backend
 
     from arch.api.table.session import build_session
-    RuntimeInstance.SESSION = build_session(job_id=job_id, work_mode=mode, backend=backend)
+    session = build_session(job_id=job_id, work_mode=mode, backend=backend)
+    RuntimeInstance.SESSION = session
 
     table("__federation__", job_id, partition=10)
 

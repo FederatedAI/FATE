@@ -37,23 +37,23 @@ class DHKeyExchangeTest(TestSyncBase):
                 .key_exchange()
         elif role == consts.HOST:
             uid = identify_uuid_sync.Host() \
-                ._register_identify_uuid(transfer_variable.host_uuid,
+                .register_identify_uuid(transfer_variable.host_uuid,
                                          conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag) \
                 .generate_uuid()
             return (uid,
                     dh_keys_exchange_sync.Host()
-                    ._register_dh_key_exchange(transfer_variable.dh_pubkey,
+                    .register_dh_key_exchange(transfer_variable.dh_pubkey,
                                                transfer_variable.dh_ciphertext_host,
                                                transfer_variable.dh_ciphertext_bc)
                     .key_exchange(uid))
         else:
             uid = identify_uuid_sync.Guest() \
-                ._register_identify_uuid(transfer_variable.guest_uuid,
+                .register_identify_uuid(transfer_variable.guest_uuid,
                                          conflict_flag_transfer_variable=transfer_variable.uuid_conflict_flag) \
                 .generate_uuid()
             return (uid,
                     dh_keys_exchange_sync.Guest()
-                    ._register_dh_key_exchange(transfer_variable.dh_pubkey,
+                    .register_dh_key_exchange(transfer_variable.dh_pubkey,
                                                transfer_variable.dh_ciphertext_guest,
                                                transfer_variable.dh_ciphertext_bc)
                     .key_exchange(uid))

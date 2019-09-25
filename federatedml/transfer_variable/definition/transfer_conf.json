@@ -1,154 +1,75 @@
 {
- "HeteroDNNLRTransferVariable": {
-  "guest_dec_gradient": {
-   "src": "arbiter",
+ "HeteroDecisionTreeTransferVariable": {
+  "encrypted_grad_and_hess": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "tree_node_queue": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "node_positions": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_splitinfo_host": {
+   "src": "host",
    "dst": [
     "guest"
    ]
   },
-  "guest_enc_gradient": {
+  "federated_best_splitinfo_host": {
    "src": "guest",
    "dst": [
-    "arbiter"
-   ]
-  },
-  "host_dec_gradient": {
-   "src": "arbiter",
-   "dst": [
     "host"
    ]
   },
-  "host_enc_gradient": {
+  "final_splitinfo_host": {
    "src": "host",
    "dst": [
-    "arbiter"
+    "guest"
    ]
-  }
- },
- "HomoTransferVariable": {
-  "guest_uuid": {
+  },
+  "dispatch_node_host": {
    "src": "guest",
    "dst": [
-    "arbiter"
-   ]
-  },
-  "host_uuid": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "uuid_conflict_flag": {
-   "src": "arbiter",
-   "dst": [
-    "guest",
     "host"
    ]
   },
-  "dh_pubkey": {
-   "src": "arbiter",
-   "dst": [
-    "guest",
-    "host"
-   ]
-  },
-  "dh_ciphertext_host": {
+  "dispatch_node_host_result": {
    "src": "host",
    "dst": [
-    "arbiter"
+    "guest"
    ]
   },
-  "dh_ciphertext_guest": {
+  "tree": {
    "src": "guest",
    "dst": [
-    "arbiter"
-   ]
-  },
-  "dh_ciphertext_bc": {
-   "src": "arbiter",
-   "dst": [
-    "guest",
     "host"
    ]
   },
-  "guest_party_weight": {
+  "predict_data": {
    "src": "guest",
    "dst": [
-    "arbiter"
-   ]
-  },
-  "host_party_weight": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "use_encrypt": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "paillier_pubkey": {
-   "src": "arbiter",
-   "dst": [
     "host"
    ]
   },
-  "re_encrypt_times": {
+  "predict_data_by_host": {
    "src": "host",
    "dst": [
-    "arbiter"
+    "guest"
    ]
   },
-  "model_to_re_encrypt": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "model_re_encrypted": {
-   "src": "arbiter",
-   "dst": [
-    "host"
-   ]
-  },
-  "is_converge": {
-   "src": "arbiter",
-   "dst": [
-    "guest",
-    "host"
-   ]
-  },
-  "host_loss": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "guest_loss": {
+  "predict_finish_tag": {
    "src": "guest",
    "dst": [
-    "arbiter"
-   ]
-  },
-  "aggregated_model": {
-   "src": "arbiter",
-   "dst": [
-    "guest",
     "host"
-   ]
-  },
-  "host_model": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "guest_model": {
-   "src": "guest",
-   "dst": [
-    "arbiter"
    ]
   }
  },
@@ -172,52 +93,6 @@
    ]
   }
  },
- "HeteroFeatureBinningTransferVariable": {
-  "paillier_pubkey": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "encrypted_label": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "encrypted_bin_sum": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  }
- },
- "RawIntersectTransferVariable": {
-  "send_ids_host": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "send_ids_guest": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "intersect_ids_host": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "intersect_ids_guest": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
  "HeteroFeatureSelectionTransferVariable": {
   "result_left_cols": {
    "src": "guest",
@@ -229,42 +104,6 @@
    "src": "host",
    "dst": [
     "guest"
-   ]
-  }
- },
- "SampleTransferVariable": {
-  "sample_ids": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
- "HeteroSecureBoostingTreeTransferVariable": {
-  "tree_dim": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "stop_flag": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  }
- },
- "HeteroWorkFlowTransferVariable": {
-  "train_data": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "test_data": {
-   "src": "guest",
-   "dst": [
-    "host"
    ]
   }
  },
@@ -485,6 +324,20 @@
    ]
   }
  },
+ "HeteroSecureBoostingTreeTransferVariable": {
+  "tree_dim": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "stop_flag": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
  "HeteroLRTransferVariable": {
   "paillier_pubkey": {
    "src": "arbiter",
@@ -574,81 +427,300 @@
    ]
   }
  },
- "HeteroDecisionTreeTransferVariable": {
-  "encrypted_grad_and_hess": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "tree_node_queue": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "node_positions": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "encrypted_splitinfo_host": {
+ "RawIntersectTransferVariable": {
+  "send_ids_host": {
    "src": "host",
    "dst": [
     "guest"
    ]
   },
-  "federated_best_splitinfo_host": {
+  "send_ids_guest": {
    "src": "guest",
    "dst": [
     "host"
    ]
   },
-  "final_splitinfo_host": {
+  "intersect_ids_host": {
    "src": "host",
    "dst": [
     "guest"
    ]
   },
-  "dispatch_node_host": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "dispatch_node_host_result": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "tree": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "predict_data": {
-   "src": "guest",
-   "dst": [
-    "host"
-   ]
-  },
-  "predict_data_by_host": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "predict_finish_tag": {
+  "intersect_ids_guest": {
    "src": "guest",
    "dst": [
     "host"
    ]
   }
  },
+ "HeteroWorkFlowTransferVariable": {
+  "train_data": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "test_data": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "HomoTransferVariable": {
+  "guest_uuid": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_uuid": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "uuid_conflict_flag": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_pubkey": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_ciphertext_host": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_guest": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_bc": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "guest_party_weight": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_party_weight": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "use_encrypt": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "paillier_pubkey": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  },
+  "re_encrypt_times": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "model_to_re_encrypt": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "model_re_encrypted": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  },
+  "is_converge": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "host_loss": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "guest_loss": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "aggregated_model": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "host_model": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "guest_model": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "to_encrypt_model": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "re_encrypted_model": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "OneVsRestTransferVariable": {
+  "host_classes": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "aggregate_classes": {
+   "src": "guest",
+   "dst": [
+    "host",
+    "arbiter"
+   ]
+  }
+ },
+ "SampleTransferVariable": {
+  "sample_ids": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "HeteroFeatureBinningTransferVariable": {
+  "paillier_pubkey": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_label": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_bin_sum": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+ "HeteroDNNLRTransferVariable": {
+  "guest_dec_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "guest"
+   ]
+  },
+  "guest_enc_gradient": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_dec_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  },
+  "host_enc_gradient": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  }
+ },
  "HomoLRTransferVariable": {
+  "guest_uuid": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_uuid": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "uuid_conflict_flag": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_pubkey": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_ciphertext_host": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_guest": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_bc": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
   "paillier_pubkey": {
    "src": "arbiter",
    "dst": [
@@ -667,7 +739,7 @@
     "arbiter"
    ]
   },
-  "final_model": {
+  "aggregated_model": {
    "src": "arbiter",
    "dst": [
     "guest",
@@ -692,7 +764,7 @@
     "arbiter"
    ]
   },
-  "converge_flag": {
+  "is_converge": {
    "src": "arbiter",
    "dst": [
     "guest",
@@ -739,21 +811,6 @@
    "src": "arbiter",
    "dst": [
     "host"
-   ]
-  }
- },
- "OneVsRestTransferVariable": {
-  "host_classes": {
-   "src": "host",
-   "dst": [
-    "guest"
-   ]
-  },
-  "aggregate_classes": {
-   "src": "guest",
-   "dst": [
-    "host",
-    "arbiter"
    ]
   }
  }

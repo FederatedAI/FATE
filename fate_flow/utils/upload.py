@@ -16,10 +16,9 @@
 
 import csv
 import os
-import sys
 import time
 
-from arch.api import eggroll,storage
+from arch.api import table_manager
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
 
@@ -48,7 +47,7 @@ class Upload(object):
             namespace = _namespace
         if table_name is None:
             table_name = _table_name
-        eggroll.init(mode=self.parameters['work_mode'])
+        table_manager.init(mode=self.parameters['work_mode'])
         read_head = self.parameters['head']
         head = True
         if read_head == 0:
@@ -66,7 +65,7 @@ class Upload(object):
             self.parameters["partition"] = 1
 
         input_data = self.read_data(table_name, namespace, head)
-        data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
+        data_table = table_manager.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
         print("------------load data finish!-----------------")
         print("file: {}".format(self.parameters["file"]))
         print("total data_count: {}".format(data_table.count()))
@@ -102,7 +101,7 @@ class Upload(object):
                     yield (values[0], self.list_to_str(values[1:]))
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
-        storage.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+        table_manager.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
                                      dst_table_namespace)
 
     def list_to_str(self, input_list):

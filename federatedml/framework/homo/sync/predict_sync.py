@@ -85,7 +85,7 @@ class Host(object):
         if use_encrypted:
             self._predict_wx_variable.remote(wx, consts.ARBITER, 0, suffix)
             predict_result = self._predict_result_variable.get(idx=0, suffix=suffix)
-            predict_result_table = predict_result.join(data_instances, lambda p, d: [d.label, None, p,
+            predict_result_table = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
                                                                                      {"0": None, "1": None}])
         else:
             pred_prob, pred_label = classify(wx, predict_threshold)

@@ -86,7 +86,6 @@ class Arbiter(object):
         losses = self._loss_sync.get_losses(idx=idx, suffix=suffix)
         total_loss = 0.0
         total_degree = 0.0
-        LOGGER.debug()
         for loss in losses:
             total_loss += loss.unboxed
             total_degree += loss.get_degree(1.0)

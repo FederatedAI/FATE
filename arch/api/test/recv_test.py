@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import table_manager
 from arch.api import federation
 
 if __name__ == '__main__':
-    eggroll.init("atest")
+    table_manager.init(job_id="atest")
     federation.init("atest", {
 
         "local": {

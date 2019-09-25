@@ -38,14 +38,14 @@ class IsConvergeTest(TestSyncBase):
             return status
         elif role == consts.HOST:
             status = []
-            is_converge = is_converge_sync.Host()._register_is_converge(transfer_variable.is_converge)
+            is_converge = is_converge_sync.Host().register_is_converge(transfer_variable.is_converge)
             for i in range(2):
                 for j in range(2):
                     status.append(is_converge.get_converge_status(suffix=(i, j)))
             return status
         else:
             status = []
-            is_converge = is_converge_sync.Guest()._register_is_converge(transfer_variable.is_converge)
+            is_converge = is_converge_sync.Guest().register_is_converge(transfer_variable.is_converge)
             for i in range(2):
                 for j in range(2):
                     status.append(is_converge.get_converge_status(suffix=(i, j)))

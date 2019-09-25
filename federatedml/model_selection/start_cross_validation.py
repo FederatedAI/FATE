@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -12,38 +15,24 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-from enum import IntEnum
+
+from arch.api.utils import log_utils
+from federatedml.model_selection.KFold import KFold
+
+LOGGER = log_utils.getLogger()
 
 
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
+def _get_cv_param(model):
+    model.model_param.cv_param.role = model.role
+    model.model_param.cv_param.mode = model.mode
+    return model.model_param.cv_param
 
 
-class Backend(IntEnum):
-    EGGROLL = 0
-    SPARK = 1
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
-
-    def is_spark(self):
-        return self.value == self.SPARK
-
-
-class JobStatus(object):
-    WAITING = 'waiting'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
-    PARTIAL = 'partial'
-    DELETED = 'deleted'
-    CANCELED = 'canceled'
-
-
-class TaskStatus(object):
-    START = 'start'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
+def run(model, data_instances):
+    if not model.need_run:
+        return data_instances
+    kflod_obj = KFold()
+    cv_param = _get_cv_param(model)
+    kflod_obj.run(cv_param, data_instances, model)
+    LOGGER.info("Finish KFold run")
+    return data_instances
