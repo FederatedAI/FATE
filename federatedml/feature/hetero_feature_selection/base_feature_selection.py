@@ -218,8 +218,9 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         for col_idx, col_name in enumerate(header):
 
-            is_left = left_cols.get(col_idx)
+            is_left = left_cols.get(col_name)
             if is_left is None:
+                new_feature.append(instance.features[col_idx])
                 continue
             if not is_left:
                 continue

@@ -81,10 +81,12 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             variance_coe_param = self.model_param.variance_coe_param
-            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param, self.cols, self.static_obj)
+            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param,
+                                                                 self.filter_result.this_to_select_cols_index,
+                                                                 self.static_obj)
             new_left_cols = coe_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
 
             self.static_obj = coe_filter.statics_obj
             self.variance_coe_meta = coe_filter.get_meta_obj()
@@ -96,10 +98,12 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.UNIQUE_VALUE:
             unique_param = self.model_param.unique_param
-            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.cols, self.static_obj)
+            unique_filter = feature_selection.UniqueValueFilter(unique_param,
+                                                                self.filter_result.this_to_select_cols_index,
+                                                                self.static_obj)
             new_left_cols = unique_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
 
             self.static_obj = unique_filter.statics_obj
             self.unique_meta = unique_filter.get_meta_obj()
@@ -110,10 +114,11 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         if method == consts.OUTLIER_COLS:
             outlier_param = self.model_param.outlier_param
-            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.cols)
+            outlier_filter = feature_selection.OutlierFilter(outlier_param,
+                                                             self.filter_result.this_to_select_cols_index)
             new_left_cols = outlier_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
 
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
@@ -125,16 +130,11 @@ class HeteroFeatureSelectionHost(BaseHeteroFeatureSelection):
 
         left_cols_index = self.transfer_variable.result_left_cols.get(idx=0,
                                                                       suffix=(filter_name,))
-        original_cols = self.filter_result.this_to_select_cols_index
+        original_cols = self.filter_result.this_to_select_cols
         self.filter_result.add_left_col_index(left_cols_index)
         LOGGER.info("Received left columns from guest, received left_cols: {}".format(left_cols_index))
-        # self.left_cols = left_cols
-        # LOGGER.debug("Before renew: self.left_cols: {}".format(self.left_cols))
-        # self._renew_final_left_cols(left_cols)
-        # LOGGER.debug("After renew: self.left_cols: {}".format(self.left_cols))
 
-        # self._renew_left_col_names()
-
+        LOGGER.debug(f"left_cols: {self.filter_result.get_left_cols()}")
         left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=original_cols,
                                                             left_cols=self.filter_result.get_left_cols())
 

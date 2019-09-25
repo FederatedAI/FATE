@@ -19,9 +19,9 @@
 
 from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
+from federatedml.feature.hetero_feature_selection import filter_result
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
 from federatedml.util import consts
-from federatedml.feature.hetero_feature_selection import filter_result
 
 LOGGER = log_utils.getLogger()
 
@@ -69,12 +69,12 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 host_select_cols = self._get_host_select_cols(consts.IV_VALUE_THRES)
                 LOGGER.debug("In iv value filter, host_select_cols: {}".format(host_select_cols))
                 iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                                  self.cols,
+                                                                  self.filter_result.this_to_select_cols_index,
                                                                   self.binning_model,
                                                                   host_select_cols=host_select_cols)
                 new_left_cols = iv_filter.fit(data_instances, fit_host=True)
                 # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_cols(new_left_cols)
+                self.filter_result.add_left_col_index(new_left_cols)
 
                 host_left_cols = iv_filter.host_cols
                 left_cols = host_left_cols.get(consts.HOST)
@@ -97,15 +97,15 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
             else:
                 iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                                  self.cols,
+                                                                  self.filter_result.this_to_select_cols_index,
                                                                   self.binning_model)
                 new_left_cols = iv_filter.fit(data_instances)
                 # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_cols(new_left_cols)
+                self.filter_result.add_left_col_index(new_left_cols)
 
             LOGGER.debug(
                 "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Self left cols are: {}".format(
-                    self.filter_result.left_cols))
+                    self.filter_result.get_left_cols()))
             self.iv_value_meta = iv_filter.get_meta_obj()
             self.results.append(iv_filter.get_param_obj())
             # self._renew_left_col_names()
@@ -115,24 +115,24 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             iv_param = self.model_param.iv_percentile_param
             if self.local_only:
                 iv_filter = feature_selection.IVPercentileFilter(iv_param,
-                                                                 self.cols,
+                                                                 self.filter_result.this_to_select_cols_index,
                                                                  {},
                                                                  self.binning_model)
                 new_left_cols = iv_filter.fit(data_instances)
                 # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_cols(new_left_cols)
+                self.filter_result.add_left_col_index(new_left_cols)
 
             else:
                 host_select_cols = self._get_host_select_cols(consts.IV_PERCENTILE)
                 host_cols = {consts.HOST: host_select_cols}
 
                 iv_filter = feature_selection.IVPercentileFilter(iv_param,
-                                                                 self.cols,
+                                                                 self.filter_result.this_to_select_cols_index,
                                                                  host_cols,
                                                                  self.binning_model)
                 new_left_cols = iv_filter.fit(data_instances)
                 # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_cols(new_left_cols)
+                self.filter_result.add_left_col_index(new_left_cols)
 
                 host_left_cols = iv_filter.host_cols
                 # Only one host
@@ -164,17 +164,19 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
             LOGGER.debug(
                 "[Result][FeatureSelection][Guest]Finish iv percentile threshold filter. Self left cols are: {}".format(
-                    self.filter_result.left_cols))
+                    self.filter_result.get_left_cols()))
             self.iv_percentile_meta = iv_filter.get_meta_obj()
             self.results.append(iv_filter.get_param_obj())
             # self._renew_left_col_names()
 
         if method == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
             variance_coe_param = self.model_param.variance_coe_param
-            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param, self.cols, self.static_obj)
+            coe_filter = feature_selection.CoeffOfVarValueFilter(variance_coe_param,
+                                                                 self.filter_result.this_to_select_cols_index,
+                                                                 self.static_obj)
             new_left_cols = coe_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
             self.static_obj = coe_filter.statics_obj
 
             LOGGER.info(
@@ -187,10 +189,12 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         if method == consts.UNIQUE_VALUE:
             unique_param = self.model_param.unique_param
-            unique_filter = feature_selection.UniqueValueFilter(unique_param, self.cols, self.static_obj)
+            unique_filter = feature_selection.UniqueValueFilter(unique_param,
+                                                                self.filter_result.this_to_select_cols_index,
+                                                                self.static_obj)
             new_left_cols = unique_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
 
             self.static_obj = unique_filter.statics_obj
             self.unique_meta = unique_filter.get_meta_obj()
@@ -202,10 +206,11 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         if method == consts.OUTLIER_COLS:
             outlier_param = self.model_param.outlier_param
-            outlier_filter = feature_selection.OutlierFilter(outlier_param, self.cols)
+            outlier_filter = feature_selection.OutlierFilter(outlier_param,
+                                                             self.filter_result.this_to_select_cols_index)
             new_left_cols = outlier_filter.fit(data_instances)
             # self._renew_final_left_cols(new_left_cols)
-            self.filter_result.add_left_cols(new_left_cols)
+            self.filter_result.add_left_col_index(new_left_cols)
 
             self.outlier_meta = outlier_filter.get_meta_obj()
             self.results.append(outlier_filter.get_param_obj())
