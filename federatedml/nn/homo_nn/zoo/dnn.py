@@ -14,21 +14,21 @@
 #  limitations under the License.
 #
 
-import typing
-
 from federatedml.nn.homo_nn.backend.tf_keras.layers import has_builder, DENSE, DROPOUT
-from federatedml.nn.homo_nn.backend.tf_keras.nn_model import KerasNNModel, KerasSequenceDataConverter
-from federatedml.nn.homo_nn.zoo.nn import build_nn
+from federatedml.nn.homo_nn.backend.tf_keras.nn_model import KerasNNModel
+from federatedml.nn.homo_nn.zoo import nn
 
 
-def is_supported_layer(layer):
+def is_dnn_supported_layer(layer):
     return has_builder(layer) and layer in {DENSE, DROPOUT}
 
 
-def build_dnn(nn_define, loss, optimizer, metrics) -> typing.Tuple[KerasNNModel, KerasSequenceDataConverter]:
-    return build_nn(nn_define=nn_define,
-                    loss=loss,
-                    optimizer=optimizer,
-                    metrics=metrics,
-                    is_supported_layer=is_supported_layer,
-                    default_layer=DENSE)
+def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
+                   is_supported_layer=is_dnn_supported_layer) -> KerasNNModel:
+    return nn.build_nn_model(input_shape=input_shape,
+                             nn_define=nn_define,
+                             loss=loss,
+                             optimizer=optimizer,
+                             metrics=metrics,
+                             is_supported_layer=is_supported_layer,
+                             default_layer=DENSE)
