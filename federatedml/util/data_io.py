@@ -38,7 +38,6 @@ from federatedml.protobuf.generated.data_io_meta_pb2 import ImputerMeta
 from federatedml.protobuf.generated.data_io_param_pb2 import ImputerParam
 from federatedml.protobuf.generated.data_io_meta_pb2 import OutlierMeta
 from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
-from arch.api import storage
 
 LOGGER = log_utils.getLogger()
 
