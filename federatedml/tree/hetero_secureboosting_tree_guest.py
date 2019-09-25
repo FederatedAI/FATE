@@ -38,7 +38,6 @@ from federatedml.util.transfer_variable.hetero_secure_boost_transfer_variable im
     HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol import AffineEncrypt
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
@@ -179,9 +178,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         LOGGER.info("generate encrypter")
         if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
-            self.encrypter.generate_key(self.encrypt_param.key_length)
-        elif self.encrypt_param.method.lower() == consts.AFFINE.lower():
-            self.encrypter = AffineEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         elif self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower():
             self.encrypter = IterativeAffineEncrypt()
