@@ -5,20 +5,20 @@
 
 |  服务器  |                                                              |
 | :------: | ------------------------------------------------------------ |
-|   数量   | \>1(根据实际提供的服务器规划部署模块)                        |
-|   配置   | 16 core /32GB memory / 300GB硬盘/50M带宽                     |
+|   数量   | \>1(根据实际提供的服务器规划部署)                            |
+|   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
 | 操作系统 | CentOS linux 7.2及以上                                       |
 |  依赖包  | yum源： gcc gcc-c ++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev<br />（可以使用初始化脚本env.sh安装） |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
-| 文件系统 | 1. 300G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
+| 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
 2.集群规划
 ==========
 
-| 节点名称 | 主机名        | IP地址      | 操作系统   |
-| -------- | ------------- | ----------- | ---------- |
-| PartyA   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2 |
-| PartyB   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2 |
+| party  | 主机名        | IP地址      | 操作系统   |
+| ------ | ------------- | ----------- | ---------- |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2 |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2 |
 
 3.基础环境配置
 ==============
