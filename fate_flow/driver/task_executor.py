@@ -104,6 +104,7 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                          initiator_role=job_initiator.get('role', None),
                                           task_info=task.to_json())
 
             schedule_logger.info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
@@ -130,6 +131,7 @@ class TaskExecutor(object):
                 TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                               party_id=party_id,
                                               initiator_party_id=job_initiator.get('party_id', None),
+                                              initiator_role=job_initiator.get('role', None),
                                               task_info=task.to_json())
             except Exception as e:
                 schedule_logger.exception(e)
@@ -181,7 +183,7 @@ class TaskExecutor(object):
         return task_run_args
 
     @staticmethod
-    def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, task_info):
+    def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, initiator_role, task_info):
         for dest_party_id in {party_id, initiator_party_id}:
             if party_id != initiator_party_id and dest_party_id == initiator_party_id:
                 # do not pass the process id to the initiator
@@ -197,6 +199,7 @@ class TaskExecutor(object):
                               party_id),
                           src_party_id=party_id,
                           dest_party_id=dest_party_id,
+                          src_role=initiator_role,
                           json_body=task_info,
                           work_mode=RuntimeConfig.WORK_MODE)
 

@@ -38,6 +38,7 @@ TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metr
 DATA_FUNC = ["download", "upload"]
 TABLE_FUNC = ["table_info"]
 MODEL_FUNC = ["load", "online", "version"]
+PERMISSION_FUNC = ["grant", "delete"]
 
 
 def prettify(response, verbose=True):
@@ -153,6 +154,9 @@ def call_fun(func, config_data, dsl_path, config_path):
         if func == "version":
             detect_utils.check_config(config=config_data, required_arguments=['namespace'])
         response = requests.post("/".join([server_url, "model", func]), json=config_data)
+    elif func in PERMISSION_FUNC:
+        detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
+        response = requests.post("/".join([server_url, "permission", func]), json=config_data)
     return response.json() if isinstance(response, requests.models.Response) else response
 
 
@@ -181,7 +185,8 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dsl', required=False, type=str, help="dsl path")
     parser.add_argument('-f', '--function', type=str,
                         choices=(
-                                DATA_FUNC + MODEL_FUNC + JOB_FUNC + JOB_OPERATE_FUNC + TASK_OPERATE_FUNC + TABLE_FUNC + TRACKING_FUNC),
+                                DATA_FUNC + MODEL_FUNC + JOB_FUNC + JOB_OPERATE_FUNC + TASK_OPERATE_FUNC + TABLE_FUNC +
+                                TRACKING_FUNC + PERMISSION_FUNC),
                         required=True,
                         help="function to call")
     parser.add_argument('-j', '--job_id', required=False, type=str, help="job id")
@@ -194,6 +199,11 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--work_mode', required=False, type=int, help="work mode")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
+    parser.add_argument('-src_party_id', '--src_party_id', required=False, type=int, help="src_party_id")
+    parser.add_argument('-src_role', '--src_role', required=False, type=int, help="src_role")
+    parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege_role")
+    parser.add_argument('-privilege_command', '--privilege_command', required=False, type=str, help="privilege_command")
+    parser.add_argument('-privilege_component', '--privilege_component', required=False, type=str, help="privilege_component")
     try:
         args = parser.parse_args()
         config_data = {}
@@ -210,6 +220,7 @@ if __name__ == "__main__":
                 config_data['local']['party_id'] = args.party_id
             if args.role:
                 config_data['local']['role'] = args.role
+
         response = call_fun(args.function, config_data, dsl_path, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()

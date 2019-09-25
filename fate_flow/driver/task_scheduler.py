@@ -49,7 +49,7 @@ class TaskScheduler(object):
                                   role,
                                   party_id),
                               src_party_id=job_initiator['party_id'],
-                              dest_party_id=party_id,
+                              dest_party_id=party_id, src_role=job_initiator['role'],
                               json_body=job.to_json(),
                               work_mode=job.f_work_mode)
                 if response_json["retcode"]:
@@ -76,7 +76,9 @@ class TaskScheduler(object):
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
-                                      initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
+                                      initiator_party_id=job_initiator['party_id'],
+                                      initiator_role=job_initiator['role'],
+                                      job_info=job.to_json())
 
         top_level_task_status = set()
         components = dag.get_next_components(None)
@@ -108,7 +110,9 @@ class TaskScheduler(object):
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
-                                      initiator_party_id=job_initiator['party_id'], job_info=job.to_json())
+                                      initiator_party_id=job_initiator['party_id'],
+                                      initiator_role=job_initiator['role'],
+                                      job_info=job.to_json())
         TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
         schedule_logger.info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
 
@@ -139,6 +143,7 @@ class TaskScheduler(object):
                                   dest_party_id),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=dest_party_id,
+                              src_role=job_initiator['role'],
                               json_body={'job_parameters': job_parameters,
                                          'job_initiator': job_initiator,
                                          'job_args': party_job_args,
@@ -159,6 +164,7 @@ class TaskScheduler(object):
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'],
+                                      initiator_role=job_initiator['role'],
                                       job_info=job_utils.update_job_progress(job_id=job_id, dag=dag,
                                                                              current_task_id=task_id).to_json())
         if task_success:
@@ -277,7 +283,7 @@ class TaskScheduler(object):
                                                                                'success' if task_process_start_status else 'failed'))
 
     @staticmethod
-    def sync_job_status(job_id, roles, work_mode, initiator_party_id, job_info):
+    def sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info):
         for role, partys in roles.items():
             job_info['f_role'] = role
             for party_id in partys:
@@ -291,6 +297,7 @@ class TaskScheduler(object):
                                   party_id),
                               src_party_id=initiator_party_id,
                               dest_party_id=party_id,
+                              src_role=initiator_role,
                               json_body=job_info,
                               work_mode=work_mode)
 
@@ -315,6 +322,7 @@ class TaskScheduler(object):
                               ),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
+                              src_role=job_initiator['role'],
                               json_body={},
                               work_mode=job_parameters['work_mode'])
                 # clean
@@ -327,6 +335,7 @@ class TaskScheduler(object):
                                   party_id),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
+                              src_role=job_initiator['role'],
                               json_body={},
                               work_mode=job_parameters['work_mode'])
 
@@ -345,6 +354,7 @@ class TaskScheduler(object):
 
             # set status first
             TaskScheduler.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
+                                          initiator_role=initiator_job.f_role,
                                           work_mode=job_work_mode,
                                           job_info=job_info)
             for role, partys in roles.items():
@@ -360,6 +370,7 @@ class TaskScheduler(object):
                                              ),
                                              src_party_id=initiator_party_id,
                                              dest_party_id=party_id,
+                                             src_role=initiator_job.f_role,
                                              json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
                                                                           'role': initiator_job.f_role}},
                                              work_mode=job_work_mode)
