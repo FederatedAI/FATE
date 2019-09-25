@@ -10,8 +10,8 @@
 		},
 		"fateflow": {
 			"host": "localhost",
-			"grpc.port": 9362,
-			"http.port": 9382
+			"grpc.port": 9360,
+			"http.port": 9380
 		},
 		"fateboard": {
 			"host": "localhost",

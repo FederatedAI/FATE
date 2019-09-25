@@ -7,7 +7,7 @@
         "work_mode": 0,
         "job_type": "predict",
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": "201909181210133376613"
+        "model_version": ""
     },
     "role": {
         "guest": [10000],
@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "dum_b", "namespace": "dum"}]
+                    "eval_data": [{"name": "student_b", "namespace": "student"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "dum_a", "namespace": "dum"}]
+                    "eval_data": [{"name": "student_a", "namespace": "student"}]
                 }
             }
         }
