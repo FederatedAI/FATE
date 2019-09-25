@@ -49,4 +49,6 @@ class HomoTransferVariable(BaseTransferVariable):
         self.aggregated_model = Variable(name='HomoTransferVariable.aggregated_model', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
         self.host_model = Variable(name='HomoTransferVariable.host_model', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         self.guest_model = Variable(name='HomoTransferVariable.guest_model', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
+        self.to_encrypt_model = Variable(name='HomoTransferVariable.to_encrypt_model', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
+        self.re_encrypted_model = Variable(name='HomoTransferVariable.re_encrypted_model', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
         pass

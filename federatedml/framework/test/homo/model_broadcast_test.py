@@ -31,12 +31,12 @@ class ModelBroadcastTest(TestSyncBase):
                 .send_model(vars_to_broadcast, cipher_dict)
         elif role == consts.HOST:
             return model_broadcast_sync.Host() \
-                ._register_model_broadcaster(transfer_variable.aggregated_model) \
-                ._get_model()
+                .register_model_broadcaster(transfer_variable.aggregated_model) \
+                .get_model()
         else:
             return model_broadcast_sync.Guest() \
-                ._register_model_broadcaster(transfer_variable.aggregated_model) \
-                ._get_model()
+                .register_model_broadcaster(transfer_variable.aggregated_model) \
+                .get_model()
 
     def run_with_num_hosts(self, num_hosts):
         ratio = 0.3
@@ -58,9 +58,9 @@ class ModelBroadcastTest(TestSyncBase):
         variables = ListWeights([random.random() for _ in range(10)])
 
         arbiter, guest, *hosts = self.run_results(num_hosts, cipher_dict, variables)
-        guest = guest.parameters
-        hosts = [host.parameters for host in hosts]
-        self.assertListEqual(guest, variables.for_remote().parameters)
+        guest = guest.unboxed
+        hosts = [host.unboxed for host in hosts]
+        self.assertListEqual(guest, variables.unboxed)
 
         host_decrypted = [cipher_dict[i].decrypt_list(hosts[i]) if cipher_dict[i] else hosts[i]
                           for i in range(num_hosts)]

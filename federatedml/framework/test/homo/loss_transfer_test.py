@@ -38,13 +38,13 @@ class LossTransferTest(TestSyncBase):
             loss = random.random()
             if has_loss:
                 loss_transfer_sync.Host() \
-                    ._register_loss_transfer(transfer_variable.host_loss) \
+                    .register_loss_transfer(transfer_variable.host_loss) \
                     .send_loss(loss)
             return has_loss, loss
         else:
             import random
             return loss_transfer_sync.Guest() \
-                ._register_loss_transfer(transfer_variable.guest_loss) \
+                .register_loss_transfer(transfer_variable.guest_loss) \
                 .send_loss(random.random())
 
     def run_with_num_hosts(self, num_hosts):
