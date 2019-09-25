@@ -22,7 +22,6 @@ import tarfile
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api import storage
 from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import get_fate_uuid
 from arch.api.utils.core import json_loads
@@ -314,7 +313,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_meta(output_data_table, have_data_label):
     # get meta
-    output_data_meta = storage.get_data_table_metas_by_instance(output_data_table)
+    output_data_meta = output_data_table.get_metas()
     schema = output_data_meta.get('schema', {})
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:

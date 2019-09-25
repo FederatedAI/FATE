@@ -164,4 +164,4 @@ class FederationRuntime(object):
 
         if 0 <= idx < len(src_party_ids):
             return rtn[0]
-        return rtn
+        return rtn,

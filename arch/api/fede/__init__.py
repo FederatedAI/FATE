@@ -13,37 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import IntEnum
-
-
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
-
-
-class Backend(IntEnum):
-    EGGROLL = 0
-    SPARK = 1
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
-
-    def is_spark(self):
-        return self.value == self.SPARK
-
-
-class JobStatus(object):
-    WAITING = 'waiting'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
-    PARTIAL = 'partial'
-    DELETED = 'deleted'
-    CANCELED = 'canceled'
-
-
-class TaskStatus(object):
-    START = 'start'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
+from .federation import FederationBuilder
+__all__ = ["FederationBuilder"]

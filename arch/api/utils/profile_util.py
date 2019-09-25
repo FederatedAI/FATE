@@ -13,37 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import IntEnum
+
+import time
+
+from arch.api.utils.log_utils import LoggerFactory
+
+LOGGER = LoggerFactory.get_logger("PROFILING")
 
 
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
+def log_elapsed(func):
+    func_name = func.__name__
 
-
-class Backend(IntEnum):
-    EGGROLL = 0
-    SPARK = 1
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
-
-    def is_spark(self):
-        return self.value == self.SPARK
-
-
-class JobStatus(object):
-    WAITING = 'waiting'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
-    PARTIAL = 'partial'
-    DELETED = 'deleted'
-    CANCELED = 'canceled'
-
-
-class TaskStatus(object):
-    START = 'start'
-    RUNNING = 'running'
-    SUCCESS = 'success'
-    FAILED = 'failed'
+    def _fn(*args, **kwargs):
+        t = time.time()
+        name = f"{func_name}#{kwargs['func_tag']}" if 'func_tag' in kwargs else func_name
+        rtn = func(*args, **kwargs)
+        LOGGER.debug(f"{name} takes {time.time() - t}s")
+        return rtn
+    return _fn
