@@ -20,18 +20,18 @@
 import numpy as np
 from google.protobuf import json_format
 
-from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
+from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-from federatedml.linear_regression.linear_regression_weights import LinearRegressionWeights
+from federatedml.poisson_regression.poisson_regression_weights import PoissonRegressionWeights
 from federatedml.model_base import ModelBase
 from federatedml.model_selection.KFold import KFold
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.optimizer import optimizer_factory
 
-from federatedml.param.linear_regression_param import LinearParam
+from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.util import consts
@@ -42,10 +42,10 @@ from federatedml.util import abnormal_detection
 LOGGER = log_utils.getLogger()
 
 
-class BaseLinearRegression(ModelBase):
+class BasePoissonRegression(ModelBase):
     def __init__(self):
-        super(BaseLinearRegression, self).__init__()
-        self.model_param = LinearParam()
+        super(BasePoissonRegression, self).__init__()
+        self.model_param = PoissonParam()
         # attribute:
         self.n_iter_ = 0
         self.coef_ = None
@@ -60,9 +60,9 @@ class BaseLinearRegression(ModelBase):
         self.is_converged = False
         self.header = None
         self.class_name = self.__class__.__name__
-        self.model_name = 'LinearRegression'
-        self.model_param_name = 'LinearRegressionParam'
-        self.model_meta_name = 'LinearRegressionMeta'
+        self.model_name = 'PoissonRegression'
+        self.model_param_name = 'PoissonRegressionParam'
+        self.model_meta_name = 'PoissonRegressionMeta'
         self.role = ''
         self.mode = ''
         self.schema = {}
@@ -80,6 +80,7 @@ class BaseLinearRegression(ModelBase):
         self.max_iter = params.max_iter
         self.party_weight = params.party_weight
         self.optimizer = optimizer_factory(params)
+        self.exposure_colname = params.exposure_colname
 
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
@@ -104,43 +105,89 @@ class BaseLinearRegression(ModelBase):
             return self.header
         return data_instances.schema.get("header")
 
+    def get_exposure_index(self, header, exposure_colname):
+        try:
+            exposure_index = header.index(exposure_colname)
+        except:
+            exposure_index = -1
+        return exposure_index
+
+    def load_instance(self, data_instance):
+        """
+        return data_instance without exposure
+        Parameters
+        ----------
+        data_instance: DTable of Instances, input data
+        """
+        if self.exposure_index == -1:
+            return data_instance
+        if self.exposure_index >= len(data_instance.features):
+            raise ValueError(
+                "exposure_index {} out of features' range".format(self.exposure_index))
+        data_instance.features = np.delete(data_instance.features, self.exposure_index)
+        return data_instance
+
+    def load_exposure(self, data_instance):
+        """
+        return exposure of a given data_instance
+        Parameters
+        ----------
+        data_instance: DTable of Instances, input data
+        """
+        if self.exposure_index == -1:
+            exposure = 1
+        else:
+            exposure = data_instance.features[self.exposure_index]
+        return exposure
+
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
                                      metric_type="LOSS",
                                      extra_metas={
                                          "unit_name": "iters",
                                      })
-
         self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
         self.callback_metric(metric_name='loss',
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, loss)])
 
-    def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(
-            lambda v: np.dot(v.features, coef_) + intercept_)
+    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
+        if exposure is None:
+            mu = data_instances.mapValues(
+                lambda v: np.exp(np.dot(v.features, coef_) + intercept_))
+        else:
+            mu = data_instances.join(exposure,
+                                     lambda v, ei: np.exp(np.dot(v.features, coef_) + intercept_) / ei)
+        return mu
+
+    def safe_log(self, v):
+        if v == 0:
+            return np.log(1e-7)
+        return np.log(v)
 
     def fit(self, data_instance):
         pass
 
     def _get_meta(self):
-        meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,
-                                                              eps=self.model_param.eps,
-                                                              alpha=self.alpha,
-                                                              optimizer=self.model_param.optimizer,
-                                                              party_weight=self.model_param.party_weight,
-                                                              batch_size=self.batch_size,
-                                                              learning_rate=self.model_param.learning_rate,
-                                                              max_iter=self.max_iter,
-                                                              converge_func=self.model_param.converge_func,
-                                                              fit_intercept=self.fit_intercept)
+        meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(
+            penalty=self.model_param.penalty,
+            eps=self.model_param.eps,
+            alpha=self.alpha,
+            optimizer=self.model_param.optimizer,
+            party_weight=self.model_param.party_weight,
+            batch_size=self.batch_size,
+            learning_rate=self.model_param.learning_rate,
+            max_iter=self.max_iter,
+            converge_func=self.model_param.converge_func,
+            fit_intercept=self.fit_intercept,
+            exposure_colname=self.exposure_colname)
         return meta_protobuf_obj
 
     def _get_param(self):
         header = self.header
         LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
-            param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
+            param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam()
             return param_protobuf_obj
 
         weight_dict = {}
@@ -148,7 +195,7 @@ class BaseLinearRegression(ModelBase):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
         intercept_ = self.model_weights.intercept_
-        param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,
+        param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(iters=self.n_iter_,
                                                                  loss_history=self.loss_history,
                                                                  is_converged=self.is_converged,
                                                                  weight=weight_dict,
@@ -173,10 +220,11 @@ class BaseLinearRegression(ModelBase):
             self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         fit_intercept = meta_obj.fit_intercept
+        self.exposure_index = meta_obj.exposure_index
 
         self.header = list(result_obj.header)
         #LOGGER.debug("In load model, header: {}".format(self.header))
-        # For linear regression arbiter predict function
+        # For poisson regression arbiter predict function
         if self.header is None:
             return
 
@@ -190,7 +238,7 @@ class BaseLinearRegression(ModelBase):
 
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
-        self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+        self.model_weights = PoissonRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
 
     def _abnormal_detection(self, data_instances):
         """

@@ -57,5 +57,3 @@ class Host(object):
 
     def remote_loss_regular(self, loss_regular, suffix=tuple()):
         self.host_loss_regular_transfer.remote(obj=loss_regular, role=consts.GUEST, idx=0, suffix=suffix)
-
-

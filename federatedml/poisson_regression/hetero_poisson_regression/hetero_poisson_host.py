@@ -19,36 +19,36 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_linr_gradient_and_loss
+from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
+from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLinRHost(HeteroLinRBase):
+class HeteroPoissonHost(HeteroPoissonBase):
     def __init__(self):
-        super(HeteroLinRHost, self).__init__()
+        super(HeteroPoissonHost, self).__init__()
         self.batch_num = None
         self.batch_index_list = []
         self.role = consts.HOST
 
         self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Host()
+        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
 
     def fit(self, data_instances):
         """
-        Train linear regression model of role host
+        Train poisson regression model of role host
         Parameters
         ----------
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_linR host")
+        LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
 
         self.header = self.get_header(data_instances)
@@ -69,8 +69,10 @@ class HeteroLinRHost(HeteroLinRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-            self.optimizer.set_iters(self.n_iter_ + 1)
+
             batch_data_generator = self.batch_generator.generate_batch_data()
+            self.optimizer.set_iters(self.n_iter_ + 1)
+
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = self.transform(batch_data)
@@ -82,7 +84,9 @@ class HeteroLinRHost(HeteroLinRBase):
                     self.n_iter_,
                     batch_index)
 
-                self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer, self.n_iter_, batch_index)
+                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights,
+                                                         self.encrypted_calculator, self.optimizer,
+                                                         self.n_iter_, batch_index)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1
@@ -109,6 +113,6 @@ class HeteroLinRHost(HeteroLinRBase):
 
         data_features = self.transform(data_instances)
 
-        pred_host = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote partial prediction to Guest")

@@ -28,9 +28,9 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
 
-class LinearParam(BaseParam):
+class PoissonParam(BaseParam):
     """
-    Parameters used for Linear Regression.
+    Parameters used for Poisson Regression.
 
     Parameters
     ----------
@@ -64,23 +64,18 @@ class LinearParam(BaseParam):
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
-            c)  weight_diff: Use difference between weights of two consecutive iterations
-
-    decay: int or float, default: 1
-        Decay rate for learning rate. learning rate will follow the following decay schedule:
-        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
-        where t is the iter number.
 
     """
 
     def __init__(self, penalty='L2',
                  eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff', predict_param=PredictParam(),
+                 max_iter=100, converge_func='diff',
+                 exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
-        super(LinearParam, self).__init__()
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
+        super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
         self.alpha = alpha
@@ -88,6 +83,7 @@ class LinearParam(BaseParam):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
+
         self.max_iter = max_iter
         self.converge_func = converge_func
         self.encrypt_param = encrypt_param
@@ -97,78 +93,84 @@ class LinearParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.exposure_colname = exposure_colname
+
 
     def check(self):
-        descr = "linear_param's"
+        descr = "poisson_param's"
 
         if type(self.penalty).__name__ != "str":
             raise ValueError(
-                "linear_param's penalty {} not supported, should be str type".format(self.penalty))
+                "poisson_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
             if self.penalty not in ['L1', 'L2', 'NONE']:
                 raise ValueError(
-                    "linear_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+                    "poisson_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
         if type(self.eps).__name__ != "float":
             raise ValueError(
-                "linear_param's eps {} not supported, should be float type".format(self.eps))
+                "poisson_param's eps {} not supported, should be float type".format(self.eps))
 
         if type(self.alpha).__name__ != "float":
             raise ValueError(
-                "linear_param's alpha {} not supported, should be float type".format(self.alpha))
+                "poisson_param's alpha {} not supported, should be float type".format(self.alpha))
 
         if type(self.optimizer).__name__ != "str":
             raise ValueError(
-                "linear_param's optimizer {} not supported, should be str type".format(self.optimizer))
+                "poisson_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
                 raise ValueError(
-                    "linear_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam' or 'adagrad'")
+                    "poisson_param's optimizer not supported, optimizer should be"
+                    " 'sgd', 'rmsprop', 'adam', 'adagrad' or 'nesterov_momentum_sgd'")
 
         if type(self.batch_size).__name__ != "int":
             raise ValueError(
-                "linear_param's batch_size {} not supported, should be int type".format(self.batch_size))
+                "poisson_param's batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
+            if type(self.batch_size).__name__ != "int" \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
 
         if type(self.learning_rate).__name__ != "float":
             raise ValueError(
-                "linear_param's learning_rate {} not supported, should be float type".format(
+                "poisson_param's learning_rate {} not supported, should be float type".format(
                     self.learning_rate))
 
         self.init_param.check()
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(
-                "linear_param's max_iter {} not supported, should be int type".format(self.max_iter))
+                "poisson_param's max_iter {} not supported, should be int type".format(self.max_iter))
         elif self.max_iter <= 0:
             raise ValueError(
-                "linear_param's max_iter must be greater or equal to 1")
+                "poisson_param's max_iter must be greater or equal to 1")
+
+        if self.exposure_colname is not None:
+            if type(self.exposure_colname).__name__ != "str":
+                raise ValueError(
+                    "poisson_param's exposure_colname {} not supported, should be string type".format(self.exposure_colname))
 
         if type(self.converge_func).__name__ != "str":
             raise ValueError(
-                "linear_param's converge_func {} not supported, should be str type".format(
+                "poisson_param's converge_func {} not supported, should be str type".format(
                     self.converge_func))
         else:
             self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs']:
+            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
-                    "linear_param's converge_func not supported, converge_func should be"
+                    "poisson_param's converge_func not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
 
         if type(self.party_weight).__name__ not in ["int", 'float']:
             raise ValueError(
-                "linear_param's party_weight {} not supported, should be 'int' or 'float'".format(
+                "poisson_param's party_weight {} not supported, should be 'int' or 'float'".format(
                     self.party_weight))
-
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
                 "regression param's decay {} not support, should be 'int' or 'float'".format(self.decay)

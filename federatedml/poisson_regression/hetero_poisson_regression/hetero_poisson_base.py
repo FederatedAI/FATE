@@ -16,16 +16,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.linear_regression.base_linear_regression import BaseLinearRegression
+from federatedml.poisson_regression.base_poisson_regression import BasePoissonRegression
 from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.hetero_linr_transfer_variable import HeteroLinRTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_poisson_transfer_variable import HeteroPoissonTransferVariable
 
-class HeteroLinRBase(BaseLinearRegression):
+class HeteroPoissonBase(BasePoissonRegression):
     def __init__(self):
         super().__init__()
-        self.model_name = 'HeteroLinearRegression'
-        self.model_param_name = 'HeteroLinearRegressionParam'
-        self.model_meta_name = 'HeteroLinearRegressionMeta'
+        self.model_name = 'HeteroPoissonRegression'
+        self.model_param_name = 'HeteroPoissonRegressionParam'
+        self.model_meta_name = 'HeteroPoissonRegressionMeta'
         self.mode = consts.HETERO
         self.aggregator = None
         self.cipher = None
@@ -34,8 +34,8 @@ class HeteroLinRBase(BaseLinearRegression):
         self.converge_procedure = None
 
     def _init_model(self, params):
-        super(HeteroLinRBase, self)._init_model(params)
-        self.transfer_variable = HeteroLinRTransferVariable()
+        super(HeteroPoissonBase, self)._init_model(params)
+        self.transfer_variable = HeteroPoissonTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
