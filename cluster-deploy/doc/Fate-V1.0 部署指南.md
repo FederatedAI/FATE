@@ -596,7 +596,7 @@ python run_toy_example.py 9999 10000 1
 
 该文件在/data/projects/fate/python/examples/min_test_task /目录下。
 
-**在Host的节点192.168.0.1中，运行：**
+**在Host节点192.168.0.1上运行：**
 
 export PYTHONPATH = /data/projects/fate/python
 
@@ -608,7 +608,7 @@ sh run.sh host fast
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
-**在Guest的节点：192.168.0.2中，运行：**
+**在Guest节点192.168.0.2上运行：**
 
 export PYTHONPATH = /data/projects/fate/python
 
@@ -616,7 +616,7 @@ source /data/projects/fate/venv/bin/activate
 
 cd /data/projects/fate/python/examples/min_test_task/
 
-sh run.sh guest fast \$ {host_table} \$ {host_namespace}
+sh run.sh guest fast \$ {host_table} \$ {host_namespace} 
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
 
