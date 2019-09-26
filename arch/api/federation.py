@@ -15,6 +15,7 @@
 #
 
 from arch.api import RuntimeInstance
+from eggroll.api import RuntimeInstance as EggRoll_RuntimeInstance
 from arch.api import WorkMode
 from arch.api.standalone import federation as standalone_federation
 from arch.api.cluster import federation as cluster_federation
@@ -40,7 +41,7 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
         }
      }
     """
-    if RuntimeInstance.MODE is None:
+    if EggRoll_RuntimeInstance.MODE is None:
         raise EnvironmentError("eggroll should be initialized before federation")
     if RuntimeInstance.MODE == WorkMode.STANDALONE:
         RuntimeInstance.FEDERATION = standalone_federation.init(job_id=job_id, runtime_conf=runtime_conf)

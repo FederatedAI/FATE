@@ -78,12 +78,7 @@ public class ObjectRecvConsumeLmdbAction extends BaseRecvConsumeAction {
             finalTransferMeta = transferMeta;
         }
 
-        federationStorageLocator = StorageBasic.StorageLocator.newBuilder()
-                .setNamespace(finalTransferMeta.getJob().getJobId())
-                .setName(FederationConstants.OBJECT_STORAGE_NAMESPACE)
-                .setType(StorageBasic.StorageType.LMDB)
-                .setFragment(0)
-                .build();
+        federationStorageLocator = finalTransferMeta.getDataDesc().getStorageLocator();
 
         Kv.CreateTableInfo createTableInfo = Kv.CreateTableInfo.newBuilder()
                 .setStorageLocator(federationStorageLocator)

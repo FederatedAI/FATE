@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.driver.federation.constant;
+syntax = "proto3";
 
-import org.springframework.stereotype.Component;
+package com.webank.ai.fate.api.core;
+option java_outer_classname = "DataStructure";
 
-@Component
-public class FederationConstants {
-    public static final String OBJECT_STORAGE_NAMESPACE = "__federation__";
+// raw entry for map
+message RawEntry {
+    bytes key = 1;
+    bytes value = 2;
+}
+
+// map for proto 2
+message RawMap {
+    repeated RawEntry entries = 1;
+}
+
+// generic map for all key-value data
+message Dict {
+    map<string, bytes> dict = 1;
 }

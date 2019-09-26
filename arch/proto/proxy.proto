@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-import "basic-meta.proto";
+import "fate-meta.proto";
 
 package com.webank.ai.fate.api.networking.proxy;
 

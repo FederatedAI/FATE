@@ -63,7 +63,7 @@ public class TransferProtoMessageUtils {
         return topicBuilder.clear()
                 .setPartyId(party.getPartyId())
                 .setName(party.getName())
-                .setRole(StringConstants.ROLE_EGGROLL)
+                .setRole("fate")
                 .build();
     }
 

@@ -19,6 +19,7 @@ import os
 
 from arch.api import federation
 from arch.api import storage
+from arch.api import eggroll
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, get_lan_ip
 from fate_flow.db.db_models import Task
@@ -131,6 +132,7 @@ class TaskExecutor(object):
                                               party_id=party_id,
                                               initiator_party_id=job_initiator.get('party_id', None),
                                               task_info=task.to_json())
+                eggroll.stop()
             except Exception as e:
                 schedule_logger.exception(e)
         schedule_logger.info(
