@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.encryption import encryption
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel, FasterEncryptedFTLHostModel
 from federatedml.ftl.test.mock_models import MockAutoencoder, MockFTLModelParam

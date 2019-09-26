@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.data_util.common_data_util import overlapping_samples_converter, generate_table_namespace_n_name
 from federatedml.ftl.test.util import assert_matrix
 

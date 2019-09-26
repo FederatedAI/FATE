@@ -14,7 +14,10 @@
 #  limitations under the License.
 #
 
+
 from enum import IntEnum, Enum
+
+from arch.api import session
 
 
 class WorkMode(IntEnum):
@@ -46,7 +49,6 @@ class RuntimeInstance(object):
     Backend: Backend = None
 
 
-
 class StoreType(Enum):
     IN_MEMORY = "IN_MEMORY"
     LMDB = "LMDB"
@@ -55,3 +57,7 @@ class StoreType(Enum):
 class NamingPolicy(Enum):
     DEFAULT = 'DEFAULT'
     ITER_AWARE = 'ITER_AWARE'
+
+
+# compatibility
+eggroll = session

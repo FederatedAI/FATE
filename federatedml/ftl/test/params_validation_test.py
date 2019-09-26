@@ -21,7 +21,7 @@ from federatedml.param.ftl_param import FTLDataParam, FTLModelParam, LocalModelP
 from federatedml.util.param_extract import ParamExtract
 # from federatedml.util.param_checker import FTLDataParamChecker, LocalModelParamChecker, FTLModelParamChecker
 
-from arch.api.eggroll import init
+from arch.api.session import init
 
 
 def get_filled_param(param_var, config_json):
