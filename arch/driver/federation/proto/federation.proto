@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-import "eggroll-basic-meta.proto";
+import "basic-meta.proto";
 import "storage-basic.proto";
 
 package com.webank.ai.fate.api.driver.federation;
