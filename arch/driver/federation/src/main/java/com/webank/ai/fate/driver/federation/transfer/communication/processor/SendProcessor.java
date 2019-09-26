@@ -17,12 +17,12 @@
 package com.webank.ai.fate.driver.federation.transfer.communication.processor;
 
 import com.google.common.collect.Lists;
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
-import com.webank.ai.fate.core.constant.RuntimeConstants;
-import com.webank.ai.fate.core.error.exception.StorageNotExistsException;
-import com.webank.ai.fate.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.api.storage.StorageBasic;
+import com.webank.ai.eggroll.core.constant.RuntimeConstants;
+import com.webank.ai.eggroll.core.error.exception.StorageNotExistsException;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
 import com.webank.ai.fate.driver.federation.factory.FederationCallbackFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.client.ProxyClient;
 import com.webank.ai.fate.driver.federation.transfer.communication.action.TransferQueueConsumeAction;
@@ -32,8 +32,8 @@ import com.webank.ai.fate.driver.federation.transfer.communication.producer.Obje
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.service.ProxySelectionService;
 import com.webank.ai.fate.driver.federation.utils.ThreadPoolTaskExecutorUtil;
-import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Dtable;
-import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
+import com.webank.ai.eggroll.framework.meta.service.dao.generated.model.Dtable;
+import com.webank.ai.eggroll.framework.meta.service.dao.generated.model.Fragment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

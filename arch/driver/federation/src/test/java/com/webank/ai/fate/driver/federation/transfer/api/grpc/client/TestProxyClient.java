@@ -16,10 +16,10 @@
 
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.client;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
-import com.webank.ai.fate.core.constant.RuntimeConstants;
+import com.webank.ai.eggroll.api.storage.StorageBasic;
+import com.webank.ai.eggroll.core.constant.RuntimeConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
