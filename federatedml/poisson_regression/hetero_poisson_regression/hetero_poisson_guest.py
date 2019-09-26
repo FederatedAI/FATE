@@ -14,38 +14,30 @@
 #  limitations under the License.
 #
 
+
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_linr_gradient_and_loss
+from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
+from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLinRGuest(HeteroLinRBase):
+class HeteroPoissonGuest(HeteroPoissonBase):
     def __init__(self):
         super().__init__()
         self.data_batch_count = []
-        # self.guest_forward = None
         self.role = consts.GUEST
         self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Guest()
+        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
-
-    @staticmethod
-    def load_data(data_instance):
-        """
-        return data_instance as original
-        Parameters
-        ----------
-        data_instance: DTable of Instance, input data
-        """
-        return data_instance
 
     def fit(self, data_instances):
         """
@@ -55,10 +47,14 @@ class HeteroLinRGuest(HeteroLinRBase):
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_linR_guest fit")
+        LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-        #data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
+        self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
+        if self.exposure_index > -1:
+            self.header.pop(self.exposure_index)
+        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -76,31 +72,33 @@ class HeteroLinRGuest(HeteroLinRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
+            # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_ + 1)
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
+                # compute offset of this batch
+                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
 
                 # Start gradient procedure
-                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                optimized_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.model_weights,
                     self.encrypted_calculator,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index
+                    batch_index,
+                    batch_offset
                 )
-
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_,
+                                                         batch_index, batch_offset, loss_norm)
 
-                self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
+                self.model_weights = self.optimizer.update_model(self.model_weights, optimized_gradient)
+
                 batch_index += 1
-                LOGGER.debug("model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
-
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -123,14 +121,16 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         LOGGER.info("Start predict ...")
 
+        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+
         data_features = self.transform(data_instances)
-        pred_guest = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")
 
-        pred = pred_guest.join(pred_host, lambda g, h: g + h)
-        LOGGER.debug("prediction: {}".format(pred))
+        pred = pred_guest.join(pred_host, lambda g, h: g * h)
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
+        
         return predict_result

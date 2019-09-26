@@ -20,17 +20,17 @@
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
-from federatedml.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
-from federatedml.optim.gradient import hetero_linr_gradient_and_loss
+from federatedml.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
+from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroLinRArbiter(HeteroLinRBase):
+class HeteroPoissonArbiter(HeteroPoissonBase):
     def __init__(self):
-        super(HeteroLinRArbiter, self).__init__()
+        super(HeteroPoissonArbiter, self).__init__()
         self.role = consts.ARBITER
 
         # attribute
@@ -38,7 +38,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
-        self.gradient_loss_operator = hetero_linr_gradient_and_loss.Arbiter()
+        self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Arbiter()
         self.converge_procedure = convergence.Arbiter()
 
     def run(self, component_parameters=None, args=None):
@@ -64,19 +64,19 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
     def fit(self, data_instances=None):
         """
-        Train linear regression model of role arbiter
+        Train poisson regression model of role arbiter
         Parameters
         ----------
         data_instances: DTable of Instance, input data
         """
-        LOGGER.info("Enter hetero_linR_arbiter fit")
+        LOGGER.info("Enter hetero_poisson_arbiter fit")
 
         self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            iter_loss = None
+            iter_loss =None
             batch_data_generator = self.batch_generator.generate_batch_data()
             total_gradient = None
             self.optimizer.set_iters(self.n_iter_ + 1)
@@ -92,11 +92,10 @@ class HeteroLinRArbiter(HeteroLinRBase):
                     total_gradient = total_gradient + gradient
 
                 loss_list = self.gradient_loss_operator.compute_loss(self.cipher_operator, self.n_iter_, batch_index)
-                if len(loss_list) == 1:
-                    if iter_loss is None:
-                        iter_loss = loss_list[0]
-                    else:
-                        iter_loss = iter_loss + loss_list[0]
+                if iter_loss is None:
+                    iter_loss = loss_list[0]
+                else:
+                    iter_loss = iter_loss + loss_list[0]
 
             # if converge
             if iter_loss is not None:
@@ -105,15 +104,12 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
             if self.model_param.converge_func == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
-                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
-                                                                                weight_diff, self.is_converged))
                 if weight_diff < self.model_param.eps:
                     self.is_converged = True
-            else:
-                if iter_loss is None:
-                    raise ValueError("Multiple host roles exist, loss converge function is no available."
-                                     "You should use 'weight_diff' instead.")
+                LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
+                                                                                weight_diff, self.is_converged))
 
+            else:
                 self.is_converged = self.converge_func.is_converge(iter_loss)
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 

@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/student-mat_a.csv",
-  "head": 0,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "student-mat_a",
-  "namespace": "student_host"
-}
