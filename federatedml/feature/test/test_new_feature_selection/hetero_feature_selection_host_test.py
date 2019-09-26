@@ -20,7 +20,7 @@
 import unittest
 
 import numpy as np
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.feature.instance import Instance
@@ -43,7 +43,7 @@ class TestHeteroFeatureSelection():
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
 
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
         table.schema = {"header": self.header}
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     import sys
     job_id = str(sys.argv[1])
 
-    eggroll.init(job_id)
+    session.init(job_id)
     federation.init(job_id,
                     {"local": {
                         "role": "host",

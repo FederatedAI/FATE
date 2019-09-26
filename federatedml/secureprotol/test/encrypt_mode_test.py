@@ -17,14 +17,14 @@
 import copy
 import numpy as np
 import unittest
-from arch.api import eggroll
+from arch.api import session
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.secureprotol import PaillierEncrypt
 
 
 class TestEncryptModeCalculator(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_encrypt_mode_calculator")
+        session.init("test_encrypt_mode_calculator")
 
         self.list_data = []
         self.tuple_data = []
@@ -39,9 +39,9 @@ class TestEncryptModeCalculator(unittest.TestCase):
             self.tuple_data.append(tuple_value)
             self.numpy_data.append(numpy_value)
 
-        self.data_list = eggroll.parallelize(self.list_data, include_key=False, partition=10)
-        self.data_tuple = eggroll.parallelize(self.tuple_data, include_key=False, partition=10)
-        self.data_numpy = eggroll.parallelize(self.numpy_data, include_key=False, partition=10)
+        self.data_list = session.parallelize(self.list_data, include_key=False, partition=10)
+        self.data_tuple = session.parallelize(self.tuple_data, include_key=False, partition=10)
+        self.data_numpy = session.parallelize(self.numpy_data, include_key=False, partition=10)
        
     def test_data_type(self, mode="strict", re_encrypted_rate=0.2):
         encrypter = PaillierEncrypt()

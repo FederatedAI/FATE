@@ -21,7 +21,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 
@@ -45,7 +45,7 @@ class TestHeteroSecureBoostGuest(unittest.TestCase):
             sparse_vec = SparseVector(indices, data, 50)
             self.data.append((str(i), Instance(features=sparse_vec, label=i % 2)))
 
-        self.table = eggroll.parallelize(self.data, include_key=True)
+        self.table = session.parallelize(self.data, include_key=True)
         self.table.schema = {"header": ["fid" + str(i) for i in range(50)]}
 
     def test_join(self):
@@ -58,14 +58,14 @@ class TestHeteroSecureBoostGuest(unittest.TestCase):
 
         data_sids = np.array(table_sid)
         train_sids_table = [(str(x), 1) for x in data_sids]
-        table2 = eggroll.parallelize(train_sids_table,
-                                          include_key=True,
-                                          partition=table1._partitions)
+        table2 = session.parallelize(train_sids_table,
+                                     include_key=True,
+                                     partition=table1._partitions)
 
         table3 = table1.join(table2, lambda x, y: x)
         self.assertTrue(table3.count() == table1.count())
 
 
 if __name__ == '__main__':
-    eggroll.init("jobid")
+    session.init("jobid")
     unittest.main()

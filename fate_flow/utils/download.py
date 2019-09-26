@@ -15,7 +15,7 @@
 #
 import os
 
-from arch.api import eggroll,storage
+from arch.api import session,storage
 
 from arch.api.utils import log_utils, dtable_utils
 
@@ -35,7 +35,7 @@ class Download(object):
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
                                                             create=False)
         job_id = "_".join(self.taskid.split("_")[:2])
-        eggroll.init(job_id, self.parameters["work_mode"])
+        session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
             data_table = storage.get_data_table(name=table_name, namespace=namespace)
             print('===== begin to export data =====')

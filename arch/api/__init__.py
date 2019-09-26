@@ -60,4 +60,4 @@ class NamingPolicy(Enum):
 
 
 # compatibility
-eggroll = session
+session = session

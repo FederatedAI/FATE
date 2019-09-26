@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection import KFold
 from federatedml.param.cross_validation_param import CrossValidationParam
@@ -26,7 +26,7 @@ from federatedml.param.cross_validation_param import CrossValidationParam
 
 class TestKFlod(unittest.TestCase):
     def setUp(self):
-        eggroll.init("123")
+        session.init("123")
         self.data_num = 1000
         self.feature_num = 200
         final_result = []
@@ -35,7 +35,7 @@ class TestKFlod(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=0)
             tmp = (str(i), inst)
             final_result.append(tmp)
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         self.table = table

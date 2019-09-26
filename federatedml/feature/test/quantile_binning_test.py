@@ -19,9 +19,9 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 
-eggroll.init("123")
+session.init("123")
 
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
@@ -48,7 +48,7 @@ class TestQuantileBinning(unittest.TestCase):
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
 
@@ -120,7 +120,7 @@ class TestQuantileBinning(unittest.TestCase):
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=1)
         header = ['x' + str(i) for i in range(self.feature_num)]
@@ -208,7 +208,7 @@ class TestQuantileBinning(unittest.TestCase):
 
         abnormal_value = final_result[0][1].features.get_data(0, 'a')
         print('abnormal_value: {}, type: {}'.format(abnormal_value, type(abnormal_value)))
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=1)
         header = ['x' + str(i) for i in range(sparse_inst_shape)]

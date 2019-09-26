@@ -17,18 +17,18 @@
 import unittest
 import random
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
 
 class TeskClassifyLabelChecker(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_label_checker")
+        session.init("test_label_checker")
 
         self.small_label_set = [i % 5 for i in range(100)]
-        self.classify_y = eggroll.parallelize(self.small_label_set, include_key=False)
+        self.classify_y = session.parallelize(self.small_label_set, include_key=False)
         self.regression_label = [random.random() for i in range(100)]
-        self.regression_y = eggroll.parallelize(self.regression_label)
+        self.regression_y = session.parallelize(self.regression_label)
         self.classify_checker = ClassifyLabelChecker()
         self.regression_checker = RegressionLabelChecker()
 

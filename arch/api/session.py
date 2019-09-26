@@ -17,7 +17,6 @@
 import os
 import typing
 import uuid
-import warnings
 from typing import Iterable
 
 from arch.api import RuntimeInstance

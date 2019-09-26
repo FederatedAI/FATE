@@ -19,9 +19,9 @@
 
 import unittest
 
-from arch.api import eggroll
+from arch.api import session
 
-eggroll.init("123")
+session.init("123")
 from federatedml.feature.one_hot_encoder import OneHotEncoder
 from federatedml.feature.instance import Instance
 import numpy as np
@@ -44,7 +44,7 @@ class TestOneHotEncoder(unittest.TestCase):
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
 
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
         table.schema = {"header": self.header}

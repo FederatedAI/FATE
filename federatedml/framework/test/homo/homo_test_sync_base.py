@@ -26,7 +26,7 @@ class TestSyncBase(unittest.TestCase):
 
     @classmethod
     def init_table_manager_and_federation(cls, job_id, role, num_hosts, host_ind=0):
-        from arch.api import eggroll
+        from arch.api import session
         from arch.api import federation
 
         role_id = {
@@ -40,7 +40,7 @@ class TestSyncBase(unittest.TestCase):
                 9999
             ]
         }
-        eggroll.init(job_id)
+        session.init(job_id)
         federation.init(job_id,
                         {"local": {
                             "role": role,
@@ -50,14 +50,14 @@ class TestSyncBase(unittest.TestCase):
                         })
 
     def clean_tables(self):
-        from arch.api import eggroll
-        eggroll.init(job_id=self.job_id)
+        from arch.api import session
+        session.init(job_id=self.job_id)
         try:
-            eggroll.cleanup("*", self.job_id, True)
+            session.cleanup("*", self.job_id, True)
         except EnvironmentError:
             pass
         try:
-            eggroll.cleanup("*", self.job_id, False)
+            session.cleanup("*", self.job_id, False)
         except EnvironmentError:
             pass
 

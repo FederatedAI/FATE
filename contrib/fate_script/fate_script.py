@@ -3,7 +3,7 @@ import uuid
 import pandas as pd
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from contrib.fate_script import WorkMode
 from contrib.fate_script import RuntimeInstance
 from contrib.fate_script.standalone import fate_script as standalone_fate_script
@@ -13,7 +13,7 @@ from contrib.fate_script.blas.blas import TensorInEgg, TensorInPy
 from federatedml.util.param_checker import AllChecker
 
 def init(job_id, runtime_conf, mode, server_conf_path="arch/conf/server_conf.json"):
-    eggroll.init(job_id, mode)
+    session.init(job_id, mode)
     print("runtime_conf:{}".format(runtime_conf))
     all_checker = AllChecker(runtime_conf)
     all_checker.check_all()
@@ -63,7 +63,7 @@ def get_lr_x_table(file_path):
     ns = str(uuid.uuid1())
     csv_table = pd.read_csv(file_path)
     data = pd.read_csv(file_path).values
-    x = eggroll.table('fata_script_test_data_x_' + str(RuntimeInstance.FEDERATION.role + str(RuntimeInstance.FEDERATION.job_id)), ns, partition=2, persistent=True)
+    x = session.table('fata_script_test_data_x_' + str(RuntimeInstance.FEDERATION.role + str(RuntimeInstance.FEDERATION.job_id)), ns, partition=2, persistent=True)
     if 'y' in list(csv_table.columns.values):
         data_index = 2
     else:
@@ -77,7 +77,7 @@ def get_lr_y_table(file_path):
     ns = str(uuid.uuid1())
     csv_table = pd.read_csv(file_path)
     data = pd.read_csv(file_path).values
-    y = eggroll.table('fata_script_test_data_y_' + str(RuntimeInstance.FEDERATION.role) + str(RuntimeInstance.FEDERATION.job_id), ns, partition=2, persistent=True)
+    y = session.table('fata_script_test_data_y_' + str(RuntimeInstance.FEDERATION.role) + str(RuntimeInstance.FEDERATION.job_id), ns, partition=2, persistent=True)
     if 'y' not in list(csv_table.columns.values):
         raise RuntimeError("input data must contain y column")
     for i in range(np.shape(data)[0]):

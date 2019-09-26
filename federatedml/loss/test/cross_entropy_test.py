@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 from sklearn import metrics
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
 from federatedml.util import consts
@@ -28,12 +28,12 @@ from federatedml.util import consts
 
 class TestSigmoidBinaryCrossEntropyLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_cross_entropy")
+        session.init("test_cross_entropy")
         self.sigmoid_loss = SigmoidBinaryCrossEntropyLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for i in range(1, 10):
@@ -62,12 +62,12 @@ class TestSigmoidBinaryCrossEntropyLoss(unittest.TestCase):
 
 class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_cross_entropy")
+        session.init("test_cross_entropy")
         self.softmax_loss = SoftmaxCrossEntropyLoss()
         self.y_list = [i % 5 for i in range(100)]
         self.predict_list = [np.array([random.random() for i in range(5)]) for j in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for i in range(10):

@@ -24,17 +24,17 @@ from fate_flow.manager.tracking import Tracking
 
 from federatedml.util.data_io import DataIO
 from federatedml.param.dataio_param import DataIOParam
-from arch.api import eggroll
+from arch.api import session
 from federatedml.util import consts
 
 
 class TestDenseFeatureReader(unittest.TestCase):
     def setUp(self):
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
-        self.table1 = eggroll.parallelize(data1, include_key=True)
+        self.table1 = session.parallelize(data1, include_key=True)
 
         data2 = [("a", '-1,,na,null,null,2')]
-        self.table2 = eggroll.parallelize(data2, include_key=True)
+        self.table2 = session.parallelize(data2, include_key=True)
         self.args1 = {"data": 
                        {"data_io_0": {
                          "data": self.table1
@@ -149,7 +149,7 @@ class TestSparseFeatureReader(unittest.TestCase):
              
             self.data.append((i, " ".join(row)))
 
-        self.table = eggroll.parallelize(self.data, include_key=True)
+        self.table = session.parallelize(self.data, include_key=True)
         self.args = {"data": 
                       {"data_io_0": {
                         "data": self.table
@@ -248,8 +248,8 @@ class TestSparseTagReader(unittest.TestCase):
             self.data.append((i, ' '.join(row)))
             self.data_with_value.append((i, ' '.join(row_with_value)))
 
-        self.table1 = eggroll.parallelize(self.data, include_key=True)
-        self.table2 = eggroll.parallelize(self.data_with_value, include_key=True)
+        self.table1 = session.parallelize(self.data, include_key=True)
+        self.table2 = session.parallelize(self.data_with_value, include_key=True)
         self.args1 = {"data": 
                        {"data_io_0": {
                          "data": self.table1
@@ -398,5 +398,5 @@ class TestSparseTagReader(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    eggroll.init("test_dataio" + str(int(time.time())))
+    session.init("test_dataio" + str(int(time.time())))
     unittest.main()

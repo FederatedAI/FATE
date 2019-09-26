@@ -17,7 +17,7 @@
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
 import copy
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.model_selection.cross_validate import BaseCrossValidator
@@ -66,12 +66,12 @@ class KFold(BaseCrossValidator):
             train_sids_table = [(key_type(x), 1) for x in train_sids]
             test_sids_table = [(key_type(x), 1) for x in test_sids]
             # print(train_sids_table)
-            train_table = eggroll.parallelize(train_sids_table,
+            train_table = session.parallelize(train_sids_table,
                                               include_key=True,
                                               partition=data_inst._partitions)
             train_data = data_inst.join(train_table, lambda x, y: x)
 
-            test_table = eggroll.parallelize(test_sids_table,
+            test_table = session.parallelize(test_sids_table,
                                              include_key=True,
                                              partition=data_inst._partitions)
             test_data = data_inst.join(test_table, lambda x, y: x)
