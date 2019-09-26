@@ -23,8 +23,8 @@ from arch.api.table import eggroll_util
 
 
 def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
-    from arch.api import table_manager
-    dup = table_manager.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+    from arch.api import session
+    dup = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
 
     def _func(_, it):
         eggroll_util.maybe_create_eggroll_client()

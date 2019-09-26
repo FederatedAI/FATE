@@ -15,7 +15,7 @@
 #
 from typing import List
 
-from arch.api import table_manager
+from arch.api import session
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -177,25 +177,25 @@ class Tracking(object):
         if data_table:
             persistent_table = data_table.save_as(namespace=data_table._namespace,
                                                   name='{}_persistent'.format(data_table._name))
-            table_manager.save_data_table_meta(
+            session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
                 data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
             data_table_info = {
                 data_name: {'name': persistent_table._name, 'namespace': persistent_table._namespace}}
         else:
             data_table_info = {}
-        table_manager.save_data(
+        session.save_data(
             data_table_info.items(),
             name=Tracking.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
 
     def get_output_data_table(self, data_name: str = 'component'):
-        output_data_info_table = table_manager.table(name=Tracking.output_table_name('data'),
+        output_data_info_table = session.table(name=Tracking.output_table_name('data'),
                                                namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
         if data_table_info:
-            data_table = table_manager.table(name=data_table_info.get('name', ''),
+            data_table = session.table(name=data_table_info.get('name', ''),
                                        namespace=data_table_info.get('namespace', ''))
             data_table_meta = data_table.get_metas()
             if data_table_meta.get('schema', None):
@@ -356,7 +356,7 @@ class Tracking(object):
 
     def clean_task(self):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))
-        table_manager.clean_tables(namespace=self.task_id, regex_string='*')
+        session.clean_tables(namespace=self.task_id, regex_string='*')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace

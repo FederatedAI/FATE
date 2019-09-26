@@ -20,14 +20,14 @@ import os
 
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
-from arch.api import table_manager
+from arch.api import session
 from arch.api.utils import file_utils, version_control
 from arch.api.proto import default_empty_fill_pb2
 from fate_flow.settings import stat_logger
 
 
 def save_component_model(component_model_key, model_buffers, party_model_id, model_version, version_log=None):
-    pipeline_model_table = table_manager.table(name=model_version, namespace=party_model_id,
+    pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
                                          create_if_missing=True, error_if_exist=False)
     model_class_map = {}
@@ -40,13 +40,13 @@ def save_component_model(component_model_key, model_buffers, party_model_id, mod
             buffer_object_serialize_string = fill_message.SerializeToString()
         pipeline_model_table.put(storage_key, buffer_object_serialize_string, use_serialize=False)
         model_class_map[storage_key] = type(buffer_object).__name__
-    table_manager.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
+    session.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
     version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
     version_control.save_version(name=model_version, namespace=party_model_id, version_log=version_log)
 
 
 def read_component_model(component_model_key, party_model_id, model_version):
-    pipeline_model_table = table_manager.table(name=model_version, namespace=party_model_id,
+    pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
                                          create_if_missing=False, error_if_exist=False)
     model_buffers = {}
@@ -84,7 +84,7 @@ def parse_proto_object(proto_object, proto_object_serialized_bytes):
 
 
 def collect_pipeline_model(party_model_id, model_version):
-    pipeline_model_table = table_manager.table(name=model_version, namespace=party_model_id,
+    pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
                                          create_if_missing=False, error_if_exist=False)
     model_buffers = {}
@@ -104,11 +104,11 @@ def collect_pipeline_model(party_model_id, model_version):
 
 
 def save_pipeline_model_meta(kv, party_model_id, model_version):
-    table_manager.save_data_table_meta(kv, data_table_namespace=party_model_id, data_table_name=model_version)
+    session.save_data_table_meta(kv, data_table_namespace=party_model_id, data_table_name=model_version)
 
 
 def get_pipeline_model_meta(party_model_id, model_version):
-    return table_manager.get_data_table_metas(data_table_namespace=party_model_id, data_table_name=model_version)
+    return session.get_data_table_metas(data_table_namespace=party_model_id, data_table_name=model_version)
 
 
 def get_proto_buffer_class(class_name):

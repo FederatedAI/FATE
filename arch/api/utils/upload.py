@@ -21,7 +21,7 @@ import traceback
 import csv
 import sys
 import time
-from arch.api import table_manager, Backend
+from arch.api import session, Backend
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
@@ -42,8 +42,8 @@ def list_to_str(input_list):
 
 def save_data_header(header_source, dst_table_name, dst_table_namespace):
     header_source_item = header_source.split(',')
-    table_manager.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}, dst_table_name,
-                                       dst_table_namespace)
+    session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}, dst_table_name,
+                                 dst_table_namespace)
 
 
 def read_data(input_file, dst_table_name, dst_table_namespace, head=True):
@@ -141,10 +141,10 @@ if __name__ == "__main__":
             if table_name is None:
                 table_name = _table_name
             # todo: use eggroll as default storage backed
-            table_manager.init(job_id=args.job_id, mode=work_mode, backend=Backend.EGGROLL)
+            session.init(job_id=args.job_id, mode=work_mode, backend=Backend.EGGROLL)
             input_data = read_data(input_file_path, table_name, namespace, head)
             in_version = job_config.get('in_version', False)
-            data_table = table_manager.save_data(input_data, name=table_name, namespace=namespace, partition=partition, in_version=in_version)
+            data_table = session.save_data(input_data, name=table_name, namespace=namespace, partition=partition, in_version=in_version)
             print("------------load data finish!-----------------")
             print("file: {}".format(input_file_path))
             print("total data_count: {}".format(data_table.count()))
