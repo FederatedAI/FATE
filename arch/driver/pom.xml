@@ -35,11 +35,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <dependencies>
-        <dependency>
-            <groupId>com.webank.ai.fate</groupId>
-            <artifactId>fate-core</artifactId>
-            <version>${fate.version}</version>
-        </dependency>
     </dependencies>
 
 

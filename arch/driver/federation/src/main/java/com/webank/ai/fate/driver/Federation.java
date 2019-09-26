@@ -15,15 +15,14 @@
  */
 
 package com.webank.ai.fate.driver;
-
-import com.webank.ai.fate.core.factory.DefaultGrpcServerFactory;
-import com.webank.ai.fate.core.server.BaseFateServer;
-import com.webank.ai.fate.core.server.DefaultServerConf;
-import com.webank.ai.fate.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.core.factory.DefaultGrpcServerFactory;
+import com.webank.ai.eggroll.core.server.BaseEggRollServer;
+import com.webank.ai.eggroll.core.server.DefaultServerConf;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.server.ProxyServiceImpl;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.server.TransferSubmitServiceImpl;
 import com.webank.ai.fate.driver.federation.transfer.communication.TransferJobScheduler;
-import com.webank.ai.fate.eggroll.storage.service.server.ObjectStoreServicer;
+import com.webank.ai.eggroll.framework.storage.service.server.ObjectStoreServicer;
 import io.grpc.Server;
 import io.grpc.ServerInterceptors;
 import org.apache.commons.cli.CommandLine;
@@ -35,7 +34,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
-public class Federation extends BaseFateServer {
+public class Federation extends BaseEggRollServer{
     private static final Logger LOGGER = LogManager.getLogger();
     public static void main(String[] args) throws Exception {
         String confFilePath = null;
