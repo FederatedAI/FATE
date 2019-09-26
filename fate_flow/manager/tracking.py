@@ -311,9 +311,13 @@ class Tracking(object):
                     # TODO:
                     pass
             for k, v in job_info.items():
-                if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
-                    continue
-                setattr(job, k, v)
+                try:
+                    if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
+                        continue
+                    setattr(job, k, v)
+                except:
+                    pass
+
             if is_insert:
                 job.save(force_insert=True)
             else:
@@ -344,9 +348,12 @@ class Tracking(object):
                     # TODO:
                     pass
             for k, v in task_info.items():
-                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
-                                                                                                              k).default:
-                    continue
+                try:
+                    if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
+                                                                                                                  k).default:
+                        continue
+                except:
+                    pass
                 setattr(task, k, v)
             if is_insert:
                 task.save(force_insert=True)

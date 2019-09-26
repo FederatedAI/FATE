@@ -132,7 +132,7 @@ class TaskScheduler(object):
                     party_job_args = {}
                 dest_party_id = party_parameters.get('local', {}).get('party_id')
 
-                federated_api(job_id=job_id,
+                response = federated_api(job_id=job_id,
                               method='POST',
                               endpoint='/{}/schedule/{}/{}/{}/{}/{}/run'.format(
                                   API_VERSION,
@@ -153,6 +153,9 @@ class TaskScheduler(object):
                                          'output': component.get_output(),
                                          'job_server': {'ip': get_lan_ip(), 'http_port': RuntimeConfig.HTTP_PORT}},
                               work_mode=job_parameters['work_mode'])
+                if response['retcode']:
+                    if 'not authorized' in response['retmsg']:
+                        raise Exception('run component {} not authorized'.format(component_name))
         component_task_status = TaskScheduler.check_task_status(job_id=job_id, component=component)
         if component_task_status:
             task_success = True

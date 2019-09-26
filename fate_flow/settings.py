@@ -56,6 +56,7 @@ CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
 USE_AUTHENTICATION = False
+PRIVILEGE_COMMAND_WHITELIST = ['task_status', 'job_status', 'save_pipeline', 'clean']
 
 DATABASE = {
     'name': 'fate_flow',
