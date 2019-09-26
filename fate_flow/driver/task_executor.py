@@ -132,6 +132,7 @@ class TaskExecutor(object):
                                               party_id=party_id,
                                               initiator_party_id=job_initiator.get('party_id', None),
                                               task_info=task.to_json())
+                eggroll.stop()
             except Exception as e:
                 schedule_logger.exception(e)
         schedule_logger.info(
