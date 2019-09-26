@@ -28,9 +28,9 @@ Initializes EggRoll runtime. This API should always be called before other API c
 **Example:**
 
 ``` python
->>> from arch import eggroll
->>> from eggroll.api import WorkMode
->>> from eggroll.api import NamingPolicy
+>>> from arch.api import eggroll
+>>> from arch.api.eggroll import WorkMode
+>>> from arch.api.eggroll import NamingPolicy
 >>> eggroll.init('a', WorkMode.CLUSTER, NamingPolicy.ITER_AWARE)
 ```
 
