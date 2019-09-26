@@ -38,7 +38,7 @@ from federatedml.protobuf.generated.data_io_meta_pb2 import ImputerMeta
 from federatedml.protobuf.generated.data_io_param_pb2 import ImputerParam
 from federatedml.protobuf.generated.data_io_meta_pb2 import OutlierMeta
 from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
-from arch.api import storage
+from arch.api import table_manager
 
 LOGGER = log_utils.getLogger()
 
@@ -81,8 +81,8 @@ class DenseFeatureReader(object):
                 raise ValueError("input data's schema for fit and transform should be same")
 
     def generate_header(self, input_data, mode="fit"):
-        header = storage.get_data_table_meta_by_instance("header", input_data)
-        sid_name = storage.get_data_table_meta_by_instance("sid", input_data)
+        header = input_data.get_meta("header")
+        sid_name = input_data.get_meta("sid")
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(self.sid_name))
  
