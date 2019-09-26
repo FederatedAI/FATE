@@ -16,9 +16,11 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.driver.job_controller import TaskScheduler
 from fate_flow.manager.queue_manager import BaseQueue
-from fate_flow.settings import schedule_logger
+
+
 
 
 class DAGScheduler(threading.Thread):
@@ -30,7 +32,7 @@ class DAGScheduler(threading.Thread):
 
     def run(self):
         if not self.queue.is_ready():
-            schedule_logger.error('queue is not ready')
+            schedule_logger().error('queue is not ready')
             return False
         all_jobs = []
         while True:
@@ -40,12 +42,12 @@ class DAGScheduler(threading.Thread):
                         all_jobs.remove(future)
                         break
                 job_event = self.queue.get_event()
-                schedule_logger.info('schedule job {}'.format(job_event))
+                schedule_logger(job_event['job_id']).info('schedule job {}'.format(job_event))
                 future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
                 future.add_done_callback(DAGScheduler.get_result)
                 all_jobs.append(future)
             except Exception as e:
-                schedule_logger.exception(e)
+                schedule_logger().exception(e)
 
     def stop(self):
         self.job_executor_pool.shutdown(True)
@@ -55,7 +57,7 @@ class DAGScheduler(threading.Thread):
         try:
             return TaskScheduler.run_job(**job_event)
         except Exception as e:
-            schedule_logger.exception(e)
+            schedule_logger(job_event.get('job_id')).exception(e)
             return False
 
     @staticmethod
