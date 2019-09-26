@@ -211,11 +211,13 @@ class TaskScheduler(object):
         else:
             for role in job_runtime_conf['role']:
                 for party_id_index in range(len(role)):
-                    task_info = {"f_status":JobStatus.FAILED if component_task_status==False else JobStatus.TIMEOUT}
-                    TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
-                              party_id=role[party_id_index], initiator_party_id=job_initiator.get('party_id')
-                            , initiator_role=job_initiator.get('role'),
-                              task_info=task_info)
+                    task_info = {"f_status": JobStatus.FAILED if component_task_status == False else JobStatus.TIMEOUT}
+                    TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id,
+                                                  role=role,
+                                                  party_id=role[party_id_index],
+                                                  initiator_party_id=job_initiator.get('party_id'),
+                                                  initiator_role=job_initiator.get('role'),
+                                                  task_info=task_info)
             return False
 
     @staticmethod
