@@ -66,7 +66,7 @@ class DataIOParam(BaseParam):
 
     with_label : bool, True if input data consist of label, False otherwise. default: 'false'
 
-    label_idx : int, accepted 'int','long' only, use when with_label is True. default: 'false'
+    label_name : str, column_name of the column where label locates, only use in dense-inputformat. default: ''
 
     label_type : object, accepted 'int','int64','float','float64','long','str' only,
                 use when with_label is True. default: 'false'
@@ -80,7 +80,7 @@ class DataIOParam(BaseParam):
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
-                 with_label=False, label_idx=0,
+                 with_label=False, label_name='',
                  label_type='int', output_format='dense'):
         self.input_format = input_format
         self.delimitor = delimitor
@@ -96,7 +96,7 @@ class DataIOParam(BaseParam):
         self.outlier_impute = outlier_impute
         self.outlier_replace_value = outlier_replace_value
         self.with_label = with_label
-        self.label_idx = label_idx
+        self.label_name = label_name
         self.label_type = label_type
         self.output_format = output_format
 
@@ -133,8 +133,8 @@ class DataIOParam(BaseParam):
             raise ValueError("dataio param's with_label {} not supported".format(self.with_label))
 
         if self.with_label:
-            if type(self.label_idx).__name__ not in ["long", "int"]:
-                raise ValueError("dataio param's label_idx {} not supported".format(self.label_idx))
+            if not isinstance(self.label_name, str):
+                raise ValueError("dataio param's label_name {} should be str".format(self.label_name))
 
             self.label_type = self.check_and_change_lower(self.label_type,
                                                           ["int", "int64", "float", "float64", "str", "long"],
