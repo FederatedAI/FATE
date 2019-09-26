@@ -57,7 +57,3 @@ class StoreType(Enum):
 class NamingPolicy(Enum):
     DEFAULT = 'DEFAULT'
     ITER_AWARE = 'ITER_AWARE'
-
-
-# compatibility
-session = session
