@@ -23,6 +23,7 @@ from federatedml.framework.homo.procedure import aggregator, predict_procedure
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
+from federatedml.optim import activation
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -39,12 +40,10 @@ class HomoLRArbiter(HomoLRBase):
         self.aggregator = aggregator.Arbiter()
         self.lr_weights = None
         self.cipher = paillier_cipher.Arbiter()
-        self.predict_procedure = predict_procedure.Arbiter()
 
     def _init_model(self, params):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
-        self.predict_procedure.register_predict_sync(self.transfer_variable)
 
     def fit(self, data_instances):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
@@ -90,7 +89,27 @@ class HomoLRArbiter(HomoLRBase):
 
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=current_suffix)
-        self.predict_procedure.start_predict(host_ciphers,
-                                             self.lr_weights,
-                                             self.model_param.predict_param.threshold,
-                                             current_suffix)
+
+        for idx, cipher in host_ciphers.items():
+            if cipher is None:
+                continue
+            encrypted_lr_weights = self.lr_weights.encrypted(cipher, inplace=False)
+            self.transfer_variable.aggregated_model.remote(obj=encrypted_lr_weights.for_remote(),
+                                                           role=consts.HOST,
+                                                           idx=idx,
+                                                           suffix=current_suffix)
+
+        # Receive wx results
+        for idx, cipher in host_ciphers.items():
+            if cipher is None:
+                continue
+            encrypted_predict_wx = self.transfer_variable.predict_wx.get(idx=idx, suffix=current_suffix)
+            predict_wx = cipher.distribute_decrypt(encrypted_predict_wx)
+
+            predict_table = predict_wx.mapValues(lambda x: 1 if activation.sigmoid(x) >
+                                                                self.model_param.predict_param.threshold else 0)
+
+            self.transfer_variable.predict_result.remote(predict_table,
+                                                         role=consts.HOST,
+                                                         idx=idx,
+                                                         suffix=current_suffix)

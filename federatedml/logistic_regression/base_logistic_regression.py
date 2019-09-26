@@ -115,7 +115,8 @@ class BaseLogisticRegression(ModelBase):
     def fit(self, data_instance):
         pass
 
-
+    def _get_meta(self):
+        pass
 
     def _get_param(self):
         header = self.header

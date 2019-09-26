@@ -37,11 +37,9 @@ class HomoLRGuest(HomoLRBase):
         self.loss_history = []
         self.role = consts.GUEST
         self.aggregator = aggregator.Guest()
-        self.predict_procedure = predict_procedure.Guest()
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.predict_procedure.register_predict_sync(self.transfer_variable, self)
 
     def fit(self, data_instances):
 
@@ -90,9 +88,13 @@ class HomoLRGuest(HomoLRBase):
     def predict(self, data_instances):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        predict_result = self.predict_procedure.start_predict(data_instances,
-                                                              self.lr_weights,
-                                                              self.model_param.predict_param.threshold)
+        predict_wx = self.compute_wx(data_instances, self.lr_weights.coef_, self.lr_weights.intercept_)
+
+        pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+
+        predict_result = data_instances.mapValues(lambda x: x.label)
+        predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
+                                                                       {"1": x[0], "0": x[1]}])
         return predict_result
 
 

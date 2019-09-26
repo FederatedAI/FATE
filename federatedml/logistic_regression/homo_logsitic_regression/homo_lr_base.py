@@ -26,6 +26,7 @@ from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.util import consts
+from federatedml.optim import activation
 from federatedml.util import fate_operator
 from federatedml.protobuf.generated import lr_model_meta_pb2
 
@@ -61,6 +62,20 @@ class HomoLRBase(BaseLogisticRegression):
         if self.model_param.converge_func == 'weight_diff':
             return False
         return True
+
+    def classify(self, predict_wx, threshold):
+        """
+        convert a probability table into a predicted class table.
+        """
+        # predict_wx = self.compute_wx(data_instances, self.lr_weights.coef_, self.lr_weights.intercept_)
+
+        def predict(x):
+            prob = activation.sigmoid(x)
+            pred_label = 1 if prob > threshold else 0
+            return prob, pred_label
+
+        predict_table = predict_wx.mapValues(predict)
+        return predict_table
 
     def _judge_stage(self, args):
         data_sets = args['data']

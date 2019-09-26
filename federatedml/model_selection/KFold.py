@@ -97,9 +97,9 @@ class KFold(BaseCrossValidator):
 
             LOGGER.info("KFold fold_num is: {}".format(fold_num))
             if self.mode == consts.HETERO:
-                self._synchronize_data(train_data, model.flowid, consts.TRAIN_DATA)
+                self._align_data_index(train_data, model.flowid, consts.TRAIN_DATA)
                 LOGGER.info("Train data Synchronized")
-                self._synchronize_data(test_data, model.flowid, consts.TEST_DATA)
+                self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
                 LOGGER.info("Test data Synchronized")
             LOGGER.debug("train_data count: {}".format(train_data.count()))
 
@@ -160,7 +160,7 @@ class KFold(BaseCrossValidator):
         self.evaluate_param = param.evaluate_param
         np.random.seed(self.random_seed)
 
-    def _synchronize_data(self, data_instance, flowid, data_application=None):
+    def _align_data_index(self, data_instance, flowid, data_application=None):
         header = data_instance.schema.get('header')
 
         if data_application is None:
@@ -178,29 +178,15 @@ class KFold(BaseCrossValidator):
 
         if self.role == consts.GUEST:
             data_sid = data_instance.mapValues(lambda v: 1)
-
             transfer_id.remote(data_sid,
                                role=consts.HOST,
                                idx=-1,
                                suffix=(flowid,))
-            """
-            federation.remote(data_sid,
-                              name=transfer_id.name,
-                              tag=transfer_variable.generate_transferid(transfer_id, flowid),
-                              role=consts.HOST,
-                              idx=0)
-            """
-
             LOGGER.info("remote {} to host".format(data_application))
             return None
         elif self.role == consts.HOST:
             data_sid = transfer_id.get(idx=0,
                                        suffix=(flowid,))
-            """
-            data_sid = federation.get(name=transfer_id.name,
-                                      tag=transfer_variable.generate_transferid(transfer_id, flowid),
-                                      idx=-1)
-            """
 
             LOGGER.info("get {} from guest".format(data_application))
             join_data_insts = data_sid.join(data_instance, lambda s, d: d)

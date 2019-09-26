@@ -42,7 +42,6 @@ class HomoLRHost(HomoLRBase):
         self.aggregator = aggregator.Host()
         self.lr_weights = None
         self.cipher = paillier_cipher.Host()
-        self.predict_procedure = predict_procedure.Host()
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -54,7 +53,6 @@ class HomoLRHost(HomoLRBase):
         else:
             self.use_encrypt = False
             self.gradient_operator = LogisticGradient()
-        self.predict_procedure.register_predict_sync(self.transfer_variable, self)
 
     def fit(self, data_instances):
         LOGGER.debug("Start data count: {}".format(data_instances.count()))
@@ -129,12 +127,21 @@ class HomoLRHost(HomoLRBase):
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
-        predict_result = self.predict_procedure.start_predict(data_instances,
-                                                              self.lr_weights,
-                                                              self.model_param.predict_param.threshold,
-                                                              self.use_encrypt,
-                                                              self.fit_intercept,
-                                                              suffix=suffix)
+        if self.use_encrypt:
+            final_model = self.transfer_variable.aggregated_model.get(idx=0, suffix=suffix)
+            lr_weights = LogisticRegressionWeights(final_model.unboxed, self.fit_intercept)
+            wx = self.compute_wx(data_instances, lr_weights.coef_, lr_weights.intercept_)
+            self.transfer_variable.predict_wx.remote(wx, consts.ARBITER, 0, suffix=suffix)
+            predict_result = self.transfer_variable.predict_result.get(idx=0, suffix=suffix)
+            predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
+                                                                                     {"0": None, "1": None}])
+
+        else:
+            predict_wx = self.compute_wx(data_instances, self.lr_weights.coef_, self.lr_weights.intercept_)
+            pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
+                                                                           {"1": x[0], "0": 1 - x[0]}])
         return predict_result
 
     def _get_param(self):
