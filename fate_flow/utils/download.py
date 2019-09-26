@@ -15,7 +15,7 @@
 #
 import os
 
-from arch.api import session,storage
+from arch.api import session
 
 from arch.api.utils import log_utils, dtable_utils
 
@@ -37,7 +37,7 @@ class Download(object):
         job_id = "_".join(self.taskid.split("_")[:2])
         session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = storage.get_data_table(name=table_name, namespace=namespace)
+            data_table = session.get_data_table(name=table_name, namespace=namespace)
             print('===== begin to export data =====')
             lines = 0
             for key, value in data_table.collect():
