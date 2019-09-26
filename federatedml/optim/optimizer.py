@@ -19,7 +19,7 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.logistic_regression.logistic_regression_weights import LogisticRegressionWeights
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 
 LOGGER = log_utils.getLogger()
 
@@ -51,7 +51,7 @@ class _Optimizer(object):
     def apply_gradients(self, grad):
         raise NotImplementedError("Should not call here")
 
-    def _l1_updator(self, model_weights: LogisticRegressionWeights, gradient):
+    def _l1_updator(self, model_weights: LinearModelWeights, gradient):
         coef_ = model_weights.coef_
         if model_weights.fit_intercept:
             gradient_without_intercept = gradient[: -1]
@@ -64,15 +64,15 @@ class _Optimizer(object):
         if model_weights.fit_intercept:
             new_weights = np.append(new_weights, model_weights.intercept_)
             new_weights[-1] -= gradient[-1]
-        new_param = LogisticRegressionWeights(new_weights, model_weights.fit_intercept)
+        new_param = LinearModelWeights(new_weights, model_weights.fit_intercept)
         return new_param
 
-    def _l2_updator(self, lr_weights: LogisticRegressionWeights, gradient):
+    def _l2_updator(self, lr_weights: LinearModelWeights, gradient):
         """
         For l2 regularization, the regular term has been added in gradients.
         """
         new_weights = lr_weights.unboxed - gradient
-        new_param = LogisticRegressionWeights(new_weights, lr_weights.fit_intercept)
+        new_param = LinearModelWeights(new_weights, lr_weights.fit_intercept)
         return new_param
 
     def add_regular_to_grad(self, grad, lr_weights):
@@ -87,27 +87,27 @@ class _Optimizer(object):
             new_grad = grad
         return new_grad
 
-    def regularization_update(self, model_weights: LogisticRegressionWeights, grad):
+    def regularization_update(self, model_weights: LinearModelWeights, grad):
         if self.penalty == 'l1':
             model_weights = self._l1_updator(model_weights, grad)
         elif self.penalty == 'l2':
             model_weights = self._l2_updator(model_weights, grad)
         else:
             new_vars = model_weights.unboxed - grad
-            model_weights = LogisticRegressionWeights(new_vars, model_weights.fit_intercept)
+            model_weights = LinearModelWeights(new_vars, model_weights.fit_intercept)
         return model_weights
 
-    def __l1_loss_norm(self, model_weights: LogisticRegressionWeights):
+    def __l1_loss_norm(self, model_weights: LinearModelWeights):
         coef_ = model_weights.coef_
         loss_norm = np.sum(self.alpha * np.abs(coef_))
         return loss_norm
 
-    def __l2_loss_norm(self, model_weights: LogisticRegressionWeights):
+    def __l2_loss_norm(self, model_weights: LinearModelWeights):
         coef_ = model_weights.coef_
         loss_norm = 0.5 * self.alpha * np.dot(coef_, coef_)
         return loss_norm
 
-    def loss_norm(self, model_weights: LogisticRegressionWeights):
+    def loss_norm(self, model_weights: LinearModelWeights):
         if self.penalty == 'l1':
             loss_norm_value = self.__l1_loss_norm(model_weights)
         elif self.penalty == 'l2':
@@ -116,7 +116,7 @@ class _Optimizer(object):
             loss_norm_value = None
         return loss_norm_value
 
-    def update_model(self, model_weights: LogisticRegressionWeights, grad, has_applied=True):
+    def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
         if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)

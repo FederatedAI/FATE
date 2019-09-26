@@ -6,7 +6,6 @@
     "max_iter": 100,
     "converge_func": "diff",
     "re_encrypt_batches": 2,
-    "party_weight": 1,
     "batch_size": 320,
     "learning_rate": 0.01,
     "init_param": {

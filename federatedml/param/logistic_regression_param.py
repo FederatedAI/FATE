@@ -47,10 +47,6 @@ class LogisticParam(BaseParam):
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
         Optimize method
 
-    party_weight : int or float, default: 1
-        Required in Homo LR. Setting the weight of model updated for this party.
-        The higher weight set, the higher influence made for this party when updating model.
-
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
 
@@ -74,7 +70,7 @@ class LogisticParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 eps=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -91,7 +87,6 @@ class LogisticParam(BaseParam):
         self.max_iter = max_iter
         self.converge_func = converge_func
         self.encrypt_param = encrypt_param
-        self.party_weight = party_weight
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
@@ -161,11 +156,6 @@ class LogisticParam(BaseParam):
 
         self.encrypt_param.check()
 
-        if type(self.party_weight).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "logistic_param's party_weight {} not supported, should be 'int' or 'float'".format(
-                    self.party_weight))
-
         if type(self.decay).__name__ not in ["int", 'float']:
             raise ValueError(
                 "logistic_param's decay {} not supported, should be 'int' or 'float'".format(
@@ -192,7 +182,7 @@ class HomoLogisticParam(LogisticParam):
 
     """
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 eps=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
@@ -201,7 +191,7 @@ class HomoLogisticParam(LogisticParam):
                  aggregate_iters=1
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, eps=eps, alpha=alpha, optimizer=optimizer,
-                                                party_weight=party_weight, batch_size=batch_size,
+                                                batch_size=batch_size,
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, converge_func=converge_func,
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
@@ -234,7 +224,7 @@ class HomoLogisticParam(LogisticParam):
 
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 eps=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -242,7 +232,7 @@ class HeteroLogisticParam(LogisticParam):
                  one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, eps=eps, alpha=alpha, optimizer=optimizer,
-                                                  party_weight=party_weight, batch_size=batch_size,
+                                                  batch_size=batch_size,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, converge_func=converge_func,
                                                   predict_param=predict_param, cv_param=cv_param,
