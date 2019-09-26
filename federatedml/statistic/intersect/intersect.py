@@ -27,6 +27,8 @@ class Intersect(object):
     def __init__(self, intersect_params):
         self.transfer_variable = None
         self.only_output_key = intersect_params.only_output_key
+        self._guest_id = None
+        self._host_id = None
 
     def run(self, data_instances):
         raise NotImplementedError("method init must be define")
@@ -47,6 +49,26 @@ class Intersect(object):
         intersect_ids.schema = data_instances.schema
         return intersect_ids
 
+    @property
+    def guest_party_id(self):
+        return self._guest_id
+
+    @guest_party_id.setter
+    def guest_party_id(self, guest_id):
+        if not isinstance(guest_id, int):
+            raise ValueError("party id should be integer, but get {}".format(guest_id))
+        self._guest_id = guest_id
+
+    @property
+    def host_party_id(self):
+        return self._host_id
+
+    @host_party_id.setter
+    def host_party_id(self, host_id):
+        if not isinstance(host_id, int):
+            raise ValueError("party id should be integer, but get {}".format(host_id))
+        self._host_id = host_id
+
 
 class RsaIntersect(Intersect):
     def __init__(self, intersect_params):
@@ -61,6 +83,8 @@ class RawIntersect(Intersect):
         self.with_encode = intersect_params.with_encode
         self.transfer_variable = RawIntersectTransferVariable()
         self.encode_params = intersect_params.encode_params
+
+        self.task_id = None
 
     def intersect_send_id(self, data_instances):
         sid_encode_pair = None
@@ -188,5 +212,10 @@ class RawIntersect(Intersect):
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
+        if self.task_id is not None:
+            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
+            recv_ids.save_as(self.task_id, namespace)
+            LOGGER.info("save guest id in name:{}, namespace:{}".format(self.task_id, namespace))
 
         return intersect_ids
