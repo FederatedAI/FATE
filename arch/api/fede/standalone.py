@@ -118,8 +118,9 @@ class FederationRuntime(object):
                 if isinstance(obj, _DTable):
                     _status_table.put(_tagged_key, (obj._type, obj._name, obj._namespace, obj._partitions))
                 else:
-                    object_storage_table_name = '{}.{}'.format(OBJECT_STORAGE_NAME, '-'.join([self.role, str(self.party_id), _role, str(_partyId)]))
-                    _table = _get_meta_table(object_storage_table_name, self.job_id)
+                    # object_storage_table_name = '{}.{}'.format(OBJECT_STORAGE_NAME, '-'.join([self.role, str(self.party_id), _role, str(_partyId)]))
+                    # _table = _get_meta_table(object_storage_table_name, self.job_id)
+                    _table = _get_meta_table(OBJECT_STORAGE_NAME, self.job_id)
                     _table.put(_tagged_key, obj)
                     _status_table.put(_tagged_key, _tagged_key)
                 LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
@@ -153,7 +154,6 @@ class FederationRuntime(object):
         results = self._loop.run_until_complete(asyncio.gather(*tasks))
 
         rtn = []
-
         _object_table = _get_meta_table(OBJECT_STORAGE_NAME, self.job_id)
         for r in results:
             if isinstance(r, tuple):

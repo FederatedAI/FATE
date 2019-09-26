@@ -24,12 +24,12 @@ class FederationWrapped(object):
 
         if work_mode.is_standalone():
             from .standalone import init
-            from arch.api.standalone.eggroll import _DTable
+            from eggroll.api.standalone.eggroll import _DTable
             self._raw_federation = init(job_id, runtime_conf)
             self._raw_table_cls = _DTable
         elif work_mode.is_cluster():
             from .cluster import init
-            from arch.api.cluster.eggroll import _DTable
+            from eggroll.api.cluster.eggroll import _DTable
             self._raw_federation = init(job_id, runtime_conf, server_conf_path)
             self._raw_table_cls = _DTable
         self.job_id = job_id
@@ -42,7 +42,7 @@ class FederationWrapped(object):
         return isinstance(obj, self._wrapper_table_cls)
 
     def _as_wrapped_table(self, obj):
-        return self._wrapper_table_cls.from_dtable(dtable=obj, job_id=self.job_id)
+        return self._wrapper_table_cls.from_dtable(dtable=obj, session_id=self.job_id)
 
     @staticmethod
     def _as_raw_table(obj: Table):
