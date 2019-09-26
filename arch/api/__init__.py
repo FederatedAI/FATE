@@ -17,8 +17,6 @@
 
 from enum import IntEnum, Enum
 
-from arch.api import session
-
 
 class WorkMode(IntEnum):
     STANDALONE = 0
