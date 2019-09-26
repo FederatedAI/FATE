@@ -47,7 +47,7 @@ class LocalModel(object):
             loss = self.model.train_one_epoch()
             losses.append(loss)
         # total_loss, mAP, recall = self.model.eval(self.model.dataloader, self.model.yolo, test_num=1000)
-        #return self.model.get_weights(), total_loss, mAP, recall
+        # return self.model.get_weights(), total_loss, mAP, recall
         return self.model.get_weights(), sum(losses) / len(losses)
 
     def evaluate(self):
@@ -222,33 +222,9 @@ class FederatedClient(object):
         # TODO: later: simulate datagen for long-running train-serve service
         # i.e. the local dataset can increase while training
 
-        # self.lock = threading.Lock()
-        # def simulate_data_gen(self):
-        #     num_items = random.randint(10, FederatedClient.MAX_DATASET_SIZE_KEPT * 2)
-        #     for _ in range(num_items):
-        #         with self.lock:
-        #             # (X, Y)
-        #             self.collected_data_train += [self.datasource.sample_single_non_iid()]
-        #             # throw away older data if size > MAX_DATASET_SIZE_KEPT
-        #             self.collected_data_train = self.collected_data_train[-FederatedClient.MAX_DATASET_SIZE_KEPT:]
-        #             print(self.collected_data_train[-1][1])
-        #         self.intermittently_sleep(p=.2, low=1, high=3)
-
-        # threading.Thread(target=simulate_data_gen, args=(self,)).start()
-
     def intermittently_sleep(self, p=.1, low=10, high=100):
-        if (random.random() < p):
+        if random.random() < p:
             time.sleep(random.randint(low, high))
-
-
-# possible: use a low-latency pubsub system for gradient update, and do "gossip"
-# e.g. Google cloud pubsub, Amazon SNS
-# https://developers.google.com/nearby/connections/overview
-# https://pypi.python.org/pypi/pyp2p
-
-# class PeerToPeerClient(FederatedClient):
-#     def __init__(self):
-#         super(PushBasedClient, self).__init__()    
 
 
 if __name__ == "__main__":

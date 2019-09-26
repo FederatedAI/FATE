@@ -41,13 +41,29 @@ We implemented two mainstream object detection algorithms (YOLOv3 and Faster R-C
 ### Train
 1. Start server
     ```bash
-    sh ./run_server.sh street_5 yolo 1234
+    ./run_server.sh [DATASET] [MODEL] [PORT]
+    # DATASET could be street_5 or street_20 for our datasets
+    # MODEL in {yolo , faster} is the model to use
+    # PORT is the communication port
+    # Examples:
+    ./run_server.sh street_5 yolo 1234
+    ./run_server.sh street_20 faster 5678
     ```
 2. Start clients
     ```bash
-    sh ./run.sh street_5 5 yolo 1234
+    ./run.sh [DATASET] [CLIENTS] [MODEL] [PORT]
+    # DATASET could be street_5 or street_20 for our datasets
+    # CLIENTS specifies the number of clients 
+    # MODEL is the model to use, should be identical with that of server
+    # PORT is the communication port, should be identical with that of server
+    # Examples:
+    ./run.sh street_5 5 yolo 1234
+    ./run.sh street_20 20 faster 5678
     ```
 3. Stop training
     ```bash
-    sh ./stop.sh street_5 yolo
+    ./stop.sh [DATASET] [MODEL]
+    # Examples: 
+    ./stop.sh street_5 yolo
+    ./stop.sh street_20 faster
     ```

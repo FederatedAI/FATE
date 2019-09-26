@@ -34,7 +34,6 @@ class Aggregator(object):
         self.current_weights = self.get_init_parameters()
         self.model_path = task_config['model_path']
         # weights should be a ordered list of parameter
-       # for stats
         self.train_losses = []
         self.avg_test_losses = []
         self.avg_test_maps = []
