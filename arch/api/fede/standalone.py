@@ -154,6 +154,7 @@ class FederationRuntime(object):
         results = self._loop.run_until_complete(asyncio.gather(*tasks))
 
         rtn = []
+
         _object_table = _get_meta_table(OBJECT_STORAGE_NAME, self.job_id)
         for r in results:
             if isinstance(r, tuple):
