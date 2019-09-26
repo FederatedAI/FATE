@@ -19,9 +19,9 @@ import concurrent
 
 import grpc
 
-from arch.api.cluster.eggroll import _DTable, _EggRoll
+from eggroll.api.cluster.eggroll import _DTable, _EggRoll
 from arch.api.proto import federation_pb2, federation_pb2_grpc
-from arch.api.proto import basic_meta_pb2, storage_basic_pb2
+from eggroll.api.proto import basic_meta_pb2, storage_basic_pb2
 from arch.api.utils import file_utils, eggroll_serdes
 from arch.api.utils.log_utils import getLogger
 
@@ -168,7 +168,8 @@ class FederationRuntime(object):
                     '''
                     If it is a object, put the object in the table and send the table meta.
                     '''
-                    _table = _EggRoll.get_instance().table(OBJECT_STORAGE_NAME, self.job_id)
+                    object_storage_table_name = '{}.{}'.format(OBJECT_STORAGE_NAME, '-'.join([self.role, str(self.party_id), _role, str(_partyId)]))
+                    _table = _EggRoll.get_instance().table(object_storage_table_name, self.job_id)
                     _table.put(_tagged_key, obj)
                     storage_locator = self.__get_locator(_table)
                     desc = federation_pb2.TransferDataDesc(transferDataType=federation_pb2.OBJECT,

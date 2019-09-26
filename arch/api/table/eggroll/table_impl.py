@@ -25,17 +25,17 @@ from arch.api.utils.profile_util import log_elapsed
 # noinspection PyProtectedMember,SpellCheckingInspection,PyPep8Naming
 class DTable(Table):
 
-    def __init__(self, dtable, job_id):
+    def __init__(self, dtable, session_id):
         self._dtable = dtable
         self._partitions = self._dtable._partitions
         self.schema = {}
         self._name = self._dtable._name or str(uuid.uuid1())
         self._namespace = self._dtable._namespace
-        self._job_id = job_id
+        self._session_id = session_id
 
     @classmethod
     def from_dtable(cls, job_id, dtable):
-        return DTable(dtable=dtable, job_id=job_id)
+        return DTable(dtable=dtable, session_id=job_id)
 
     def get_name(self):
         return self._name
@@ -100,15 +100,15 @@ class DTable(Table):
 
     @log_elapsed
     def map(self, func, **kwargs):
-        return DTable(self._dtable.map(func), job_id=self._job_id)
+        return DTable(self._dtable.map(func), session_id=self._session_id)
 
     @log_elapsed
     def mapValues(self, func, **kwargs):
-        return DTable(self._dtable.mapValues(func), job_id=self._job_id)
+        return DTable(self._dtable.mapValues(func), session_id=self._session_id)
 
     @log_elapsed
     def mapPartitions(self, func, **kwargs):
-        return DTable(self._dtable.mapPartitions(func), job_id=self._job_id)
+        return DTable(self._dtable.mapPartitions(func), session_id=self._session_id)
 
     @log_elapsed
     def reduce(self, func, **kwargs):
@@ -116,28 +116,28 @@ class DTable(Table):
 
     @log_elapsed
     def join(self, other, func, **kwargs):
-        return DTable(self._dtable.join(other._dtable, func=func), job_id=self._job_id)
+        return DTable(self._dtable.join(other._dtable, func=func), session_id=self._session_id)
 
     @log_elapsed
     def glom(self, **kwargs):
-        return DTable(self._dtable.glom(), job_id=self._job_id)
+        return DTable(self._dtable.glom(), session_id=self._session_id)
 
     @log_elapsed
     def sample(self, fraction, seed=None, **kwargs):
-        return DTable(self._dtable.sample(fraction=fraction, seed=seed), job_id=self._job_id)
+        return DTable(self._dtable.sample(fraction=fraction, seed=seed), session_id=self._session_id)
 
     @log_elapsed
     def subtractByKey(self, other, **kwargs):
-        return DTable(self._dtable.subtractByKey(other._dtable), job_id=self._job_id)
+        return DTable(self._dtable.subtractByKey(other._dtable), session_id=self._session_id)
 
     @log_elapsed
     def filter(self, func, **kwargs):
-        return DTable(self._dtable.filter(func), job_id=self._job_id)
+        return DTable(self._dtable.filter(func), session_id=self._session_id)
 
     @log_elapsed
     def union(self, other, func=lambda v1, v2: v1, **kwargs):
-        return DTable(self._dtable.union(other._dtable, func=func), job_id=self._job_id)
+        return DTable(self._dtable.union(other._dtable, func=func), session_id=self._session_id)
 
     @log_elapsed
     def flatMap(self, func, **kwargs):
-        return DTable(self._dtable.flatMap(func), job_id=self._job_id)
+        return DTable(self._dtable.flatMap(func), session_id=self._session_id)

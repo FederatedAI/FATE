@@ -17,9 +17,9 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.observer;
 
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
-import com.webank.ai.fate.core.model.DelayedResult;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
+import com.webank.ai.eggroll.core.model.DelayedResult;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

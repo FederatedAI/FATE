@@ -16,13 +16,13 @@
 
 package com.webank.ai.fate.driver.federation.factory;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.api.driver.federation.TransferSubmitServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.api.grpc.client.GrpcAsyncClientContext;
-import com.webank.ai.fate.core.api.grpc.client.GrpcStreamingClientTemplate;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcAsyncClientContext;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcStreamingClientTemplate;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushServerRequestStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.communication.action.DtableRecvConsumeAction;
 import com.webank.ai.fate.driver.federation.transfer.communication.action.ObjectRecvConsumeLmdbAction;
@@ -34,7 +34,7 @@ import com.webank.ai.fate.driver.federation.transfer.communication.processor.Sen
 import com.webank.ai.fate.driver.federation.transfer.communication.producer.DtableFragmentSendProducer;
 import com.webank.ai.fate.driver.federation.transfer.communication.producer.ObjectLmdbSendProducer;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
-import com.webank.ai.fate.eggroll.meta.service.dao.generated.model.Fragment;
+import com.webank.ai.eggroll.framework.meta.service.dao.generated.model.Fragment;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

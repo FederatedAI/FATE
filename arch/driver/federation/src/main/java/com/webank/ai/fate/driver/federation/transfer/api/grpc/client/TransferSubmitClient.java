@@ -17,14 +17,14 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.client;
 
 import com.google.common.base.Preconditions;
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.api.driver.federation.TransferSubmitServiceGrpc;
-import com.webank.ai.fate.core.api.grpc.client.GrpcAsyncClientContext;
-import com.webank.ai.fate.core.api.grpc.client.GrpcCalleeStreamingStubMethodInvoker;
-import com.webank.ai.fate.core.api.grpc.client.GrpcStreamingClientTemplate;
-import com.webank.ai.fate.core.model.DelayedResult;
-import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcAsyncClientContext;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcCalleeStreamingStubMethodInvoker;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcStreamingClientTemplate;
+import com.webank.ai.eggroll.core.model.DelayedResult;
+import com.webank.ai.eggroll.core.model.impl.SingleDelayedResult;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.SendClientResponseObserver;
 import org.springframework.beans.factory.annotation.Autowired;

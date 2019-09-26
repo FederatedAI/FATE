@@ -80,6 +80,7 @@ class Upload(object):
     def read_data(self, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
         split_file_name = input_file.split('.')
+        data = list()
         if 'csv' in split_file_name:
             with open(input_file) as csv_file:
                 csv_reader = csv.reader(csv_file)
@@ -88,7 +89,7 @@ class Upload(object):
                     self.save_data_header(','.join(data_head), dst_table_name, dst_table_namespace)
 
                 for row in csv_reader:
-                    yield (row[0], self.list_to_str(row[1:]))
+                    data.append((row[0], self.list_to_str(row[1:])))
         else:
             with open(input_file, 'r') as fin:
                 if head is True:
@@ -98,7 +99,8 @@ class Upload(object):
                 lines = fin.readlines()
                 for line in lines:
                     values = line.replace("\n", "").replace("\t", ",").split(",")
-                    yield (values[0], self.list_to_str(values[1:]))
+                    data.append((values[0], self.list_to_str(values[1:])))
+        return data
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         session.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,

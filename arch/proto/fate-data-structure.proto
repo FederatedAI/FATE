@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package com.webank.ai.fate.driver.federation.transfer.service;
+syntax = "proto3";
 
-import com.webank.ai.eggroll.api.core.BasicMeta;
+package com.webank.ai.fate.api.core;
+option java_outer_classname = "DataStructure";
 
-public interface ProxySelectionService {
-    public BasicMeta.Endpoint select();
+// raw entry for map
+message RawEntry {
+    bytes key = 1;
+    bytes value = 2;
+}
+
+// map for proto 2
+message RawMap {
+    repeated RawEntry entries = 1;
+}
+
+// generic map for all key-value data
+message Dict {
+    map<string, bytes> dict = 1;
 }

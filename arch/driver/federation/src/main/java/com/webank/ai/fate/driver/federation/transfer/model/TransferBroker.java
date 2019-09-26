@@ -21,7 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.protobuf.ByteString;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.constant.RuntimeConstants;
+import com.webank.ai.eggroll.core.constant.RuntimeConstants;
 import com.webank.ai.fate.driver.federation.transfer.communication.action.TransferQueueConsumeAction;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

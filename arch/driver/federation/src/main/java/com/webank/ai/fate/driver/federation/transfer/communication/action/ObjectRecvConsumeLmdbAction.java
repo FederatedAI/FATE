@@ -18,17 +18,17 @@ package com.webank.ai.fate.driver.federation.transfer.communication.action;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.api.eggroll.storage.Kv;
-import com.webank.ai.fate.api.eggroll.storage.StorageBasic;
-import com.webank.ai.fate.core.io.StoreInfo;
+import com.webank.ai.eggroll.api.storage.Kv;
+import com.webank.ai.eggroll.api.storage.StorageBasic;
+import com.webank.ai.eggroll.core.io.StoreInfo;
 import com.webank.ai.fate.driver.federation.constant.FederationConstants;
 import com.webank.ai.fate.driver.federation.factory.KeyValueStoreFactory;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
-import com.webank.ai.fate.eggroll.roll.api.grpc.client.RollKvServiceClient;
+import com.webank.ai.eggroll.framework.roll.api.grpc.client.RollKvServiceClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,12 +78,7 @@ public class ObjectRecvConsumeLmdbAction extends BaseRecvConsumeAction {
             finalTransferMeta = transferMeta;
         }
 
-        federationStorageLocator = StorageBasic.StorageLocator.newBuilder()
-                .setNamespace(finalTransferMeta.getJob().getJobId())
-                .setName(FederationConstants.OBJECT_STORAGE_NAMESPACE)
-                .setType(StorageBasic.StorageType.LMDB)
-                .setFragment(0)
-                .build();
+        federationStorageLocator = finalTransferMeta.getDataDesc().getStorageLocator();
 
         Kv.CreateTableInfo createTableInfo = Kv.CreateTableInfo.newBuilder()
                 .setStorageLocator(federationStorageLocator)

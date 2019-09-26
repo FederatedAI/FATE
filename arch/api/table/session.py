@@ -93,6 +93,14 @@ class FateSession(object):
     def generateUniqueId(self):
         pass
 
+    @abc.abstractmethod
+    def get_session_id(self):
+        pass
+
+    @abc.abstractmethod
+    def stop(self):
+        pass
+
     @staticmethod
     def get_data_table(name, namespace):
         """
