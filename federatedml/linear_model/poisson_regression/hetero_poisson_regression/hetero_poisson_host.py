@@ -98,7 +98,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
             if self.is_converged:
                 break
 
-        LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+        if not self.is_converged:
+            LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
     def predict(self, data_instances):
         """
