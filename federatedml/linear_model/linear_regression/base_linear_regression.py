@@ -27,6 +27,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -124,3 +125,7 @@ class BaseLinearRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+    
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="regression")
+

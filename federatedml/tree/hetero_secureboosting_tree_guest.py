@@ -33,7 +33,7 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
-from federatedml.optim import DiffConverge
+from federatedml.optim.convergence import converge_func_factory
 from federatedml.tree import BoostingTree
 from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
@@ -69,6 +69,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.convegence = None
         self.y = None
         self.F = None
+        self.predict_F = None
         self.data_bin = None
         self.loss = None
         self.init_score = None
@@ -202,7 +203,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
             self.feature_importances_[fid] += tree_feature_importance[fid]
 
-    def update_f_value(self, new_f=None, tidx=-1):
+    def update_f_value(self, new_f=None, tidx=-1, mode="train"):
         LOGGER.info("update tree f value, tree idx is {}".format(tidx))
         if self.F is None:
             if self.tree_dim > 1:
@@ -210,11 +211,14 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             else:
                 self.F, self.init_score = self.loss.initialize(self.y)
         else:
-            accumuldate_f = functools.partial(self.accumulate_f,
+            accumulate_f = functools.partial(self.accumulate_f,
                                               lr=self.learning_rate,
                                               idx=tidx)
 
-            self.F = self.F.join(new_f, accumuldate_f)
+            if mode == "train":
+                self.F = self.F.join(new_f, accumulate_f)
+            else:
+                self.predict_F = self.predict_F.join(new_f, accumulate_f)
 
     def compute_grad_and_hess(self):
         LOGGER.info("compute grad and hess")
@@ -254,7 +258,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_convergence(self, loss):
         LOGGER.info("check convergence")
         if self.convegence is None:
-            self.convegence = DiffConverge(eps=self.tol)
+            self.convegence = converge_func_factory(params.converge_func, params.eps)
 
         return self.convegence.is_converge(loss)
 
@@ -301,7 +305,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                           idx=-1)
         """
 
-    def fit(self, data_inst):
+    def fit(self, data_inst, validate_data=None):
         LOGGER.info("begin to train secureboosting guest model")
         self.gen_feature_fid_mapping(data_inst.schema)
         data_inst = self.data_alignment(data_inst)
@@ -317,6 +321,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
+
+        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
         for i in range(self.num_trees):
             self.compute_grad_and_hess()
@@ -347,9 +353,13 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             self.history_loss.append(loss)
             LOGGER.info("round {} loss is {}".format(i, loss))
 
+            LOGGER.debug("type of loss is {}".format(type(loss).__name__))
             self.callback_metric("loss",
                                  "train",
                                  [Metric(i, loss)])
+
+            if validation_strategy:
+                validation_strategy.validate(self, i)
 
             if self.n_iter_no_change is True:
                 if self.check_convergence(loss):
@@ -371,7 +381,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         LOGGER.info("predict tree f value, there are {} trees".format(len(self.trees_)))
         tree_dim = self.tree_dim
         init_score = self.init_score
-        self.F = data_inst.mapValues(lambda v: init_score)
+        self.predict_F = data_inst.mapValues(lambda v: init_score)
         rounds = len(self.trees_) // self.tree_dim
         for i in range(rounds):
             for tidx in range(self.tree_dim):
@@ -383,7 +393,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 tree_inst.set_host_party_idlist(self.host_party_idlist)
 
                 predict_data = tree_inst.predict(data_inst)
-                self.update_f_value(new_f=predict_data, tidx=tidx)
+                self.update_f_value(new_f=predict_data, tidx=tidx, mode="predict")
 
     def predict(self, data_inst):
         LOGGER.info("start predict")
@@ -392,13 +402,13 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
             if self.num_classes == 2:
-                predicts = self.F.mapValues(lambda f: float(loss_method.predict(f)))
+                predicts = self.predict_F.mapValues(lambda f: float(loss_method.predict(f)))
             else:
-                predicts = self.F.mapValues(lambda f: loss_method.predict(f).tolist())
+                predicts = self.predict_F.mapValues(lambda f: loss_method.predict(f).tolist())
 
         elif self.task_type == consts.REGRESSION:
             if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
-                predicts = self.F
+                predicts = self.predict_F
             else:
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 

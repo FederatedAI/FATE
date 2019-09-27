@@ -47,7 +47,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         return data_instance
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train linR model of role guest
         Parameters
@@ -58,6 +58,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+        
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         #data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -104,6 +106,10 @@ class HeteroLinRGuest(HeteroLinRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:
                 break
@@ -132,5 +138,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         pred = pred_guest.join(pred_host, lambda g, h: g + h)
         LOGGER.debug("prediction: {}".format(pred))
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+
+        LOGGER.debug("predict result is {}".format(list(predict_result.collect())))
 
         return predict_result
