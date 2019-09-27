@@ -86,9 +86,9 @@ class BaseLogisticRegression(BaseLinearModel):
                                                              is_converged=self.is_converged,
                                                              weight=weight_dict,
                                                              intercept=intercept_,
-                                                             header=header,
-                                                             need_one_vs_rest=self.need_one_vs_rest,
-                                                             one_vs_rest_classes=one_vs_rest_class
+                                                             header=header
+                                                             # need_one_vs_rest=self.need_one_vs_rest,
+                                                             # one_vs_rest_classes=one_vs_rest_class
                                                              )
         json_result = json_format.MessageToJson(param_protobuf_obj)
         LOGGER.debug("json_result: {}".format(json_result))
