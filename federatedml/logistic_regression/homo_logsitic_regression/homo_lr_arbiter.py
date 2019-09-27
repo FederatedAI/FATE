@@ -366,10 +366,10 @@ class HomoLRArbiter(HomoLRBase):
                 LOGGER.debug("Start to remote re_encrypt_model: {}, transfer_id: {}".format(re_encrypt_model,
                                                                                             re_encrypted_model_id))
 
-                self.transfer_variable.re_encrypted_model(re_encrypt_model,
-                                                          role=consts.HOST,
-                                                          idx=idx,
-                                                          suffix=(iter_num, batch_num))
+                self.transfer_variable.re_encrypted_model.remote(re_encrypt_model,
+                                                                 role=consts.HOST,
+                                                                 idx=idx,
+                                                                 suffix=(iter_num, batch_num))
                 """
                 federation.remote(re_encrypt_model, name=self.transfer_variable.re_encrypted_model.name,
                                   tag=re_encrypted_model_id, role=consts.HOST, idx=idx)
