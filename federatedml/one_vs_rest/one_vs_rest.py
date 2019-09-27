@@ -43,25 +43,18 @@ class OneVsRest(object):
         self.__support_role_list = [consts.GUEST, consts.HOST, consts.ARBITER]
         self.__support_mode_list = [consts.HOMO, consts.HETERO]
 
-    def __check_param(self):
-        if self.role not in self.__support_role_list:
-            raise ValueError("Not support role:{}".format(self.role))
+    # @staticmethod
+    # def __mask_label(instance, label):
+    #     instance.label = (1 if (instance.label == label) else 0)
+    #     return instance
 
-        if self.mode not in self.__support_mode_list:
-            raise ValueError("Not support mode:{}".format(self.mode))
-
-    @staticmethod
-    def __mask_label(instance, label):
-        instance.label = (1 if (instance.label == label) else 0)
-        return instance
-
-    @staticmethod
-    def __get_classes(data_instances):
-        classes = set()
-        for instance in data_instances:
-            classes.add(instance[1].label)
-
-        return classes
+    # @staticmethod
+    # def __get_classes(data_instances):
+    #     classes = set()
+    #     for instance in data_instances:
+    #         classes.add(instance[1].label)
+    #
+    #     return classes
 
     @staticmethod
     def __get_multi_class_res(instance, classes):
@@ -79,67 +72,60 @@ class OneVsRest(object):
 
         return classes[max_prob_index], max_prob, instance_with_class
 
-    def __get_data_classes(self, data_instances):
+    def _get_data_classes(self, data_instances):
         """
         get all classes in data_instances
         """
-        f = functools.partial(self.__get_classes)
+        def get_classes(data_instances):
+            classes = set()
+            for instance in data_instances:
+                classes.add(instance[1].label)
+
+            return classes
+
+        f = functools.partial(get_classes)
         classes_res = data_instances.mapPartitions(f)
         classes = classes_res.reduce(lambda a, b: a | b)
         return classes
 
-    def __mask_data_label(self, data_instances, label):
+    def _mask_data_label(self, data_instances, label):
         """
         mask the instance.label to 1 if equals to label and 0 if not
         """
-        f = functools.partial(self.__mask_label, label=label)
+
+        def do_mask_label(instance):
+            instance.label = (1 if (instance.label == label) else 0)
+            return instance
+
+        f = functools.partial(do_mask_label)
         data_instances = data_instances.mapValues(f)
 
         return data_instances
 
-    def __synchronize_aggregate_classed_list(self):
-        """
-        synchronize all of class of data, include guest, host and arbiter, from guest to the others
-        """
-        if self.role == consts.GUEST:
-            self.transfer_variable.aggregate_classes.remote(self.classes,
-                                                            role=consts.HOST,
-                                                            idx=-1)
+    def _sync_class_guest(self, class_set):
+        raise NotImplementedError("Function should not be called here")
 
-            if self.has_arbiter:
-                self.transfer_variable.aggregate_classes.remote(self.classes,
-                                                                role=consts.ARBITER,
-                                                                idx=0)
+    def _sync_class_host(self, class_set):
+        raise NotImplementedError("Function should not be called here")
 
-        elif self.role == consts.HOST or self.role == consts.ARBITER:
-            self.classes = self.transfer_variable.aggregate_classes.get(idx=0)
-        else:
-            raise ValueError("Unknown role:{}".format(self.role))
+    def _sync_class_arbiter(self):
+        raise NotImplementedError("Function should not be called here")
 
-    def __synchronize_classes_list(self):
+    def _synchronize_classes_list(self, class_set):
         """
         Guest will get classes from host data, and aggregate classes it has. After that, send the aggregate classes to
         host and arbiter as binary classification times.
         """
-        if self.mode == consts.HOMO:
-            if self.role == consts.GUEST:
-                host_classes_list = self.transfer_variable.host_classes.get(idx=-1)
-
-                for host_class in host_classes_list:
-                    self.classes = self.classes | host_class
-
-            elif self.role == consts.HOST:
-                self.transfer_variable.host_classes.remote(self.classes,
-                                                           role=consts.GUEST,
-                                                           idx=0)
-        self.__synchronize_aggregate_classed_list()
+        if self.role == consts.GUEST:
+            self._sync_class_guest(class_set)
+        elif self.role == consts.HOST:
+            self._sync_class_host(class_set)
+        else:
+            self._sync_class_arbiter()
 
     @property
     def has_label(self):
-        if (self.mode == consts.HOMO and self.role != consts.ARBITER) or (
-                        self.mode == consts.HETERO and self.role == consts.GUEST):
-            return True
-        return False
+        raise NotImplementedError("Function should not be called here")
 
     def fit(self, data_instances=None):
         """
@@ -150,18 +136,20 @@ class OneVsRest(object):
         """
         LOGGER.info("mode is {}, role is {}, start to one_vs_rest fit".format(self.mode, self.role))
         if self.has_label:
-            self.classes = self.__get_data_classes(data_instances)
+            class_set = self._get_data_classes(data_instances)
+        else:
+            class_set = None
 
         LOGGER.info("Start to synchronize")
-        self.__synchronize_classes_list()
+        self._synchronize_classes_list(class_set)
 
         LOGGER.info("Total classes:{}".format(self.classes))
 
         current_flow_id = self.classifier.flowid
-        for flow_id, label in enumerate(self.classes):
-            LOGGER.info("Start to train OneVsRest with flow_id:{}, label:{}".format(flow_id, label))
+        for label_index, label in enumerate(self.classes):
+            LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
-            classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(flow_id)]))
+            classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self.__mask_data_label(data_instances, label=label)
@@ -270,6 +258,71 @@ class OneVsRest(object):
 
 
 class HomoOneVsRest(OneVsRest):
-    def __init__(self, classifier, role, mode, one_vs_rest_param):
-        pass
+    # def __init__(self, classifier, role, one_vs_rest_param):
+    #     super().__init__()
 
+    @property
+    def has_label(self):
+        if self.role == consts.ARBITER:
+            return False
+        return True
+
+    def _sync_class_guest(self, class_set):
+        host_classes_list = self.transfer_variable.host_classes.get(idx=-1)
+        for host_class in host_classes_list:
+            class_set = class_set | host_class
+        self.classes = list(class_set)
+        self.transfer_variable.aggregate_classes.remote(self.classes,
+                                                        role=consts.HOST,
+                                                        idx=-1)
+        if self.has_arbiter:
+            class_num = len(self.classes)
+            self.transfer_variable.aggregate_classes.remote(class_num,
+                                                            role=consts.ARBITER,
+                                                            idx=0)
+
+    def _sync_class_host(self, class_set):
+        self.transfer_variable.host_classes.remote(class_set,
+                                                   role=consts.GUEST,
+                                                   idx=0)
+        self.classes = self.transfer_variable.aggregate_classes.get(idx=0)
+
+    def _sync_class_arbiter(self):
+        class_nums = self.transfer_variable.aggregate_classes.get(idx=0)
+        self.classes = [x for x in range(class_nums)]
+
+
+class HeteroOneVsRest(OneVsRest):
+    @property
+    def has_label(self):
+        if self.role == consts.GUEST:
+            return True
+        return False
+
+    def _sync_class_guest(self, class_set):
+        self.classes = list(class_set)
+        class_num = len(self.classes)
+        self.transfer_variable.aggregate_classes.remote(class_num,
+                                                        role=consts.HOST,
+                                                        idx=-1)
+        if self.has_arbiter:
+            self.transfer_variable.aggregate_classes.remote(class_num,
+                                                            role=consts.ARBITER,
+                                                            idx=0)
+
+    def _sync_class_host(self, class_set):
+        class_nums = self.transfer_variable.aggregate_classes.get(idx=0)
+        self.classes = [x for x in range(class_nums)]
+
+    def _sync_class_arbiter(self):
+        class_nums = self.transfer_variable.aggregate_classes.get(idx=0)
+        self.classes = [x for x in range(class_nums)]
+
+
+def one_vs_rest_factory(classifier, role, mode, one_vs_rest_param):
+    if mode == consts.HOMO:
+        return HomoOneVsRest(classifier, role, mode, one_vs_rest_param)
+    elif mode == consts.HETERO:
+        return HeteroOneVsRest(classifier, role, mode, one_vs_rest_param)
+    else:
+        raise ValueError(f"Cannot recognize mode: {mode} in one vs rest")

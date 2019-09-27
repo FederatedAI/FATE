@@ -121,7 +121,7 @@ class HeteroLRArbiter(HeteroLRBase):
                 iter_loss /= self.batch_generator.batch_num
                 self.callback_loss(self.n_iter_, iter_loss)
 
-            if self.model_param.converge_func == 'weight_diff':
+            if self.model_param.early_stop == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
                 LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
                                                                                 weight_diff, self.is_converged))
@@ -131,7 +131,7 @@ class HeteroLRArbiter(HeteroLRBase):
                 if iter_loss is None:
                     raise ValueError("More multiple host situation, loss converge function is not available."
                                      "You should use 'weight_diff' instead")
-                self.is_converged = self.converge_func.is_converge(iter_loss)
+                self.is_converged = self.early_stop.is_converge(iter_loss)
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
