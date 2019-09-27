@@ -101,7 +101,7 @@ class Guest(hetero_regression_gradient_sync.Guest, loss_sync.Guest):
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
         """
         Compute hetero linr loss:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
+            loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
         (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
         """
         current_suffix = (n_iter_, batch_index)
@@ -123,7 +123,7 @@ class Guest(hetero_regression_gradient_sync.Guest, loss_sync.Guest):
             wxy_square = wxy.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
             loss_gh = wxy.join(host_forward, lambda g, h: g*h).reduce(reduce_add)
-            loss = (wxy_square + host_wx_square + 2 * loss_gh) / n
+            loss = (wxy_square + host_wx_square + 2 * loss_gh) / (2 * n)
             if loss_norm is not None:
                 loss = loss + loss_norm + host_loss_regular[0]
             loss_list.append(loss)
@@ -192,8 +192,8 @@ class Host(hetero_regression_gradient_sync.Host, loss_sync.Host):
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
         """
-        Compute htero linr loss for:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
+        Compute hetero linr loss for:
+            loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
 
             Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
         """
