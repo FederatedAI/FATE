@@ -101,7 +101,7 @@ def maybe_create_eggroll_client():
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
     if mode == 0:
         from eggroll.api.standalone.eggroll import Standalone
-        Standalone(**eggroll_session)
+        Standalone(eggroll_session)
     else:
         from eggroll.api.cluster.eggroll import _EggRoll
-        _EggRoll(**eggroll_session)
+        _EggRoll(eggroll_session)
