@@ -173,14 +173,17 @@ public class JobDetailController {
                 component.put(Dict.COMPONENT_NAME, (String) o);
                 Task task = taskManagerService.findTask(jobId, role, (String) o);
                 String taskStatus =null;
-                Long elapsed=null;
+                Long createTime=null;
+//                Long elapsed=null;
                 if(task!=null){
                      taskStatus = task.getfStatus();
-                     elapsed = task.getfElapsed();
+                     createTime = task.getfCreateTime();
+//                    elapsed = task.getfElapsed();
                 }
 
                 component.put(Dict.STATUS, taskStatus);
-                component.put(Dict.TIME,elapsed);
+//                component.put(Dict.TIME,elapsed);
+                component.put(Dict.TIME,createTime);
                 componentList.add(component);
             }
 
