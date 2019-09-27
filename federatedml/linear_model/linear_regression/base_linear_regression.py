@@ -71,7 +71,6 @@ class BaseLinearRegression(BaseLinearModel):
                                                               tol=self.model_param.tol,
                                                               alpha=self.alpha,
                                                               optimizer=self.model_param.optimizer,
-                                                              party_weight=self.model_param.party_weight,
                                                               batch_size=self.batch_size,
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
