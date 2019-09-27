@@ -105,11 +105,11 @@ class HeteroLinRArbiter(HeteroLinRBase):
                 iter_loss = iter_loss / self.batch_generator.batch_num
                 self.callback_loss(self.n_iter_, iter_loss)
 
-            if self.model_param.converge_func == 'weight_diff':
+            if self.model_param.early_stop == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
                 LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
                                                                                 weight_diff, self.is_converged))
-                if weight_diff < self.model_param.eps:
+                if weight_diff < self.model_param.tol:
                     self.is_converged = True
             else:
                 if iter_loss is None:
