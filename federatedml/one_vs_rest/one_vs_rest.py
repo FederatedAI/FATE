@@ -88,7 +88,8 @@ class OneVsRest(object):
         classes = classes_res.reduce(lambda a, b: a | b)
         return classes
 
-    def _mask_data_label(self, data_instances, label):
+    @staticmethod
+    def _mask_data_label(data_instances, label):
         """
         mask the instance.label to 1 if equals to label and 0 if not
         """
@@ -152,7 +153,7 @@ class OneVsRest(object):
             classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
-                data_instances_mask_label = self.__mask_data_label(data_instances, label=label)
+                data_instances_mask_label = self._mask_data_label(data_instances, label=label)
                 data_instances_mask_label.schema['header'] = header
                 LOGGER.info("finish mask label:{}".format(label))
 
@@ -163,7 +164,7 @@ class OneVsRest(object):
                 classifier.fit(data_instances)
 
             self.models.append(classifier)
-            LOGGER.info("Finish model_{} training!".format(flow_id))
+            LOGGER.info("Finish model_{} training!".format(label_index))
 
     def predict(self, data_instances):
         """
@@ -179,8 +180,11 @@ class OneVsRest(object):
         """
         prob = None
         for i, model in enumerate(self.models):
+            current_flow_id = model.flowid
+            model.set_flowid("_".join([current_flow_id, "one_vs_rest", str(i)]))
+
             LOGGER.info("Start to predict with model:{}".format(i))
-            model.set_flowid("predict_" + str(i))
+            # model.set_flowid("predict_" + str(i))
             predict_res = model.predict(data_instances)
             if predict_res:
                 if not prob:
