@@ -134,11 +134,6 @@ class HeteroLinRGuest(HeteroLinRBase):
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")
-
         pred = pred_guest.join(pred_host, lambda g, h: g + h)
-        LOGGER.debug("prediction: {}".format(pred))
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
-        LOGGER.debug("predict result is {}".format(list(predict_result.collect())))
-
         return predict_result
