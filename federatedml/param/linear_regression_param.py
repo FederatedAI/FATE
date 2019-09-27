@@ -74,7 +74,7 @@ class LinearParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
@@ -91,7 +91,6 @@ class LinearParam(BaseParam):
         self.max_iter = max_iter
         self.early_stop = early_stop
         self.encrypt_param = encrypt_param
-        self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.predict_param = copy.deepcopy(predict_param)
@@ -165,17 +164,20 @@ class LinearParam(BaseParam):
 
         self.encrypt_param.check()
 
-        if type(self.party_weight).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "linear_param's party_weight {} not supported, should be 'int' or 'float'".format(
-                    self.party_weight))
-
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
-                "regression param's decay {} not support, should be 'int' or 'float'".format(self.decay)
+                "regression param's decay {} not supported, should be 'int' or 'float'".format(self.decay)
             )
-        if type(self.decay_sqrt).__name__ not in ['bool']:
+        if type(self.decay_sqrt).__name__ not in ["bool"]:
             raise ValueError(
-                "regression param's decay_sqrt {} not support, should be 'bool'".format(self.decay)
+                "regression param's decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
+
         return True

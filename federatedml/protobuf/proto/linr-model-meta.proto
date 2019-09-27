@@ -24,10 +24,9 @@ message LinRModelMeta {
     double tol = 2;
     double alpha = 3;
     string optimizer = 4;
-    double party_weight = 5;
-    int64 batch_size = 6;
-    double learning_rate = 7;
-    int64 max_iter = 8;
-    string early_stop = 9;
-    bool fit_intercept = 10;
+    int64 batch_size = 5;
+    double learning_rate = 6;
+    int64 max_iter = 7;
+    string early_stop = 8;
+    bool fit_intercept = 9;
 }
