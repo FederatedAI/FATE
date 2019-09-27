@@ -41,36 +41,30 @@ class Upload(object):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
-                                                            create=True)
+        table_name, namespace = self.parameters.get("table_name", None), self.parameters.get("namespace", None)
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace
         if table_name is None:
             table_name = _table_name
-        eggroll.init(mode=self.parameters['work_mode'])
         read_head = self.parameters['head']
-        head = True
         if read_head == 0:
             head = False
         elif read_head == 1:
             head = True
         else:
-            print("'head' in .json should be 0 or 1, set head to 1")
+            raise Exception("'head' in conf.json should be 0 or 1")
         partition = self.parameters["partition"]
-        try:
-            if partition <=0 or partition >= self.MAX_PARTITION_NUM :
-                print("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-        except:
-            print("set partition to 1")
-            self.parameters["partition"] = 1
+        if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
+            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         input_data = self.read_data(table_name, namespace, head)
-        data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
-        print("------------load data finish!-----------------")
-        print("file: {}".format(self.parameters["file"]))
-        print("total data_count: {}".format(data_table.count()))
-        print("table name: {}, table namespace: {}".format(table_name, namespace))
+        eggroll.init(mode=self.parameters['work_mode'])
+        data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"], in_version=self.parameters.get("in_version", False))
+        LOGGER.info("------------load data finish!-----------------")
+        LOGGER.info("file: {}".format(self.parameters["file"]))
+        LOGGER.info("total data_count: {}".format(data_table.count()))
+        LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
 
     def set_taskid(self, taskid):
         self.taskid = taskid
