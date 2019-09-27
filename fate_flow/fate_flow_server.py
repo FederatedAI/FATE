@@ -26,7 +26,7 @@ from grpc._cython import cygrpc
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
-from arch.api import table_manager, Backend
+from arch.api import session, Backend
 from arch.api.proto import proxy_pb2_grpc
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_app import manager as job_app_manager
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
 
-    table_manager.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
+    session.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     # start job detector

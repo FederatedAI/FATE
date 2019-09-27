@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -13,3 +15,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+BASEDIR=$(dirname "$0")
+cd $BASEDIR
+
+PROTO_DIR="proto"
+TARGER_DIR="generated"
+
+generate() {
+  python -m grpc_tools.protoc -I./$PROTO_DIR --python_out=./$TARGER_DIR  $1
+}
+
+for proto in `ls $PROTO_DIR`; do
+  if [[ "${proto##*.}"x = "proto"x ]]
+  then
+    echo "generate proto: $proto"
+    generate $proto
+  fi
+done
+

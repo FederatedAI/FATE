@@ -19,7 +19,7 @@ import uuid
 
 import numpy as np
 
-from arch.api.eggroll import init, table
+from arch.api.session import init, table
 from federatedml.ftl.data_util.common_data_util import save_data_to_eggroll_table, create_guest_host_data_generator, \
     create_table, split_into_guest_host_dtable, load_model_parameters, save_model_parameters, feed_into_dtable
 from federatedml.ftl.test.util import assert_array, assert_matrix

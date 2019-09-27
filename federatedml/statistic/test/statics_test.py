@@ -3,10 +3,10 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.util import consts
 
-eggroll.init("123")
+session.init("123")
 
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.feature.instance import Instance
@@ -14,7 +14,7 @@ from federatedml.feature.instance import Instance
 
 class TestStatistics(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_instance")
+        session.init("test_instance")
         dense_inst = []
         dense_not_inst = []
         headers = ['x' + str(i) for i in range(20)]
@@ -33,8 +33,8 @@ class TestStatistics(unittest.TestCase):
         self.dense_data_transpose = np.array(self.dense_data_transpose)
         self.dense_data_transpose = self.dense_data_transpose.transpose()
 
-        self.dense_table = eggroll.parallelize(dense_inst, include_key=True, partition=5)
-        self.dense_not_inst_table = eggroll.parallelize(dense_not_inst, include_key=True, partition=5)
+        self.dense_table = session.parallelize(dense_inst, include_key=True, partition=5)
+        self.dense_not_inst_table = session.parallelize(dense_not_inst, include_key=True, partition=5)
         self.dense_table.schema = {'header': headers}
         self.dense_not_inst_table.schema = {'header': headers}
 

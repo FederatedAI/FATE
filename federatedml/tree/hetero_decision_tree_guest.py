@@ -29,7 +29,7 @@ from arch.api.utils import log_utils
 
 import functools
 import copy
-from arch.api import eggroll
+from arch.api import session
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
@@ -272,7 +272,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch)
 
         for i in range(len(encrypted_splitinfo_host)):
-            encrypted_splitinfo_host_table = eggroll.parallelize(
+            encrypted_splitinfo_host_table = session.parallelize(
                 zip(self.cur_split_nodes, encrypted_splitinfo_host[i]), include_key=False,
                 partition=self.data_bin._partitions)
 
@@ -322,7 +322,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             merge_infos.append(splitinfo)
 
-        splitinfo_guest_host_table = eggroll.parallelize(merge_infos,
+        splitinfo_guest_host_table = session.parallelize(merge_infos,
                                                          include_key=False,
                                                          partition=self.data_bin._partitions)
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)

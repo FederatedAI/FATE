@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-from arch.api import table_manager, Backend
+from arch.api import session, Backend
 
 
 def do_export_file(job_id, _data):
@@ -13,10 +13,10 @@ def do_export_file(job_id, _data):
         output_path = _data.get("output_path")
 
         # todo: use eggroll as default storage backend
-        table_manager.init(job_id=job_id, mode=work_mode, backend=Backend.EGGROLL)
+        session.init(job_id=job_id, mode=work_mode, backend=Backend.EGGROLL)
 
         with open(os.path.abspath(output_path), "w") as fout:
-            data_table = table_manager.get_data_table(name=name, namespace=namespace)
+            data_table = session.get_data_table(name=name, namespace=namespace)
                
             print('===== begin to export data =====')
             lines = 0

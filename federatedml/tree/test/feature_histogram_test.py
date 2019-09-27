@@ -16,7 +16,7 @@
 
 import unittest
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.tree import FeatureHistogram
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
@@ -29,7 +29,7 @@ import random
 class TestFeatureHistogram(unittest.TestCase):
     def setUp(self):
         self.feature_histogram = FeatureHistogram()
-        eggroll.init("test_feature_histogram")
+        session.init("test_feature_histogram")
         data_insts = []
         for i in range(1000):
             indices = []
@@ -43,10 +43,10 @@ class TestFeatureHistogram(unittest.TestCase):
             data_insts.append((Instance(features=sparse_vec), (1, random.randint(0, 3))))
         self.node_map = {0: 0, 1: 1, 2: 2, 3: 3}
         self.data_insts = data_insts
-        self.data_bin = eggroll.parallelize(data_insts, include_key=False)
+        self.data_bin = session.parallelize(data_insts, include_key=False)
 
         self.grad_and_hess_list = [(random.random(), random.random()) for i in range(1000)]
-        self.grad_and_hess = eggroll.parallelize(self.grad_and_hess_list, include_key=False)
+        self.grad_and_hess = session.parallelize(self.grad_and_hess_list, include_key=False)
 
         bin_split_points = []
         for i in range(10):

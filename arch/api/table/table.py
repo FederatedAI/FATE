@@ -68,8 +68,8 @@ class Table(object):
 
         Examples:
 
-            >>> from arch.api import table_manager
-            >>> a = table_manager.parallelize(range(10))
+            >>> from arch.api import session
+            >>> a = session.parallelize(range(10))
             >>> b = a.collect(min_chunk_size=1000)
             >>> list(b)
             [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]

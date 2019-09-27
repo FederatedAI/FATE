@@ -18,9 +18,9 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 
-eggroll.init("123")
+session.init("123")
 
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.instance import Instance
@@ -43,7 +43,7 @@ class TestBucketBinning(unittest.TestCase):
             tmp_pair = (str(i), inst)
             final_result.append(tmp_pair)
             numpy_array.append(tmp)
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
 

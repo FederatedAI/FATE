@@ -16,7 +16,7 @@
 
 import numpy as np
 from sklearn.datasets import make_moons
-from arch.api import table_manager
+from arch.api import session
 # from arch.api.cluster import mock_roll as eggroll
 import functools
 import uuid
@@ -65,11 +65,11 @@ class TestMethod(object):
 
 if __name__ == '__main__':
     # 修改flow_id 否则内存表可能被覆盖
-    table_manager.init(mode=0)
+    session.init(mode=0)
     ns = str(uuid.uuid1())
 
-    X = table_manager.table('testX7', ns, partition=2)
-    Y = table_manager.table('testY7', ns, partition=2)
+    X = session.table('testX7', ns, partition=2)
+    Y = session.table('testY7', ns, partition=2)
 
     # X.destroy()
     # Y.destroy()

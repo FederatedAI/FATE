@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from sklearn.utils import resample
 from fate_flow.entity.metric import Metric
@@ -119,7 +119,7 @@ class RandomSampler(object):
                                       n_samples=sample_num,
                                       random_state=self.random_state)
 
-            sample_dtable = eggroll.parallelize(zip(sample_ids, range(len(sample_ids))),
+            sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
                                                 partition=data_inst._partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
@@ -152,7 +152,7 @@ class RandomSampler(object):
                 index = id_maps[sample_ids[i]]
                 new_data.append((i, data_set[index][1]))
 
-            new_data_inst = eggroll.parallelize(new_data,
+            new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
                                                 partition=data_inst._partitions)
 
@@ -299,7 +299,7 @@ class StratifiedSampler(object):
 
                 callback(self.tracker, "stratified", callback_metrics)
 
-            sample_dtable = eggroll.parallelize(zip(sample_ids, range(len(sample_ids))),
+            sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
                                                 partition=data_inst._partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
@@ -358,7 +358,7 @@ class StratifiedSampler(object):
                 index = id_maps[sample_ids[i]]
                 new_data.append((i, data_set[index][1]))
 
-            new_data_inst = eggroll.parallelize(new_data,
+            new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
                                                 partition=data_inst._partitions)
 

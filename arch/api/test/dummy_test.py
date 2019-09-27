@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.eggroll import init, parallelize
+from arch.api.session import init, parallelize
 # from arch.api.cluster.mock_roll import init, parallelize
 
 import numpy as np

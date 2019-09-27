@@ -22,7 +22,7 @@ message DataIOMeta {
    bool tag_with_value = 4;
    string tag_value_delimitor = 5;
    bool with_label = 6;
-   int32 label_idx = 7;
+   string label_name = 7;
    string label_type = 8;
    string output_format = 9;
    ImputerMeta imputer_meta = 10;

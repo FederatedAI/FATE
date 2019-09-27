@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+
 from enum import IntEnum, Enum
 
 
@@ -44,7 +45,6 @@ class RuntimeInstance(object):
     MODE: WorkMode = None
     FEDERATION = None
     Backend: Backend = None
-
 
 
 class StoreType(Enum):

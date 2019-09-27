@@ -19,7 +19,7 @@
 
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
-from arch.api import eggroll
+from arch.api import session
 import argparse
 import requests
 import traceback

@@ -25,7 +25,7 @@
 # 
 # =============================================================================
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api.utils import log_utils
 import warnings
 from federatedml.tree import XgboostCriterion
@@ -135,7 +135,7 @@ class Splitter(object):
     def find_split(self, histograms, valid_features, partitions=1, sitename=consts.GUEST,
                    use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of raw data")
-        histogram_table = eggroll.parallelize(histograms, include_key=False, partition=partitions)
+        histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
         splitinfo_table = histogram_table.mapValues(lambda sub_hist:
                                                     self.find_split_single_histogram_guest(sub_hist,
                                                                                            valid_features,
@@ -198,7 +198,7 @@ class Splitter(object):
     def find_split_host(self, histograms, valid_features, partitions=1, sitename=consts.HOST,
                         use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of host")
-        histogram_table = eggroll.parallelize(histograms, include_key=False, partition=partitions)
+        histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
         host_splitinfo_table = histogram_table.mapValues(lambda hist:
                                                          self.find_split_single_histogram_host(hist, valid_features,
                                                                                                sitename,

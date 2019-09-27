@@ -6,7 +6,7 @@ import unittest
 
 from sklearn.preprocessing import StandardScaler as SSL
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam
@@ -40,8 +40,8 @@ class TestStandardScaler(unittest.TestCase):
             print(v[1].features)
 
     def data_to_eggroll_table(self, data, jobid, partition=1, work_mode=0):
-        eggroll.init(jobid, mode=work_mode)
-        data_table = eggroll.parallelize(data, include_key=False, partition=10)
+        session.init(jobid, mode=work_mode)
+        data_table = session.parallelize(data, include_key=False, partition=10)
         return data_table
 
     def get_table_instance_feature(self, table_instance):

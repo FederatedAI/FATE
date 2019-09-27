@@ -18,7 +18,7 @@ import json
 import sys
 from workflow.hetero_ftl_workflow.hetero_guest_workflow import FTLGuestWorkFlow
 from federatedml.ftl.data_util.uci_credit_card_util import load_guest_host_dtable_from_UCI_Credit_Card
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
@@ -38,14 +38,14 @@ class TestFTLGuest(FTLGuestWorkFlow):
 
         LOGGER.debug("The Guest job id is {}".format(job_id))
         LOGGER.debug("The Guest work mode id is {}".format(self.workflow_param.work_mode))
-        eggroll.init(job_id, self.workflow_param.work_mode)
+        session.init(job_id, self.workflow_param.work_mode)
         federation.init(job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")
 
     def gen_data_instance(self, table_name, namespace, mode="fit"):
         data_model_param = self._get_data_model_param()
         if data_model_param.is_read_table:
-            return eggroll.table(table_name, namespace)
+            return session.table(table_name, namespace)
         else:
             data_model_param_dict = dict()
             data_model_param_dict["file_path"] = data_model_param.file_path
@@ -61,7 +61,7 @@ class TestFTLGuest(FTLGuestWorkFlow):
         data_model_param = self._get_data_model_param()
         valid_data_model_param = self._get_valid_data_model_param()
         if valid_data_model_param.is_read_table:
-            return eggroll.table(table_name, namespace)
+            return session.table(table_name, namespace)
         else:
             data_model_param_dict = dict()
             data_model_param_dict["file_path"] = valid_data_model_param.file_path
