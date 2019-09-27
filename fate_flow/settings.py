@@ -24,7 +24,6 @@ import __main__
 
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
 stat_logger = log_utils.getLogger("fate_flow_stat")
-schedule_logger = log_utils.getLogger("fate_flow_schedule")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
 
@@ -55,6 +54,8 @@ HTTP_PORT = 9380
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
+USE_AUTHENTICATION = False
+PRIVILEGE_COMMAND_WHITELIST = ['task_status', 'job_status', 'save_pipeline', 'clean']
 
 DATABASE = {
     'name': 'fate_flow',
