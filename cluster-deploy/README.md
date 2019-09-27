@@ -2,9 +2,7 @@
 
 #                      **FATE-V1.0 Deployment Guide**
 
-
-
-
+You can also refer to:[Chinese deployment guide](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
 
 ## 1.     Module Information
 
@@ -66,11 +64,11 @@ The following configuration is a one-sided server configuration information. If 
 | Server                 |                                                              |
 | ---------------------- | ------------------------------------------------------------ |
 | **Quantity**           | 1 or more than 1 (according to the actual server allocation module provided) |
-| **Configuration**      | 16 core / 32G memory / 300G hard disk / 50M bandwidth        |
+| **Configuration**      | 8 core / 16G memory / 500G hard disk / 10M bandwidth         |
 | **Operating System**   | Version: CentOS Linux release 7.2                            |
 | **Dependency Package** | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev (They can be installed using the initialization script env.sh) |
 | **Users**              | User: app owner:apps (app user can sudo su root without password) |
-| **File System**        | 1. The 300G hard disk is mounted to the /data directory.                                                                                2. Created /data/projects directory, projects directory belongs to app:apps |
+| **File System**        | 1. The  500G hard disk is mounted to the /data directory.                                                                               2. Created /data/projects directory, projects directory belongs to app:apps. |
 
 ### **3.2. Software Version Requirements**
 
@@ -203,7 +201,37 @@ Enter password: fate_dev
 
 After the check is completed, return to the execution node for project deployment.
 
+### 3.5.**Configuring sudo**
 
+Executed by the **root** user:
+
+1.vim /etc/sudoers.d/app
+
+2.Add the following content:
+
+app ALL=(ALL) ALL
+
+app ALL=(ALL) NOPASSWD: ALL
+
+Defaults !env_reset
+
+### 3.6.Configure password-free login from the execution node to the node to be deployed
+
+1.Generate a key on the all node,Contains the execution node and the node to be deployed
+
+su - app
+
+ssh-keygen -t rsa
+
+2.Generate authorized_keys fileon the execution node
+
+cat ~/.ssh/id_rsa.pub >> /home/app/.ssh/authorized_keys 
+
+chmod 600 ~/.ssh/authorized_keys
+
+3.Copy the execution node authorized_keys file to all nodes to be deployed
+
+scp \~/.ssh/authorized_keys app\@{ip}:/home/app/.ssh
 
 ## 4.      Project Deployment
 
@@ -359,6 +387,50 @@ serving1=(B.S1-ip B.S2-ip)
 exchangeip=exchangeip 
 ```
 
+example: 
+
+| surroundings | ip              | Business service                                             |
+| ------------ | --------------- | ------------------------------------------------------------ |
+| exchange     | 192.168.167xxx  | proxy                                                        |
+| partyA       | 192.168.168.xxx | proxy;meta-service;federation;fate-flow;roll;serving-server;fateboard;egg |
+| partyB       | 192.168.169.xxx | proxy;meta-service;federation;fate-flow;roll;serving-server;fateboard;egg |
+
+```
+user=app 
+dir=/data/projects/fate 
+mysqldir=/data/projects/common/mysql/mysql-8.0.13
+javadir=/data/projects/common/jdk/jdk1.8.0_192
+venvdir=/data/projects/fate/venv
+redisip=(192.168.168.xxx 192.168.169.xxx)
+redispass=fate_dev
+partylist=(192.168.168.xxx 192.168.169.xxx)
+JDBC0=(192.168.168.xxx eggroll_meta fate_dev fate_dev) 
+JDBC1=(192.168.169.xxx eggroll_meta fate_dev fate_dev) 
+fateflowdb0=(192.168.168.xxx fateflow fate_dev fate_dev) 
+fateflowdb1=(192.168.169.xxx fateflow fate_dev fate_dev) 
+iplist=(192.168.168.xxx  192.168.169.xxx)
+iplist0=(192.168.168.xxx)
+iplist1=(192.168.169.xxx)
+fateboard0=(192.168.168.xxx)
+fateboard1=(192.168.169.xxx)
+Cxxcompile=false
+fedlist0=(192.168.168.xxx)
+fedlist1=(192.168.169.xxx)
+meta0=(192.168.168.xxx)
+meta1=(192.168.169.xxx)
+proxy0=(192.168.168.xxx)
+proxy1=(192.168.169.xxx)
+roll0=(192.168.168.xxx)
+roll1=(192.168.169.xxx)
+egglist0=(192.168.168.xxx)
+egglist1=(192.168.169.xxx) 
+fllist0=(192.168.168.xxx)
+fllist1=(192.168.169.xxx)
+serving0=(192.168.168.xxx)
+serving1=(192.168.169.xxx)
+exchangeip=192.168.167.xxx
+```
+
 *<u>Note: According to the above configuration method, you can modify it according to the actual situation.</u>*
 
 After modifying the configuration items corresponding to the configurations.sh file according to the above configuration, execute the auto-packaging.sh script:
@@ -493,8 +565,6 @@ example-dir-tree
 |    |- third_party/
 |    |- service.sh
 |    |- storage-service.cc
-|    |- storage-service-0.3
-|    |- storage-service -> storage-service-0.3
 ```
 
 Continue to execute the deployment script in the FATE/cluster-deploy/scripts directory:
