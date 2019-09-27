@@ -114,24 +114,10 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
     def compute_forwards(self, data_instances, model_weights):
         """
-        forwards =
+        forwards = wx
         """
         wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
-
-    # def compute_unilateral_gradient(self, data_instances, fore_gradient, model_weights, optimizer=None):
-    #     """
-    #     gradient = (1/N)*∑(1/2*ywx-1)*1/2yx = (1/N)*∑(0.25 * wx - 0.5 * y) * x, where y = 1 or -1
-    #     fore_gradient = d = (0.25 * wx - 0.5 * y)
-    #     Thus g = (1/N)*∑(d * x)
-    #     Optimizer process is executed in Arbiter
-    #     """
-    #     unilateral_gradient = hetero_gradient_computer.compute_gradient(data_instances,
-    #                                                                     fore_gradient,
-    #                                                                     model_weights.fit_intercept)
-    #     if optimizer is not None:
-    #         unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
-    #     return unilateral_gradient
 
     def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index):
         """

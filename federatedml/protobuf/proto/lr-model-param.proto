@@ -26,7 +26,19 @@ message LRModelParam {
     map<string, double> weight = 4;
     double intercept = 5;
     repeated string header = 6;
-    bool need_one_vs_rest = 7;
-    repeated string one_vs_rest_classes = 8;
+    OneVsRestResult one_vs_rest_result = 7;
 }
 
+message SingleModel {
+    int32 iters = 1;
+    repeated double loss_history = 2;
+    bool is_converged = 3;
+    map<string, double> weight = 4;
+    double intercept = 5;
+    repeated string header = 6;
+}
+
+message OneVsRestResult {
+    repeated SingleModel completed_models = 1;
+    repeated string one_vs_rest_classes = 2;
+}
