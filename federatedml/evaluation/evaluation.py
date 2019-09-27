@@ -62,7 +62,6 @@ class Evaluation(ModelBase):
             consts.EXPLAINED_VARIANCE,
             consts.MEAN_ABSOLUTE_ERROR,
             consts.MEAN_SQUARED_ERROR,
-            consts.MEAN_SQUARED_LOG_ERROR,
             consts.MEDIAN_ABSOLUTE_ERROR,
             consts.R2_SCORE,
             consts.ROOT_MEAN_SQUARED_ERROR
