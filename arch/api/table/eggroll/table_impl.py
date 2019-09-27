@@ -34,8 +34,8 @@ class DTable(Table):
         self._session_id = session_id
 
     @classmethod
-    def from_dtable(cls, job_id, dtable):
-        return DTable(dtable=dtable, session_id=job_id)
+    def from_dtable(cls, session_id, dtable):
+        return DTable(dtable=dtable, session_id=session_id)
 
     def get_name(self):
         return self._name
