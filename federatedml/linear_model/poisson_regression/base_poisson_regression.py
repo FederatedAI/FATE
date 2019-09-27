@@ -81,19 +81,21 @@ class BasePoissonRegression(BaseLinearModel):
             exposure = data_instance.features[self.exposure_index]
         return exposure
 
-    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
-        if exposure is None:
-            mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_))
-        else:
-            mu = data_instances.join(exposure,
-                                     lambda v, ei: np.exp(np.dot(v.features, coef_) + intercept_) / ei)
-        return mu
-
     def safe_log(self, v):
         if v == 0:
             return np.log(1e-7)
         return np.log(v)
+
+    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
+        if exposure is None:
+            mu = data_instances.mapValues(
+                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
+        else:
+            offset = self.safe_log(exposure)
+            mu = data_instances.mapValues(
+                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ + offset))
+
+        return mu
 
     def _get_meta(self):
         meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(
