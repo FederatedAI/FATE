@@ -31,6 +31,7 @@ from federatedml.param.boosting_tree_param import BoostingTreeParam
 from federatedml.model_selection.KFold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.validation_strategy import ValidationStrategy
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
@@ -56,6 +57,7 @@ class BoostingTree(ModelBase):
         self.re_encrypted_rate = None
         self.predict_param = None
         self.cv_param = None
+        self.validation_freqs = None
         self.feature_name_fid_mapping = {}
         self.role = ''
         self.mode = consts.HETERO
@@ -79,6 +81,7 @@ class BoostingTree(ModelBase):
         self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
         self.predict_param = boostingtree_param.predict_param
         self.cv_param = boostingtree_param.cv_param
+        self.validation_freqs = boostingtree_param.validation_freqs
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -136,6 +139,12 @@ class BoostingTree(ModelBase):
     def predict(self, data_inst):
         pass
 
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy.set_train_data(train_data)
+        validation_strategy.set_validate_data(validate_data)
+        return validation_strategy
+    
     def cross_validation(self, data_instances):
         if not self.need_run:
             return data_instances

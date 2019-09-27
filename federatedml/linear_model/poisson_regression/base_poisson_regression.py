@@ -26,6 +26,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights as P
 from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -156,3 +157,7 @@ class BasePoissonRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = PoissonRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+    
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="regression")
+

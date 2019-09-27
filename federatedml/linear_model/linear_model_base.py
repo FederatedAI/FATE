@@ -25,6 +25,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
+from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class BaseLinearModel(ModelBase):
@@ -48,6 +49,7 @@ class BaseLinearModel(ModelBase):
         self.schema = {}
         self.cipher_operator = None
         self.model_weights = None
+        self.validation_freqs = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -57,8 +59,9 @@ class BaseLinearModel(ModelBase):
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
-        self.converge_func = converge_func_factory(params)
+        self.converge_func = converge_func_factory(params.converge_func, params.eps)
         self.encrypted_calculator = None
+        self.validation_freqs = params.validation_freqs
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:
@@ -107,6 +110,12 @@ class BaseLinearModel(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy.set_train_data(train_data)
+        validation_strategy.set_validate_data(validate_data)
+        return validation_strategy
+    
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
 
