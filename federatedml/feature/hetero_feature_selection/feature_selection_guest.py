@@ -139,24 +139,6 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
                 left_col_index = host_left_cols.get(consts.HOST)
                 self.host_filter_result.add_left_cols(left_col_index)
 
-                # new_result = {}
-                # for host_col_idx in host_select_cols:
-                #     if host_col_idx not in left_cols:
-                #         LOGGER.warning(
-                #             "Host column {} has not been set in feature binning module".format(host_col_idx))
-                #         continue
-                #
-                #     original_left = host_select_cols.get(host_col_idx)
-                #     if not original_left:
-                #         continue
-                #
-                #     is_left = left_cols.get(host_col_idx)
-                #     new_result[host_col_idx] = is_left
-                #
-                # LOGGER.debug("Recived result: host_select_cols: {}, iv result: host_left_cols: {},"
-                #              "final_result new_result : {}".format(host_select_cols, host_left_cols, new_result))
-                # self.host_left_cols = new_result
-                # self._add_host_left_cols(self.host_left_cols)
                 self._send_host_result_cols(consts.IV_PERCENTILE)
                 LOGGER.info(
                     "[Result][FeatureSelection][Host]Finish iv percentile threshold filter. "

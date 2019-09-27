@@ -23,7 +23,7 @@ from federatedml.framework.homo.procedure import aggregator
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
-from federatedml.optim.gradient.logistic_gradient import LogisticGradient
+from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
 

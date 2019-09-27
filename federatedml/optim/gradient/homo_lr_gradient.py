@@ -14,48 +14,58 @@
 #  limitations under the License.
 #
 
-import functools
-
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.optim.gradient.base_gradient import Gradient
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
 
-class LogisticGradient(Gradient):
-    def compute_loss(self, values, coef, intercept):
-        X, Y = self.load_data(values)
+def load_data(data_instance):
+    X = []
+    Y = []
+    for iter_key, instant in data_instance:
+        weighted_feature = instant.weight * instant.features
+        X.append(weighted_feature)
+        if instant.label == 1:
+            Y.append([1])
+        else:
+            Y.append([-1])
+    X = np.array(X)
+    Y = np.array(Y)
+    return X, Y
+
+
+class LogisticGradient(object):
+
+    @staticmethod
+    def compute_loss(values, coef, intercept):
+        X, Y = load_data(values)
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
         return tot_loss
 
-    def compute_gradient(self, values, coef, intercept, fit_intercept):
-        X, Y = self.load_data(values)
+    @staticmethod
+    def compute_gradient(values, coef, intercept, fit_intercept):
+        X, Y = load_data(values)
         batch_size = len(X)
         if batch_size == 0:
             LOGGER.warning("This partition got 0 data")
-            return None, None
+            return None
 
         d = (1.0 / (1 + np.exp(-np.multiply(Y.transpose(), X.dot(coef) + intercept))) - 1).transpose() * Y
         grad_batch = d * X
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
         return grad
 
 
-class TaylorLogisticGradient(Gradient):
-    def compute_loss(self, values, w, intercept):
-        LOGGER.warning("Taylor Logistic Gradient cannot compute loss in encrypted mode")
-        return 0
+class TaylorLogisticGradient(object):
 
-    def compute_gradient(self, values, coef, intercept, fit_intercept):
-        X, Y = self.load_data(values)
+    @staticmethod
+    def compute_gradient(values, coef, intercept, fit_intercept):
+        X, Y = load_data(values)
         batch_size = len(X)
         if batch_size == 0:
             return None

@@ -135,13 +135,14 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        prob_guest = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
-        prob_host = self.transfer_variable.host_prob.get(idx=0)
+        pred_prob = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        host_probs = self.transfer_variable.host_prob.get(idx=-1)
 
         LOGGER.info("Get probability from Host")
 
         # guest probability
-        pred_prob = prob_guest.join(prob_host, lambda g, h: activation.sigmoid(g + h))
+        for host_prob in host_probs:
+            pred_prob = pred_prob.join(host_prob, lambda g, h: activation.sigmoid(g + h))
         pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)

@@ -19,13 +19,12 @@ import functools
 import time
 
 from arch.api.model_manager import manager as model_manager
-from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from arch.api.utils import log_utils
-from federatedml.util import consts
+from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
-
 
 
 class OneVsRest(object):
@@ -37,7 +36,6 @@ class OneVsRest(object):
         self.role = role
         self.mode = mode
         self.flow_id = 0
-        self.need_mask_label = False
         self.has_arbiter = one_vs_rest_param.has_arbiter
 
         self.models = []
@@ -88,16 +86,7 @@ class OneVsRest(object):
         """
         f = functools.partial(self.__get_classes)
         classes_res = data_instances.mapPartitions(f)
-
-        classes = None
-        for res in list(classes_res.collect()):
-            class_set = res[1]
-            if not classes:
-                classes = class_set
-
-            for v in class_set:
-                classes.add(v)
-
+        classes = classes_res.reduce(lambda a, b: a | b)
         return classes
 
     def __mask_data_label(self, data_instances, label):
@@ -116,36 +105,15 @@ class OneVsRest(object):
         if self.role == consts.GUEST:
             self.transfer_variable.aggregate_classes.remote(self.classes,
                                                             role=consts.HOST,
-                                                            idx=0)
-            """
-            federation.remote(self.classes,
-                              name=self.transfer_variable.aggregate_classes.name,
-                              tag=self.transfer_variable.generate_transferid(self.transfer_variable.aggregate_classes),
-                              role=consts.HOST,
-                              idx=0)
-            """
+                                                            idx=-1)
 
             if self.has_arbiter:
                 self.transfer_variable.aggregate_classes.remote(self.classes,
                                                                 role=consts.ARBITER,
                                                                 idx=0)
-                """
-                federation.remote(self.classes,
-                                  name=self.transfer_variable.aggregate_classes.name,
-                                  tag=self.transfer_variable.generate_transferid(
-                                      self.transfer_variable.aggregate_classes),
-                                  role=consts.ARBITER,
-                                  idx=0)
-                """
 
         elif self.role == consts.HOST or self.role == consts.ARBITER:
             self.classes = self.transfer_variable.aggregate_classes.get(idx=0)
-            """
-            self.classes = federation.get(name=self.transfer_variable.aggregate_classes.name,
-                                          tag=self.transfer_variable.generate_transferid(
-                                              self.transfer_variable.aggregate_classes),
-                                          idx=0)
-            """
         else:
             raise ValueError("Unknown role:{}".format(self.role))
 
@@ -156,29 +124,23 @@ class OneVsRest(object):
         """
         if self.mode == consts.HOMO:
             if self.role == consts.GUEST:
-                host_classes_list = self.transfer_variable.host_classes.get(idx=0)
-                """
-                host_classes_list = federation.get(name=self.transfer_variable.host_classes.name,
-                                                   tag=self.transfer_variable.generate_transferid(
-                                                       self.transfer_variable.host_classes),
-                                                   idx=0)
-                """
+                host_classes_list = self.transfer_variable.host_classes.get(idx=-1)
+
                 for host_class in host_classes_list:
-                    self.classes.add(host_class)
+                    self.classes = self.classes | host_class
 
             elif self.role == consts.HOST:
                 self.transfer_variable.host_classes.remote(self.classes,
                                                            role=consts.GUEST,
                                                            idx=0)
-                """
-                federation.remote(self.classes,
-                                  name=self.transfer_variable.host_classes.name,
-                                  tag=self.transfer_variable.generate_transferid(self.transfer_variable.host_classes),
-                                  role=consts.GUEST,
-                                  idx=0)
-                """
-
         self.__synchronize_aggregate_classed_list()
+
+    @property
+    def has_label(self):
+        if (self.mode == consts.HOMO and self.role != consts.ARBITER) or (
+                        self.mode == consts.HETERO and self.role == consts.GUEST):
+            return True
+        return False
 
     def fit(self, data_instances=None):
         """
@@ -187,22 +149,21 @@ class OneVsRest(object):
         ----------
         data_instances: DTable of instances
         """
-        if (self.mode == consts.HOMO and self.role != consts.ARBITER) or (
-                self.mode == consts.HETERO and self.role == consts.GUEST):
-            LOGGER.info("mode is {}, role is {}, start to get data classes".format(self.mode, self.role))
+        LOGGER.info("mode is {}, role is {}, start to one_vs_rest fit".format(self.mode, self.role))
+        if self.has_label:
             self.classes = self.__get_data_classes(data_instances)
-            self.need_mask_label = True
 
         LOGGER.info("Start to synchronize")
         self.__synchronize_classes_list()
 
         LOGGER.info("Total classes:{}".format(self.classes))
 
+        current_flow_id = self.classifier.flowid
         for flow_id, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with flow_id:{}, label:{}".format(flow_id, label))
             classifier = copy.deepcopy(self.classifier)
-            classifier.set_flowid("_".join(["train", str(flow_id)]))
-            if self.need_mask_label:
+            classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(flow_id)]))
+            if self.has_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self.__mask_data_label(data_instances, label=label)
                 data_instances_mask_label.schema['header'] = header
@@ -307,3 +268,9 @@ class OneVsRest(object):
             self.classes.append(model_class)
 
         LOGGER.info("finish load OneVsRest model.")
+
+
+class HomoOneVsRest(OneVsRest):
+    def __init__(self, classifier, role, mode, one_vs_rest_param):
+        pass
+

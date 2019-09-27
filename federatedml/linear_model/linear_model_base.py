@@ -57,7 +57,7 @@ class BaseLinearModel(ModelBase):
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
-        self.converge_func = converge_func_factory(params)
+        self.converge_func = converge_func_factory(params.converge_func, params.eps)
         self.encrypted_calculator = None
 
     def get_features_shape(self, data_instances):
