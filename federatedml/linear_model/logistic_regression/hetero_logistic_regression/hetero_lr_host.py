@@ -69,7 +69,7 @@ class HeteroLRHost(HeteroLRBase):
 
         return host_forward
 
-    def fit(self, data_instances, *args):
+    def fit(self, data_instances, validate_data=None):
         """
         Train lr model of role host
         Parameters
@@ -80,6 +80,8 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.info("Enter hetero_lr host")
         self._abnormal_detection(data_instances)
 
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -121,6 +123,8 @@ class HeteroLRHost(HeteroLRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
+            validation_strategy.validate(self, self.n_iter_)
+            
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

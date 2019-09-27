@@ -18,8 +18,8 @@
 
 import operator
 
-class FilterResult(object):
 
+class FilterResult(object):
     def __init__(self):
         self._left_cols = {}
         self._pass_filter_nums = {}
@@ -43,6 +43,7 @@ class SelfFilterResult(FilterResult):
     """
     Store all the filtered results
     """
+
     def __init__(self, header, to_select_cols_all):
         super().__init__()
         self.__header = tuple(header)
@@ -74,6 +75,7 @@ class RemoteFilterResult(FilterResult):
     Store remote party filter results
     Typically used in Guest party to store Host party results
     """
+
     def __init__(self):
         super().__init__()
         self.to_select_cols_dict = {}

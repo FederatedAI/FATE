@@ -3,6 +3,6 @@
   "head": 1,
   "partition": 10,
   "work_mode": 0,
-  "table_name": "nmes_exposure_a",
+  "table_name": "nmes_a",
   "namespace": "nmes"
 }

@@ -71,5 +71,5 @@ class BucketBinning(Binning):
                 s_p = min_value + (k + 1) * L
                 split_point.append(s_p)
             final_split_points[col_name] = split_point
-
+        self.split_points = final_split_points
         return final_split_points

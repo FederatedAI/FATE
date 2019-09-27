@@ -23,7 +23,7 @@
         "data": {
           "train_data": [
             {
-              "name": "nmes_exposure_b",
+              "name": "nmes_b",
               "namespace": "nmes"
             }
           ]
@@ -92,7 +92,7 @@
         "data": {
           "train_data": [
             {
-              "name": "nmes_exposure_a",
+              "name": "nmes_a",
               "namespace": "nmes"
             }
           ]
@@ -157,7 +157,7 @@
     "hetero_poisson_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",
-      "eps": 1e-3,
+      "eps": 1e-5,
       "alpha": 0.01,
       "max_iter": 20,
       "converge_func": "weight_diff",

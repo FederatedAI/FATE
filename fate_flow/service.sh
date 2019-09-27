@@ -17,8 +17,8 @@
 #
 
 export PYTHONPATH=
-log_dir="/data/projects/fate/python/yuwu/FATE/logs"
-venv="/data/projects/fate/venv/"
+log_dir="${PYTHONPATH}/logs"
+venv=
 # FATE deployment suggested path
 # venv=/data/projects/fate/venv/
 
