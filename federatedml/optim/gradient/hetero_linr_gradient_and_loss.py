@@ -45,7 +45,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
                                        encrypted_calculator, batch_index, offset=None):
         """
-                Compute gradients:
+        Compute gradients:
         gradient = (1/N)*\sum(wx -y)*x
 
         Define wx as guest_forward or host_forward
@@ -100,7 +100,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wxy_square = wxy.mapValues(lambda x: np.square(x)).reduce(reduce_add)
 
             loss_gh = wxy.join(host_forward, lambda g, h: g * h).reduce(reduce_add)
-            loss = (wxy_square + host_wx_square + 2 * loss_gh) / n
+            loss = (wxy_square + host_wx_square + 2 * loss_gh) / (2 * n)
             if loss_norm is not None:
                 loss = loss + loss_norm + host_loss_regular[0]
             loss_list.append(loss)
@@ -125,7 +125,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
         """
         Compute htero linr loss for:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
+            loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
 
             Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
         """
@@ -145,46 +145,6 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
                                      transfer_variables.guest_optim_gradient,
                                      transfer_variables.host_optim_gradient)
         self._register_loss_sync(transfer_variables.loss)
-
-    # def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
-    #     """
-    #     Decrypt gradients.
-    #
-    #     Parameters
-    #     ----------
-    #     cipher_operator: Use for encryption
-    #
-    #     optimizer: optimizer that get delta gradient of this iter
-    #
-    #     n_iter_: int, current iter nums
-    #
-    #     batch_index: int, use to obtain current encrypted_calculator
-    #
-    #     """
-    #     current_suffix = (n_iter_, batch_index)
-    #
-    #     host_gradients, guest_gradient = self.get_local_gradient(current_suffix)
-    #     # LOGGER.debug("at Arbiter's end, Guest gradient's type is {}".format(type(guest_gradient[0])))
-    #
-    #
-    #     host_gradients = [np.array(h) for h in host_gradients]
-    #     guest_gradient = np.array(guest_gradient)
-    #
-    #     size_list = [h_g.shape[0] for h_g in host_gradients]
-    #     size_list.append(guest_gradient.shape[0])
-    #
-    #     gradient = np.hstack((h for h in host_gradients))
-    #     gradient = np.hstack((gradient, guest_gradient))
-    #     # LOGGER.debug("after stacking, gradient's type is {}".format(type(gradient[0])))
-    #
-    #     grad = np.array(cipher_operator.decrypt_list(gradient))
-    #     delta_grad = optimizer.apply_gradients(grad)
-    #     separate_optim_gradient = self.separate(delta_grad, size_list)
-    #     host_optim_gradients = separate_optim_gradient[: -1]
-    #     guest_optim_gradient = separate_optim_gradient[-1]
-    #
-    #     self.remote_local_gradient(host_optim_gradients, guest_optim_gradient, current_suffix)
-    #     return delta_grad
 
     def compute_loss(self, cipher, n_iter_, batch_index):
         """
