@@ -74,7 +74,8 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, converge_func='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
+                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
+                 validation_freqs=None
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -92,6 +93,7 @@ class LogisticParam(BaseParam):
         self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "logistic_param's"

@@ -74,7 +74,8 @@ class PoissonParam(BaseParam):
                  exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True,
+                 validation_freqs=None):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -94,7 +95,7 @@ class PoissonParam(BaseParam):
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.exposure_colname = exposure_colname
-
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "poisson_param's"

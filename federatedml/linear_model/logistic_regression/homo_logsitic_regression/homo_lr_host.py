@@ -54,11 +54,12 @@ class HomoLRHost(HomoLRBase):
             self.use_encrypt = False
             self.gradient_operator = LogisticGradient()
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         LOGGER.debug("Start data count: {}".format(data_instances.count()))
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
@@ -120,6 +121,8 @@ class HomoLRHost(HomoLRBase):
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
     def predict(self, data_instances):

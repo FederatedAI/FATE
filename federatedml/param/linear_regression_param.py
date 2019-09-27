@@ -79,7 +79,7 @@ class LinearParam(BaseParam):
                  max_iter=100, converge_func='diff', predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.eps = eps
@@ -97,6 +97,7 @@ class LinearParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "linear_param's"

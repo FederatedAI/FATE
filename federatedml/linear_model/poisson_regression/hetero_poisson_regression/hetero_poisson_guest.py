@@ -37,7 +37,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train linR model of role guest
         Parameters
@@ -48,6 +48,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+        
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         if self.exposure_index > -1:
             self.header.pop(self.exposure_index)
@@ -100,6 +103,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:
                 break

@@ -51,7 +51,7 @@ class HeteroLRGuest(HeteroLRBase):
             data_instance.label = -1
         return data_instance
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train lr model of role guest
         Parameters
@@ -62,6 +62,9 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+       
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -113,6 +116,9 @@ class HeteroLRGuest(HeteroLRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+           
+            validation_strategy.validate(self, self.n_iter_)
+            
             self.n_iter_ += 1
             if self.is_converged:
                 break
