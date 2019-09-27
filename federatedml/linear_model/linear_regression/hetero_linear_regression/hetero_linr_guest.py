@@ -78,7 +78,7 @@ class HeteroLinRGuest(HeteroLinRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
+            # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_ + 1)
             batch_index = 0

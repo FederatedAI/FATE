@@ -51,7 +51,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         if offset is None:
             raise ValueError("Offset should be provided when compute poisson forwards")
         mu = data_instances.join(offset, lambda d, m: np.exp(np.dot(d.features, model_weights.coef_)
-                                                             + model_weights.intercept_ - m))
+                                                             + model_weights.intercept_ + m))
         self.forwards = mu
 
         self.aggregated_forwards = self.forwards.join(self.host_forwards[0], lambda g, h: g * h)
@@ -78,9 +78,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         """
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
-        guest_wx_y = data_instances.mapValues(
-            lambda v: (np.dot(v.features, model_weights.coef_) + model_weights.intercept_, v.label))
-        offset_sum = offset.reduce(reduce_add)
+        guest_wx_y = data_instances.join(offset,
+            lambda v, m: (np.dot(v.features, model_weights.coef_) + model_weights.intercept_ + m, v.label))
         loss_list = []
         host_wxs = self.get_host_loss_intermediate(current_suffix)
         if loss_norm is not None:
@@ -95,7 +94,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         host_wx = host_wxs[0]
         loss_wx = guest_wx_y.join(host_wx, lambda g, h: g[1] * (g[0] + h)).reduce(reduce_add)
         loss_mu = self.forwards.join(host_mu, lambda g, h: g * h).reduce(reduce_add)
-        loss = (loss_mu - loss_wx + offset_sum) / n
+        loss = (loss_mu - loss_wx) / n
         if loss_norm is not None:
             loss = loss + loss_norm + host_loss_regular[0]
         loss_list.append(loss)
