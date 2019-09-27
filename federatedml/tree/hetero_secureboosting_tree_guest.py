@@ -30,6 +30,7 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
 from federatedml.util.classfiy_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
@@ -501,6 +502,17 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
 
+    def get_metrics_param(self):
+        if self.task_type == consts.CLASSIFICATION:
+            if self.num_classes == 2:
+                return EvaluateParam(eval_type="binary",
+                                     pos_label=self.classes_[1])
+            else:
+                return EvaluateParam(eval_type="multi")
+        else:
+            return EvaluateParam(eval_type="regression")
+
+    
     def export_model(self):
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
