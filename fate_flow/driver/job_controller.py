@@ -123,7 +123,7 @@ class JobController(object):
             TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
                                           role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
-                                          task_info=task.to_json())
+                                          task_info=task.to_json(), initiator_role=job_initiator.get('role', None))
 
     @staticmethod
     def update_task_status(job_id, component_name, task_id, role, party_id, task_info):

@@ -37,3 +37,4 @@ class TaskStatus(object):
     RUNNING = 'running'
     SUCCESS = 'success'
     FAILED = 'failed'
+    TIMEOUT = 'timeout'
