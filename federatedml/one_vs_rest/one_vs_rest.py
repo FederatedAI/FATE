@@ -53,7 +53,6 @@ class OneVsRest(object):
     @staticmethod
     def __mask_label(instance, label):
         instance.label = (1 if (instance.label == label) else 0)
-
         return instance
 
     @staticmethod
