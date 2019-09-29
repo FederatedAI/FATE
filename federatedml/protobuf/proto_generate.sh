@@ -17,20 +17,24 @@
 #
 
 BASEDIR=$(dirname "$0")
-cd $BASEDIR
+cd "$BASEDIR" || exit
 
 PROTO_DIR="proto"
 TARGER_DIR="generated"
 
 generate() {
-  python -m grpc_tools.protoc -I./$PROTO_DIR --python_out=./$TARGER_DIR  $1
+  python -m grpc_tools.protoc -I./$PROTO_DIR --python_out=./$TARGER_DIR "$1"
 }
 
-for proto in `ls $PROTO_DIR`; do
-  if [[ "${proto##*.}"x = "proto"x ]]
-  then
-    echo "generate proto: $proto"
-    generate $proto
-  fi
-done
+generate_all() {
+  for proto in "$PROTO_DIR"/*.proto; do
+    echo "protoc: $proto"
+    generate "$proto"
+  done
+}
 
+if [ $# -gt 0 ]; then
+  generate "$1"
+else
+  generate_all
+fi
