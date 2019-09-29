@@ -63,7 +63,8 @@ class TaskExecutor(object):
             job_args = task_config['job_args']
             task_input_dsl = task_config['input']
             task_output_dsl = task_config['output']
-            parameters = task_config['parameters']
+            parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
+            # parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
             schedule_logger().exception(e)
@@ -182,6 +183,15 @@ class TaskExecutor(object):
                         model_name=search_model_name)
                     this_type_args[search_component_name] = models
         return task_run_args
+
+    @staticmethod
+    def get_parameters(job_id, component_name, role, party_id):
+        job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
+        if job_dsl_parser:
+            component = job_dsl_parser.get_component_info(component_name)
+            parameters = component.get_role_parameters()
+            role_index = parameters[role][0]['role'][role].index(party_id)
+            return parameters[role][role_index]
 
     @staticmethod
     def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, initiator_role, task_info):

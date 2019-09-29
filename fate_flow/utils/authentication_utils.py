@@ -35,8 +35,7 @@ class PrivilegeAuth(object):
 
     @staticmethod
     def authentication_privilege(src_party_id, src_role, request_path, func_name):
-        dest_role, user_command, component = PrivilegeAuth.get_authentication_items(request_path, func_name)
-        privilege_dic = PrivilegeAuth.get_privilege_dic(dest_role, user_command, component)
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, func_name)
         for privilege_type, value in privilege_dic.items():
             if value in PrivilegeAuth.command_whitelist:
                 return
@@ -131,7 +130,7 @@ class PrivilegeAuth(object):
     def get_authentication_items(request_path, func_name):
         dest_role = request_path.split('/')[2] if 'task' not in func_name else request_path.split('/')[4]
         component = request.json.get('module_name').lower() if 'run_task' in func_name else None
-        return dest_role, func_name, component
+        return PrivilegeAuth.get_privilege_dic(dest_role, func_name, component)
 
     @staticmethod
     def get_privilege_dic(privilege_role, privilege_command, privilege_component):
@@ -199,3 +198,14 @@ def search_command(path):
 def search_component(path):
     component_list = [file_name.split('.')[0].lower() for file_name in os.listdir(path) if 'json' in file_name]
     PrivilegeAuth.ALL_PERMISSION['privilege_component'].extend(component_list)
+
+
+def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
+    initiator = runtime_conf['initiator']
+    roles = runtime_conf['role']
+    if initiator['role'] != src_role or initiator['party_id'] != src_party_id or party_id not in roles[role]:
+        raise Exception('Authentication verification failed')
+    components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
+    if not set(components).issubset(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_component', [])):
+        if not set(components).issubset(PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_component', [])):
+            raise Exception('Authentication verification failed')

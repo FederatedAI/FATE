@@ -16,8 +16,8 @@
 from flask import Flask, request
 
 from fate_flow.settings import stat_logger
-from fate_flow.utils import authentication_utils
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.authentication_utils import modify_permission, PrivilegeAuth
 
 manager = Flask(__name__)
 
@@ -28,13 +28,23 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
-@manager.route('/grant', methods=['post'])
+@manager.route('/grant/privilege', methods=['post'])
 def grant_permission():
-    authentication_utils.modify_permission(request.json)
+    modify_permission(request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/delete', methods=['post'])
+@manager.route('/delete/privilege', methods=['post'])
 def delete_permission():
-    authentication_utils.modify_permission(request.json, delete=True)
+    modify_permission(request.json, delete=True)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/query/privilege', methods=['post'])
+def query_privilege():
+    privilege_dict = PrivilegeAuth.get_permission_config(request.json.get('src_party_id'), request.json.get('src_role'))
+    return get_json_result(retcode=0, retmsg='success', data={'src_party_id': request.json.get('src_party_id'),
+                                                              'role': request.json.get('src_role'),
+                                                              'privilege_role': privilege_dict.get('privilege_role',[]),
+                                                              'privilege_command': privilege_dict.get('privilege_command', []),
+                                                              'privilege_component': privilege_dict.get('privilege_component', [])})

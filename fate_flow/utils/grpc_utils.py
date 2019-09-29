@@ -28,9 +28,9 @@ def get_proxy_data_channel():
     return channel, stub
 
 
-def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, _src_role, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
-    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=ROLE, callback=_src_end_point)
+    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), src_role="{}".format(_src_role), role=ROLE, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=ROLE, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
     _command = proxy_pb2.Command(name=ROLE)
@@ -55,6 +55,10 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         src = header.src
         dst = header.dst
         method = header.operator
+        param_dict = json.loads(param)
+        param_dict['src_party_id'] = src.partyId
+        param_dict['src_role'] = src.src_role
+        param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 
         action = getattr(requests, method.lower(), None)
         stat_logger.info('rpc receive: {}'.format(packet))
@@ -64,4 +68,4 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         else:
             pass
         resp_json = resp.json()
-        return wrap_grpc_packet(resp_json, method, _suffix, dst.partyId, src.partyId, job_id)
+        return wrap_grpc_packet(resp_json, method, _suffix, dst.partyId, src.partyId, src.src_role, job_id)
