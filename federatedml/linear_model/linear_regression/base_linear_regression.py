@@ -27,6 +27,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -67,14 +68,13 @@ class BaseLinearRegression(BaseLinearModel):
 
     def _get_meta(self):
         meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,
-                                                              eps=self.model_param.eps,
+                                                              tol=self.model_param.tol,
                                                               alpha=self.alpha,
                                                               optimizer=self.model_param.optimizer,
-                                                              party_weight=self.model_param.party_weight,
                                                               batch_size=self.batch_size,
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
-                                                              converge_func=self.model_param.converge_func,
+                                                              early_stop=self.model_param.early_stop,
                                                               fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
@@ -124,3 +124,7 @@ class BaseLinearRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+    
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="regression")
+

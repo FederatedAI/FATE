@@ -47,7 +47,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         return data_instance
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train linR model of role guest
         Parameters
@@ -58,6 +58,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+        
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         #data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -76,7 +78,7 @@ class HeteroLinRGuest(HeteroLinRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
+            # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_ + 1)
             batch_index = 0
@@ -85,10 +87,10 @@ class HeteroLinRGuest(HeteroLinRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_guest_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.model_weights,
                     self.encrypted_calculator,
+                    self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index
@@ -104,6 +106,10 @@ class HeteroLinRGuest(HeteroLinRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+
+            LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:
                 break
@@ -128,9 +134,6 @@ class HeteroLinRGuest(HeteroLinRBase):
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")
-
         pred = pred_guest.join(pred_host, lambda g, h: g + h)
-        LOGGER.debug("prediction: {}".format(pred))
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
         return predict_result

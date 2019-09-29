@@ -334,6 +334,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             if self.tree_[i].sitename == self.sitename:
                 fid = self.decode("feature_idx", self.tree_[i].fid, split_maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_[i].bid, self.tree_[i].id, self.split_maskdict)
+                LOGGER.debug ("shape of bin_split_points is {}".format(len(self.bin_split_points[fid])))
                 real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_[i].id)
                 self.tree_[i].bid = real_splitval
 

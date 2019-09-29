@@ -86,18 +86,18 @@ class _WeightDiffConverge(_ConvergeFunction):
         return False
 
 
-def converge_func_factory(param):
-    try:
-        converge_func = param.converge_func
-        eps = param.eps
-    except AttributeError:
-        raise AttributeError("Converge Function parameters has not been totally set")
+def converge_func_factory(early_stop, tol):
+    # try:
+    #     converge_func = param.converge_func
+    #     eps = param.eps
+    # except AttributeError:
+    #     raise AttributeError("Converge Function parameters has not been totally set")
 
-    if converge_func == 'diff':
-        return _DiffConverge(eps)
-    elif converge_func == 'weight_diff':
-        return _WeightDiffConverge(eps)
-    elif converge_func == 'abs':
-        return _AbsConverge(eps)
+    if early_stop == 'diff':
+        return _DiffConverge(tol)
+    elif early_stop == 'weight_diff':
+        return _WeightDiffConverge(tol)
+    elif early_stop == 'abs':
+        return _AbsConverge(tol)
     else:
         raise NotImplementedError("Converge Function method cannot be recognized: {}".format(converge_func))

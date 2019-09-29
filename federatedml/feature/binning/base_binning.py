@@ -238,6 +238,11 @@ class Binning(object):
             split_points = self.split_points
 
         is_sparse = data_overview.is_sparse_data(data_instances)
+
+        LOGGER.debug("In convert_feature_to_bin, split_points: {}, header: {}, transform_cols_idx: {}".format(
+            split_points, self.header, transform_cols_idx
+        ))
+
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
                                   transform_cols_idx=transform_cols_idx,

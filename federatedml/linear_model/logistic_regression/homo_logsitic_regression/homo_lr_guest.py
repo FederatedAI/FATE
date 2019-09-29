@@ -23,7 +23,7 @@ from federatedml.framework.homo.procedure import aggregator
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.model_selection import MiniBatch
-from federatedml.optim.gradient.logistic_gradient import LogisticGradient
+from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
@@ -41,11 +41,12 @@ class HomoLRGuest(HomoLRBase):
     def _init_model(self, params):
         super()._init_model(params)
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
 
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.model_weights = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
@@ -87,6 +88,8 @@ class HomoLRGuest(HomoLRBase):
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
                 batch_num += 1
                 degree += n
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
     def predict(self, data_instances):

@@ -45,23 +45,4 @@ class Arbiter(object):
     def compute_gradient_procedure(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
 
-    @staticmethod
-    def separate(value, size_list):
-        """
-        Separate value in order to several set according size_list
-        Parameters
-        ----------
-        value: list or ndarray, input data
-        size_list: list, each set size
 
-        Returns
-        ----------
-        list
-            set after separate
-        """
-        separate_res = []
-        cur = 0
-        for size in size_list:
-            separate_res.append(value[cur:cur + size])
-            cur += size
-        return separate_res

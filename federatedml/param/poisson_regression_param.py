@@ -38,7 +38,7 @@ class PoissonParam(BaseParam):
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
-    eps : float, default: 1e-5
+    tol : float, default: 1e-5
         The tolerance of convergence
 
     alpha : float, default: 1.0
@@ -60,24 +60,25 @@ class PoissonParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    converge_func : str, 'diff' or 'abs', default: 'diff'
+    early_stop : str, 'diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < tol, it is converged.
 
     """
 
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
+                 max_iter=100, early_stop='diff',
                  exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True):
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True,
+                 validation_freqs=None):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
-        self.eps = eps
+        self.tol = tol
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
@@ -85,16 +86,15 @@ class PoissonParam(BaseParam):
         self.init_param = copy.deepcopy(init_param)
 
         self.max_iter = max_iter
-        self.converge_func = converge_func
+        self.early_stop = early_stop
         self.encrypt_param = encrypt_param
-        self.party_weight = party_weight
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.predict_param = copy.deepcopy(predict_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.exposure_colname = exposure_colname
-
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "poisson_param's"
@@ -108,9 +108,9 @@ class PoissonParam(BaseParam):
                 raise ValueError(
                     "poisson_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.eps).__name__ != "float":
+        if type(self.tol).__name__ != "float":
             raise ValueError(
-                "poisson_param's eps {} not supported, should be float type".format(self.eps))
+                "poisson_param's tol {} not supported, should be float type".format(self.tol))
 
         if type(self.alpha).__name__ != "float":
             raise ValueError(
@@ -154,29 +154,33 @@ class PoissonParam(BaseParam):
                 raise ValueError(
                     "poisson_param's exposure_colname {} not supported, should be string type".format(self.exposure_colname))
 
-        if type(self.converge_func).__name__ != "str":
+        if type(self.early_stop).__name__ != "str":
             raise ValueError(
-                "poisson_param's converge_func {} not supported, should be str type".format(
-                    self.converge_func))
+                "poisson_param's early_stop {} not supported, should be str type".format(
+                    self.early_stop))
         else:
-            self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
+            self.early_stop = self.early_stop.lower()
+            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
-                    "poisson_param's converge_func not supported, converge_func should be"
+                    "poisson_param's early_stop not supported, early_stop should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
 
-        if type(self.party_weight).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "poisson_param's party_weight {} not supported, should be 'int' or 'float'".format(
-                    self.party_weight))
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
-                "regression param's decay {} not support, should be 'int' or 'float'".format(self.decay)
+                "regression param's decay {} not supported, should be 'int' or 'float'".format(self.decay)
             )
         if type(self.decay_sqrt).__name__ not in ['bool']:
             raise ValueError(
-                "regression param's decay_sqrt {} not support, should be 'bool'".format(self.decay)
+                "regression param's decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
+
         return True

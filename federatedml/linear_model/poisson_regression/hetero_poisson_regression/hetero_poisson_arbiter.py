@@ -62,7 +62,7 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
         else:
             LOGGER.info("Task is transform")
 
-    def fit(self, data_instances=None):
+    def fit(self, data_instances=None, validate_data=None):
         """
         Train poisson regression model of role arbiter
         Parameters
@@ -74,6 +74,8 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
         self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
 
+        validation_strategy = self.init_validation_strategy()
+        
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
             iter_loss =None
@@ -102,9 +104,9 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
                 iter_loss = iter_loss / self.batch_generator.batch_num
                 self.callback_loss(self.n_iter_, iter_loss)
 
-            if self.model_param.converge_func == 'weight_diff':
+            if self.model_param.early_stop == 'weight_diff':
                 weight_diff = fate_operator.norm(total_gradient)
-                if weight_diff < self.model_param.eps:
+                if weight_diff < self.model_param.tol:
                     self.is_converged = True
                 LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
                                                                                 weight_diff, self.is_converged))
@@ -114,6 +116,8 @@ class HeteroPoissonArbiter(HeteroPoissonBase):
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
+            validation_strategy.validate(self, self.n_iter_)
+            
             self.n_iter_ += 1
             if self.is_converged:
                 break
