@@ -35,6 +35,25 @@
           "homo_nn"
         ]
       }
+    },
+    "homo_nn_1": {
+      "module": "HomoNN",
+      "input": {
+        "data": {
+          "eval_data": [
+            "dataio_0.train"
+          ]
+        },
+        "model": ["homo_nn_0.homo_nn"]
+      },
+      "output": {
+        "data": [
+          "train2"
+        ],
+        "model": [
+          "homo_nn2"
+        ]
+      }
     }
   }
 }

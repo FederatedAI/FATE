@@ -68,7 +68,7 @@ class TFNNModel(NNModel):
                 total[k] += v
         return total
 
-    def save_model(self):
+    def export_model(self):
         frozen_graph_def = tf.graph_util.convert_variables_to_constants(
             self._sess,
             self._sess.graph_def,
