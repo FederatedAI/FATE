@@ -90,7 +90,10 @@ class JobController(object):
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role,  initiator_party_id)
-        RuntimeConfig.JOB_QUEUE.put_event(job_event)
+        try:
+            RuntimeConfig.JOB_QUEUE.put_event(job_event)
+        except Exception as e:
+            raise Exception('push job into queue failed')
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
