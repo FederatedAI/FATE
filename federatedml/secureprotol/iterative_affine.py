@@ -124,3 +124,12 @@ class IterativeAffineCiphertext(object):
 
     def __rsub__(self, other):
         return other + (self * -1)
+
+    def __mul__(self, other):
+        if type(other) is int and other is -1:
+            return IterativeAffineCiphertext(self.cipher * other)
+        else:
+            raise TypeError("Multiplication only supports int -1.")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
