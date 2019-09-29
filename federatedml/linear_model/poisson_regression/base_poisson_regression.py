@@ -91,9 +91,9 @@ class BasePoissonRegression(BaseLinearModel):
             mu = data_instances.mapValues(
                 lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
         else:
-            offset = self.safe_log(exposure)
-            mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ + offset))
+            offset = exposure.mapValues(lambda v: self.safe_log(v))
+            mu = data_instances.join(offset,
+                lambda v, m: np.exp(np.dot(v.features, coef_) + intercept_ + m))
 
         return mu
 
