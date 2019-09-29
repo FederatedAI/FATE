@@ -92,8 +92,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
-        left_col_name_dict = {}
-
         LOGGER.debug("in _get_param, self.left_cols: {}, self.original_header: {}".format(
             self.filter_result.get_left_cols, self.header
         ))

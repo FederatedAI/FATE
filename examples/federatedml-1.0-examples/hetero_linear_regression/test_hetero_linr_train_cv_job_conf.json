@@ -155,15 +155,15 @@
   "algorithm_parameters": {
     "hetero_linr_0": {
       "penalty": "L2",
-      "optimizer": "rmsprop",
-      "eps": 1e-5,
+      "optimizer": "sgd",
+      "eps": 1e-3,
       "alpha": 0.01,
-      "max_iter": 20,
+      "max_iter": 10,
       "converge_func": "diff",
       "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"
@@ -172,7 +172,7 @@
         "n_splits": 5,
         "shuffle": false,
         "random_seed": 103,
-        "need_cv": false,
+        "need_cv": true,
         "evaluate_param": {
           "eval_type": "regression"
         }

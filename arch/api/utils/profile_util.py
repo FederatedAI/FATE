@@ -17,6 +17,7 @@
 import time
 
 from arch.api.utils.log_utils import LoggerFactory
+import inspect
 
 LOGGER = LoggerFactory.get_logger("PROFILING")
 
@@ -28,6 +29,7 @@ def log_elapsed(func):
         t = time.time()
         name = f"{func_name}#{kwargs['func_tag']}" if 'func_tag' in kwargs else func_name
         rtn = func(*args, **kwargs)
-        LOGGER.debug(f"{name} takes {time.time() - t}s")
+        frame = inspect.getouterframes(inspect.currentframe(), 2)
+        LOGGER.debug(f"{frame[1].filename.split('/')[-1]}:{frame[1].lineno} call {name}, takes {time.time() - t}s")
         return rtn
     return _fn

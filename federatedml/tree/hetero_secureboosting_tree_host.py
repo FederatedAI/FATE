@@ -109,7 +109,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         """
         return stop_flag
 
-    def fit(self, data_inst):
+    def fit(self, data_inst, validate_data=None):
         LOGGER.info("begin to train secureboosting guest model")
         self.gen_feature_fid_mapping(data_inst.schema)
         LOGGER.debug("schema is {}".format(data_inst.schema))
@@ -117,6 +117,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
+        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        
         for i in range(self.num_trees):
             # n_tree = []
             for tidx in range(self.tree_dim):
@@ -138,6 +140,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 # n_tree.append(tree_inst.get_tree_model())
 
             # self.trees_.append(n_tree)
+
+            if validation_strategy:
+                validation_strategy.validate(self, i)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)

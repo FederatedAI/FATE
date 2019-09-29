@@ -23,23 +23,22 @@
         "data": {
           "train_data": [
             {
-              "name": "nmes_exposure_b",
-              "namespace": "nmes"
+              "name": "student_b",
+              "namespace": "student"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_idx": [0],
+        "label_name": "y",
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
         "outlier_replace": [true]
       },
       "feature_scale_0": {
-        "method": ["standard_scale"],
-        "need_run": [false]
+        "method": ["min_max_scale"]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -92,8 +91,8 @@
         "data": {
           "train_data": [
             {
-              "name": "nmes_exposure_a",
-              "namespace": "nmes"
+              "name": "student_a",
+              "namespace": "student"
             }
           ]
         }
@@ -154,16 +153,15 @@
     }
   },
   "algorithm_parameters": {
-    "hetero_poisson_0": {
+    "hetero_linr_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",
-      "eps": 1e-3,
+      "eps": 1e-5,
       "alpha": 0.01,
-      "max_iter": 20,
-      "converge_func": "weight_diff",
+      "max_iter": 100,
+      "converge_func": "diff",
       "batch_size": -1,
       "learning_rate": 0.15,
-      "exposure_colname": "exposure",
       "init_param": {
         "init_method": "random_uniform"
       },

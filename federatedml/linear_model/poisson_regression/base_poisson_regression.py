@@ -26,6 +26,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights as P
 from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -80,31 +81,32 @@ class BasePoissonRegression(BaseLinearModel):
             exposure = data_instance.features[self.exposure_index]
         return exposure
 
-    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
-        if exposure is None:
-            mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_))
-        else:
-            mu = data_instances.join(exposure,
-                                     lambda v, ei: np.exp(np.dot(v.features, coef_) + intercept_) / ei)
-        return mu
-
     def safe_log(self, v):
         if v == 0:
             return np.log(1e-7)
         return np.log(v)
 
+    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
+        if exposure is None:
+            mu = data_instances.mapValues(
+                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
+        else:
+            offset = exposure.mapValues(lambda v: self.safe_log(v))
+            mu = data_instances.join(offset,
+                lambda v, m: np.exp(np.dot(v.features, coef_) + intercept_ + m))
+
+        return mu
+
     def _get_meta(self):
         meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(
             penalty=self.model_param.penalty,
-            eps=self.model_param.eps,
+            tol=self.model_param.tol,
             alpha=self.alpha,
             optimizer=self.model_param.optimizer,
-            party_weight=self.model_param.party_weight,
             batch_size=self.batch_size,
             learning_rate=self.model_param.learning_rate,
             max_iter=self.max_iter,
-            converge_func=self.model_param.converge_func,
+            early_stop=self.model_param.early_stop,
             fit_intercept=self.fit_intercept,
             exposure_colname=self.exposure_colname)
         return meta_protobuf_obj
@@ -156,3 +158,7 @@ class BasePoissonRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = PoissonRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+    
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="regression")
+

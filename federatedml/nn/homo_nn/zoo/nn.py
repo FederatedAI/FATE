@@ -17,7 +17,8 @@
 from tensorflow.python.keras import Sequential
 
 from federatedml.nn.homo_nn.backend.tf_keras.layers import get_builder, has_builder
-from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel
+from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
+    restore_keras_nn_model
 
 
 def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
@@ -42,3 +43,7 @@ def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
                                        loss=loss,
                                        optimizer=optimizer,
                                        metrics=metrics)
+
+
+def restore_nn_model(model_bytes):
+    return restore_keras_nn_model(model_bytes)

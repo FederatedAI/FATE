@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -37,7 +36,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train linR model of role guest
         Parameters
@@ -48,6 +47,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+        
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         if self.exposure_index > -1:
             self.header.pop(self.exposure_index)
@@ -72,7 +74,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
@@ -81,10 +83,10 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
 
                 # Start gradient procedure
-                optimized_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                optimized_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.model_weights,
                     self.encrypted_calculator,
+                    self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index,
@@ -100,6 +102,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:
                 break

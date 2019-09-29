@@ -23,22 +23,23 @@
         "data": {
           "train_data": [
             {
-              "name": "student_b",
-              "namespace": "student"
+              "name": "nmes_b",
+              "namespace": "nmes"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_idx": [0],
+        "label_name": "y",
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
         "outlier_replace": [true]
       },
       "feature_scale_0": {
-        "method": ["min_max_scale"]
+        "method": ["standard_scale"],
+        "need_run": [false]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -91,8 +92,8 @@
         "data": {
           "train_data": [
             {
-              "name": "student_a",
-              "namespace": "student"
+              "name": "nmes_a",
+              "namespace": "nmes"
             }
           ]
         }
@@ -153,17 +154,18 @@
     }
   },
   "algorithm_parameters": {
-    "hetero_linr_0": {
+    "hetero_poisson_0": {
       "penalty": "L2",
-      "optimizer": "sgd",
-      "eps": 1e-3,
+      "optimizer": "rmsprop",
+      "eps": 1e-5,
       "alpha": 0.01,
-      "max_iter": 400,
-      "converge_func": "diff",
+      "max_iter": 20,
+      "converge_func": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
+      "exposure_colname": "exposure",
       "init_param": {
-        "init_method": "zeros"
+        "init_method": "random_uniform"
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"
@@ -172,7 +174,7 @@
         "n_splits": 5,
         "shuffle": false,
         "random_seed": 103,
-        "need_cv": true,
+        "need_cv": false,
         "evaluate_param": {
           "eval_type": "regression"
         }

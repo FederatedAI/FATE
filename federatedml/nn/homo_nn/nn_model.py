@@ -30,7 +30,7 @@ class NNModel(object):
     def set_model_weights(self, weights: Weights):
         pass
 
-    def save_model(self):
+    def export_model(self):
         pass
 
     def load_model(self):
@@ -65,3 +65,9 @@ def get_nn_builder(config_type):
     if config_type:
         from federatedml.nn.homo_nn.zoo.nn import build_nn_model
         return build_nn_model
+
+
+def restore_nn_model(config_type, model_bytes):
+    if config_type:
+        from federatedml.nn.homo_nn.zoo.nn import restore_nn_model
+        return restore_nn_model(model_bytes)

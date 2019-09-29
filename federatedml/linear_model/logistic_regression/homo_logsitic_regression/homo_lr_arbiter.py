@@ -45,12 +45,13 @@ class HomoLRArbiter(HomoLRBase):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
+        validation_strategy = self.init_validation_strategy()
 
         while self.n_iter_ < max_iter:
             suffix = (self.n_iter_,)
@@ -82,6 +83,8 @@ class HomoLRArbiter(HomoLRBase):
                                   re_encrypt_times=self.re_encrypt_times,
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
+            
+            validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
     def predict(self, data_instantces):

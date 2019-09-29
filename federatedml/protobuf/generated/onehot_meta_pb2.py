@@ -7,6 +7,7 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -18,7 +19,6 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-meta.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_options=_b('B\017OneHotMetaProto'),
   serialized_pb=_b('\n\x11onehot-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\",\n\nOneHotMeta\x12\x0c\n\x04\x63ols\x18\x01 \x03(\t\x12\x10\n\x08need_run\x18\x02 \x01(\x08\x42\x11\x42\x0fOneHotMetaProtob\x06proto3')
 )
 
@@ -38,21 +38,21 @@ _ONEHOTMETA = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.need_run', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -73,5 +73,6 @@ OneHotMeta = _reflection.GeneratedProtocolMessageType('OneHotMeta', (_message.Me
 _sym_db.RegisterMessage(OneHotMeta)
 
 
-DESCRIPTOR._options = None
+DESCRIPTOR.has_options = True
+DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\017OneHotMetaProto'))
 # @@protoc_insertion_point(module_scope)

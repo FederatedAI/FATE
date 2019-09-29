@@ -75,11 +75,11 @@
     "homo_nn_0": {
       "config_type": "nn",
       "nn_define": [
-        {
-          "layer": "Dense",
-          "units": 1,
-          "activation": "sigmoid"
-        }
+          {
+            "layer": "Dense",
+            "units": 1,
+            "activation": "sigmoid"
+          }
       ],
       "batch_size": -1,
       "optimizer": {
@@ -94,7 +94,7 @@
       "metrics": [
         "accuracy", "AUC"
       ],
-      "max_iter": 100
+      "max_iter": 10
     }
   }
 }

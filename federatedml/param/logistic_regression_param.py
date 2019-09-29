@@ -70,28 +70,30 @@ class LogisticParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff', encrypt_param=EncryptParam(),
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
+                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
+                 validation_freqs=None
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
-        self.eps = eps
+        self.tol = tol
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
-        self.converge_func = converge_func
+        self.early_stop = early_stop
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "logistic_param's"
@@ -105,9 +107,9 @@ class LogisticParam(BaseParam):
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.eps).__name__ != "float":
+        if type(self.tol).__name__ != "float":
             raise ValueError(
-                "logistic_param's eps {} not supported, should be float type".format(self.eps))
+                "logistic_param's tol {} not supported, should be float type".format(self.tol))
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
@@ -143,15 +145,15 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's max_iter must be greater or equal to 1")
 
-        if type(self.converge_func).__name__ != "str":
+        if type(self.early_stop).__name__ != "str":
             raise ValueError(
-                "logistic_param's converge_func {} not supported, should be str type".format(
-                    self.converge_func))
+                "logistic_param's early_stop {} not supported, should be str type".format(
+                    self.early_stop))
         else:
-            self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
+            self.early_stop = self.early_stop.lower()
+            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
-                    "logistic_param's converge_func not supported, converge_func should be"
+                    "logistic_param's early_stop not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
@@ -182,18 +184,18 @@ class HomoLogisticParam(LogisticParam):
 
     """
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
+                 max_iter=100, early_stop='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
                  aggregate_iters=1
                  ):
-        super(HomoLogisticParam, self).__init__(penalty=penalty, eps=eps, alpha=alpha, optimizer=optimizer,
+        super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
                                                 learning_rate=learning_rate,
-                                                init_param=init_param, max_iter=max_iter, converge_func=converge_func,
+                                                init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param,
                                                 one_vs_rest_param=one_vs_rest_param, decay=decay, decay_sqrt=decay_sqrt)
@@ -224,17 +226,17 @@ class HomoLogisticParam(LogisticParam):
 
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
+                 max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
                  ):
-        super(HeteroLogisticParam, self).__init__(penalty=penalty, eps=eps, alpha=alpha, optimizer=optimizer,
+        super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
                                                   learning_rate=learning_rate,
-                                                  init_param=init_param, max_iter=max_iter, converge_func=converge_func,
+                                                  init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   one_vs_rest_param=one_vs_rest_param, decay=decay,
                                                   decay_sqrt=decay_sqrt)

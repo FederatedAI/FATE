@@ -17,20 +17,13 @@
 syntax = "proto3";
 
 package com.webank.ai.fate.core.mlmodel.buffer;
-option java_outer_classname = "LRModelMetaProto";
+option java_outer_classname = "NNModelParamProto";
 
-message LRModelMeta {
-    string penalty = 1;
-    double tol = 2;
-    double alpha = 3;
-    string optimizer = 4;
-    double party_weight = 5;
-    int64 batch_size = 6;
-    double learning_rate = 7;
-    int64 max_iter = 8;
-    string early_stop = 9;
-    int64 re_encrypt_batches = 10;
-    bool fit_intercept=11;
-    bool need_one_vs_rest = 12;
+message NNModelParam {
+    int32 aggregate_iter = 1;
+    bytes saved_model_bytes = 2;
+    repeated double loss_history = 3;
+    bool is_converged = 4;
+    repeated string header = 5;
 }
 

@@ -51,7 +51,7 @@ class HeteroLRGuest(HeteroLRBase):
             data_instance.label = -1
         return data_instance
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         """
         Train lr model of role guest
         Parameters
@@ -62,6 +62,9 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+       
+        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -113,6 +116,9 @@ class HeteroLRGuest(HeteroLRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+           
+            validation_strategy.validate(self, self.n_iter_)
+            
             self.n_iter_ += 1
             if self.is_converged:
                 break
@@ -135,13 +141,14 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        prob_guest = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
-        prob_host = self.transfer_variable.host_prob.get(idx=0)
+        pred_prob = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        host_probs = self.transfer_variable.host_prob.get(idx=-1)
 
         LOGGER.info("Get probability from Host")
 
         # guest probability
-        pred_prob = prob_guest.join(prob_host, lambda g, h: activation.sigmoid(g + h))
+        for host_prob in host_probs:
+            pred_prob = pred_prob.join(host_prob, lambda g, h: activation.sigmoid(g + h))
         pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)

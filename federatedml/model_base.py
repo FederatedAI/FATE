@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 from federatedml.util.param_extract import ParamExtract
+from federatedml.param.evaluation_param import EvaluateParam
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -25,6 +26,7 @@ class ModelBase(object):
     def __init__(self):
         self.model_output = None
         self.mode = None
+        self.role = None
         self.data_output = None
         self.model_param = None
         self.transfer_variable = None
@@ -35,6 +37,7 @@ class ModelBase(object):
         self.need_one_vs_rest = False
         self.tracker = None
         self.cv_fold = 0
+        self.validation_freqs = None
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
@@ -122,7 +125,7 @@ class ModelBase(object):
 
         elif train_data is not None:
             self.set_flowid('fit')
-            self.fit(train_data)
+            self.fit(train_data, eval_data)
             self.set_flowid('predict')
             self.data_output = self.predict(train_data)
 
@@ -187,6 +190,10 @@ class ModelBase(object):
 
         self._run_data(args["data"], stage)
 
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="binary",
+                             pos_label=1)
+
     def predict(self, data_inst):
         pass
 
@@ -203,6 +210,9 @@ class ModelBase(object):
         pass
 
     def one_vs_rest_predict(self, train_data):
+        pass
+
+    def init_validation_strategy(self, train_data=None, validate_data=None):
         pass
 
     def save_data(self):
