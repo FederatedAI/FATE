@@ -23,6 +23,8 @@ from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.protobuf.generated import nn_model_meta_pb2
+import json
 
 
 class HomoNNParam(BaseParam):
@@ -57,12 +59,12 @@ class HomoNNParam(BaseParam):
                  aggregate_every_n_epoch: int = 1,
                  config_type: str = "nn",
                  nn_define: dict = None,
-                 optimizer: typing.Union[str, dict] = 'SGD',
+                 optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
                  loss: str = None,
                  metrics: typing.Union[str, list] = None,
                  max_iter: int = 100,
                  batch_size: int = -1,
-                 early_stop: typing.Union[str, dict] = None,
+                 early_stop: typing.Union[str, dict, SimpleNamespace] = None,
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam()):
         super(HomoNNParam, self).__init__()
@@ -87,6 +89,29 @@ class HomoNNParam(BaseParam):
         self.early_stop = _parse_early_stop(self.early_stop)
         self.metrics = _parse_metrics(self.metrics)
         self.optimizer = _parse_optimizer(self.optimizer)
+
+    def generate_pb(self):
+        pb = nn_model_meta_pb2.HomoNNParam()
+        pb.secure_aggregate = self.secure_aggregate
+        pb.aggregate_every_n_epoch = self.aggregate_every_n_epoch
+        pb.config_type = self.config_type
+
+        for layer in self.nn_define:
+            pb.nn_define.append(json.dumps(layer))
+
+        pb.batch_size = self.batch_size
+        pb.max_iter = self.max_iter
+
+        pb.early_stop.early_stop = self.early_stop.converge_func
+        pb.early_stop.eps = self.early_stop.eps
+
+        for metric in self.metrics:
+            pb.metrics.append(metric)
+
+        pb.optimizer.optimizer = self.optimizer.optimizer
+        pb.optimizer.args = json.dumps(self.optimizer.kwargs)
+        pb.loss = self.loss
+        return pb
 
 
 def _parse_metrics(param):

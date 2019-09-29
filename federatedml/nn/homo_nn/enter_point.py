@@ -16,7 +16,6 @@
 import functools
 import typing
 
-from arch.api import eggroll
 from arch.api.utils.log_utils import LoggerFactory
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
@@ -27,6 +26,12 @@ from federatedml.transfer_variable.transfer_class.homo_transfer_variable import 
 from federatedml.util import consts
 
 Logger = LoggerFactory.get_logger()
+MODEL_META_NAME = "HomoNNModelMeta"
+MODEL_PARAM_NAME = "HomoNNModelParam"
+
+
+def _build_model_dict(meta, param):
+    return {MODEL_META_NAME: meta, MODEL_PARAM_NAME: param}
 
 
 class HomoNNBase(ModelBase):
@@ -149,15 +154,32 @@ class HomoNNClient(HomoNNBase):
         else:
             Logger.warn(f"reach max iter: {self.aggregator_iter}, not converged")
 
+    def export_model(self):
+        return _build_model_dict(meta=self._get_meta(), param=self._get_param())
+
+    def _get_meta(self):
+        from federatedml.protobuf.generated import nn_model_meta_pb2
+        meta_pb = nn_model_meta_pb2.NNModelMeta()
+        meta_pb.params.CopyFrom(self.model_param.generate_pb())
+        meta_pb.aggregate_iter = self.aggregator_iter
+        return meta_pb
+
+    def _get_param(self):
+        from federatedml.protobuf.generated import nn_model_param_pb2
+        param_pb = nn_model_param_pb2.NNModelParam()
+        param_pb.saved_model_bytes = self.nn_model.export_model()
+        return param_pb
+
     def predict(self, data_inst):
+        pass
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
-        result_table = eggroll.table(name=eggroll.generateUniqueId(), namespace=eggroll.get_job_id())
+        result_table = session.table(name=session.generateUniqueId(), namespace=session.get_job_id())
         kv = map(lambda x: (x[0], list(x[1])), zip(data.get_keys(), self.nn_model.predict(data)))
         result_table.put_all(kv)
         return result_table
 
     def save_model(self):
-        return self.nn_model.save_model()
+        return self.nn_model.export_model()
 
 
 class HomoNNHost(HomoNNClient):

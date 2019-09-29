@@ -30,7 +30,7 @@ class NNModel(object):
     def set_model_weights(self, weights: Weights):
         pass
 
-    def save_model(self):
+    def export_model(self):
         pass
 
     def load_model(self):

@@ -13,6 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import io
+import zipfile
+import tempfile
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import set_session
@@ -102,6 +106,25 @@ class KerasNNModel(NNModel):
 
     def predict(self, data: tf.keras.utils.Sequence, **kwargs):
         return self._model.predict(data)
+
+    def export_model(self):
+        with tempfile.TemporaryDirectory() as tmp_path:
+            try:
+                tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
+            except NotImplementedError:
+                import warnings
+                warnings.warn('Saving the model as SavedModel is still in experimental stages. '
+                              'trying tf.keras.experimental.export_saved_model...')
+                tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
+
+            model_bytes = io.BytesIO()
+            with zipfile.ZipFile(model_bytes, 'w', zipfile.ZIP_DEFLATED) as f:
+                f.write(tmp_path)
+
+        return model_bytes.getvalue()
+
+    def export_optimizer_config(self):
+        return self._model.optimizer.get_config()
 
 
 class KerasSequenceData(tf.keras.utils.Sequence):
