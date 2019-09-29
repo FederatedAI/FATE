@@ -407,11 +407,13 @@ class TaskScheduler(object):
                         CANCEL = True
                         schedule_logger(job_id).info(
                             'send {} {} {} job {} command successfully'.format(role, party_id,"cancel" if is_cancel else "kill", job_id))
+                        if is_cancel:
+                            break
                     else:
                         schedule_logger(job_id).info(
                             'send {} {} {} job {} command failed: {}'.format(role, party_id, "cancel" if is_cancel else "kill", job_id, response['retmsg']))
-                    if is_cancel:
-                        return CANCEL
+            if is_cancel:
+                return CANCEL
         else:
             schedule_logger(job_id).info('send {} job {} command failed'.format("cancel" if is_cancel else "kill", job_id))
             raise Exception('can not found job: {}'.format(job_id))

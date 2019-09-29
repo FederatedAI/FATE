@@ -60,9 +60,11 @@ class JobController(object):
             pipeline_model = job_tracker.get_output_model('pipeline')
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-        job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
-                                                            job_dsl=job_dsl,
-                                                            job_runtime_conf=job_runtime_conf)
+        path_dict = save_job_conf(job_id=job_id,
+                                  job_dsl=job_dsl,
+                                  job_runtime_conf=job_runtime_conf,
+                                  train_runtime_conf=train_runtime_conf,
+                                  pipeline_dsl=None)
 
         job = Job()
         job.f_job_id = job_id
@@ -96,9 +98,8 @@ class JobController(object):
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
-        return job_id, job_dsl_path, job_runtime_conf_path, {'model_id': job_parameters['model_id'],
-                                                             'model_version': job_parameters[
-                                                                 'model_version']}, board_url
+        return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], \
+               {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator, timeout=False):
@@ -143,11 +144,13 @@ class JobController(object):
             runtime_conf = json_loads(job_info['f_runtime_conf'])
             train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])
             if USE_AUTHENTICATION:
-                authentication_check(src_role=job_info['src_rloe'], src_party_id=job_info['src_party_id'],
+                authentication_check(src_role=job_info['src_role'], src_party_id=job_info['src_party_id'],
                                      dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
             save_job_conf(job_id=job_id,
                           job_dsl=dsl,
-                          job_runtime_conf=runtime_conf)
+                          job_runtime_conf=runtime_conf,
+                          train_runtime_conf=train_runtime_conf,
+                          pipeline_dsl=None)
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}

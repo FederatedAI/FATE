@@ -186,7 +186,11 @@ class TaskExecutor(object):
 
     @staticmethod
     def get_parameters(job_id, component_name, role, party_id):
-        job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
+
+        job_conf_dict = job_utils.get_job_conf(job_id)
+        job_dsl_parser = job_utils.get_job_dsl_parser(job_conf_dict['job_dsl_path'],
+                                                      job_conf_dict['job_runtime_conf_path'],
+                                                      job_conf_dict['train_runtime_conf_path'])
         if job_dsl_parser:
             component = job_dsl_parser.get_component_info(component_name)
             parameters = component.get_role_parameters()

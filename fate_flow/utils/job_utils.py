@@ -100,22 +100,38 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_conf(job_id, job_dsl, job_runtime_conf):
-    job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
-    os.makedirs(os.path.dirname(job_dsl_path), exist_ok=True)
-    for data, conf_path in [(job_dsl, job_dsl_path), (job_runtime_conf, job_runtime_conf_path)]:
+def save_job_conf(job_id, job_dsl, job_runtime_conf, train_runtime_conf, pipeline_dsl):
+    path_dict = get_job_conf_path(job_id=job_id)
+    os.makedirs(os.path.dirname(path_dict.get('job_dsl_path')), exist_ok=True)
+    for data, conf_path in [(job_dsl, path_dict['job_dsl_path']), (job_runtime_conf, path_dict['job_runtime_conf_path']),
+                            (train_runtime_conf, path_dict['train_runtime_conf_path']), (pipeline_dsl, path_dict['pipeline_dsl_path'])]:
         with open(conf_path, 'w+') as f:
             f.truncate()
+            if not data:
+                data = {}
             f.write(json.dumps(data, indent=4))
             f.flush()
-    return job_dsl_path, job_runtime_conf_path
+    return path_dict
 
 
 def get_job_conf_path(job_id):
     job_dir = get_job_directory(job_id)
     job_dsl_path = os.path.join(job_dir, 'job_dsl.json')
     job_runtime_conf_path = os.path.join(job_dir, 'job_runtime_conf.json')
-    return job_dsl_path, job_runtime_conf_path
+    train_runtime_conf_path = os.path.join(job_dir, 'train_runtime_conf.json')
+    pipeline_dsl_path = os.path.join(job_dir, 'pipeline_dsl.json')
+    return {'job_dsl_path': job_dsl_path,
+            'job_runtime_conf_path': job_runtime_conf_path,
+            'train_runtime_conf_path': train_runtime_conf_path,
+            'pipeline_dsl_path': pipeline_dsl_path}
+
+
+def get_job_conf(job_id):
+    conf_dict = {}
+    for key, path in get_job_conf_path(job_id).items():
+        config = file_utils.load_json_conf(path)
+        conf_dict[key] = config
+    return conf_dict
 
 
 def get_job_dsl_parser_by_job_id(job_id):
