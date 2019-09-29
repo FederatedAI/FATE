@@ -50,7 +50,7 @@ class HomoLRGuest(HomoLRBase):
         self.model_weights = self._init_model_variables(data_instances)
 
         max_iter = self.max_iter
-        total_data_num = data_instances.count()
+        # total_data_num = data_instances.count()
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
         model_weights = self.model_weights
 

@@ -73,7 +73,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
 
         self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
-        
+
         validation_strategy = self.init_validation_strategy()
 
         while self.n_iter_ < self.max_iter:
@@ -85,9 +85,9 @@ class HeteroLinRArbiter(HeteroLinRBase):
             for batch_index in batch_data_generator:
                 # Compute and Transfer gradient info
                 gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
-                                                                   self.optimizer,
-                                                                   self.n_iter_,
-                                                                   batch_index)
+                                                                                  self.optimizer,
+                                                                                  self.n_iter_,
+                                                                                  batch_index)
                 if total_gradient is None:
                     total_gradient = gradient
                 else:
@@ -120,7 +120,7 @@ class HeteroLinRArbiter(HeteroLinRBase):
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
-            
+
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:

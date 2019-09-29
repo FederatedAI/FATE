@@ -40,6 +40,7 @@ class HomoLRArbiter(HomoLRBase):
         self.aggregator = aggregator.Arbiter()
         self.model_weights = None
         self.cipher = paillier_cipher.Arbiter()
+        self.host_predict_results = []
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -103,16 +104,18 @@ class HomoLRArbiter(HomoLRBase):
                                                            suffix=current_suffix)
 
         # Receive wx results
+
         for idx, cipher in host_ciphers.items():
             if cipher is None:
                 continue
             encrypted_predict_wx = self.transfer_variable.predict_wx.get(idx=idx, suffix=current_suffix)
             predict_wx = cipher.distribute_decrypt(encrypted_predict_wx)
 
-            predict_table = predict_wx.mapValues(lambda x: 1 if activation.sigmoid(x) >
-                                                                self.model_param.predict_param.threshold else 0)
+            prob_table = predict_wx.mapValues(lambda x: activation.sigmoid(x))
+            predict_table = prob_table.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
             self.transfer_variable.predict_result.remote(predict_table,
                                                          role=consts.HOST,
                                                          idx=idx,
                                                          suffix=current_suffix)
+            self.host_predict_results.append((prob_table, predict_table))

@@ -64,10 +64,10 @@ class HeteroLRArbiter(HeteroLRBase):
             self.cross_validation(None)
             return
 
-        if self.need_one_vs_rest:
-            LOGGER.info("Task is one_vs_rest fit")
-            if not "model" in args:
-                self.one_vs_rest_fit()
+        # if self.need_one_vs_rest:
+        #     LOGGER.info("Task is one_vs_rest fit")
+        #     if not "model" in args:
+        #         self.one_vs_rest_fit()
         elif not "model" in args:
             LOGGER.info("Task is fit")
             self.set_flowid('fit')
