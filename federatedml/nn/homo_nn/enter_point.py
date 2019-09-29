@@ -16,10 +16,12 @@
 import functools
 import typing
 
+from arch.api import session
 from arch.api.utils.log_utils import LoggerFactory
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
+from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
@@ -32,6 +34,14 @@ MODEL_PARAM_NAME = "HomoNNModelParam"
 
 def _build_model_dict(meta, param):
     return {MODEL_META_NAME: meta, MODEL_PARAM_NAME: param}
+
+
+def _extract_param(model_dict: dict):
+    return model_dict.get(MODEL_PARAM_NAME, None)
+
+
+def _extract_meta(model_dict: dict):
+    return model_dict.get(MODEL_META_NAME, None)
 
 
 class HomoNNBase(ModelBase):
@@ -64,8 +74,8 @@ class HomoNNArbiter(HomoNNBase):
 
     def _init_model(self, param):
         super(HomoNNArbiter, self)._init_model(param)
-        early_stop = param.early_stop
-        self.converge_func = converge_func_factory(early_stop).is_converge
+        early_stop = self.model_param.early_stop
+        self.converge_func = converge_func_factory(early_stop.converge_func, early_stop.eps).is_converge
         self.loss_consumed = early_stop.converge_func != "weight_diff"
 
     def _check_monitored_status(self):
@@ -125,7 +135,7 @@ class HomoNNClient(HomoNNBase):
                                            loss=self.loss,
                                            metrics=self.metrics)
 
-    def fit(self, data_inst):
+    def fit(self, data_inst, *args):
 
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
         self.__build_nn_model(data.get_shape()[0])
@@ -171,15 +181,20 @@ class HomoNNClient(HomoNNBase):
         return param_pb
 
     def predict(self, data_inst):
-        pass
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
         result_table = session.table(name=session.generateUniqueId(), namespace=session.get_job_id())
         kv = map(lambda x: (x[0], list(x[1])), zip(data.get_keys(), self.nn_model.predict(data)))
         result_table.put_all(kv)
         return result_table
 
-    def save_model(self):
-        return self.nn_model.export_model()
+    def _load_model(self, model_dict):
+        model_dict = list(model_dict["model"].values())[0]
+        model_obj = _extract_param(model_dict)
+        meta_obj = _extract_meta(model_dict)
+        self.model_param.restore_from_pb(meta_obj.params)
+        self._init_model(self.model_param)
+        self.aggregator_iter = meta_obj.aggregate_iter
+        self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
 
 
 class HomoNNHost(HomoNNClient):

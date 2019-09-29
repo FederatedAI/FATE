@@ -64,7 +64,7 @@ class HomoNNParam(BaseParam):
                  metrics: typing.Union[str, list] = None,
                  max_iter: int = 100,
                  batch_size: int = -1,
-                 early_stop: typing.Union[str, dict, SimpleNamespace] = None,
+                 early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam()):
         super(HomoNNParam, self).__init__()
@@ -111,6 +111,25 @@ class HomoNNParam(BaseParam):
         pb.optimizer.optimizer = self.optimizer.optimizer
         pb.optimizer.args = json.dumps(self.optimizer.kwargs)
         pb.loss = self.loss
+        return pb
+
+    def restore_from_pb(self, pb):
+        self.secure_aggregate = pb.secure_aggregate
+        self.aggregate_every_n_epoch = pb.aggregate_every_n_epoch
+        self.config_type = pb.config_type
+
+        for layer in pb.nn_define:
+            self.nn_define.append(json.loads(layer))
+
+        self.batch_size = pb.batch_size
+        self.max_iter = pb.max_iter
+
+        self.early_stop = _parse_early_stop(dict(early_stop=pb.early_stop.early_stop, eps=pb.early_stop.eps))
+
+        self.metrics = list(pb.metrics)
+
+        self.optimizer = _parse_optimizer(dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args)))
+        self.loss = pb.loss
         return pb
 
 
