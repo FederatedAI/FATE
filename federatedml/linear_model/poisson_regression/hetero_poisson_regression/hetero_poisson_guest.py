@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -75,7 +74,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
