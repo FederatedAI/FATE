@@ -50,8 +50,6 @@ def init(job_id=None,
     session = build_session(job_id=job_id, work_mode=mode, backend=backend)
     RuntimeInstance.SESSION = session
 
-    table("__federation__", job_id, partition=10)
-
 
 @log_elapsed
 def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
