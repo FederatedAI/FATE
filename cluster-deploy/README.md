@@ -29,9 +29,9 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 
 
-##2.     Deployment Architecture
+## 2.     Deployment Architecture
 
-### **2.1. Unilateral Deployment Architecture **
+### **2.1. Unilateral Deployment Architecture**
 
 
 
