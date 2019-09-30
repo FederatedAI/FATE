@@ -50,9 +50,7 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_rol
 
 def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
-    json_body['src_party_id'] = src_party_id
-    json_body['src_role'] = src_role
-    _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
+    _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, src_role, job_id,
                                overall_timeout=overall_timeout)
     try:
         channel, stub = get_proxy_data_channel()

@@ -21,7 +21,7 @@ import re
 from flask import request
 
 from arch.api.utils import file_utils
-from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST
+from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger
 
 
 class PrivilegeAuth(object):
@@ -35,8 +35,8 @@ class PrivilegeAuth(object):
 
     @staticmethod
     def authentication_privilege(src_party_id, src_role, request_path, func_name):
-        dest_role, user_command, component = PrivilegeAuth.get_authentication_items(request_path, func_name)
-        privilege_dic = PrivilegeAuth.get_privilege_dic(dest_role, user_command, component)
+        stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
+        privilege_dic = PrivilegeAuth.get_authentication_items(request_path, func_name)
         for privilege_type, value in privilege_dic.items():
             if value in PrivilegeAuth.command_whitelist:
                 return
@@ -45,7 +45,9 @@ class PrivilegeAuth(object):
                         .get(privilege_type, []):
                     if value not in PrivilegeAuth.get_permission_config(src_party_id, src_role) \
                             .get(privilege_type, []):
+                        stat_logger.info('{} {} not authorized'.format(privilege_type.split('_')[1], value))
                         raise Exception('{} {} not authorized'.format(privilege_type.split('_')[1], value))
+        stat_logger.info('party {} role {} successful authenticated'.format(src_party_id, src_role))
         return True
 
     @staticmethod
@@ -65,6 +67,9 @@ class PrivilegeAuth(object):
     @staticmethod
     def get_new_permission_config(src_party_id, src_role, privilege_role, privilege_command, privilege_component, delete):
         with open(PrivilegeAuth.local_storage_file) as f:
+            stat_logger.info(
+                "add permissions: src_party_id {} src_role {} privilege_role {} privilege_command {} privilege_component {}".format(
+                    src_party_id, src_role, privilege_role, privilege_command, privilege_component))
             json_data = json.load(f)
             local_storage = json_data
             privilege_dic = PrivilegeAuth.get_privilege_dic(privilege_role, privilege_command, privilege_component)
@@ -76,8 +81,8 @@ class PrivilegeAuth(object):
                             value = PrivilegeAuth.ALL_PERMISSION[privilege_type]
                         if value not in PrivilegeAuth.ALL_PERMISSION.get(privilege_type) and \
                                 value != PrivilegeAuth.ALL_PERMISSION.get(privilege_type):
-                            raise Exception(
-                                '{} does not exist in the permission {}'.format(value, privilege_type.split('_')[1]))
+                            stat_logger.info('{} does not exist in the permission {}'.format(value, privilege_type.split('_')[1]))
+                            raise Exception('{} does not exist in the permission {}'.format(value, privilege_type.split('_')[1]))
                         if not delete:
                             if local_storage.get(src_party_id, {}):
                                 if local_storage.get(src_party_id).get(src_role, {}):
@@ -106,9 +111,12 @@ class PrivilegeAuth(object):
                                 else:
                                     local_storage[src_party_id][src_role][ privilege_type] = []
                             except:
+                                stat_logger.info('{} {} is not authorized ,it cannot be deleted'.format(privilege_type.split('_')[1], value)
+                                    if isinstance(value, str) else "No permission to delete")
                                 raise Exception(
                                     '{} {} is not authorized ,it cannot be deleted'.format(privilege_type.split('_')[1], value)
                                     if isinstance(value, str) else "No permission to delete")
+            stat_logger.info('add permission successfully')
             f.close()
             return local_storage
 
@@ -131,7 +139,7 @@ class PrivilegeAuth(object):
     def get_authentication_items(request_path, func_name):
         dest_role = request_path.split('/')[2] if 'task' not in func_name else request_path.split('/')[4]
         component = request.json.get('module_name').lower() if 'run_task' in func_name else None
-        return dest_role, func_name, component
+        return PrivilegeAuth.get_privilege_dic(dest_role, func_name, component)
 
     @staticmethod
     def get_privilege_dic(privilege_role, privilege_command, privilege_component):
@@ -143,6 +151,7 @@ class PrivilegeAuth(object):
     def init():
         if USE_AUTHENTICATION:
             # init local storage
+            stat_logger.info('init local authorization library')
             file_dir = os.path.join(file_utils.get_project_base_directory(), 'fate_flow')
             os.makedirs(file_dir, exist_ok=True)
             PrivilegeAuth.local_storage_file = os.path.join(file_dir, 'authorization_config.json')
@@ -158,7 +167,9 @@ class PrivilegeAuth(object):
                                           'federatedml', 'conf', 'setting_conf')
             command_file_path = os.path.join(file_utils.get_project_base_directory(),
                                              'fate_flow', 'apps', 'schedule_app.py')
+            stat_logger.info('search commands from {}'.format(command_file_path))
             search_command(command_file_path)
+            stat_logger.info('search components from {}'.format(component_path))
             search_component(component_path)
 
 
@@ -199,3 +210,21 @@ def search_command(path):
 def search_component(path):
     component_list = [file_name.split('.')[0].lower() for file_name in os.listdir(path) if 'json' in file_name]
     PrivilegeAuth.ALL_PERMISSION['privilege_component'].extend(component_list)
+
+
+def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
+    initiator = runtime_conf['initiator']
+    roles = runtime_conf['role']
+    if initiator['role'] != src_role or initiator['party_id'] != int(src_party_id) or int(party_id) not in roles[role]:
+        stat_logger.info('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
+        raise Exception('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
+    components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
+    if not set(components).issubset(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get(
+            'privilege_component', [])):
+        if not set(components).issubset(PrivilegeAuth.get_permission_config(src_party_id, src_role).get(
+                'privilege_component', [])):
+            stat_logger.info('src_role {} src_party_id {} component authentication that needs to be run failed:{}'.format(
+                src_role, src_party_id, components))
+            raise Exception('src_role {} src_party_id {} component authentication that needs to be run failed:{}'.format(
+                src_role, src_party_id, components))
+    stat_logger.info('src_role {} src_party_id {} authentication check success'.format(src_role, src_party_id))

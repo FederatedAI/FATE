@@ -38,7 +38,7 @@ TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metr
 DATA_FUNC = ["download", "upload"]
 TABLE_FUNC = ["table_info"]
 MODEL_FUNC = ["load", "online", "version"]
-PERMISSION_FUNC = ["grant", "delete"]
+PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 
 def prettify(response, verbose=True):
@@ -156,7 +156,7 @@ def call_fun(func, config_data, dsl_path, config_path):
         response = requests.post("/".join([server_url, "model", func]), json=config_data)
     elif func in PERMISSION_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
-        response = requests.post("/".join([server_url, "permission", func]), json=config_data)
+        response = requests.post("/".join([server_url, "permission", func.replace('_', '/')]), json=config_data)
     return response.json() if isinstance(response, requests.models.Response) else response
 
 

@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads
@@ -23,7 +24,7 @@ from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import BOARD_DASHBOARD_URL
+from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
@@ -59,9 +60,11 @@ class JobController(object):
             pipeline_model = job_tracker.get_output_model('pipeline')
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-        job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
-                                                            job_dsl=job_dsl,
-                                                            job_runtime_conf=job_runtime_conf)
+        path_dict = save_job_conf(job_id=job_id,
+                                  job_dsl=job_dsl,
+                                  job_runtime_conf=job_runtime_conf,
+                                  train_runtime_conf=train_runtime_conf,
+                                  pipeline_dsl=None)
 
         job = Job()
         job.f_job_id = job_id
@@ -98,9 +101,8 @@ class JobController(object):
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
-        return job_id, job_dsl_path, job_runtime_conf_path, {'model_id': job_parameters['model_id'],
-                                                             'model_version': job_parameters[
-                                                                 'model_version']}, board_url
+        return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], \
+               {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
 
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator, timeout=False):
@@ -142,9 +144,14 @@ class JobController(object):
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
             train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])
+            if USE_AUTHENTICATION:
+                authentication_check(src_role=job_info['src_role'], src_party_id=job_info['src_party_id'],
+                                     dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
             save_job_conf(job_id=job_id,
                           job_dsl=dsl,
-                          job_runtime_conf=runtime_conf)
+                          job_runtime_conf=runtime_conf,
+                          train_runtime_conf=train_runtime_conf,
+                          pipeline_dsl=None)
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}
