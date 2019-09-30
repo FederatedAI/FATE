@@ -16,15 +16,20 @@
 package com.webank.ai.fate.board.global;
 
 
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.conn.HttpHostConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.net.SocketException;
 import java.sql.SQLIntegrityConstraintViolationException;
 
 
@@ -44,23 +49,31 @@ public class GlobalExceptionHandler {
 
         ResponseResult response = new ResponseResult();
 
-        if (e instanceof MissingServletRequestParameterException) {
-
-            response.setCode(ErrorCode.PARAM_ERROR.getCode());
-            response.setMsg(e.getMessage());
+        if (e instanceof ServletException) {
             logger.error("error ", e);
+            response.setCode(ErrorCode.SERVLET_ERROR.getCode());
+            response.setMsg(ErrorCode.SERVLET_ERROR.getMsg());
+
+        } else if (e instanceof HttpMessageNotReadableException) {
+            logger.error("error ", e);
+            response.setCode(ErrorCode.REQUESTBODY_ERROR.getCode());
+            response.setMsg(ErrorCode.REQUESTBODY_ERROR.getMsg());
         } else if (e instanceof IllegalArgumentException) {
             logger.error("error ", e);
-            response.setCode(ErrorCode.SYSTEM_ERROR.getCode());
-            response.setMsg(e.getMessage());
+            response.setCode(ErrorCode.ERROR_PARAMETER.getCode());
+            response.setMsg(ErrorCode.ERROR_PARAMETER.getMsg());
         } else if (e instanceof SQLIntegrityConstraintViolationException) {
             logger.error("error ", e);
-            response.setCode(ErrorCode.SYSTEM_ERROR.getCode());
-            response.setMsg(e.getMessage());
+            response.setCode(ErrorCode.DATABASE_ERROR_CONNECTION.getCode());
+            response.setMsg(ErrorCode.DATABASE_ERROR_CONNECTION.getMsg());
+        } else if (e instanceof SocketException ||e instanceof ClientProtocolException) {
+            logger.error("error ", e);
+            response.setCode(ErrorCode.FATEFLOW_ERROR_CONNECTION.getCode());
+            response.setMsg(ErrorCode.FATEFLOW_ERROR_CONNECTION.getMsg());
         } else {
             logger.error("error ", e);
             response.setCode(ErrorCode.SYSTEM_ERROR.getCode());
-            response.setMsg("system error");
+            response.setMsg(ErrorCode.SYSTEM_ERROR.getMsg());
         }
         return response;
     }

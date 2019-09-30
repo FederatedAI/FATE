@@ -14,12 +14,12 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.homo.sync import identify_uuid_sync, dh_keys_exchange_sync
 from federatedml.secureprotol.encrypt import PadsCipher
 from federatedml.util import consts
 
-LOGGER = LoggerFactory.get_logger()
+LOGGER = log_utils.getLogger()
 
 
 class Arbiter(identify_uuid_sync.Arbiter,

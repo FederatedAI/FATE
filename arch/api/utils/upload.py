@@ -29,16 +29,7 @@ MAX_PARTITION_NUM = 1024
 
 
 def list_to_str(input_list):
-    str1 = ''
-    size = len(input_list)
-    for i in range(size):
-        if i == size - 1:
-            str1 += str(input_list[i])
-        else:
-            str1 += str(input_list[i]) + ','
-
-    return str1
-
+    return ','.join(list(map(str, input_list)))
 
 def save_data_header(header_source, dst_table_name, dst_table_namespace):
     header_source_item = header_source.split(',')
@@ -70,7 +61,6 @@ def read_data(input_file, dst_table_name, dst_table_namespace, head=True):
 
 
 def generate_table_name(input_file_path):
-    local_time = time.localtime(time.time())
     str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     file_name = input_file_path.split(".")[0]
     file_name = file_name.split("/")[-1]

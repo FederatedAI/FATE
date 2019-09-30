@@ -17,7 +17,8 @@ import functools
 import typing
 
 from arch.api import session
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
+from fate_flow.entity.metric import MetricMeta, MetricType, Metric
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
@@ -27,7 +28,7 @@ from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
 from federatedml.util import consts
 
-Logger = LoggerFactory.get_logger()
+Logger = log_utils.getLogger()
 MODEL_META_NAME = "HomoNNModelMeta"
 MODEL_PARAM_NAME = "HomoNNModelParam"
 
@@ -78,9 +79,22 @@ class HomoNNArbiter(HomoNNBase):
         self.converge_func = converge_func_factory(early_stop.converge_func, early_stop.eps).is_converge
         self.loss_consumed = early_stop.converge_func != "weight_diff"
 
+    def callback_loss(self, iter_num, loss):
+        metric_meta = MetricMeta(name='train',
+                                 metric_type=MetricType.LOSS,
+                                 extra_metas={
+                                     "unit_name": "iters",
+                                 })
+
+        self.callback_meta(metric_name='loss', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='loss',
+                             metric_namespace='train',
+                             metric_data=[Metric(iter_num, loss)])
+
     def _check_monitored_status(self):
         loss = self.aggregator.aggregate_loss(suffix=self._iter_suffix())
         Logger.info(f"loss at iter {self.aggregator_iter}: {loss}")
+        self.callback_loss(self.aggregator_iter, loss)
         if self.loss_consumed:
             converge_args = (loss,) if self.loss_consumed else (self.aggregator.model,)
             return self.aggregator.send_converge_status(self.converge_func,
@@ -182,10 +196,8 @@ class HomoNNClient(HomoNNBase):
 
     def predict(self, data_inst):
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
-        result_table = session.table(name=session.generateUniqueId(), namespace=session.get_job_id())
         kv = map(lambda x: (x[0], list(x[1])), zip(data.get_keys(), self.nn_model.predict(data)))
-        result_table.put_all(kv)
-        return result_table
+        return session.parallelize(kv, include_key=True)
 
     def _load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
