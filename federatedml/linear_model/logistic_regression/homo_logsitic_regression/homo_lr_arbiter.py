@@ -46,7 +46,7 @@ class HomoLRArbiter(HomoLRBase):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
-    def fit(self, data_instances, validate_data=None):
+    def fit(self, data_instances=None, validate_data=None):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
@@ -88,7 +88,7 @@ class HomoLRArbiter(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
-    def predict(self, data_instantces):
+    def predict(self, data_instantces=None):
         current_suffix = ('predict',)
 
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
@@ -119,3 +119,20 @@ class HomoLRArbiter(HomoLRBase):
                                                          idx=idx,
                                                          suffix=current_suffix)
             self.host_predict_results.append((prob_table, predict_table))
+
+    def run(self, component_parameters=None, args=None):
+        self._init_runtime_parameters(component_parameters)
+
+        if self.need_cv:
+            LOGGER.info("Task is cross validation.")
+            self.cross_validation(None)
+            return
+
+        elif not "model" in args:
+            LOGGER.info("Task is fit")
+            self.set_flowid('fit')
+            self.fit()
+        else:
+            LOGGER.info("Task is predict")
+            self.set_flowid('')
+            self.predict()

@@ -18,13 +18,12 @@ import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
 import copy
 from arch.api import session
-from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.model_selection.cross_validate import BaseCrossValidator
 from federatedml.model_selection.indices import collect_index
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
-from federatedml.transfer_variable.transfer_class.hetero_workflow_transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.transfer_variable.transfer_class.cross_validation_transfer_variable import CrossValidationTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -36,6 +35,16 @@ class KFold(BaseCrossValidator):
         self.n_splits = 1
         self.shuffle = True
         self.random_seed = 1
+
+    def _init_model(self, param):
+        self.model_param = param
+        self.n_splits = param.n_splits
+        self.mode = param.mode
+        self.role = param.role
+        self.shuffle = param.shuffle
+        self.random_seed = param.random_seed
+        # self.evaluate_param = param.evaluate_param
+        np.random.seed(self.random_seed)
 
     def split(self, data_inst):
         np.random.seed(self.random_seed)
@@ -150,16 +159,6 @@ class KFold(BaseCrossValidator):
             model.set_flowid(this_flowid)
             model.predict(None)
 
-    def _init_model(self, param):
-        self.model_param = param
-        self.n_splits = param.n_splits
-        self.mode = param.mode
-        self.role = param.role
-        self.shuffle = param.shuffle
-        self.random_seed = param.random_seed
-        self.evaluate_param = param.evaluate_param
-        np.random.seed(self.random_seed)
-
     def _align_data_index(self, data_instance, flowid, data_application=None):
         header = data_instance.schema.get('header')
 
@@ -167,11 +166,11 @@ class KFold(BaseCrossValidator):
             LOGGER.warning("not data_application!")
             return
 
-        transfer_variable = HeteroWorkFlowTransferVariable()
+        transfer_variable = CrossValidationTransferVariable()
         if data_application == consts.TRAIN_DATA:
-            transfer_id = transfer_variable.train_data
+            transfer_id = transfer_variable.train_sid
         elif data_application == consts.TEST_DATA:
-            transfer_id = transfer_variable.test_data
+            transfer_id = transfer_variable.test_sid
         else:
             LOGGER.warning("data_application error!")
             return
@@ -197,8 +196,10 @@ class KFold(BaseCrossValidator):
         if eval_data is None:
             return
         eval_obj = Evaluation()
-        LOGGER.debug("In KFold, evaluate_param is: {}".format(self.evaluate_param.__dict__))
-        eval_obj._init_model(self.evaluate_param)
+        # LOGGER.debug("In KFold, evaluate_param is: {}".format(self.evaluate_param.__dict__))
+        # eval_obj._init_model(self.evaluate_param)
+        eval_param = model.get_metrics_param()
+        eval_obj._init_model(eval_param)
         eval_obj.set_tracker(model.tracker)
         eval_data = {fold_name: eval_data}
         eval_obj.fit(eval_data)

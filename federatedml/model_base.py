@@ -41,8 +41,6 @@ class ModelBase(object):
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
-        LOGGER.debug("model_param class: {}, component_parameters: {}".format(self.model_param.__name__,
-                                                                              component_parameters))
 
         param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
 

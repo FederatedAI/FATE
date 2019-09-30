@@ -27,8 +27,8 @@ from federatedml.transfer_variable.transfer_class.base_transfer_variable import 
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroWorkFlowTransferVariable(BaseTransferVariable):
+class CrossValidationTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
-        self.train_data = Variable(name='HeteroWorkFlowTransferVariable.train_data', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.test_data = Variable(name='HeteroWorkFlowTransferVariable.test_data', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.train_sid = Variable(name='CrossValidationTransferVariable.train_sid', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.test_sid = Variable(name='CrossValidationTransferVariable.test_sid', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass
