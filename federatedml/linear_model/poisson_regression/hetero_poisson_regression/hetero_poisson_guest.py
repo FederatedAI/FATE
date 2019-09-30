@@ -123,6 +123,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         """
         LOGGER.info("Start predict ...")
 
+        self.header = self.get_header(data_instances)
+        self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
+
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 

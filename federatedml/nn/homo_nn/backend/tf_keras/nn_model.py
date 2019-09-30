@@ -13,16 +13,37 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+import io
+import os
+import tempfile
+import zipfile
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import set_session
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
-import copy
 
-Logger = LoggerFactory.get_logger()
+Logger = log_utils.getLogger()
+
+
+def _zip_dir_as_bytes(path):
+    with io.BytesIO() as io_bytes:
+        with zipfile.ZipFile(io_bytes, 'w', zipfile.ZIP_DEFLATED) as zip:
+            for root, dirs, files in os.walk(path, topdown=False):
+                for name in files:
+                    full_path = os.path.join(root, name)
+                    relative_path = os.path.relpath(full_path, path)
+                    zip.write(filename=full_path, arcname=relative_path)
+                for name in dirs:
+                    full_path = os.path.join(root, name)
+                    relative_path = os.path.relpath(full_path, path)
+                    zip.write(filename=full_path, arcname=relative_path)
+        zip_bytes = io_bytes.getvalue()
+    return zip_bytes
 
 
 def _compile_model(model, loss, optimizer, metrics):
@@ -67,6 +88,10 @@ def from_keras_sequential_model(model, loss, optimizer, metrics):
     return KerasNNModel(sess, model)
 
 
+def restore_keras_nn_model(model_bytes):
+    return KerasNNModel.restore_model(model_bytes)
+
+
 class KerasNNModel(NNModel):
     def __init__(self, sess, model):
         self._sess: tf.Session = sess
@@ -102,6 +127,40 @@ class KerasNNModel(NNModel):
 
     def predict(self, data: tf.keras.utils.Sequence, **kwargs):
         return self._model.predict(data)
+
+    def export_model(self):
+        with tempfile.TemporaryDirectory() as tmp_path:
+            try:
+                tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
+            except NotImplementedError:
+                import warnings
+                warnings.warn('Saving the model as SavedModel is still in experimental stages. '
+                              'trying tf.keras.experimental.export_saved_model...')
+                tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
+
+            model_bytes = _zip_dir_as_bytes(tmp_path)
+
+        return model_bytes
+
+    @staticmethod
+    def restore_model(model_bytes):  # todo: restore optimizer to support incremental learning
+        sess = _init_session()
+        with tempfile.TemporaryDirectory() as tmp_path:
+            with io.BytesIO(model_bytes) as bytes_io:
+                with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as f:
+                    f.extractall(tmp_path)
+
+            try:
+                model = tf.keras.models.load_model(filepath=tmp_path)
+            except IOError:
+                import warnings
+                warnings.warn('loading the model as SavedModel is still in experimental stages. '
+                              'trying tf.keras.experimental.load_from_saved_model...')
+                model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
+        return KerasNNModel(sess, model)
+
+    def export_optimizer_config(self):
+        return self._model.optimizer.get_config()
 
 
 class KerasSequenceData(tf.keras.utils.Sequence):
