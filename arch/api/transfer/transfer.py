@@ -15,11 +15,8 @@
 #
 
 from arch.api.table.table import Table
-from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.splitable import is_splitable_obj, split_remote, split_get, is_split_head, \
     split_table_tag, get_num_split
-
-Logger = LoggerFactory.get_logger()
 
 
 class FederationWrapped(object):
@@ -71,7 +68,6 @@ class FederationWrapped(object):
         num_split = get_num_split(rtn)
         splits = [self._raw_federation.get(name=name, tag=split_table_tag(tag, i), idx=idx) for i in range(num_split)]
         obj = split_get(splits)
-        Logger.info(f"get {obj} in {num_split} splits")
         return obj
 
     # noinspection PyProtectedMember
@@ -105,7 +101,6 @@ class FederationWrapped(object):
 
         # num fragment > 1
         self._raw_federation.remote(value[0], name=name, tag=tag, role=role, idx=idx)
-        Logger.info(f"remote {obj} in {value[0]} splits")
         for k, v in value[1]:
             self._raw_federation.remote(obj=v,
                                         name=name,
