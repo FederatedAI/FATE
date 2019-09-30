@@ -111,41 +111,6 @@ class HomoLRBase(BaseLogisticRegression):
                                                  data_instance=data_instances)
         return model_weights
 
-    # def run(self, component_parameters=None, args=None):
-    #     self._init_runtime_parameters(component_parameters)
-    #     train_data, eval_data = self._extract_data(args["data"])
-    #     stage, has_eval = self._judge_stage(args)
-    #     if self.need_cv:
-    #         LOGGER.info("Need cross validation.")
-    #         self.cross_validation(train_data)
-    #
-    #     elif self.need_one_vs_rest:
-    #         if "model" in args:
-    #             self._load_model(args)
-    #         self.one_vs_rest_logic(stage, train_data, eval_data)
-    #
-    #     elif stage == "fit":
-    #         self.fit(train_data)
-    #         self.data_output = self.predict(train_data)
-    #         if self.data_output:
-    #             self.data_output = self.data_output.mapValues(lambda value: value + ["train"])
-    #         if has_eval:
-    #             self.set_flowid('validate')
-    #             eval_data_output = self.predict(eval_data)
-    #             if eval_data_output:
-    #                 eval_data_output = eval_data_output.mapValues(lambda value: value + ["validation"])
-    #                 self.data_output = self.data_output.union(eval_data_output)
-    #         if train_data is not None:
-    #             self.set_predict_data_schema(self.data_output, train_data.schema)
-    #     else:
-    #         self.set_flowid('predict')
-    #         self.data_output = self.predict(eval_data)
-    #         if self.data_output:
-    #             self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
-    #
-    #         if eval_data is not None:
-    #             self.set_predict_data_schema(self.data_output, eval_data.schema)
-
     def _compute_loss(self, data_instances):
         f = functools.partial(self.gradient_operator.compute_loss,
                               coef=self.model_weights.coef_,

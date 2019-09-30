@@ -122,7 +122,8 @@ class KFold(BaseCrossValidator):
             model.set_flowid(this_flowid)
             train_pred_res = model.predict(train_data)
 
-            if train_pred_res is not None:
+            # if train_pred_res is not None:
+            if self.role == consts.GUEST:
                 fold_name = "_".join(['train', 'fold', str(fold_num)])
                 pred_res = train_pred_res.mapValues(lambda value: value + ['train'])
                 self.evaluate(pred_res, fold_name, model)
@@ -133,7 +134,8 @@ class KFold(BaseCrossValidator):
             pred_res = model.predict(test_data)
             model.set_predict_data_schema(pred_res, test_data.schema)
 
-            if pred_res is not None:
+            # if pred_res is not None:
+            if self.role == consts.GUEST:
                 fold_name = "_".join(['validate', 'fold', str(fold_num)])
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)

@@ -57,12 +57,6 @@ class ModelBase(object):
             need_run = True
         self.need_run = need_run
 
-        try:
-            need_one_vs_rest = param.one_vs_rest_param.need_one_vs_rest
-        except AttributeError:
-            need_one_vs_rest = False
-        self.need_one_vs_rest = need_one_vs_rest
-
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
 
     def _init_model(self, model):
@@ -98,32 +92,6 @@ class ModelBase(object):
         if stage == 'cross_validation':
             LOGGER.info("Need cross validation.")
             self.cross_validation(train_data)
-
-        elif stage == "one_vs_rest":
-            LOGGER.info("Need one_vs_rest.")
-            if train_data:
-                self.one_vs_rest_fit(train_data)
-                self.data_output = self.one_vs_rest_predict(train_data)
-                if self.data_output:
-                    self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
-
-                if eval_data:
-                    eval_data_predict_res = self.one_vs_rest_predict(eval_data)
-                    if eval_data_predict_res:
-                        predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
-
-                        if self.data_output:
-                            self.data_output = self.data_output.union(predict_output_res)
-                        else:
-                            self.data_output = predict_output_res
-
-                self.set_predict_data_schema(self.data_output, train_data.schema)
-
-            elif eval_data:
-                self.data_output = self.one_vs_rest_predict(eval_data)
-                if self.data_output:
-                    self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
-                    self.set_predict_data_schema(self.data_output, eval_data.schema)
 
         elif train_data is not None:
             self.set_flowid('fit')
@@ -174,10 +142,6 @@ class ModelBase(object):
 
         if self.need_cv:
             stage = 'cross_validation'
-        elif self.need_one_vs_rest:
-            stage = "one_vs_rest"
-            if "model" in args:
-                self._load_model(args)
         elif "model" in args:
             self._load_model(args)
             stage = "transform"
@@ -221,12 +185,9 @@ class ModelBase(object):
         return self.data_output
 
     def export_model(self):
-        # self.model_output = {"XXXMeta": "model_meta",
-        #                     "XXXParam": "model_param"}
         return self.model_output
 
     def set_flowid(self, flowid):
-        # self.flowid = '_'.join(map(str, [self.flowid, flowid]))
         self.flowid = '.'.join([self.taskid, str(flowid)])
         self.set_transfer_variable()
 

@@ -208,10 +208,10 @@ class OneVsRest(object):
             predict_res = None
         #
         # LOGGER.info("finish OneVsRest Predict, return predict results.")
-
+        predict_res
         return predict_res
 
-    def save_model(self, single_model_pb):
+    def save(self, single_model_pb):
         """
         Save each classifier model of OneVsRest. It just include model_param but not model_meta now
         """
@@ -219,9 +219,11 @@ class OneVsRest(object):
         for classifier in self.models:
             single_param_dict = classifier.get_single_model_param()
             classifier_pb_objs.append(single_model_pb(**single_param_dict))
+
+        one_vs_rest_class = [str(x) for x in self.classes]
         one_vs_rest_result = {
             'completed_models': classifier_pb_objs,
-            'one_vs_rest_classes': self.classes
+            'one_vs_rest_classes': one_vs_rest_class
         }
         return one_vs_rest_result
 
@@ -231,16 +233,16 @@ class OneVsRest(object):
         """
         completed_models = one_vs_rest_result.completed_models
         one_vs_rest_classes = one_vs_rest_result.one_vs_rest_classes
-        self.classes = list(one_vs_rest_classes)
+        self.classes = [int(x) for x in one_vs_rest_classes]   # Support other label type in the future
         self.models = []
         for classifier_obj in list(completed_models):
             classifier = copy.deepcopy(self.classifier)
-            self.models.append(classifier.load_single_model(classifier_obj))
+            classifier.load_single_model(classifier_obj)
+            classifier.need_one_vs_rest = False
+            self.models.append(classifier)
 
 
 class HomoOneVsRest(OneVsRest):
-    # def __init__(self, classifier, role, one_vs_rest_param):
-    #     super().__init__()
 
     @property
     def has_label(self):
@@ -300,10 +302,10 @@ class HeteroOneVsRest(OneVsRest):
         self.classes = [x for x in range(class_nums)]
 
 
-def one_vs_rest_factory(classifier, role, mode, one_vs_rest_param):
+def one_vs_rest_factory(classifier, role, mode, has_arbiter):
     if mode == consts.HOMO:
-        return HomoOneVsRest(classifier, role, mode, one_vs_rest_param)
+        return HomoOneVsRest(classifier, role, mode, has_arbiter)
     elif mode == consts.HETERO:
-        return HeteroOneVsRest(classifier, role, mode, one_vs_rest_param)
+        return HeteroOneVsRest(classifier, role, mode, has_arbiter)
     else:
         raise ValueError(f"Cannot recognize mode: {mode} in one vs rest")

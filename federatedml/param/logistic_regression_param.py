@@ -80,7 +80,7 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
+                 decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None
                  ):
         super(LogisticParam, self).__init__()
@@ -96,7 +96,6 @@ class LogisticParam(BaseParam):
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
@@ -196,7 +195,7 @@ class HomoLogisticParam(LogisticParam):
                  max_iter=100, early_stop='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
+                 decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -206,7 +205,7 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                one_vs_rest_param=one_vs_rest_param, decay=decay, decay_sqrt=decay_sqrt)
+                                                decay=decay, decay_sqrt=decay_sqrt)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
@@ -239,7 +238,7 @@ class HeteroLogisticParam(LogisticParam):
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
+                 decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -247,7 +246,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
-                                                  one_vs_rest_param=one_vs_rest_param, decay=decay,
+                                                  decay=decay,
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
                                                   validation_freqs=validation_freqs)
         self.encrypted_mode_calculator_param = encrypted_mode_calculator_param

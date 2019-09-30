@@ -19,6 +19,7 @@ from federatedml.linear_model.base_linear_model_arbiter import HeteroBaseArbiter
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
+from federatedml.util import consts
 
 
 LOGGER = log_utils.getLogger()
@@ -31,5 +32,16 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.model_param = HeteroLogisticParam()
         self.n_iter_ = 0
         self.header = None
+        self.is_converged = False
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'
+        self.need_one_vs_rest = None
+        self.mode = consts.HETERO
+
+    def fit(self, data_instances=None, validate_data=None):
+        LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest is None:
+            self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
+            return
+        else:
+            super().fit(data_instances, validate_data)

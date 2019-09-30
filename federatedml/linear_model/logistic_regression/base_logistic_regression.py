@@ -20,9 +20,10 @@ from google.protobuf import json_format
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
-from federatedml.one_vs_rest.one_vs_rest import OneVsRest
 from federatedml.optim.initialize import Initializer
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+
 
 LOGGER = log_utils.getLogger()
 
@@ -38,14 +39,14 @@ class BaseLogisticRegression(BaseLinearModel):
         self.model_meta_name = 'LogisticRegressionMeta'
 
         # one_ve_rest parameter
-        self.need_one_vs_rest = False
+        self.need_one_vs_rest = None
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
 
-    def _init_model(self, params):
-        super()._init_model(params)
-        if params.multi_class == 'ovr':
-            self.need_one_vs_rest = True
+    # def _init_model(self, params):
+    #     super()._init_model(params)
+    #     if params.multi_class == 'ovr':
+    #         self.need_one_vs_rest = True
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
@@ -60,7 +61,7 @@ class BaseLogisticRegression(BaseLinearModel):
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
-                  'intersect': self.model_weights.intercept_,
+                  'intercept': self.model_weights.intercept_,
                   'header': self.header}
         return result
 
@@ -73,11 +74,12 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
+            single_result = {'header': header}
         else:
             one_vs_rest_result = None
-
-        single_result = self.get_single_model_param()
+            single_result = self.get_single_model_param()
         single_result['one_vs_rest_result'] = one_vs_rest_result
+        LOGGER.debug("in _get_param, single_result: {}".format(single_result))
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
         json_result = json_format.MessageToJson(param_protobuf_obj)
@@ -85,6 +87,7 @@ class BaseLogisticRegression(BaseLinearModel):
         return param_protobuf_obj
 
     def _load_model(self, model_dict):
+        LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.fit_intercept = meta_obj.fit_intercept
@@ -94,12 +97,15 @@ class BaseLogisticRegression(BaseLinearModel):
             return
 
         one_vs_rest_result = result_obj.one_vs_rest_result
-
+        LOGGER.debug("in _load_model One_vs_rest_result: {}".format(one_vs_rest_result))
         if one_vs_rest_result is not None:
-            self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode, has_arbiter=True)
+            self.one_vs_rest_obj = one_vs_rest_factory(classifier=self, role=self.role,
+                                                       mode=self.mode, has_arbiter=True)
             self.one_vs_rest_obj.load_model(one_vs_rest_result)
+            self.need_one_vs_rest = True
         else:
             self.load_single_model(result_obj)
+            self.need_one_vs_rest = False
 
     def load_single_model(self, single_model_obj):
         feature_shape = len(self.header)
@@ -115,11 +121,14 @@ class BaseLogisticRegression(BaseLinearModel):
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
-        self.one_vs_rest_obj = OneVsRest(classifier=self, role=self.role, mode=self.mode, has_arbiter=True)
+        self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
         classes = self.one_vs_rest_obj.get_data_classes(train_data)
         if len(classes) > 2:
+            LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
+            self.need_one_vs_rest = True
             self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
         else:
+            LOGGER.debug("Class num less or equal than 2, no need to do one_vs_rest")
             self.need_one_vs_rest = False
             self.fit(train_data, validate_data)
 
@@ -129,31 +138,3 @@ class BaseLogisticRegression(BaseLinearModel):
             return
         return self.one_vs_rest_obj.predict(data_instances=validate_data)
 
-        # def _get_one_vs_rest_param(self):
-        #     return self.model_param.one_vs_rest_param
-
-        # def one_vs_rest_logic(self, stage, train_data=None, eval_data=None):
-        #     LOGGER.info("Need one_vs_rest.")
-        #     if stage == 'fit':
-        #         self.one_vs_rest_fit(train_data)
-        #         self.data_output = self.one_vs_rest_predict(train_data)
-        #         if self.data_output:
-        #             self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
-        #
-        #         if eval_data:
-        #             eval_data_predict_res = self.one_vs_rest_predict(eval_data)
-        #             if eval_data_predict_res:
-        #                 predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
-        #
-        #                 if self.data_output:
-        #                     self.data_output.union(predict_output_res)
-        #                 else:
-        #                     self.data_output = predict_output_res
-        #
-        #         self.set_predict_data_schema(self.data_output, train_data.schema)
-        #
-        #     elif stage == 'predict':
-        #         self.data_output = self.one_vs_rest_predict(eval_data)
-        #         if self.data_output:
-        #             self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
-        #             self.set_predict_data_schema(self.data_output, eval_data.schema)
