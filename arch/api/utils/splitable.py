@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import pickle
+
+Pickle = pickle
 
 __FATE_BIG_OBJ_MAX_PART_SIZE = "__fate_big_obj_max_part_size"
 __SUFFIX = "_part_"
@@ -28,19 +31,10 @@ def is_splitable_obj(obj):
 
 
 def num_split_parts(obj, bytes_size):
-    return (bytes_size - 1) / getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE) + 1
-
-
-def get_split_obj_header(num_split):
-    return _FragHead(num_split)
-
-
-def is_split_obj_header(obj):
-    return isinstance(obj, _FragHead)
+    return (bytes_size - 1) // getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE) + 1
 
 
 def _attr_injected_meta_class(**attrs):
-
     class _AttrInjected(type):
 
         def __call__(cls, *args, **kwargs):
@@ -52,23 +46,46 @@ def _attr_injected_meta_class(**attrs):
     return _AttrInjected
 
 
-def segment_transfer_enabled(max_part_size=0x2000000):
+def segment_transfer_enabled(max_part_size=0x100000000):
     """
     a metaclass, indicate objects in this class should be transfer in segments
     Args:
         max_part_size: defaults 32MB
     """
-    return _attr_injected_meta_class(__FATE_BIG_OBJ_MAX_PART_SIZE=max_part_size)
+    return _attr_injected_meta_class(**{__FATE_BIG_OBJ_MAX_PART_SIZE: max_part_size})
 
 
-def get_part_key(prefix, index):
-    return f"{prefix}{__SUFFIX}{index}"
+def split_remote(obj):
+    obj_bytes = Pickle.dumps(obj)
+    byte_size = len(obj_bytes)
+    num_slice = num_split_parts(obj, byte_size)
+    if num_slice <= 1:
+        return obj,
+    else:
+        head = _SplitHead(num_slice)
+        kv = [(i, obj_bytes[get_slice(obj, i)]) for i in range(num_slice)]
+        return head, kv
 
 
-class _FragHead(object):
-    def __init__(self, num_part):
-        self._num_part = num_part
+def split_table_tag(tag, k):
+    return f"{tag}.__frag__{k}"
 
-    @property
-    def num_part(self):
-        return self._num_part
+
+def is_split_head(obj):
+    return isinstance(obj, _SplitHead)
+
+
+def split_get(splits):
+    obj_bytes = b''.join(splits)
+    obj = Pickle.loads(obj_bytes)
+    return obj
+
+
+# noinspection PyProtectedMember
+def get_num_split(obj):
+    return obj._num_split
+
+
+class _SplitHead(object):
+    def __init__(self, num_split):
+        self._num_split = num_split

@@ -15,6 +15,11 @@
 #
 
 from arch.api.table.table import Table
+from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils.splitable import is_splitable_obj, split_remote, split_get, is_split_head, \
+    split_table_tag, get_num_split
+
+Logger = LoggerFactory.get_logger()
 
 
 class FederationWrapped(object):
@@ -50,15 +55,24 @@ class FederationWrapped(object):
 
     def _get_all(self, name, tag):
         rtn = self._raw_federation.get(name=name, tag=tag, idx=-1)
-        if len(rtn) > 0 and self._is_raw_table(rtn[0]):
-            rtn = [self._as_wrapped_table(tbl) for tbl in rtn]
-        return rtn
+        return [self._post_get(value, name, tag, idx) for idx, value in enumerate(rtn)]
 
     def _get_single(self, name, tag, idx):
         rtn = self._raw_federation.get(name=name, tag=tag, idx=idx)
+        return self._post_get(rtn, name, tag, idx)
+
+    def _post_get(self, rtn, name, tag, idx):
         if self._is_raw_table(rtn):
-            rtn = self._as_wrapped_table(rtn)
-        return rtn
+            return self._as_wrapped_table(rtn)
+
+        if not is_split_head(rtn):
+            return rtn
+
+        num_split = get_num_split(rtn)
+        splits = [self._raw_federation.get(name=name, tag=split_table_tag(tag, i), idx=idx) for i in range(num_split)]
+        obj = split_get(splits)
+        Logger.info(f"get {obj} in {num_split} splits")
+        return obj
 
     # noinspection PyProtectedMember
     def _idx_in_range(self, name, idx) -> bool:
@@ -77,10 +91,28 @@ class FederationWrapped(object):
             return self._get_all(name, tag)
 
     def remote(self, obj, name: str, tag: str, role=None, idx=-1):
-        value = obj
-        if self._is_wrapped_table(obj):
-            value = self._as_raw_table(value)
-        return self._raw_federation.remote(obj=value, name=name, tag=tag, role=role, idx=idx)
+        if not is_splitable_obj(obj):
+            if self._is_wrapped_table(obj):
+                obj = self._as_raw_table(obj)
+            return self._raw_federation.remote(obj=obj, name=name, tag=tag, role=role, idx=idx)
+
+        # maybe split remote
+        value = split_remote(obj)
+
+        # num fragment is 1
+        if not is_split_head(value[0]):
+            return self._raw_federation.remote(obj=value[0], name=name, tag=tag, role=role, idx=idx)
+
+        # num fragment > 1
+        self._raw_federation.remote(value[0], name=name, tag=tag, role=role, idx=idx)
+        Logger.info(f"remote {obj} in {value[0]} splits")
+        for k, v in value[1]:
+            self._raw_federation.remote(obj=v,
+                                        name=name,
+                                        tag=split_table_tag(tag, k),
+                                        role=role,
+                                        idx=idx)
+        return
 
 
 class FederationBuilder(object):
