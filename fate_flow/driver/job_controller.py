@@ -117,9 +117,7 @@ class JobController(object):
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
-            status = TaskStatus.FAILED
-            if timeout:
-                status = TaskStatus.TIMEOUT
+            status = TaskStatus.FAILED if not timeout else TaskStatus.TIMEOUT
 
             if task.f_status != TaskStatus.SUCCESS:
                 task.f_status = status

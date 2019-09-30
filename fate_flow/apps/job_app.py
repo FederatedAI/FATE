@@ -25,7 +25,7 @@ from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
@@ -59,9 +59,9 @@ def submit_job():
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), is_cancel=True)
+    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
     if not response:
-        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
+        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
 
