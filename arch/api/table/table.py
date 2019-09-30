@@ -174,6 +174,6 @@ class Table(object):
 
     def save_metas(self, kv):
         from arch.api.table.session import FateSession
-        return FateSession.get_instance().save_data_table_meta(kv=kv,
-                                                               name="%s.meta" % self.get_name(),
-                                                               namespace=self.get_namespace())
+        return FateSession.save_data_table_meta(kv=kv,
+                                                data_table_name="%s.meta" % self.get_name(),
+                                                data_table_namespace=self.get_namespace())
