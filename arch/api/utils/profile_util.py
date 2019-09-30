@@ -16,10 +16,10 @@
 
 import time
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 import inspect
 
-LOGGER = LoggerFactory.get_logger("PROFILING")
+LOGGER = log_utils.getLogger("PROFILING")
 
 
 def log_elapsed(func):

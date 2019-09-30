@@ -17,7 +17,7 @@ import functools
 import typing
 
 from arch.api import session
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from fate_flow.entity.metric import MetricMeta, MetricType, Metric
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
@@ -28,7 +28,7 @@ from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
 from federatedml.util import consts
 
-Logger = LoggerFactory.get_logger()
+Logger = log_utils.getLogger()
 MODEL_META_NAME = "HomoNNModelMeta"
 MODEL_PARAM_NAME = "HomoNNModelParam"
 

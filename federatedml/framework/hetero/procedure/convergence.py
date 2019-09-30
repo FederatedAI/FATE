@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import converge_sync
 
-LOGGER = LoggerFactory.get_logger()
+LOGGER = log_utils.getLogger()
 
 
 class Host(converge_sync.Host):
