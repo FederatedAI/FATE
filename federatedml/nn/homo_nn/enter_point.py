@@ -182,7 +182,7 @@ class HomoNNClient(HomoNNBase):
 
     def predict(self, data_inst):
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
-        result_table = session.table(name=session.generateUniqueId(), namespace=session.get_job_id())
+        result_table = session.table(name=session.generateUniqueId(), namespace=session.get_session_id())
         kv = map(lambda x: (x[0], list(x[1])), zip(data.get_keys(), self.nn_model.predict(data)))
         result_table.put_all(kv)
         return result_table
