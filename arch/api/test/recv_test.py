@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 
 if __name__ == '__main__':
-    eggroll.init("atest")
+    session.init(job_id="atest")
     federation.init("atest", {
 
         "local": {

@@ -14,6 +14,3 @@
 #  limitations under the License.
 #
 
-from federatedml.optim.gradient.logistic_gradient import LogisticGradient, HeteroLogisticGradient, TaylorLogisticGradient
-
-__all__ = ["LogisticGradient", "HeteroLogisticGradient", "TaylorLogisticGradient"]

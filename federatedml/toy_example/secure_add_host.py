@@ -17,7 +17,7 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from arch.api.utils import log_utils
 from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import SecureAddExampleTransferVariable
@@ -46,7 +46,7 @@ class SecureAddHost(ModelBase):
 
     def _init_data(self):
         kvs = [(i, 1) for i in range(self.data_num)]
-        self.y = eggroll.parallelize(kvs, include_key=True, partition=self.partition)
+        self.y = session.parallelize(kvs, include_key=True, partition=self.partition)
 
     def share(self, y):
         first = np.random.uniform(y, -y)

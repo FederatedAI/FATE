@@ -18,7 +18,7 @@ import importlib
 import os
 
 from arch.api import federation
-from arch.api import storage
+from arch.api import session
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
@@ -71,8 +71,9 @@ class TaskExecutor(object):
             return
         try:
             # init environment, process is shared globally
-            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'])
-            storage.init_storage(job_id=task_id, work_mode=RuntimeConfig.WORK_MODE)
+            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
+                                      BACKEND=job_parameters.get('backend', 0))
+            session.init(job_id=task_id, mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
             federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
@@ -154,7 +155,7 @@ class TaskExecutor(object):
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
 
-                                data_table = storage.table(
+                                data_table = session.table(
                                     namespace=job_args['data'][search_data_name]['namespace'],
                                     name=job_args['data'][search_data_name]['name'])
                             else:

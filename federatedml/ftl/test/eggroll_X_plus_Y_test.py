@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.eggroll_computation.helper import distribute_compute_X_plus_Y
 from federatedml.ftl.test.util import assert_matrix
 

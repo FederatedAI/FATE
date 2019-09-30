@@ -1,7 +1,7 @@
 {
-    "module_path":  "federatedml/logistic_regression/homo_logsitic_regression",
+    "module_path":  "federatedml/linear_model/logistic_regression/homo_logsitic_regression",
     "default_runtime_conf": "logistic_regression_param.json",
-    "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
+    "param_class" : "federatedml/param/logistic_regression_param.py/HomoLogisticParam",
     "role":
     {
         "guest":

@@ -21,6 +21,17 @@ class WorkMode(IntEnum):
     CLUSTER = 1
 
 
+class Backend(IntEnum):
+    EGGROLL = 0
+    SPARK = 1
+
+    def is_eggroll(self):
+        return self.value == self.EGGROLL
+
+    def is_spark(self):
+        return self.value == self.SPARK
+
+
 class JobStatus(object):
     WAITING = 'waiting'
     RUNNING = 'running'

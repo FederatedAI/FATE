@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.instance import Instance
 from federatedml.optim.gradient import HeteroLogisticGradient
 from federatedml.secureprotol import PaillierEncrypt
@@ -31,10 +31,10 @@ class TestHeteroLogisticGradient(unittest.TestCase):
         self.hetero_lr_gradient = HeteroLogisticGradient(self.paillier_encrypt)
 
         size = 10
-        self.wx = eggroll.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
-        self.en_sum_wx_square = eggroll.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)])
+        self.wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
+        self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)])
         self.w = [i for i in range(size)]
-        self.data_inst = eggroll.parallelize(
+        self.data_inst = session.parallelize(
             [Instance(features=[1 for _ in range(size)], label=pow(-1, i % 2)) for i in range(size)], partition=1)
 
         # test fore_gradient
@@ -74,5 +74,5 @@ class TestHeteroLogisticGradient(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    eggroll.init("1111")
+    session.init("1111")
     unittest.main()

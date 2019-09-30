@@ -14,19 +14,37 @@
 #  limitations under the License.
 #
 
+
 from enum import IntEnum, Enum
 
 
 class WorkMode(IntEnum):
     STANDALONE = 0
     CLUSTER = 1
-    SIMPLE = 2
+
+    def is_standalone(self):
+        return self.value == self.STANDALONE
+
+    def is_cluster(self):
+        return self.value == self.CLUSTER
+
+
+class Backend(IntEnum):
+    EGGROLL = 0
+    SPARK = 1
+
+    def is_spark(self):
+        return self.value == self.SPARK
+
+    def is_eggroll(self):
+        return self.value == self.EGGROLL
 
 
 class RuntimeInstance(object):
-    EGGROLL = None
-    MODE = None
+    SESSION = None
+    MODE: WorkMode = None
     FEDERATION = None
+    Backend: Backend = None
 
 
 class StoreType(Enum):

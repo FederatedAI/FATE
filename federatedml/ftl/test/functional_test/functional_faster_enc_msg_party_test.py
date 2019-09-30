@@ -20,7 +20,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.autoencoder import Autoencoder
 from federatedml.ftl.data_util.common_data_util import split_data_combined
 from federatedml.ftl.data_util.uci_credit_card_util import load_UCI_Credit_Card_data

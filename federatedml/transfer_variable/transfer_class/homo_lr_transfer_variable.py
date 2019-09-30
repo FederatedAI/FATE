@@ -29,14 +29,21 @@ from federatedml.transfer_variable.transfer_class.base_transfer_variable import 
 # noinspection PyAttributeOutsideInit
 class HomoLRTransferVariable(BaseTransferVariable):
     def define_transfer_variable(self):
+        self.guest_uuid = Variable(name='HomoLRTransferVariable.guest_uuid', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
+        self.host_uuid = Variable(name='HomoLRTransferVariable.host_uuid', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
+        self.uuid_conflict_flag = Variable(name='HomoLRTransferVariable.uuid_conflict_flag', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
+        self.dh_pubkey = Variable(name='HomoLRTransferVariable.dh_pubkey', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
+        self.dh_ciphertext_host = Variable(name='HomoLRTransferVariable.dh_ciphertext_host', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
+        self.dh_ciphertext_guest = Variable(name='HomoLRTransferVariable.dh_ciphertext_guest', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
+        self.dh_ciphertext_bc = Variable(name='HomoLRTransferVariable.dh_ciphertext_bc', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
         self.paillier_pubkey = Variable(name='HomoLRTransferVariable.paillier_pubkey', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
         self.guest_model = Variable(name='HomoLRTransferVariable.guest_model', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
         self.host_model = Variable(name='HomoLRTransferVariable.host_model', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
-        self.final_model = Variable(name='HomoLRTransferVariable.final_model', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
+        self.aggregated_model = Variable(name='HomoLRTransferVariable.aggregated_model', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
         self.to_encrypt_model = Variable(name='HomoLRTransferVariable.to_encrypt_model', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         self.re_encrypted_model = Variable(name='HomoLRTransferVariable.re_encrypted_model', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
         self.re_encrypt_times = Variable(name='HomoLRTransferVariable.re_encrypt_times', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
-        self.converge_flag = Variable(name='HomoLRTransferVariable.converge_flag', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
+        self.is_converge = Variable(name='HomoLRTransferVariable.is_converge', auth=dict(src='arbiter', dst=['guest', 'host']), transfer_variable=self)
         self.guest_loss = Variable(name='HomoLRTransferVariable.guest_loss', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
         self.host_loss = Variable(name='HomoLRTransferVariable.host_loss', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         self.use_encrypt = Variable(name='HomoLRTransferVariable.use_encrypt', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)

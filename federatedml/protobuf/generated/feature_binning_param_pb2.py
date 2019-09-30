@@ -17,9 +17,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-binning-param.proto',
-  package='com.webank.ai.fate.common.mlmodel.buffer',
+  package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1b\x66\x65\x61ture-binning-param.proto\x12(com.webank.ai.fate.common.mlmodel.buffer\"\xee\x01\n\x07IVParam\x12\x11\n\twoe_array\x18\x01 \x03(\x01\x12\x10\n\x08iv_array\x18\x02 \x03(\x01\x12\x19\n\x11\x65vent_count_array\x18\x03 \x03(\x03\x12\x1d\n\x15non_event_count_array\x18\x04 \x03(\x03\x12\x18\n\x10\x65vent_rate_array\x18\x05 \x03(\x01\x12\x1c\n\x14non_event_rate_array\x18\x06 \x03(\x01\x12\x14\n\x0csplit_points\x18\x07 \x03(\x01\x12\n\n\x02iv\x18\x08 \x01(\x01\x12\x18\n\x10is_woe_monotonic\x18\t \x01(\x08\x12\x10\n\x08\x62in_nums\x18\n \x01(\x03\"\xea\x01\n\x14\x46\x65\x61tureBinningResult\x12i\n\x0e\x62inning_result\x18\x01 \x03(\x0b\x32Q.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.BinningResultEntry\x1ag\n\x12\x42inningResultEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.common.mlmodel.buffer.IVParam:\x02\x38\x01\"\xc7\x02\n\x13\x46\x65\x61tureBinningParam\x12V\n\x0e\x62inning_result\x18\x01 \x01(\x0b\x32>.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult\x12\x64\n\x0chost_results\x18\x02 \x03(\x0b\x32N.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.HostResultsEntry\x1ar\n\x10HostResultsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12M\n\x05value\x18\x02 \x01(\x0b\x32>.com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult:\x02\x38\x01\x42\x1a\x42\x18\x46\x65\x61tureBinningParamProtob\x06proto3')
+  serialized_pb=_b('\n\x1b\x66\x65\x61ture-binning-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xee\x01\n\x07IVParam\x12\x11\n\twoe_array\x18\x01 \x03(\x01\x12\x10\n\x08iv_array\x18\x02 \x03(\x01\x12\x19\n\x11\x65vent_count_array\x18\x03 \x03(\x03\x12\x1d\n\x15non_event_count_array\x18\x04 \x03(\x03\x12\x18\n\x10\x65vent_rate_array\x18\x05 \x03(\x01\x12\x1c\n\x14non_event_rate_array\x18\x06 \x03(\x01\x12\x14\n\x0csplit_points\x18\x07 \x03(\x01\x12\n\n\x02iv\x18\x08 \x01(\x01\x12\x18\n\x10is_woe_monotonic\x18\t \x01(\x08\x12\x10\n\x08\x62in_nums\x18\n \x01(\x03\"\xe6\x01\n\x14\x46\x65\x61tureBinningResult\x12g\n\x0e\x62inning_result\x18\x01 \x03(\x0b\x32O.com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.BinningResultEntry\x1a\x65\n\x12\x42inningResultEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12>\n\x05value\x18\x02 \x01(\x0b\x32/.com.webank.ai.fate.core.mlmodel.buffer.IVParam:\x02\x38\x01\"\xc1\x02\n\x13\x46\x65\x61tureBinningParam\x12T\n\x0e\x62inning_result\x18\x01 \x01(\x0b\x32<.com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult\x12\x62\n\x0chost_results\x18\x02 \x03(\x0b\x32L.com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.HostResultsEntry\x1ap\n\x10HostResultsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12K\n\x05value\x18\x02 \x01(\x0b\x32<.com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult:\x02\x38\x01\x42\x1a\x42\x18\x46\x65\x61tureBinningParamProtob\x06proto3')
 )
 
 
@@ -27,76 +27,76 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _IVPARAM = _descriptor.Descriptor(
   name='IVParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='woe_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.woe_array', index=0,
+      name='woe_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.woe_array', index=0,
       number=1, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='iv_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.iv_array', index=1,
+      name='iv_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.iv_array', index=1,
       number=2, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='event_count_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.event_count_array', index=2,
+      name='event_count_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.event_count_array', index=2,
       number=3, type=3, cpp_type=2, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='non_event_count_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.non_event_count_array', index=3,
+      name='non_event_count_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.non_event_count_array', index=3,
       number=4, type=3, cpp_type=2, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='event_rate_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.event_rate_array', index=4,
+      name='event_rate_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.event_rate_array', index=4,
       number=5, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='non_event_rate_array', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.non_event_rate_array', index=5,
+      name='non_event_rate_array', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.non_event_rate_array', index=5,
       number=6, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='split_points', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.split_points', index=6,
+      name='split_points', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.split_points', index=6,
       number=7, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='iv', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.iv', index=7,
+      name='iv', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.iv', index=7,
       number=8, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='is_woe_monotonic', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.is_woe_monotonic', index=8,
+      name='is_woe_monotonic', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.is_woe_monotonic', index=8,
       number=9, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='bin_nums', full_name='com.webank.ai.fate.common.mlmodel.buffer.IVParam.bin_nums', index=9,
+      name='bin_nums', full_name='com.webank.ai.fate.core.mlmodel.buffer.IVParam.bin_nums', index=9,
       number=10, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -114,27 +114,27 @@ _IVPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=74,
-  serialized_end=312,
+  serialized_start=72,
+  serialized_end=310,
 )
 
 
 _FEATUREBINNINGRESULT_BINNINGRESULTENTRY = _descriptor.Descriptor(
   name='BinningResultEntry',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.BinningResultEntry',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.BinningResultEntry',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.BinningResultEntry.key', index=0,
+      name='key', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.BinningResultEntry.key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.BinningResultEntry.value', index=1,
+      name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.BinningResultEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -152,19 +152,19 @@ _FEATUREBINNINGRESULT_BINNINGRESULTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=446,
-  serialized_end=549,
+  serialized_start=442,
+  serialized_end=543,
 )
 
 _FEATUREBINNINGRESULT = _descriptor.Descriptor(
   name='FeatureBinningResult',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='binning_result', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.binning_result', index=0,
+      name='binning_result', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.binning_result', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -182,27 +182,27 @@ _FEATUREBINNINGRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=315,
-  serialized_end=549,
+  serialized_start=313,
+  serialized_end=543,
 )
 
 
 _FEATUREBINNINGPARAM_HOSTRESULTSENTRY = _descriptor.Descriptor(
   name='HostResultsEntry',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.HostResultsEntry',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.HostResultsEntry',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.HostResultsEntry.key', index=0,
+      name='key', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.HostResultsEntry.key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.HostResultsEntry.value', index=1,
+      name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.HostResultsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -220,26 +220,26 @@ _FEATUREBINNINGPARAM_HOSTRESULTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=765,
-  serialized_end=879,
+  serialized_start=755,
+  serialized_end=867,
 )
 
 _FEATUREBINNINGPARAM = _descriptor.Descriptor(
   name='FeatureBinningParam',
-  full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='binning_result', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.binning_result', index=0,
+      name='binning_result', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.binning_result', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='host_results', full_name='com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.host_results', index=1,
+      name='host_results', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.host_results', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -257,8 +257,8 @@ _FEATUREBINNINGPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=552,
-  serialized_end=879,
+  serialized_start=546,
+  serialized_end=867,
 )
 
 _FEATUREBINNINGRESULT_BINNINGRESULTENTRY.fields_by_name['value'].message_type = _IVPARAM
@@ -276,7 +276,7 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 IVParam = _reflection.GeneratedProtocolMessageType('IVParam', (_message.Message,), dict(
   DESCRIPTOR = _IVPARAM,
   __module__ = 'feature_binning_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.IVParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.IVParam)
   ))
 _sym_db.RegisterMessage(IVParam)
 
@@ -285,12 +285,12 @@ FeatureBinningResult = _reflection.GeneratedProtocolMessageType('FeatureBinningR
   BinningResultEntry = _reflection.GeneratedProtocolMessageType('BinningResultEntry', (_message.Message,), dict(
     DESCRIPTOR = _FEATUREBINNINGRESULT_BINNINGRESULTENTRY,
     __module__ = 'feature_binning_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult.BinningResultEntry)
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult.BinningResultEntry)
     ))
   ,
   DESCRIPTOR = _FEATUREBINNINGRESULT,
   __module__ = 'feature_binning_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningResult)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningResult)
   ))
 _sym_db.RegisterMessage(FeatureBinningResult)
 _sym_db.RegisterMessage(FeatureBinningResult.BinningResultEntry)
@@ -300,12 +300,12 @@ FeatureBinningParam = _reflection.GeneratedProtocolMessageType('FeatureBinningPa
   HostResultsEntry = _reflection.GeneratedProtocolMessageType('HostResultsEntry', (_message.Message,), dict(
     DESCRIPTOR = _FEATUREBINNINGPARAM_HOSTRESULTSENTRY,
     __module__ = 'feature_binning_param_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam.HostResultsEntry)
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam.HostResultsEntry)
     ))
   ,
   DESCRIPTOR = _FEATUREBINNINGPARAM,
   __module__ = 'feature_binning_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.common.mlmodel.buffer.FeatureBinningParam)
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.FeatureBinningParam)
   ))
 _sym_db.RegisterMessage(FeatureBinningParam)
 _sym_db.RegisterMessage(FeatureBinningParam.HostResultsEntry)

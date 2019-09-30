@@ -46,6 +46,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._parse_cols(data_instances)
 
         self.binning_obj.fit_split_points(data_instances)
+        LOGGER.debug("After fit, binning_obj split_points: {}".format(self.binning_obj.split_points))
+
         is_binary_data = data_overview.is_binary_labels(data_instances)
 
         if not is_binary_data:
@@ -82,14 +84,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         data_instances = self.fit_local(data_instances, label_table)
 
         # 5. Received host result and calculate iv value
-        encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
 
         encrypted_bin_sum = self.transfer_variable.encrypted_bin_sum.get(idx=0)
-        """
-        encrypted_bin_sum = federation.get(name=self.transfer_variable.encrypted_bin_sum.name,
-                                           tag=encrypted_bin_sum_id,
-                                           idx=0)
-        """
+
         LOGGER.info("Get encrypted_bin_sum from host")
 
         result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
@@ -98,6 +95,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         # Support one host only in this version. Multiple host will be supported in the future.
         self.host_results[consts.HOST] = host_iv_attrs
         self.set_schema(data_instances)
+
+        LOGGER.debug("Before transform, binning_obj split_points: {}".format(self.binning_obj.split_points))
+
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
         return self.data_output

@@ -30,7 +30,7 @@ from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 
 
 class TaskScheduler(object):
@@ -284,16 +284,46 @@ class TaskScheduler(object):
             task_config_path = os.path.join(task_dir, 'task_config.json')
             with open(task_config_path, 'w') as fw:
                 json.dump(task_config, fw)
-            process_cmd = [
-                'python3', sys.modules[TaskExecutor.__module__].__file__,
-                '-j', job_id,
-                '-n', component_name,
-                '-t', task_id,
-                '-r', role,
-                '-p', party_id,
-                '-c', task_config_path,
-                '--job_server', '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
-            ]
+
+            try:
+                backend = task_config['job_parameters']['backend']
+            except KeyError:
+                backend = 0
+                schedule_logger.warn("failed to get backend, set as 0")
+
+            backend = Backend(backend)
+
+            if backend.is_eggroll():
+                process_cmd = [
+                    'python3', sys.modules[TaskExecutor.__module__].__file__,
+                    '-j', job_id,
+                    '-n', component_name,
+                    '-t', task_id,
+                    '-r', role,
+                    '-p', party_id,
+                    '-c', task_config_path,
+                    '--job_server', '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
+                ]
+            elif backend.is_spark():
+                if "SPARK_HOME" not in os.environ:
+                    raise EnvironmentError("SPARK_HOME not found")
+                spark_home = os.environ["SPARK_HOME"]
+                spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
+                process_cmd = [
+                    spark_submit_cmd,
+                    f'--name={task_id}#{role}',
+                    sys.modules[TaskExecutor.__module__].__file__,
+                    '-j', job_id,
+                    '-n', component_name,
+                    '-t', task_id,
+                    '-r', role,
+                    '-p', party_id,
+                    '-c', task_config_path,
+                    '--job_server', '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
+                ]
+            else:
+                raise ValueError(f"${backend} supported")
+
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger(job_id).info(
                 'job {} {} {} {} task subprocess start'.format(job_id, component_name, role, party_id, task_config))

@@ -19,7 +19,7 @@ import os
 import sys
 import time
 
-from arch.api import eggroll,storage
+from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
 
@@ -41,7 +41,8 @@ class Upload(object):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
-        table_name, namespace = self.parameters.get("table_name", None), self.parameters.get("namespace", None)
+        table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
+                                                            create=True)
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace
@@ -59,8 +60,8 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         input_data = self.read_data(table_name, namespace, head)
-        eggroll.init(mode=self.parameters['work_mode'])
-        data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"], in_version=self.parameters.get("in_version", False))
+        session.init(mode=self.parameters['work_mode'])
+        data_table = session.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
         LOGGER.info("------------load data finish!-----------------")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table.count()))

@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 
 if __name__ == '__main__':
-    eggroll.init("atest")
+    session.init(job_id="atest")
     federation.init("atest", {
         "local": {
             "role": "host",
@@ -38,7 +38,7 @@ if __name__ == '__main__':
             ]
         }})
     for _tag in range(0, 1000, 2):
-        c = eggroll.parallelize(range(_tag), partition=3, persistent=True).map(lambda k, v: (v, k+1))
+        c = session.parallelize(range(_tag), partition=3, persistent=True).map(lambda k, v: (v, k + 1))
         print(c)
         a = _tag
         federation.remote(a, "RsaIntersectTransferVariable.rsa_pubkey", tag="{}".format(_tag))

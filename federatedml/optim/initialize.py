@@ -17,13 +17,29 @@
 import numpy as np
 
 from arch.api.utils import log_utils
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
+from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
 
 
-class Initializer:
-    def zeros(self, data_shape):
+class Initializer(object):
+
+    def zeros(self, data_shape, fit_intercept, data_instances):
+        """
+        If fit intercept, use the following formula to initialize b can get a faster converge rate
+            b = log(P(1)/P(0))
+        """
+
         inits = np.zeros(data_shape)
+        if fit_intercept and data_instances is not None:
+            static_obj = statics.MultivariateStatisticalSummary(data_instances, cols_index=-1)
+            label_historgram = static_obj.get_label_histogram()
+            LOGGER.debug("label_histogram is : {}".format(label_historgram))
+            one_count = label_historgram.get(1)
+            zero_count = label_historgram.get(0, 0) + label_historgram.get(-1, 0)
+            init_intercept = np.log((one_count / zero_count))
+            inits[-1] = init_intercept
         return inits
 
     def random_normal(self, data_shape):
@@ -43,7 +59,7 @@ class Initializer:
         inits = np.ones(data_shape)
         return inits
 
-    def init_model(self, model_shape, init_params):
+    def init_model(self, model_shape, init_params, data_instance=None):
         init_method = init_params.init_method
         fit_intercept = init_params.fit_intercept
 
@@ -66,20 +82,13 @@ class Initializer:
         elif init_method == 'ones':
             w = self.ones(model_shape)
         elif init_method == 'zeros':
-            w = self.zeros(model_shape)
+            w = self.zeros(model_shape, fit_intercept, data_instance)
         elif init_method == 'const':
             init_const = init_params.init_const
             w = self.constant(model_shape, const=init_const)
         else:
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
-        # if fit_intercept:
-        #     coef_ = w[:-1]
-        #     intercept_ = w[-1]
-        # else:
-        #     coef_ = w
-        #     intercept_ = 0
-        # return coef_, intercept_
 
         LOGGER.debug("Initialed model: {}".format(w))
-
-        return w
+        lr_weights = LinearModelWeights(w, init_params.fit_intercept)
+        return lr_weights

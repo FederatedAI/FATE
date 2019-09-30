@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
 from arch.api.utils import version_control
@@ -22,7 +22,7 @@ import datetime
 
 
 def save_model(buffer_type, proto_buffer, name, namespace, version_log=None):
-    data_table = eggroll.table(name=name, namespace=namespace, partition=get_model_table_partition_count(),
+    data_table = session.table(name=name, namespace=namespace, partition=get_model_table_partition_count(),
                                create_if_missing=True, error_if_exist=False)
     # todo:  model slice?
     data_table.put(buffer_type, proto_buffer.SerializeToString(), use_serialize=False)
@@ -31,7 +31,7 @@ def save_model(buffer_type, proto_buffer, name, namespace, version_log=None):
 
 
 def read_model(buffer_type, proto_buffer, name, namespace):
-    data_table = eggroll.table(name=name, namespace=namespace, partition=get_model_table_partition_count(),
+    data_table = session.table(name=name, namespace=namespace, partition=get_model_table_partition_count(),
                                create_if_missing=False, error_if_exist=False)
     if data_table:
         buffer_bytes = data_table.get(buffer_type, use_serialize=False)

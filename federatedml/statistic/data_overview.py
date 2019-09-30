@@ -25,16 +25,7 @@ LOGGER = log_utils.getLogger()
 
 
 def get_features_shape(data_instances):
-    if not isinstance(data_instances, types.GeneratorType):
-        features = data_instances.collect()
-    else:
-        features = data_instances
-
-    try:
-        one_feature = features.__next__()
-    except StopIteration:
-        one_feature = None
-
+    one_feature = data_instances.first()
     instance = one_feature[1]
     if instance is None:
         return None
@@ -49,16 +40,7 @@ def get_features_shape(data_instances):
 
 
 def get_data_shape(data):
-    if not isinstance(data, types.GeneratorType):
-        features = data.collect()
-    else:
-        features = data
-
-    try:
-        one_feature = features.__next__()
-    except StopIteration:
-        one_feature = None
-
+    one_feature = data.first()
     if one_feature is not None:
         return len(list(one_feature[1]))
     else:

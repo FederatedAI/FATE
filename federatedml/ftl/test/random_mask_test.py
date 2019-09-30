@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.data_util.common_data_util import add_random_mask_for_list_of_values, add_random_mask, \
     remove_random_mask_from_list_of_values, remove_random_mask
 from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matrix, distribute_decrypt_matrix

@@ -21,16 +21,16 @@ option java_outer_classname = "LRModelMetaProto";
 
 message LRModelMeta {
     string penalty = 1;
-    double eps = 2;
+    double tol = 2;
     double alpha = 3;
     string optimizer = 4;
     double party_weight = 5;
     int64 batch_size = 6;
     double learning_rate = 7;
     int64 max_iter = 8;
-    string converge_func = 9;
+    string early_stop = 9;
     int64 re_encrypt_batches = 10;
-    bool need_run=11;
+    bool fit_intercept=11;
     bool need_one_vs_rest = 12;
 }
 
