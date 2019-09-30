@@ -15,12 +15,10 @@
 #
 import json
 import os
-import signal
 import sys
 import time
 from threading import Timer
 
-from arch.api import storage
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
@@ -77,7 +75,6 @@ class TaskScheduler(object):
         t = Timer(timeout, TaskScheduler.job_handler, [job_id])
         t.start()
 
-        storage.init_storage(job_id=job_id, work_mode=RuntimeConfig.WORK_MODE)
         job = Job()
         job.f_job_id = job_id
         job.f_start_time = current_timestamp()
@@ -289,7 +286,7 @@ class TaskScheduler(object):
                 backend = task_config['job_parameters']['backend']
             except KeyError:
                 backend = 0
-                schedule_logger.warn("failed to get backend, set as 0")
+                schedule_logger(job_id).warning("failed to get backend, set as 0")
 
             backend = Backend(backend)
 

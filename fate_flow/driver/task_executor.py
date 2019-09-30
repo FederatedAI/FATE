@@ -16,6 +16,7 @@
 import argparse
 import importlib
 import os
+import traceback
 
 from arch.api import federation
 from arch.api import session
@@ -66,6 +67,7 @@ class TaskExecutor(object):
             parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
+            traceback.print_exc()
             schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
             return
@@ -123,6 +125,7 @@ class TaskExecutor(object):
                     tracker.save_output_model(output_model, task_output_dsl['model'][0])
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
+            traceback.print_exc()
             schedule_logger(job_id).exception(e)
             task.f_status = TaskStatus.FAILED
         finally:
@@ -136,6 +139,7 @@ class TaskExecutor(object):
                                               initiator_role=job_initiator.get('role', None),
                                               task_info=task.to_json())
             except Exception as e:
+                traceback.print_exc()
                 schedule_logger(job_id).exception(e)
         schedule_logger(job_id).info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))

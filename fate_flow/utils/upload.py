@@ -16,7 +16,6 @@
 
 import csv
 import os
-import sys
 import time
 
 from arch.api import session
@@ -97,7 +96,7 @@ class Upload(object):
                     yield (values[0], self.list_to_str(values[1:]))
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
-        storage.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+        session.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
                                      dst_table_namespace)
 
     def list_to_str(self, input_list):
