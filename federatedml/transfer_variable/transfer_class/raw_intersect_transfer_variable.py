@@ -33,4 +33,5 @@ class RawIntersectTransferVariable(BaseTransferVariable):
         self.send_ids_guest = Variable(name='RawIntersectTransferVariable.send_ids_guest', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         self.intersect_ids_host = Variable(name='RawIntersectTransferVariable.intersect_ids_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.intersect_ids_guest = Variable(name='RawIntersectTransferVariable.intersect_ids_guest', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.sync_intersect_ids_multi_hosts = Variable(name='RawIntersectTransferVariable.sync_intersect_ids_multi_hosts', auth=dict(src='guest', dst=['host']), transfer_variable=self)
         pass

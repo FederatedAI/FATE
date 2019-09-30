@@ -23,6 +23,12 @@
       "dst": [
         "host"
       ]
+    },
+    "sync_intersect_ids_multi_hosts": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
     }
   }
 }
