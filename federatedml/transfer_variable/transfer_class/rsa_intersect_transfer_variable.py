@@ -34,4 +34,6 @@ class RsaIntersectTransferVariable(BaseTransferVariable):
         self.intersect_host_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_host_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.intersect_guest_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.intersect_ids = Variable(name='RsaIntersectTransferVariable.intersect_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.cache_version_info = Variable(name='RsaIntersectTransferVariable.cache_version_info', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.cache_version_match_info = Variable(name='RsaIntersectTransferVariable.cache_version_match_info', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         pass
