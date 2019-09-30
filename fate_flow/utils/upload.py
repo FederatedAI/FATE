@@ -101,7 +101,9 @@ class Upload(object):
                     yield (values[0], self.list_to_str(values[1:]))
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
-        session.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+        header_source_item = header_source.split(',')
+        session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
+                                     dst_table_name,
                                      dst_table_namespace)
 
     def list_to_str(self, input_list):

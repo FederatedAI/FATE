@@ -80,7 +80,7 @@ class HeteroLinRGuest(HeteroLinRBase):
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
@@ -130,15 +130,12 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start predict ...")
 
         data_features = self.transform(data_instances)
-        pred_guest = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
-        pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
-
+        pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
         LOGGER.info("Get prediction from Host")
 
-        pred = pred_guest.join(pred_host, lambda g, h: g + h)
-        LOGGER.debug("prediction: {}".format(pred))
+        for host_pred in host_preds:
+            pred = pred.join(host_pred, lambda g, h: g + h)
+
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
-        LOGGER.debug("predict result is {}".format(list(predict_result.collect())))
-
         return predict_result

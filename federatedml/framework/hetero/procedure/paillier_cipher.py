@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import paillier_keygen_sync
 
-LOGGER = LoggerFactory.get_logger()
+LOGGER = log_utils.getLogger()
 
 
 class Host(paillier_keygen_sync.Host):
