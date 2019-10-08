@@ -21,6 +21,9 @@ class IntersectModelBase(ModelBase):
         self.model_param = IntersectParam()
         self.role = None
 
+        self.guest_party_id = None
+        self.host_party_id = None
+
     def __init_intersect_method(self):
         LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
         if self.model_param.intersect_method == "rsa":
@@ -37,8 +40,25 @@ class IntersectModelBase(ModelBase):
                 self.intersection_obj = RawIntersectionGuest(self.model_param)
             else:
                 raise ValueError("role {} is not support".format(self.role))
+            self.intersection_obj.task_id = self.taskid
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
+
+        if self.role == consts.HOST:
+            self.intersection_obj.host_party_id = self.host_party_id
+        self.intersection_obj.guest_party_id = self.guest_party_id
+
+    def run(self, component_parameters=None, args=None):
+        self.guest_party_id = component_parameters["role"]["guest"][0]
+        if component_parameters["local"]["role"] == consts.HOST:
+            self.host_party_id = component_parameters["local"]["party_id"]
+
+        self._init_runtime_parameters(component_parameters)
+
+        if args.get("data", None) is None:
+            return
+
+        self._run_data(args["data"], stage='fit')
 
     def fit(self, data):
         self.__init_intersect_method()
