@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.secureprotol.encrypt import RsaEncrypt, PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol.encrypt import RsaEncrypt, PaillierEncrypt, FakeEncrypt, AffineEncrypt, IterativeAffineEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 
-__all__ = ['RsaEncrypt', 'PaillierEncrypt', 'FakeEncrypt', 'EncryptModeCalculator']
+__all__ = ['RsaEncrypt', 'PaillierEncrypt', 'FakeEncrypt', 'EncryptModeCalculator', 'AffineEncrypt', 'IterativeAffineEncrypt']
