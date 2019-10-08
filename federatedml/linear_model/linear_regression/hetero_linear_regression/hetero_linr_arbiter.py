@@ -32,4 +32,5 @@ class HeteroLinRArbiter(HeteroBaseArbiter, HeteroLinRBase):
         self.header = None
         self.model_param_name = 'HeteroLinearRegressionParam'
         self.model_meta_name = 'HeteroLinearRegressionMeta'
+        self.is_converged = False
 

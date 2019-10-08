@@ -33,3 +33,4 @@ class HeteroPoissonArbiter(HeteroBaseArbiter, HeteroPoissonBase):
         self.header = None
         self.model_param_name = 'HeteroPoissonRegressionParam'
         self.model_meta_name = 'HeteroPoissonRegressionMeta'
+        self.is_converged = False

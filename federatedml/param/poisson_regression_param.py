@@ -60,7 +60,7 @@ class PoissonParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    early_stop : str, 'diff' or 'abs', default: 'diff'
+    early_stop : str, 'weight_diff', 'diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < tol, it is converged.
