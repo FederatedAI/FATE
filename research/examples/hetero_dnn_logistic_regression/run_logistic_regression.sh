@@ -61,9 +61,9 @@ load_file() {
     conf_path=$conf_dir/load_file.json_${role}_${load_mode}_$jobid
     cp $load_data_conf $conf_path
     data_table=${data_set}_${role}_${load_mode}_$jobid
-	sed -i "s|_input_path|${input_path}|g" ${conf_path}
-	sed -i "s/_table_name/${data_table}/g" ${conf_path}
-    sed -i "s/_work_mode/${work_mode}/g" ${conf_path}
+	sed -i "" "s|_input_path|${input_path}|g" ${conf_path}
+	sed -i "" "s/_table_name/${data_table}/g" ${conf_path}
+    sed -i "" "s/_work_mode/${work_mode}/g" ${conf_path}
     
     python $load_file_program -c ${conf_path}
 }
@@ -87,13 +87,13 @@ train() {
     echo "current runtime conf is "$cur_runtime_conf
     echo "training table is "$train_table
     echo $predict_table
-    sed -i "s/_workflow_method/train/g" $cur_runtime_conf
-    sed -i "s/_train_table_name/$train_table/g" $cur_runtime_conf
-    sed -i "s/_predict_table_name/$predict_table/g" $cur_runtime_conf
-    sed -i "s/_work_mode/$work_mode/g" $cur_runtime_conf
-    sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
-    sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
-    sed -i "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_workflow_method/train/g" $cur_runtime_conf
+    sed -i "" "s/_train_table_name/$train_table/g" $cur_runtime_conf
+    sed -i "" "s/_predict_table_name/$predict_table/g" $cur_runtime_conf
+    sed -i "" "s/_work_mode/$work_mode/g" $cur_runtime_conf
+    sed -i "" "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
 
     log_file=${log_dir}/${jobid}
     echo "Please check log file in "${log_file}
@@ -127,12 +127,12 @@ cross_validation() {
 
     echo "current runtime conf is "$cur_runtime_conf
     echo "cv talbe is"$cv_table
-    sed -i "s/_workflow_method/cross_validation/g" $cur_runtime_conf
-    sed -i "s/_cross_validation_table_name/$cv_table/g" $cur_runtime_conf
-    sed -i "s/_work_mode/$work_mode/g" $cur_runtime_conf
-    sed -i "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
-    sed -i "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
-    sed -i "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_workflow_method/cross_validation/g" $cur_runtime_conf
+    sed -i "" "s/_cross_validation_table_name/$cv_table/g" $cur_runtime_conf
+    sed -i "" "s/_work_mode/$work_mode/g" $cur_runtime_conf
+    sed -i "" "s/_guest_party_id/$guest_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_host_party_id/$host_partyid/g" $cur_runtime_conf
+    sed -i "" "s/_arbiter_party_id/$arbiter_partyid/g" $cur_runtime_conf
 
     log_file=${log_dir}/${jobid}
     echo "Please check log file in "${log_file}

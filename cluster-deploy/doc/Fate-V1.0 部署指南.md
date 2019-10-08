@@ -51,7 +51,7 @@ vim /etc/hosts
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-sed -i '/\^SELINUX/s/=.\*/=disabled/' /etc/selinux/config
+sed -i "" '/\^SELINUX/s/=.\*/=disabled/' /etc/selinux/config
 
 setenforce 0
 

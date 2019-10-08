@@ -44,8 +44,8 @@ fi
 cp -r ./fate_flow/* /var/lib/fate/data
 
 
-sed -i "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
-sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+sed -i "" "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
+sed -i "" "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
 #sed -i "s/^spring.datasource.username=.*/spring.datasource.username=fate_dev/g" ./fateboard/conf/application.properties
 #sed -i "s/^spring.datasource.password=.*/spring.datasource.password=fate_dev/g" ./fateboard/conf/application.properties
 cd fateboard
