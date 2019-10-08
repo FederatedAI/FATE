@@ -78,6 +78,12 @@ class HeteroLRHost(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr host")
+        LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
+
+        if self.need_one_vs_rest is None:
+            self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
+            return
+
         self._abnormal_detection(data_instances)
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
@@ -140,6 +146,9 @@ class HeteroLRHost(HeteroLRBase):
         data_instances:DTable of Instance, input data
         """
         LOGGER.info("Start predict ...")
+        if self.need_one_vs_rest:
+            self.one_vs_rest_obj.predict(data_instances)
+            return
 
         data_features = self.transform(data_instances)
 

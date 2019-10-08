@@ -201,7 +201,7 @@ In this step, two config files corresponding to dsl config file and submit runti
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                    "train_data": [{"name": "hetero_breast_b", "namespace": "hetero_guest_breast"}]
                 }
             },
  ```

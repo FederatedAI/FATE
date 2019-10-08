@@ -22,7 +22,7 @@ from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import consts
-
+from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 
 class HeteroLRBase(BaseLogisticRegression):
     def __init__(self):
@@ -103,3 +103,6 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj
+
+
+

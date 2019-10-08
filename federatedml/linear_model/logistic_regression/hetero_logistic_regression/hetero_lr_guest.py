@@ -38,6 +38,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
+        # self.need_one_vs_rest = None
 
     @staticmethod
     def load_data(data_instance):
@@ -62,6 +63,11 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
+
+        LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest is None:
+            self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
+            return
        
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         
@@ -139,6 +145,9 @@ class HeteroLRGuest(HeteroLRBase):
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict ...")
+        if self.need_one_vs_rest:
+            predict_result = self.one_vs_rest_obj.predict(data_instances)
+            return predict_result
 
         data_features = self.transform(data_instances)
         pred_prob = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)

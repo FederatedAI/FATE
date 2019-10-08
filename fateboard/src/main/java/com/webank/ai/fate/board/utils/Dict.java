@@ -30,6 +30,7 @@ public class Dict {
     static public final String PARTY_ID = "party_id";
     static public final String START_TIME="start_time";
     static public final String END_TIME="end_time";
+    static public final String RETMSG="retmsg";
 
     static public final String DEPENDENCY_DATA = "dependency_data";
     static public final String DATAVIEW_DATA = "dataview_data";

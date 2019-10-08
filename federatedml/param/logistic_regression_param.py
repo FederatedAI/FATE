@@ -38,7 +38,7 @@ class LogisticParam(BaseParam):
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
-    eps : float, default: 1e-5
+    tol : float, default: 1e-5
         The tolerance of convergence
 
     alpha : float, default: 1.0
@@ -56,7 +56,7 @@ class LogisticParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    converge_func : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
+    early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
@@ -67,6 +67,12 @@ class LogisticParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
 
+    decay_sqrt: Bool, default: True
+        lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    multi_class: str, 'ovr', default: 'ovr'
+        If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
+
     """
 
     def __init__(self, penalty='L2',
@@ -74,8 +80,8 @@ class LogisticParam(BaseParam):
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
-                 validation_freqs=None
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -90,9 +96,9 @@ class LogisticParam(BaseParam):
         self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.multi_class = multi_class
         self.validation_freqs = validation_freqs
 
     def check(self):
@@ -189,16 +195,17 @@ class HomoLogisticParam(LogisticParam):
                  max_iter=100, early_stop='diff',
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True,
-                 aggregate_iters=1
+                 decay=1, decay_sqrt=True,
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
-                                                cv_param=cv_param,
-                                                one_vs_rest_param=one_vs_rest_param, decay=decay, decay_sqrt=decay_sqrt)
+                                                cv_param=cv_param, multi_class=multi_class,
+                                                validation_freqs=validation_freqs,
+                                                decay=decay, decay_sqrt=decay_sqrt)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
@@ -231,15 +238,17 @@ class HeteroLogisticParam(LogisticParam):
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 one_vs_rest_param=OneVsRestParam(), decay=1, decay_sqrt=True
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
-                                                  one_vs_rest_param=one_vs_rest_param, decay=decay,
-                                                  decay_sqrt=decay_sqrt)
+                                                  decay=decay,
+                                                  decay_sqrt=decay_sqrt, multi_class=multi_class,
+                                                  validation_freqs=validation_freqs)
         self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
 
     def check(self):

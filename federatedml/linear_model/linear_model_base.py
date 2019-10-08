@@ -137,3 +137,6 @@ class BaseLinearModel(ModelBase):
             return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')
+
+    def check_one_vs_rest_status(self, data_instances=None):
+        self.need_one_vs_rest = False

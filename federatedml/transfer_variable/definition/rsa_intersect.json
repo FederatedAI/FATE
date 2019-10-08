@@ -29,6 +29,18 @@
       "dst": [
         "host"
       ]
+    },
+    "cache_version_info":{
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "cache_version_match_info":{
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
     }
   }
 }
