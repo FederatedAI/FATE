@@ -77,31 +77,6 @@ class HomoLRBase(BaseLogisticRegression):
         predict_table = predict_wx.mapValues(predict)
         return predict_table
 
-    # def _judge_stage(self, args):
-    #     data_sets = args['data']
-    #     has_eval = False
-    #     for data_key in data_sets:
-    #         if "eval_data" in data_sets[data_key]:
-    #             has_eval = True
-    #
-    #     if "model" in args:
-    #         stage = 'predict'
-    #     else:
-    #         stage = 'fit'
-    #     LOGGER.debug("Current stage: {}, has_eval: {}".format(stage, has_eval))
-    #     return stage, has_eval
-
-    def _extract_data(self, data_sets):
-        train_data = None
-        eval_data = None
-        for data_key in data_sets:
-            if data_sets[data_key].get("train_data", None):
-                train_data = data_sets[data_key]["train_data"]
-
-            if data_sets[data_key].get("eval_data", None):
-                eval_data = data_sets[data_key]["eval_data"]
-        return train_data, eval_data
-
     def _init_model_variables(self, data_instances):
         model_shape = data_overview.get_features_shape(data_instances)
 
