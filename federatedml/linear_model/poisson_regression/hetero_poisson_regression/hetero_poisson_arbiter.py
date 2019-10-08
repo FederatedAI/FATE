@@ -19,7 +19,7 @@ from federatedml.linear_model.base_linear_model_arbiter import HeteroBaseArbiter
 from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.param.poisson_regression_param import PoissonParam
-
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -34,3 +34,4 @@ class HeteroPoissonArbiter(HeteroBaseArbiter, HeteroPoissonBase):
         self.model_param_name = 'HeteroPoissonRegressionParam'
         self.model_meta_name = 'HeteroPoissonRegressionMeta'
         self.is_converged = False
+        self.mode = consts.HETERO
