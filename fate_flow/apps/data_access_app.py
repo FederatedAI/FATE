@@ -43,16 +43,17 @@ def download_upload(access_module):
     else:
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(request_config, required_arguments=required_arguments)
-
+    data = {}
     if access_module == "upload":
         if not os.path.isabs(request_config['file']):
             request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])
+        data['table_name'] = request_config["table_name"]
+        data['namespace'] = request_config["namespace"]
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
-    job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
-    return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
-                                                'job_runtime_conf_path': job_runtime_conf_path,
-                                                'board_url': board_url
-                                                })
+    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
+    data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
+                 'board_url': board_url, 'logs_directory': logs_directory})
+    return get_json_result(job_id=job_id, data=data)
 
 
 def gen_data_access_job_config(config_data, access_module):
