@@ -17,12 +17,11 @@
 import uuid
 from typing import Iterable
 
-# noinspection PyProtectedMember
 from arch.api.table.table import Table
 from arch.api.utils.profile_util import log_elapsed
 
 
-# noinspection PyProtectedMember,SpellCheckingInspection,PyPep8Naming
+# noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class DTable(Table):
 
     def __init__(self, dtable, session_id):
