@@ -31,8 +31,8 @@ from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
-from federatedml.util.classfiy_label_checker import RegressionLabelChecker
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
+from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.tree import BoostingTree
