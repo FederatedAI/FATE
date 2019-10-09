@@ -385,11 +385,12 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
     try:
         if timeout > 0:
             schedule_logger(job_id).info('setting job {} timeout {}'.format(job_id, timeout))
+            return timeout
         else:
             default_timeout = job_default_timeout(runtime_conf, dsl)
             schedule_logger(job_id).info('setting job {} timeout {} not a positive number, using the default timeout {}'.format(
                 job_id, timeout, default_timeout))
-        return timeout
+            return default_timeout
     except:
         default_timeout = job_default_timeout(runtime_conf, dsl)
         schedule_logger(job_id).info('setting job {} timeout {} is incorrect, using the default timeout {}'.format(
