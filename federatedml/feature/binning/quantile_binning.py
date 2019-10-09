@@ -70,6 +70,7 @@ class QuantileBinning(Binning):
 
         # calculate the split points
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
+        percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
 
         if self.summary_dict is None:

@@ -64,7 +64,7 @@ ROC = "roc"
 
 # workflow
 TRAIN_DATA = "train_data"
-TEST_DATA = "test_data"
+TEST_DATA = "data"
 
 # initialize method
 RANDOM_NORMAL = "random_normal"
@@ -115,3 +115,10 @@ MINMAXSCALE = 'min_max_scale'
 STANDARDSCALE = 'standard_scale'
 ALL = 'all'
 COL = 'col'
+
+# intersection cache
+PHONE = 'phone'
+IMEI = 'imei'
+MD5 = 'md5'
+SHA256 = 'sha256'
+INTERSECT_CACHE_TAG = 'Za'

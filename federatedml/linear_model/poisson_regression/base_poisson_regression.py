@@ -40,6 +40,7 @@ class BasePoissonRegression(BaseLinearModel):
         self.model_param_name = 'PoissonRegressionParam'
         self.model_meta_name = 'PoissonRegressionMeta'
         self.cipher_operator = PaillierEncrypt()
+        self.exposure_index = -1
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -139,7 +140,7 @@ class BasePoissonRegression(BaseLinearModel):
             self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         fit_intercept = meta_obj.fit_intercept
-        self.exposure_index = meta_obj.exposure_index
+        self.exposure_colname = meta_obj.exposure_colname
 
         self.header = list(result_obj.header)
         # LOGGER.debug("In load model, header: {}".format(self.header))

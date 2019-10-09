@@ -268,6 +268,11 @@ class Binning(object):
             s_ps = np.array(s_ps)
             split_points_result.append(s_ps)
         split_points_result = np.array(split_points_result)
+        assert len(split_points_result) == len(self.split_points)
+        LOGGER.debug("Original split_points: {}, changed split_point: {}".format(self.split_points, split_points_result))
+        LOGGER.debug("In convert_feature_to_bin, new_data: {}, split_point_result: {}, bin_sparse: {}".format(
+            new_data, split_points_result, bin_sparse
+        ))
         return new_data, split_points_result, bin_sparse
 
     @staticmethod
@@ -280,8 +285,10 @@ class Binning(object):
         for col_idx, col_value in all_data:
             if col_idx in transform_cols_idx:
                 if col_value in abnormal_list:
+                    indice.append(col_idx)
                     sparse_value.append(col_value)
                     continue
+                # Maybe it is because missing value add in sparse value, but
                 col_name = header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
@@ -452,6 +459,7 @@ class Binning(object):
                 col_bin_num = bin_num
                 break
         col_bin_num = int(col_bin_num)
+        assert col_bin_num <= len(split_points)
         return col_bin_num
 
     @staticmethod

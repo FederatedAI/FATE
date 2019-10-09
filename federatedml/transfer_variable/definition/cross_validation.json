@@ -1,12 +1,12 @@
 {
-  "HeteroWorkFlowTransferVariable": {
-    "train_data": {
+  "CrossValidationTransferVariable": {
+    "train_sid": {
       "src": "guest",
       "dst": [
         "host"
       ]
     },
-    "test_data": {
+    "test_sid": {
       "src": "guest",
       "dst": [
         "host"

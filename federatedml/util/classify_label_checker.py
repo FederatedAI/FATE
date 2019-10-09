@@ -33,16 +33,16 @@ class ClassifyLabelChecker(object):
         pass
 
     @staticmethod
-    def validate_y(y):
+    def validate_label(data_inst):
         """
         Label Checker in classification task.
             Check whether the distinct labels is no more than MAX_CLASSNUM which define in consts,
-            also get all distinct lables
+            also get all distinct labels
 
         Parameters
         ----------
-        y : DTable
-            The input data's labels
+        data_inst : DTable,
+                    values are data instance format define in federatedml/feature/instance.py
 
         Returns
         -------
@@ -51,47 +51,44 @@ class ClassifyLabelChecker(object):
         labels : list, the distince labels
 
         """
-        class_dict_iters = y.mapPartitions(ClassifyLabelChecker.get_all_class).collect()
-        class_dict = {}
-        for _, worker_class_dict in class_dict_iters:
-            class_dict.update(worker_class_dict)
+        class_set = data_inst.mapPartitions(ClassifyLabelChecker.get_all_class).reduce(lambda x, y: x | y)
 
-        num_class = len(class_dict)
-        if len(class_dict) > consts.MAX_CLASSNUM:
+        num_class = len(class_set)
+        if len(class_set) > consts.MAX_CLASSNUM:
             raise ValueError("In Classfy Proble, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
 
-        return num_class, class_dict.keys()
+        return num_class, list(class_set)
 
     @staticmethod
     def get_all_class(kv_iterator):
-        class_dict = {}
-        for _, label in kv_iterator:
-            class_dict[label] = True
+        class_set = set()
+        for _, inst in kv_iterator:
+            class_set.add(inst.label)
 
-        if len(class_dict) > consts.MAX_CLASSNUM:
-            raise ValueError("In Classfy Task, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
+        if len(class_set) > consts.MAX_CLASSNUM:
+            raise ValueError("In Classify Task, max dif classes should no more than %d" % (consts.MAX_CLASSNUM))
 
-        return class_dict
+        return class_set
 
 
 class RegressionLabelChecker(object):
     @staticmethod
-    def validate_y(y):
+    def validate_label(data_inst):
         """
         Label Checker in regression task.
             Check if all labels is a float type.
 
         Parameters
         ----------
-        y : DTable
-            The input data's labels
+        data_inst : DTable,
+                    values are data instance format define in federatedml/feature/instance.py
 
         """
-        y.mapValues(RegressionLabelChecker.test_numeric_data)
+        data_inst.mapValues(RegressionLabelChecker.test_numeric_data)
 
     @staticmethod
     def test_numeric_data(value):
         try:
-            y = float(value)
+            label = float(value.label)
         except:
             raise ValueError("In Regression Task, all label should be numeric!!")

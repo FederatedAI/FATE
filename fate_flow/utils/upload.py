@@ -103,22 +103,15 @@ class Upload(object):
         return data
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
-        session.save_data_table_meta({'header': ','.join(header_source.split(',')[1:]).strip()}, dst_table_name,
+        header_source_item = header_source.split(',')
+        session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
+                                     dst_table_name,
                                      dst_table_namespace)
 
     def list_to_str(self, input_list):
-        str1 = ''
-        size = len(input_list)
-        for i in range(size):
-            if i == size - 1:
-                str1 += str(input_list[i])
-            else:
-                str1 += str(input_list[i]) + ','
-
-        return str1
+        return ','.join(list(map(str, input_list)))
 
     def generate_table_name(self, input_file_path):
-        local_time = time.localtime(time.time())
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
         file_name = input_file_path.split(".")[0]
         file_name = file_name.split("/")[-1]

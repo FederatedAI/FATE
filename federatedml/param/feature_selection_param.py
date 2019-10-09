@@ -198,8 +198,6 @@ class FeatureSelectionParam(BaseParam):
                                               "coefficient_of_variation_value_thres",
                                               "outlier_cols"])
             self.filter_methods[idx] = method
-        # if "iv_value_thres" in self.filter_method and "iv_percentile" in self.filter_method:
-        #     raise ValueError("Two iv methods should not exist at the same time.")
 
         self.check_defined_type(self.select_cols, descr, ['list', 'int'])
 

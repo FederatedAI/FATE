@@ -38,6 +38,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
+        # self.need_one_vs_rest = None
 
     @staticmethod
     def load_data(data_instance):
@@ -62,9 +63,21 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-       
+
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+
+        if len(classes) > 2:
+            self.need_one_vs_rest = True
+            self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
+        else:
+            self.need_one_vs_rest = False
+            self.fit_binary(data_instances, validate_data)
+
+    def fit_binary(self, data_instances, validate_data=None):
+        LOGGER.info("Enter hetero_lr_guest fit")
+        self.header = self.get_header(data_instances)
+
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -102,7 +115,7 @@ class HeteroLRGuest(HeteroLRBase):
                         self.optimizer,
                         self.n_iter_,
                         batch_index
-                        )
+                )
                 LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
@@ -116,9 +129,9 @@ class HeteroLRGuest(HeteroLRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
-           
+
             validation_strategy.validate(self, self.n_iter_)
-            
+
             self.n_iter_ += 1
             if self.is_converged:
                 break
@@ -139,6 +152,9 @@ class HeteroLRGuest(HeteroLRBase):
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict ...")
+        if self.need_one_vs_rest:
+            predict_result = self.one_vs_rest_obj.predict(data_instances)
+            return predict_result
 
         data_features = self.transform(data_instances)
         pred_prob = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
@@ -148,7 +164,8 @@ class HeteroLRGuest(HeteroLRBase):
 
         # guest probability
         for host_prob in host_probs:
-            pred_prob = pred_prob.join(host_prob, lambda g, h: activation.sigmoid(g + h))
+            pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
+        pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
         pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)

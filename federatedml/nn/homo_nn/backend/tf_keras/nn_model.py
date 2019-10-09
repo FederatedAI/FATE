@@ -23,11 +23,11 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import set_session
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
 
-Logger = LoggerFactory.get_logger()
+Logger = log_utils.getLogger()
 
 
 def _zip_dir_as_bytes(path):

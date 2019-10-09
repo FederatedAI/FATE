@@ -23,12 +23,13 @@ from arch.api.utils import log_utils
 from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 from federatedml.util import consts
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
 
 LOGGER = log_utils.getLogger()
 
 
 class OneVsRest(object):
-    def __init__(self, classifier, role, mode, one_vs_rest_param):
+    def __init__(self, classifier, role, mode, has_arbiter):
         self.classifier = classifier
         self.transfer_variable = OneVsRestTransferVariable()
 
@@ -36,25 +37,11 @@ class OneVsRest(object):
         self.role = role
         self.mode = mode
         self.flow_id = 0
-        self.has_arbiter = one_vs_rest_param.has_arbiter
+        self.has_arbiter = has_arbiter
 
         self.models = []
         self.class_name = self.__class__.__name__
-        self.__support_role_list = [consts.GUEST, consts.HOST, consts.ARBITER]
-        self.__support_mode_list = [consts.HOMO, consts.HETERO]
 
-    # @staticmethod
-    # def __mask_label(instance, label):
-    #     instance.label = (1 if (instance.label == label) else 0)
-    #     return instance
-
-    # @staticmethod
-    # def __get_classes(data_instances):
-    #     classes = set()
-    #     for instance in data_instances:
-    #         classes.add(instance[1].label)
-    #
-    #     return classes
 
     @staticmethod
     def __get_multi_class_res(instance, classes):
@@ -72,21 +59,16 @@ class OneVsRest(object):
 
         return classes[max_prob_index], max_prob, instance_with_class
 
-    def _get_data_classes(self, data_instances):
+    def get_data_classes(self, data_instances):
         """
         get all classes in data_instances
         """
-        def get_classes(data_instances):
-            classes = set()
-            for instance in data_instances:
-                classes.add(instance[1].label)
-
-            return classes
-
-        f = functools.partial(get_classes)
-        classes_res = data_instances.mapPartitions(f)
-        classes = classes_res.reduce(lambda a, b: a | b)
-        return classes
+        class_set = None
+        if self.has_label:
+            num_class, class_list = ClassifyLabelChecker.validate_label(data_instances)
+            class_set = set(class_list)
+        self._synchronize_classes_list(class_set)
+        return self.classes
 
     @staticmethod
     def _mask_data_label(data_instances, label):
@@ -128,21 +110,17 @@ class OneVsRest(object):
     def has_label(self):
         raise NotImplementedError("Function should not be called here")
 
-    def fit(self, data_instances=None):
+    def fit(self, data_instances=None, validate_data=None):
         """
         Fit OneVsRest model
         Parameters:
         ----------
         data_instances: DTable of instances
         """
-        LOGGER.info("mode is {}, role is {}, start to one_vs_rest fit".format(self.mode, self.role))
-        if self.has_label:
-            class_set = self._get_data_classes(data_instances)
-        else:
-            class_set = None
+        if self.mode == consts.HOMO:
+            raise ValueError("Currently, One vs Rest is not supported for homo algorithm")
 
-        LOGGER.info("Start to synchronize")
-        self._synchronize_classes_list(class_set)
+        LOGGER.info("mode is {}, role is {}, start to one_vs_rest fit".format(self.mode, self.role))
 
         LOGGER.info("Total classes:{}".format(self.classes))
 
@@ -150,6 +128,7 @@ class OneVsRest(object):
         for label_index, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
+            classifier.need_one_vs_rest = False
             classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
@@ -158,13 +137,25 @@ class OneVsRest(object):
                 LOGGER.info("finish mask label:{}".format(label))
 
                 LOGGER.info("start classifier fit")
-                classifier.fit(data_instances_mask_label)
+                classifier.fit_binary(data_instances_mask_label)
             else:
                 LOGGER.info("start classifier fit")
-                classifier.fit(data_instances)
+                classifier.fit_binary(data_instances, validate_data=validate_data)
 
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(label_index))
+
+    def _comprehensive_result(self, predict_res_list):
+        """
+        prob result is available for guest party only.
+        """
+        if self.role == consts.GUEST:
+            prob = predict_res_list[0].mapValues(lambda r: [r[2]])
+            for predict_res in predict_res_list[1:]:
+                prob = prob.join(predict_res, lambda p, r: p + [r[2]])
+        else:
+            prob = None
+        return prob
 
     def predict(self, data_instances):
         """
@@ -178,92 +169,59 @@ class OneVsRest(object):
         ----------
         predict_res: DTable, if has predict_res, it includes ground true label, predict probably and predict label
         """
-        prob = None
+        predict_res_list = []
         for i, model in enumerate(self.models):
             current_flow_id = model.flowid
             model.set_flowid("_".join([current_flow_id, "one_vs_rest", str(i)]))
 
             LOGGER.info("Start to predict with model:{}".format(i))
             # model.set_flowid("predict_" + str(i))
-            predict_res = model.predict(data_instances)
-            if predict_res:
-                if not prob:
-                    prob = predict_res.mapValues(lambda r: [r[2]])
-                else:
-                    prob = prob.join(predict_res, lambda p, r: p + [r[2]])
+            single_predict_res = model.predict(data_instances)
+            predict_res_list.append(single_predict_res)
 
-            LOGGER.info("finish model_{} predict.".format(i))
-
-        predict_res = None
+        prob = self._comprehensive_result(predict_res_list)
         if prob:
             f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
             multi_classes_res = prob.mapValues(f)
             predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
-
-        LOGGER.info("finish OneVsRest Predict, return predict results.")
-
+        else:
+            predict_res = None
+        #
+        # LOGGER.info("finish OneVsRest Predict, return predict results.")
         return predict_res
 
-    def save_model(self, name, namespace):
+    def save(self, single_model_pb):
         """
         Save each classifier model of OneVsRest. It just include model_param but not model_meta now
         """
-        classifier_models = []
-        str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
-        for i, model in enumerate(self.models):
-            classifier_name = str_time + "_" + str(i) + "_" + self.role + "_name"
-            model.save_model(classifier_name, namespace)
-            classifier_model = one_vs_rest_param_pb2.ClassifierModel(name=classifier_name,
-                                                                     namespace=namespace)
-            classifier_models.append(classifier_model)
-            LOGGER.info("finish save model_{}, role:{}".format(i, self.role))
+        classifier_pb_objs = []
+        for classifier in self.models:
+            single_param_dict = classifier.get_single_model_param()
+            classifier_pb_objs.append(single_model_pb(**single_param_dict))
 
-        str_classes = [str(c) for c in self.classes]
-        one_vs_rest_param_obj = one_vs_rest_param_pb2.OneVsRestParam(classes=str_classes,
-                                                                     classifier_models=classifier_models)
+        one_vs_rest_class = [str(x) for x in self.classes]
+        one_vs_rest_result = {
+            'completed_models': classifier_pb_objs,
+            'one_vs_rest_classes': one_vs_rest_class
+        }
+        return one_vs_rest_result
 
-        param_buffer_type = "{}.param".format(self.class_name)
-        model_manager.save_model(buffer_type=param_buffer_type,
-                                 proto_buffer=one_vs_rest_param_obj,
-                                 name=name,
-                                 namespace=namespace)
-
-        meta_buffer_type = 'None'
-
-        LOGGER.info("finish OneVsRest save model.")
-        return [(meta_buffer_type, param_buffer_type)]
-
-    def load_model(self, name, namespace):
+    def load_model(self, one_vs_rest_result):
         """
         Load OneVsRest model
         """
-        model_obj = one_vs_rest_param_pb2.OneVsRestParam()
-        buffer_type = "{}.param".format(self.class_name)
-
-        model_manager.read_model(buffer_type=buffer_type,
-                                 proto_buffer=model_obj,
-                                 name=name,
-                                 namespace=namespace)
-
-        LOGGER.info("OneVsRest classes number:{}".format(len(model_obj.classes)))
-
+        completed_models = one_vs_rest_result.completed_models
+        one_vs_rest_classes = one_vs_rest_result.one_vs_rest_classes
+        self.classes = [int(x) for x in one_vs_rest_classes]   # Support other label type in the future
         self.models = []
-        for i, classifier_model in enumerate(model_obj.classifier_models):
+        for classifier_obj in list(completed_models):
             classifier = copy.deepcopy(self.classifier)
-            classifier.load_model(classifier_model.name, classifier_model.namespace)
+            classifier.load_single_model(classifier_obj)
+            classifier.need_one_vs_rest = False
             self.models.append(classifier)
-            LOGGER.info("finish load model_{}, classes is {}".format(i, model_obj.classes[i]))
-
-        self.classes = []
-        for model_class in model_obj.classes:
-            self.classes.append(model_class)
-
-        LOGGER.info("finish load OneVsRest model.")
 
 
 class HomoOneVsRest(OneVsRest):
-    # def __init__(self, classifier, role, one_vs_rest_param):
-    #     super().__init__()
 
     @property
     def has_label(self):
@@ -323,10 +281,10 @@ class HeteroOneVsRest(OneVsRest):
         self.classes = [x for x in range(class_nums)]
 
 
-def one_vs_rest_factory(classifier, role, mode, one_vs_rest_param):
+def one_vs_rest_factory(classifier, role, mode, has_arbiter):
     if mode == consts.HOMO:
-        return HomoOneVsRest(classifier, role, mode, one_vs_rest_param)
+        return HomoOneVsRest(classifier, role, mode, has_arbiter)
     elif mode == consts.HETERO:
-        return HeteroOneVsRest(classifier, role, mode, one_vs_rest_param)
+        return HeteroOneVsRest(classifier, role, mode, has_arbiter)
     else:
         raise ValueError(f"Cannot recognize mode: {mode} in one vs rest")

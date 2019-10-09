@@ -40,12 +40,13 @@ class HomoLRArbiter(HomoLRBase):
         self.aggregator = aggregator.Arbiter()
         self.model_weights = None
         self.cipher = paillier_cipher.Arbiter()
+        self.host_predict_results = []
 
     def _init_model(self, params):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
-    def fit(self, data_instances, validate_data=None):
+    def fit(self, data_instances=None, validate_data=None):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
@@ -87,7 +88,7 @@ class HomoLRArbiter(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
-    def predict(self, data_instantces):
+    def predict(self, data_instantces=None):
         current_suffix = ('predict',)
 
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
@@ -103,16 +104,35 @@ class HomoLRArbiter(HomoLRBase):
                                                            suffix=current_suffix)
 
         # Receive wx results
+
         for idx, cipher in host_ciphers.items():
             if cipher is None:
                 continue
             encrypted_predict_wx = self.transfer_variable.predict_wx.get(idx=idx, suffix=current_suffix)
             predict_wx = cipher.distribute_decrypt(encrypted_predict_wx)
 
-            predict_table = predict_wx.mapValues(lambda x: 1 if activation.sigmoid(x) >
-                                                                self.model_param.predict_param.threshold else 0)
+            prob_table = predict_wx.mapValues(lambda x: activation.sigmoid(x))
+            predict_table = prob_table.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
 
             self.transfer_variable.predict_result.remote(predict_table,
                                                          role=consts.HOST,
                                                          idx=idx,
                                                          suffix=current_suffix)
+            self.host_predict_results.append((prob_table, predict_table))
+
+    def run(self, component_parameters=None, args=None):
+        self._init_runtime_parameters(component_parameters)
+
+        if self.need_cv:
+            LOGGER.info("Task is cross validation.")
+            self.cross_validation(None)
+            return
+
+        elif not "model" in args:
+            LOGGER.info("Task is fit")
+            self.set_flowid('fit')
+            self.fit()
+        else:
+            LOGGER.info("Task is predict")
+            self.set_flowid('')
+            self.predict()

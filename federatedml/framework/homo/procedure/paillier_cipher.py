@@ -16,10 +16,10 @@
 
 from federatedml.framework.homo.sync import paillier_keygen_sync
 
-from arch.api.utils.log_utils import LoggerFactory
+from arch.api.utils import log_utils
 from federatedml.framework.homo.sync import paillier_re_cipher_sync
 
-LOGGER = LoggerFactory.get_logger()
+LOGGER = log_utils.getLogger()
 
 
 class Host(paillier_keygen_sync.Host, paillier_re_cipher_sync.Host):
