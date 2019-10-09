@@ -114,7 +114,6 @@ class DenseFeatureReader(object):
 
         abnormal_detection.empty_table_detection(input_data)
 
-        input_data_features = None
         input_data_labels = None
       
         self.generate_header(input_data, mode=mode)
