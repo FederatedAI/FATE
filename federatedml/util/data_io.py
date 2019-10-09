@@ -85,11 +85,8 @@ class DenseFeatureReader(object):
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(self.sid_name))
  
-        if not header:
+        if not header and not sid_name:
             raise ValueError("dense input-format should have header schema")
-
-        if sid_name is None:
-            sid_name = "sid"
 
         if self.with_label:
             self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
@@ -97,7 +94,10 @@ class DenseFeatureReader(object):
                              header.split(self.delimitor, -1)[self.label_idx + 1:]
             
         else:
-            header_gen = header.split(self.delimitor, -1)
+            if header:
+                header_gen = header.split(self.delimitor, -1)
+            else:
+                header_gen = None
 
         if mode == "transform":
             self.check_header_eq(self.header, header_gen, self.sid_name, sid_name)

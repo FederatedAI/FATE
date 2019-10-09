@@ -156,7 +156,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_label(self):
         LOGGER.info("check label")
         if self.task_type == consts.CLASSIFICATION:
-            self.num_classes, self.classes_ = ClassifyLabelChecker.validate_y(self.y)
+            self.num_classes, self.classes_ = ClassifyLabelChecker.validate_label(self.data_bin)
             if self.num_classes > 2:
                 self.classify_target = "multinomial"
                 self.tree_dim = self.num_classes
@@ -178,7 +178,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 self.y = self.y.mapValues(lambda _class: class_mapping[_class])
 
         else:
-            RegressionLabelChecker.validate_y(self.y)
+            RegressionLabelChecker.validate_label(self.data_bin)
 
         self.set_loss(self.objective_param)
 
