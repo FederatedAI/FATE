@@ -83,7 +83,7 @@ class Splitter(object):
             if node_cnt < self.min_sample_split:
                 break
 
-            for bid in range(bin_num - missing_bin):
+            for bid in range(bin_num - missing_bin - 1):
                 sum_grad_l = histogram[fid][bid][0]
                 sum_hess_l = histogram[fid][bid][1]
                 node_cnt_l = histogram[fid][bid][2]
@@ -166,7 +166,7 @@ class Splitter(object):
             if node_cnt < self.min_sample_split:
                 break
 
-            for bid in range(bin_num - missing_bin):
+            for bid in range(bin_num - missing_bin - 1):
                 sum_grad_l = histogram[fid][bid][0]
                 sum_hess_l = histogram[fid][bid][1]
                 node_cnt_l = histogram[fid][bid][2]

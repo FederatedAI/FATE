@@ -18,27 +18,28 @@ import unittest
 import random
 
 from arch.api import session
-from federatedml.util.classfiy_label_checker import ClassifyLabelChecker, RegressionLabelChecker
+from federatedml.feature.instance import Instance
+from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
 
 class TeskClassifyLabelChecker(unittest.TestCase):
     def setUp(self):
         session.init("test_label_checker")
 
-        self.small_label_set = [i % 5 for i in range(100)]
-        self.classify_y = session.parallelize(self.small_label_set, include_key=False)
-        self.regression_label = [random.random() for i in range(100)]
-        self.regression_y = session.parallelize(self.regression_label)
+        self.small_label_set = [Instance(label=i % 5) for i in range(100)]
+        self.classify_inst = session.parallelize(self.small_label_set, include_key=False)
+        self.regression_label = [Instance(label=random.random()) for i in range(100)]
+        self.regression_inst = session.parallelize(self.regression_label)
         self.classify_checker = ClassifyLabelChecker()
         self.regression_checker = RegressionLabelChecker()
 
     def test_classify_label_checkert(self):
-        num_class, classes = self.classify_checker.validate_y(self.classify_y)
+        num_class, classes = self.classify_checker.validate_label(self.classify_inst)
         self.assertTrue(num_class == 5)
         self.assertTrue(sorted(classes) == [0, 1, 2, 3, 4])
 
     def test_regression_label_checker(self):
-        self.regression_checker.validate_y(self.regression_y)
+        self.regression_checker.validate_label(self.regression_inst)
 
 
 if __name__ == '__main__':

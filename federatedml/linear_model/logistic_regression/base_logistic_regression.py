@@ -43,8 +43,10 @@ class BaseLogisticRegression(BaseLinearModel):
         self.one_vs_rest_classes = []
         self.one_vs_rest_obj = None
 
-    # def _init_model(self, params):
-    #     super()._init_model(params)
+    def _init_model(self, params):
+        super()._init_model(params)
+        self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
+
     #     if params.multi_class == 'ovr':
     #         self.need_one_vs_rest = True
 
@@ -121,16 +123,8 @@ class BaseLogisticRegression(BaseLinearModel):
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
-        self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
-        classes = self.one_vs_rest_obj.get_data_classes(train_data)
-        if len(classes) > 2:
-            LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
-            self.need_one_vs_rest = True
-            self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
-        else:
-            LOGGER.debug("Class num less or equal than 2, no need to do one_vs_rest")
-            self.need_one_vs_rest = False
-            self.fit(train_data, validate_data)
+        LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
+        self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
     def one_vs_rest_predict(self, validate_data):
         if not self.one_vs_rest_obj:

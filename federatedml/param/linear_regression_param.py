@@ -60,7 +60,7 @@ class LinearParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    early_stop : str, 'diff' or 'abs', default: 'diff'
+    early_stop : str, 'diff' or 'abs' or 'weight_dff', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < tol, it is converged.
@@ -157,10 +157,10 @@ class LinearParam(BaseParam):
                     self.early_stop))
         else:
             self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs']:
+            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "linear_param's early_stop not supported, early_stop should be"
-                    " 'diff' or 'abs'")
+                    " 'weight_diff', 'diff' or 'abs'")
 
         self.encrypt_param.check()
 

@@ -28,4 +28,5 @@ message ScaleMeta{
     repeated string feat_lower = 6;
     bool with_mean = 7;
     bool with_std = 8;
+    bool need_run = 9;
 }

@@ -23,6 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 from federatedml.util import consts
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
 
 LOGGER = log_utils.getLogger()
 
@@ -40,21 +41,7 @@ class OneVsRest(object):
 
         self.models = []
         self.class_name = self.__class__.__name__
-        self.__support_role_list = [consts.GUEST, consts.HOST, consts.ARBITER]
-        self.__support_mode_list = [consts.HOMO, consts.HETERO]
 
-    # @staticmethod
-    # def __mask_label(instance, label):
-    #     instance.label = (1 if (instance.label == label) else 0)
-    #     return instance
-
-    # @staticmethod
-    # def __get_classes(data_instances):
-    #     classes = set()
-    #     for instance in data_instances:
-    #         classes.add(instance[1].label)
-    #
-    #     return classes
 
     @staticmethod
     def __get_multi_class_res(instance, classes):
@@ -76,17 +63,10 @@ class OneVsRest(object):
         """
         get all classes in data_instances
         """
-        def get_classes(data_instances):
-            classes = set()
-            for instance in data_instances:
-                classes.add(instance[1].label)
-
-            return classes
         class_set = None
         if self.has_label:
-            f = functools.partial(get_classes)
-            classes_res = data_instances.mapPartitions(f)
-            class_set = classes_res.reduce(lambda a, b: a | b)
+            num_class, class_list = ClassifyLabelChecker.validate_label(data_instances)
+            class_set = set(class_list)
         self._synchronize_classes_list(class_set)
         return self.classes
 
@@ -157,10 +137,10 @@ class OneVsRest(object):
                 LOGGER.info("finish mask label:{}".format(label))
 
                 LOGGER.info("start classifier fit")
-                classifier.fit(data_instances_mask_label)
+                classifier.fit_binary(data_instances_mask_label)
             else:
                 LOGGER.info("start classifier fit")
-                classifier.fit(data_instances, validate_data=validate_data)
+                classifier.fit_binary(data_instances, validate_data=validate_data)
 
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(label_index))
@@ -208,7 +188,6 @@ class OneVsRest(object):
             predict_res = None
         #
         # LOGGER.info("finish OneVsRest Predict, return predict results.")
-        predict_res
         return predict_res
 
     def save(self, single_model_pb):
