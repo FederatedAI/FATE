@@ -41,7 +41,6 @@ def create_job(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
-@request_authority_certification
 def job_status(job_id, role, party_id):
     JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
                                     create=False)
@@ -57,7 +56,6 @@ def save_pipeline(job_id, role, party_id, model_id, model_version):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
-@request_authority_certification
 def kill_job(job_id, role, party_id):
     JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
                            job_initiator=request.json.get('job_initiator', {}), timeout=request.json.get('timeout', False))
@@ -87,7 +85,6 @@ def run_task(job_id, component_name, task_id, role, party_id):
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/status', methods=['POST'])
-@request_authority_certification
 def task_status(job_id, component_name, task_id, role, party_id):
     JobController.update_task_status(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
