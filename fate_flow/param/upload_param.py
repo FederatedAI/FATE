@@ -17,13 +17,14 @@
 
 class UploadParam:
     def __init__(self, file="", head=1, partition=10,
-                 namespace="", table_name="", work_mode=0):
+                 namespace="", table_name="", work_mode=0, in_version=False):
         self.file = file
         self.head = head
         self.partition = partition
         self.namespace = namespace
         self.table_name = table_name
         self.work_mode = work_mode
+        self.in_version = in_version
 
     def check(self):
         return True

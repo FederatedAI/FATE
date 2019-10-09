@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 from arch.api.utils.core import get_lan_ip
-from fate_flow.settings import detect_logger, API_VERSION, schedule_logger
+from arch.api.utils.log_utils import schedule_logger
+from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 
 
@@ -59,7 +60,7 @@ class JobDetector(cron.Cron):
                                             dest_party_id=initiator_party_id,
                                             json_body={'job_id': job_id},
                                             work_mode=job_work_mode)
-                    schedule_logger.info('send stop job {} command'.format(job_id))
+                    schedule_logger(job_id).info('send stop job {} command'.format(job_id))
         except Exception as e:
             detect_logger.exception(e)
         finally:

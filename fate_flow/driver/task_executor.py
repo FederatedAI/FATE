@@ -16,15 +16,17 @@
 import argparse
 import importlib
 import os
+import traceback
 
 from arch.api import federation
 from arch.api import session
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core import current_timestamp, get_lan_ip
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import API_VERSION, schedule_logger
+from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.entity.constant_config import TaskStatus
@@ -46,8 +48,8 @@ class TaskExecutor(object):
             parser.add_argument('-c', '--config', required=True, type=str, help="task config")
             parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
-            schedule_logger.info('enter task process')
-            schedule_logger.info(args)
+            schedule_logger(args.job_id).info('enter task process')
+            schedule_logger(args.job_id).info(args)
             # init function args
             if args.job_server:
                 RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
@@ -62,10 +64,12 @@ class TaskExecutor(object):
             job_args = task_config['job_args']
             task_input_dsl = task_config['input']
             task_output_dsl = task_config['output']
-            parameters = task_config['parameters']
+            parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
+            # parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
-            schedule_logger.exception(e)
+            traceback.print_exc()
+            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
             return
         try:
@@ -105,11 +109,12 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                          initiator_role=job_initiator.get('role', None),
                                           task_info=task.to_json())
 
-            schedule_logger.info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger.info(parameters)
-            schedule_logger.info(task_input_dsl)
+            schedule_logger(job_id).info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
+            schedule_logger(job_id).info(parameters)
+            schedule_logger(job_id).info(task_input_dsl)
             run_object.run(parameters, task_run_args)
             if task_output_dsl:
                 if task_output_dsl.get('data', []):
@@ -121,7 +126,8 @@ class TaskExecutor(object):
                     tracker.save_output_model(output_model, task_output_dsl['model'][0])
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
-            schedule_logger.exception(e)
+            traceback.print_exc()
+            schedule_logger(job_id).exception(e)
             task.f_status = TaskStatus.FAILED
         finally:
             try:
@@ -131,11 +137,13 @@ class TaskExecutor(object):
                 TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                               party_id=party_id,
                                               initiator_party_id=job_initiator.get('party_id', None),
+                                              initiator_role=job_initiator.get('role', None),
                                               task_info=task.to_json())
                 session.stop()
             except Exception as e:
-                schedule_logger.exception(e)
-        schedule_logger.info(
+                traceback.print_exc()
+                schedule_logger(job_id).exception(e)
+        schedule_logger(job_id).info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
 
@@ -183,7 +191,20 @@ class TaskExecutor(object):
         return task_run_args
 
     @staticmethod
-    def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, task_info):
+    def get_parameters(job_id, component_name, role, party_id):
+
+        job_conf_dict = job_utils.get_job_conf(job_id)
+        job_dsl_parser = job_utils.get_job_dsl_parser(job_conf_dict['job_dsl_path'],
+                                                      job_conf_dict['job_runtime_conf_path'],
+                                                      job_conf_dict['train_runtime_conf_path'])
+        if job_dsl_parser:
+            component = job_dsl_parser.get_component_info(component_name)
+            parameters = component.get_role_parameters()
+            role_index = parameters[role][0]['role'][role].index(party_id)
+            return parameters[role][role_index]
+
+    @staticmethod
+    def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, initiator_role, task_info):
         for dest_party_id in {party_id, initiator_party_id}:
             if party_id != initiator_party_id and dest_party_id == initiator_party_id:
                 # do not pass the process id to the initiator
@@ -199,6 +220,7 @@ class TaskExecutor(object):
                               party_id),
                           src_party_id=party_id,
                           dest_party_id=dest_party_id,
+                          src_role=initiator_role,
                           json_body=task_info,
                           work_mode=RuntimeConfig.WORK_MODE)
 

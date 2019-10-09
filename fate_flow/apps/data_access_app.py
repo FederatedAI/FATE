@@ -44,9 +44,6 @@ def download_upload(access_module):
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(request_config, required_arguments=required_arguments)
 
-    if access_module == "upload":
-        if not os.path.isabs(request_config['file']):
-            request_config["file"] = os.path.join(file_utils.get_project_base_directory(), request_config["file"])
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
     return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
@@ -73,8 +70,6 @@ def gen_data_access_job_config(config_data, access_module):
     }
 
     if access_module == 'upload':
-        if not os.path.isabs(config_data["file"]):
-            config_data["file"] = os.path.join(file_utils.get_project_base_directory(), config_data["file"])
         job_runtime_conf["role_parameters"][initiator_role] = {
             "upload_0": {
                 "head": [config_data["head"]],
@@ -82,6 +77,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "file": [config_data.get("file")],
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
+                "in_version": [config_data.get("in_version")],
             }
         }
 
