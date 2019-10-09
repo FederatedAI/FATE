@@ -64,7 +64,7 @@ ROC = "roc"
 
 # workflow
 TRAIN_DATA = "train_data"
-TEST_DATA = "test_data"
+TEST_DATA = "data"
 
 # initialize method
 RANDOM_NORMAL = "random_normal"
