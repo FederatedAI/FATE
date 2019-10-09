@@ -140,15 +140,15 @@ def clean_all_rsa(host_party_id, id_type, encrypt_type, tag='Za'):
             id_type, encrypt_type, tag))
         IdLibraryCacheInfo.delete().where(IdLibraryCacheInfo.f_party_id == host_party_id, \
             IdLibraryCacheInfo.f_id_type == id_type, IdLibraryCacheInfo.f_encrypt_type == encrypt_type, \
-            IdLibraryCacheInfo.f_tag == tag)
+            IdLibraryCacheInfo.f_tag == tag).execute()
 
 
 def clean_rsa(namespace, version):
     init_database_tables()
     with DB.connection_context():
         LOGGER.info('clean rsa and out table info, namespace={}, version={}.'.format(namespace, version))
-        IdLibraryCacheInfo.delete().where(IdLibraryCacheInfo.f_party_id == namespace, \
-            IdLibraryCacheInfo.f_version == version)
+        IdLibraryCacheInfo.delete().where(IdLibraryCacheInfo.f_namespcae == namespace, \
+            IdLibraryCacheInfo.f_version == version).execute()
 
 
 

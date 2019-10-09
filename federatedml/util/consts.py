@@ -29,6 +29,8 @@ REGRESSION = 'regression'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
+AFFINE = 'Affine'
+ITERATIVEAFFINE = 'IterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
@@ -64,7 +66,7 @@ ROC = "roc"
 
 # workflow
 TRAIN_DATA = "train_data"
-TEST_DATA = "data"
+TEST_DATA = "test_data"
 
 # initialize method
 RANDOM_NORMAL = "random_normal"

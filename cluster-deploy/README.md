@@ -64,11 +64,11 @@ The following configuration is a one-sided server configuration information. If 
 | Server                 |                                                              |
 | ---------------------- | ------------------------------------------------------------ |
 | **Quantity**           | 1 or more than 1 (according to the actual server allocation module provided) |
-| **Configuration**      | 16 core / 32G memory / 300G hard disk / 50M bandwidth        |
+| **Configuration**      | 8 core / 16G memory / 500G hard disk / 10M bandwidth         |
 | **Operating System**   | Version: CentOS Linux release 7.2                            |
 | **Dependency Package** | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev (They can be installed using the initialization script env.sh) |
 | **Users**              | User: app owner:apps (app user can sudo su root without password) |
-| **File System**        | 1. The 300G hard disk is mounted to the /data directory.                                                                                2. Created /data/projects directory, projects directory belongs to app:apps |
+| **File System**        | 1. The  500G hard disk is mounted to the /data directory.                                                                               2. Created /data/projects directory, projects directory belongs to app:apps. |
 
 ### **3.2. Software Version Requirements**
 
