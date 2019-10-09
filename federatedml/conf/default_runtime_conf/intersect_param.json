@@ -1,6 +1,5 @@
 {
     "intersect_method": "rsa",
     "random_bit": 128,
-    "is_send_intersect_ids": true,
-    "is_get_intersect_ids": true
+    "sync_intersect_ids": true
 }
