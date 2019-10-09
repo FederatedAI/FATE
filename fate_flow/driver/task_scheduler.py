@@ -71,9 +71,7 @@ class TaskScheduler(object):
         job_args = dag.get_args_input()
         if not job_initiator:
             return False
-
-        timeout = job_parameters.get("timeout", job_utils.job_default_timeout(runtime_conf=job_runtime_conf, dsl=job_dsl))
-        schedule_logger(job_id).info('setting job {} timeout {}'.format(job_id, timeout))
+        timeout = job_utils.get_timeout(job_id, job_parameters.get("timeout", None), job_runtime_conf, job_dsl)
         t = Timer(timeout, TaskScheduler.job_handler, [job_id])
         t.start()
 

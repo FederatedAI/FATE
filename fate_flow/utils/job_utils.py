@@ -29,6 +29,7 @@ import psutil
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -378,6 +379,22 @@ def job_server_routing(routing_type=0):
             return func(*args, **kwargs)
         return _wrapper
     return _out_wrapper
+
+
+def get_timeout(job_id, timeout, runtime_conf, dsl):
+    try:
+        if timeout > 0:
+            schedule_logger(job_id).info('setting job {} timeout {}'.format(job_id, timeout))
+        else:
+            default_timeout = job_default_timeout(runtime_conf, dsl)
+            schedule_logger(job_id).info('setting job {} timeout {} not a positive number, using the default timeout {}'.format(
+                job_id, timeout, default_timeout))
+        return timeout
+    except:
+        default_timeout = job_default_timeout(runtime_conf, dsl)
+        schedule_logger(job_id).info('setting job {} timeout {} is incorrect, using the default timeout {}'.format(
+            job_id, timeout, default_timeout))
+        return default_timeout
 
 
 def job_default_timeout(runtime_conf, dsl):
