@@ -53,6 +53,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         if self.exposure_index > -1:
             self.header.pop(self.exposure_index)
+            LOGGER.info("expsoure provided at Guest, colname is {}".format(self.exposure_colname))
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 
@@ -92,6 +93,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                     batch_index,
                     batch_offset
                 )
+                LOGGER.debug("iteration:{} Guest's gradient: {}".format(self.n_iter_, optimized_gradient))
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_,
                                                          batch_index, batch_offset, loss_norm)
