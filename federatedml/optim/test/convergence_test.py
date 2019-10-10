@@ -17,14 +17,15 @@
 import math
 import unittest
 
-from federatedml.optim.convergence import DiffConverge, AbsConverge
+from federatedml.optim.convergence import converge_func_factory
 
 
 class TestConvergeFunction(unittest.TestCase):
     def test_diff_converge(self):
         loss = 50
         eps = 0.00001
-        converge_func = DiffConverge(eps=eps)
+        # converge_func = DiffConverge(eps=eps)
+        converge_func = converge_func_factory(early_stop='diff', tol=eps)
         iter_num = 0
         pre_loss = loss
         while iter_num < 500:
@@ -39,7 +40,9 @@ class TestConvergeFunction(unittest.TestCase):
     def test_abs_converge(self):
         loss = 50
         eps = 0.00001
-        converge_func = AbsConverge(eps=eps)
+        # converge_func = AbsConverge(eps=eps)
+        converge_func = converge_func_factory(early_stop='abs', tol=eps)
+
         iter_num = 0
         while iter_num < 500:
             loss *= 0.5

@@ -35,11 +35,19 @@ class PrivilegeAuth(object):
 
     @staticmethod
     def authentication_privilege(src_party_id, src_role, request_path, func_name):
+        if not int(PrivilegeAuth.get_dest_party_id(request_path, func_name)) or \
+                src_party_id == PrivilegeAuth.get_dest_party_id(request_path, func_name):
+            return
+        if src_role != 'guest':
+            stat_logger.info('src_role {} is not guest'.format(src_role))
+            raise Exception('src_role {} is not guest'.format(src_role))
+        if src_party_id == PrivilegeAuth.get_dest_party_id(request_path, func_name):
+            return
         stat_logger.info("party {} role {} start authentication".format(src_party_id, src_role))
         privilege_dic = PrivilegeAuth.get_authentication_items(request_path, func_name)
         for privilege_type, value in privilege_dic.items():
             if value in PrivilegeAuth.command_whitelist:
-                return
+                continue
             if value:
                 if value not in PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}) \
                         .get(privilege_type, []):
@@ -142,6 +150,10 @@ class PrivilegeAuth(object):
         return PrivilegeAuth.get_privilege_dic(dest_role, func_name, component)
 
     @staticmethod
+    def get_dest_party_id(request_path, func_name):
+        return request_path.split('/')[3] if 'task' not in func_name else request_path.split('/')[5]
+
+    @staticmethod
     def get_privilege_dic(privilege_role, privilege_command, privilege_component):
         return {'privilege_role': privilege_role,
                 'privilege_command': privilege_command,
@@ -202,22 +214,29 @@ def request_authority_certification(func):
 def search_command(path):
     with open(path, 'r') as fp:
         command_list = re.findall("def (.*)\(", fp.read())
-        if 'internal_server_error' in command_list:
-            command_list.remove('internal_server_error')
-        PrivilegeAuth.ALL_PERMISSION['privilege_command'].extend(command_list)
+    command_list = list(set(command_list) - {'internal_server_error', 'kill_job', 'task_status', 'job_status'})
+    PrivilegeAuth.ALL_PERMISSION['privilege_command'].extend(command_list)
 
 
 def search_component(path):
     component_list = [file_name.split('.')[0].lower() for file_name in os.listdir(path) if 'json' in file_name]
+    component_list = list(set(component_list) - {'upload', 'download'})
     PrivilegeAuth.ALL_PERMISSION['privilege_component'].extend(component_list)
 
 
 def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
     initiator = runtime_conf['initiator']
     roles = runtime_conf['role']
+    if 'local' not in roles:
+        if set(roles['host']) & set(roles['guest']):
+            stat_logger.info('host {} became guest'.format(set(roles['host']) & set(roles['guest'])))
+            raise Exception('host {} can not be used as guest'.format(set(roles['host']) & set(roles['guest'])))
     if initiator['role'] != src_role or initiator['party_id'] != int(src_party_id) or int(party_id) not in roles[role]:
-        stat_logger.info('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
-        raise Exception('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
+        if not int(party_id):
+            return
+        else:
+            stat_logger.info('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
+            raise Exception('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
     components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
     if not set(components).issubset(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get(
             'privilege_component', [])):
@@ -226,5 +245,6 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
             stat_logger.info('src_role {} src_party_id {} component authentication that needs to be run failed:{}'.format(
                 src_role, src_party_id, components))
             raise Exception('src_role {} src_party_id {} component authentication that needs to be run failed:{}'.format(
-                src_role, src_party_id, components))
+                src_role, src_party_id, set(components)-set(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(
+                    src_role, {}).get('privilege_component', []))))
     stat_logger.info('src_role {} src_party_id {} authentication check success'.format(src_role, src_party_id))

@@ -1,40 +1,34 @@
 {
   "initiator": {
     "role": "guest",
-    "party_id": 10000
+    "party_id": 9999
   },
   "job_parameters": {
-    "work_mode": 0
+    "work_mode": 1
   },
   "role": {
     "guest": [
-      10000
+      9999
     ],
     "host": [
       10000
-    ]
+    ]  
   },
   "role_parameters": {
     "guest": {
       "args": {
         "data": {
-          "train_data": [
+          "data": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "namespace": "hetero_guest_breast"
             }
-          ]
+        ]
         }
       },
       "dataio_0": {
         "with_label": [
-          true
-        ],
-        "label_name": [
-          "y"
-        ],
-        "label_type": [
-          "int"
+          false
         ],
         "output_format": [
           "dense"
@@ -44,12 +38,12 @@
     "host": {
       "args": {
         "data": {
-          "train_data": [
+          "data": [
             {
               "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "namespace": "hetero_guest_breast"
             }
-          ]
+        ]
         }
       },
       "dataio_0": {
@@ -63,19 +57,16 @@
     }
   },
   "algorithm_parameters": {
-    "hetero_feature_binning_0": {
-      "method": "quantile",
-      "compress_thres": 10000,
-      "head_size": 10000,
-      "error": 0.001,
-      "bin_num": 10,
-      "cols": -1,
-      "adjustment_factor": 0.5,
-      "local_only": false,
-      "transform_param": {
-        "transform_cols": [],
-        "transform_type": "bin_num"
+      "intersect_0": {
+          "intersect_method": "rsa",
+          "sync_intersect_ids": true,
+          "only_output_key": true,
+           
+          "intersect_cache_param": {
+              "use_cache": true,
+              "id_type": "tag1",
+              "encrypt_type": "tag2"
+          }
       }
-    }
   }
 }
