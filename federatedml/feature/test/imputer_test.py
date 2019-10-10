@@ -2,7 +2,7 @@ import numpy as np
 import time
 import unittest
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.imputer import Imputer
 
 
@@ -42,8 +42,8 @@ class TestMinMaxScaler(unittest.TestCase):
             print(v[1].features)
 
     def data_to_eggroll_table(self, data, jobid, partition=10, work_mode=0):
-        eggroll.init(jobid, mode=work_mode)
-        data_table = eggroll.parallelize(data, include_key=False, partition=partition)
+        session.init(jobid, mode=work_mode)
+        data_table = session.parallelize(data, include_key=False, partition=partition)
         return data_table
 
     def table_to_list(self, table_instance):

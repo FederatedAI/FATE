@@ -1,0 +1,16 @@
+{
+  "CrossValidationTransferVariable": {
+    "train_sid": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "test_sid": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Preconditions;
 import com.webank.ai.fate.board.global.ErrorCode;
 import com.webank.ai.fate.board.global.ResponseResult;
+import com.webank.ai.fate.board.pojo.Task;
 import com.webank.ai.fate.board.services.TaskManagerService;
 import com.webank.ai.fate.board.utils.Dict;
 import com.webank.ai.fate.board.utils.HttpClientPool;
@@ -40,6 +41,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.webank.ai.fate.board.global.ErrorCode.FATEFLOW_ERROR_CONNECTION;
+import static com.webank.ai.fate.board.global.ErrorCode.REQUEST_PARAMETER_ERROR;
+
 
 @Controller
 @RequestMapping(value = "/v1")
@@ -55,8 +59,6 @@ public class JobDetailController {
     @Value("${fateflow.url}")
     String fateUrl;
 
-
-
     @ResponseBody
     @RequestMapping(value = "/tracking/component/metrics", method = RequestMethod.POST)
     public ResponseResult getMetaInfo(@RequestBody String param) {
@@ -65,19 +67,28 @@ public class JobDetailController {
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
         String componentName = jsonObject.getString(Dict.COMPONENT_NAME);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
+
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_METRIC, jsonObject.toJSONString());
+
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_METRIC, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, Dict.DATA);
     }
-
-    ;
-
 
     @RequestMapping(value = "/tracking/component/metric_data", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult getMetricInfo(@RequestBody String param) {
-
         JSONObject jsonObject = JSON.parseObject(param);
         String jobId = jsonObject.getString(Dict.JOBID);
         String role = jsonObject.getString(Dict.ROLE);
@@ -85,9 +96,20 @@ public class JobDetailController {
         String componentName = jsonObject.getString(Dict.COMPONENT_NAME);
         String metricNamespace = jsonObject.getString(Dict.METRIC_NAMESPACE);
         String metricName = jsonObject.getString(Dict.METRIC_NAME);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName, metricName, metricNamespace));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName, metricName, metricNamespace));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_METRIC_DATA, jsonObject.toJSONString());
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_METRIC_DATA, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, null);
     }
 
@@ -100,10 +122,21 @@ public class JobDetailController {
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
         String componentName = jsonObject.getString(Dict.COMPONENT_NAME);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_PARAMETERS, jsonObject.toJSONString());
-        Preconditions.checkArgument(result != null);
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_COPONENT_PARAMETERS, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
+
         return ResponseUtil.buildResponse(result, Dict.DATA);
 
     }
@@ -116,32 +149,58 @@ public class JobDetailController {
         String jobId = jsonObject.getString(Dict.JOBID);
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
+
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_DAG_DEPENDENCY, jsonObject);
-        Preconditions.checkArgument(result != null);
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_DAG_DEPENDENCY, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
+        if ((result == null) || (result == "")) {
+            return new ResponseResult<>(ErrorCode.FATEFLOW_ERROR_NULL_RESULT);
+        }
+
         JSONObject resultObject = JSON.parseObject(result);
         Integer retcode = resultObject.getInteger(Dict.RETCODE);
+        if (retcode == null) {
+            return new ResponseResult<>(ErrorCode.FATEFLOW_ERROR_WRONG_RESULT);
+        }
 
         if (retcode == 0) {
             JSONObject data = resultObject.getJSONObject(Dict.DATA);
             JSONArray components_list = data.getJSONArray(Dict.COMPONENT_LIST);
             ArrayList<Map> componentList = new ArrayList<>();
+
             for (Object o : components_list) {
-                HashMap<String, String> component = new HashMap<>();
+                HashMap<String, Object> component = new HashMap<>();
                 component.put(Dict.COMPONENT_NAME, (String) o);
-                String taskStatus = taskManagerService.findTaskStatus(jobId, role,(String) o);
+                Task task = taskManagerService.findTask(jobId, role, (String) o);
+                String taskStatus = null;
+                Long createTime = null;
+                if (task != null) {
+                    taskStatus = task.getfStatus();
+                    createTime = task.getfCreateTime();
+                }
+
                 component.put(Dict.STATUS, taskStatus);
+                component.put(Dict.TIME, createTime);
                 componentList.add(component);
             }
+
             data.put(Dict.COMPONENT_LIST, componentList);
             return new ResponseResult<>(ErrorCode.SUCCESS, data);
 
         } else {
-            return new ResponseResult<>(retcode, resultObject);
+            return new ResponseResult<>(retcode, resultObject.getString(Dict.RETMSG));
         }
-
-
     }
 
     @RequestMapping(value = "/tracking/component/output/model", method = RequestMethod.POST)
@@ -152,9 +211,20 @@ public class JobDetailController {
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
         String componentName = jsonObject.getString(Dict.COMPONENT_NAME);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_OUTPUT_MODEL, jsonObject.toJSONString());
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_OUTPUT_MODEL, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, null);
     }
 
@@ -166,9 +236,20 @@ public class JobDetailController {
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
         String componentName = jsonObject.getString(Dict.COMPONENT_NAME);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId, componentName));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_OUTPUT_DATA, jsonObject.toJSONString());
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_OUTPUT_DATA, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, null);
     }
 }

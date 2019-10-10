@@ -24,14 +24,14 @@
           "train_data": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_idx": [0],
+        "label_name": ["y"],
         "label_type": ["int"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -92,7 +92,7 @@
           "train_data": [
             {
               "name": "hetero_breast_a",
-              "namespace": "hetero_host_breast"
+              "namespace": "hetero_breast_host"
             }
           ]
         }
@@ -153,6 +153,15 @@
     }
   },
   "algorithm_parameters": {
+    "feature_scale_0": {
+        "need_run": false
+    },
+    "hetero_feature_binning_0": {
+      "need_run": false
+    },
+    "hetero_feature_selection_0": {
+      "need_run": false
+    },
     "hetero_lr_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",
@@ -169,10 +178,7 @@
         "n_splits": 5,
         "shuffle": false,
         "random_seed": 103,
-        "need_cv": false,
-        "evaluate_param": {
-          "eval_type": "binary"
-        }
+        "need_cv": false
       }
     }
   }

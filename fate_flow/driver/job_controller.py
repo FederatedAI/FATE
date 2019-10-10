@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads
 from fate_flow.db.db_models import Job
@@ -75,16 +75,22 @@ class JobController(object):
         job.f_progress = 0
         job.f_create_time = current_timestamp()
 
-        # save job info
+        initiator_role = job_initiator['role']
+        initiator_party_id = job_initiator['party_id']
+        if initiator_party_id not in job_runtime_conf['role'][initiator_role]:
+            schedule_logger.info("initiator party id error:{}".format(initiator_party_id))
+            raise Exception("initiator party id error {}".format(initiator_party_id))
+
+        get_job_dsl_parser(dsl=job_dsl,
+                           runtime_conf=job_runtime_conf,
+                           train_runtime_conf=train_runtime_conf)
+
         TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
 
         # push into queue
-        RuntimeConfig.JOB_QUEUE.put_event({
-            'job_id': job_id,
-            "initiator_role": job_initiator['role'],
-            "initiator_party_id": job_initiator['party_id']
-        }
-        )
+        job_event = job_utils.job_event(job_id, initiator_role,  initiator_party_id)
+        RuntimeConfig.JOB_QUEUE.put_event(job_event)
+
         schedule_logger.info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
@@ -205,3 +211,22 @@ class JobController(object):
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
                 schedule_logger.exception(e)
         schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
+
+    @staticmethod
+    def cancel_job(job_id, role, party_id, job_initiator):
+        schedule_logger.info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if jobs:
+            job = jobs[0]
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = job_utils.job_event(job.f_job_id,
+                                        job_runtime_conf['initiator']['role'],
+                                        job_runtime_conf['initiator']['party_id'])
+            RuntimeConfig.JOB_QUEUE.del_event(event)
+
+            schedule_logger.info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+
+
+
+
+

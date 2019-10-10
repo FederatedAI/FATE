@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.instance import Instance
 from federatedml.ftl.test.util import assert_matrix
 from research.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy
@@ -16,7 +16,7 @@ def create_instance_table(data, index_list):
         inst = Instance(inst_id=idx, features=row)
         indexed_instances.append((idx, inst))
 
-    dtable = eggroll.parallelize(indexed_instances, include_key=True)
+    dtable = session.parallelize(indexed_instances, include_key=True)
     for r in dtable.collect():
         print(r[0], r[1].features)
     return dtable
@@ -27,7 +27,7 @@ def create_shared_gradient_table(gradients, index_list):
     for idx, grad in zip(index_list, gradients):
         indexed_instances.append((idx, grad))
 
-    dtable = eggroll.parallelize(indexed_instances, include_key=True)
+    dtable = session.parallelize(indexed_instances, include_key=True)
     return dtable
 
 
@@ -144,5 +144,5 @@ class TestDNNLR(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    eggroll.init()
+    session.init()
     unittest.main()

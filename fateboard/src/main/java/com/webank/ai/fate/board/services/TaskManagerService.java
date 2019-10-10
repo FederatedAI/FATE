@@ -42,6 +42,18 @@ public class TaskManagerService {
         }
         return null;
     }
+    public Task findTask(String jobId,String role, String componentName) {
+        TaskExample taskExample = new TaskExample();
+        TaskExample.Criteria criteria = taskExample.createCriteria();
+        criteria.andFJobIdEqualTo(jobId);
+        criteria.andFComponentNameEqualTo(componentName);
+        criteria.andFRoleEqualTo(role);
+        List<Task> tasks = taskMapper.selectByExample(taskExample);
+        if (tasks.size() != 0) {
+            return tasks.get(0);
+        }
+        return null;
+    }
 
 
 }

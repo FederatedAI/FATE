@@ -2,12 +2,12 @@ import time
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import add_random_mask, remove_random_mask
 from research.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
+from federatedml.util.transfer import HeteroDNNLRTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -57,7 +57,7 @@ class BaseLocalModelUpdateProxy(object):
             inst.set_feature(feat)
             indexed_instances.append((idx, inst))
 
-        dtable = eggroll.parallelize(indexed_instances, include_key=True, partition=instance_table._partitions)
+        dtable = session.parallelize(indexed_instances, include_key=True, partition=instance_table._partitions)
 
         end = time.time()
         LOGGER.debug("@ transform time:" + str(end - start))

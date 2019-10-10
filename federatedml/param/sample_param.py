@@ -29,7 +29,8 @@ class SampleParam(BaseParam):
 
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
 
-    fractions: None or float or list, if mode equals to random, it should be a float number greater than 0, otherwise a list of float elements. default: None
+    fractions: None or float or list, if mode equals to random, it should be a float number greater than 0,
+     otherwise a list of float elements. default: None
 
     random_state: int, RandomState instance or None, default: None
     """

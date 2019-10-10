@@ -1,0 +1,12 @@
+{
+    "module_path":  "fate_flow/utils",
+    "default_runtime_conf": "download_param.json",
+    "param_class" : "fate_flow/param/download_param.py/DownloadParam",
+    "role":
+    {
+        "local":
+        {
+            "program": "download.py/Download"
+        }
+    }
+}

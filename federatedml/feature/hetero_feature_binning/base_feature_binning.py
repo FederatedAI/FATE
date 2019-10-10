@@ -16,9 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from google.protobuf import json_format
-
-from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
+from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning.bucket_binning import BucketBinning
@@ -28,7 +26,7 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_feature_binning_transfer_variable import \
+from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -68,7 +66,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.cols = None
+        self.cols = []
         self.cols_dict = {}
         self.binning_obj = None
         self.header = []

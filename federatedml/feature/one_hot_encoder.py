@@ -18,7 +18,7 @@ import functools
 
 import numpy as np
 
-from arch.api.proto import onehot_meta_pb2, onehot_param_pb2
+from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.statistic.data_overview import get_header
@@ -138,6 +138,10 @@ class OneHotEncoder(ModelBase):
         Returns
         -------
         col_maps: a dict in which keys are original header, values are dicts. The dicts in value
+        e.g.
+        cols_map = {"x1": {1 : "x1_1"},
+                    ...}
+
         """
         col_maps = {}
         for col_name in cols:

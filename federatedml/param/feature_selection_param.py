@@ -56,8 +56,9 @@ class IVValueSelectionParam(BaseParam):
         self.value_threshold = value_threshold
 
     def check(self):
-        descr = "IV selection param's"
-        self.check_decimal_float(self.value_threshold, descr)
+        if not isinstance(self.value_threshold, (float, int)):
+            raise ValueError("IV selection param's value_threshold should be float or int")
+
         return True
 
 
@@ -197,8 +198,6 @@ class FeatureSelectionParam(BaseParam):
                                               "coefficient_of_variation_value_thres",
                                               "outlier_cols"])
             self.filter_methods[idx] = method
-        # if "iv_value_thres" in self.filter_method and "iv_percentile" in self.filter_method:
-        #     raise ValueError("Two iv methods should not exist at the same time.")
 
         self.check_defined_type(self.select_cols, descr, ['list', 'int'])
 

@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 import random
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 # from federatedml.feature.quantile import Quantile
@@ -57,14 +57,14 @@ class TestInstance(unittest.TestCase):
     #     self.sparse_table.schema = {'header': headers}
 
     def setUp(self):
-        eggroll.init("test_instance")
+        session.init("test_instance")
 
         dense_inst = []
         headers = ['x' + str(i) for i in range(20)]
         for i in range(100):
             inst = Instance(features=(i % 16 * np.ones(20)))
             dense_inst.append((i, inst))
-        self.dense_table = eggroll.parallelize(dense_inst, include_key=True, partition=2)
+        self.dense_table = session.parallelize(dense_inst, include_key=True, partition=2)
         self.dense_table.schema = {'header': headers}
 
         self.sparse_inst = []
@@ -84,7 +84,7 @@ class TestInstance(unittest.TestCase):
             sparse_vec = SparseVector(indices, data, 30)
             self.sparse_inst.append((i, Instance(features=sparse_vec)))
 
-        self.sparse_table = eggroll.parallelize(self.sparse_inst, include_key=True)
+        self.sparse_table = session.parallelize(self.sparse_inst, include_key=True)
         self.sparse_table.schema = {"header": ["fid" + str(i) for i in range(30)]}
         # self.sparse_table = eggroll.parallelize(sparse_inst, include_key=True, partition=1)
 
@@ -134,7 +134,7 @@ class TestInstance(unittest.TestCase):
                 # col_name = 'x' + str(i)
                 col_idx = i
                 split_point = np.array(bin_splitpoints[col_idx])
-                self.assertTrue((split_point == np.asarray([3, 7, 11], dtype='int')).all())
+                self.assertTrue((split_point == np.asarray([3, 7, 11, 15], dtype='int')).all())
 
         for split_points in bin_splitpoints:
             self.assertTrue(len(split_points) <= 4)

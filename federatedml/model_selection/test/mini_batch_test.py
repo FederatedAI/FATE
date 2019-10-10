@@ -19,12 +19,12 @@ import unittest
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection import MiniBatch
 from federatedml.model_selection import indices
 
-eggroll.init("123")
+session.init("123")
 
 
 class TestMiniBatch(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestMiniBatch(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=0)
             tmp = (i, inst)
             final_result.append(tmp)
-        table = eggroll.parallelize(final_result,
+        table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         return table

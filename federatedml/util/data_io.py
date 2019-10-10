@@ -24,7 +24,6 @@
 import functools
 import numpy as np
 from arch.api.utils import log_utils
-from fate_flow.manager.tracking import Tracking 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.instance import Instance
@@ -33,13 +32,12 @@ from federatedml.util import consts
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
 from federatedml.model_base import ModelBase
-from arch.api.proto.data_io_meta_pb2 import DataIOMeta
-from arch.api.proto.data_io_param_pb2 import DataIOParam
-from arch.api.proto.data_io_meta_pb2 import ImputerMeta
-from arch.api.proto.data_io_param_pb2 import ImputerParam
-from arch.api.proto.data_io_meta_pb2 import OutlierMeta
-from arch.api.proto.data_io_param_pb2 import OutlierParam
-from arch.api import storage
+from federatedml.protobuf.generated.data_io_meta_pb2 import DataIOMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import DataIOParam
+from federatedml.protobuf.generated.data_io_meta_pb2 import ImputerMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import ImputerParam
+from federatedml.protobuf.generated.data_io_meta_pb2 import OutlierMeta
+from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 
 LOGGER = log_utils.getLogger()
 
@@ -60,48 +58,55 @@ class DenseFeatureReader(object):
         self.outlier_impute = data_io_param.outlier_impute
         self.outlier_replace_value = data_io_param.outlier_replace_value
         self.with_label = data_io_param.with_label
-        self.label_idx = data_io_param.label_idx
+        self.label_name = data_io_param.label_name
         self.label_type = data_io_param.label_type
         self.output_format = data_io_param.output_format
         self.missing_impute_rate = None
         self.outlier_replace_rate = None
+        self.label_idx = None
         self.header = None
         self.sid_name = None
-        self.label_name = None
         self.tracker = None
 
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def generate_header(self, input_data, input_data_feature):
-        header = storage.get_data_table_meta_by_instance("header", input_data)
-        sid_name = storage.get_data_table_meta_by_instance("sid", input_data)
+    def check_header_eq(self, header_fit, header_transform, sid_name_fit, sid_name_transform):
+        if sid_name_fit != sid_name_transform or len(header_fit) != len(header_transform):
+            raise ValueError("input data's schema for fit and transform should be same")
+ 
+        for i in range(len(header_fit)):
+            if header_fit[i] != header_transform[i]:
+                raise ValueError("input data's schema for fit and transform should be same")
+
+    def generate_header(self, input_data, mode="fit"):
+        header = input_data.get_meta("header")
+        sid_name = input_data.get_meta("sid")
         LOGGER.debug("header is {}".format(header))
-        LOGGER.debug("sid_name is {}".format(sid_name))
+        LOGGER.debug("sid_name is {}".format(self.sid_name))
+ 
+        if not header and not sid_name:
+            raise ValueError("dense input-format should have header schema")
 
-        if not header:
-            feature_shape = data_overview.get_data_shape(input_data_feature)
-            self.header = ["fid" + str(i) for i in range(feature_shape)]
-            self.sid_name = "sid"
+        if self.with_label:
+            self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
+            header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
+                             header.split(self.delimitor, -1)[self.label_idx + 1:]
             
-            if self.with_label:
-                self.label_name = "label"
         else:
-            if not sid_name:
-                self.sid_name = "sid"
+            if header:
+                header_gen = header.split(self.delimitor, -1)
             else:
-                self.sid_name = sid_name
+                header_gen = None
 
-            if self.with_label:
-                self.header = header.split(self.delimitor, -1)[: self.label_idx] + \
-                              header.split(self.delimitor, -1)[self.label_idx + 1:]
-                self.label_name = header.split(self.delimitor, -1)[self.label_idx]
-            else:
-                self.header = header.split(self.delimitor, -1)
+        if mode == "transform":
+            self.check_header_eq(self.header, header_gen, self.sid_name, sid_name)
 
+        self.header = header_gen
+        self.sid_name = sid_name
+
+    def get_schema(self):
         schema = make_schema(self.header, self.sid_name, self.label_name)
-        set_schema(input_data_feature, schema)
-        
         return schema
 
     def read_data(self, input_data, mode="fit"):
@@ -109,13 +114,11 @@ class DenseFeatureReader(object):
 
         abnormal_detection.empty_table_detection(input_data)
 
-        input_data_features = None
         input_data_labels = None
+      
+        self.generate_header(input_data, mode=mode)
 
         if self.with_label:
-            if type(self.label_idx).__name__ != "int":
-                raise ValueError("label index should be integer")
-
             data_shape = data_overview.get_data_shape(input_data)
             if not data_shape or self.label_idx >= data_shape:
                 raise ValueError("input data's value is empty, it does not contain a label")
@@ -138,7 +141,9 @@ class DenseFeatureReader(object):
         return data_instance
 
     def fit(self, input_data, input_data_features, input_data_labels):
-        schema = self.generate_header(input_data, input_data_features)
+        schema = self.get_schema()
+        set_schema(input_data_features, schema)
+        
         input_data_features = self.fill_missing_value(input_data_features, "fit")
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
 
@@ -178,13 +183,6 @@ class DenseFeatureReader(object):
                 self.missing_impute = imputer_processor.get_missing_value_list()
 
             self.missing_impute_rate = imputer_processor.get_impute_rate(mode)
-            # callback("missing_value_ratio",
-            #         missing_impute_rate,
-            #         self.tracker)
-
-            # callback("missing_value_list",
-            #           self.missing_impute,
-            #           self.tracker)
 
         return input_data_features
 
@@ -205,13 +203,6 @@ class DenseFeatureReader(object):
                                                                   transform_value=self.outlier_replace_value)
 
             self.outlier_replace_rate = imputer_processor.get_impute_rate(mode)
-            # callback("outlier_value_ratio",
-            #         outlier_replace_rate,
-            #         self.tracker)
-
-            # callback("outlier_value_list",
-            #          self.outlier_impute,
-            #          self.tracker)
 
         return input_data_features
 
@@ -250,6 +241,12 @@ class DenseFeatureReader(object):
             raise ValueError("output format {} is not define".format(output_format))
 
         if output_format == "dense":
+            if data_type in ["int", "int64", "long", "float", "float64", "double"]:
+                for i in range(len(features)):
+                    if (missing_impute is not None and features[i] in missing_impute) or \
+                            (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
+                        features[i] = np.nan
+
             return np.asarray(features, dtype=data_type)
 
         indices = []
@@ -260,9 +257,11 @@ class DenseFeatureReader(object):
         for i in range(column_shape):
             if (missing_impute is not None and features[i] in missing_impute) or \
                     (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
-                continue
+                indices.append(i)
+                data.append(np.nan)
+                non_zero += 1
 
-            if data_type in ['float', 'float64']:
+            if data_type in ['float', 'float64', "double"]:
                 if np.fabs(float(features[i])) < consts.FLOAT_ZERO:
                     continue
 
@@ -270,7 +269,7 @@ class DenseFeatureReader(object):
                 data.append(float(features[i]))
                 non_zero += 1
 
-            elif data_type in ['int']:
+            elif data_type in ['int', "int64", "long"]:
                 if int(features[i]) == 0:
                     continue
                 indices.append(i)
@@ -283,12 +282,10 @@ class DenseFeatureReader(object):
         return SparseVector(indices, data, column_shape)
 
     def save_model(self):
-
         dataio_meta, dataio_param = save_data_io_model(input_format="dense",
                                                        delimitor=self.delimitor,
                                                        data_type=self.data_type,
                                                        with_label=self.with_label,
-                                                       label_idx=self.label_idx,
                                                        label_type=self.label_type,
                                                        output_format=self.output_format,
                                                        header=self.header,
@@ -785,12 +782,11 @@ def save_data_io_model(input_format="dense",
                        tag_with_value=False,
                        tag_value_delimitor=":",
                        with_label=False,
-                       label_idx=0,
+                       label_name='',
                        label_type="int",
                        output_format="dense",
                        header=None,
                        sid_name=None,
-                       label_name=None,
                        model_name="DataIO"):
     model_meta = DataIOMeta()
     model_param = DataIOParam()
@@ -801,7 +797,7 @@ def save_data_io_model(input_format="dense",
     model_meta.tag_with_value = tag_with_value
     model_meta.tag_value_delimitor = tag_value_delimitor
     model_meta.with_label = with_label
-    model_meta.label_idx = label_idx
+    model_meta.label_name = label_name
     model_meta.label_type = label_type
     model_meta.output_format = output_format
 
@@ -825,7 +821,7 @@ def load_data_io_model(model_name="DataIO",
     tag_with_value = model_meta.tag_with_value
     tag_value_delimitor = model_meta.tag_value_delimitor
     with_label = model_meta.with_label
-    label_idx = model_meta.label_idx
+    label_name = model_meta.label_name
     label_type = model_meta.label_type
     output_format = model_meta.output_format
 
@@ -834,11 +830,9 @@ def load_data_io_model(model_name="DataIO",
     if model_param.sid_name:
         sid_name = model_param.sid_name
     
-    label_name = None
-    if model_param.label_name:
-        label_name = model_param.label_name
+    label_name = model_param.label_name
 
-    return delimitor, data_type, tag_with_value, tag_value_delimitor, with_label, label_idx, label_type, output_format, header, sid_name, label_name
+    return delimitor, data_type, tag_with_value, tag_value_delimitor, with_label, label_name, label_type, output_format, header, sid_name, label_name
 
 
 def save_missing_imputer_model(missing_fill=False,

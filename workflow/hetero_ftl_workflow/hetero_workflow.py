@@ -16,12 +16,12 @@
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.param.ftl_param import FTLModelParam, LocalModelParam, FTLDataParam, FTLValidDataParam
 from federatedml.param.workflow_param import WorkFlowParam
 from federatedml.util.param_extract import ParamExtract
-from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -81,7 +81,7 @@ class FTLWorkFlow(object):
     def save_eval_result(self, eval_data):
         LOGGER.info("@ save evaluation result to table with namespace: {0} and name: {1}".format(
             self.workflow_param.evaluation_output_namespace, self.workflow_param.evaluation_output_table))
-        eggroll.parallelize([eval_data],
+        session.parallelize([eval_data],
                             include_key=False,
                             name=self.workflow_param.evaluation_output_table,
                             namespace=self.workflow_param.evaluation_output_namespace,

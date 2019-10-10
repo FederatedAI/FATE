@@ -20,7 +20,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from arch.api.eggroll import parallelize, table
+from arch.api.session import parallelize, table
 from federatedml.feature.instance import Instance
 
 

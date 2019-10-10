@@ -22,7 +22,6 @@ import tarfile
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api import storage
 from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import get_fate_uuid
 from arch.api.utils.core import json_loads
@@ -139,7 +138,7 @@ def component_parameters():
         for role, partys_parameters in parameters.items():
             for party_parameters in partys_parameters:
                 if party_parameters.get('local', {}).get('role', '') == request_data['role'] and party_parameters.get(
-                        'local', {}).get('party_id', '') == request_data['party_id']:
+                        'local', {}).get('party_id', '') == int(request_data['party_id']):
                     output_parameters = {}
                     output_parameters['module'] = party_parameters.get('module', '')
                     for p_k, p_v in party_parameters.items():
@@ -314,7 +313,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_meta(output_data_table, have_data_label):
     # get meta
-    output_data_meta = storage.get_data_table_metas_by_instance(output_data_table)
+    output_data_meta = output_data_table.get_metas()
     schema = output_data_meta.get('schema', {})
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:

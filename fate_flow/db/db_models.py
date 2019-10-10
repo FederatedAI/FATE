@@ -66,7 +66,7 @@ class BaseDataBase(object):
             raise Exception('can not init database')
 
 
-if __main__.__file__ == 'fate_flow_server.py':
+if __main__.__file__.endswith('fate_flow_server.py'):
     DB = BaseDataBase().database_connection
 else:
     # Initialize the database only when the server is started.

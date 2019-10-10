@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 from sklearn import metrics
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.loss import LeastSquaredErrorLoss
 from federatedml.loss.regression_loss import LeastAbsoluteErrorLoss
 from federatedml.loss.regression_loss import HuberLoss
@@ -32,12 +32,12 @@ from federatedml.util import consts
 
 class TestLeastSquaredErrorLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_least_squared_error_loss")
+        session.init("test_least_squared_error_loss")
         self.lse_loss = LeastSquaredErrorLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:
@@ -64,12 +64,12 @@ class TestLeastSquaredErrorLoss(unittest.TestCase):
 
 class TestLeastAbsoluteErrorLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_least_abs_error_loss")
+        session.init("test_least_abs_error_loss")
         self.lae_loss = LeastAbsoluteErrorLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:
@@ -103,13 +103,13 @@ class TestLeastAbsoluteErrorLoss(unittest.TestCase):
 
 class TestHuberLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_huber_loss")
+        session.init("test_huber_loss")
         self.delta = 1
         self.huber_loss = HuberLoss(self.delta)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:
@@ -143,13 +143,13 @@ class TestHuberLoss(unittest.TestCase):
 
 class TestFairLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_fair_loss")
+        session.init("test_fair_loss")
         self.c = 1
         self.fair_loss = FairLoss(self.c)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:
@@ -183,12 +183,12 @@ class TestFairLoss(unittest.TestCase):
 
 class TestLogCoshLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_fair_loss")
+        session.init("test_fair_loss")
         self.log_cosh_loss = LogCoshLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:
@@ -223,13 +223,13 @@ class TestLogCoshLoss(unittest.TestCase):
 
 class TestTweedieLoss(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_fair_loss")
+        session.init("test_fair_loss")
         self.rho = 0.5
         self.tweedie_loss = TweedieLoss(self.rho)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = eggroll.parallelize(self.y_list, include_key=False)
-        self.predict = eggroll.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False)
+        self.predict = session.parallelize(self.predict_list, include_key=False)
 
     def test_predict(self):
         for y in self.y_list:

@@ -74,7 +74,6 @@ REDIS = {
 }
 
 REDIS_QUEUE_DB_INDEX = 0
-JOB_MODULE_CONF = file_utils.load_json_conf("fate_flow/job_module_conf.json")
 
 """
 Services

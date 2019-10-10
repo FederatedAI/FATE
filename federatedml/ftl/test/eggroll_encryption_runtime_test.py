@@ -19,7 +19,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.ftl.eggroll_computation.helper import distribute_encrypt_matrix
 from federatedml.ftl.encryption import encryption
 from federatedml.secureprotol.encrypt import PaillierEncrypt

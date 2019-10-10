@@ -6,7 +6,7 @@ import unittest
 
 from sklearn.preprocessing import MinMaxScaler as MMS
 
-from arch.api import eggroll
+from arch.api import session
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam
@@ -41,8 +41,8 @@ class TestMinMaxScaler(unittest.TestCase):
             print("id:{}, value:{}".format(v[0], v[1].features))
 
     def data_to_eggroll_table(self, data, jobid, partition=1, work_mode=0):
-        eggroll.init(jobid, mode=work_mode)
-        data_table = eggroll.parallelize(data, include_key=False)
+        session.init(jobid, mode=work_mode)
+        data_table = session.parallelize(data, include_key=False)
         return data_table
 
     def sklearn_attribute_format(self, scaler, feature_range):

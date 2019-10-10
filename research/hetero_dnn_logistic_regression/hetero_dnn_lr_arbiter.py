@@ -1,11 +1,12 @@
 import time
 
+from federatedml.util.transfer import HeteroDNNLRTransferVariable
+
 from arch.api.utils import log_utils
 from federatedml.ftl.eggroll_computation.helper import distribute_decrypt_matrix
-from research.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
-from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRArbiter
+from federatedml.linear_model.logistic_regression import HeteroLRArbiter
 from federatedml.util import consts
-from federatedml.util.transfer_variable import HeteroDNNLRTransferVariable
+from research.hetero_dnn_logistic_regression.federation_client import FATEFederationClient
 
 LOGGER = log_utils.getLogger()
 
@@ -18,7 +19,7 @@ class HeteroDNNLRArbiter(HeteroLRArbiter):
         self.federation_client = FATEFederationClient()
 
     def _decrypt(self, enc_item):
-        return distribute_decrypt_matrix(self.encrypt_operator.get_privacy_key(), enc_item)
+        return distribute_decrypt_matrix(self.cipher_operator.get_privacy_key(), enc_item)
 
     def _decrypt_grads(self, enc_grads):
         if type(enc_grads) is list:

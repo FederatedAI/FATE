@@ -122,7 +122,8 @@ class DecisionTreeParam(BaseParam):
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001):
+                 n_iter_no_change=True, tol=0.001,
+                 use_missing=False, zero_as_missing=False):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
@@ -133,6 +134,8 @@ class DecisionTreeParam(BaseParam):
         self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.use_missing = use_missing
+        self.zero_as_missing =zero_as_missing
 
     def check(self):
         descr = "decision tree param"
@@ -223,8 +226,10 @@ class BoostingTreeParam(BaseParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), 
                  bin_num=32,
+                 use_missing=False, zero_as_missing=False,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam(), cv_param=CrossValidationParam()):
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 validation_freqs=None):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -235,9 +240,12 @@ class BoostingTreeParam(BaseParam):
         self.tol = tol
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.bin_num = bin_num
+        self.use_missing = use_missing
+        self.zero_as_missing = zero_as_missing
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.validation_freqs = validation_freqs
 
     def check(self):
         self.tree_param.check()

@@ -1,0 +1,91 @@
+{
+  "HeteroPoissonTransferVariable": {
+    "paillier_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "batch_data_index": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_forward": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "loss_intermediate": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "fore_gradient": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_gradient": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "guest_optim_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_loss_regular": {
+    "src": "host",
+    "dst": [
+        "guest"
+    ]
+    },
+    "loss": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "converge_flag": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "batch_info": {
+      "src": "guest",
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    },
+    "host_optim_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_gradient": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_partial_prediction": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

@@ -28,6 +28,9 @@ public class Dict {
     static public final String COMPONENT_NAME = "component_name";
     static public final String ROLE = "role";
     static public final String PARTY_ID = "party_id";
+    static public final String START_TIME="start_time";
+    static public final String END_TIME="end_time";
+    static public final String RETMSG="retmsg";
 
     static public final String DEPENDENCY_DATA = "dependency_data";
     static public final String DATAVIEW_DATA = "dataview_data";
@@ -37,6 +40,7 @@ public class Dict {
     static public final String METRIC_NAME = "metric_name";
     static public final String STATUS = "status";
     static public final String COMPONENT_LIST = "component_list";
+    static public final String TASK_ECLAPSED_TIME="task_elapsed_time";
 
 
     static public final String CREATE_TIME = "create_time";
@@ -57,10 +61,24 @@ public class Dict {
     static public final String URL_JOB_DATAVIEW = "/v1/tracking/job/data_view";
     static public final String URL_JOB_STOP = "/v1/job/stop";
     static public final String REMOTE_RETURN_MSG = "retmsg";
+    static public final String URL_JOB_CANCEL="/v1/job/cancel";
 
     static public final String SSH_IP = "ip";
     static public final String SSH_USER = "user";
     static public final String SSH_PASSWORD = "password";
     static public final String SSH_PORT = "port";
+
+    static public final String ORDERFIELD="order_field";
+    static public final String ORDERTYPE="order_type";
+    static public final String FILTERFIELD="filter_field";
+    static public final String FILTERVALUE="filter_value";
+    static public final String TOTALRECORD="total_record";
+    static public final String PAGENUM="page_num";
+    static public final String PAGESIZE="page_size";
+    static public final String FIELD_START_TIME="f_start_time";
+    static public final String FILED_END_TIME="f_end_time";
+    static public final String TIME="time";
+
+
 
 }

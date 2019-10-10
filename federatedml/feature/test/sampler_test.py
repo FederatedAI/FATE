@@ -18,7 +18,7 @@ import numpy as np
 import random
 import unittest
 
-from arch.api import eggroll
+from arch.api import session
 from fate_flow.manager.tracking import Tracking 
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
@@ -28,11 +28,11 @@ from federatedml.util import consts
 
 class TestRandomSampler(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_random_sampler")
+        session.init("test_random_sampler")
         self.data = [(i * 10 + 5, i * i) for i in range(100)]
-        self.table = eggroll.parallelize(self.data, include_key=True)
+        self.table = session.parallelize(self.data, include_key=True)
         self.data_to_trans = [(i * 10 + 5, i * i * i) for i in range(100)]
-        self.table_trans = eggroll.parallelize(self.data_to_trans, include_key=True)
+        self.table_trans = session.parallelize(self.data_to_trans, include_key=True)
 
     def test_downsample(self):
         sampler = RandomSampler(fraction=0.3, method="downsample")
@@ -90,15 +90,15 @@ class TestRandomSampler(unittest.TestCase):
 
 class TestStratifiedSampler(unittest.TestCase):
     def setUp(self):
-        eggroll.init("test_stratified_sampler")
+        session.init("test_stratified_sampler")
         self.data = []
         self.data_to_trans = []
         for i in range(1000):
             self.data.append((i, Instance(label=i % 4, features=i * i)))
             self.data_to_trans.append((i, Instance(features = i ** 3)))
 
-        self.table = eggroll.parallelize(self.data, include_key=True)
-        self.table_trans = eggroll.parallelize(self.data_to_trans, include_key=True)
+        self.table = session.parallelize(self.data, include_key=True)
+        self.table_trans = session.parallelize(self.data_to_trans, include_key=True)
 
     def test_downsample(self):
         fractions = [(0, 0.3), (1, 0.4), (2, 0.5), (3, 0.8)]

@@ -28,4 +28,4 @@ def dataset_to_list(src):
             vector[idx] = v
         return vector
     else:
-        return src
+        return [src]

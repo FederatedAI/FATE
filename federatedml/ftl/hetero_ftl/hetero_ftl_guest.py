@@ -29,10 +29,10 @@ from federatedml.ftl.encryption.encryption import generate_encryption_key_pair, 
 from federatedml.ftl.faster_encrypted_ftl import FasterEncryptedFTLGuestModel
 from federatedml.ftl.hetero_ftl.hetero_ftl_base import HeteroFTLParty
 from federatedml.ftl.plain_ftl import PlainFTLGuestModel
-from federatedml.optim.convergence import DiffConverge
+from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.ftl_param import FTLModelParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -47,7 +47,8 @@ class HeteroFTLGuest(HeteroFTLParty):
         self.transfer_variable = transfer_variable
         self.max_iter = model_param.max_iter
         self.n_iter_ = 0
-        self.converge_func = DiffConverge(eps=model_param.eps)
+        # self.converge_func = DiffConverge(eps=model_param.eps)
+        self.converge_func = converge_func_factory(early_stop='diff', tol=model_param.eps)
 
     def set_converge_function(self, converge_func):
         self.converge_func = converge_func

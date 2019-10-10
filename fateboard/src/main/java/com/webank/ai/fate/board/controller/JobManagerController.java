@@ -17,6 +17,7 @@
 package com.webank.ai.fate.board.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -39,6 +40,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import static com.webank.ai.fate.board.global.ErrorCode.FATEFLOW_ERROR_CONNECTION;
+import static com.webank.ai.fate.board.global.ErrorCode.REQUEST_PARAMETER_ERROR;
 
 @CrossOrigin
 @RestController
@@ -70,9 +74,20 @@ public class JobManagerController {
         String jobId = jsonObject.getString(Dict.JOBID);
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_JOB_STOP, jsonObject.toJSONString());
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_JOB_STOP, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, null);
 
     }
@@ -83,9 +98,21 @@ public class JobManagerController {
         String jobId = jsonObject.getString(Dict.JOBID);
         String role = jsonObject.getString(Dict.ROLE);
         String partyId = jsonObject.getString(Dict.PARTY_ID);
-        Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        try {
+            Preconditions.checkArgument(StringUtils.isNoneEmpty(jobId, role, partyId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+
+        }
         jsonObject.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, jsonObject.toJSONString());
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, jsonObject.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
         return ResponseUtil.buildResponse(result, Dict.DATA);
     }
 
@@ -98,20 +125,37 @@ public class JobManagerController {
         HashMap<String, Object> resultMap = new HashMap<>();
         JobWithBLOBs jobWithBLOBs = jobManagerService.queryJobByConditions(jobId, role, partyId);
         if (jobWithBLOBs == null) {
-            return new ResponseResult<>(ErrorCode.INCOMING_PARAM_ERROR);
-
+            return new ResponseResult<>(ErrorCode.DATABASE_ERROR_RESULT_NULL);
         }
         Map params = Maps.newHashMap();
         params.put(Dict.JOBID, jobId);
         params.put(Dict.ROLE, role);
         params.put(Dict.PARTY_ID, new Integer(partyId));
-        String result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, JSON.toJSONString(params));
-        JSONObject data = JSON.parseObject(result).getJSONObject(Dict.DATA);
-        resultMap.put(Dict.JOB, jobWithBLOBs);
-        resultMap.put(Dict.DATASET, data);
-        return new ResponseResult<>(ErrorCode.SUCCESS, resultMap);
-    }
+        String result = null;
+        try {
+            result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, JSON.toJSONString(params));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(FATEFLOW_ERROR_CONNECTION);
+        }
+        if (result == null) {
+            return new ResponseResult<>(ErrorCode.FATEFLOW_ERROR_NULL_RESULT);
+        }
+        JSONObject resultObject = JSON.parseObject(result);
+        Integer retcode = resultObject.getInteger(Dict.RETCODE);
+        if (retcode == null) {
+            return new ResponseResult<>(ErrorCode.FATEFLOW_ERROR_WRONG_RESULT);
+        }
+        if (retcode == 0) {
 
+            JSONObject data = resultObject.getJSONObject(Dict.DATA);
+            resultMap.put(Dict.JOB, jobWithBLOBs);
+            resultMap.put(Dict.DATASET, data);
+            return new ResponseResult<>(ErrorCode.SUCCESS, resultMap);
+        } else {
+            return new ResponseResult<>(retcode, resultObject.getString(Dict.RETMSG));
+        }
+    }
 
 
     @RequestMapping(value = "/query/totalrecord", method = RequestMethod.GET)
@@ -120,56 +164,65 @@ public class JobManagerController {
         return new ResponseResult<>(ErrorCode.SUCCESS, count);
     }
 
-    @RequestMapping(value = "/query/all/{totalRecord}/{pageNum}/{pageSize}", method = RequestMethod.GET)
 
-    public ResponseResult queryJob(@PathVariable(value = "totalRecord") long totalRecord,
-                                   @PathVariable(value = "pageNum") long pageNum,
-                                   @PathVariable(value = "pageSize") long pageSize) {
+    @RequestMapping(value = "/query/page", method = RequestMethod.POST)
+    public ResponseResult queryJobByPage(@RequestBody String pageParams) {
+        JSONObject pageObject = JSON.parseObject(pageParams);
 
+        Long pageNum = pageObject.getLong(Dict.PAGENUM);
+        Long pageSize = pageObject.getLong(Dict.PAGESIZE);
+
+        if (pageNum == null || pageSize == null) {
+            return new ResponseResult(REQUEST_PARAMETER_ERROR);
+        }
+        String jobId = pageObject.getString(Dict.JOBID);
+        String partyId = pageObject.getString(Dict.PARTY_ID);
+
+        JSONArray roleJsonArray = pageObject.getJSONArray(Dict.ROLE);
+        List<String> roles = roleJsonArray.toJavaList(String.class);
+        JSONArray jobJsonArray = pageObject.getJSONArray(Dict.JOB_STATUS);
+        List<String> jobStatus = jobJsonArray.toJavaList(String.class);
+
+        String startTime = pageObject.getString(Dict.START_TIME);
+        String endTime = pageObject.getString(Dict.END_TIME);
+
+        long totalRecord = jobManagerService.totalCount(jobId, roles, partyId, jobStatus);
         PageBean<Map> listPageBean = new PageBean<>(pageNum, pageSize, totalRecord);
-        String orderField = "f_start_time";
-        String orderType = "desc";
         long startIndex = listPageBean.getStartIndex();
-        List<JobWithBLOBs> jobWithBLOBsList = jobManagerService.queryPagedJobsByCondition(startIndex, pageSize, orderField, orderType, null);
+        List<JobWithBLOBs> jobWithBLOBs = jobManagerService.queryPageByCondition(jobId, roles, partyId, jobStatus, startTime, endTime, startIndex, pageSize);
         ArrayList<Map> jobList = new ArrayList<>();
         Map<JobWithBLOBs, Future> jobDataMap = new LinkedHashMap<>();
-        for (JobWithBLOBs jobWithBLOBs : jobWithBLOBsList) {
-            ListenableFuture<?> future = ThreadPoolTaskExecutorUtil.submitListenable(this.asyncServiceExecutor, new Callable<JSONObject>() {
 
-                @Override
-                public JSONObject call() throws Exception {
-                    String jobId = jobWithBLOBs.getfJobId();
-                    String role = jobWithBLOBs.getfRole();
-                    String partyId = jobWithBLOBs.getfPartyId();
-                    Map params = Maps.newHashMap();
-                    params.put(Dict.JOBID, jobId);
-                    params.put(Dict.ROLE, role);
-                    params.put(Dict.PARTY_ID, new Integer(partyId));
-                    String result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, JSON.toJSONString(params));
-                    JSONObject data = JSON.parseObject(result).getJSONObject(Dict.DATA);
-                    return data;
-                }
+        for (JobWithBLOBs jobWithBLOB : jobWithBLOBs) {
+            ListenableFuture<?> future = ThreadPoolTaskExecutorUtil.submitListenable(this.asyncServiceExecutor, (Callable<JSONObject>) () -> {
+                String jobId1 = jobWithBLOB.getfJobId();
+                String role1 = jobWithBLOB.getfRole();
+                String partyId1 = jobWithBLOB.getfPartyId();
+                HashMap<String, String> jobParams = Maps.newHashMap();
+                jobParams.put(Dict.JOBID, jobId1);
+                jobParams.put((Dict.ROLE), role1);
+                jobParams.put(Dict.PARTY_ID, partyId1);
+                String result = httpClientPool.post(fateUrl + Dict.URL_JOB_DATAVIEW, JSON.toJSONString(jobParams));
+                JSONObject data = JSON.parseObject(result).getJSONObject(Dict.DATA);
+
+                return data;
             }, new int[]{500, 1000}, new int[]{3, 3});
-
-            jobDataMap.put(jobWithBLOBs, future);
+            jobDataMap.put(jobWithBLOB, future);
         }
-
         jobDataMap.forEach((k, v) -> {
+            HashMap<String, Object> stringObjectHashMap = new HashMap<>();
+            stringObjectHashMap.put(Dict.JOB, k);
             try {
-                HashMap<String, Object> stringObjectHashMap = new HashMap<>();
-                stringObjectHashMap.put(Dict.JOB, k);
-                jobList.add(stringObjectHashMap);
                 stringObjectHashMap.put(Dict.DATASET, v.get());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+
             }
+            jobList.add(stringObjectHashMap);
         });
         listPageBean.setList(jobList);
-
         return new ResponseResult<>(ErrorCode.SUCCESS, listPageBean);
-
     }
+
 
 }

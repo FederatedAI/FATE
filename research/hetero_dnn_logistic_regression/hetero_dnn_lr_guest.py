@@ -16,9 +16,9 @@
 
 from arch.api.utils import log_utils
 from federatedml.ftl.data_util.common_data_util import load_model_parameters, save_model_parameters
+from federatedml.linear_model.logistic_regression import HeteroLRGuest
 from research.hetero_dnn_logistic_regression.local_model_proxy import BaseLocalModelUpdateProxy, \
     PlainLocalModelUpdateProxy
-from federatedml.logistic_regression.hetero_logistic_regression import HeteroLRGuest
 
 LOGGER = log_utils.getLogger()
 
