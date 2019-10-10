@@ -22,6 +22,7 @@ from threading import Timer
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
+from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION
@@ -54,6 +55,9 @@ class TaskScheduler(object):
                               json_body=job.to_json(),
                               work_mode=job.f_work_mode)
                 if response_json["retcode"]:
+                    if 'not authorized' in response_json['retmsg']:
+                        JobController.update_job_status(job.f_job_id, job_initiator['role'], job_initiator['party_id'],
+                                                        {"f_status": JobStatus.FAILED}, create=False)
                     raise Exception(response_json["retmsg"])
 
     @staticmethod

@@ -238,6 +238,8 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
             stat_logger.info('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
             raise Exception('src_role {} src_party_id {} authentication check failed'.format(src_role, src_party_id))
     components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
+    if str(party_id) == str(src_party_id):
+        return
     if not set(components).issubset(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get(
             'privilege_component', [])):
         if not set(components).issubset(PrivilegeAuth.get_permission_config(src_party_id, src_role).get(
