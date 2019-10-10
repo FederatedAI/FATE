@@ -57,8 +57,8 @@ class ValidationStrategy(object):
 
         return epoch + 1 in self.validation_freqs
 
-    def generate_flowid(self, prefix, epoch, keywords="iteration"):
-        return "_".join([prefix, keywords, str(epoch)])
+    def generate_flowid(self, prefix, epoch, keywords="iteration", data_type="train"):
+        return "_".join([prefix, keywords, str(epoch), data_type])
 
     def make_data_set_name(self, need_cv, model_flowid, epoch):
         data_iteration_name = "_".join(["iteration", str(epoch)])
@@ -84,8 +84,9 @@ class ValidationStrategy(object):
         if not data:
             return
 
+        LOGGER.debug("start to evaluate data {}".format(data_type))
         model_flowid = model.flowid
-        flowid = self.generate_flowid(model_flowid, epoch)
+        flowid = self.generate_flowid(model_flowid, epoch, "iteration", data_type)
         model.flowid = flowid
         predicts = model.predict(data)
         model.flowid = model_flowid
@@ -114,7 +115,7 @@ class ValidationStrategy(object):
         else:
             predicts = train_predicts
             if validate_predicts:
-                predicts = predicts.union(train_predicts)
+                predicts = predicts.union(validate_predicts)
 
             self.evaluate(predicts, model, epoch)
 
