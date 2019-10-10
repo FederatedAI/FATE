@@ -16,7 +16,7 @@
 
 import unittest
 
-from federatedml.optim import Initializer
+from federatedml.optim.initialize import Initializer
 from federatedml.param import InitParam
 from federatedml.util import consts
 import numpy as np
@@ -31,9 +31,8 @@ class TestInitialize(unittest.TestCase):
                                    fit_intercept=False
                                    )
         model = initializer.init_model(model_shape=data_shape, init_params=init_param_obj)
-        model_shape = model.shape
+        model_shape = np.array(model.unboxed).shape
         self.assertTrue(model_shape == (10,))
-
 
 
 if __name__ == '__main__':

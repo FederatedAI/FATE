@@ -143,7 +143,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def sync_encrypted_grad_and_hess(self):
         LOGGER.info("send encrypted grad and hess to host")
         encrypted_grad_and_hess = self.encrypt_grad_and_hess()
-        LOGGER.debug("encrypted_grad_and_hess is {}".format(list(encrypted_grad_and_hess.collect())))
+        # LOGGER.debug("encrypted_grad_and_hess is {}".format(list(encrypted_grad_and_hess.collect())))
 
         self.transfer_inst.encrypted_grad_and_hess.remote(encrypted_grad_and_hess,
                                                           role=consts.HOST,
@@ -532,7 +532,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("begin to fit guest decision tree")
         self.sync_encrypted_grad_and_hess()
 
-        LOGGER.debug("self.grad and hess is {}".format(list(self.grad_and_hess.collect())))
+        # LOGGER.debug("self.grad and hess is {}".format(list(self.grad_and_hess.collect())))
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
         root_node = Node(id=0, sitename=consts.GUEST, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
                          weight=self.splitter.node_weight(root_sum_grad, root_sum_hess))

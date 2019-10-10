@@ -52,10 +52,14 @@ class JobDetector(cron.Cron):
                     else:
                         my_party_id = jobs[0].f_party_id
                         initiator_party_id = jobs[0].f_initiator_party_id
-                    api_utils.local_api(method='POST',
-                                        endpoint='/{}/job/stop'.format(
-                                            API_VERSION),
-                                        json_body={'job_id': job_id})
+                    api_utils.federated_api(job_id=job_id,
+                                            method='POST',
+                                            endpoint='/{}/job/stop'.format(
+                                                API_VERSION),
+                                            src_party_id=my_party_id,
+                                            dest_party_id=initiator_party_id,
+                                            json_body={'job_id': job_id},
+                                            work_mode=job_work_mode)
                     schedule_logger(job_id).info('send stop job {} command'.format(job_id))
         except Exception as e:
             detect_logger.exception(e)

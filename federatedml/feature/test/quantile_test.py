@@ -134,7 +134,7 @@ class TestInstance(unittest.TestCase):
                 # col_name = 'x' + str(i)
                 col_idx = i
                 split_point = np.array(bin_splitpoints[col_idx])
-                self.assertTrue((split_point == np.asarray([3, 7, 11], dtype='int')).all())
+                self.assertTrue((split_point == np.asarray([3, 7, 11, 15], dtype='int')).all())
 
         for split_points in bin_splitpoints:
             self.assertTrue(len(split_points) <= 4)

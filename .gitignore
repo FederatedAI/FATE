@@ -6,6 +6,8 @@
 __pycache__
 *.jar
 *.class
+.project
+*.prefs
 
 # excluded paths
 /arch/core/target/
@@ -28,3 +30,4 @@ __pycache__
 /logs/
 /jobs/
 /audit/
+.vscode/*

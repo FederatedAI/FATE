@@ -32,16 +32,16 @@ Logger = log_utils.getLogger()
 
 def _zip_dir_as_bytes(path):
     with io.BytesIO() as io_bytes:
-        with zipfile.ZipFile(io_bytes, 'w', zipfile.ZIP_DEFLATED) as zip:
+        with zipfile.ZipFile(io_bytes, 'w', zipfile.ZIP_DEFLATED) as zipper:
             for root, dirs, files in os.walk(path, topdown=False):
                 for name in files:
                     full_path = os.path.join(root, name)
                     relative_path = os.path.relpath(full_path, path)
-                    zip.write(filename=full_path, arcname=relative_path)
+                    zipper.write(filename=full_path, arcname=relative_path)
                 for name in dirs:
                     full_path = os.path.join(root, name)
                     relative_path = os.path.relpath(full_path, path)
-                    zip.write(filename=full_path, arcname=relative_path)
+                    zipper.write(filename=full_path, arcname=relative_path)
         zip_bytes = io_bytes.getvalue()
     return zip_bytes
 
@@ -175,16 +175,34 @@ class KerasSequenceData(tf.keras.utils.Sequence):
 
         _, one_data = data_instances.first()
         self.x_shape = one_data.features.shape
-        self.y_shape = getattr(one_data.label, "shape", (1,))
-        self.x = np.zeros((self.size, *self.x_shape))
-        self.y = np.zeros((self.size, *self.y_shape))
-        index = 0
-        self._keys = []
-        for k, inst in data_instances.collect():
-            self._keys.append(k)
-            self.x[index] = inst.features
-            self.y[index] = inst.label
-            index += 1
+
+        num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
+        if num_label == 2:
+            self.y_shape = (1,)
+            self.x = np.zeros((self.size, *self.x_shape))
+            self.y = np.zeros((self.size, *self.y_shape))
+            index = 0
+            self._keys = []
+            for k, inst in data_instances.collect():
+                self._keys.append(k)
+                self.x[index] = inst.features
+                self.y[index] = inst.label
+                index += 1
+
+        # encoding label in one-hot
+        elif num_label > 2:
+            self.y_shape = (num_label,)
+            self.x = np.zeros((self.size, *self.x_shape))
+            self.y = np.zeros((self.size, *self.y_shape))
+            index = 0
+            self._keys = []
+            for k, inst in data_instances.collect():
+                self._keys.append(k)
+                self.x[index] = inst.features
+                self.y[index][inst.label] = 1
+                index += 1
+        else:
+            raise ValueError(f"num_label is {num_label}")
 
         self.batch_size = batch_size if batch_size > 0 else self.size
 

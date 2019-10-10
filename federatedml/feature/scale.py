@@ -72,7 +72,7 @@ class Scale(ModelBase):
             fit_data.schema = data.schema
 
             self.callback_meta(metric_name="scale", metric_namespace="train",
-                                        metric_meta=MetricMeta(name="scale", metric_type="SCALE", extra_metas={"method":self.model_param.method}))
+                               metric_meta=MetricMeta(name="scale", metric_type="SCALE", extra_metas={"method":self.model_param.method}))
         else:
             fit_data = data
 

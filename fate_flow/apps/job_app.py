@@ -42,7 +42,7 @@ def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path,job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
         return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
                                                     'job_runtime_conf_path': job_runtime_conf_path,
                                                     'model_info': model_info,

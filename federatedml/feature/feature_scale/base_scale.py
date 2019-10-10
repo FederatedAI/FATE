@@ -45,6 +45,8 @@ class BaseScale(object):
         self.column_min_value = None
         self.column_max_value = None
 
+        self.round_num = 6
+
     def _get_data_shape(self, data):
         if not self.data_shape:
             self.data_shape = data_overview.get_features_shape(data)
@@ -224,10 +226,6 @@ class BaseScale(object):
         else:
             LOGGER.info("feat_lower is None and feat_upper is None, do not need to fit feature range!")
             return data
-
-    def __get_upper_lower_percentile(self, data):
-        # TODO
-        pass
 
     def fit(self, data):
         pass

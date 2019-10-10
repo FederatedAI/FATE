@@ -21,9 +21,12 @@ import sys
 import __main__
 from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField, DateTimeField
 from playhouse.pool import PooledMySQLDatabase
+from playhouse.apsw_ext import APSWDatabase
 
 from arch.api.utils import log_utils
-from fate_flow.settings import DATABASE, stat_logger
+from fate_flow.entity.constant_config import WorkMode
+from fate_flow.settings import DATABASE, USE_LOCAL_DATABASE, WORK_MODE, stat_logger
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 LOGGER = log_utils.getLogger()
 
@@ -44,15 +47,24 @@ def singleton(cls, *args, **kw):
 class BaseDataBase(object):
     def __init__(self):
         database_config = DATABASE.copy()
-        db_name = database_config.pop("name")     
-        self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-        stat_logger.info('init mysql database on cluster mode successfully')
-
-
+        db_name = database_config.pop("name")
+        if WORK_MODE == WorkMode.STANDALONE:
+            if USE_LOCAL_DATABASE:
+                self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
+                stat_logger.info('init sqlite database on standalone mode successfully')
+            else:
+                self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+                stat_logger.info('init mysql database on standalone mode successfully')
+                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+        elif WORK_MODE == WorkMode.CLUSTER:
+            self.database_connection = PooledMySQLDatabase(db_name, **database_config)
+            stat_logger.info('init mysql database on cluster mode successfully')
+            RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+        else:
+            raise Exception('can not init database')
 
 DB = BaseDataBase().database_connection
-has_been_init = False
-
 
 def close_connection(db_connection):
     try:
@@ -76,9 +88,6 @@ class DataBaseModel(Model):
 
 
 def init_database_tables():
-    global has_been_init
-    if has_been_init:
-        return
     with DB.connection_context():
         members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
         table_objs = []
@@ -86,7 +95,6 @@ def init_database_tables():
             if obj != DataBaseModel and issubclass(obj, DataBaseModel):
                 table_objs.append(obj)
         DB.create_tables(table_objs)
-        has_been_init = True
 
 
 
