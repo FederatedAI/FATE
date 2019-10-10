@@ -1,11 +1,9 @@
 import os
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--log", type=str, default="yolo_client1_epoch1_batch1_1000_07231425.log", help="path to log file")
+    parser.add_argument("--log", type=str, required=True, help="path to log file")
     parser.add_argument("--output_dir", type=str, default="formatted_logs", help="path to output file")
     opt = parser.parse_args()
     log_file_name = os.path.basename(opt.log)
@@ -40,6 +38,3 @@ if __name__ == '__main__':
     output.write("round,train_loss,test_map,test_recall\n")
     for r, loss, mAP, recall in zip(round_, train_loss, server_test_map, server_test_recall):
         output.write("{},{},{},{}\n".format(r, loss, mAP, recall))
-    # x = np.array(round_)
-    # plt.plot(x, np.array(server_test_map))
-    # plt.show()
