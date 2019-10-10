@@ -1,7 +1,7 @@
 # Federated-Benchmark: A Benchmark of Real-world Images Dataset for Federated Learning
 
 ## Overview
-We present a real-world image dataset, reflecting the characteristic real-world federated learning scenarios, and provide provided an extensive benchmark on model performance, efficiency, and communication in a federated learning setting.
+We present a real-world image dataset, reflecting the characteristic real-world federated learning scenarios, and provide an extensive benchmark on model performance, efficiency, and communication in a federated learning setting.
 
 ## Resources
 * Dataset: [dataset.fedai.org](https://dataset.fedai.org)
