@@ -20,7 +20,7 @@
             },
             "dataio_0":{
                 "with_label": [true],
-                "label_idx": [0],
+                "label_name": ["y"],
                 "label_type": ["int"],
                 "output_format": ["dense"]
             }
