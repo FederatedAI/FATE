@@ -56,7 +56,7 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         dst = header.dst
         method = header.operator
         param_dict = json.loads(param)
-        param_dict['src_party_id'] = src.partyId
+        param_dict['src_party_id'] = str(src.partyId)
         param_dict['src_role'] = src.src_role
         param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 

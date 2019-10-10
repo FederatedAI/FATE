@@ -28,7 +28,14 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
-    return jsonify({"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta})
+    result_dict = {"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta}
+    response = {}
+    for key, value in result_dict.items():
+        if not value and key != "retcode":
+            continue
+        else:
+            response[key] = value
+    return jsonify(response)
 
 
 def error_response(response_code, retmsg):
