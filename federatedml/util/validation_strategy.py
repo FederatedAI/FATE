@@ -114,7 +114,7 @@ class ValidationStrategy(object):
         else:
             predicts = train_predicts
             if validate_predicts:
-                predicts = predicts.union(train_predicts)
+                predicts = predicts.union(validate_predicts)
 
             self.evaluate(predicts, model, epoch)
 

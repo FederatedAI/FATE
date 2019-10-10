@@ -50,6 +50,7 @@ class MiniBatch:
         -------
         A generator that might generate data or index.
         """
+        LOGGER.debug("Currently, len of all_batch_data: {}".format(len(self.all_batch_data)))
         if result == 'index':
             for index_table in self.all_index_data:
                 yield index_table

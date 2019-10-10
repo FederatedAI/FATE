@@ -20,10 +20,14 @@ import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def _one_dimension_dot(X, w):
     res = 0
+    LOGGER.debug("_one_dimension_dot, len of w: {}, len of X: {}".format(len(w), len(X)))
     for i in range(len(X)):
         if np.fabs(X[i]) < 1e-5:
             continue
