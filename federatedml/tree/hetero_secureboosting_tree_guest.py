@@ -31,14 +31,15 @@ from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.util.classfiy_label_checker import ClassifyLabelChecker
-from federatedml.util.classfiy_label_checker import RegressionLabelChecker
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
+from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.tree import BoostingTree
 from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
 from federatedml.util import consts
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
@@ -184,8 +185,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def generate_encrypter(self):
         LOGGER.info("generate encrypter")
-        if self.encrypt_param.method == consts.PAILLIER:
+        if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
+            self.encrypter.generate_key(self.encrypt_param.key_length)
+        elif self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower():
+            self.encrypter = IterativeAffineEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
             raise NotImplementedError("encrypt method not supported yes!!!")

@@ -78,16 +78,21 @@ class HeteroLRHost(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr host")
-        LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
 
-        if self.need_one_vs_rest is None:
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+
+        if len(classes) > 2:
+            self.need_one_vs_rest = True
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
-            return
+        else:
+            self.need_one_vs_rest = False
+            self.fit_binary(data_instances, validate_data)
 
+    def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        
+
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -130,7 +135,7 @@ class HeteroLRHost(HeteroLRBase):
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
             validation_strategy.validate(self, self.n_iter_)
-            
+
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

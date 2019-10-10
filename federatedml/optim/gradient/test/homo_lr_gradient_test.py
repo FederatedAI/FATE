@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from federatedml.feature.instance import Instance
-from federatedml.optim.gradient import LogisticGradient, TaylorLogisticGradient
+from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.secureprotol import PaillierEncrypt
 
 
@@ -50,18 +50,18 @@ class TestHomoLRGradient(unittest.TestCase):
 
     def test_gradient_length(self):
         fit_intercept = False
-        grad, loss = self.gradient_operator.compute(self.values, self.coef, 0, fit_intercept)
+        grad = self.gradient_operator.compute_gradient(self.values, self.coef, 0, fit_intercept)
         self.assertEqual(grad.shape[0], self.X.shape[1])
 
-        taylor_grad, loss = self.taylor_operator.compute(self.values, self.coef, 0, fit_intercept)
+        taylor_grad = self.taylor_operator.compute_gradient(self.values, self.coef, 0, fit_intercept)
         self.assertEqual(taylor_grad.shape[0], self.X.shape[1])
         self.assertTrue(np.sum(grad - taylor_grad) < 0.0001)
 
         fit_intercept = True
-        grad, loss = self.gradient_operator.compute(self.values, self.coef, 0, fit_intercept)
+        grad = self.gradient_operator.compute_gradient(self.values, self.coef, 0, fit_intercept)
         self.assertEqual(grad.shape[0], self.X.shape[1] + 1)
 
-        taylor_grad, loss = self.taylor_operator.compute(self.values, self.coef, 0, fit_intercept)
+        taylor_grad = self.taylor_operator.compute_gradient(self.values, self.coef, 0, fit_intercept)
         self.assertEqual(taylor_grad.shape[0], self.X.shape[1] + 1)
 
         self.assertTrue(np.sum(grad - taylor_grad) < 0.0001)
