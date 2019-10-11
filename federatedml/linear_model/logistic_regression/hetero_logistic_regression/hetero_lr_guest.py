@@ -106,7 +106,8 @@ class HeteroLRGuest(HeteroLRBase):
                 batch_feat_inst = self.transform(batch_data)
 
                 # Start gradient procedure
-
+                LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
+                                                                                        batch_feat_inst.count()))
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
                     compute_gradient_procedure(
                         batch_feat_inst,

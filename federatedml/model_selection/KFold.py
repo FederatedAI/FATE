@@ -115,7 +115,7 @@ class KFold(BaseCrossValidator):
             this_flowid = 'train.' + str(fold_num)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
-            model.fit(train_data)
+            model.fit(train_data, test_data)
 
             this_flowid = 'predict_train.' + str(fold_num)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
