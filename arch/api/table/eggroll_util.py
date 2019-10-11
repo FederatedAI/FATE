@@ -104,4 +104,5 @@ def maybe_create_eggroll_client():
         Standalone(eggroll_session)
     else:
         from eggroll.api.cluster.eggroll import _EggRoll
-        _EggRoll(eggroll_session)
+        if _EggRoll.instance is None:
+            _EggRoll(eggroll_session)
