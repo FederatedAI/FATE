@@ -76,7 +76,7 @@ class TaskExecutor(object):
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
                                       BACKEND=job_parameters.get('backend', 0))
-            session.init(job_id=task_id, mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
             federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
