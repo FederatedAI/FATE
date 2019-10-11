@@ -66,7 +66,7 @@ class DataIOParam(BaseParam):
 
     with_label : bool, True if input data consist of label, False otherwise. default: 'false'
 
-    label_name : str, column_name of the column where label locates, only use in dense-inputformat. default: ''
+    label_name : str, column_name of the column where label locates, only use in dense-inputformat. default: 'y'
 
     label_type : object, accepted 'int','int64','float','float64','long','str' only,
                 use when with_label is True. default: 'false'
@@ -80,7 +80,7 @@ class DataIOParam(BaseParam):
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
-                 with_label=False, label_name='',
+                 with_label=False, label_name='y',
                  label_type='int', output_format='dense'):
         self.input_format = input_format
         self.delimitor = delimitor

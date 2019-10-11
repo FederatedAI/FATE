@@ -58,6 +58,7 @@ class JobDetector(cron.Cron):
                                                 API_VERSION),
                                             src_party_id=my_party_id,
                                             dest_party_id=initiator_party_id,
+                                            src_role=None,
                                             json_body={'job_id': job_id},
                                             work_mode=job_work_mode)
                     schedule_logger(job_id).info('send stop job {} command'.format(job_id))
