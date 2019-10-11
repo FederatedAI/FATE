@@ -59,7 +59,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols_dict)
+        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
+                                                              self.cols_dict, split_points)
 
         self.transfer_variable.encrypted_bin_sum.remote(encrypted_bin_sum,
                                                         role=consts.GUEST,
@@ -90,10 +91,10 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.encryptor.set_public_key(pubkey)
         self.has_synchronized = True
 
-    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict):
+    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
         f = functools.partial(self.binning_obj.add_label_in_partition,
-                              total_bin=self.model_param.bin_num,
+                              split_points=split_points,
                               cols_dict=cols_dict,
                               encryptor=self.encryptor,
                               header=self.header)
