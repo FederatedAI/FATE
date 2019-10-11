@@ -28,6 +28,9 @@
         "with_label": [
           true
         ],
+       "label_name": [
+          "y"
+        ],
         "output_format": [
           "dense"
         ]

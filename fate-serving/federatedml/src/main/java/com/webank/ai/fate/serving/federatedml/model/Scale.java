@@ -22,7 +22,7 @@ public class Scale extends BaseModel {
         try {
             this.scaleMeta = this.parseModel(ScaleMeta.parser(), protoMeta);
             this.scaleParam = this.parseModel(ScaleParam.parser(), protoParam);
-            this.need_run = scaleParam.getNeedRun();
+            this.need_run = this.scaleMeta.getNeedRun();
         } catch (Exception ex) {
             ex.printStackTrace();
             return StatusCode.ILLEGALDATA;

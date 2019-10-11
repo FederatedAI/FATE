@@ -76,15 +76,15 @@ class HomoLRGuest(HomoLRBase):
             batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-                LOGGER.debug("In each batch, lr_weight: {}".format(model_weights.unboxed))
+                LOGGER.debug("In each batch, lr_weight: {}, batch_data count: {}".format(model_weights.unboxed, n))
                 f = functools.partial(self.gradient_operator.compute_gradient,
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                grad /= n
                 LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                     self.n_iter_, batch_num, grad, n))
-                grad /= n
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
                 batch_num += 1
                 degree += n
