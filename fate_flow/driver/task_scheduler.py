@@ -22,14 +22,13 @@ from threading import Timer
 from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
-# from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser
-from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
+from fate_flow.entity.constant_config import JobStatus, Backend
 
 
 class TaskScheduler(object):
@@ -55,9 +54,12 @@ class TaskScheduler(object):
                               json_body=job.to_json(),
                               work_mode=job.f_work_mode)
                 if response_json["retcode"]:
-                    # if 'not authorized' in response_json['retmsg']:
-                    #     JobController.update_job_status(job.f_job_id, job_initiator['role'], job_initiator['party_id'],
-                    #                                     {"f_status": JobStatus.FAILED}, create=False)
+                    job.f_status = JobStatus.FAILED
+                    TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles,
+                                                  work_mode=job.f_work_mode,
+                                                  initiator_party_id=job_initiator['party_id'],
+                                                  initiator_role=job_initiator['role'],
+                                                  job_info=job.to_json())
                     raise Exception(response_json["retmsg"])
 
     @staticmethod
@@ -208,15 +210,7 @@ class TaskScheduler(object):
                     return False
             return True
         else:
-            for role in job_runtime_conf['role']:
-                for party_id_index in range(len(role)):
-                    task_info = {"f_status": JobStatus.FAILED if component_task_status == False else JobStatus.TIMEOUT}
-                    TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id,
-                                                  role=role,
-                                                  party_id=role[party_id_index],
-                                                  initiator_party_id=job_initiator.get('party_id'),
-                                                  initiator_role=job_initiator.get('role'),
-                                                  task_info=task_info)
+            TaskScheduler.stop_job(job_id=job_id, end_status=JobStatus.FAILED if component_task_status==False else JobStatus.TIMEOUT)
             return False
 
     @staticmethod

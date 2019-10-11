@@ -63,7 +63,6 @@ def kill_job(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
-@request_authority_certification
 def cancel_job(job_id, role, party_id):
     JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id),
                              job_initiator=request.json.get('job_initiator', {}))

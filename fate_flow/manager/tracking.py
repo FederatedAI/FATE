@@ -158,9 +158,6 @@ class Tracking(object):
                 self.party_id, self.task_id)
             stat_logger.info(query_sql)
             cursor = DB.execute_sql(query_sql)
-            if not cursor.fetchall():
-                raise Exception('Please check the parameters:job_id({}) ,role({}),  party_id({}), component_name({})'.format(
-                    self.job_id, self.role,self.party_id, self.component_name if not job_level else 'dag'))
             for row in cursor.fetchall():
                 metrics[row[0]] = metrics.get(row[0], [])
                 metrics[row[0]].append(row[1])

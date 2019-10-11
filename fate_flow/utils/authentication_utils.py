@@ -214,7 +214,7 @@ def request_authority_certification(func):
 def search_command(path):
     with open(path, 'r') as fp:
         command_list = re.findall("def (.*)\(", fp.read())
-    command_list = list(set(command_list) - {'internal_server_error', 'kill_job', 'task_status', 'job_status'})
+    command_list = list(set(command_list) - {'internal_server_error', 'kill_job', 'task_status', 'job_status', 'cancel_job'})
     PrivilegeAuth.ALL_PERMISSION['privilege_command'].extend(command_list)
 
 
