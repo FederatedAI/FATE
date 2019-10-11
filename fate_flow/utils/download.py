@@ -38,7 +38,7 @@ class Download(object):
         session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
             data_table = session.get_data_table(name=table_name, namespace=namespace)
-            print('===== begin to export data =====')
+            LOGGER.info('===== begin to export data =====')
             lines = 0
             for key, value in data_table.collect():
                 if not value:
@@ -47,10 +47,10 @@ class Download(object):
                     fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
                 lines += 1
                 if lines % 2000 == 0:
-                    print("===== export {} lines =====".format(lines))
-            print("===== export {} lines totally =====".format(lines))
-            print('===== export data finish =====')
-            print('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
+                    LOGGER.info("===== export {} lines =====".format(lines))
+            LOGGER.info("===== export {} lines totally =====".format(lines))
+            LOGGER.info('===== export data finish =====')
+            LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
 
     def set_taskid(self, taskid):
         self.taskid = taskid
