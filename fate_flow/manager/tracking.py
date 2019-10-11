@@ -158,6 +158,9 @@ class Tracking(object):
                 self.party_id, self.task_id)
             stat_logger.info(query_sql)
             cursor = DB.execute_sql(query_sql)
+            if not cursor.fetchall():
+                raise Exception('Please check the parameters:job_id({}) ,role({}),  party_id({}), component_name({})'.format(
+                    self.job_id, self.role,self.party_id, self.component_name if not job_level else 'dag'))
             for row in cursor.fetchall():
                 metrics[row[0]] = metrics.get(row[0], [])
                 metrics[row[0]].append(row[1])
@@ -297,6 +300,8 @@ class Tracking(object):
             if jobs:
                 job = jobs[0]
                 is_insert = False
+                if job.f_status == JobStatus.TIMEOUT:
+                    return None
             elif create:
                 job = Job()
                 job.f_create_time = current_timestamp()
@@ -311,9 +316,13 @@ class Tracking(object):
                     # TODO:
                     pass
             for k, v in job_info.items():
-                if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
-                    continue
-                setattr(job, k, v)
+                try:
+                    if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
+                        continue
+                    setattr(job, k, v)
+                except:
+                    pass
+
             if is_insert:
                 job.save(force_insert=True)
             else:
@@ -344,9 +353,12 @@ class Tracking(object):
                     # TODO:
                     pass
             for k, v in task_info.items():
-                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
-                                                                                                              k).default:
-                    continue
+                try:
+                    if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
+                                                                                                                  k).default:
+                        continue
+                except:
+                    pass
                 setattr(task, k, v)
             if is_insert:
                 task.save(force_insert=True)
