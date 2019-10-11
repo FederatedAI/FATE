@@ -17,12 +17,12 @@
 package com.webank.ai.fate.driver.federation.factory;
 
 import com.google.common.base.Preconditions;
-import com.webank.ai.fate.core.constant.StringConstants;
-import com.webank.ai.fate.core.io.KeyValueStore;
-import com.webank.ai.fate.core.io.StoreInfo;
-import com.webank.ai.fate.core.model.Bytes;
-import com.webank.ai.fate.eggroll.storage.service.model.RemoteKeyValueStore;
-import com.webank.ai.fate.eggroll.storage.service.model.enums.Stores;
+import com.webank.ai.eggroll.core.constant.StringConstants;
+import com.webank.ai.eggroll.core.io.KeyValueStore;
+import com.webank.ai.eggroll.core.io.StoreInfo;
+import com.webank.ai.eggroll.core.model.Bytes;
+import com.webank.ai.eggroll.framework.storage.service.model.RemoteKeyValueStore;
+import com.webank.ai.eggroll.framework.storage.service.model.enums.Stores;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

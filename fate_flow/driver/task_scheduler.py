@@ -300,11 +300,27 @@ class TaskScheduler(object):
             elif backend.is_spark():
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")
+                spark_submit_config = task_config['job_parameters'].get("spark_submit_config", dict())
+                deploy_mode = spark_submit_config.get("deploy-mode", "client")
+                queue = spark_submit_config.get("queue", "default")
+                driver_memory = spark_submit_config.get("driver-memory", "1g")
+                num_executors = spark_submit_config.get("num-executors", 2)
+                executor_memory = spark_submit_config.get("executor-memory", "1g")
+                executor_cores = spark_submit_config.get("executor-cores", 1)
+
+                if deploy_mode not in ["client"]:
+                    raise ValueError(f"deploy mode {deploy_mode} not supported")
                 spark_home = os.environ["SPARK_HOME"]
                 spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
                 process_cmd = [
                     spark_submit_cmd,
                     f'--name={task_id}#{role}',
+                    f'--deploy-mode={deploy_mode}',
+                    f'--queue={queue}',
+                    f'--driver-memory={driver_memory}',
+                    f'--num-executors={num_executors}',
+                    f'--executor-memory={executor_memory}',
+                    f'--executor-cores={executor_cores}',
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
@@ -312,7 +328,8 @@ class TaskScheduler(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_config_path,
-                    '--job_server', '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
+                    '--job_server',
+                    '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
                 ]
             else:
                 raise ValueError(f"${backend} supported")

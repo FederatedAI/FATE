@@ -18,8 +18,8 @@ package com.webank.ai.fate.driver.federation.transfer.manager;
 
 import com.google.common.base.Preconditions;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.factory.ReturnStatusFactory;
-import com.webank.ai.fate.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.core.factory.ReturnStatusFactory;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
