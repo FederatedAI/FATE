@@ -1,5 +1,10 @@
 #!/bin/bash
 set -e
+module_name="fate_flow"
+cwd=$(cd `dirname $0`; pwd)
+cd $cwd
+source ./configurations.sh
+
 config_path=$2
 if [[ ${config_path} == "" ]] || [[ ! -f ${config_path} ]]
 then
@@ -8,35 +13,33 @@ then
 fi
 source ${config_path}
 
-cwd=$(cd `dirname $0`; pwd)
-cd ../../
-fate_dir=`pwd`
-
-
-source_build() {
-	cd ${fate_dir}/cluster-deploy/example-dir-tree/python
+package_source() {
+    cd ${packages_dir}
 	if [ -f "fate_flow-${version}.tar.gz" ]
 	then
 		rm fate_flow-${version}.tar.gz
 	fi
-	cp -r ${fate_dir}/fate_flow ${fate_dir}/cluster-deploy/example-dir-tree/python
+	cp -r ${source_dir}/fate_flow $packages_dir
 	tar -czf fate_flow-${version}.tar.gz  ./fate_flow
 	rm -rf ./fate_flow
+	return 0
+}
+
+source_build() {
+    echo "[INFO][$module_name] build from source code"
+	return 0
 }
 
 build() {
-	#cd ${fate_dir}/cluster-deploy/example-dir-tree/python 
-	#wget 
-	return 0 
+	return 0
 }
 
 config() {
-	cd ${fate_dir}/cluster-deploy/example-dir-tree/python
-	
+	cd ${packages_dir}
 	if [ ! -f "fate_flow-${version}.tar.gz" ]
 	then
 		echo "fate_flow-${version}.tar.gz doesn't exist."
-		exit
+		return 1
 	fi
 	if [ -f "fate_flow-${version}-config.tar.gz" ]
 	then
@@ -46,25 +49,24 @@ config() {
 	tar -xvf fate_flow-${version}.tar.gz
 	if [[ ! -f "fate_flow/service.sh" ]] || [[ ! -f "fate_flow/settings.py" ]]
 		then
-		echo "usage: $0 {install} {configurations path}."
-		exit
+		echo "[ERROR][$module_name] can not found fate_flow/service.sh or fate_flow/settings.py"
+		return 2
 	fi
 	
-	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${dir}/python#g" ./fate_flow/service.sh
-	sed -i "s#venv=.*#venv=${venvdir}#g" ./fate_flow/service.sh
+	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${deploy_dir}/python#g" ./fate_flow/service.sh
+	sed -i "s#venv=.*#venv=${venv_dir}#g" ./fate_flow/service.sh
 	
 	sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./fate_flow/settings.py
-	sed -i "s/PARTY_ID =.*/PARTY_ID = \"${partyid}\"/g" ./fate_flow/settings.py
-	sed -i "s/'user':.*/'user': '${fldbuser}',/g" ./fate_flow/settings.py
-	sed -i "s/'passwd':.*/'passwd': '${fldbpasswd}',/g" ./fate_flow/settings.py
-	sed -i "s/'host':.*/'host': '${fldbip}',/g" ./fate_flow/settings.py
-	sed -i "s/'name':.*/'name': '${fldbname}',/g" ./fate_flow/settings.py
-	sed -i "s/localhost/${flip}/g" ./fate_flow/settings.py
-	sed -i "s/'password':.*/'password': '${redispass}',/g" ./fate_flow/settings.py
-	sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redisip}',/;x};x;}" ./fate_flow/settings.py
+	sed -i "s/'user':.*/'user': '${db_user}',/g" ./fate_flow/settings.py
+	sed -i "s/'passwd':.*/'passwd': '${db_password}',/g" ./fate_flow/settings.py
+	sed -i "s/'host':.*/'host': '${db_ip}',/g" ./fate_flow/settings.py
+	sed -i "s/'name':.*/'name': '${db_name}',/g" ./fate_flow/settings.py
+	sed -i "s/'password':.*/'password': '${redis_password}',/g" ./fate_flow/settings.py
+	sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./fate_flow/settings.py
 	
 	tar -czf  fate_flow-${version}-config.tar.gz ./fate_flow
-	rm -rf ./fate_dir
+	rm -rf ./source_dir
+	return 0
 
 }
 
@@ -79,6 +81,9 @@ install(){
 }
 
 case "$1" in
+    package_source)
+        package_source
+        ;;
     source_build)
         source_build 
         ;;

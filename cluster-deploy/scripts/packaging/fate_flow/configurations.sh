@@ -1,16 +1,13 @@
 #!/bin/bash
 
-#fataboard config
-#input_dir=/data/projects/xuyiming/0917/FATE
-#output_dir=/data/projects/xuyiming/0917/FATE/cluster-deploy/scripts
 version=0.3
-dir=/data/projects/fate
-venvdir=/data/projects/fate/venv
-partyid=9999
-fldbuser=fate_dev
-fldbpasswd=fate_dev
-fldbip=127.0.0.1
-fldbname=fate_flow
-flip=127.0.0.1
-redispass=fate_dev
-redisip=127.0.0.1
+source_dir=
+deploy_dir=/data/projects/fate
+venv_dir=/data/projects/fate/venv
+packages_dir=
+db_ip=127.0.0.1
+db_user=fate_dev
+db_password=fate_dev
+db_name=fate_flow
+redis_ip=127.0.0.1
+redis_password=fate_dev
