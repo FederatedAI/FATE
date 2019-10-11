@@ -25,7 +25,7 @@ from arch.api.table.session import FateSession as TableManger
 # noinspection PyProtectedMember
 class FateSessionImpl(TableManger):
     """
-    manage RDDTable, use EggRoleStorage as storage
+    manage DTable, use EggRoleStorage as storage
     """
 
     def __init__(self, eggroll_session, work_mode):
