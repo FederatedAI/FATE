@@ -18,6 +18,7 @@ import typing
 
 from arch.api import session
 from arch.api.utils.log_utils import LoggerFactory
+from fate_flow.entity.metric import MetricType, MetricMeta, Metric
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
