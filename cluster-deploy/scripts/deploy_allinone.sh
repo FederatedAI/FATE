@@ -3,7 +3,8 @@ cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 packaging_dir=${cwd}/packaging
-output_packages_dir=${packaging_dir}/packages
+echo $(cd `dirname ${cwd}`;pwd)
+output_packages_dir=$(cd `dirname ${cwd}`;pwd)/packages
 
 modules=(fate_flow)
 
@@ -16,7 +17,7 @@ init() {
     rm -rf ${output_packages_dir}/*
     mkdir -p ${output_packages_dir}/source
     mkdir -p ${output_packages_dir}/config
-	for node_ip in "${nodes_ip[@]}"; do
+	for node_ip in "${node_list[@]}"; do
 	    mkdir -p ${output_packages_dir}/config/${node_ip}
 	done
 }
@@ -35,7 +36,7 @@ fate_flow() {
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
     sh install.sh package_source ./configurations.sh.tmp
-	for node_ip in "${nodes_ip[@]}"; do
+	for node_ip in "${node_list[@]}"; do
         sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
 	    sh install.sh config ./configurations.sh.tmp ${node_ip}
@@ -47,7 +48,7 @@ distribute() {
     tar czf source.tar.gz ./source
     echo "[INFO] distribute source and config"
     deploy_packages_dir=${deploy_dir}/packages
-	for node_ip in "${nodes_ip[@]}"; do
+	for node_ip in "${node_list[@]}"; do
 	    ssh -tt ${user}@${node_ip} << eeooff
 rm -rf ${deploy_packages_dir}
 mkdir -p ${deploy_packages_dir}/config
@@ -62,7 +63,7 @@ eeooff
 }
 
 install() {
-	for node_ip in "${nodes_ip[@]}"; do
+	for node_ip in "${node_list[@]}"; do
 	    ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 tar xzf source.tar.gz
