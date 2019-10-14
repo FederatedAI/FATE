@@ -429,7 +429,7 @@ class TaskScheduler(object):
                         cancel_success = True
                         schedule_logger(job_id).info(
                             'send {} {} {} job {} command successfully'.format(role, party_id, "cancel" if is_cancel else "kill", job_id))
-                        if cancel_success:
+                        if is_cancel:
                             break
                     else:
                         schedule_logger(job_id).info(
