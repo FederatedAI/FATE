@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='lr-model-param.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x14lr-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xc2\x02\n\x0cLRModelParam\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12P\n\x06weight\x18\x04 \x03(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.LRModelParam.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x12S\n\x12one_vs_rest_result\x18\x07 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.OneVsRestResult\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xeb\x01\n\x0bSingleModel\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12O\n\x06weight\x18\x04 \x03(\x0b\x32?.com.webank.ai.fate.core.mlmodel.buffer.SingleModel.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"}\n\x0fOneVsRestResult\x12M\n\x10\x63ompleted_models\x18\x01 \x03(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.SingleModel\x12\x1b\n\x13one_vs_rest_classes\x18\x02 \x03(\tB\x13\x42\x11LRModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x14lr-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xdc\x02\n\x0cLRModelParam\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12P\n\x06weight\x18\x04 \x03(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.LRModelParam.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x12S\n\x12one_vs_rest_result\x18\x07 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.OneVsRestResult\x12\x18\n\x10need_one_vs_rest\x18\x08 \x01(\x08\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xeb\x01\n\x0bSingleModel\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12O\n\x06weight\x18\x04 \x03(\x0b\x32?.com.webank.ai.fate.core.mlmodel.buffer.SingleModel.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"}\n\x0fOneVsRestResult\x12M\n\x10\x63ompleted_models\x18\x01 \x03(\x0b\x32\x33.com.webank.ai.fate.core.mlmodel.buffer.SingleModel\x12\x1b\n\x13one_vs_rest_classes\x18\x02 \x03(\tB\x13\x42\x11LRModelParamProtob\x06proto3')
 )
 
 
@@ -58,8 +58,8 @@ _LRMODELPARAM_WEIGHTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=342,
-  serialized_end=387,
+  serialized_start=368,
+  serialized_end=413,
 )
 
 _LRMODELPARAM = _descriptor.Descriptor(
@@ -118,6 +118,13 @@ _LRMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='need_one_vs_rest', full_name='com.webank.ai.fate.core.mlmodel.buffer.LRModelParam.need_one_vs_rest', index=7,
+      number=8, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -131,7 +138,7 @@ _LRMODELPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=65,
-  serialized_end=387,
+  serialized_end=413,
 )
 
 
@@ -168,8 +175,8 @@ _SINGLEMODEL_WEIGHTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=342,
-  serialized_end=387,
+  serialized_start=368,
+  serialized_end=413,
 )
 
 _SINGLEMODEL = _descriptor.Descriptor(
@@ -233,8 +240,8 @@ _SINGLEMODEL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=390,
-  serialized_end=625,
+  serialized_start=416,
+  serialized_end=651,
 )
 
 
@@ -271,8 +278,8 @@ _ONEVSRESTRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=627,
-  serialized_end=752,
+  serialized_start=653,
+  serialized_end=778,
 )
 
 _LRMODELPARAM_WEIGHTENTRY.containing_type = _LRMODELPARAM

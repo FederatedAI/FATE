@@ -125,7 +125,11 @@ class HomoLRHost(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
+
     def predict(self, data_instances):
+
+        LOGGER.info(f'Start predict task')
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
         suffix = ('predict',)

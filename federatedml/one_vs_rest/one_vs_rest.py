@@ -282,6 +282,7 @@ class HeteroOneVsRest(OneVsRest):
 
 
 def one_vs_rest_factory(classifier, role, mode, has_arbiter):
+    LOGGER.info("Create one_vs_rest object, role: {}, mode: {}".format(role, mode))
     if mode == consts.HOMO:
         return HomoOneVsRest(classifier, role, mode, has_arbiter)
     elif mode == consts.HETERO:
