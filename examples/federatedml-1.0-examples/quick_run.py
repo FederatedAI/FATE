@@ -45,8 +45,8 @@ TASK = 'train'
 # Put your data to /examples/data folder and indicate the data names here
 GUEST_DATA_SET = 'breast_b.csv'
 HOST_DATA_SET = 'breast_a.csv'
-# GUEST_DATA_SET = 'breast_homo_guest.csv'
-# HOST_DATA_SET = 'breast_homo_host.csv'
+# GUEST_DATA_SET = 'homo_breast_train_guest.csv'
+# HOST_DATA_SET = 'homo_breast_train_host.csv'
 
 # Define your party ids here
 GUEST_ID = 10000
