@@ -5,18 +5,25 @@ cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
 
-config_path=$2
+usage() {
+	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+}
+
+deploy_mode=$1
+config_path=$3
 if [[ ${config_path} == "" ]] || [[ ! -f ${config_path} ]]
 then
-	echo "usage: $0 {install} {configurations path}."
+	usage
 	exit
 fi
 source ${config_path}
 
+# deploy functions
 
-package_source() {
+package() {
+    # source code and apt
     cd ${output_packages_dir}/source
-	if [ -e "${module_name}" ]
+	if [[ -e "${module_name}" ]]
 	then
 		rm ${module_name}
 	fi
@@ -24,19 +31,10 @@ package_source() {
 	return 0
 }
 
-source_build() {
-    echo "[INFO][$module_name] build from source code"
-	return 0
-}
-
-build() {
-	return 0
-}
-
 config() {
-    node_label=$3
+    node_label=$4
 	cd ${output_packages_dir}/config/${node_label}
-	if [ -e "${module_name}" ]
+	if [[ -e "${module_name}" ]]
 	then
 		rm ${module_name}
 	fi
@@ -57,41 +55,35 @@ config() {
 	sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
 
 	cd ../
-    cp ${cwd}/install.sh ./
+    cp ${cwd}/deploy.sh ./
     cp ${cwd}/${config_path} ./configurations.sh
 	return 0
 }
 
 install () {
-    mkdir -p ${deploy_dir}/python/${module_name}
-    cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/python
-    cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/python/${module_name}
+    mkdir -p ${deploy_dir}/${module_name}
+    cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}
+    cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}
 }
 
 init (){
 	return 0
 }
 
-case "$1" in
-    package_source)
-        package_source $*
-        ;;
-    source_build)
-        source_build $*
-        ;;
-    build)
-        build $*
+case "$2" in
+    package)
+        package $*
         ;;
     config)
         config $*
         ;;
+    install)
+        install $*
+        ;;
     init)
         init $*
         ;;
-    install)
-        install $*
-        ;;		
 	*)
-		echo "usage: $0 {source_build|build|config|init|install} {configurations path}."
+	    usage
         exit -1
 esac

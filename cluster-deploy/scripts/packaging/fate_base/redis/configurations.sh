@@ -1,8 +1,10 @@
 #!/bin/bash
 
-#redis configurations
-redisdir=/data/app/redis
-redispass=fate_dev
-redisversion=5.0.2
+source_code_dir=
+output_packages_dir=
+deploy_dir=
+deploy_packages_dir=
+redis_password=
+redis_version=
 
 

@@ -19,7 +19,7 @@ status() {
 start() {
     getpid
     if [[ ${pid} == "" ]]; then
-        nohup $basepath/bin/redis-server $basepath/conf/redis.conf &
+        nohup $basepath/bin/redis-server redis.conf &
         if [[ $? -eq 0 ]]; then
             getpid
             echo "service start sucessfully. pid: ${pid}"

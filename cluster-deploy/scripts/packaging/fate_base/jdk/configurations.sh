@@ -1,9 +1,8 @@
 #!/bin/bash
 
-mysql_version=
-user=
+jdk_version=
 source_code_dir=
 output_packages_dir=
 deploy_dir=
 deploy_packages_dir=
-mysql_password=
+
