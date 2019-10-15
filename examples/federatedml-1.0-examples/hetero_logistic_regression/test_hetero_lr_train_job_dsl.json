@@ -61,7 +61,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "feature_scale_0.train"
+                        "hetero_feature_binning_0.transform_data"
                     ]
                 },
                 "isometric_model": [
@@ -73,11 +73,25 @@
                 "model": ["selected"]
             }
         },
+        "one_hot_encoder_0": {
+            "module": "OneHotEncoder",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["model"]
+            }
+        },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": ["hetero_feature_selection_0.train"]
+                    "train_data": ["one_hot_encoder_0.train"]
                 }
             },
             "output": {

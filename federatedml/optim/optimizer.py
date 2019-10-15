@@ -20,6 +20,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -52,6 +53,9 @@ class _Optimizer(object):
         raise NotImplementedError("Should not call here")
 
     def _l1_updator(self, model_weights: LinearModelWeights, gradient):
+        """
+        Use
+        """
         coef_ = model_weights.coef_
         if model_weights.fit_intercept:
             gradient_without_intercept = gradient[: -1]
@@ -88,9 +92,9 @@ class _Optimizer(object):
         return new_grad
 
     def regularization_update(self, model_weights: LinearModelWeights, grad):
-        if self.penalty == 'l1':
+        if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
-        elif self.penalty == 'l2':
+        elif self.penalty == consts.L2_PENALTY:
             model_weights = self._l2_updator(model_weights, grad)
         else:
             new_vars = model_weights.unboxed - grad
@@ -108,9 +112,9 @@ class _Optimizer(object):
         return loss_norm
 
     def loss_norm(self, model_weights: LinearModelWeights):
-        if self.penalty == 'l1':
+        if self.penalty == consts.L1_PENALTY:
             loss_norm_value = self.__l1_loss_norm(model_weights)
-        elif self.penalty == 'l2':
+        elif self.penalty == consts.L2_PENALTY:
             loss_norm_value = self.__l2_loss_norm(model_weights)
         else:
             loss_norm_value = None

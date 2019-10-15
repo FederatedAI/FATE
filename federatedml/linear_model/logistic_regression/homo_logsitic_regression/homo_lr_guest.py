@@ -101,7 +101,7 @@ class HomoLRGuest(HomoLRBase):
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-                                                                       {"1": x[0], "0": x[1]}])
+                                                                       {"1": x[0], "0": 1 - x[0]}])
         return predict_result
 
 
