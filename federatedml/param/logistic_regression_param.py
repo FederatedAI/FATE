@@ -104,7 +104,9 @@ class LogisticParam(BaseParam):
     def check(self):
         descr = "logistic_param's"
 
-        if self.penalty is not None and type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            pass
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
