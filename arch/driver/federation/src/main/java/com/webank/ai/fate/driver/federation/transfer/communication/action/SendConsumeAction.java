@@ -16,9 +16,9 @@
 
 package com.webank.ai.fate.driver.federation.transfer.communication.action;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.client.ProxyClient;
 import com.webank.ai.fate.driver.federation.transfer.manager.TransferMetaHelper;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;

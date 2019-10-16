@@ -18,9 +18,9 @@ package com.webank.ai.fate.driver.federation.transfer.utils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.constant.StringConstants;
+import com.webank.ai.eggroll.core.constant.StringConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

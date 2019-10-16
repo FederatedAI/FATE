@@ -17,14 +17,14 @@
 package com.webank.ai.fate.driver.federation.transfer.communication.producer;
 
 import com.google.protobuf.ByteString;
-import com.webank.ai.fate.api.core.BasicMeta;
-import com.webank.ai.fate.api.core.DataStructure;
+import com.webank.ai.eggroll.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.DataStructure;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.api.grpc.client.crud.StorageMetaClient;
-import com.webank.ai.fate.core.factory.ReturnStatusFactory;
-import com.webank.ai.fate.core.serdes.impl.KeyValueToRawEntrySerDes;
-import com.webank.ai.fate.core.utils.ErrorUtils;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.api.grpc.client.crud.StorageMetaClient;
+import com.webank.ai.eggroll.core.factory.ReturnStatusFactory;
+import com.webank.ai.eggroll.core.serdes.impl.KeyValueToRawEntrySerDes;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.KeyValueStoreFactory;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.utils.FederationServerUtils;
