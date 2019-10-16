@@ -112,9 +112,9 @@ class TaskExecutor(object):
                                           initiator_role=job_initiator.get('role', None),
                                           task_info=task.to_json())
 
-            schedule_logger(job_id).info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger(job_id).info(parameters)
-            schedule_logger(job_id).info(task_input_dsl)
+            schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
+            schedule_logger().info(parameters)
+            schedule_logger().info(task_input_dsl)
             run_object.run(parameters, task_run_args)
             if task_output_dsl:
                 if task_output_dsl.get('data', []):
@@ -127,7 +127,7 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
             traceback.print_exc()
-            schedule_logger(job_id).exception(e)
+            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
         finally:
             try:
@@ -141,8 +141,8 @@ class TaskExecutor(object):
                                               task_info=task.to_json())
             except Exception as e:
                 traceback.print_exc()
-                schedule_logger(job_id).exception(e)
-        schedule_logger(job_id).info(
+                schedule_logger().exception(e)
+        schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
 
