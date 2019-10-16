@@ -30,18 +30,18 @@ class RDDTable(Table):
 
     # noinspection PyProtectedMember
     @classmethod
-    def from_dtable(cls, job_id: str, dtable):
+    def from_dtable(cls, session_id: str, dtable):
         namespace = dtable._namespace
         name = dtable._name
         partitions = dtable._partitions
-        return RDDTable(job_id=job_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
+        return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
 
     @classmethod
     def from_rdd(cls, rdd: RDD, job_id: str, namespace: str, name: str):
         partitions = rdd.getNumPartitions()
-        return RDDTable(job_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
+        return RDDTable(session_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
 
-    def __init__(self, job_id: str,
+    def __init__(self, session_id: str,
                  namespace: str,
                  name: str = None,
                  partitions: int = 1,
@@ -56,7 +56,7 @@ class RDDTable(Table):
         self.schema = {}
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace
-        self._job_id = job_id
+        self._session_id = session_id
 
     def get_name(self):
         return self._name
@@ -76,7 +76,7 @@ class RDDTable(Table):
         """
         rdd = materialize(rdd)
         name = name or str(uuid.uuid1())
-        return RDDTable(job_id=self._job_id,
+        return RDDTable(session_id=self._session_id,
                         namespace=self._namespace,
                         name=name,
                         partitions=rdd.getNumPartitions(),
@@ -277,7 +277,7 @@ class RDDTable(Table):
         partition = partition or self._partitions
         if self._dtable:
             _dtable = self._dtable.save_as(name, namespace, partition, use_serialize=use_serialize)
-            return RDDTable.from_dtable(job_id=self._job_id, dtable=_dtable)
+            return RDDTable.from_dtable(session_id=self._session_id, dtable=_dtable)
         else:
             from arch.api.table.pyspark.rdd_func import _save_as_func
             return _save_as_func(self._rdd, name=name, namespace=namespace, partition=partition, persistent=persistent)

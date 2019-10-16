@@ -153,6 +153,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._parse_cols(data_instances)
 
         iv_attrs = self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+        for key, iv_attr in iv_attrs.items():
+            LOGGER.debug('col: {}, local iv result: {}'.format(key, iv_attr.result_dict()))
         self.binning_result = iv_attrs
         self.set_schema(data_instances)
         return data_instances

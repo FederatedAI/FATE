@@ -1,0 +1,14 @@
+numpy
+torchvision
+matplotlib
+terminaltables
+pillow
+tqdm
+sklearn
+socketIO_client
+flask
+flask_socketio
+scikit_image
+torchnet
+scipy
+cupy

@@ -96,6 +96,9 @@ class Evaluation(ModelBase):
         self.pos_label = self.model_param.pos_label
 
     def _run_data(self, data_sets=None, stage=None):
+        if not self.need_run:
+            return
+
         data = {}
         for data_key in data_sets:
             if data_sets[data_key].get("data", None):
@@ -148,7 +151,7 @@ class Evaluation(ModelBase):
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
-            if res:
+            if res is not None:
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 

@@ -61,8 +61,8 @@ class RedisQueue(BaseQueue):
             stat_logger.info('get event from redis queue: {}'.format(event))
             return event
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('get event from redis queue failed')
+            stat_logger.exception(e)
             return None
 
     def is_ready(self):
@@ -75,8 +75,9 @@ class RedisQueue(BaseQueue):
             ret = conn.lpush(self.queue_name, json.dumps(event))
             stat_logger.info('put event into redis queue {}: {}'.format('successfully' if ret else 'failed', event))
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('put event into redis queue failed')
+            stat_logger.exception(e)
+            raise e
 
     def del_event(self, event):
         try:
@@ -84,10 +85,10 @@ class RedisQueue(BaseQueue):
             ret = conn.lrem(self.queue_name, 1, json.dumps(event))
             stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
             if not ret:
-                raise Exception('delete event from redis queue failed:job not in redis queue')
+                raise Exception('job not in redis queue')
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('delete event from redis queue failed')
+            stat_logger.exception(e)
             raise Exception('delete event from redis queue failed')
 
     def parse_event(self, content):
@@ -120,8 +121,9 @@ class InProcessQueue(BaseQueue):
             self.queue.put(event)
             stat_logger.info('put event into in-process queue successfully: {}'.format(event))
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('put event into in-process queue failed')
+            stat_logger.exception(e)
+            raise e
 
     def get_event(self):
         try:
@@ -129,8 +131,8 @@ class InProcessQueue(BaseQueue):
             stat_logger.info('get event from in-process queue successfully: {}'.format(event))
             return event
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('get event from in-process queue failed')
+            stat_logger.exception(e)
             return None
 
     def qsize(self):
@@ -154,8 +156,9 @@ class ListQueue(BaseQueue):
             self.put(event)
             stat_logger.info('put event into in-process queue successfully: {}'.format(event))
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('put event into in-process queue failed')
+            stat_logger.exception(e)
+            raise e
 
     def get_event(self):
         try:
@@ -163,8 +166,8 @@ class ListQueue(BaseQueue):
             stat_logger.info('get event from in-process queue successfully: {}'.format(event))
             return event
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('get event from in-process queue failed')
+            stat_logger.exception(e)
             return None
 
     def del_event(self, event):
@@ -172,10 +175,9 @@ class ListQueue(BaseQueue):
             ret = self.dell(event)
             stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
         except Exception as e:
-            stat_logger.exception(e)
             stat_logger.error('delete event from  queue failed')
+            stat_logger.exception(e)
             raise Exception('{} not in ListQueue'.format(event))
-
 
     def dell(self, event):
         with self.not_empty:

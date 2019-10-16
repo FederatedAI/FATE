@@ -125,7 +125,11 @@ class HomoLRHost(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
+
     def predict(self, data_instances):
+
+        LOGGER.info(f'Start predict task')
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
         suffix = ('predict',)
@@ -151,17 +155,6 @@ class HomoLRHost(HomoLRBase):
         return predict_result
 
     def _get_param(self):
-        if self.need_one_vs_rest:
-            one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
-            param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
-                                                                 loss_history=self.loss_history,
-                                                                 is_converged=self.is_converged,
-                                                                 weight={},
-                                                                 intercept=0,
-                                                                 need_one_vs_rest=self.need_one_vs_rest,
-                                                                 one_vs_rest_classes=one_vs_rest_class)
-            return param_protobuf_obj
-
         header = self.header
 
         weight_dict = {}
@@ -178,7 +171,6 @@ class HomoLRHost(HomoLRBase):
                                                              is_converged=self.is_converged,
                                                              weight=weight_dict,
                                                              intercept=intercept,
-                                                             need_one_vs_rest=self.need_one_vs_rest,
                                                              header=header)
         from google.protobuf import json_format
         json_result = json_format.MessageToJson(param_protobuf_obj)

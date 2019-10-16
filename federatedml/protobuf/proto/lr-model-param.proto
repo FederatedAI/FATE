@@ -27,6 +27,7 @@ message LRModelParam {
     double intercept = 5;
     repeated string header = 6;
     OneVsRestResult one_vs_rest_result = 7;
+    bool need_one_vs_rest = 8;
 }
 
 message SingleModel {

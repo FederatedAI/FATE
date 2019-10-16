@@ -29,6 +29,7 @@ import psutil
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -100,22 +101,38 @@ def new_runtime_conf(job_dir, method, module, role, party_id):
     return os.path.join(conf_path_dir, 'runtime_conf.json')
 
 
-def save_job_conf(job_id, job_dsl, job_runtime_conf):
-    job_dsl_path, job_runtime_conf_path = get_job_conf_path(job_id=job_id)
-    os.makedirs(os.path.dirname(job_dsl_path), exist_ok=True)
-    for data, conf_path in [(job_dsl, job_dsl_path), (job_runtime_conf, job_runtime_conf_path)]:
+def save_job_conf(job_id, job_dsl, job_runtime_conf, train_runtime_conf, pipeline_dsl):
+    path_dict = get_job_conf_path(job_id=job_id)
+    os.makedirs(os.path.dirname(path_dict.get('job_dsl_path')), exist_ok=True)
+    for data, conf_path in [(job_dsl, path_dict['job_dsl_path']), (job_runtime_conf, path_dict['job_runtime_conf_path']),
+                            (train_runtime_conf, path_dict['train_runtime_conf_path']), (pipeline_dsl, path_dict['pipeline_dsl_path'])]:
         with open(conf_path, 'w+') as f:
             f.truncate()
+            if not data:
+                data = {}
             f.write(json.dumps(data, indent=4))
             f.flush()
-    return job_dsl_path, job_runtime_conf_path
+    return path_dict
 
 
 def get_job_conf_path(job_id):
     job_dir = get_job_directory(job_id)
     job_dsl_path = os.path.join(job_dir, 'job_dsl.json')
     job_runtime_conf_path = os.path.join(job_dir, 'job_runtime_conf.json')
-    return job_dsl_path, job_runtime_conf_path
+    train_runtime_conf_path = os.path.join(job_dir, 'train_runtime_conf.json')
+    pipeline_dsl_path = os.path.join(job_dir, 'pipeline_dsl.json')
+    return {'job_dsl_path': job_dsl_path,
+            'job_runtime_conf_path': job_runtime_conf_path,
+            'train_runtime_conf_path': train_runtime_conf_path,
+            'pipeline_dsl_path': pipeline_dsl_path}
+
+
+def get_job_conf(job_id):
+    conf_dict = {}
+    for key, path in get_job_conf_path(job_id).items():
+        config = file_utils.load_json_conf(path)
+        conf_dict[key] = config
+    return conf_dict
 
 
 def get_job_dsl_parser_by_job_id(job_id):
@@ -362,6 +379,29 @@ def job_server_routing(routing_type=0):
             return func(*args, **kwargs)
         return _wrapper
     return _out_wrapper
+
+
+def get_timeout(job_id, timeout, runtime_conf, dsl):
+    try:
+        if timeout > 0:
+            schedule_logger(job_id).info('setting job {} timeout {}'.format(job_id, timeout))
+            return timeout
+        else:
+            default_timeout = job_default_timeout(runtime_conf, dsl)
+            schedule_logger(job_id).info('setting job {} timeout {} not a positive number, using the default timeout {}'.format(
+                job_id, timeout, default_timeout))
+            return default_timeout
+    except:
+        default_timeout = job_default_timeout(runtime_conf, dsl)
+        schedule_logger(job_id).info('setting job {} timeout {} is incorrect, using the default timeout {}'.format(
+            job_id, timeout, default_timeout))
+        return default_timeout
+
+
+def job_default_timeout(runtime_conf, dsl):
+    # future versions will improve
+    timeout = 60*60*24*7
+    return timeout
 
 
 def job_event(job_id, initiator_role,  initiator_party_id):

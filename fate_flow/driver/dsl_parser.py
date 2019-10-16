@@ -37,7 +37,6 @@ class Component(object):
         self.name = None
         self.upstream = []
         self.downstream = []
-        self.parameters = {}
         self.role_parameters = {}
         self.input = {}
         self.output = {}
@@ -65,9 +64,6 @@ class Component(object):
 
     def get_downstream(self):
         return self.downstream
-
-    def get_parameters(self):
-        return self.parameters
 
     def set_name(self, name):
         self.name = name
@@ -98,6 +94,7 @@ class DSLParser(object):
         self.component_downstream = []
         self.component_upstream_data_relation_set = set()
         self.component_upstream_model_relation_set = set()
+        self.train_input_model = {}
         self.in_degree = []
         self.topo_rank = []
         self.predict_dsl = {}
@@ -107,6 +104,7 @@ class DSLParser(object):
         self.pipeline_module_alias = None
         self.setting_conf_prefix = None
         self.graph_dependency = None
+        self.args_input = None
 
     def _init_components(self, pipeline_dsl=None, mode="train"):
         components = self.dsl.get("components")
@@ -149,17 +147,22 @@ class DSLParser(object):
         """
         init top input
         """
-        # self.args_input = parameter_util.ParameterOverride.get_args_input(runtime_conf, module="args")
+        for i in range(len(self.topo_rank)):
+            idx = self.topo_rank[i]
+            name = self.components[idx].get_name()
+            if self.train_input_model.get(name, None) is None:
+                module = self.components[idx].get_module()
+                role_parameters = parameter_util.ParameterUtil.override_parameter(default_runtime_conf_prefix,
+                                                                                  setting_conf_prefix,
+                                                                                  runtime_conf,
+                                                                                  module,
+                                                                                  name)
 
-        for component in self.components:
-            module = component.get_module()
-            name = component.get_name()
-            role_parameters = parameter_util.ParameterUtil.override_parameter(default_runtime_conf_prefix,
-                                                                              setting_conf_prefix,
-                                                                              runtime_conf,
-                                                                              module,
-                                                                              name)
-            component.set_role_parameters(role_parameters)
+                self.components[idx].set_role_parameters(role_parameters)
+            else:
+                up_component = self.train_input_model.get(name)
+                up_idx = self.component_name_index.get(up_component)
+                self.components[idx].set_role_parameters(self.components[up_idx].get_role_parameters())
 
     def _check_component_valid_names(self):
         occur_times = {}
@@ -202,7 +205,6 @@ class DSLParser(object):
                                  "and be consecutive for same module")
 
     def _find_dependencies(self, pipeline_dsl=None, mode="train"):
-        # self.in_degree = [0 for i in range(len(self.components))]
         self.component_downstream = [[] for i in range(len(self.components))]
         self.component_upstream = [[] for i in range(len(self.components))]
 
@@ -260,6 +262,9 @@ class DSLParser(object):
                                 self.component_upstream[idx].append(module_name)
                                 self.component_upstream_model_relation_set.add((name, module_name))
 
+                                if model_key == "model":
+                                    self.train_input_model[name] = module_name
+
             if "data" in upstream_input:
                 data_dict = upstream_input.get("data")
                 for data_set in data_dict:
@@ -273,7 +278,6 @@ class DSLParser(object):
                                 raise ValueError("If use pipeline, pipiline dsl should not be None")
                             end_data_module = self._get_end_of_pipeline_dsl(pipeline_dsl)
                             idx_dependendy = self.component_name_index.get(end_data_module)
-                            # self.in_degree[idx] += 1
                             self.component_downstream[idx_dependendy].append(name)
                             self.component_upstream[idx].append(end_data_module)
                             self.component_upstream_data_relation_set.add((name, end_data_module))
@@ -285,7 +289,6 @@ class DSLParser(object):
                                 raise ValueError("Only can use pipeline's data in the end")
 
                             idx_dependendy = self.component_name_index.get(module_name)
-                            # self.in_degree[idx] += 1
                             self.component_downstream[idx_dependendy].append(name)
                             self.component_upstream[idx].append(module_name)
                             self.component_upstream_data_relation_set.add((name, module_name))
@@ -441,23 +444,30 @@ class DSLParser(object):
             self.graph_dependency[role] = {}
             dependency_list = [copy.deepcopy(base_dependency) for i in range(len(runtime_conf["role"].get(role)))]
 
-            for component in self.components:
-                name = component.get_name()
-                module = component.get_module()
-                parameters = component.get_role_parameters()
+            for rank in range(len(self.topo_rank)):
+                idx = self.topo_rank[rank]
+                name = self.components[idx].get_name()
+                module = self.components[idx].get_module()
+                parameters = self.components[idx].get_role_parameters()
 
                 if role not in parameters:
                     for i in range(len(dependency_list)):
                         dependency_list[i]["component_need_run"][name] = False
                 else:
-                    param_class = parameter_util.ParameterUtil.get_param_class_name(self.setting_conf_prefix,
-                                                                                    module)
-                    for i in range(len(dependency_list)):
-                        if parameters[role][i].get(param_class) is None \
-                                or parameters[role][i][param_class].get("need_run") is False:
-                            dependency_list[i]["component_need_run"][name] = False
-                        else:
-                            dependency_list[i]["component_need_run"][name] = True
+                    if self.train_input_model.get(name, None) is None:
+                        param_class = parameter_util.ParameterUtil.get_param_class_name(self.setting_conf_prefix,
+                                                                                        module)
+                        for i in range(len(dependency_list)):
+                            if parameters[role][i].get(param_class) is None \
+                                    or parameters[role][i][param_class].get("need_run") is False:
+                                dependency_list[i]["component_need_run"][name] = False
+                            else:
+                                dependency_list[i]["component_need_run"][name] = True
+                    else:
+                        input_model_name = self.train_input_model.get(name)
+                        for i in range(len(dependency_list)):
+                            dependency_list[i]["component_need_run"][name] = dependency_list[i]["component_need_run"][
+                                input_model_name]
 
             for i in range(len(runtime_conf["role"].get(role))):
                 party_id = runtime_conf["role"].get(role)[i]
@@ -620,7 +630,6 @@ class DSLParser(object):
         self.args_input = parameter_util.ParameterUtil.get_args_input(runtime_conf, module="args")
 
         if mode == "train":
-            # if pipeline_runtime_conf is None and pipeline_dsl is None:
             self._auto_deduction(setting_conf_prefix)
 
         self.prepare_graph_dependency_info()
@@ -641,7 +650,6 @@ class DSLParser(object):
 
     def get_predict_dsl(self, role):
         return self.gen_predict_dsl_by_role(role)
-        # return self.predict_dsl
 
     def gen_predict_dsl_by_role(self, role):
         if not self.predict_dsl:

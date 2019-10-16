@@ -47,29 +47,24 @@ class Upload(object):
             namespace = _namespace
         if table_name is None:
             table_name = _table_name
-        session.init(mode=self.parameters['work_mode'])
         read_head = self.parameters['head']
-        head = True
         if read_head == 0:
             head = False
         elif read_head == 1:
             head = True
         else:
-            print("'head' in .json should be 0 or 1, set head to 1")
+            raise Exception("'head' in conf.json should be 0 or 1")
         partition = self.parameters["partition"]
-        try:
-            if partition <=0 or partition >= self.MAX_PARTITION_NUM :
-                print("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-        except:
-            print("set partition to 1")
-            self.parameters["partition"] = 1
+        if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
+            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         input_data = self.read_data(table_name, namespace, head)
+        session.init(mode=self.parameters['work_mode'])
         data_table = session.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
-        print("------------load data finish!-----------------")
-        print("file: {}".format(self.parameters["file"]))
-        print("total data_count: {}".format(data_table.count()))
-        print("table name: {}, table namespace: {}".format(table_name, namespace))
+        LOGGER.info("------------load data finish!-----------------")
+        LOGGER.info("file: {}".format(self.parameters["file"]))
+        LOGGER.info("total data_count: {}".format(data_table.count()))
+        LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
 
     def set_taskid(self, taskid):
         self.taskid = taskid
@@ -80,6 +75,7 @@ class Upload(object):
     def read_data(self, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
         split_file_name = input_file.split('.')
+        data = list()
         if 'csv' in split_file_name:
             with open(input_file) as csv_file:
                 csv_reader = csv.reader(csv_file)
@@ -88,7 +84,7 @@ class Upload(object):
                     self.save_data_header(','.join(data_head), dst_table_name, dst_table_namespace)
 
                 for row in csv_reader:
-                    yield (row[0], self.list_to_str(row[1:]))
+                    data.append((row[0], self.list_to_str(row[1:])))
         else:
             with open(input_file, 'r') as fin:
                 if head is True:
@@ -98,13 +94,15 @@ class Upload(object):
                 lines = fin.readlines()
                 for line in lines:
                     values = line.replace("\n", "").replace("\t", ",").split(",")
-                    yield (values[0], self.list_to_str(values[1:]))
+                    data.append((values[0], self.list_to_str(values[1:])))
+        return data
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
         session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
                                      dst_table_name,
                                      dst_table_namespace)
+
 
     def list_to_str(self, input_list):
         return ','.join(list(map(str, input_list)))

@@ -35,6 +35,7 @@ def load_model():
     request_config = request.json
     _job_id = generate_job_id()
     initiator_party_id = request_config['initiator']['party_id']
+    initiator_role = request_config['initiator']['role']
     publish_model.generate_publish_model_info(request_config)
     load_status = True
     load_status_info = {}
@@ -51,6 +52,7 @@ def load_model():
                                          endpoint='/{}/model/load/do'.format(API_VERSION),
                                          src_party_id=initiator_party_id,
                                          dest_party_id=_party_id,
+                                         src_role = initiator_role,
                                          json_body=request_config,
                                          work_mode=request_config['job_parameters']['work_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']

@@ -17,10 +17,10 @@
 package com.webank.ai.fate.driver.federation.transfer.communication.processor;
 
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.api.grpc.client.crud.ClusterMetaClient;
-import com.webank.ai.fate.core.api.grpc.client.crud.StorageMetaClient;
-import com.webank.ai.fate.core.utils.ErrorUtils;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.api.grpc.client.crud.ClusterMetaClient;
+import com.webank.ai.eggroll.core.api.grpc.client.crud.StorageMetaClient;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.manager.TransferMetaHelper;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;

@@ -16,8 +16,8 @@
 
 package com.webank.ai.fate.driver.federation.utils;
 
-import com.webank.ai.fate.api.core.BasicMeta;
-import com.webank.ai.fate.core.server.ServerConf;
+import com.webank.ai.eggroll.api.core.BasicMeta;
+import com.webank.ai.eggroll.core.server.ServerConf;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

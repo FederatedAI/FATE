@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='feature-selection-param.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x1d\x66\x65\x61ture-selection-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xa5\x01\n\x0c\x46\x65\x61tureValue\x12_\n\x0e\x66\x65\x61ture_values\x18\x01 \x03(\x0b\x32G.com.webank.ai.fate.core.mlmodel.buffer.FeatureValue.FeatureValuesEntry\x1a\x34\n\x12\x46\x65\x61tureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xa5\x01\n\x08LeftCols\x12\x15\n\roriginal_cols\x18\x01 \x03(\t\x12Q\n\tleft_cols\x18\x02 \x03(\x0b\x32>.com.webank.ai.fate.core.mlmodel.buffer.LeftCols.LeftColsEntry\x1a/\n\rLeftColsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\"\xdc\x05\n\x1b\x46\x65\x61tureSelectionFilterParam\x12n\n\x0e\x66\x65\x61ture_values\x18\x01 \x03(\x0b\x32V.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.FeatureValuesEntry\x12w\n\x13host_feature_values\x18\x02 \x03(\x0b\x32Z.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.HostFeatureValuesEntry\x12\x43\n\tleft_cols\x18\x03 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols\x12m\n\x0ehost_left_cols\x18\x04 \x03(\x0b\x32U.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.HostLeftColsEntry\x12\x13\n\x0b\x66ilter_name\x18\x05 \x01(\t\x1a\x34\n\x12\x46\x65\x61tureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1an\n\x16HostFeatureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x43\n\x05value\x18\x02 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.FeatureValue:\x02\x38\x01\x1a\x65\n\x11HostLeftColsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12?\n\x05value\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols:\x02\x38\x01\"\xe3\x01\n\x15\x46\x65\x61tureSelectionParam\x12T\n\x07results\x18\x01 \x03(\x0b\x32\x43.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam\x12I\n\x0f\x66inal_left_cols\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols\x12\x11\n\tcol_names\x18\x03 \x03(\t\x12\x16\n\x0ehost_col_names\x18\x04 \x03(\tB\x1c\x42\x1a\x46\x65\x61tureSelectionParamProtob\x06proto3')
+  serialized_pb=_b('\n\x1d\x66\x65\x61ture-selection-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xa5\x01\n\x0c\x46\x65\x61tureValue\x12_\n\x0e\x66\x65\x61ture_values\x18\x01 \x03(\x0b\x32G.com.webank.ai.fate.core.mlmodel.buffer.FeatureValue.FeatureValuesEntry\x1a\x34\n\x12\x46\x65\x61tureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xa5\x01\n\x08LeftCols\x12\x15\n\roriginal_cols\x18\x01 \x03(\t\x12Q\n\tleft_cols\x18\x02 \x03(\x0b\x32>.com.webank.ai.fate.core.mlmodel.buffer.LeftCols.LeftColsEntry\x1a/\n\rLeftColsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\"\xdc\x05\n\x1b\x46\x65\x61tureSelectionFilterParam\x12n\n\x0e\x66\x65\x61ture_values\x18\x01 \x03(\x0b\x32V.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.FeatureValuesEntry\x12w\n\x13host_feature_values\x18\x02 \x03(\x0b\x32Z.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.HostFeatureValuesEntry\x12\x43\n\tleft_cols\x18\x03 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols\x12m\n\x0ehost_left_cols\x18\x04 \x03(\x0b\x32U.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam.HostLeftColsEntry\x12\x13\n\x0b\x66ilter_name\x18\x05 \x01(\t\x1a\x34\n\x12\x46\x65\x61tureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1an\n\x16HostFeatureValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x43\n\x05value\x18\x02 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.FeatureValue:\x02\x38\x01\x1a\x65\n\x11HostLeftColsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12?\n\x05value\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols:\x02\x38\x01\"\xf3\x01\n\x15\x46\x65\x61tureSelectionParam\x12T\n\x07results\x18\x01 \x03(\x0b\x32\x43.com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionFilterParam\x12I\n\x0f\x66inal_left_cols\x18\x02 \x01(\x0b\x32\x30.com.webank.ai.fate.core.mlmodel.buffer.LeftCols\x12\x11\n\tcol_names\x18\x03 \x03(\t\x12\x16\n\x0ehost_col_names\x18\x04 \x03(\t\x12\x0e\n\x06header\x18\x05 \x03(\tB\x1c\x42\x1a\x46\x65\x61tureSelectionParamProtob\x06proto3')
 )
 
 
@@ -373,6 +373,13 @@ _FEATURESELECTIONPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='header', full_name='com.webank.ai.fate.core.mlmodel.buffer.FeatureSelectionParam.header', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -386,7 +393,7 @@ _FEATURESELECTIONPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1145,
-  serialized_end=1372,
+  serialized_end=1388,
 )
 
 _FEATUREVALUE_FEATUREVALUESENTRY.containing_type = _FEATUREVALUE

@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 from arch.api.utils.core import get_lan_ip
-from fate_flow.settings import detect_logger, API_VERSION, schedule_logger
+from arch.api.utils.log_utils import schedule_logger
+from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 
 
@@ -39,7 +40,7 @@ class JobDetector(cron.Cron):
                 except Exception as e:
                     detect_logger.exception(e)
             if stop_job_ids:
-                schedule_logger.info('start to stop jobs: {}'.format(stop_job_ids))
+                schedule_logger().info('start to stop jobs: {}'.format(stop_job_ids))
             for job_id in stop_job_ids:
                 jobs = job_utils.query_job(job_id=job_id)
                 if jobs:
@@ -51,11 +52,16 @@ class JobDetector(cron.Cron):
                     else:
                         my_party_id = jobs[0].f_party_id
                         initiator_party_id = jobs[0].f_initiator_party_id
-                    api_utils.local_api(method='POST',
-                                        endpoint='/{}/job/stop'.format(
-                                            API_VERSION),
-                                        json_body={'job_id': job_id})
-                    schedule_logger.info('send stop job {} command'.format(job_id))
+                    api_utils.federated_api(job_id=job_id,
+                                            method='POST',
+                                            endpoint='/{}/job/stop'.format(
+                                                API_VERSION),
+                                            src_party_id=my_party_id,
+                                            dest_party_id=initiator_party_id,
+                                            src_role=None,
+                                            json_body={'job_id': job_id},
+                                            work_mode=job_work_mode)
+                    schedule_logger(job_id).info('send stop job {} command'.format(job_id))
         except Exception as e:
             detect_logger.exception(e)
         finally:

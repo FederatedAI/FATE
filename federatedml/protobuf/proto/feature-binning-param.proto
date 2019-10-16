@@ -46,5 +46,5 @@ message FeatureBinningResult {
 message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
     map<string, FeatureBinningResult> host_results = 2;
-
+    repeated string header = 3;
 }
