@@ -179,7 +179,7 @@ Job visualization provides overviews of the overall execution of the job, visual
 
 The job workflow of federated learning modeling is easy to understand, which can help you track the running progress intuitively. For each role, you may see your own graph in the federated learning modeling. 
 <div style="text-align:center", align=center>
-<img src="./images/job_detail.png" />
+<img src="./images/JobDetail.png" />
 </div>
 
 **Visualizing the model graph**
