@@ -14,24 +14,11 @@
                 "model": ["dataio"]
             }
          },
-         "intersection_0": {
-             "module": "Intersection",
-             "input": {
-                 "data": {
-                     "data": [
-                         "dataio_0.train"
-                     ]
-                 }
-             },
-             "output": {
-                 "data": ["train"]
-             }
-         },
         "hetero_linr_0": {
             "module": "HeteroLinR",
             "input": {
                 "data": {
-                    "train_data": ["intersection_0.train"]
+                    "train_data": ["dataio_0.train"]
                 }
             },
             "output": {

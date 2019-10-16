@@ -23,15 +23,15 @@
         "data": {
           "train_data": [
             {
-              "name": "student_b",
-              "namespace": "student"
+              "name": "insurance_b",
+              "namespace": "insurance"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["y"],
+        "label_name": ["charges"],
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -91,8 +91,8 @@
         "data": {
           "train_data": [
             {
-              "name": "student_a",
-              "namespace": "student"
+              "name": "insurance_a",
+              "namespace": "insurance"
             }
           ]
         }
