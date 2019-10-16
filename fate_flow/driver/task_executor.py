@@ -93,7 +93,7 @@ class TaskExecutor(object):
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = os.getpid()
             run_class_paths = parameters.get('CodePath').split('/')
-            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].rstrip('.py')
+            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
             run_class_name = run_class_paths[-1]
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            job_parameters=job_parameters, job_args=job_args,
