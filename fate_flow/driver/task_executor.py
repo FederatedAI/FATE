@@ -116,14 +116,11 @@ class TaskExecutor(object):
             schedule_logger().info(parameters)
             schedule_logger().info(task_input_dsl)
             run_object.run(parameters, task_run_args)
-            if task_output_dsl:
-                if task_output_dsl.get('data', []):
-                    output_data = run_object.save_data()
-                    tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0])
-                if task_output_dsl.get('model', []):
-                    output_model = run_object.export_model()
-                    # There is only one model output at the current dsl version.
-                    tracker.save_output_model(output_model, task_output_dsl['model'][0])
+            output_data = run_object.save_data()
+            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else None)
+            output_model = run_object.export_model()
+            # There is only one model output at the current dsl version.
+            tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else None)
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
             traceback.print_exc()

@@ -110,3 +110,9 @@ class Upload(object):
         file_name = input_file_path.split(".")[0]
         file_name = file_name.split("/")[-1]
         return file_name, str_time
+
+    def save_data(self):
+        return None
+
+    def export_model(self):
+        return None
