@@ -227,7 +227,7 @@ def search_component(path):
 def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
     initiator = runtime_conf['initiator']
     roles = runtime_conf['role']
-    if 'local' not in roles:
+    if 'local' not in roles or str(party_id) != str(src_party_id):
         if set(roles['host']) & set(roles['guest']):
             stat_logger.info('host {} became guest'.format(set(roles['host']) & set(roles['guest'])))
             raise Exception('host {} can not be used as guest'.format(set(roles['host']) & set(roles['guest'])))
