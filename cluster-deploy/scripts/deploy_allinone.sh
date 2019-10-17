@@ -5,7 +5,7 @@ source ./default_configurations.sh
 source ./allinone_configurations.sh
 
 deploy_modes=(apt build)
-support_modules=(mysql)
+support_modules=(jdk python mysql redis fate_flow federatedml)
 base_modules=(jdk jdk mysql redis)
 
 deploy_mode=$1
