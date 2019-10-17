@@ -104,12 +104,14 @@ class LogisticParam(BaseParam):
     def check(self):
         descr = "logistic_param's"
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            pass
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'none']:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
@@ -228,6 +230,8 @@ class HomoLogisticParam(LogisticParam):
             if self.optimizer != 'sgd':
                 raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
 
+            if self.penalty == consts.L1_PENALTY:
+                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
         return True
 
 
