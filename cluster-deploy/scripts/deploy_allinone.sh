@@ -5,7 +5,7 @@ source ./default_configurations.sh
 source ./allinone_configurations.sh
 
 deploy_modes=(apt build)
-support_modules=(federatedml)
+support_modules=(mysql)
 base_modules=(jdk jdk mysql redis)
 
 deploy_mode=$1
@@ -27,6 +27,22 @@ else
     echo "[INFO] can not support this deploy mode ${deploy_mode}"
     exit 1
 fi
+
+init_env() {
+    if [[ "${deploy_mode}" == "apt" ]]; then
+        # TODO: All modules support apt deployment mode and need to be removed here.
+        for node_ip in "${node_list[@]}"; do
+	        scp ${cwd}/packaging/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
+	        ssh -tt ${user}@${node_ip} << eeooff
+cd ${deploy_packages_dir}
+sh env.sh
+exit
+eeooff
+        done
+    elif [[ "${deploy_mode}" == "build" ]]; then
+        echo "not support"
+    fi
+}
 
 deploy_jdk() {
     pwd
@@ -158,6 +174,7 @@ eeooff
 }
 
 all() {
+    init_env
 	for module in "${support_modules[@]}"; do
         echo
 		echo "[INFO] ${module} is packaging:"
