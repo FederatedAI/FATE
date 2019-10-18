@@ -39,7 +39,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
     def fit(self, data_instances, validate_data=None):
         """
-        Train linR model of role guest
+        Train poisson model of role guest
         Parameters
         ----------
         data_instances: DTable of Instance, input data
@@ -127,6 +127,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         header = data_instances.schema.get("header")
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
+
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 
