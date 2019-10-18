@@ -159,12 +159,12 @@
       "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 2,
+      "max_iter": 10,
       "early_stop": "weight_diff",
       "decay": 10,
       "batch_size": -1,
       "learning_rate": 0.01,
-      "exposure_colname": "hscore",
+      "exposure_colname": "exposure",
       "init_param": {
         "init_method": "const",
         "init_const": 0
