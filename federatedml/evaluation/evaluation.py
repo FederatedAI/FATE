@@ -488,6 +488,7 @@ class Evaluation(ModelBase):
         float
             The R^2 score
         """
+        LOGGER.debug("R2 score is: {}".format(r2_score(labels, pred_scores)))
         return r2_score(labels, pred_scores)
 
     def root_mean_squared_error(self, labels, pred_scores):

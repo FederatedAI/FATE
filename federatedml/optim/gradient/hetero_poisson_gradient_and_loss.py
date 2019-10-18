@@ -41,7 +41,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                        batch_index, offset=None):
         """
         Compute gradients:
-        gradient = (1/N)*\sum(exp(wx) -y)*x
+        gradient = (1/N)*\sum(exp(wx) - y) * x
 
         Define exp(wx) as mu, named it as guest_forward or host_forward
         Define (mu-y) as fore_gradient
@@ -140,7 +140,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(model_weights.coef_)
+        loss_regular = optimizer.loss_norm(model_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 

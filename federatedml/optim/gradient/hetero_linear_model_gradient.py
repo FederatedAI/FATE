@@ -254,19 +254,14 @@ class Arbiter(object):
 
         grad = np.array(cipher_operator.decrypt_list(gradient))
 
-        LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
-            grad, size_list
-        ))
+        #LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(grad, size_list))
 
         delta_grad = optimizer.apply_gradients(grad)
 
-        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
-            delta_grad
-        ))
+        #LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(delta_grad))
+
         separate_optim_gradient = self.separate(delta_grad, size_list)
-        LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
-            separate_optim_gradient
-        ))
+        #LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(separate_optim_gradient))
         host_optim_gradients = separate_optim_gradient[: -1]
         guest_optim_gradient = separate_optim_gradient[-1]
 

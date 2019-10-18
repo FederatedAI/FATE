@@ -27,10 +27,6 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
-    # def __init__(self):
-    #     self.host_forwards = None
-    #     self.wx = None
-    #     self.aggregated_wx = None
 
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward,
@@ -79,7 +75,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         """
         Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-        (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
+        (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h * (wx_g - y))
         """
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
@@ -135,7 +131,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(model_weights.coef_)
+        loss_regular = optimizer.loss_norm(model_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 

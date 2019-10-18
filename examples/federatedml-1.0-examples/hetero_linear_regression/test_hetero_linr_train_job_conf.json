@@ -1,21 +1,20 @@
 {
   "initiator": {
     "role": "guest",
-    "party_id": 10000
+    "party_id": 9999
   },
   "job_parameters": {
-    "work_mode": 0
+    "work_mode": 1
   },
   "role": {
     "guest": [
-      10000
+      9999
     ],
     "host": [
-      10000,
-      10001
+      10000
     ],
     "arbiter": [
-      10000
+      9999
     ]
   },
   "role_parameters": {
@@ -24,15 +23,15 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast"
+              "name": "motor_small_b",
+              "namespace": "motor_small"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["y"],
+        "label_name": ["motor_speed"],
         "label_type": ["int"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -48,42 +47,41 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast"
-            },
-            {
-              "name": "hetero_breast_a_2",
-              "namespace": "hetero_breast"
+              "name": "motor_small_a",
+              "namespace": "motor_small"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false, false],
-        "output_format": ["dense", "dense"],
-        "outlier_replace": [false, false]
+        "with_label": [false],
+        "output_format": ["dense"],
+        "outlier_replace": [false]
       },
       "feature_scale_0": {
-        "method": ["standard_scale", "standard_scale"],
-        "need_run": [false, false]
+        "method": ["standard_scale"],
+        "need_run": [false]
       },
       "evaluation_0": {
-        "need_run": [false, false]
+        "need_run": [false]
       }
     }
   },
   "algorithm_parameters": {
     "hetero_linr_0": {
       "penalty": "L2",
-      "optimizer": "sgd",
+      "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 0.01,
       "max_iter": 50,
       "early_stop": "weight_diff",
-      "batch_size": -1,
-      "learning_rate": 0.01,
+      "batch_size": 1,
+      "learning_rate": 0.5,
+      "decay_sqrt": false,
+      "decay": 0.0,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "const",
+        "init_const": 0
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"
