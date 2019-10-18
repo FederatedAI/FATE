@@ -1,7 +1,7 @@
 #!/bin/bash
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
-source ./default_configurations.sh
+source /packaging/fate_base/default_configurations.sh
 source ./allinone_configurations.sh
 
 deploy_modes=(apt build)
@@ -223,6 +223,7 @@ exit
 eeooff
 	    scp ${output_packages_dir}/source.tar.gz ${user}@${node_ip}:${deploy_packages_dir}
 	    cd ${output_packages_dir}/config/${node_ip}
+	    cp ${source_code_dir}/cluster-deploy/scripts/packaging/fate_base/default_configurations.sh  ./
 	    tar czf config.tar.gz ./*
 	    scp config.tar.gz  ${user}@${node_ip}:${deploy_packages_dir}
 	done
@@ -241,7 +242,7 @@ eeooff
 	        ssh -tt ${user}@${node_ip} << eeooff
             cd ${deploy_packages_dir}/config/${module}
             sh ./deploy.sh ${deploy_mode} install ./configurations.sh
-            sh ./deploy.sh ${deploy_mode} init
+            sh ./deploy.sh ${deploy_mode} init ./configurations.sh
             exit
 eeooff
         done
