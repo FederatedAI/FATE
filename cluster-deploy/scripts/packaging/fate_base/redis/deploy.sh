@@ -4,7 +4,7 @@ module_name="redis"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../../../default_configurations.sh
+source ../default_configurations.sh
 
 usage() {
 	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
@@ -29,7 +29,7 @@ package(){
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        wget ${fate_cos_address}/redis-${redis_version}.tar.gz ./
+        wget ${fate_cos_address}/redis-${redis_version}.tar.gz
         tar xzf redis-${redis_version}.tar.gz
         rm -rf redis-${redis_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then

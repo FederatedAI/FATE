@@ -4,7 +4,7 @@ module_name="jdk"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../../../default_configurations.sh
+source ../default_configurations.sh
 
 usage() {
 	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
@@ -30,7 +30,7 @@ package() {
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        wget ${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz ./
+        wget ${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz
         tar xzf jdk-${jdk_version}-linux-x64.tar.gz
         rm -rf jdk-${jdk_version}-linux-x64.tar.gz
         mkdir tmp

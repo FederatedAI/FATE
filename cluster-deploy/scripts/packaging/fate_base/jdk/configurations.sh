@@ -1,4 +1,5 @@
 #!/bin/bash
+#jdk
 
 jdk_version=
 source_code_dir=

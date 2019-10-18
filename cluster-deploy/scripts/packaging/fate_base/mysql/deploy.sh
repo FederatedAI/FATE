@@ -4,7 +4,7 @@ module_name="mysql"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../../../default_configurations.sh
+source ../default_configurations.sh
 
 usage() {
 	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
@@ -28,7 +28,7 @@ package(){
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
+        wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
