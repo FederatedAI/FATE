@@ -33,8 +33,8 @@ Sample module supports two sample mode, they are Random sample mode and Stratifi
 * in random mode, "downsample" and "upsample" method is provided, users 
 can set the sample parameter "fractions", which is the sample ratio of data.
 * in stratified mode, "downsample" and "upsample" method is also provided, 
-users can set the sample parameter "fractions" too, but it should be a list of tuples of (label_i, ratio),
-which means that the sample ratios of different labels of data set. e.g. [(0, 1.5), (1, 2.5), (3, 3.5)]
+users can set the sample parameter "fractions" two, but it should be a list of tuples of (label_i, ratio),
+which means that the sample ratios of different labels of data set.
 
 # Feature scale
 Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 

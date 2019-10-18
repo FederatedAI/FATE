@@ -86,6 +86,9 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
+        supported_config_type = ["nn", "keras"]
+        if self.config_type not in supported_config_type:
+            raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
         self.metrics = _parse_metrics(self.metrics)
         self.optimizer = _parse_optimizer(self.optimizer)

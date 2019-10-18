@@ -15,6 +15,7 @@
 #
 
 from arch.api import session
+from arch.api import federation
 from sklearn.utils import resample
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -23,7 +24,6 @@ from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
 from federatedml.model_base import ModelBase
 import random
-
 
 class RandomSampler(object):
     """
@@ -59,12 +59,12 @@ class RandomSampler(object):
 
         sample_ids : None or list
             if None, will sample data from the class instance's parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids to generate data
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
 
         Returns
         -------
         new_data_inst: DTable
-            the output sample data, same format with input
+            the output sample data, sample format with input
 
         sample_ids: list, return only if sample_ids is None
 
@@ -92,12 +92,12 @@ class RandomSampler(object):
 
         sample_ids : None or list
             if None, will sample data from the class instance's parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids to generate data
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
 
         Returns
         -------
         new_data_inst: DTable
-            the output sample data, same format with input
+            the output sample data, sample format with input
 
         sample_ids: list, return only if sample_ids is None
 
@@ -175,8 +175,6 @@ class StratifiedSampler(object):
     ----------
     fractions : None or list of (category, sample ratio) tuple,
         sampling ratios of each category, default: None
-        e.g.
-        [(0, 0.5), (1, 0.1]) in down sample, [(1, 1.5), (0, 1.8)], where 0\1 are the the occurred category.
 
     random_state: int, RandomState instance or None, optional, default: None
 
@@ -212,8 +210,8 @@ class StratifiedSampler(object):
             The input data
 
         sample_ids : None or list
-            if None, will sample data from the class instance's key by sample parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids to generate data
+            if None, will sample data from the class instance's parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids the generate data
 
         Returns
         -------
@@ -239,8 +237,8 @@ class StratifiedSampler(object):
             To use this method, a list of ratio should be give, and the list length
                 equals to the number of distinct labels
             support down sample and up sample
-                if use down sample: should give a list of (category, ratio), where ratio is between [0, 1]
-                otherwise: should give a list (category, ratio), where the float ratio should no less than 1.0
+                if use down sample: should give a list of float ratio between [0, 1]
+                otherwise: should give a list of float ratio larger than 1.0
 
 
         Parameters

@@ -47,7 +47,6 @@ class Arbiter(object):
         total = sum(left_re_encrypt_times.values())
         batch_iter_num = 0
         while total > 0:
-            batch_iter_num += re_encrypt_batches
             idx_remind = [idx for idx, left_times in left_re_encrypt_times.items() if left_times > 0]
             LOGGER.debug("Current idx_remind: {}, left_re_encrypt_times: {}, total: {}".format(idx_remind,
                                                                                                left_re_encrypt_times,
@@ -66,6 +65,8 @@ class Arbiter(object):
                                                          suffix=(*suffix, iter_num, batch_iter_num))
                 left_re_encrypt_times[idx] -= 1
                 total -= 1
+            batch_iter_num += re_encrypt_batches
+
 
 
 class Host(object):

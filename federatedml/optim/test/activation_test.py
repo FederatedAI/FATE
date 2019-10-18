@@ -33,8 +33,6 @@ class TestConvergeFunction(unittest.TestCase):
             a2 = activation.sigmoid(x)
             self.assertTrue(np.abs(a1 - a2) < 1e-5)
 
-        x = 710
-
 
 if __name__ == '__main__':
     unittest.main()

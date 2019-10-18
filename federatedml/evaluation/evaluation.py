@@ -151,7 +151,7 @@ class Evaluation(ModelBase):
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
-            if res:
+            if res is not None:
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 

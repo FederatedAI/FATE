@@ -49,14 +49,13 @@ class ValidationStrategy(object):
         self.flowid = flowid
 
     def need_run_validation(self, epoch):
-        LOGGER.debug("validation_freqs is {}".format(self.validation_freqs))
         if not self.validation_freqs:
             return False
 
         if isinstance(self.validation_freqs, int):
             return (epoch + 1) % self.validation_freqs == 0
 
-        return epoch in self.validation_freqs
+        return epoch + 1 in self.validation_freqs
 
     def generate_flowid(self, prefix, epoch, keywords="iteration", data_type="train"):
         return "_".join([prefix, keywords, str(epoch), data_type])
@@ -86,11 +85,11 @@ class ValidationStrategy(object):
             return
 
         LOGGER.debug("start to evaluate data {}".format(data_type))
-        model_flowid = ".".join(model.flowid.split(".", -1)[1:])
+        model_flowid = model.flowid
         flowid = self.generate_flowid(model_flowid, epoch, "iteration", data_type)
-        model.set_flowid(flowid)
+        model.flowid = flowid
         predicts = model.predict(data)
-        model.set_flowid(model_flowid)
+        model.flowid = model_flowid
 
         if self.mode == consts.HOMO and self.role == consts.ARBITER:
             pass
@@ -114,12 +113,9 @@ class ValidationStrategy(object):
         if train_predicts is None and validate_predicts is None:
             return
         else:
-            LOGGER.debug("train_predicts data is {}".format(list(train_predicts.collect())))
             predicts = train_predicts
             if validate_predicts:
-                LOGGER.debug("validate_predicts data is {}".format(list(validate_predicts.collect())))
                 predicts = predicts.union(validate_predicts)
 
-            LOGGER.debug("predicts data is {}".format(list(predicts.collect())))
             self.evaluate(predicts, model, epoch)
 
