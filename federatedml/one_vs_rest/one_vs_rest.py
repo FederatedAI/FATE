@@ -42,7 +42,6 @@ class OneVsRest(object):
         self.models = []
         self.class_name = self.__class__.__name__
 
-
     @staticmethod
     def __get_multi_class_res(instance, classes):
         """
