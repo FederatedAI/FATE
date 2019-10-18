@@ -141,6 +141,9 @@ class PoissonParam(BaseParam):
                     self.learning_rate))
 
         self.init_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError(
+                "Linear regression's encrypt method supports 'Paillier' or None only")
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(

@@ -165,8 +165,7 @@ class LinearParam(BaseParam):
         self.encrypt_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                "Linear regression's encrypt method supports 'Paillier' or None only"
-            )
+                "Linear regression's encrypt method supports 'Paillier' or None only")
 
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
