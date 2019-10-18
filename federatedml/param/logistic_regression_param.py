@@ -111,11 +111,11 @@ class LogisticParam(BaseParam):
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'none']:
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.tol).__name__ != "float":
+        if not isinstance(self.tol, (int, float)):
             raise ValueError(
                 "logistic_param's tol {} not supported, should be float type".format(self.tol))
 
@@ -167,7 +167,7 @@ class LogisticParam(BaseParam):
         self.encrypt_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                "Linear regression's encrypt method supports 'Paillier' or None only")
+                "logistic_param's encrypted method support 'Paillier' or None only")
 
         if type(self.decay).__name__ not in ["int", 'float']:
             raise ValueError(

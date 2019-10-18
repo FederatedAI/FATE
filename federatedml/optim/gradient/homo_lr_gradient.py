@@ -65,6 +65,7 @@ class TaylorLogisticGradient(object):
 
     @staticmethod
     def compute_gradient(values, coef, intercept, fit_intercept):
+        LOGGER.debug("Get in compute_gradient")
         X, Y = load_data(values)
         batch_size = len(X)
         if batch_size == 0:
@@ -79,4 +80,5 @@ class TaylorLogisticGradient(object):
             grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
+        LOGGER.debug("Finish compute_gradient")
         return grad
