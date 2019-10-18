@@ -21,6 +21,7 @@ source ${config_path}
 # deploy functions
 
 package() {
+    source ../../../default_configurations.sh
     if [[ "${deploy_mode}" == "apt" ]]; then
         cd ${output_packages_dir}/source
         if [[ -e "${module_name}" ]]

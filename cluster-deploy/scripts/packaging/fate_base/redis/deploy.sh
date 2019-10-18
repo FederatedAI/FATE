@@ -4,7 +4,6 @@ module_name="redis"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../../../default_configurations.sh
 
 usage() {
 	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
@@ -21,6 +20,7 @@ source ${config_path}
 
 # deploy functions
 package(){
+    source ../../../default_configurations.sh
     if [[ "${deploy_mode}" == "apt" ]]; then
         cd ${output_packages_dir}/source
         if [[ -e "${module_name}" ]]
@@ -29,7 +29,9 @@ package(){
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        wget ${fate_cos_address}/redis-${redis_version}.tar.gz ./
+        # fast script test
+        # cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/redis-${redis_version}.tar.gz ./
+        wget ${fate_cos_address}/redis-${redis_version}.tar.gz
         tar xzf redis-${redis_version}.tar.gz
         rm -rf redis-${redis_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
