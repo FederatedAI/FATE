@@ -110,11 +110,11 @@ class LinearParam(BaseParam):
                 raise ValueError(
                     "linear_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.tol).__name__ != "float":
+        if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
                 "linear_param's tol {} not supported, should be float type".format(self.tol))
 
-        if type(self.alpha).__name__ != "float":
+        if type(self.alpha).__name__ not in ["int", "float"]:
             raise ValueError(
                 "linear_param's alpha {} not supported, should be float type".format(self.alpha))
 
@@ -134,8 +134,8 @@ class LinearParam(BaseParam):
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int", "long"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than 10 or "
-                                         "-1 represent for all data".format(self.batch_size))
+                raise ValueError(descr + " {} not supported, should be larger than {} or "
+                                         "-1 represent for all data".format(consts.MIN_BATCH_SIZE, self.batch_size))
 
         if type(self.learning_rate).__name__ != "float":
             raise ValueError(
@@ -163,6 +163,9 @@ class LinearParam(BaseParam):
                     " 'weight_diff', 'diff' or 'abs'")
 
         self.encrypt_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError(
+                "Linear regression's encrypt method supports 'Paillier' or None only")
 
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(

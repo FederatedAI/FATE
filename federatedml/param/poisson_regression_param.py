@@ -108,11 +108,11 @@ class PoissonParam(BaseParam):
                 raise ValueError(
                     "poisson_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.tol).__name__ != "float":
+        if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
                 "poisson_param's tol {} not supported, should be float type".format(self.tol))
 
-        if type(self.alpha).__name__ != "float":
+        if type(self.alpha).__name__ not in ["int", "float"]:
             raise ValueError(
                 "poisson_param's alpha {} not supported, should be float type".format(self.alpha))
 
@@ -141,6 +141,9 @@ class PoissonParam(BaseParam):
                     self.learning_rate))
 
         self.init_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError(
+                "Linear regression's encrypt method supports 'Paillier' or None only")
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(
@@ -166,6 +169,10 @@ class PoissonParam(BaseParam):
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError(
+                "Poisson regression's encrypt method supports 'Paillier' or None only"
+            )
 
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
