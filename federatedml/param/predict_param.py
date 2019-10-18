@@ -30,13 +30,11 @@ class PredictParam(BaseParam):
 
     Parameters
     ----------
-    with_proba: bool, Specify whether the result contains probability
 
     threshold: float or int, The threshold use to separate positive and negative class. Normally, it should be (0,1)
     """
 
-    def __init__(self, with_proba=True, threshold=0.5):
-        self.with_proba = with_proba
+    def __init__(self, threshold=0.5):
         self.threshold = threshold
 
     def check(self):
