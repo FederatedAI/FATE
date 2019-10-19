@@ -25,12 +25,12 @@ from arch.api.table.session import FateSession as TableManger
 # noinspection PyProtectedMember
 class FateSessionImpl(TableManger):
     """
-    manage RDDTable, use EggRoleStorage as storage
+    manage DTable, use EggRoleStorage as storage
     """
 
     def __init__(self, eggroll_session, work_mode):
         self._eggroll = eggroll_util.build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
-        self.job_id = ["job_id"]
+        self._session_id = eggroll_session.get_session_id()
         TableManger.set_instance(self)
 
     def table(self,
@@ -44,7 +44,7 @@ class FateSessionImpl(TableManger):
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist)
-        return DTable(dtable=dtable, job_id=self.job_id)
+        return DTable(dtable=dtable, session_id=self._session_id)
 
     def parallelize(self,
                     data: Iterable,
@@ -68,7 +68,7 @@ class FateSessionImpl(TableManger):
                                            create_if_missing=create_if_missing,
                                            error_if_exist=error_if_exist)
 
-        rdd_inst = DTable(dtable, job_id=self.job_id)
+        rdd_inst = DTable(dtable, session_id=self._session_id)
 
         return rdd_inst
 
@@ -76,7 +76,10 @@ class FateSessionImpl(TableManger):
         self._eggroll.cleanup(name=name, namespace=namespace, persistent=persistent)
 
     def generateUniqueId(self):
-        self._eggroll.generateUniqueId()
+        return self._eggroll.generateUniqueId()
 
-    def get_job_id(self):
-        return self.job_id
+    def get_session_id(self):
+        return self._session_id
+
+    def stop(self):
+        self._eggroll.stop()

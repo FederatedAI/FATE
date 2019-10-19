@@ -30,7 +30,7 @@ class FateSessionImpl(FateSession):
     """
 
     def __init__(self, eggroll_session, work_mode: WorkMode):
-        self.job_id = eggroll_session["job_id"]
+        self._session_id = eggroll_session.get_session_id()
         self._eggroll_session = eggroll_session
         self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
 
@@ -56,7 +56,7 @@ class FateSessionImpl(FateSession):
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist)
-        return RDDTable.from_dtable(job_id=self.job_id, dtable=dtable)
+        return RDDTable.from_dtable(session_id=self._session_id, dtable=dtable)
 
     def parallelize(self,
                     data: Iterable,
@@ -73,11 +73,17 @@ class FateSessionImpl(FateSession):
         rdd = self._sc.parallelize(_iter, partition)
         rdd = materialize(rdd)
         if namespace is None:
-            namespace = self.job_id
-        return RDDTable.from_rdd(rdd=rdd, job_id=self.job_id, namespace=namespace, name=name)
+            namespace = self._session_id
+        return RDDTable.from_rdd(rdd=rdd, job_id=self._session_id, namespace=namespace, name=name)
 
     def cleanup(self, name, namespace, persistent):
         return self._eggroll.cleanup(name=name, namespace=namespace, persistent=persistent)
 
     def generateUniqueId(self):
         return self._eggroll.generateUniqueId()
+
+    def get_session_id(self):
+        return self._session_id
+
+    def stop(self):
+        self._eggroll.stop()

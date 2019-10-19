@@ -18,7 +18,7 @@ package com.webank.ai.fate.driver.federation.transfer.manager;
 
 import com.google.common.collect.Maps;
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.event.TransferJobEvent;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;

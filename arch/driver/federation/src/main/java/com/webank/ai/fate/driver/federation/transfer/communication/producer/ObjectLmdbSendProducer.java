@@ -17,14 +17,15 @@
 package com.webank.ai.fate.driver.federation.transfer.communication.producer;
 
 import com.google.protobuf.ByteString;
-import com.webank.ai.fate.api.core.BasicMeta;
-import com.webank.ai.fate.api.eggroll.storage.Kv;
-import com.webank.ai.fate.core.io.StoreInfo;
-import com.webank.ai.fate.driver.federation.constant.FederationConstants;
+import com.webank.ai.eggroll.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.storage.Kv;
+import com.webank.ai.eggroll.api.storage.StorageBasic;
+import com.webank.ai.eggroll.core.io.StoreInfo;
+import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import com.webank.ai.fate.driver.federation.transfer.utils.TransferPojoUtils;
-import com.webank.ai.fate.eggroll.roll.api.grpc.client.RollKvServiceClient;
-import com.webank.ai.fate.eggroll.storage.service.model.enums.Stores;
+import com.webank.ai.eggroll.framework.roll.api.grpc.client.RollKvServiceClient;
+import com.webank.ai.eggroll.framework.storage.service.model.enums.Stores;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +52,12 @@ public class ObjectLmdbSendProducer extends BaseProducer {
         LOGGER.info("[FEDERATION][SEND][OBJECT][PRODUCER] start. jobId: {}");
         BasicMeta.ReturnStatus result = null;
         try {
+            Federation.TransferDataDesc dataDesc = transferMeta.getDataDesc();
+            StorageBasic.StorageLocator storageLocator = dataDesc.getStorageLocator();
             StoreInfo storeInfo = StoreInfo.builder()
-                    .nameSpace(transferMeta.getJob().getJobId())
-                    .tableName(FederationConstants.OBJECT_STORAGE_NAMESPACE)
-                    .type(Stores.LMDB.name())
+                    .nameSpace(storageLocator.getNamespace())
+                    .tableName(storageLocator.getName())
+                    .type(storageLocator.getType().name())
                     .build();
 
             Kv.Operand request = Kv.Operand.newBuilder()

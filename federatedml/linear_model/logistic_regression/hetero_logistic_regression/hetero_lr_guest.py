@@ -79,7 +79,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
-
+        LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         LOGGER.info("Generate mini-batch from input data")
@@ -97,13 +97,14 @@ class HeteroLRGuest(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            # each iter will get the same batach_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
+
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
+                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 # Start gradient procedure
                 LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
