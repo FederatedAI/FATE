@@ -16,7 +16,7 @@ output_packages_dir=$(cd `dirname ${cwd}`;pwd)/packages
 deploy_packages_dir=${deploy_dir}/packages
 mkdir -p ${output_packages_dir}
 
-echo "[INFO] check..."
+echo "[INFO] Check..."
 if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
     rm -rf ${output_packages_dir}/*
     mkdir -p ${output_packages_dir}/source
@@ -33,7 +33,7 @@ init_env() {
     if [[ "${deploy_mode}" == "apt" ]]; then
         # TODO: All modules support apt deployment mode and need to be removed here.
         for node_ip in "${node_list[@]}"; do
-		ssh -tt ${user}@${node_ip} << eeooff
+		    ssh -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
 exit
 eeooff
@@ -49,8 +49,17 @@ eeooff
     fi
 }
 
+if_base() {
+    module_name=$1
+    if [[ ${base_modules[@]/${module_name}/} != ${base_modules[@]} ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
 deploy_jdk() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s/jdk_version=.*/jdk_version=${jdk_version}/g" ./configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
@@ -65,7 +74,6 @@ deploy_jdk() {
 
 
 deploy_python() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -78,7 +86,6 @@ deploy_python() {
 }
 
 deploy_mysql() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
     sed -i "s/user=.*/user=${user}/g" ./configurations.sh.tmp
@@ -94,7 +101,6 @@ deploy_mysql() {
 }
 
 deploy_redis() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s/redis_version=.*/redis_version=${redis_version}/g" ./configurations.sh.tmp
     sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
@@ -109,7 +115,6 @@ deploy_redis() {
 }
 
 deploy_fate_flow() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -128,7 +133,6 @@ deploy_fate_flow() {
 }
 
 deploy_federatedml() {
-    pwd
     cp configurations.sh configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -140,7 +144,6 @@ deploy_federatedml() {
 	done
 }
 deploy_fateboard() {
- pwd
  cp configurations.sh configurations.sh.tmp
 
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
@@ -162,7 +165,6 @@ deploy_fateboard() {
 
 }
 deploy_federation() {
- pwd
  cp configurations.sh configurations.sh.tmp
 
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
@@ -185,7 +187,6 @@ deploy_federation() {
 }
 
 deploy_proxy() {
- pwd
  cp configurations.sh configurations.sh.tmp
 
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
@@ -239,11 +240,18 @@ tar xzf config.tar.gz -C config
 exit
 eeooff
         for module in "${support_modules[@]}"; do
+            if [[ $(if_base ${module}) -eq 0 ]];then
+                module_deploy_dir=${deploy_dir}/common/${module_name}
+            else
+                module_deploy_dir=${deploy_dir}/${module_name}
+            fi
+            echo "[INFO] ${module} deploy dir is ${module_deploy_dir}"
 	        ssh -tt ${user}@${node_ip} << eeooff
-            cd ${deploy_packages_dir}/config/${module}
-            sh ./deploy.sh ${deploy_mode} install ./configurations.sh
-            sh ./deploy.sh ${deploy_mode} init ./configurations.sh
-            exit
+	            rm -rf ${module_deploy_dir}
+                cd ${deploy_packages_dir}/config/${module}
+                sh ./deploy.sh ${deploy_mode} install ./configurations.sh
+                sh ./deploy.sh ${deploy_mode} init ./configurations.sh
+                exit
 eeooff
         done
 	done
@@ -254,10 +262,13 @@ all() {
 	for module in "${support_modules[@]}"; do
         echo
 		echo "[INFO] ${module} is packaging:"
-        echo "=================================="
+        echo "------------------------------------------------------------------------"
         cd ${packaging_dir}
-        if [[ ${base_modules[@]/${module}/} != ${base_modules[@]} ]];then
+        if [[ $(if_base ${module}) -eq 0 ]];then
+            echo "[INFO] ${module} is base module"
             cd fate_base
+        else
+            echo "[INFO] ${module} is application module"
         fi
         cd ${module}
         deploy_${module}
@@ -267,7 +278,7 @@ all() {
 		else
 		    echo "[INFO] ${module} packaging successfully."
 		fi
-        echo "----------------------------------"
+        echo "------------------------------------------------------------------------"
 		cd ${cwd}
 	done
 	distribute

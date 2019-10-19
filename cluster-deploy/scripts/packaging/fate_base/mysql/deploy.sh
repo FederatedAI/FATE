@@ -29,7 +29,7 @@ package(){
         mkdir -p ${module_name}
         cd ${module_name}
         # fast script test
-        #cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
+        # cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
         wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
@@ -51,7 +51,14 @@ config(){
 	cp -r ${cwd}/conf ./${module_name}/conf/
 	cp ${cwd}/service.sh ./${module_name}/conf/
 
-	cd ${module_name}
+	cd ${module_name}/conf/conf
+	sed -i "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
+	sed -i "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
+	sed -i "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
+	sed -i "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
+	sed -i "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
+
+	cd ${output_packages_dir}/config/${node_label}/${module_name}
     cp ${cwd}/deploy.sh ./
     cp ${cwd}/${config_path} ./configurations.sh
     return 0
@@ -67,14 +74,14 @@ init(){
     mysql_dir=${deploy_dir}/${module_name}/mysql-${mysql_version}
     cd ${mysql_dir}
     mkdir data
-    mkdir conf
     mkdir log
+    sh service.sh stop
     ./bin/mysqld --initialize --user=${user} --basedir=${mysql_dir}  --datadir=${mysql_dir}/data &> install_init.log
     temp_str=`cat install_init.log  | grep root@localhost`
     password_str=${temp_str##* }
     nohup ./bin/mysqld_safe --defaults-file=${mysql_dir}/conf/my.cnf --user=${user} &
     sleep 10
-    ${mysql_dir}/bin/mysql -uroot -p${password_str}-S ${mysql_dir}/mysql.sock --connect-expired-password << EOF
+    ./bin/mysql -uroot -p"${password_str}" -S ./mysql.sock --connect-expired-password << EOF
     alter user  'root'@'localhost' IDENTIFIED by "${mysql_password}";
 EOF
     echo "the password of root: ${mysql_password}"
