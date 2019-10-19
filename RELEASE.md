@@ -15,7 +15,7 @@
 * Support evaluation during training on both train and validate data
 * Add spark as computing engine
 
->FATEFlow
+>FATE-Flow
 * Upload and Download support CLI for querying job status
 * Support for canceling waiting job
 * Support for setting job timeout
