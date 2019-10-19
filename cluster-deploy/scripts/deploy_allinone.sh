@@ -6,13 +6,13 @@ source ./allinone_configurations.sh
 
 deploy_modes=(apt build)
 #support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation)
-support_modules=(mysql)
+support_modules=(python)
 base_modules=(jdk python  mysql redis)
 
 deploy_mode=$1
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 packaging_dir=${cwd}/packaging
-output_packages_dir=$(cd `dirname ${cwd}`;pwd)/packages
+output_packages_dir=$(cd `dirname ${cwd}`;pwd)/output_packages
 deploy_packages_dir=${deploy_dir}/packages
 mkdir -p ${output_packages_dir}
 
@@ -75,6 +75,7 @@ deploy_jdk() {
 
 deploy_python() {
     cp configurations.sh configurations.sh.tmp
+    sed -i "s/python_version=.*/python_version=${python_version}/g" ./configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
@@ -120,7 +121,7 @@ deploy_fate_flow() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python#g" ./configurations.sh.tmp
+    sed -i "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
@@ -261,8 +262,8 @@ all() {
     init_env
 	for module in "${support_modules[@]}"; do
         echo
-		echo "[INFO] ${module} is packaging:"
         echo "------------------------------------------------------------------------"
+		echo "[INFO] ${module} is packaging:"
         cd ${packaging_dir}
         if [[ $(if_base ${module}) -eq 0 ]];then
             echo "[INFO] ${module} is base module"

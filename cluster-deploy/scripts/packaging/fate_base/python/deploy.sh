@@ -30,9 +30,17 @@ package() {
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/miniconda3.tar.gz ./
-        tar xzf miniconda3.tar.gz
-        rm -rf miniconda3.tar.gz
+        copy_path=${source_code_dir}/cluster-deploy/packages/miniconda3-fate-${python_version}.tar.gz
+        download_uri=${fate_cos_address}/miniconda3-fate-${python_version}.tar.gz
+        if [[ -f ${copy_path} ]];then
+            echo "[INFO] Copying ${copy_path}"
+            cp ${copy_path} ./
+        else
+            echo "[INFO] Downloading ${download_uri}"
+            wget ${download_uri}
+        fi
+        tar xzf miniconda3-fate-${python_version}.tar.gz
+        rm -rf miniconda3-fate-${python_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
         echo "not support"
     fi
@@ -48,7 +56,7 @@ config(){
 	fi
 	mkdir -p ./${module_name}/conf
 
-	cd ${module_name}
+	cd ${output_packages_dir}/config/${node_label}/${module_name}
     cp ${cwd}/deploy.sh ./
     cp ${cwd}/${config_path} ./configurations.sh
     return 0
@@ -57,6 +65,11 @@ config(){
 install() {
     mkdir -p ${deploy_dir}
     cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
+    cd ${deploy_dir}/${module_name}/miniconda3-fate-${python_version}
+    echo "#!/bin/sh
+export PATH=${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin:\$PATH" > ./bin/activate
+	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda
+	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda-env
 }
 
 init(){

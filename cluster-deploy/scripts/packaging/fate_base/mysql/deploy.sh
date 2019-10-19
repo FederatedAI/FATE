@@ -28,9 +28,15 @@ package(){
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        # fast script test
-        # cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
-        wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+        copy_path=${source_code_dir}/cluster-deploy/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+        download_uri=${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+        if [[ -f  ${copy_path} ]];then
+            echo "[INFO] Copying ${copy_path}"
+            cp ${copy_path} ./
+        else
+            echo "[INFO] Downloading ${download_uri}"
+            wget ${download_uri}
+        fi
         tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}

@@ -30,9 +30,15 @@ package() {
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        # fast script test
-        # cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/jdk-${jdk_version}-linux-x64.tar.gz ./
-        wget ${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz
+        copy_path=${source_code_dir}/cluster-deploy/packages/jdk-${jdk_version}-linux-x64.tar.gz
+        download_uri=${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz
+        if [[ -f ${copy_path} ]];then
+            echo "[INFO] Copying ${copy_path}"
+            cp ${copy_path} ./
+        else
+            echo "[INFO] Downloading ${download_uri}"
+            wget ${download_uri}
+        fi
         tar xzf jdk-${jdk_version}-linux-x64.tar.gz
         rm -rf jdk-${jdk_version}-linux-x64.tar.gz
         mkdir tmp

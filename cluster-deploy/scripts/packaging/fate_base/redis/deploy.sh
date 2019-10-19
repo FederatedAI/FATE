@@ -29,9 +29,15 @@ package(){
         fi
         mkdir -p ${module_name}
         cd ${module_name}
-        # fast script test
-        # cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/redis-${redis_version}.tar.gz ./
-        wget ${fate_cos_address}/redis-${redis_version}.tar.gz
+        copy_path=${source_code_dir}/cluster-deploy/packages/redis-${redis_version}.tar.gz
+        download_uri=${fate_cos_address}/redis-${redis_version}.tar.gz
+        if [[ -f ${copy_path} ]];then
+            echo "[INFO] Copying ${copy_path}"
+            cp ${copy_path} ./
+        else
+            echo "[INFO] Downloading ${download_uri}"
+            wget ${fate_cos_address}/redis-${redis_version}.tar.gz
+        fi
         tar xzf redis-${redis_version}.tar.gz
         rm -rf redis-${redis_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
