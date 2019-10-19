@@ -1,4 +1,5 @@
 #!/bin/bash
+#mysql
 
 mysql_version=
 user=

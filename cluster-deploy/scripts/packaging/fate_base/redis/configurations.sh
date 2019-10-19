@@ -1,4 +1,5 @@
 #!/bin/bash
+#redis
 
 source_code_dir=
 output_packages_dir=

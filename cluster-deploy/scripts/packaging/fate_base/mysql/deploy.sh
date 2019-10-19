@@ -29,8 +29,8 @@ package(){
         mkdir -p ${module_name}
         cd ${module_name}
         # fast script test
-        cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
-        #wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+        #cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz ./
+        wget ${fate_cos_address}/mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
         mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
@@ -67,6 +67,7 @@ init(){
     mysql_dir=${deploy_dir}/${module_name}/mysql-${mysql_version}
     cd ${mysql_dir}
     mkdir data
+    mkdir conf
     mkdir log
     ./bin/mysqld --initialize --user=${user} --basedir=${mysql_dir}  --datadir=${mysql_dir}/data &> install_init.log
     temp_str=`cat install_init.log  | grep root@localhost`

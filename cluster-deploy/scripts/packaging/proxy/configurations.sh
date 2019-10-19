@@ -1,4 +1,5 @@
 #!/bin/bash
+#proxy
 
 version=0.3
 java_dir=
