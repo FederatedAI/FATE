@@ -31,4 +31,5 @@ get_module_binary() {
         echo "[INFO] Downloading ${download_uri}"
         wget ${download_uri}
     fi
+    echo "[INFO] Finish get ${module_name} available binary"
 }

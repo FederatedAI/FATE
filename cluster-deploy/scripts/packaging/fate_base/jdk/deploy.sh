@@ -39,16 +39,6 @@ package() {
 
 config(){
     node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
-
-	cd ${module_name}
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
     return 0
 }
 

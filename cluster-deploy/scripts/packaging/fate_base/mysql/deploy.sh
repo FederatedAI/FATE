@@ -35,11 +35,6 @@ package(){
 config(){
     node_label=$4
 	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
 	cp -r ${cwd}/conf ./${module_name}/conf/
 	cp ${cwd}/service.sh ./${module_name}/conf/
 
@@ -49,10 +44,6 @@ config(){
 	sed -i "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
 	sed -i "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
 	sed -i "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
-
-	cd ${output_packages_dir}/config/${node_label}/${module_name}
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
     return 0
 }
 

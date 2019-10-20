@@ -6,7 +6,7 @@ source ./allinone_configurations.sh
 
 deploy_modes=(binary build)
 #support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation)
-support_modules=(jdk)
+support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy faederation)
 base_modules=(jdk python  mysql redis)
 deploy_mode=$1
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
@@ -57,6 +57,17 @@ if_base() {
     fi
 }
 
+config_enter() {
+    node_label=$1
+    module_name=$2
+	if [[ -e ${output_packages_dir}/config/${node_label}/${module_name} ]]
+	then
+		rm -rf ${output_packages_dir}/config/${node_label}/${module_name}
+	fi
+	mkdir -p ${output_packages_dir}/config/${node_label}/${module_name}/conf
+    cp ./deploy.sh ${output_packages_dir}/config/${node_label}/${module_name}/
+    cp ./configurations.sh.tmp ${output_packages_dir}/config/${node_label}/${module_name}/configurations.sh
+}
 
 deploy_jdk() {
     cp configurations.sh configurations.sh.tmp
@@ -67,6 +78,7 @@ deploy_jdk() {
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+	    config_enter ${node_ip} jdk
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
@@ -81,6 +93,7 @@ deploy_python() {
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+	    config_enter ${node_ip} python
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
@@ -96,6 +109,7 @@ deploy_mysql() {
     sed -i "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+	    config_enter ${node_ip} mysql
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
@@ -110,6 +124,7 @@ deploy_redis() {
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+	    config_enter ${node_ip} redis
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
@@ -128,6 +143,7 @@ deploy_fate_flow() {
 	for node_ip in "${node_list[@]}"; do
         sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
+	    config_enter ${node_ip} fate_flow
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
@@ -140,12 +156,13 @@ deploy_federatedml() {
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+	    config_enter ${node_ip} federatedml
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
 }
-deploy_fateboard() {
- cp configurations.sh configurations.sh.tmp
 
+deploy_fateboard() {
+    cp configurations.sh configurations.sh.tmp
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -153,65 +170,58 @@ deploy_fateboard() {
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
- sed -i "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
-
+    sed -i "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
-
- for node_ip in "${node_list[@]}"; do
+    for node_ip in "${node_list[@]}"; do
         sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
-     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
- done
-
+	    config_enter ${node_ip} fateboard
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
 }
-deploy_federation() {
- cp configurations.sh configurations.sh.tmp
 
+deploy_federation() {
+    cp configurations.sh configurations.sh.tmp
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
-
- for ((i=0;i<${#node_list[*]};i++))
- do
-  node_ip=${node_list[i]}
-  party_id=${party_list[i]}
-  sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        party_id=${party_list[i]}
+        sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
         sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
-     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
- done
-
+	    config_enter ${node_ip} federation
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
 }
 
 deploy_proxy() {
- cp configurations.sh configurations.sh.tmp
-
+    cp configurations.sh configurations.sh.tmp
     sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-
     sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
-
- for ((i=0;i<${#node_list[*]};i++))
- do
-  node_ip=${node_list[i]}
-  exchange_ip=${node_list[1-i]}
-  party_id=${party_list[i]}
-  sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        exchange_ip=${node_list[1-i]}
+        party_id=${party_list[i]}
+        sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
         sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/federation_ip=.*/federation_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/exchange_ip=.*/exchange_ip=${exchange_ip}/g" ./configurations.sh.tmp
-
-     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
- done
-
+	    config_enter ${node_ip} proxy
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
 }
+
 distribute() {
     cd ${output_packages_dir}
     tar czf source.tar.gz ./source
@@ -241,9 +251,9 @@ exit
 eeooff
         for module in "${support_modules[@]}"; do
             if [[ $(if_base ${module}) -eq 0 ]];then
-                module_deploy_dir=${deploy_dir}/common/${module_name}
+                module_deploy_dir=${deploy_dir}/common/${module}
             else
-                module_deploy_dir=${deploy_dir}/${module_name}
+                module_deploy_dir=${deploy_dir}/${module}
             fi
             echo "[INFO] ${module} deploy dir is ${module_deploy_dir}"
 	        ssh -tt ${user}@${node_ip} << eeooff

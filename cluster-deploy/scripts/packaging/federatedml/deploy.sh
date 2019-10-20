@@ -21,7 +21,6 @@ source ${config_path}
 # deploy functions
 
 package() {
-    # source code and binary
     cd ${output_packages_dir}/source
 	if [[ -e "${module_name}" ]]
 	then
@@ -37,15 +36,6 @@ package() {
 
 config() {
     node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}
-	cd ./${module_name}
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
 	return 0
 }
 

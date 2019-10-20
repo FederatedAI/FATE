@@ -1,17 +1,14 @@
 #!/bin/bash
+#federation
 
 version=0.3
 java_dir=
-proxy_port=9370
 source_code_dir=
 output_packages_dir=
 deploy_dir=
 deploy_packages_dir=
 
 party_id=
-proxy_ip=
-exchange_ip=
-federation_ip=
-fate_flow_ip=
-serving_ip1=
-serving_ip2=
+port=8011
+meta_service_ip=
+meta_service_port=8590
