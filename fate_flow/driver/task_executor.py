@@ -76,7 +76,7 @@ class TaskExecutor(object):
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
                                       BACKEND=job_parameters.get('backend', 0))
-            session.init(job_id=task_id, mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
             federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
@@ -139,6 +139,7 @@ class TaskExecutor(object):
                                               initiator_party_id=job_initiator.get('party_id', None),
                                               initiator_role=job_initiator.get('role', None),
                                               task_info=task.to_json())
+                session.stop()
             except Exception as e:
                 traceback.print_exc()
                 schedule_logger(job_id).exception(e)
@@ -193,9 +194,9 @@ class TaskExecutor(object):
     def get_parameters(job_id, component_name, role, party_id):
 
         job_conf_dict = job_utils.get_job_conf(job_id)
-        job_dsl_parser = job_utils.get_job_dsl_parser(job_conf_dict['job_dsl_path'],
-                                                      job_conf_dict['job_runtime_conf_path'],
-                                                      job_conf_dict['train_runtime_conf_path'])
+        job_dsl_parser = job_utils.get_job_dsl_parser(dsl=job_conf_dict['job_dsl_path'],
+                                                      runtime_conf=job_conf_dict['job_runtime_conf_path'],
+                                                      train_runtime_conf=job_conf_dict['train_runtime_conf_path'])
         if job_dsl_parser:
             component = job_dsl_parser.get_component_info(component_name)
             parameters = component.get_role_parameters()

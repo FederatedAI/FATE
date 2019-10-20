@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -21,17 +21,12 @@ source ${config_path}
 # deploy functions
 
 package() {
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        cd ${output_packages_dir}/source
-        if [[ -e "${module_name}" ]]
-        then
-            rm ${module_name}
-        fi
-        mkdir -p ${module_name}
-        cd ${module_name}
-        cp ${source_code_dir}/cluster-deploy/scripts/fate-base/packages/miniconda3.tar.gz ./
-        tar xzf miniconda3.tar.gz
-        rm -rf miniconda3.tar.gz
+    source ../../../default_configurations.sh
+    package_init ${output_packages_dir} ${module_name}
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        get_module_binary ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
+        tar xzf miniconda3-fate-${python_version}.tar.gz
+        rm -rf miniconda3-fate-${python_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
         echo "not support"
     fi
@@ -40,22 +35,17 @@ package() {
 
 config(){
     node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
-
-	cd ${module_name}
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
     return 0
 }
 
 install() {
     mkdir -p ${deploy_dir}
     cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
+    cd ${deploy_dir}/${module_name}/miniconda3-fate-${python_version}
+    echo "#!/bin/sh
+export PATH=${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin:\$PATH" > ./bin/activate
+	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda
+	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda-env
 }
 
 init(){

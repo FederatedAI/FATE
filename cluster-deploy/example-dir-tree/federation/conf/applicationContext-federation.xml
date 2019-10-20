@@ -27,7 +27,7 @@
 	http://www.springframework.org/schema/task
     http://www.springframework.org/schema/task/spring-task-4.3.xsd">
 
-    <context:component-scan base-package="com.webank.ai.fate"/>
+    <context:component-scan base-package="com.webank.ai.fate,com.webank.ai.eggroll"/>
     <context:annotation-config/>
 
     <task:executor id="federationAsyncThreadPool" pool-size="10-100" queue-capacity="0" keep-alive="30"/>

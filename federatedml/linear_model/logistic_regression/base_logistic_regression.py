@@ -23,7 +23,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights as L
 from federatedml.optim.initialize import Initializer
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
-
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -55,6 +55,9 @@ class BaseLogisticRegression(BaseLinearModel):
 
     def get_single_model_param(self):
         weight_dict = {}
+        LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
+            self.model_weights.unboxed, self.model_weights.coef_, self.header
+        ))
         for idx, header_name in enumerate(self.header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
@@ -64,7 +67,8 @@ class BaseLogisticRegression(BaseLinearModel):
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
-                  'header': self.header}
+                  'header': self.header
+                  }
         return result
 
     def _get_param(self):
@@ -76,10 +80,11 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
-            single_result = {'header': header}
+            single_result = {'header': header, 'need_one_vs_rest': True}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
+            single_result['need_one_vs_rest'] = False
         single_result['one_vs_rest_result'] = one_vs_rest_result
         LOGGER.debug("in _get_param, single_result: {}".format(single_result))
 
@@ -98,9 +103,10 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.header is None:
             return
 
-        one_vs_rest_result = result_obj.one_vs_rest_result
-        LOGGER.debug("in _load_model One_vs_rest_result: {}".format(one_vs_rest_result))
-        if one_vs_rest_result is not None:
+        need_one_vs_rest = result_obj.need_one_vs_rest
+        LOGGER.debug("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
+        if need_one_vs_rest:
+            one_vs_rest_result = result_obj.one_vs_rest_result
             self.one_vs_rest_obj = one_vs_rest_factory(classifier=self, role=self.role,
                                                        mode=self.mode, has_arbiter=True)
             self.one_vs_rest_obj.load_model(one_vs_rest_result)
@@ -110,6 +116,7 @@ class BaseLogisticRegression(BaseLinearModel):
             self.need_one_vs_rest = False
 
     def load_single_model(self, single_model_obj):
+        LOGGER.info("It's a binary task, start to load single model")
         feature_shape = len(self.header)
         tmp_vars = np.zeros(feature_shape)
         weight_dict = dict(single_model_obj.weight)

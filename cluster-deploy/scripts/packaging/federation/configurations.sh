@@ -7,7 +7,8 @@ source_code_dir=
 output_packages_dir=
 deploy_dir=
 deploy_packages_dir=
-federation_port=9394
-meta_service_port=8590
+
 party_id=
+port=9394
 meta_service_ip=
+meta_service_port=8590

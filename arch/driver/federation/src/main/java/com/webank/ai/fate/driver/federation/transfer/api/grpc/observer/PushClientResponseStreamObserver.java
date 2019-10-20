@@ -17,8 +17,8 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.observer;
 
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.api.grpc.observer.BaseCallerResponseStreamObserver;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.api.grpc.observer.BaseCallerResponseStreamObserver;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

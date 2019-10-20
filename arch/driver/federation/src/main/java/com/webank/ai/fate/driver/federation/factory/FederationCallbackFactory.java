@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.driver.federation.factory;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.driver.federation.transfer.model.DefaultConsumerListenableCallback;
 import com.webank.ai.fate.driver.federation.transfer.model.DefaultSendProducerListenableCallback;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;

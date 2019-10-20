@@ -92,6 +92,7 @@ class HeteroLRHost(HeteroLRBase):
         self._abnormal_detection(data_instances)
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -117,6 +118,8 @@ class HeteroLRHost(HeteroLRBase):
             for batch_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
+                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
+
                 optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
                     batch_index)

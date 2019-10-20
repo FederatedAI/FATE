@@ -4,10 +4,9 @@ module_name="jdk"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../default_configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -22,15 +21,10 @@ source ${config_path}
 # deploy functions
 
 package() {
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        cd ${output_packages_dir}/source
-        if [[ -e "${module_name}" ]]
-        then
-            rm ${module_name}
-        fi
-        mkdir -p ${module_name}
-        cd ${module_name}
-        wget ${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz
+    source ../../../default_configurations.sh
+    package_init ${output_packages_dir} ${module_name}
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        get_module_binary ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
         tar xzf jdk-${jdk_version}-linux-x64.tar.gz
         rm -rf jdk-${jdk_version}-linux-x64.tar.gz
         mkdir tmp
@@ -45,16 +39,6 @@ package() {
 
 config(){
     node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
-
-	cd ${module_name}
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
     return 0
 }
 

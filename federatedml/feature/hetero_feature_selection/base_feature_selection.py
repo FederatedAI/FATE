@@ -110,7 +110,9 @@ class BaseHeteroFeatureSelection(ModelBase):
             results=self.results,
             final_left_cols=left_col_obj,
             col_names=self.filter_result.get_sorted_col_names(),
-            host_col_names=host_col_names)
+            host_col_names=host_col_names,
+            header=self.header
+        )
 
         json_result = json_format.MessageToJson(result_obj)
         LOGGER.debug("json_result: {}".format(json_result))
@@ -127,26 +129,6 @@ class BaseHeteroFeatureSelection(ModelBase):
             idx -= 1
         LOGGER.debug('in make_cols_list, cols_list: {}, result_list: {}'.format(cols_list, result_list))
         return result_list
-
-    # def _add_left_cols(self):
-    #     this_filter_left = set()
-    #     for col_idx, is_left in self.left_cols.items():
-    #         if is_left:
-    #             this_filter_left.add(self.header[col_idx])
-    #             LOGGER.debug('col_idx: {}, is_left: {}, this_filter_left: {}'.format(
-    #                 col_idx, is_left, this_filter_left
-    #             ))
-    #     self.cols_list.append(this_filter_left)
-    #     LOGGER.debug("In _add_left_cols, left_cols: {}, col_list: {}".format(
-    #         self.left_cols, self.cols_list
-    #     ))
-
-    # def _add_host_left_cols(self, host_left_cols):
-    #     this_filter_left = set()
-    #     for col_idx, is_left in host_left_cols.items():
-    #         if is_left:
-    #             this_filter_left.add('.'.join(['host', str(col_idx)]))
-    #     self.host_cols_list.append(this_filter_left)
 
     def save_data(self):
         return self.data_output
@@ -272,19 +254,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
-
-    # def _renew_final_left_cols(self, new_left_cols):
-    #     """
-    #     As for all columns including those not specified in user params, record which columns left.
-    #     """
-    #     left_col_list = []
-    #     for col_idx, is_left in new_left_cols.items():
-    #         if not is_left:
-    #             self.left_cols[col_idx] = False
-    #         elif is_left:
-    #             left_col_list.append(col_idx)
-    #             self.left_cols[col_idx] = True
-    #     self.cols = left_col_list
 
     def _transform_init_cols(self, data_instances):
         self.schema = data_instances.schema

@@ -4,10 +4,9 @@ module_name="redis"
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./configurations.sh
-source ../default_configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -21,15 +20,10 @@ source ${config_path}
 
 # deploy functions
 package(){
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        cd ${output_packages_dir}/source
-        if [[ -e "${module_name}" ]]
-        then
-            rm ${module_name}
-        fi
-        mkdir -p ${module_name}
-        cd ${module_name}
-        wget ${fate_cos_address}/redis-${redis_version}.tar.gz
+    source ../../../default_configurations.sh
+    package_init ${output_packages_dir} ${module_name}
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        get_module_binary ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
         tar xzf redis-${redis_version}.tar.gz
         rm -rf redis-${redis_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
@@ -41,22 +35,12 @@ package(){
 config(){
     node_label=$4
 	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
-
 	cd ./${module_name}/conf
     cp ${output_packages_dir}/source/${module_name}/redis-${redis_version}/redis.conf ./
 	cp ${cwd}/service.sh ./
 	sed -i "s/bind 127.0.0.1/bind 0.0.0.0/g" ./redis.conf
     sed -i "s/# requirepass foobared/requirepass ${redis_password}/g" ./redis.conf
     sed -i "s/databases 16/databases 50/g" ./redis.conf
-
-	cd ../
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
     return 0
 }
 

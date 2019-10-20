@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -21,7 +21,6 @@ source ${config_path}
 # deploy functions
 
 package() {
-    # source code and apt
     cd ${output_packages_dir}/source
 	if [[ -e "${module_name}" ]]
 	then
@@ -34,18 +33,12 @@ package() {
 config() {
     node_label=$4
 	cd ${output_packages_dir}/config/${node_label}
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ./${module_name}/conf
 	cp ${source_code_dir}/${module_name}/service.sh ./${module_name}/conf
 	cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
 	cd ./${module_name}/conf
 
 	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${deploy_dir}#g" ./service.sh
 	sed -i "s#venv=.*#venv=${venv_dir}#g" ./service.sh
-	
 	sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
 	sed -i "s/'user':.*/'user': '${db_user}',/g" ./settings.py
 	sed -i "s/'passwd':.*/'passwd': '${db_password}',/g" ./settings.py
@@ -53,10 +46,6 @@ config() {
 	sed -i "s/'name':.*/'name': '${db_name}',/g" ./settings.py
 	sed -i "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
 	sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
-
-	cd ../
-    cp ${cwd}/deploy.sh ./
-    cp ${cwd}/${config_path} ./configurations.sh
 	return 0
 }
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-#proxy
 
 version=0.3
 java_dir=
@@ -8,9 +7,6 @@ source_code_dir=
 output_packages_dir=
 deploy_dir=
 deploy_packages_dir=
-#local python environment
-#PYTHONPATH=/data/projects/fate/python
-#venvdir=/data/projects/fate/venv
 
 party_id=
 proxy_ip=

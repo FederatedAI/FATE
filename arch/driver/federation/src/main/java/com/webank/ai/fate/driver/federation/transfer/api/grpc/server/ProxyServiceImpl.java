@@ -17,11 +17,14 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.server;
 
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.api.eggroll.storage.Kv;
+import com.webank.ai.eggroll.api.storage.Kv;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.api.grpc.server.GrpcServerWrapper;
-import com.webank.ai.fate.core.constant.StringConstants;
+import com.webank.ai.fate.api.networking.proxy.Proxy;
+import com.webank.ai.eggroll.core.api.grpc.server.GrpcServerWrapper;
+import com.webank.ai.eggroll.core.api.grpc.server.GrpcServerWrapper;
+import com.webank.ai.eggroll.core.constant.StringConstants;
+import com.webank.ai.eggroll.core.constant.StringConstants;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushServerRequestStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;

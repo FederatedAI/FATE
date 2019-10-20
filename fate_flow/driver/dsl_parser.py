@@ -162,7 +162,7 @@ class DSLParser(object):
             else:
                 up_component = self.train_input_model.get(name)
                 up_idx = self.component_name_index.get(up_component)
-                self.components[i].set_role_parameters(self.components[up_idx].get_role_parameters())
+                self.components[idx].set_role_parameters(self.components[up_idx].get_role_parameters())
 
     def _check_component_valid_names(self):
         occur_times = {}

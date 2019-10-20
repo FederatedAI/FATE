@@ -210,7 +210,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def update_f_value(self, new_f=None, tidx=-1, mode="train"):
         LOGGER.info("update tree f value, tree idx is {}".format(tidx))
-        if self.F is None:
+        if mode == "train" and self.F is None:
             if self.tree_dim > 1:
                 self.F, self.init_score = self.loss.initialize(self.y, self.tree_dim)
             else:
