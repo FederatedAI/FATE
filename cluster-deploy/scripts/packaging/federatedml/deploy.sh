@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -21,7 +21,7 @@ source ${config_path}
 # deploy functions
 
 package() {
-    # source code and apt
+    # source code and binary
     cd ${output_packages_dir}/source
 	if [[ -e "${module_name}" ]]
 	then

@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -22,23 +22,9 @@ source ${config_path}
 
 package() {
     source ../../../default_configurations.sh
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        cd ${output_packages_dir}/source
-        if [[ -e "${module_name}" ]]
-        then
-            rm ${module_name}
-        fi
-        mkdir -p ${module_name}
-        cd ${module_name}
-        copy_path=${source_code_dir}/cluster-deploy/packages/jdk-${jdk_version}-linux-x64.tar.gz
-        download_uri=${fate_cos_address}/jdk-${jdk_version}-linux-x64.tar.gz
-        if [[ -f ${copy_path} ]];then
-            echo "[INFO] Copying ${copy_path}"
-            cp ${copy_path} ./
-        else
-            echo "[INFO] Downloading ${download_uri}"
-            wget ${download_uri}
-        fi
+    package_init ${output_packages_dir} ${module_name}
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        get_module_binary ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
         tar xzf jdk-${jdk_version}-linux-x64.tar.gz
         rm -rf jdk-${jdk_version}-linux-x64.tar.gz
         mkdir tmp

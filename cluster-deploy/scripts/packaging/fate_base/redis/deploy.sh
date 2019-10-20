@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {apt/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -21,23 +21,9 @@ source ${config_path}
 # deploy functions
 package(){
     source ../../../default_configurations.sh
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        cd ${output_packages_dir}/source
-        if [[ -e "${module_name}" ]]
-        then
-            rm ${module_name}
-        fi
-        mkdir -p ${module_name}
-        cd ${module_name}
-        copy_path=${source_code_dir}/cluster-deploy/packages/redis-${redis_version}.tar.gz
-        download_uri=${fate_cos_address}/redis-${redis_version}.tar.gz
-        if [[ -f ${copy_path} ]];then
-            echo "[INFO] Copying ${copy_path}"
-            cp ${copy_path} ./
-        else
-            echo "[INFO] Downloading ${download_uri}"
-            wget ${fate_cos_address}/redis-${redis_version}.tar.gz
-        fi
+    package_init ${output_packages_dir} ${module_name}
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        get_module_binary ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
         tar xzf redis-${redis_version}.tar.gz
         rm -rf redis-${redis_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then

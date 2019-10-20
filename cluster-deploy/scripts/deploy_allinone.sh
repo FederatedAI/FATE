@@ -4,11 +4,10 @@ cd ${cwd}
 source ./default_configurations.sh
 source ./allinone_configurations.sh
 
-deploy_modes=(apt build)
+deploy_modes=(binary build)
 #support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation)
-support_modules=(python)
+support_modules=(jdk)
 base_modules=(jdk python  mysql redis)
-
 deploy_mode=$1
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 packaging_dir=${cwd}/packaging
@@ -30,8 +29,8 @@ else
 fi
 
 init_env() {
-    if [[ "${deploy_mode}" == "apt" ]]; then
-        # TODO: All modules support apt deployment mode and need to be removed here.
+    if [[ "${deploy_mode}" == "binary" ]]; then
+        # TODO: All modules support binary deployment mode and need to be removed here.
         for node_ip in "${node_list[@]}"; do
 		    ssh -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
@@ -304,7 +303,7 @@ multiple() {
 }
 
 usage() {
-    echo "usage: $0 {apt|build} {all|[module1, ...]}"
+    echo "usage: $0 {binary|build} {all|[module1, ...]}"
 }
 
 
