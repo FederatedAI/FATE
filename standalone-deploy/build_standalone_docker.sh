@@ -24,59 +24,52 @@ fatepath=$(cd $basepath/..;pwd)
 cd ${fatepath}
 
 init() {
- cp -r arch federatedml workflow examples fate_flow research ${basepath}
+    cp -r arch federatedml workflow examples fate_flow research ${basepath}
+    docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
+    mkdir -p ${basepath}/fateboard
+    cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
+    cd ${basepath}/fateboard
+    ln -s fateboard-$version.jar fateboard.jar
+    mkdir conf ssh
+    cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
+    touch ./ssh/ssh.properties
 
- docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
- mkdir -p ${basepath}/fateboard
- cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
- cd ${basepath}/fateboard
- ln -s fateboard-$version.jar fateboard.jar
- mkdir conf ssh
- cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
- touch ./ssh/ssh.properties
+    cd ${basepath}
+    cp ../requirements.txt ./docker/python
+    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research
 
- cd ${basepath}
- cp ../requirements.txt ./docker/python
+    logPath="/var/lib/fate/log"
+    if [ ! -d "$logPath" ]; then
+     mkdir -p "$logPath"
+    fi
 
- tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research
+    dataPath="/var/lib/fate/data"
+    if [ ! -d "$dataPath" ]; then
+     mkdir -p "$dataPath"
+    fi
+    cp -r ./fate_flow/* /var/lib/fate/data
 
- logPath="/var/lib/fate/log"
- if [ ! -d "$logPath" ]; then
-  mkdir -p "$logPath"
- fi
+    sed -i"" "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
+    sed -i"" "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+    sed -i"" "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
+    tar -cf ./docker/fateboard/fateboard.tar fateboard
 
- dataPath="/var/lib/fate/data"
- if [ ! -d "$dataPath" ]; then
-  mkdir -p "$dataPath"
- fi
- cp -r ./fate_flow/* /var/lib/fate/data
-
- sed -i"" "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
- sed -i"" "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
- sed -i"" "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
-
- tar -cf ./docker/fateboard/fateboard.tar fateboard
-
- docker-compose -f ./docker/docker-compose-build.yml up -d
- docker restart fate_python
- sleep 5
- docker restart fate_fateboard
-
- rm -rf examples workflow arch federatedml fateboard fate_flow research  data
-
- rm docker/python/fate.tar
-
- rm docker/python/requirements.txt
-
- rm docker/fateboard/fateboard.tar
+    docker-compose -f ./docker/docker-compose-build.yml up -d
+    docker restart fate_python
+    sleep 5
+    docker restart fate_fateboard
+    rm -rf examples workflow arch federatedml fateboard fate_flow research  data
+    rm docker/python/fate.tar
+    rm docker/python/requirements.txt
+    rm docker/fateboard/fateboard.tar
 }
 start() {
- docker start `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
- docker start `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
+    docker start `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
+    docker start `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
 }
 stop(){
- docker stop `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
- docker stop `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
+    docker stop `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
+    docker stop `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
 
 }
 case "$1" in
@@ -89,7 +82,7 @@ case "$1" in
     stop)
         stop
         ;;
- *)
-  echo "usage: $0 {init|start|stop}."
+    *)
+        echo "usage: $0 {init|start|stop}."
         exit -1
 esac

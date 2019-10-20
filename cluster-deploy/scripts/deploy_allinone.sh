@@ -250,7 +250,8 @@ tar xzf config.tar.gz -C config
 exit
 eeooff
         for module in "${support_modules[@]}"; do
-            if [[ $(if_base ${module}) -eq 0 ]];then
+            if_base ${module}
+            if [[ $? -eq 0 ]];then
                 module_deploy_dir=${deploy_dir}/common/${module}
             else
                 module_deploy_dir=${deploy_dir}/${module}
@@ -274,7 +275,8 @@ all() {
         echo "------------------------------------------------------------------------"
 		echo "[INFO] ${module} is packaging:"
         cd ${packaging_dir}
-        if [[ $(if_base ${module}) -eq 0 ]];then
+        if_base ${module}
+        if [[ $? -eq 0 ]];then
             echo "[INFO] ${module} is base module"
             cd fate_base
         else

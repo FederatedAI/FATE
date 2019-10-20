@@ -40,6 +40,7 @@ package() {
 
 config() {
     node_label=$4
+    cd ${output_packages_dir}/config/${node_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
@@ -50,7 +51,7 @@ config() {
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/${module_name}.properties ./conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/route_tables/route_table.json ./conf
     sed -i "s/port=.*/port=${proxy_port}/g" ./conf/${module_name}.properties
-    sed -i "s#route.table=.*#route.table=${output_packages_dir}/${module_name}/conf/route_table.json#g" ./conf/${module_name}.properties
+    sed -i "s#route.table=.*#route.table=${deploy_dir}/${module_name}/conf/route_table.json#g" ./conf/${module_name}.properties
     sed -i "s/coordinator=.*/coordinator=${party_id}/g" ./conf/${module_name}.properties
     sed -i "s/ip=.*/ip=${proxy_ip}/g" ./conf/${module_name}.properties
     cp ${cwd}/proxy_modify_json.py ./

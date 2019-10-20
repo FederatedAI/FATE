@@ -16,10 +16,7 @@
 #  limitations under the License.
 #
 basepath=$(cd `dirname $0`;pwd)
-echo basepath
-
 configpath=$(cd $basepath/conf;pwd)
-echo configpath
 
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
