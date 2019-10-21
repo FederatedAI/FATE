@@ -1,7 +1,7 @@
 #!/bin/bash
 #federation
 
-version=0.3
+version=1.1
 java_dir=
 source_code_dir=
 output_packages_dir=

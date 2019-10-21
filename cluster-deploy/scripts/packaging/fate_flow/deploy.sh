@@ -37,7 +37,7 @@ config() {
 	cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
 	cd ./${module_name}/conf
 
-	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${deploy_dir}#g" ./service.sh
+	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./service.sh
 	sed -i "s#venv=.*#venv=${venv_dir}#g" ./service.sh
 	sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
 	sed -i "s/'user':.*/'user': '${db_user}',/g" ./settings.py

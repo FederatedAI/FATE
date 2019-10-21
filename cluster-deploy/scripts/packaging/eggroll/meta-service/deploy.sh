@@ -41,19 +41,21 @@ package() {
 
 config() {
     node_label=$4
+	cd ${output_packages_dir}/config/${node_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
 
     mkdir conf
-    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/roll.properties ./conf
+    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
-    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-roll.xml ./conf
+    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
 
-    sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/roll.properties
-    sed -i "s/service.port=.*/service.port=${port}/g" ./conf/roll.properties
-    sed -i "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/roll.properties
-    sed -i "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/roll.properties
+	sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/meta-service.properties
+	sed -i "s/service.port=.*/service.port=${port}/g" ./conf/meta-service.properties
+	sed -i "s#//.*?#//${db_ip}:3306/${db_name}?#g" ./conf/meta-service.properties
+	sed -i "s/jdbc.username=.*/jdbc.username=${db_user}/g" ./conf/meta-service.properties
+	sed -i "s/jdbc.password=.*/jdbc.password=${db_password}/g" ./conf/meta-service.properties
 }
 
 init() {

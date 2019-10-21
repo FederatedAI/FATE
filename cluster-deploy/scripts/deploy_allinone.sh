@@ -6,8 +6,9 @@ source ./allinone_configurations.sh
 
 deploy_modes=(binary build)
 #support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation)
-support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy faederation)
+support_modules=(egg)
 base_modules=(jdk python  mysql redis)
+eggroll_modules=(roll meta-service egg)
 deploy_mode=$1
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 packaging_dir=${cwd}/packaging
@@ -39,7 +40,7 @@ eeooff
 	        scp ${cwd}/packaging/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
 	        ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
-sh env.sh
+#sh env.sh
 exit
 eeooff
         done
@@ -51,6 +52,15 @@ eeooff
 if_base() {
     module_name=$1
     if [[ ${base_modules[@]/${module_name}/} != ${base_modules[@]} ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+if_eggroll() {
+    module_name=$1
+    if [[ ${eggroll_modules[@]/${module_name}/} != ${eggroll_modules[@]} ]];then
         return 0
     else
         return 1
@@ -135,6 +145,8 @@ deploy_fate_flow() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+
+    sed -i "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
     sed -i "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
@@ -222,6 +234,74 @@ deploy_proxy() {
     done
 }
 
+deploy_roll() {
+    cp configurations.sh configurations.sh.tmp
+    sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        party_id=${party_list[i]}
+        sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+        sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
+	    config_enter ${node_ip} roll
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
+}
+
+deploy_metaservice() {
+    cp configurations.sh configurations.sh.tmp
+    sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+
+    sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
+    sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
+
+    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        party_id=${party_list[i]}
+        sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+        sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
+	    config_enter ${node_ip} meta-service
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
+}
+
+deploy_egg() {
+    cp configurations.sh configurations.sh.tmp
+    sed -i"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+
+    sed -i "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+    sed -i "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+    sed -i "s#data_dir=.*#data_dir=${deploy_dir}/eggroll/data_dir#g" ./configurations.sh.tmp
+
+    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        party_id=${party_list[i]}
+        sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+        sed -i "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
+        sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+	    config_enter ${node_ip} egg
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
+    done
+}
+
+
 distribute() {
     cd ${output_packages_dir}
     tar czf source.tar.gz ./source
@@ -254,7 +334,12 @@ eeooff
             if [[ $? -eq 0 ]];then
                 module_deploy_dir=${deploy_dir}/common/${module}
             else
-                module_deploy_dir=${deploy_dir}/${module}
+                if_eggroll ${module}
+                if [[ $? -eq 0 ]];then
+                    module_deploy_dir=${deploy_dir}/eggroll/${module}
+                else
+                    module_deploy_dir=${deploy_dir}/${module}
+                fi
             fi
             echo "[INFO] ${module} deploy dir is ${module_deploy_dir}"
 	        ssh -tt ${user}@${node_ip} << eeooff
@@ -270,9 +355,9 @@ eeooff
 
 all() {
     init_env
+    echo "------------------------------------------------------------------------"
 	for module in "${support_modules[@]}"; do
         echo
-        echo "------------------------------------------------------------------------"
 		echo "[INFO] ${module} is packaging:"
         cd ${packaging_dir}
         if_base ${module}
@@ -280,19 +365,29 @@ all() {
             echo "[INFO] ${module} is base module"
             cd fate_base
         else
-            echo "[INFO] ${module} is application module"
+            if_eggroll ${module}
+            if [[ $? -eq 0 ]];then
+                echo "[INFO] ${module} is eggroll module"
+                cd eggroll
+            else
+                echo "[INFO] ${module} is application module"
+            fi
         fi
         cd ${module}
-        deploy_${module}
+        if [[ "${module}" == "meta-service" ]]; then
+            deploy_metaservice
+        else
+            deploy_${module}
+        fi
         if [[ $? -ne 0 ]];then
 		    echo "[INFO] ${module} packaging error."
 		    exit 255
 		else
 		    echo "[INFO] ${module} packaging successfully."
 		fi
-        echo "------------------------------------------------------------------------"
 		cd ${cwd}
 	done
+    echo "------------------------------------------------------------------------"
 	distribute
 	install
 }
