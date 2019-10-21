@@ -56,7 +56,7 @@ class EncryptParam(BaseParam):
             user_input = self.method.lower()
             if user_input == "paillier":
                 self.method = consts.PAILLIER
-            if user_input == "iterativeaffine":
+            elif user_input == "iterativeaffine":
                 self.method = consts.ITERATIVEAFFINE
             else:
                 raise ValueError(
@@ -72,4 +72,5 @@ class EncryptParam(BaseParam):
 
         LOGGER.debug("Finish encrypt parameter check!")
         return True
+
 

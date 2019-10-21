@@ -103,77 +103,76 @@ class LinearParam(BaseParam):
 
         if type(self.penalty).__name__ != "str":
             raise ValueError(
-                "linear_param's penalty {} not supported, should be str type".format(self.penalty))
+                descr + "penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
             if self.penalty not in ['L1', 'L2', 'NONE']:
                 raise ValueError(
-                    "linear_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+                    descr + "penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
-                "linear_param's tol {} not supported, should be float type".format(self.tol))
+                descr + "tol {} not supported, should be float type".format(self.tol))
 
         if type(self.alpha).__name__ not in ["int", "float"]:
             raise ValueError(
-                "linear_param's alpha {} not supported, should be float type".format(self.alpha))
+                descr + "alpha {} not supported, should be float type".format(self.alpha))
 
         if type(self.optimizer).__name__ != "str":
             raise ValueError(
-                "linear_param's optimizer {} not supported, should be str type".format(self.optimizer))
+                descr + "optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
             if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
                 raise ValueError(
-                    "linear_param's optimizer not supported, optimizer should be"
+                    descr + "optimizer not supported, optimizer should be"
                     " 'sgd', 'rmsprop', 'adam' or 'adagrad'")
 
-        if type(self.batch_size).__name__ != "int":
+        if type(self.batch_size).__name__ not in ["int", "long"]:
             raise ValueError(
-                "linear_param's batch_size {} not supported, should be int type".format(self.batch_size))
+                descr + "batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int", "long"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(consts.MIN_BATCH_SIZE, self.batch_size))
+                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
 
         if type(self.learning_rate).__name__ != "float":
             raise ValueError(
-                "linear_param's learning_rate {} not supported, should be float type".format(
+                descr + "learning_rate {} not supported, should be float type".format(
                     self.learning_rate))
 
         self.init_param.check()
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(
-                "linear_param's max_iter {} not supported, should be int type".format(self.max_iter))
+                descr + "max_iter {} not supported, should be int type".format(self.max_iter))
         elif self.max_iter <= 0:
             raise ValueError(
-                "linear_param's max_iter must be greater or equal to 1")
+                descr + "max_iter must be greater or equal to 1")
 
         if type(self.early_stop).__name__ != "str":
             raise ValueError(
-                "linear_param's early_stop {} not supported, should be str type".format(
+                descr + "early_stop {} not supported, should be str type".format(
                     self.early_stop))
         else:
             self.early_stop = self.early_stop.lower()
             if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
-                    "linear_param's early_stop not supported, early_stop should be"
-                    " 'weight_diff', 'diff' or 'abs'")
+                    descr + "early_stop not supported, early_stop should be 'weight_diff', 'diff' or 'abs'")
 
         self.encrypt_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                "Linear regression's encrypt method supports 'Paillier' or None only")
+                descr + "encrypt method supports 'Paillier' or None only")
 
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
-                "regression param's decay {} not supported, should be 'int' or 'float'".format(self.decay)
+                descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)
             )
         if type(self.decay_sqrt).__name__ not in ["bool"]:
             raise ValueError(
-                "regression param's decay_sqrt {} not supported, should be 'bool'".format(self.decay)
+                descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
         if self.validation_freqs is not None:
             if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
