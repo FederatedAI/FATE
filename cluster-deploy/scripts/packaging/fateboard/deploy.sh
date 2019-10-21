@@ -24,8 +24,6 @@ packaging() {
     package_init ${output_packages_dir} ${module_name}
     if [[ "${deploy_mode}" == "binary" ]]; then
         get_module_binary ${source_code_dir} ${module_name} ${module_name}-${version}.jar
-        tar xzf ${module_name}-${version}.tar.gz
-        rm -rf ${module_name}-${version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
         if [[ -f "${source_code_dir}/${module_name}/target/${module_name}-${version}.jar" ]];then
             cp ${source_code_dir}/${module_name}/target/${module_name}-${version}.jar ./
@@ -36,8 +34,8 @@ packaging() {
 }
 
 config() {
-    node_label=$4
-    cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+    cd ${output_packages_dir}/config/${party_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
 

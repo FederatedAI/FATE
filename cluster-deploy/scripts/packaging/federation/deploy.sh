@@ -40,8 +40,8 @@ packaging() {
 
 
 config() {
-    node_label=$4
-    cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+    cd ${output_packages_dir}/config/${party_label}
 
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
@@ -56,6 +56,8 @@ config() {
     sed -i "s/service.port=.*/service.port=${port}/g" ./conf/federation.properties
     sed -i "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/federation.properties
     sed -i "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
+    sed -i "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
+    sed -i "s/proxy.port=.*/proxy.ip=${proxy_port}/g" ./conf/federation.properties
 }
 
 init() {

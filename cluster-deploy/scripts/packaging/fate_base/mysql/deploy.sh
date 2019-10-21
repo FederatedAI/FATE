@@ -33,8 +33,8 @@ packaging(){
 }
 
 config(){
-    node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+	cd ${output_packages_dir}/config/${party_label}
 	cp -r ${cwd}/conf ./${module_name}/conf/
 	cp ${cwd}/service.sh ./${module_name}/conf/
 

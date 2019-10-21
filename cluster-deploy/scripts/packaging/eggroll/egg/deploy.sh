@@ -71,8 +71,8 @@ packaging() {
 
 
 config() {
-    node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+	cd ${output_packages_dir}/config/${party_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
 	cp ${cwd}/modify_json.py ./

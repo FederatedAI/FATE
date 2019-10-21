@@ -21,18 +21,15 @@ source ${config_path}
 # deploy functions
 
 packaging() {
-    cd ${output_packages_dir}/source
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
+    source ../../default_configurations.sh
+    package_init ${output_packages_dir} ${module_name}
 	cp -r ${source_code_dir}/${module_name} ${output_packages_dir}/source
 	return 0
 }
 
 config() {
-    node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+	cd ${output_packages_dir}/config/${party_label}
 	cp ${source_code_dir}/${module_name}/service.sh ./${module_name}/conf
 	cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
 	cd ./${module_name}/conf

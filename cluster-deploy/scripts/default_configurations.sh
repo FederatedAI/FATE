@@ -11,7 +11,7 @@ package_init() {
     cd ${output_packages_dir}/source
     if [[ -e "${module_name}" ]]
     then
-        rm ${module_name}
+        rm -rf ${module_name}
     fi
     mkdir -p ${module_name}
     cd ${module_name}

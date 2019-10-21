@@ -33,8 +33,8 @@ packaging(){
 }
 
 config(){
-    node_label=$4
-	cd ${output_packages_dir}/config/${node_label}
+    party_label=$4
+	cd ${output_packages_dir}/config/${party_label}
 	cd ./${module_name}/conf
     cp ${output_packages_dir}/source/${module_name}/redis-${redis_version}/redis.conf ./
 	cp ${cwd}/service.sh ./

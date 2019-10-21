@@ -21,12 +21,8 @@ source ${config_path}
 # deploy functions
 
 packaging() {
-    cd ${output_packages_dir}/source
-	if [[ -e "${module_name}" ]]
-	then
-		rm ${module_name}
-	fi
-	mkdir -p ${module_name}
+    source ../../default_configurations.sh
+    package_init ${output_packages_dir} ${module_name}
 	cp -r ${source_code_dir}/federatedml ${output_packages_dir}/source/${module_name}/
 	cp -r ${source_code_dir}/examples ${output_packages_dir}/source/${module_name}
 	mkdir -p ${output_packages_dir}/source/${module_name}/arch
@@ -35,8 +31,8 @@ packaging() {
 }
 
 config() {
-    node_label=$4
-	cd ${output_packages_dir}/config/${node_label}/${module_name}/conf
+    party_label=$4
+	cd ${output_packages_dir}/config/${party_label}/${module_name}/conf
 	python ${cwd}/generate_server_conf.py ${cwd}/service.env.tmp ./server_conf.json
 	return 0
 }
