@@ -28,7 +28,7 @@ import numpy as np
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.param.boosting_tree_param import BoostingTreeParam
-from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection.k_fold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy

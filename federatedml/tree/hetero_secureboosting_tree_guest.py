@@ -518,6 +518,9 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     
     def export_model(self):
+        if self.need_cv:
+            return None
+        
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
         self.model_output = {meta_name: meta_protobuf,

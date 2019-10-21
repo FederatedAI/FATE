@@ -15,6 +15,7 @@
 #
 import sys
 from collections import defaultdict
+import math
 import numpy as np
 import logging
 
@@ -151,7 +152,15 @@ class Evaluation(ModelBase):
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
-            if res:
+            if res is not None:
+                LOGGER.debug("res:{}".format(res))
+                try:
+                    if math.isinf(res):
+                        res = -9999999
+                        LOGGER.debug("res is inf, set to {}".format(res))
+                except:
+                    pass
+                   
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 

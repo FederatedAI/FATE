@@ -55,7 +55,7 @@ class EvaluateParam(BaseParam):
         if type(self.need_run).__name__ != "bool":
             raise ValueError(
                 "evaluate param's need_run {} not supported, should be bool".format(
-                    self.pos_label))
+                    self.need_run))
 
         LOGGER.info("Finish evaluation parameter check!")
         return True

@@ -68,6 +68,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
+            self.in_one_vs_rest = True
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
             self.need_one_vs_rest = False
@@ -153,7 +154,7 @@ class HeteroLRGuest(HeteroLRBase):
         DTable
             include input data label, predict probably, label
         """
-        LOGGER.info("Start predict ...")
+        LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
         if self.need_one_vs_rest:
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result

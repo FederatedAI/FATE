@@ -108,6 +108,9 @@ class DSLParser(object):
 
     def _init_components(self, pipeline_dsl=None, mode="train"):
         components = self.dsl.get("components")
+        if components is None:
+            raise ValueError("there are no components in dsl, please have a check!")
+
         pipeline_cnt = 0
         for name in components:
             module = components[name]["module"]
@@ -599,13 +602,22 @@ class DSLParser(object):
                 output_data_str = output_data[0]
                 if "train_data" in input_data or "eval_data" in input_data:
                     if "train_data" in input_data:
-                        output_data_maps[name][output_data_str] = input_data.get("train_data")
+                        up_input_data = input_data.get("train_data")[0]
                     else:
-                        output_data_maps[name][output_data_str] = input_data.get("eval_data")
+                        up_input_data = input_data.get("eval_data")[0]
                 elif "data" in input_data:
-                    output_data_maps[name][output_data_str] = input_data.get("data")
+                    up_input_data = input_data.get("data")[0]
                 else:
                     raise ValueError("Illegal input data")
+
+                up_input_data_component_name = up_input_data.split(".", -1)[0]
+                if up_input_data_component_name == "args" or self.get_need_deploy_parameter(name=up_input_data_component_name,
+                                                  setting_conf_prefix=setting_conf_prefix):
+                    output_data_maps[name][output_data_str] = up_input_data
+                else:
+                    up_input_data_suf = up_input_data.split(".", -1)[-1]
+                    output_data_maps[name][output_data_str] = output_data_maps[up_input_data_component_name][
+                        up_input_data_suf]
 
         if not need_predict:
             return
