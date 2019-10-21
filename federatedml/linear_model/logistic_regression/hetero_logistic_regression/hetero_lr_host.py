@@ -78,6 +78,7 @@ class HeteroLRHost(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr host")
+        self.header = self.get_header(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
