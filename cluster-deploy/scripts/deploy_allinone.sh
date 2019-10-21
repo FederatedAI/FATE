@@ -40,7 +40,7 @@ eeooff
 	        scp ${cwd}/packaging/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
 	        ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
-#sh env.sh
+sh env.sh
 exit
 eeooff
         done

@@ -32,6 +32,9 @@ package() {
         get_module_binary ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
         tar xzf eggroll-storage-service-cxx-${version}.tar.gz
         rm -rf eggroll-storage-service-cxx-${version}.tar.gz
+        get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        tar xzf third_party_eggrollv1.tar.gz
+        rm -rf third_party_eggrollv1.tar.gz
 
         cd ../
         mkdir computing
@@ -73,6 +76,7 @@ config() {
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
 	cp ${cwd}/modify_json.py ./
+	cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
     sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
 
     mkdir conf
@@ -83,15 +87,16 @@ config() {
 	sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/egg.properties
 	sed -i "s/service.port=.*/service.port=${port}/g" ./conf/egg.properties
 	sed -i "s/engine.names=.*/engine.names=processor/g" ./conf/egg.properties
-	sed -i "s#bootstrap.script=.*#bootstrap.script=${dir}/api/eggroll/framework/egg/src/main/resources/processor-starter.sh#g" ./conf/egg.properties
+	sed -i "s#bootstrap.script=.*#bootstrap.script=${deploy_dir}/${module_name}/processor-starter.sh#g" ./conf/egg.properties
 	sed -i "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
 	sed -i "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
 	sed -i "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
-	sed -i "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/computing/processor.py#g" ./conf/egg.properties
-	sed -i "s#data-dir=.*#data-dir=${data_dir}/data-dir#g" ./conf/egg.properties
+	sed -i "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/computing/processor.py#g" ./conf/egg.properties
+	sed -i "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
 	sed -i "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
 	sed -i "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
-
+	echo >> ./conf/egg.properties
+	echo "eggroll.computing.processor.python-path=${python_path}" >> ./conf/egg.properties
 }
 
 init() {
@@ -106,11 +111,15 @@ install(){
     ln -s eggroll-${module_name}-${version}.jar eggroll-${module_name}.jar
 
     cp -r ./storage-service-cxx ${deploy_dir}/
+    rm -rf ./storage-service-cxx
     cp -r ./computing ${deploy_dir}/
+    rm -rf ./computing
     mkdir -p ${deploy_dir}/python/eggroll/api
     cp -r ./eggroll-api/* ${deploy_dir}/python/eggroll/api/
+    rm -rf ./eggroll-api
     mkdir -p ${deploy_dir}/python/conf
     cp -r ./eggroll-conf/* ${deploy_dir}/python/conf/
+    rm -rf ./eggroll-conf
 
     cd ${deploy_dir}/storage-service-cxx
 	sed -i "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
