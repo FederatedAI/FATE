@@ -86,7 +86,8 @@ class ValidationStrategy(object):
             return
 
         LOGGER.debug("start to evaluate data {}".format(data_type))
-        model_flowid = ".".join(model.flowid.split(".", -1)[1:])
+        model_flowid = model.flowid
+        # model_flowid = ".".join(model.flowid.split(".", -1)[1:])
         flowid = self.generate_flowid(model_flowid, epoch, "iteration", data_type)
         model.set_flowid(flowid)
         predicts = model.predict(data)

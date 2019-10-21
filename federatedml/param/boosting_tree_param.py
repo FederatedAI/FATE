@@ -305,7 +305,7 @@ class BoostingTreeParam(BaseParam):
         if self.validation_freqs is None:
             pass
         elif isinstance(self.validation_freqs, int):
-            if not self.check_positive_number(self.validation_freqs, descr):
+            if self.validation_freqs < 1:
                 raise ValueError("validation_freqs should be larger than 0 when it's integer")
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
