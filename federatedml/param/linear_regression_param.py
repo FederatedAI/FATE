@@ -99,7 +99,7 @@ class LinearParam(BaseParam):
         self.validation_freqs = validation_freqs
 
     def check(self):
-        descr = "linear_param's"
+        descr = "linear_regression_param's "
 
         if type(self.penalty).__name__ != "str":
             raise ValueError(
@@ -108,7 +108,7 @@ class LinearParam(BaseParam):
             self.penalty = self.penalty.upper()
             if self.penalty not in ['L1', 'L2', 'NONE']:
                 raise ValueError(
-                    descr + "penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+                    "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
