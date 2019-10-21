@@ -25,9 +25,10 @@
 # DSL PARSER
 # =============================================================================
 
-import json
 import copy
+import json
 import os
+
 from fate_flow.utils import parameter_util
 
 
@@ -611,9 +612,10 @@ class DSLParser(object):
                     raise ValueError("Illegal input data")
 
                 up_input_data_component_name = up_input_data.split(".", -1)[0]
-                if up_input_data_component_name == "args" or self.get_need_deploy_parameter(name=up_input_data_component_name,
-                                                  setting_conf_prefix=setting_conf_prefix):
-                    output_data_maps[name][output_data_str] = up_input_data
+                if up_input_data_component_name == "args" or self.get_need_deploy_parameter(
+                        name=up_input_data_component_name,
+                        setting_conf_prefix=setting_conf_prefix):
+                    output_data_maps[name][output_data_str] = [up_input_data]
                 else:
                     up_input_data_suf = up_input_data.split(".", -1)[-1]
                     output_data_maps[name][output_data_str] = output_data_maps[up_input_data_component_name][
