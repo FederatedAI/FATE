@@ -36,6 +36,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'
         self.need_one_vs_rest = None
+        self.in_one_vs_rest = False
         self.mode = consts.HETERO
 
     def fit(self, data_instances=None, validate_data=None):
