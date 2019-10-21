@@ -7,7 +7,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {packaging|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -19,7 +19,7 @@ then
 fi
 source ${config_path}
 
-package() {
+packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
     if [[ "${deploy_mode}" == "binary" ]]; then
@@ -41,6 +41,7 @@ package() {
 
 config() {
     node_label=$4
+	cd ${output_packages_dir}/config/${node_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
@@ -69,8 +70,8 @@ install(){
 }
 
 case "$2" in
-    package)
-        package $*
+    packaging)
+        packaging $*
         ;;
     config)
         config $*

@@ -29,7 +29,10 @@ get_module_binary() {
         cp ${copy_path} ./
     else
         echo "[INFO] Downloading ${download_uri}"
-        wget ${download_uri}
+        wget -P ${source_code_dir}/cluster-deploy/packages/ ${download_uri}
+        echo "[INFO] Finish downloading ${download_uri}"
+        echo "[INFO] Copying ${copy_path}"
+        cp ${copy_path} ./
     fi
     echo "[INFO] Finish get ${module_name} available binary"
 }
