@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3
+version=1.1
 java_dir=
 proxy_port=9370
 source_code_dir=

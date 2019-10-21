@@ -5,8 +5,7 @@ source ./default_configurations.sh
 source ./allinone_configurations.sh
 
 deploy_modes=(binary build)
-#support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation)
-support_modules=(egg)
+support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
 base_modules=(jdk python  mysql redis)
 eggroll_modules=(roll meta-service egg)
 deploy_mode=$1
@@ -86,7 +85,7 @@ deploy_jdk() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
 	    config_enter ${node_ip} jdk
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
@@ -101,7 +100,7 @@ deploy_python() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
 	    config_enter ${node_ip} python
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
@@ -117,7 +116,7 @@ deploy_mysql() {
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
 	    config_enter ${node_ip} mysql
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
@@ -132,7 +131,7 @@ deploy_redis() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
 	    config_enter ${node_ip} redis
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
@@ -151,7 +150,7 @@ deploy_fate_flow() {
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
         sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
@@ -162,12 +161,18 @@ deploy_fate_flow() {
 
 deploy_federatedml() {
     cp configurations.sh configurations.sh.tmp
+	cp services.env service.env.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 	for node_ip in "${node_list[@]}"; do
+        sed -i "s/roll.host=.*/roll.host=${node_ip}/g" ./service.env.tmp
+        sed -i "s/federation.host=.*/federation.host=${node_ip}/g" ./service.env.tmp
+        sed -i "s/fateflow.host=.*/fateflow.host=${node_ip}/g" ./service.env.tmp
+        sed -i "s/fateboard.host=.*/fateboard.host=${node_ip}/g" ./service.env.tmp
+        sed -i "s/proxy.host=.*/proxy.host=${node_ip}/g" ./service.env.tmp
 	    config_enter ${node_ip} federatedml
 	    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${node_ip}
 	done
@@ -183,7 +188,7 @@ deploy_fateboard() {
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for node_ip in "${node_list[@]}"; do
         sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
         sed -i "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
@@ -199,7 +204,7 @@ deploy_federation() {
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for ((i=0;i<${#node_list[*]};i++))
     do
         node_ip=${node_list[i]}
@@ -218,7 +223,7 @@ deploy_proxy() {
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for ((i=0;i<${#node_list[*]};i++))
     do
         node_ip=${node_list[i]}
@@ -241,7 +246,7 @@ deploy_roll() {
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for ((i=0;i<${#node_list[*]};i++))
     do
         node_ip=${node_list[i]}
@@ -264,7 +269,7 @@ deploy_metaservice() {
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
 
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for ((i=0;i<${#node_list[*]};i++))
     do
         node_ip=${node_list[i]}
@@ -288,7 +293,7 @@ deploy_egg() {
     sed -i "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
     sed -i "s#data_dir=.*#data_dir=${deploy_dir}/eggroll/data_dir#g" ./configurations.sh.tmp
 
-    sh ./deploy.sh ${deploy_mode} package ./configurations.sh.tmp
+    sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
     for ((i=0;i<${#node_list[*]};i++))
     do
         node_ip=${node_list[i]}

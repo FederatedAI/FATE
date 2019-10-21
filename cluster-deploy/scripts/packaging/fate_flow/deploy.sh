@@ -6,7 +6,7 @@ cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {binary/build} {package|config|install|init} {configurations path}."
+	echo "usage: $0 {binary/build} {packaging|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
@@ -20,7 +20,7 @@ source ${config_path}
 
 # deploy functions
 
-package() {
+packaging() {
     cd ${output_packages_dir}/source
 	if [[ -e "${module_name}" ]]
 	then
@@ -60,8 +60,8 @@ init (){
 }
 
 case "$2" in
-    package)
-        package $*
+    packaging)
+        packaging $*
         ;;
     config)
         config $*
