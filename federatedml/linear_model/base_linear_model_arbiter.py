@@ -112,7 +112,7 @@ class HeteroBaseArbiter(BaseLinearModel):
             # if converge
             if iter_loss is not None:
                 iter_loss /= self.batch_generator.batch_num
-                if not self.need_one_vs_rest:
+                if not self.in_one_vs_rest:
                     self.callback_loss(self.n_iter_, iter_loss)
 
             if self.model_param.early_stop == 'weight_diff':

@@ -165,7 +165,7 @@ class LogisticParam(BaseParam):
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
-        if self.encrypt_param.method != consts.PAILLIER:
+        if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
 
