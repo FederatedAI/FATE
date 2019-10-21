@@ -33,7 +33,7 @@ def gen_conf(services_env, server_conf):
             services[service_name] = services.get(service_name, {})
             services[service_name][service_config] = value
     with open(server_conf, 'w') as fw:
-        json.dump(dict(server=services), fw, indent=4)
+        json.dump(dict(servers=services), fw, indent=4)
 
 
 if __name__ == '__main__':

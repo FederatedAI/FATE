@@ -9,7 +9,7 @@ deploy_dir=
 deploy_packages_dir=
 
 party_id=
-port=8011
+port=8590
 db_ip=
 db_user=
 db_password=

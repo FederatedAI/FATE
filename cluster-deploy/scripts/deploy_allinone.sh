@@ -7,6 +7,7 @@ source ./allinone_configurations.sh
 deploy_modes=(binary build)
 support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
 base_modules=(jdk python  mysql redis)
+deploy_modules=()
 eggroll_modules=(roll meta-service egg)
 deploy_mode=$1
 if_one_machine=1
@@ -391,7 +392,7 @@ tar xzf source.tar.gz
 tar xzf config.tar.gz -C config
 exit
 eeooff
-        for module in "${support_modules[@]}"; do
+        for module in "${deploy_modules[@]}"; do
             if_base ${module}
             if [[ $? -eq 0 ]];then
                 module_deploy_dir=${deploy_dir}/common/${module}
@@ -415,73 +416,80 @@ eeooff
 	done
 }
 
+deploy_module() {
+    module=$1
+    echo "[INFO] ${module} is packaging:"
+    cd ${cwd}
+    cd ${packaging_dir}
+    if_base ${module}
+    if [[ $? -eq 0 ]];then
+        echo "[INFO] ${module} is base module"
+        cd fate_base
+    else
+        if_eggroll ${module}
+        if [[ $? -eq 0 ]];then
+            echo "[INFO] ${module} is eggroll module"
+            cd eggroll
+        else
+            echo "[INFO] ${module} is application module"
+        fi
+    fi
+    cd ${module}
+
+    if [[ "${module}" == "meta-service" ]]; then
+        deploy_metaservice
+    else
+        deploy_${module}
+    fi
+
+    for ((i=0;i<${#node_list[*]};i++))
+    do
+        node_ip=${node_list[i]}
+        party_id=${party_list[i]}
+        if [[ "${module}" == "meta-service" ]]; then
+            config_metaservice ${i} ${node_ip} ${deploy_dir}
+        else
+            config_${module} ${i} ${node_ip} ${deploy_dir}
+        fi
+    done
+
+    if [[ $? -ne 0 ]];then
+        echo "[INFO] ${module} packaging error."
+        exit 255
+    else
+        echo "[INFO] ${module} packaging successfully."
+    fi
+}
+
+deploy() {
+    echo "------------------------------------------------------------------------"
+    for module in ${deploy_modules[@]};
+    do
+        echo
+        deploy_module ${module}
+    done
+    echo "------------------------------------------------------------------------"
+    distribute
+    install
+}
+
 all() {
     init_env
-    echo "------------------------------------------------------------------------"
-	for module in "${support_modules[@]}"; do
-        echo
-		echo "[INFO] ${module} is packaging:"
-        cd ${packaging_dir}
-        if_base ${module}
-        if [[ $? -eq 0 ]];then
-            echo "[INFO] ${module} is base module"
-            cd fate_base
-        else
-            if_eggroll ${module}
-            if [[ $? -eq 0 ]];then
-                echo "[INFO] ${module} is eggroll module"
-                cd eggroll
-            else
-                echo "[INFO] ${module} is application module"
-            fi
-        fi
-        cd ${module}
-
-        if [[ "${module}" == "meta-service" ]]; then
-            deploy_metaservice
-        else
-            deploy_${module}
-        fi
-
-        for ((i=0;i<${#node_list[*]};i++))
-        do
-            node_ip=${node_list[i]}
-            party_id=${party_list[i]}
-            if [[ "${module}" == "meta-service" ]]; then
-                config_metaservice ${i} ${node_ip} ${deploy_dir}
-            else
-                config_${module} ${i} ${node_ip} ${deploy_dir}
-            fi
-        done
-
-        if [[ $? -ne 0 ]];then
-		    echo "[INFO] ${module} packaging error."
-		    exit 255
-		else
-		    echo "[INFO] ${module} packaging successfully."
-		fi
-		cd ${cwd}
+    for ((i=0;i<${#support_modules[*]};i++))
+    do
+        deploy_modules[i]=${support_modules[i]}
 	done
-    echo "------------------------------------------------------------------------"
-	distribute
-	install
+    deploy
 }
+
 
 multiple() {
     total=$#
-    for (( i=1; i<total+1; i++)); do
-        module=${!i//\//}
-        echo
-		echo "[INFO] ${module} is deploying:"
-        echo "=================================="
-        cd ${packaging_dir}/${module}/
-        ${module}
-        echo "-----------------------------------"
-		echo "[INFO] ${module} is deployed over."
-		cd ${cwd}
+    init_env
+    for ((i=2;i<total+1;i++)); do
+        deploy_modules[i]=${!i//\//}
     done
-    distribute
-    install
+    deploy
 }
 
 usage() {
