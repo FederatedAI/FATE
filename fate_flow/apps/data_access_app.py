@@ -74,7 +74,8 @@ def gen_data_access_job_config(config_data, access_module):
     if access_module == 'upload':
         job_runtime_conf["role_parameters"][initiator_role] = {
             "upload_0": {
-                "head": [config_data["head"]],
+                "work_mode": [config_data["work_mode"]],
+                "head": [config_data.get("head")],
                 "partition": [config_data["partition"]],
                 "file": [config_data.get("file")],
                 "namespace": [config_data["namespace"]],
@@ -90,6 +91,8 @@ def gen_data_access_job_config(config_data, access_module):
     if access_module == 'download':
         job_runtime_conf["role_parameters"][initiator_role] = {
             "download_0": {
+                "work_mode": [config_data["work_mode"]],
+                "delimitor": [config_data.get("delimitor")],
                 "output_path": [config_data.get("output_path")],
                 "namespace": [config_data.get("namespace")],
                 "table_name": [config_data.get("table_name")]
