@@ -16,17 +16,17 @@
 
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.client;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.api.grpc.client.GrpcAsyncClientContext;
-import com.webank.ai.fate.core.api.grpc.client.GrpcStreamingClientTemplate;
-import com.webank.ai.fate.core.constant.RuntimeConstants;
-import com.webank.ai.fate.core.model.DelayedResult;
-import com.webank.ai.fate.core.model.impl.SingleDelayedResult;
-import com.webank.ai.fate.core.server.DefaultServerConf;
-import com.webank.ai.fate.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcAsyncClientContext;
+import com.webank.ai.eggroll.core.api.grpc.client.GrpcStreamingClientTemplate;
+import com.webank.ai.eggroll.core.constant.RuntimeConstants;
+import com.webank.ai.eggroll.core.model.DelayedResult;
+import com.webank.ai.eggroll.core.model.impl.SingleDelayedResult;
+import com.webank.ai.eggroll.core.server.DefaultServerConf;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
 import com.webank.ai.fate.driver.federation.factory.TransferServiceFactory;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.PushClientResponseStreamObserver;
 import com.webank.ai.fate.driver.federation.transfer.api.grpc.observer.UnaryCallServerRequestStreamObserver;

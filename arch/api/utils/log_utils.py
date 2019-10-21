@@ -111,7 +111,7 @@ class LoggerFactory(object):
             else:
                 log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
-            log_file = os.path.join(log_dir, "fate_flow_schedule.log")
+            log_file = os.path.join(log_dir, "fate_flow_schedule.log" if level == LoggerFactory.LEVEL else 'error.log')
         formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
@@ -164,7 +164,9 @@ class LoggerFactory(object):
         logger = logging.getLogger(job_id)
         logger.setLevel(LoggerFactory.LEVEL)
         handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL, log_dir=job_log_dir, is_schedule=True)
+        error_handler = LoggerFactory.get_handler(class_name=None, level=logging.ERROR, log_dir=job_log_dir, is_schedule=True)
         logger.addHandler(handler)
+        logger.addHandler(error_handler)
         with LoggerFactory.lock:
             LoggerFactory.schedule_logger_dict[job_id] = logger
         return logger

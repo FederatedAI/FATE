@@ -17,9 +17,9 @@
 package com.webank.ai.fate.driver.federation.transfer.communication.action;
 
 import com.webank.ai.fate.api.driver.federation.Federation;
-import com.webank.ai.fate.core.utils.ErrorUtils;
-import com.webank.ai.fate.core.utils.ToStringUtils;
-import com.webank.ai.fate.core.utils.TypeConversionUtils;
+import com.webank.ai.eggroll.core.utils.ErrorUtils;
+import com.webank.ai.eggroll.core.utils.ToStringUtils;
+import com.webank.ai.eggroll.core.utils.TypeConversionUtils;
 import com.webank.ai.fate.driver.federation.transfer.manager.RecvBrokerManager;
 import com.webank.ai.fate.driver.federation.transfer.manager.TransferMetaHelper;
 import com.webank.ai.fate.driver.federation.transfer.model.TransferBroker;
