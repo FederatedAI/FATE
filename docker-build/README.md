@@ -17,9 +17,9 @@ Before building the images, we need to configure `.env` file to name and tag the
 A sample content of `.env` is as follows:
 ```bash
 PREFIX=federatedai
-BASE_TAG=1.0-release
-BUILDER_TAG=1.0-release
-TAG=1.0-release
+BASE_TAG=1.0.2-release
+BUILDER_TAG=1.0.2-release
+TAG=1.0.2-release
 
 # PREFIX: namespace on the registry's server.
 # BASE_TAG: tag of base image.
@@ -31,12 +31,12 @@ TAG=1.0-release
 
 Use this command to build all images:
 ```bash
-$ bash build_cluster_docker.sh all
+$ bash build_cluster_docker.sh modules
 ```
 
 For **Chinese developer**, it will take a long time to download the resource from the overseas server. In this case, a user could provide the `useChineseMirror` to enable the building process download resource from Chinese mirror:
 ```bash
-$ bash build_cluster_docker.sh --useChineseMirror all
+$ bash build_cluster_docker.sh --useChineseMirror modules 
 ```
 The "Dockerfile" of all images are stored under the "./docker" sub-directory. 
 
@@ -50,22 +50,22 @@ The process of building module images can be separated into 3 steps:
 After the command finishes, use `docker images` to check the newly generated images:
 ```
 REPOSITORY                         TAG  
-federatedai/egg                       1.0-release    
-federatedai/fateboard                 1.0-release    
-federatedai/serving-server            1.0-release     
-federatedai/meta-service              1.0-release    
-federatedai/python                    1.0-release     
-federatedai/roll                      1.0-release
-federatedai/proxy                     1.0-release
-federatedai/federation                1.0-release
-federatedai/storage-service-builder   1.0-release   
-federatedai/base-image                1.0-release
+federatedai/egg                       1.0.2-release    
+federatedai/fateboard                 1.0.2-release    
+federatedai/serving-server            1.0.2-release     
+federatedai/meta-service              1.0.2-release    
+federatedai/python                    1.0.2-release     
+federatedai/roll                      1.0.2-release
+federatedai/proxy                     1.0.2-release
+federatedai/federation                1.0.2-release
+federatedai/storage-service-builder   1.0.2-release   
+federatedai/base-image                1.0.2-release
 ```
 
 ##### Push Images to a Registry (optional)
 If you need to push the images to a registry (such as Docker Hub), please use the following command to log in first: 
 
-`$ docker login` 
+`$ docker login username` 
 
 After that use this command to push the images: 
 
@@ -77,12 +77,14 @@ In the machine with all docker images are ready, use the following commands to p
 # Pull mysql and redis first if you don't have those images in your machine.
 $ docker pull redis
 $ docker pull mysql
-$ docker save $(docker images | grep -E "federatedai|redis|mysql" | awk '{print $1":"$2}') -o images.tar.gz
+$ docker save $(docker images | grep -E "redis|mysql" | awk '{print $1":"$2}') -o third-party.images.tar.gz
+$ docker save $(docker images | grep federatedai| grep -v -E "base|builder" | awk '{print $1":"$2}') -o fate.images.tar.gz
 ```
 
-After the `images.tar.gz` file was generated, it needs to be transferred to the machines hosting the FATE components. In the machine with the `images.tar.gz` file, use the following command to unpackage the images:
+After the `*.images.tar.gz` files were generated, they need to be transferred to the machines hosting the FATE components. In the machine with the `images.tar.gz` file, use the following command to unpackage the images:
 ```bash
-$ docker load -i images.tar.gz
+$ docker load -i third-party.images.tar.gz
+$ docker load -i fate.images.tar.gz
 ```
 
 ### Deployment
