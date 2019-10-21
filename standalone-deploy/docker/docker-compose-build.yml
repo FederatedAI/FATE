@@ -1,22 +1,12 @@
 version: "3"
 services:
-    #    mysql:
-    #        build: ./mysql
-    #        environment:
-    #           MYSQL_ROOT_PASSWORD: fate_dev
-    #        ports:
-    #            - "3306:3306"
-    #        command: --default-authentication-plugin=mysql_native_password
-    #        container_name: fate_mysql
+
     python:
         build: ./python
-        #        links:
-        #            - mysql
         ports:
             - "9380:9380"
             - "9360:9360"
-        #        depends_on:
-        #             - mysql
+
         volumes:
             - "/var/lib/fate/log:/fate/logs"
             - "/var/lib/fate/data:/fate/fate_flow"
@@ -25,12 +15,10 @@ services:
     fateboard:
         build: ./fateboard
         links:
-            #            - mysql
             - python
         ports:
             - "8080:8080"
         depends_on:
-            #             - mysql
             - python
         volumes:
             - "/var/lib/fate/log:/data/projects/fate/python/logs"

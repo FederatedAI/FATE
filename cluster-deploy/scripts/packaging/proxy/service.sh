@@ -15,22 +15,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-basepath=$(cd `dirname $0`;pwd)
-echo basepath
-
-configpath=$(cd $basepath/conf;pwd)
-echo configpath
 
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 
-module=fateboard
-main_class=org.springframework.boot.loader.JarLauncher
+module=proxy
+main_class=com.webank.ai.fate.networking.Proxy
 
 getpid() {
-#    pid=`ps aux | grep ${main_class} | grep -v grep | awk '{print $2}'`
-     pid=$(ps -ef|grep java|grep fateboard.jar|grep -v grep|awk '{print $2}')
-
+    pid=`ps aux | grep ${main_class} | grep -v grep | awk '{print $2}'`
 
     if [[ -n ${pid} ]]; then
         return 1
@@ -50,10 +43,10 @@ status() {
     if [[ -n ${pid} ]]; then
         echo "status:
         `ps aux | grep ${pid} | grep -v grep`"
-        return 1
+        exit 1
     else
         echo "service not running"
-        return 0
+        exit 0
     fi
 }
 
@@ -61,9 +54,7 @@ start() {
     getpid
     if [[ $? -eq 0 ]]; then
         mklogsdir
-#        java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c conf/${module}.properties >> logs/console.log 2>>logs/error.log &
-         nohup $JAVA_HOME/bin/java   -Dspring.config.location=$configpath/application.properties  -Dssh_config_file=$configpath  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
-
+        java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c conf/${module}.properties >> logs/console.log 2>>logs/error.log &
         if [[ $? -eq 0 ]]; then
             getpid
             echo "service start sucessfully. pid: ${pid}"
