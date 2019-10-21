@@ -63,7 +63,7 @@ class InitParam(BaseParam):
                 "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
 
         if self.random_seed is not None:
-            if type(self.random_seed).__name__ not in ['int', 'float']:
+            if type(self.random_seed).__name__ != 'int':
                 raise ValueError(
                     "Init param's random_seed {} not supported, should be int or float type".format(self.random_seed))
 

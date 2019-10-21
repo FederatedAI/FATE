@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection.k_fold import KFold
 
 LOGGER = log_utils.getLogger()
 

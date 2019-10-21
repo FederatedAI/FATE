@@ -228,9 +228,9 @@ class RawIntersect(Intersect):
                                             idx=-1)
             LOGGER.info("Remote intersect ids to role-send")
 
-        if self.role == consts.HOST and len(self.host_party_id_list) > 1:
-            LOGGER.info("raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(len(self.host_party_id_list)))
-            encode_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
+            if self.role == consts.HOST and len(self.host_party_id_list) > 1:
+                LOGGER.info("raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(len(self.host_party_id_list)))
+                encode_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
 
         if sid_encode_pair:
             encode_intersect_ids_map = encode_intersect_ids.join(sid_encode_pair, lambda r, s: s)

@@ -76,7 +76,7 @@ class HomoLRHost(HomoLRBase):
         total_batch_num = mini_batch_obj.batch_nums
 
         if self.use_encrypt:
-            re_encrypt_times = total_batch_num // self.re_encrypt_batches
+            re_encrypt_times = total_batch_num // self.re_encrypt_batches + 1
             LOGGER.debug("re_encrypt_times is :{}, batch_size: {}, total_batch_num: {}, re_encrypt_batches: {}".format(
                 re_encrypt_times, self.batch_size, total_batch_num, self.re_encrypt_batches))
             self.cipher.set_re_cipher_time(re_encrypt_times)
@@ -92,6 +92,10 @@ class HomoLRHost(HomoLRBase):
             if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
+                # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
+                #     model_weights.unboxed / degree,
+                #     degree,
+                #     weight.unboxed))
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 if not self.use_encrypt:
                     loss = self._compute_loss(data_instances)
@@ -108,24 +112,34 @@ class HomoLRHost(HomoLRBase):
             for batch_data in batch_data_generator:
                 n = batch_data.count()
                 degree += n
+                LOGGER.debug('before compute_gradient')
                 f = functools.partial(self.gradient_operator.compute_gradient,
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                LOGGER.debug('after compute_gradient, grad: {}'.format(grad))
                 grad /= n
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
-                batch_num += 1
+                LOGGER.debug('after update_model, model_weights: {}'.format(model_weights.unboxed))
+
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
+                    LOGGER.debug("Current")
                     w = self.cipher.re_cipher(w=model_weights.unboxed,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
-            
+                batch_num += 1
+                LOGGER.debug('after re_encrypted, model_weights: {}'.format(model_weights.unboxed))
+
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
+
     def predict(self, data_instances):
+
+        LOGGER.info(f'Start predict task')
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
         suffix = ('predict',)

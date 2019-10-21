@@ -37,7 +37,6 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from numpy import random
 from arch.api.utils import log_utils
-
 LOGGER = log_utils.getLogger()
 
 
@@ -203,6 +202,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.tree_dim = model_param.tree_dim
 
     def export_model(self):
+        if self.need_cv:
+            return None
+
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
         self.model_output = {meta_name: meta_protobuf,

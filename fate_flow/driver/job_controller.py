@@ -239,6 +239,8 @@ class JobController(object):
             RuntimeConfig.JOB_QUEUE.del_event(event)
 
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+        else:
+            raise Exception('role {} party_id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
 
 

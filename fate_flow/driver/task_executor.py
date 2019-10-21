@@ -112,22 +112,19 @@ class TaskExecutor(object):
                                           initiator_role=job_initiator.get('role', None),
                                           task_info=task.to_json())
 
-            schedule_logger(job_id).info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger(job_id).info(parameters)
-            schedule_logger(job_id).info(task_input_dsl)
+            schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
+            schedule_logger().info(parameters)
+            schedule_logger().info(task_input_dsl)
             run_object.run(parameters, task_run_args)
-            if task_output_dsl:
-                if task_output_dsl.get('data', []):
-                    output_data = run_object.save_data()
-                    tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0])
-                if task_output_dsl.get('model', []):
-                    output_model = run_object.export_model()
-                    # There is only one model output at the current dsl version.
-                    tracker.save_output_model(output_model, task_output_dsl['model'][0])
+            output_data = run_object.save_data()
+            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
+            output_model = run_object.export_model()
+            # There is only one model output at the current dsl version.
+            tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
             traceback.print_exc()
-            schedule_logger(job_id).exception(e)
+            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
         finally:
             try:
@@ -142,8 +139,8 @@ class TaskExecutor(object):
                 session.stop()
             except Exception as e:
                 traceback.print_exc()
-                schedule_logger(job_id).exception(e)
-        schedule_logger(job_id).info(
+                schedule_logger().exception(e)
+        schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status))
 
@@ -194,9 +191,9 @@ class TaskExecutor(object):
     def get_parameters(job_id, component_name, role, party_id):
 
         job_conf_dict = job_utils.get_job_conf(job_id)
-        job_dsl_parser = job_utils.get_job_dsl_parser(job_conf_dict['job_dsl_path'],
-                                                      job_conf_dict['job_runtime_conf_path'],
-                                                      job_conf_dict['train_runtime_conf_path'])
+        job_dsl_parser = job_utils.get_job_dsl_parser(dsl=job_conf_dict['job_dsl_path'],
+                                                      runtime_conf=job_conf_dict['job_runtime_conf_path'],
+                                                      train_runtime_conf=job_conf_dict['train_runtime_conf_path'])
         if job_dsl_parser:
             component = job_dsl_parser.get_component_info(component_name)
             parameters = component.get_role_parameters()

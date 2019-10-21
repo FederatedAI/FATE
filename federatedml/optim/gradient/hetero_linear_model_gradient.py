@@ -137,7 +137,6 @@ class Guest(object):
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
-        # LOGGER.debug('unilateral_gradient: {}, optimized_gradient: {}'.format(unilateral_gradient, optimized_gradient))
         return optimized_gradient, fore_gradient, self.host_forwards
 
     def get_host_forward(self, suffix=tuple()):

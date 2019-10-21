@@ -157,6 +157,7 @@ class Binning(object):
             self.cols_index = [i for i in range(len(header))]
         else:
             cols = []
+            cols_index = []
             for idx in self.cols_index:
                 try:
                     idx = int(idx)
@@ -167,7 +168,9 @@ class Binning(object):
                     raise ValueError(
                         "In binning module, selected index: {} exceed length of data dimension".format(idx))
                 cols.append(header[idx])
+                cols_index.append(idx)
             self.cols = cols
+            self.cols_index = cols_index
 
         self.cols_dict = {}
         for col in self.cols:
@@ -229,6 +232,9 @@ class Binning(object):
             transform_cols_idx = self.cols_index
         else:
             assert isinstance(transform_cols_idx, (list, tuple))
+            LOGGER.debug('In convert_feature_to_bin, transform_cols_idx: {}, col_index: {}, cols: {}'.format(
+                transform_cols_idx, self.cols_index, self.cols
+            ))
             for col in transform_cols_idx:
                 if col not in self.cols_index:
                     raise RuntimeError("Binning Transform cols: {} should be fit before transform".format(col))

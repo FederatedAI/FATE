@@ -21,7 +21,8 @@ import re
 from flask import request
 
 from arch.api.utils import file_utils
-from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger
+from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger, \
+    CLUSTER_STANDALONE_JOB_SERVER_PORT
 
 
 class PrivilegeAuth(object):
@@ -35,6 +36,8 @@ class PrivilegeAuth(object):
 
     @staticmethod
     def authentication_privilege(src_party_id, src_role, request_path, func_name):
+        if request.url_root.split(':')[-1].split('/')[0] == str(CLUSTER_STANDALONE_JOB_SERVER_PORT):
+            return
         if not int(PrivilegeAuth.get_dest_party_id(request_path, func_name)) or \
                 src_party_id == PrivilegeAuth.get_dest_party_id(request_path, func_name):
             return
@@ -227,7 +230,9 @@ def search_component(path):
 def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_id):
     initiator = runtime_conf['initiator']
     roles = runtime_conf['role']
-    if 'local' not in roles:
+    if request.url_root.split(':')[-1].split('/')[0] == str(CLUSTER_STANDALONE_JOB_SERVER_PORT):
+        return
+    if 'local' not in roles or str(party_id) != str(src_party_id):
         if set(roles['host']) & set(roles['guest']):
             stat_logger.info('host {} became guest'.format(set(roles['host']) & set(roles['guest'])))
             raise Exception('host {} can not be used as guest'.format(set(roles['host']) & set(roles['guest'])))
@@ -240,6 +245,15 @@ def authentication_check(src_role, src_party_id, dsl, runtime_conf, role, party_
     components = [dsl['components'][component_name]['module'].lower() for component_name in dsl['components'].keys()]
     if str(party_id) == str(src_party_id):
         return
+    need_run_commond = list(set(PrivilegeAuth.ALL_PERMISSION['privilege_command'])-set(PrivilegeAuth.command_whitelist))
+    if need_run_commond != PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get('privilege_command', []):
+        if need_run_commond != PrivilegeAuth.get_permission_config(src_party_id, src_role).get('privilege_command', []):
+            stat_logger.info('src_role {} src_party_id {} commond authentication that needs to be run failed:{}'.format(
+                    src_role, src_party_id, set(need_run_commond) - set(PrivilegeAuth.privilege_cache.get(src_party_id,
+                        {}).get(src_role, {}).get('privilege_command', []))))
+            raise Exception('src_role {} src_party_id {} commond authentication that needs to be run failed:{}'.format(
+                    src_role, src_party_id, set(need_run_commond) - set(PrivilegeAuth.privilege_cache.get(src_party_id,
+                        {}).get(src_role, {}).get('privilege_command', []))))
     if not set(components).issubset(PrivilegeAuth.privilege_cache.get(src_party_id, {}).get(src_role, {}).get(
             'privilege_component', [])):
         if not set(components).issubset(PrivilegeAuth.get_permission_config(src_party_id, src_role).get(

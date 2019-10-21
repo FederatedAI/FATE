@@ -42,7 +42,6 @@ class OneVsRest(object):
         self.models = []
         self.class_name = self.__class__.__name__
 
-
     @staticmethod
     def __get_multi_class_res(instance, classes):
         """
@@ -169,6 +168,7 @@ class OneVsRest(object):
         ----------
         predict_res: DTable, if has predict_res, it includes ground true label, predict probably and predict label
         """
+        LOGGER.info("Start one_vs_all predict procedure.")
         predict_res_list = []
         for i, model in enumerate(self.models):
             current_flow_id = model.flowid
@@ -282,6 +282,7 @@ class HeteroOneVsRest(OneVsRest):
 
 
 def one_vs_rest_factory(classifier, role, mode, has_arbiter):
+    LOGGER.info("Create one_vs_rest object, role: {}, mode: {}".format(role, mode))
     if mode == consts.HOMO:
         return HomoOneVsRest(classifier, role, mode, has_arbiter)
     elif mode == consts.HETERO:
