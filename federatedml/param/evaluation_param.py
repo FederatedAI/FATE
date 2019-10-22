@@ -33,6 +33,8 @@ class EvaluateParam(BaseParam):
 
     pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
     """
 
     def __init__(self, eval_type="binary", pos_label=1, need_run=True):
