@@ -56,10 +56,36 @@ class PoissonParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
+    init_param: InitParam object, default: default InitParam object
+        Init param method object.
+
     early_stop : str, 'weight_diff', 'diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
-            b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < tol, it is converged.
+            b)  weight_diff: Use difference between weights of two consecutive iterations
+            c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+
+    exposure_colname: str or None, default: None
+        Name of optional exposure variable in dTable.
+
+    predict_param: PredictParam object, default: default PredictParam object
+
+    encrypt_param: EncryptParam object, default: default EncryptParam object
+
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, default: default EncryptedModeCalculatorParam object
+
+    cv_param: CrossValidationParam object, default: default CrossValidationParam object
+
+    decay: int or float, default: 1
+        Decay rate for learning rate. learning rate will follow the following decay schedule.
+        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
+        where t is the iter number.
+
+    decay_sqrt: Bool, default: True
+        lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    validation_freqs: int, list, tuple, set, or None
+        validation frequency during training.
 
     """
 
@@ -131,7 +157,7 @@ class PoissonParam(BaseParam):
                 raise ValueError(descr + " {} not supported, should be larger than {} or "
                                          "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
 
-        if type(self.learning_rate).__name__ != "float":
+        if type(self.learning_rate).__name__ not in ["int", "float"]:
             raise ValueError(
                 descr + "learning_rate {} not supported, should be float type".format(
                     self.learning_rate))
@@ -174,7 +200,7 @@ class PoissonParam(BaseParam):
             raise ValueError(
                 descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)
             )
-        if type(self.decay_sqrt).__name__ not in ['bool']:
+        if type(self.decay_sqrt).__name__ not in ["bool"]:
             raise ValueError(
                 descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
             )
