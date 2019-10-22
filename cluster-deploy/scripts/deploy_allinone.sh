@@ -377,7 +377,7 @@ distribute() {
     deploy_packages_dir=${deploy_dir}/packages
 	for node_ip in "${node_list[@]}"; do
 	    ssh -tt ${user}@${node_ip} << eeooff
-rm -rf ${deploy_packages_dir}/*
+rm -rf ${deploy_packages_dir}
 mkdir -p ${deploy_packages_dir}/config
 exit
 eeooff

@@ -23,9 +23,15 @@ packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
     if [[ "${deploy_mode}" == "binary" ]]; then
+        mkdir ./egg-manager
+        cd ./egg-manager
         get_module_binary ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
         tar xzf eggroll-${module_name}-${version}.tar.gz
         rm -rf eggroll-${module_name}-${version}.tar.gz
+        cd ../
+
+        mkdir ./egg-services
+        cd ./egg-services
 
         mkdir storage-service-cxx
         cd storage-service-cxx
@@ -35,22 +41,22 @@ packaging() {
         get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
-
         cd ../
+
         mkdir computing
         cd computing
         get_module_binary ${source_code_dir} ${module_name} eggroll-computing-${version}.tar.gz
         tar xzf eggroll-computing-${version}.tar.gz
         rm -rf eggroll-computing-${version}.tar.gz
-
         cd ../
+
         mkdir eggroll-api
         cd eggroll-api
         get_module_binary ${source_code_dir} ${module_name} eggroll-api-${version}.tar.gz
         tar xzf eggroll-api-${version}.tar.gz
         rm -rf eggroll-api-${version}.tar.gz
-
         cd ../
+
         mkdir eggroll-conf
         cd eggroll-conf
         get_module_binary ${source_code_dir} ${module_name} eggroll-conf-${version}.tar.gz
@@ -74,10 +80,13 @@ config() {
     party_label=$4
 	cd ${output_packages_dir}/config/${party_label}
     cd ./${module_name}/conf
-	cp ${cwd}/service.sh ./
 	cp ${cwd}/modify_json.py ./
 	cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+
+	cp ${source_code_dir}/cluster-deploy/scripts/packaging/eggroll/services.sh ./
+    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
+    sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
+	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
@@ -104,23 +113,26 @@ init() {
 }
 
 install(){
-    mkdir -p ${deploy_dir}/
-    cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
-    cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}
+    mkdir -p ${deploy_dir}/${module_name}
+    cp -r ${deploy_packages_dir}/source/${module_name}/egg-manager/* ${deploy_dir}/${module_name}/
+    cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}/
     cd ${deploy_dir}/${module_name}
     ln -s eggroll-${module_name}-${version}.jar eggroll-${module_name}.jar
+    mv ./services.sh ${deploy_dir}/
 
-    cp -r ./storage-service-cxx ${deploy_dir}/
-    rm -rf ./storage-service-cxx
-    mkdir -p ${deploy_dir}/python/eggroll/
-    cp -r ./computing ${deploy_dir}/python/eggroll/
-    rm -rf ./computing
+    cd ${deploy_packages_dir}/source/${module_name}/egg-services
+
+    mkdir -p ${deploy_dir}/storage-service-cxx
+    cp -r ./storage-service-cxx/* ${deploy_dir}/storage-service-cxx/
+
+    mkdir -p ${deploy_dir}/python/eggroll/computing
+    cp -r ./computing/* ${deploy_dir}/python/eggroll/computing/
+
     mkdir -p ${deploy_dir}/python/eggroll/api
     cp -r ./eggroll-api/* ${deploy_dir}/python/eggroll/api/
-    rm -rf ./eggroll-api
+
     mkdir -p ${deploy_dir}/python/eggroll/conf
     cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
-    rm -rf ./eggroll-conf
 
     cd ${deploy_dir}/storage-service-cxx
 	sed -i "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
