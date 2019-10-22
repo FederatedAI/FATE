@@ -27,11 +27,11 @@
 
 ```
 #获取安装包
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone.tar.gz
-FATE $tar -xvf docker_standalone.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.1.tar.gz
+FATE $tar -xvf docker_standalone-fate-1.1.tar.gz
 
 #执行部署
-FATE $ cd docker_standalone
+FATE $ cd docker_standalone-fate-1.1
 FATE $ bash install_standalone_docker.sh
 
 #验证和测试
@@ -60,21 +60,21 @@ FATE $ bash ./federatedml/test/run_test.sh
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE.tar.gz
-   tar -xvf  FATE.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-1.1.tar.gz
+   tar -xvf  standalone-fate-1.1.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
 
    ```
-   cd FATE
+   cd standalone-fate-1.1
    source init.sh
    ```
 
 4. 执行测试.
 
    ```
-   cd FATE
+   cd standalone-fate-1.1
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -100,7 +100,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 #获取安装包
-FATE $ git clone https://github.com/WeBankFinTech/FATE.git
+FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #执行部署
 FATE $ cd FATE/standalone-deploy
