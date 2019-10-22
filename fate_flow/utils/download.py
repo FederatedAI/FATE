@@ -58,6 +58,12 @@ class Download(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
+    def save_data(self):
+        return None
+
+    def export_model(self):
+        return None
+
 
 
 

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection.k_fold import KFold
 from federatedml.model_selection.mini_batch import MiniBatch
 
 __all__ = ['MiniBatch', "KFold"]

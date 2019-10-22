@@ -73,7 +73,7 @@
       "adjustment_factor": 0.5,
       "local_only": false,
       "transform_param": {
-        "transform_cols": [],
+        "transform_cols": -1,
         "transform_type": "bin_num"
       }
     }

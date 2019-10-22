@@ -27,6 +27,20 @@
                 "data": ["transform_data"],
                 "model": ["binning_model"]
             }
+        },
+        "one_hot_encoder_0": {
+            "module": "OneHotEncoder",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.transform_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["model"]
+            }
         }
     }
 }

@@ -50,6 +50,8 @@ class BaseLinearModel(ModelBase):
         self.cipher_operator = None
         self.model_weights = None
         self.validation_freqs = None
+        self.need_one_vs_rest = False
+        self.in_one_vs_rest = False
 
     def _init_model(self, params):
         self.model_param = params
@@ -137,6 +139,3 @@ class BaseLinearModel(ModelBase):
             return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')
-
-    def check_one_vs_rest_status(self, data_instances=None):
-        self.need_one_vs_rest = False

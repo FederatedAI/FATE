@@ -78,11 +78,13 @@ class HeteroLRHost(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr host")
+        self.header = self.get_header(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
+            self.in_one_vs_rest = True
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
             self.need_one_vs_rest = False
