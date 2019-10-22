@@ -17,19 +17,17 @@
 #  limitations under the License.
 #
 
-from arch.api import session
-from arch.api import federation
-from arch.api.utils import log_utils
-from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import SecureAddExampleTransferVariable
-from federatedml.param.secure_add_example_param import SecureAddExampleParam
-from federatedml.model_base import ModelBase
 import numpy as np
+
+from arch.api import session
+from arch.api.utils import log_utils
+from federatedml.model_base import ModelBase
+from federatedml.param.secure_add_example_param import SecureAddExampleParam
+from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
+    SecureAddExampleTransferVariable
 
 LOGGER = log_utils.getLogger()
 
-import tensorflow as tf
-
-tf.exp
 
 class SecureAddGuest(ModelBase):
     def __init__(self):
@@ -43,6 +41,8 @@ class SecureAddGuest(ModelBase):
         self.seed = None
         self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
+        self.data_output = None
+        self.model_output = None
 
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
@@ -68,11 +68,11 @@ class SecureAddGuest(ModelBase):
         return guest_sum
 
     def reconstruct(self, guest_sum, host_sum):
-        print ("host sum is %.4f" % host_sum)
-        print ("guest sum is %.4f" % guest_sum)
+        print("host sum is %.4f" % host_sum)
+        print("guest sum is %.4f" % guest_sum)
         secure_sum = host_sum + guest_sum
 
-        print ("Secure Add Result is %.4f" % secure_sum)
+        print("Secure Add Result is %.4f" % secure_sum)
 
         return secure_sum
 
