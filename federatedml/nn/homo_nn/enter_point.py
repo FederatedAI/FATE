@@ -236,5 +236,3 @@ class HomoNNGuest(HomoNNClient):
     def __init__(self):
         super().__init__()
         self.role = consts.GUEST
-
-print(MetricType.LOSS.value)
