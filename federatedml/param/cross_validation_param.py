@@ -44,6 +44,9 @@ class CrossValidationParam(BaseParam):
     random_seed: int, default: 1
         Specify the random seed for numpy shuffle
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
+
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,

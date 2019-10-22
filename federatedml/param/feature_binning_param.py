@@ -88,6 +88,9 @@ class FeatureBinningParam(BaseParam):
     transform_param: TransformParam
         Define how to transfer the binned data.
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
+
     """
 
     def __init__(self, method=consts.QUANTILE,

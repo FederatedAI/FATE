@@ -17,14 +17,14 @@
 #  limitations under the License.
 #
 
-from arch.api import session
-from arch.api import federation
-from arch.api.utils import log_utils
-from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import SecureAddExampleTransferVariable
-from federatedml.param.secure_add_example_param import SecureAddExampleParam
-from federatedml.model_base import ModelBase
 import numpy as np
 
+from arch.api import session
+from arch.api.utils import log_utils
+from federatedml.model_base import ModelBase
+from federatedml.param.secure_add_example_param import SecureAddExampleParam
+from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
+    SecureAddExampleTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -38,8 +38,8 @@ class SecureAddHost(ModelBase):
         self.x2_plus_y2 = None
         self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
-        self.model_output = None
         self.data_output = None
+        self.model_output = None
 
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
@@ -119,5 +119,3 @@ class SecureAddHost(ModelBase):
 
         LOGGER.info("send host sum to guest")
         self.sync_host_sum_to_guest(host_sum)
-
-
