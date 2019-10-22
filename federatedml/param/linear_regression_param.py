@@ -35,7 +35,7 @@ class LinearParam(BaseParam):
     Parameters
     ----------
     penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
+        Penalty method used in LinR. Please note that, when using encrypted version in HeteroLinR,
         'L1' is not supported.
 
     tol : float, default: 1e-5
@@ -46,10 +46,6 @@ class LinearParam(BaseParam):
 
     optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'sgd'
         Optimize method
-
-    party_weight : int or float, default: 1
-        Required in Homo LR. Setting the weight of model updated for this party.
-        The higher weight set, the higher influence made for this party when updating model.
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
