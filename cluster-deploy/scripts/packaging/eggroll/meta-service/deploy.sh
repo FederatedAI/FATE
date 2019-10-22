@@ -43,8 +43,10 @@ config() {
     party_label=$4
 	cd ${output_packages_dir}/config/${party_label}
     cd ./${module_name}/conf
-	cp ${cwd}/service.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+
+	cp ${source_code_dir}/cluster-deploy/scripts/packaging/eggroll/services.sh ./
+    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
+    sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
@@ -68,6 +70,7 @@ install(){
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}
     cd ${deploy_dir}/${module_name}
     ln -s eggroll-${module_name}-${version}.jar eggroll-${module_name}.jar
+    mv ./services.sh ${deploy_dir}/
 }
 
 case "$2" in
