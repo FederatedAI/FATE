@@ -72,7 +72,7 @@
       "alpha": 0.01,
       "max_iter": 10,
       "converge_func": "weight_diff",
-      "batch_size": 1,
+      "batch_size": -1,
       "learning_rate": 0.15,
       "decay": 0.0,
       "decay_sqrt": false,
