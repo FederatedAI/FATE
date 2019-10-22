@@ -525,8 +525,9 @@ if __name__ == "__main__":
                     auc = metric_value
             print("[Train] train eval:{}".format(eval_results))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
-            if auc > task_hetero_lr_base_auc:
-                TEST_TASK["TEST_TRAIN"] = 0
+            TEST_TASK["TEST_TRAIN"] = 0
+            if auc < task_hetero_lr_base_auc:
+                print("[Warning] The auc: {} is lower than expect value: {}.")
         else:
             print("[Train] train task is failed")
             TEST_TASK["TEST_TRAIN"] = 1

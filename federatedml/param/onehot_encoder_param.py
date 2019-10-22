@@ -31,6 +31,8 @@ class OneHotEncoderParam(BaseParam):
     cols: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
     """
 
     def __init__(self, cols=-1, need_run=True):
