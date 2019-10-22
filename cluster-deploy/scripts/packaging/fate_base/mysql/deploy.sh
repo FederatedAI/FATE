@@ -65,7 +65,11 @@ init(){
     nohup ./bin/mysqld_safe --defaults-file=${mysql_dir}/conf/my.cnf --user=${user} &
     sleep 10
     ./bin/mysql -uroot -p"${password_str}" -S ./mysql.sock --connect-expired-password << EOF
-    alter user  'root'@'localhost' IDENTIFIED by "${mysql_password}";
+    ALTER USER 'root'@'localhost' IDENTIFIED by "${mysql_password}";
+    CREATE USER 'root'@"${mysql_ip}" IDENTIFIED BY "${mysql_password}";
+    GRANT ALL ON *.* TO 'root'@"${mysql_ip}";
+    CREATE DATABASE ${fate_flow_db_name};
+    CREATE DATABASE ${eggroll_meta_service_db_name};
 EOF
     echo "the password of root: ${mysql_password}"
 }

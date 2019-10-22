@@ -131,6 +131,8 @@ deploy_mysql() {
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i "s/fate_flow_db_name=.*/fate_flow_db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
+    sed -i "s/eggroll_meta_service_db_name=.*/eggroll_meta_service_db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -141,6 +143,7 @@ config_mysql() {
     party_label=$2
     party_deploy_dir=$3
     sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i "s/mysql_ip=.*/mysql_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${party_label} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
@@ -188,6 +191,7 @@ config_fate_flow() {
     sed -i "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
     sed -i "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
     sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
     sed -i "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
 	config_enter ${party_label} fate_flow
 	sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
@@ -321,6 +325,7 @@ deploy_metaservice() {
     sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i "s/db_name=.*/db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -356,7 +361,7 @@ config_egg() {
     sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
     sed -i "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-    sed -i "s#data_dir=.*#data_dir=${party_deploy_dir}/eggroll/data_dir#g" ./configurations.sh.tmp
+    sed -i "s#data_dir=.*#data_dir=${party_deploy_dir}/eggroll/data-dir#g" ./configurations.sh.tmp
     sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
     sed -i "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
     sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
@@ -465,8 +470,8 @@ deploy() {
     echo "------------------------------------------------------------------------"
     for module in ${deploy_modules[@]};
     do
-        echo
         deploy_module ${module}
+        echo
     done
     echo "------------------------------------------------------------------------"
     distribute

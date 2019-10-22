@@ -38,6 +38,9 @@ class SecureAddHost(ModelBase):
         self.x2_plus_y2 = None
         self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
+        super(SecureAddHost, self).__init__()
+        self.model_output = None
+        self.data_output = None
 
     def _init_model(self, model_param):
         self.data_num = model_param.data_num

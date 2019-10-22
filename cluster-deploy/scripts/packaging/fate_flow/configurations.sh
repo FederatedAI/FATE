@@ -12,6 +12,6 @@ python_path=
 db_ip=
 db_user=
 db_password=
-db_name=fate_flow
+db_name=
 redis_ip=
 redis_password=

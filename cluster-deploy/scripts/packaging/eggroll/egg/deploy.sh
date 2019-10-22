@@ -112,13 +112,14 @@ install(){
 
     cp -r ./storage-service-cxx ${deploy_dir}/
     rm -rf ./storage-service-cxx
-    cp -r ./computing ${deploy_dir}/
+    mkdir -p ${deploy_dir}/python/eggroll/
+    cp -r ./computing ${deploy_dir}/python/eggroll/
     rm -rf ./computing
     mkdir -p ${deploy_dir}/python/eggroll/api
     cp -r ./eggroll-api/* ${deploy_dir}/python/eggroll/api/
     rm -rf ./eggroll-api
-    mkdir -p ${deploy_dir}/python/conf
-    cp -r ./eggroll-conf/* ${deploy_dir}/python/conf/
+    mkdir -p ${deploy_dir}/python/eggroll/conf
+    cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
     rm -rf ./eggroll-conf
 
     cd ${deploy_dir}/storage-service-cxx
@@ -128,7 +129,7 @@ install(){
 	sed -i "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
 	make
 
-    cd ${deploy_dir}/python/conf
+    cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
 	#sed -i "s/clustercommip=.*/clustercommip=\"$ip\"/g" $cwd/modify_json.py
 	#sed -i "s/clustercommport=.*/clustercommport=${clustercomm_port}/g" $cwd/modify_json.py

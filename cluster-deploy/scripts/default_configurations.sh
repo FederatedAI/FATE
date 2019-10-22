@@ -4,6 +4,8 @@ python_version=1.1
 jdk_version=8u192
 mysql_version=8.0.13
 redis_version=5.0.2
+fate_flow_db_name=fate_flow
+eggroll_meta_service_db_name=eggroll_meta
 
 package_init() {
     output_packages_dir=$1

@@ -13,4 +13,4 @@ port=8590
 db_ip=
 db_user=
 db_password=
-db_name=eggroll_meta
+db_name=

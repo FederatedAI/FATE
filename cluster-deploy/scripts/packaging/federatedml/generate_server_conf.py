@@ -27,11 +27,13 @@ def gen_conf(services_env, server_conf):
             line = fr.readline().strip()
             if not line:
                 break
-            item, value = line.split('=')
-            service_name = item.split('.')[0]
-            service_config = '.'.join(item.split('.')[1:])
+            config, value = line.split('=')
+            config_items = config.split('.')
+            service_name = config_items[0]
+            config_type = config_items[-1]
+            service_config = '.'.join(config_items[1:])
             services[service_name] = services.get(service_name, {})
-            services[service_name][service_config] = value
+            services[service_name][service_config] = int(value) if config_type == 'port' else value
     with open(server_conf, 'w') as fw:
         json.dump(dict(servers=services), fw, indent=4)
 

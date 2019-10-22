@@ -43,6 +43,7 @@ class SecureAddGuest(ModelBase):
         self.seed = None
         self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
+        super(SecureAddGuest, self).__init__()
 
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
