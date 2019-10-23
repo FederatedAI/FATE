@@ -38,7 +38,7 @@ packaging() {
 }
 
 config(){
-    party_label=$4
+    config_label=$4
     return 0
 }
 

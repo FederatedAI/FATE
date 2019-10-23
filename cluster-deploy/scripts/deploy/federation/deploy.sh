@@ -40,8 +40,8 @@ packaging() {
 
 
 config() {
-    party_label=$4
-    cd ${output_packages_dir}/config/${party_label}
+    config_label=$4
+    cd ${output_packages_dir}/config/${config_label}
 
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./

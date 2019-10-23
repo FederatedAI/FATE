@@ -31,8 +31,8 @@ packaging() {
 }
 
 config() {
-    party_label=$4
-	cd ${output_packages_dir}/config/${party_label}/${module_name}/conf
+    config_label=$4
+	cd ${output_packages_dir}/config/${config_label}/${module_name}/conf
 	python ${cwd}/generate_server_conf.py ${cwd}/service.env.tmp ./server_conf.json
 	return 0
 }
