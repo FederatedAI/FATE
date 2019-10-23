@@ -104,7 +104,9 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     def _get_meta(self):
         col_list = [str(x) for x in self.cols]
-
+        LOGGER.debug("In get_meta, transform_cols_idx: {}".format(self.transform_cols_idx))
+        if not isinstance(self.transform_cols_idx, (list, tuple)):
+            self.transform_cols_idx = []
         transform_param = feature_binning_meta_pb2.TransformMeta(
             transform_cols=self.transform_cols_idx,
             transform_type=self.model_param.transform_param.transform_type
