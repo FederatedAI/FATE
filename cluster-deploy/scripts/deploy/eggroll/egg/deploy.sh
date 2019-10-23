@@ -100,7 +100,7 @@ config() {
 	sed -i "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
 	sed -i "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
 	sed -i "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
-	sed -i "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/computing/processor.py#g" ./conf/egg.properties
+	sed -i "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/eggroll/computing/processor.py#g" ./conf/egg.properties
 	sed -i "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
 	sed -i "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
 	sed -i "s#count=.*#count=${processor_count}#g" ./conf/egg.properties

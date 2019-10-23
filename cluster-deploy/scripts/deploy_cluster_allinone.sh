@@ -2,7 +2,7 @@
 cwd=$(cd `dirname $0`; pwd)
 cd ${cwd}
 source ./default_configurations.sh
-source ./allinone_configurations.sh
+source ./allinone_cluster_configurations.sh
 
 deploy_modes=(binary build)
 support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
