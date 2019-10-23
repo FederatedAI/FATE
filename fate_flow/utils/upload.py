@@ -30,6 +30,7 @@ class Upload(object):
         self.taskid = ''
         self.tracker = None
         self.MAX_PARTITION_NUM = 1024
+        self.MAX_BYTES = 10240
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
@@ -58,12 +59,11 @@ class Upload(object):
         if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
-        input_data = self.read_data(table_name, namespace, head)
         session.init(mode=self.parameters['work_mode'])
-        data_table = session.save_data(input_data, name=table_name, namespace=namespace, partition=self.parameters["partition"])
+        data_table_count = self.save_data_table(table_name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         LOGGER.info("file: {}".format(self.parameters["file"]))
-        LOGGER.info("total data_count: {}".format(data_table.count()))
+        LOGGER.info("total data_count: {}".format(data_table_count))
         LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
 
     def set_taskid(self, taskid):
@@ -72,28 +72,27 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def read_data(self, dst_table_name, dst_table_namespace, head=True):
+    def save_data_table(self, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
-        split_file_name = input_file.split('.')
-        if 'csv' in split_file_name:
-            with open(input_file) as csv_file:
-                csv_reader = csv.reader(csv_file)
-                if head is True:
-                    data_head = next(csv_reader)
-                    self.save_data_header(','.join(data_head), dst_table_name, dst_table_namespace)
-
-                for row in csv_reader:
-                    yield (row[0], self.list_to_str(row[1:]))
-        else:
-            with open(input_file, 'r') as fin:
-                if head is True:
-                    data_head = fin.readline()
-                    self.save_data_header(data_head, dst_table_name, dst_table_namespace)
-
-                lines = fin.readlines()
-                for line in lines:
-                    values = line.replace("\n", "").replace("\t", ",").split(",")
-                    yield (values[0], self.list_to_str(values[1:]))
+        with open(input_file, 'r') as fin:
+            if head is True:
+                data_head = fin.readline()
+                self.save_data_header(data_head, dst_table_name, dst_table_namespace)
+            data_table_count = 0
+            while True:
+                data = list()
+                lines = fin.readlines(self.MAX_BYTES)
+                num = 0
+                if lines:
+                    for line in lines:
+                        num += 1
+                        values = line.replace("\n", "").replace("\t", ",").split(",")
+                        data.append((values[0], self.list_to_str(values[1:])))
+                    session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
+                                      partition=self.parameters["partition"])
+                    data_table_count += num
+                else:
+                    return data_table_count
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
