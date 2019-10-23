@@ -406,8 +406,8 @@ tar xzf config.tar.gz -C config
 exit
 eeooff
         for module in "${deploy_modules[@]}"; do
-            echo "-----------------------------------------------"
-	        echo "[INFO] install ${module} on ${node_ip}"
+            echo "[INFO] -----------------------------------------------"
+	        echo "[INFO] Install ${module} on ${node_ip}"
             if_base ${module}
             if [[ $? -eq 0 ]];then
                 module_deploy_dir=${deploy_dir}/common/${module}
@@ -427,10 +427,10 @@ eeooff
                 sh ./deploy.sh ${deploy_mode} init ./configurations.sh
                 exit
 eeooff
-	        echo "[INFO] install ${module} on ${node_ip} done"
-            echo "-----------------------------------------------"
+	        echo "[INFO] Install ${module} on ${node_ip} done"
+            echo "[INFO] -----------------------------------------------"
         done
-	    echo "[INFO] install on ${node_ip} done"
+	    echo "[INFO] Install on ${node_ip} done"
 	done
 }
 
@@ -480,21 +480,21 @@ packaging_module() {
 }
 
 deploy() {
-    echo "Packaging start------------------------------------------------------------------------"
+    echo "[INFO] Packaging start------------------------------------------------------------------------"
     for module in ${deploy_modules[@]};
     do
         packaging_module ${module}
         echo
     done
-    echo "Packaging end ------------------------------------------------------------------------"
+    echo "[INFO] Packaging end ------------------------------------------------------------------------"
 
-    echo "Distribute start------------------------------------------------------------------------"
+    echo "[INFO] Distribute start------------------------------------------------------------------------"
     distribute
-    echo "Distribute end------------------------------------------------------------------------"
+    echo "[INFO] Distribute end------------------------------------------------------------------------"
 
-    echo "Install start ------------------------------------------------------------------------"
+    echo "[INFO] Install start ------------------------------------------------------------------------"
     install
-    echo "Install end ------------------------------------------------------------------------"
+    echo "[INFO] Install end ------------------------------------------------------------------------"
 }
 
 all() {
