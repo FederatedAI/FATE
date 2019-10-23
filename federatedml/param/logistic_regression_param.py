@@ -53,6 +53,9 @@ class LogisticParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
+    init_param: InitParam object, default: default InitParam object
+        Init param method object.
+
     max_iter : int, default: 100
         The maximum iteration for training.
 
@@ -69,6 +72,12 @@ class LogisticParam(BaseParam):
 
     decay_sqrt: Bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    encrypt_param: EncryptParam object, default: default EncryptParam object
+
+    predict_param: PredictParam object, default: default PredictParam object
+
+    cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.

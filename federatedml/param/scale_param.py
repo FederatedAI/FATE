@@ -51,6 +51,9 @@ class ScaleParam(BaseParam):
             The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
             if with_mean is False, u will be 0, and if with_std is False, s will be 1.
 
+        need_run: bool, default True
+            Indicate if this module needed to be run
+
     """
 
     def __init__(self, method=None, mode="normal", area="all", scale_column_idx=None, feat_upper=None, feat_lower=None,

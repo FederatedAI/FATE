@@ -140,7 +140,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(model_weights.coef_)
+        loss_regular = optimizer.loss_norm(model_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
