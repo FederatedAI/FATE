@@ -57,7 +57,7 @@ config() {
     sed -i "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/federation.properties
     sed -i "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
     sed -i "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
-    sed -i "s/proxy.port=.*/proxy.ip=${proxy_port}/g" ./conf/federation.properties
+    sed -i "s/proxy.port=.*/proxy.port=${proxy_port}/g" ./conf/federation.properties
 }
 
 init() {
