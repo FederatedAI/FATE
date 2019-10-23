@@ -35,10 +35,29 @@ packaging(){
 config(){
     party_label=$4
 	cd ${output_packages_dir}/config/${party_label}
-	cp -r ${cwd}/conf ./${module_name}/conf/
 	cp ${cwd}/service.sh ./${module_name}/conf/
+	mkdir -p ./${module_name}/conf/conf
+	cp -r ${cwd}/conf/* ./${module_name}/conf/conf/
 
-	cd ${module_name}/conf/conf
+    cd ./${module_name}/conf/
+	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
+	sed -i "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+
+	echo > ./insert-node.sql
+    echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
+    echo "INSERT INTO node (ip, port, type, status) values ('${proxy_port}', '${proxy_port}', 'PROXY', 'HEALTHY');" >> ./insert-node.sql
+    for ((i=0;i<${#egg_ip[*]};i++))
+    do
+        echo "INSERT INTO node (ip, port, type, status) values ('${egg_ip[i]}', '${egg_port}', 'EGG', 'HEALTHY');" >> ./insert-node.sql
+    done
+    for ((i=0;i<${#storage_service_ip[*]};i++))
+    do
+        echo "INSERT INTO node (ip, port, type, status) values ('${storage_service_ip[i]}', '${storage_service_port}', 'STORAGE', 'HEALTHY');" >> ./insert-node.sql
+    done
+    echo "show tables;" >> ./insert-node.sql
+    echo "select * from node;" >> ./insert-node.sql
+
+	cd ./conf
 	sed -i "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
 	sed -i "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
 	sed -i "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
@@ -69,7 +88,8 @@ init(){
     CREATE USER 'root'@"${mysql_ip}" IDENTIFIED BY "${mysql_password}";
     GRANT ALL ON *.* TO 'root'@"${mysql_ip}";
     CREATE DATABASE ${fate_flow_db_name};
-    CREATE DATABASE ${eggroll_meta_service_db_name};
+    source ${mysql_dir}/create-meta-service.sql;
+    source ${mysql_dir}/insert-node.sql;
 EOF
     echo "the password of root: ${mysql_password}"
 }

@@ -144,6 +144,11 @@ config_mysql() {
     party_deploy_dir=$3
     sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i "s/mysql_ip=.*/mysql_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${party_label} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
