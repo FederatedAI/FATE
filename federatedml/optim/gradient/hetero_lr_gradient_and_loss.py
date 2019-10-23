@@ -27,10 +27,6 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
-    # def __init__(self):
-    #     self.host_forwards = None
-    #     self.half_wx = None
-    #     self.aggregated_wx = None
 
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward_dict,

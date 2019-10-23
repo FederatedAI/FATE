@@ -38,9 +38,6 @@ class BaseLinearRegression(BaseLinearModel):
         self.model_param = LinearParam()
         # attribute:
         self.n_iter_ = 0
-        self.coef_ = None
-        self.intercept_ = 0
-        self.classes_ = None
         self.feature_shape = None
 
         self.gradient_operator = None
@@ -49,7 +46,6 @@ class BaseLinearRegression(BaseLinearModel):
         self.loss_history = []
         self.is_converged = False
         self.header = None
-        self.class_name = self.__class__.__name__
         self.model_name = 'LinearRegression'
         self.model_param_name = 'LinearRegressionParam'
         self.model_meta_name = 'LinearRegressionMeta'
@@ -101,15 +97,13 @@ class BaseLinearRegression(BaseLinearModel):
         return param_protobuf_obj
 
     def _load_model(self, model_dict):
-        # LOGGER.debug("In load model, model_dict: {}".format(model_dict))
         result_obj = list(model_dict.get('model').values())[0].get(
             self.model_param_name)
+
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         fit_intercept = meta_obj.fit_intercept
 
         self.header = list(result_obj.header)
-        # LOGGER.debug("In load model, header: {}".format(self.header))
-        # For linear regression arbiter predict function
         if self.header is None:
             return
 
@@ -127,4 +121,3 @@ class BaseLinearRegression(BaseLinearModel):
     
     def get_metrics_param(self):
         return EvaluateParam(eval_type="regression")
-

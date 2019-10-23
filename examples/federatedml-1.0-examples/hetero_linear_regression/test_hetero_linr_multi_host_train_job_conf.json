@@ -11,7 +11,8 @@
       10000
     ],
     "host": [
-      10000
+      10000,
+      9999
     ],
     "arbiter": [
       10000
@@ -32,10 +33,10 @@
       "dataio_0": {
         "with_label": [true],
         "label_name": ["y"],
-        "label_type": ["float"],
+        "label_type": ["int"],
         "output_format": ["dense"],
         "missing_fill": [true],
-        "outlier_replace": [false]
+        "outlier_replace": [true]
       },
       "evaluation_0": {
         "eval_type": ["regression"],
@@ -49,35 +50,40 @@
             {
               "name": "vehicle_a",
               "namespace": "vehicle"
+            },
+            {
+              "name": "vehicle_a",
+              "namespace": "vehicle"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false],
-        "output_format": ["dense"],
-        "missing_fill": [true],
-        "outlier_replace": [false]
+        "with_label": [false, false],
+        "output_format": ["dense", "dense"],
+        "outlier_replace": [false, false]
+      },
+      "feature_scale_0": {
+        "method": ["standard_scale", "standard_scale"],
+        "need_run": [false, false]
       },
       "evaluation_0": {
-        "need_run": [false]
+        "need_run": [false, false]
       }
     }
   },
   "algorithm_parameters": {
     "hetero_linr_0": {
-      "penalty": "None",
+      "penalty": "L2",
       "optimizer": "sgd",
-      "eps": 1e-3,
+      "tol": 1e-3,
       "alpha": 0.01,
       "max_iter": 10,
-      "converge_func": "weight_diff",
+      "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
-      "decay": 0.0,
-      "decay_sqrt": false,
       "init_param": {
-        "init_method": "zeros"
+        "init_method": "random_uniform"
       },
       "encrypted_mode_calculator_param": {
         "mode": "fast"
@@ -85,8 +91,8 @@
       "cv_param": {
         "n_splits": 5,
         "shuffle": false,
-        "random_seed": 42,
-        "need_cv": true,
+        "random_seed": 103,
+        "need_cv": false,
         "evaluate_param": {
           "eval_type": "regression"
         }
