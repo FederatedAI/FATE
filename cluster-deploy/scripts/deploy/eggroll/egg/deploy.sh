@@ -83,7 +83,7 @@ config() {
 	cp ${cwd}/modify_json.py ./
 	cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
 
-	cp ${source_code_dir}/cluster-deploy/scripts/packaging/eggroll/services.sh ./
+	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
     sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
     sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh

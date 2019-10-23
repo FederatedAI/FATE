@@ -12,7 +12,7 @@ eggroll_modules=(roll meta-service egg)
 deploy_mode=$1
 if_one_machine=1
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
-packaging_dir=${cwd}/packaging
+module_deploy_script_dir=${cwd}/deploy
 output_packages_dir=$(cd `dirname ${cwd}`;pwd)/output_packages
 deploy_packages_dir=${deploy_dir}/packages
 mkdir -p ${output_packages_dir}
@@ -41,7 +41,7 @@ init_env() {
 mkdir -p ${deploy_packages_dir}
 exit
 eeooff
-	        scp ${cwd}/packaging/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
+	        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
 	        ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 sh env.sh
@@ -83,7 +83,7 @@ config_enter() {
     cp ./configurations.sh.tmp ${output_packages_dir}/config/${party_label}/${module_name}/configurations.sh
 }
 
-deploy_jdk() {
+packaging_jdk() {
     cp configurations.sh configurations.sh.tmp
     sed -i "s/jdk_version=.*/jdk_version=${jdk_version}/g" ./configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
@@ -103,7 +103,7 @@ config_jdk() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_python() {
+packaging_python() {
     cp configurations.sh configurations.sh.tmp
     sed -i "s/python_version=.*/python_version=${python_version}/g" ./configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
@@ -123,7 +123,7 @@ config_python() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_mysql() {
+packaging_mysql() {
     cp configurations.sh configurations.sh.tmp
     sed -i "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
     sed -i "s/user=.*/user=${user}/g" ./configurations.sh.tmp
@@ -153,7 +153,7 @@ config_mysql() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_redis() {
+packaging_redis() {
     cp configurations.sh configurations.sh.tmp
     sed -i "s/redis_version=.*/redis_version=${redis_version}/g" ./configurations.sh.tmp
     sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
@@ -174,7 +174,7 @@ config_redis() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_fate_flow() {
+packaging_fate_flow() {
     cp configurations.sh configurations.sh.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -202,7 +202,7 @@ config_fate_flow() {
 	sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_federatedml() {
+packaging_federatedml() {
     cp configurations.sh configurations.sh.tmp
 	cp services.env service.env.tmp
     sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
@@ -227,7 +227,7 @@ config_federatedml() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_fateboard() {
+packaging_fateboard() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -252,7 +252,7 @@ config_fateboard() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_federation() {
+packaging_federation() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -275,7 +275,7 @@ config_federation() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_proxy() {
+packaging_proxy() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -301,7 +301,7 @@ config_proxy() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_roll() {
+packaging_roll() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -323,7 +323,7 @@ config_roll() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_metaservice() {
+packaging_metaservice() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -348,7 +348,7 @@ config_metaservice() {
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${party_label}
 }
 
-deploy_egg() {
+packaging_egg() {
     cp configurations.sh configurations.sh.tmp
     sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -377,10 +377,12 @@ config_egg() {
 
 distribute() {
     cd ${output_packages_dir}
+    echo "[INFO] compressed source"
     tar czf source.tar.gz ./source
-    echo "[INFO] distribute source and config"
+    echo "[INFO] compressed source done"
     deploy_packages_dir=${deploy_dir}/packages
 	for node_ip in "${node_list[@]}"; do
+	    echo "[INFO] distribute source to ${node_ip}"
 	    ssh -tt ${user}@${node_ip} << eeooff
 rm -rf ${deploy_packages_dir}
 mkdir -p ${deploy_packages_dir}/config
@@ -390,12 +392,13 @@ eeooff
 	    cd ${output_packages_dir}/config/${node_ip}
 	    tar czf config.tar.gz ./*
 	    scp config.tar.gz  ${user}@${node_ip}:${deploy_packages_dir}
+	    echo "[INFO] distribute source to ${node_ip} done"
 	done
-    echo "[INFO] distribute source and config done"
 }
 
 install() {
 	for node_ip in "${node_list[@]}"; do
+	    echo "[INFO] install on ${node_ip}"
 	    ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 tar xzf source.tar.gz
@@ -403,6 +406,8 @@ tar xzf config.tar.gz -C config
 exit
 eeooff
         for module in "${deploy_modules[@]}"; do
+            echo "-----------------------------------------------"
+	        echo "[INFO] install ${module} on ${node_ip}"
             if_base ${module}
             if [[ $? -eq 0 ]];then
                 module_deploy_dir=${deploy_dir}/common/${module}
@@ -422,15 +427,18 @@ eeooff
                 sh ./deploy.sh ${deploy_mode} init ./configurations.sh
                 exit
 eeooff
+	        echo "[INFO] install ${module} on ${node_ip} done"
+            echo "-----------------------------------------------"
         done
+	    echo "[INFO] install on ${node_ip} done"
 	done
 }
 
-deploy_module() {
+packaging_module() {
     module=$1
     echo "[INFO] ${module} is packaging:"
     cd ${cwd}
-    cd ${packaging_dir}
+    cd ${module_deploy_script_dir}
     if_base ${module}
     if [[ $? -eq 0 ]];then
         echo "[INFO] ${module} is base module"
@@ -447,9 +455,9 @@ deploy_module() {
     cd ${module}
 
     if [[ "${module}" == "meta-service" ]]; then
-        deploy_metaservice
+        packaging_metaservice
     else
-        deploy_${module}
+        packaging_${module}
     fi
 
     for ((i=0;i<${#node_list[*]};i++))
@@ -472,15 +480,21 @@ deploy_module() {
 }
 
 deploy() {
-    echo "------------------------------------------------------------------------"
+    echo "Packaging start------------------------------------------------------------------------"
     for module in ${deploy_modules[@]};
     do
-        deploy_module ${module}
+        packaging_module ${module}
         echo
     done
-    echo "------------------------------------------------------------------------"
+    echo "Packaging end ------------------------------------------------------------------------"
+
+    echo "Distribute start------------------------------------------------------------------------"
     distribute
+    echo "Distribute end------------------------------------------------------------------------"
+
+    echo "Install start ------------------------------------------------------------------------"
     install
+    echo "Install end ------------------------------------------------------------------------"
 }
 
 all() {
