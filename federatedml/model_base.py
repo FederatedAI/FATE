@@ -188,7 +188,8 @@ class ModelBase(object):
         return self.model_output
 
     def set_flowid(self, flowid):
-        self.flowid = '.'.join([self.taskid, str(flowid)])
+        # self.flowid = '.'.join([self.taskid, str(flowid)])
+        self.flowid = flowid
         self.set_transfer_variable()
 
     def set_transfer_variable(self):
@@ -197,6 +198,7 @@ class ModelBase(object):
             self.transfer_variable.set_flowid(self.flowid)
 
     def set_taskid(self, taskid):
+        """ taskid: jobid + component_name, reserved variable """
         self.taskid = taskid
 
     def get_metric_name(self, name_prefix):

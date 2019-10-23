@@ -17,8 +17,8 @@ import functools
 import typing
 
 from arch.api import session
-from arch.api.utils import log_utils
-from fate_flow.entity.metric import MetricMeta, MetricType, Metric
+from arch.api.utils.log_utils import LoggerFactory
+from fate_flow.entity.metric import MetricType, MetricMeta, Metric
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
@@ -28,7 +28,7 @@ from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
 from federatedml.util import consts
 
-Logger = log_utils.getLogger()
+Logger = LoggerFactory.get_logger()
 MODEL_META_NAME = "HomoNNModelMeta"
 MODEL_PARAM_NAME = "HomoNNModelParam"
 
@@ -54,6 +54,7 @@ class HomoNNBase(ModelBase):
 
     def _init_model(self, param):
         super()._init_model(param)
+        self.param = param
 
         self.transfer_variable = HomoTransferVariable()
         secure_aggregate = param.secure_aggregate
@@ -199,15 +200,17 @@ class HomoNNClient(HomoNNBase):
         predict = self.nn_model.predict(data)
         num_output_units = predict.shape[1]
 
+        threshold = self.param.predict_param.threshold
+
         if num_output_units == 1:
-            kv = map(lambda x: (x[0], (0 if x[1][0] < 0.5 else 1, x[1][0])), zip(data.get_keys(), predict))
+            kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True)
             return data_inst.join(pred_tbl, lambda d, pred: [d.label, pred[0], pred[1], {"label": pred[0]}])
         else:
-            kv = map(lambda x: (x[0], (x[1].argmax(), [float(e) for e in x[1]])), zip(data.get_keys(), predict))
+            kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True)
             return data_inst.join(pred_tbl,
-                                  lambda d, pred: [d.label, pred[0],
+                                  lambda d, pred: [d.label, pred[0].item(),
                                                    pred[1][pred[0]] / sum(pred[1]),
                                                    {"raw_predict": pred[1]}])
 

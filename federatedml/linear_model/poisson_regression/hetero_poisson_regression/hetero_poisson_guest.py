@@ -21,6 +21,7 @@ from federatedml.linear_model.poisson_regression.hetero_poisson_regression.heter
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+import copy
 
 LOGGER = log_utils.getLogger()
 
@@ -38,7 +39,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
     def fit(self, data_instances, validate_data=None):
         """
-        Train linR model of role guest
+        Train poisson model of role guest
         Parameters
         ----------
         data_instances: DTable of Instance, input data
@@ -46,10 +47,10 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         LOGGER.info("Enter hetero_poisson_guest fit")
         self._abnormal_detection(data_instances)
-        self.header = self.get_header(data_instances)
-        
+        self.header = copy.deepcopy(self.get_header(data_instances))
+
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        
+
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         if self.exposure_index > -1:
             self.header.pop(self.exposure_index)
@@ -104,7 +105,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
-            
+
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:
@@ -112,11 +113,10 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
     def predict(self, data_instances):
         """
-        Prediction of linR
+        Prediction of Poisson
         Parameters
         ----------
         data_instances:DTable of Instance, input data
-        predict_param: PredictParam, the setting of prediction.
 
         Returns
         ----------
@@ -125,8 +125,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         """
         LOGGER.info("Start predict ...")
 
-        self.header = self.get_header(data_instances)
-        self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
+        header = data_instances.schema.get("header")
+        self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
 
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
@@ -139,5 +139,5 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         pred = pred_guest.join(pred_host, lambda g, h: g * h)
         predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-        
+
         return predict_result

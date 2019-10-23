@@ -20,6 +20,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -65,18 +66,24 @@ class _Optimizer(object):
             new_weights = np.append(new_weights, model_weights.intercept_)
             new_weights[-1] -= gradient[-1]
         new_param = LinearModelWeights(new_weights, model_weights.fit_intercept)
+        LOGGER.debug("In _l1_updator, original weight: {}, new_weights: {}".format(
+            model_weights.unboxed, new_weights
+        ))
         return new_param
 
     def _l2_updator(self, lr_weights: LinearModelWeights, gradient):
         """
         For l2 regularization, the regular term has been added in gradients.
         """
+
         new_weights = lr_weights.unboxed - gradient
         new_param = LinearModelWeights(new_weights, lr_weights.fit_intercept)
+
         return new_param
 
     def add_regular_to_grad(self, grad, lr_weights):
-        if self.penalty == 'l2':
+
+        if self.penalty == consts.L2_PENALTY:
             if lr_weights.fit_intercept:
                 gradient_without_intercept = grad[: -1]
                 gradient_without_intercept += self.alpha * lr_weights.coef_
@@ -85,12 +92,13 @@ class _Optimizer(object):
                 new_grad = grad + self.alpha * lr_weights.coef_
         else:
             new_grad = grad
+
         return new_grad
 
     def regularization_update(self, model_weights: LinearModelWeights, grad):
-        if self.penalty == 'l1':
+        if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
-        elif self.penalty == 'l2':
+        elif self.penalty == consts.L2_PENALTY:
             model_weights = self._l2_updator(model_weights, grad)
         else:
             new_vars = model_weights.unboxed - grad
@@ -108,19 +116,19 @@ class _Optimizer(object):
         return loss_norm
 
     def loss_norm(self, model_weights: LinearModelWeights):
-        if self.penalty == 'l1':
+        if self.penalty == consts.L1_PENALTY:
             loss_norm_value = self.__l1_loss_norm(model_weights)
-        elif self.penalty == 'l2':
+        elif self.penalty == consts.L2_PENALTY:
             loss_norm_value = self.__l2_loss_norm(model_weights)
         else:
             loss_norm_value = None
         return loss_norm_value
 
     def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
+
         if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
-            # delta_grad = grad
         else:
             delta_grad = grad
         model_weights = self.regularization_update(model_weights, delta_grad)
@@ -133,6 +141,7 @@ class _SgdOptimizer(_Optimizer):
 
         delta_grad = learning_rate * grad
         LOGGER.debug("In sgd optimizer, learning_rate: {}, delta_grad: {}".format(learning_rate, delta_grad))
+
         return delta_grad
 
 

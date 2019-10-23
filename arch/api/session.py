@@ -50,12 +50,11 @@ def init(job_id=None,
     session = build_session(job_id=job_id, work_mode=mode, backend=backend)
     RuntimeInstance.SESSION = session
 
-    table("__federation__", job_id, partition=10)
-
 
 @log_elapsed
-def table(name, namespace, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
+def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
           in_place_computing=False) -> Table:
+    namespace = namespace or get_session_id()
     return RuntimeInstance.SESSION.table(name=name,
                                          namespace=namespace,
                                          partition=partition,
@@ -86,8 +85,8 @@ def generateUniqueId():
     return RuntimeInstance.SESSION.generateUniqueId()
 
 
-def get_job_id():
-    return RuntimeInstance.SESSION.job_id
+def get_session_id():
+    return RuntimeInstance.SESSION.get_session_id()
 
 
 def get_data_table(name, namespace):
@@ -174,3 +173,7 @@ def save_data(kv_data: Iterable,
                                              error_if_exist=error_if_exist,
                                              in_version=in_version,
                                              version_log=version_log)
+
+
+def stop():
+    RuntimeInstance.SESSION.stop()

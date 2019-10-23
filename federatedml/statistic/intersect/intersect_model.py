@@ -68,7 +68,8 @@ class IntersectModelBase(ModelBase):
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
     def save_data(self):
-        LOGGER.debug("intersect_ids:{}".format(self.intersect_ids.count()))
+        if self.intersect_ids is not None:
+            LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
         return self.intersect_ids
 
     def run(self, component_parameters=None, args=None):

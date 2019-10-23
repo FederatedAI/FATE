@@ -32,7 +32,6 @@ LOGGER = log_utils.getLogger()
 
 '''
 return: a dictionary contains table_name and namespace, 
-e.g.： {'table_name': '5c33fe50bd7d11e988b352540012fde6', 'namespace': 'id_library_cache#10001#all#imei#md5#Za'}
 '''
 def host_get_current_verison(host_party_id, id_type, encrypt_type, tag, timeout=600):
     return get_current_version(id_type, encrypt_type, tag, host_party_id, timeout=timeout)
@@ -40,7 +39,6 @@ def host_get_current_verison(host_party_id, id_type, encrypt_type, tag, timeout=
 
 '''
 return: a dictionary contains table_name and namespace, 
-e.g.： {'table_name': '5c33fe50bd7d11e988b352540012fde6', 'namespace': 'id_library_cache#10001#10000#imei#md5#Za'}
 '''
 def guest_get_current_version(host_party_id, guest_party_id, id_type, encrypt_type, tag, timeout=600):
     return get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, timeout=timeout)

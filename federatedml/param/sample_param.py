@@ -33,6 +33,9 @@ class SampleParam(BaseParam):
      otherwise a list of float elements. default: None
 
     random_state: int, RandomState instance or None, default: None
+
+    need_run: bool, default True
+        Indicate if this module needed to be run
     """
 
     def __init__(self, mode="random", method="downsample", fractions=None, random_state=None, task_type="hetero", need_run=True):

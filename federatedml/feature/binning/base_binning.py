@@ -157,6 +157,7 @@ class Binning(object):
             self.cols_index = [i for i in range(len(header))]
         else:
             cols = []
+            cols_index = []
             for idx in self.cols_index:
                 try:
                     idx = int(idx)
@@ -167,7 +168,9 @@ class Binning(object):
                     raise ValueError(
                         "In binning module, selected index: {} exceed length of data dimension".format(idx))
                 cols.append(header[idx])
+                cols_index.append(idx)
             self.cols = cols
+            self.cols_index = cols_index
 
         self.cols_dict = {}
         for col in self.cols:
@@ -229,6 +232,9 @@ class Binning(object):
             transform_cols_idx = self.cols_index
         else:
             assert isinstance(transform_cols_idx, (list, tuple))
+            LOGGER.debug('In convert_feature_to_bin, transform_cols_idx: {}, col_index: {}, cols: {}'.format(
+                transform_cols_idx, self.cols_index, self.cols
+            ))
             for col in transform_cols_idx:
                 if col not in self.cols_index:
                     raise RuntimeError("Binning Transform cols: {} should be fit before transform".format(col))
@@ -378,7 +384,7 @@ class Binning(object):
         event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
         data_bin_with_label = data_bin_table.join(event_count_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
-                              total_bin=self.bin_num,
+                              split_points=split_points,
                               cols_dict=self.cols_dict)
 
         result_sum = data_bin_with_label.mapPartitions(f)
@@ -564,7 +570,7 @@ class Binning(object):
         return result_ivs
 
     @staticmethod
-    def add_label_in_partition(data_bin_with_table, total_bin, cols_dict, encryptor=None, header=None):
+    def add_label_in_partition(data_bin_with_table, split_points, cols_dict, encryptor=None, header=None):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -574,8 +580,8 @@ class Binning(object):
             The input data, the DTable is like:
             (id, {'x1': 1, 'x2': 5, 'x3': 2}, y, 1 - y)
 
-        total_bin : int, > 0
-            Specify the largest bin number
+        split_points : dict
+            Split points dict. Use to find out total bin num for each feature
 
         cols_dict: dict
             Record key, value pairs where key is cols' name, and value is cols' index.
@@ -595,7 +601,8 @@ class Binning(object):
         result_sum = {}
         for col_name in cols_dict:
             result_col_sum = []
-            for bin_index in range(total_bin):
+            split_point = split_points.get(col_name)
+            for bin_index in range(len(split_point)):
                 if encryptor is not None:
                     result_col_sum.append([encryptor.encrypt(0), encryptor.encrypt(0)])
                 else:

@@ -53,6 +53,9 @@ class LogisticParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
+    init_param: InitParam object, default: default InitParam object
+        Init param method object.
+
     max_iter : int, default: 100
         The maximum iteration for training.
 
@@ -69,6 +72,12 @@ class LogisticParam(BaseParam):
 
     decay_sqrt: Bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    encrypt_param: EncryptParam object, default: default EncryptParam object
+
+    predict_param: PredictParam object, default: default PredictParam object
+
+    cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
@@ -104,16 +113,18 @@ class LogisticParam(BaseParam):
     def check(self):
         descr = "logistic_param's"
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            pass
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.tol).__name__ != "float":
+        if not isinstance(self.tol, (int, float)):
             raise ValueError(
                 "logistic_param's tol {} not supported, should be float type".format(self.tol))
 
@@ -163,6 +174,9 @@ class LogisticParam(BaseParam):
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
+        if self.encrypt_param.method not in [consts.PAILLIER, None]:
+            raise ValueError(
+                "logistic_param's encrypted method support 'Paillier' or None only")
 
         if type(self.decay).__name__ not in ["int", 'float']:
             raise ValueError(
@@ -228,6 +242,8 @@ class HomoLogisticParam(LogisticParam):
             if self.optimizer != 'sgd':
                 raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
 
+            if self.penalty == consts.L1_PENALTY:
+                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
         return True
 
 

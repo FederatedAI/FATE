@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.webank.ai.fate.api.driver.federation.Federation;
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.constant.StringConstants;
+import com.webank.ai.eggroll.core.constant.StringConstants;
 import org.apache.commons.lang3.SerializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -63,7 +63,7 @@ public class TransferProtoMessageUtils {
         return topicBuilder.clear()
                 .setPartyId(party.getPartyId())
                 .setName(party.getName())
-                .setRole(StringConstants.ROLE_FATE)
+                .setRole("fate")
                 .build();
     }
 

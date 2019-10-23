@@ -135,7 +135,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
         self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(model_weights.coef_)
+        loss_regular = optimizer.loss_norm(model_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 

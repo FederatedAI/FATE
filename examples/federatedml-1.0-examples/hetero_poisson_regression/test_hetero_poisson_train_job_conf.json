@@ -159,7 +159,7 @@
       "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 100,
+      "max_iter": 3,
       "early_stop": "weight_diff",
       "decay": 10,
       "batch_size": -1,
