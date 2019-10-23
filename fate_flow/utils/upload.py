@@ -78,21 +78,18 @@ class Upload(object):
             if head is True:
                 data_head = fin.readline()
                 self.save_data_header(data_head, dst_table_name, dst_table_namespace)
-            data_table_count = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
-                num = 0
                 if lines:
                     for line in lines:
-                        num += 1
                         values = line.replace("\n", "").replace("\t", ",").split(",")
                         data.append((values[0], self.list_to_str(values[1:])))
-                    session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
-                                      partition=self.parameters["partition"])
-                    data_table_count += num
+                    data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
+                                                   partition=self.parameters["partition"])
+
                 else:
-                    return data_table_count
+                    return data_table.count()
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
