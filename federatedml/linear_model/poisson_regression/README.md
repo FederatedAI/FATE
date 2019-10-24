@@ -1,6 +1,6 @@
 # Federated Poisson Regression
 
-Poisson distribution is a convenient model for modeling occurrences within a certain time period or geographical area. It is commonly used for predicting rates of low-frequency events. FATE provides Heterogeneous Poisson Regression(HeteroPoisson). The module can accept data with exposure variable, whose column name may be specified in job configuration file. Please refer to the example[link of poisson examples json file] on how to specify exposure element in job configuration.
+Poisson distribution is a convenient model for modeling occurrences within a certain time period or geographical area. It is commonly used for predicting rates of low-frequency events. FATE provides Heterogeneous Poisson Regression(HeteroPoisson). The module can accept data with exposure variable, whose column name may be specified in job configuration file. Please refer to the [examples](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.0-examples/hetero_poisson_regression) on how to specify exposure element in job configuration.
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible for generating private and public keys.
 
@@ -14,7 +14,7 @@ Figure 1： Federated HeteroPoisson Principle</div>
 
 As shown in Figure 1, a sample alignment process is conducted before training. The sample alignment process identifies overlapping samples in databases of all parties. The federated model is built based on the overlapping samples. The whole sample alignment process is conducted in encryption mode, and so confidential information (e.g. sample ids) will not be leaked.
 
-In the training process, party A and party B each compute the elements needed for final gradients. Arbiter aggregates, calculate, and transfer back the final gradients to corresponding parties. For more details on the secure model-building process, please refer to the paper[https://arxiv.org/abs/1711.10677].
+In the training process, party A and party B each compute the elements needed for final gradients. Arbiter aggregates, calculate, and transfer back the final gradients to corresponding parties. For more details on the secure model-building process, please refer to the [paper](https://arxiv.org/abs/1711.10677).
 
 ## Features 
 
