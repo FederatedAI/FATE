@@ -45,7 +45,7 @@ config(){
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
-    echo "INSERT INTO node (ip, port, type, status) values ('${proxy_port}', '${proxy_port}', 'PROXY', 'HEALTHY');" >> ./insert-node.sql
+    echo "INSERT INTO node (ip, port, type, status) values ('${proxy_ip}', '${proxy_port}', 'PROXY', 'HEALTHY');" >> ./insert-node.sql
     for ((i=0;i<${#egg_ip[*]};i++))
     do
         echo "INSERT INTO node (ip, port, type, status) values ('${egg_ip[i]}', '${egg_port}', 'EGG', 'HEALTHY');" >> ./insert-node.sql
