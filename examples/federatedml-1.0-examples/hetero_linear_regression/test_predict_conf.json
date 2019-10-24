@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "vehicle_b", "namespace": "vehicle"}]
+                    "eval_data": [{"name": "motor_small_b", "namespace": "motor_small"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "vehicle_a", "namespace": "vehicle"}]
+                    "eval_data": [{"name": "motor_small_a", "namespace": "motor_small"}]
                 }
             }
         }

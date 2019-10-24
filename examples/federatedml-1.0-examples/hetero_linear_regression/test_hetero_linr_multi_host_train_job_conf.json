@@ -24,16 +24,16 @@
         "data": {
           "train_data": [
             {
-              "name": "vehicle_b",
-              "namespace": "vehicle"
+              "name": "motor_small_b",
+              "namespace": "motor_small"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["y"],
-        "label_type": ["int"],
+        "label_name": ["motor_speed"],
+        "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
         "outlier_replace": [true]
@@ -48,12 +48,12 @@
         "data": {
           "train_data": [
             {
-              "name": "vehicle_a",
-              "namespace": "vehicle"
+              "name": "motor_small_a",
+              "namespace": "motor_small"
             },
             {
-              "name": "vehicle_a",
-              "namespace": "vehicle"
+              "name": "motor_small_a",
+              "namespace": "motor_small"
             }
           ]
         }
