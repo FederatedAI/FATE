@@ -26,37 +26,14 @@ def build_eggroll_session(work_mode, job_id=None, server_conf_path="eggroll/conf
     session_id = job_id or str(uuid.uuid1())
     session = EggrollSession(session_id=session_id)
     if work_mode.is_cluster():
-        from eggroll.api.cluster import eggroll
-        from eggroll.api.cluster.eggroll import EGGROLL_ROLL_HOST, EGGROLL_ROLL_PORT, file_utils, getLogger
-        eggroll.LOGGER = getLogger()
-
-        server_conf = file_utils.load_json_conf(server_conf_path)
-        session.add_conf('eggroll.server.conf.path', server_conf_path)
-        session.add_conf(EGGROLL_ROLL_HOST, server_conf.get("servers").get("roll").get("host"))
-        session.add_conf(EGGROLL_ROLL_PORT, server_conf.get("servers").get("roll").get("port"))
-
+        from eggroll.api.cluster.eggroll import session_init
+        session_init(session_id=job_id, server_conf_path=server_conf_path)
+    else:
+        from eggroll.api.core import EggrollSession
+        import uuid
+        session_id = job_id or str(uuid.uuid1())
+        session = EggrollSession(session_id=session_id)
     return session
-
-
-#
-#
-# def build_eggroll_session(work_mode, job_id, server_conf_path="arch/conf/server_conf.json"):
-#     import uuid
-#     job_id = job_id or str(uuid.uuid1())
-#
-#     eggroll_context = EggRollContext()
-#     if work_mode.is_cluster():
-#         from arch.api.cluster import eggroll
-#         from arch.api.cluster.eggroll import file_utils, getLogger
-#         eggroll.LOGGER = getLogger()
-#         server_conf = file_utils.load_json_conf(server_conf_path)
-#         _roll_host = server_conf.get("servers").get("roll").get("host")
-#         _roll_port = server_conf.get("servers").get("roll").get("port")
-#
-#         return dict(job_id=job_id, host=_roll_host, port=_roll_port, eggroll_context=eggroll_context)
-#
-#     else:
-#         return dict(job_id=job_id, eggroll_context=eggroll_context)
 
 
 # noinspection PyProtectedMember
@@ -66,22 +43,10 @@ def build_eggroll_runtime(work_mode: WorkMode, eggroll_session: EggrollSession):
         return Standalone(eggroll_session)
 
     elif work_mode.is_cluster():
-        from eggroll.api.cluster.eggroll import _EggRoll
-        return _EggRoll(eggroll_session)
+        from eggroll.api.cluster.eggroll import _EggRoll, eggroll_init
+        if _EggRoll.instance is None:
+            return eggroll_init(eggroll_session)
     raise ValueError(f"work_mode: {work_mode} not supported!")
-
-
-#
-# # noinspection PyProtectedMember
-# def build_eggroll_runtime(work_mode: WorkMode, eggroll_session):
-#     if work_mode.is_standalone():
-#         from arch.api.standalone.eggroll import Standalone
-#         return Standalone(**eggroll_session)
-#
-#     elif work_mode.is_cluster():
-#         from arch.api.cluster.eggroll import _EggRoll
-#         return _EggRoll(**eggroll_session)
-#     raise ValueError(f"work_mode: {work_mode} not supported!")
 
 
 def broadcast_eggroll_session(sc, work_mode, eggroll_session):
@@ -99,10 +64,4 @@ def maybe_create_eggroll_client():
     import pickle
     from pyspark.taskcontext import TaskContext
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
-    if mode == 0:
-        from eggroll.api.standalone.eggroll import Standalone
-        Standalone(eggroll_session)
-    else:
-        from eggroll.api.cluster.eggroll import _EggRoll
-        if _EggRoll.instance is None:
-            _EggRoll(eggroll_session)
+    build_eggroll_runtime(WorkMode(mode), eggroll_session)
