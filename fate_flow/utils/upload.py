@@ -30,7 +30,7 @@ class Upload(object):
         self.taskid = ''
         self.tracker = None
         self.MAX_PARTITION_NUM = 1024
-        self.MAX_BYTES = 10240
+        self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
 
     def run(self, component_parameters=None, args=None):
@@ -87,7 +87,6 @@ class Upload(object):
                         data.append((values[0], self.list_to_str(values[1:])))
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
                                                    partition=self.parameters["partition"])
-
                 else:
                     return data_table.count()
 
