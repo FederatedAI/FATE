@@ -140,7 +140,7 @@ class BaseHeteroFeatureSelection(ModelBase):
     def export_model(self):
         LOGGER.debug("Model output is : {}".format(self.model_output))
         if self.model_output is not None:
-            LOGGER.debug("Model output is : {}".format(self.model_output))
+            LOGGER.debug("model output is already exist, return directly")
             return self.model_output
 
         meta_obj = self._get_meta()
