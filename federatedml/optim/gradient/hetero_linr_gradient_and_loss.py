@@ -27,10 +27,6 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
-    # def __init__(self):
-    #     self.host_forwards = None
-    #     self.wx = None
-    #     self.aggregated_wx = None
 
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward,
@@ -44,7 +40,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
                                        encrypted_calculator, batch_index, offset=None):
-        """
+        '''
         Compute gradients:
         gradient = (1/N)*\sum(wx -y)*x
 
@@ -55,7 +51,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         data_instances: DTable of Instance, input data
 
         model_weights: LinearRegressionWeights
-            Stores coef_ and intercept_ of lr
+            Stores coef_ and intercept_ of model
 
         encrypted_calculator: Use for different encrypted methods
 
@@ -64,7 +60,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         n_iter_: int, current number of iter.
 
         batch_index: int, use to obtain current encrypted_calculator index:
-        """
+        '''
         wx = data_instances.mapValues(
             lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = wx
@@ -76,11 +72,11 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         return fore_gradient
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None):
-        """
+        '''
         Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
         (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
-        """
+        '''
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
         loss_list = []
@@ -124,12 +120,12 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         return wx
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
-        """
+        '''
         Compute htero linr loss for:
             loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
 
-            Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
-        """
+            Note: (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + (wx_g - y))
+        '''
 
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
@@ -148,9 +144,9 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         self._register_loss_sync(transfer_variables.loss)
 
     def compute_loss(self, cipher, n_iter_, batch_index):
-        """
+        '''
         Decrypt loss from guest
-        """
+        '''
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)

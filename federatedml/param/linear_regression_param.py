@@ -177,7 +177,7 @@ class LinearParam(BaseParam):
         self.encrypt_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                descr + "encrypt method supports 'Paillier' or None only")
+                descr + "encrypt method supports 'Paillier' only")
 
         self.encrypted_mode_calculator_param.check()
         
