@@ -156,7 +156,7 @@ class Evaluation(ModelBase):
                 LOGGER.debug("res:{}".format(res))
                 try:
                     if math.isinf(res):
-                        res = -9999999
+                        res = float(-9999999)
                         LOGGER.debug("res is inf, set to {}".format(res))
                 except:
                     pass
