@@ -5,9 +5,9 @@ source ./default_configurations.sh
 source ./multinode_cluster_configurations.sh
 
 deploy_modes=(binary build)
-support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll metaservice egg)
+support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
 base_modules=(jdk python mysql redis)
-eggroll_modules=(roll metaservice egg)
+eggroll_modules=(roll meta-service egg)
 env_modules=(jdk python)
 deploy_modules=()
 deploy_mode=$1
@@ -182,23 +182,23 @@ packaging_mysql() {
 config_mysql() {
     party_index=$1
     party_name=${party_names[party_index]}
+    party_id=${party_list[${party_index}]}
+    eval my_ip=\${${party_name}_mysql}
+
     eval db_ip=\${${party_name}_mysql}
     eval redis_ip=\${${party_name}_redis}
-    eval my_ip=\${${party_name}_fate_flow}
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
     eval proxy_ip=\${${party_name}_proxy}
     eval metaservice_ip=\${${party_name}_metaservice}
     eval egg_ips=\${${party_name}_egg[*]}
-    eval storage_service_ips=\${${party_name}_storage_service[*]}
-    party_id=${party_list[${party_index}]}
     sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i.bak "s/mysql_ip=.*/mysql_ip=${db_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/proxy_ip=.*/proxy_ip=${proxy_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/roll_ip=.*/roll_ip=${roll_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${metaservice_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/egg_ip=.*/egg_ip=${egg_ips[*]}/g" ./configurations.sh.tmp
-    sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${storage_service_ips[*]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/egg_ip=.*/egg_ip=\(${egg_ips[*]}\)/g" ./configurations.sh.tmp
+    sed -i.bak "s/storage_service_ip=.*/storage_service_ip=\(${egg_ips[*]}\)/g" ./configurations.sh.tmp
     config_enter ${my_ip} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
 }
@@ -215,13 +215,12 @@ packaging_redis() {
 
 config_redis() {
     party_index=$1
-    node_ip=${node_list[${party_index}]}
+    party_name=${party_names[party_index]}
     party_id=${party_list[${party_index}]}
-    config_label=$2
-    party_deploy_dir=$3
-    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
-    config_enter ${config_label} redis
-    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
+    eval my_ip=\${${party_name}_redis}
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
+    config_enter ${my_ip} redis
+    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
 }
 
 packaging_fate_flow() {
@@ -239,10 +238,11 @@ packaging_fate_flow() {
 config_fate_flow() {
     party_index=$1
     party_name=${party_names[party_index]}
+    party_id=${party_list[${party_index}]}
+    eval my_ip=\${${party_name}_fate_flow}
+
     eval db_ip=\${${party_name}_mysql}
     eval redis_ip=\${${party_name}_redis}
-    eval my_ip=\${${party_name}_fate_flow}
-    party_id=${party_list[${party_index}]}
     sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
     sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
     sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
@@ -266,6 +266,7 @@ config_federatedml() {
     party_index=$1
     party_name=${party_names[party_index]}
     eval my_ip=\${${party_name}_fate_flow}
+
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
     eval fateflow_ip=\${${party_name}_fate_flow}
@@ -296,6 +297,7 @@ config_fateboard() {
     party_index=$1
     party_name=${party_names[party_index]}
     eval my_ip=\${${party_name}_fateboard}
+
     eval db_ip=\${${party_name}_mysql}
     eval fateflow_ip=\${${party_name}_fate_flow}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
@@ -317,11 +319,12 @@ packaging_federation() {
 config_federation() {
     party_index=$1
     party_name=${party_names[party_index]}
+    party_id=${party_list[${party_index}]}
     eval my_ip=\${${party_name}_federation}
+
     eval db_ip=\${${party_name}_mysql}
     eval metaservice_ip=\${${party_name}_metaservice}
     eval proxy_ip=\${${party_name}_proxy}
-    party_id=${party_list[${party_index}]}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
@@ -342,14 +345,15 @@ packaging_proxy() {
 config_proxy() {
     party_index=$1
     party_name=${party_names[party_index]}
+    party_id=${party_list[${party_index}]}
     eval my_ip=\${${party_name}_proxy}
+
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
     eval fateflow_ip=\${${party_name}_fate_flow}
     eval fateboard_ip=\${${party_name}_fateboard}
     eval proxy_ip=\${${party_name}_proxy}
     eval exchange_ip=\${${party_names[1-party_index]}_proxy}
-    party_id=${party_list[${party_index}]}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
@@ -372,9 +376,10 @@ packaging_roll() {
 config_roll() {
     party_index=$1
     party_name=${party_names[party_index]}
-    eval my_ip=\${${party_name}_roll}
-    eval metaservice_ip=\${${party_name}_metaservice}
     party_id=${party_list[${party_index}]}
+    eval my_ip=\${${party_name}_roll}
+
+    eval metaservice_ip=\${${party_name}_metaservice}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
@@ -397,9 +402,10 @@ packaging_metaservice() {
 config_metaservice() {
     party_index=$1
     party_name=${party_names[party_index]}
-    eval my_ip=\${${party_name}_metaservice}
-    eval db_ip=\${${party_name}_mysql}
     party_id=${party_list[${party_index}]}
+    eval my_ip=\${${party_name}_metaservice}
+
+    eval db_ip=\${${party_name}_mysql}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
@@ -419,10 +425,11 @@ packaging_egg() {
 config_egg() {
     party_index=$1
     party_name=${party_names[party_index]}
-    eval my_ips=\${${party_name}_egg[*]}
+    party_id=${party_list[${party_index}]}
+    eval egg_ips=\${${party_name}_egg[*]}
     eval roll_ip=\${${party_name}_roll}
     eval proxy_ip=\${${party_name}_proxy}
-    for my_ip in ${all_node_ips[*]};do
+    for my_ip in ${egg_ips[*]};do
         sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
         sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
         sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
@@ -589,11 +596,11 @@ deploy() {
     echo "[INFO] Packaging end ------------------------------------------------------------------------"
 
     echo "[INFO] Distribute start------------------------------------------------------------------------"
-    #distribute
+    distribute
     echo "[INFO] Distribute end------------------------------------------------------------------------"
 
     echo "[INFO] Install start ------------------------------------------------------------------------"
-    #install
+    install
     echo "[INFO] Install end ------------------------------------------------------------------------"
 }
 
@@ -609,7 +616,7 @@ all() {
 
 multiple() {
     total=$#
-    #init_env
+    init_env
     for ((i=2;i<total+1;i++)); do
         deploy_modules[i]=${!i//\//}
     done
