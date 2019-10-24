@@ -29,7 +29,3 @@ In the training process, party A and party B each compute the elements needed fo
     a) "diff": Use difference of loss between two iterations;
     b) "abs": use the absolute value of loss;
     c) "weight_diff": use difference of model weights
-
-## Notes on Training
-
-In general, mini-batch preforms better than full-batch gradient descent on linear regression. For federatedml modules, the smallest batch size allowed is 10. With large datasets, we suggest that you train with a large batch size to reduce communication cost.

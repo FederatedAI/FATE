@@ -165,7 +165,7 @@ class PoissonParam(BaseParam):
         self.init_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                descr + "encrypt method supports 'Paillier' or None only")
+                descr + "encrypt method supports 'Paillier' only")
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(
