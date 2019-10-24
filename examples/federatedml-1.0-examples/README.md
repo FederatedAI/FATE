@@ -143,6 +143,8 @@ We have provided several example dsl files located in the corresponding algorith
    > HeteroFeatureSelection: feature selection module, supports both federated and standalone.
    > OneHotEncoder: feature encoding module, mostly used to encode the binning result.
    > HeteroLR: hetero logistic regression module.
+   > HeteroLinR: hetero linear regression module.
+   > HeteroPoisson: hetero poisson regression module.
    > HomoLR: homo logistic regression module.
    > HeteroSecureBoost: hetero secure-boost module.
    > Evaluation: evaluation module. support metrics for binary, multi-class and regression.

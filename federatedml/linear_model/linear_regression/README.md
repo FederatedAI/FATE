@@ -26,6 +26,6 @@ In the training process, party A and party B each compute the elements needed fo
     d) “adagrad”: AdaGrad
     e) “nesterov_momentum_sgd”: Nesterov Momentum
 4. Three converge criteria:
-    a) "diff": Use difference of loss between two iterations;
+    a) "diff": Use difference of loss between two iterations, not available for multi-host training;
     b) "abs": use the absolute value of loss;
     c) "weight_diff": use difference of model weights
