@@ -9,29 +9,27 @@ redis_password=fate_dev
 cxx_compile_flag=false
 
 # services for a
-a_mysql=
-a_redis=
-a_fateboard=
-a_fate_flow=
-a_fateboard=
-a_federation=
-a_proxy=
+a_mysql=10.211.55.6
+a_redis=10.211.55.6
+a_fate_flow=10.211.55.6
+a_fateboard=10.211.55.6
+a_federation=10.211.55.9
+a_proxy=10.211.55.6
 
-a_roll=
-a_metaservice=
-a_egg=()
-a_storage_service=()
+a_roll=10.211.55.6
+a_metaservice=10.211.55.6
+a_egg=(10.211.55.9)
+a_storage_service=(10.211.55.6)
 
 # services for b
-b_mysql=
-b_redis=
-b_fateboard=
-b_fate_flow=
-b_fateboard=
-b_federation=
-b_proxy=
+b_mysql=10.211.55.9
+b_redis=10.211.55.9
+b_fate_flow=10.211.55.9
+b_fateboard=10.211.55.9
+b_federation=10.211.55.6
+b_proxy=10.211.55.9
 
-b_roll=
-b_metaservice=
-b_egg=()
-b_storage_service=()
+b_roll=10.211.55.6
+b_metaservice=10.211.55.6
+b_egg=(10.211.55.6 10.211.55.10)
+b_storage_service=(10.211.55.9)

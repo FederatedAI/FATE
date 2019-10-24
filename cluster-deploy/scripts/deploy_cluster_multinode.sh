@@ -60,6 +60,7 @@ if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
     mkdir -p ${output_packages_dir}/source
     mkdir -p ${output_packages_dir}/config
     get_all_node_ip
+    echo "[INFO] Deploy on ${#all_node_ips[*]} node"
     for node_ip in ${all_node_ips[*]}; do
         mkdir -p ${output_packages_dir}/config/${node_ip}
     done
@@ -180,19 +181,26 @@ packaging_mysql() {
 
 config_mysql() {
     party_index=$1
-    node_ip=${node_list[${party_index}]}
+    party_name=${party_names[party_index]}
+    eval db_ip=\${${party_name}_mysql}
+    eval redis_ip=\${${party_name}_redis}
+    eval my_ip=\${${party_name}_fate_flow}
+    eval roll_ip=\${${party_name}_roll}
+    eval federation_ip=\${${party_name}_federation}
+    eval proxy_ip=\${${party_name}_proxy}
+    eval metaservice_ip=\${${party_name}_metaservice}
+    eval egg_ips=\${${party_name}_egg[*]}
+    eval storage_service_ips=\${${party_name}_storage_service[*]}
     party_id=${party_list[${party_index}]}
-    config_label=$2
-    party_deploy_dir=$3
-    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
-    sed -i.bak "s/mysql_ip=.*/mysql_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
-    config_enter ${config_label} mysql
-    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_ip=.*/mysql_ip=${db_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/proxy_ip=.*/proxy_ip=${proxy_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/roll_ip=.*/roll_ip=${roll_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${metaservice_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/egg_ip=.*/egg_ip=${egg_ips[*]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${storage_service_ips[*]}/g" ./configurations.sh.tmp
+    config_enter ${my_ip} mysql
+    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
 }
 
 packaging_redis() {
@@ -511,7 +519,6 @@ eeooff
 
             for node_ip in ${module_ips[*]}
             do
-                #node_ip=${module_ips[j]}
 	            echo "[INFO] Install ${module} on ${node_ip}"
                 echo "[INFO] -----------------------------------------------"
                 ssh -tt ${user}@${node_ip} << eeooff
@@ -582,11 +589,11 @@ deploy() {
     echo "[INFO] Packaging end ------------------------------------------------------------------------"
 
     echo "[INFO] Distribute start------------------------------------------------------------------------"
-    distribute
+    #distribute
     echo "[INFO] Distribute end------------------------------------------------------------------------"
 
     echo "[INFO] Install start ------------------------------------------------------------------------"
-    install
+    #install
     echo "[INFO] Install end ------------------------------------------------------------------------"
 }
 
