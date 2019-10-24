@@ -43,18 +43,18 @@ config() {
     touch ./ssh/ssh.properties
 
     cp ${source_code_dir}/${module_name}/src/main/resources/application.properties ./conf
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
-    sed -i "s#^server.port=.*#server.port=${fateboard_port}#g" ./conf/application.properties
-    sed -i "s#^fateflow.url=.*#fateflow.url=http://${fate_flow_ip}:${fate_flow_port}#g" ./conf/application.properties
-    sed -i "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver#g" ./conf/application.properties
-    sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
-    sed -i "s/^spring.datasource.username=.*/spring.datasource.username=${db_user}/g" ./conf/application.properties
-    sed -i "s/^spring.datasource.password=.*/spring.datasource.password=${db_password}/g" ./conf/application.properties
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    sed -i.bak "s#^server.port=.*#server.port=${fateboard_port}#g" ./conf/application.properties
+    sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://${fate_flow_ip}:${fate_flow_port}#g" ./conf/application.properties
+    sed -i.bak "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver#g" ./conf/application.properties
+    sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
+    sed -i.bak "s/^spring.datasource.username=.*/spring.datasource.username=${db_user}/g" ./conf/application.properties
+    sed -i.bak "s/^spring.datasource.password=.*/spring.datasource.password=${db_password}/g" ./conf/application.properties
     for node in "${node_list[@]}"
     do
         echo ${node}
         node_info=(${node})
-        sed -i "/${node_info[0]}/d" ./ssh/ssh.properties
+        sed -i.bak "/${node_info[0]}/d" ./ssh/ssh.properties
         echo "${node_info[0]}=${node_info[1]}|${node_info[2]}|${node_info[3]}" >> ./ssh/ssh.properties
     done
 }

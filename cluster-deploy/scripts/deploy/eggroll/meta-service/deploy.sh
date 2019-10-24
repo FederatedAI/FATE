@@ -45,19 +45,19 @@ config() {
     cd ./${module_name}/conf
 
 	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
-    sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
+    sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
 
-	sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/meta-service.properties
-	sed -i "s/service.port=.*/service.port=${port}/g" ./conf/meta-service.properties
-	sed -i "s#//.*?#//${db_ip}:3306/${db_name}?#g" ./conf/meta-service.properties
-	sed -i "s/jdbc.username=.*/jdbc.username=${db_user}/g" ./conf/meta-service.properties
-	sed -i "s/jdbc.password=.*/jdbc.password=${db_password}/g" ./conf/meta-service.properties
+	sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/meta-service.properties
+	sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/meta-service.properties
+	sed -i.bak "s#//.*?#//${db_ip}:3306/${db_name}?#g" ./conf/meta-service.properties
+	sed -i.bak "s/jdbc.username=.*/jdbc.username=${db_user}/g" ./conf/meta-service.properties
+	sed -i.bak "s/jdbc.password=.*/jdbc.password=${db_password}/g" ./conf/meta-service.properties
 }
 
 init() {

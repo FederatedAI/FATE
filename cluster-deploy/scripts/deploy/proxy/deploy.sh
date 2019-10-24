@@ -43,24 +43,24 @@ config() {
     cd ${output_packages_dir}/config/${config_label}
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
 
     mkdir conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/log4j2.properties ./conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/${module_name}.properties ./conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/route_tables/route_table.json ./conf
-    sed -i "s/port=.*/port=${proxy_port}/g" ./conf/${module_name}.properties
-    sed -i "s#route.table=.*#route.table=${deploy_dir}/${module_name}/conf/route_table.json#g" ./conf/${module_name}.properties
-    sed -i "s/coordinator=.*/coordinator=${party_id}/g" ./conf/${module_name}.properties
-    sed -i "s/ip=.*/ip=${proxy_ip}/g" ./conf/${module_name}.properties
+    sed -i.bak "s/port=.*/port=${proxy_port}/g" ./conf/${module_name}.properties
+    sed -i.bak "s#route.table=.*#route.table=${deploy_dir}/${module_name}/conf/route_table.json#g" ./conf/${module_name}.properties
+    sed -i.bak "s/coordinator=.*/coordinator=${party_id}/g" ./conf/${module_name}.properties
+    sed -i.bak "s/ip=.*/ip=${proxy_ip}/g" ./conf/${module_name}.properties
     cp ${cwd}/proxy_modify_json.py ./
-    sed -i "s/exchangeip=.*/exchangeip=\"${exchange_ip}\"/g" ./proxy_modify_json.py
-    sed -i "s/fip=.*/fip=\"${federation_ip}\"/g" ./proxy_modify_json.py
-    sed -i "s/flip=.*/flip=\"${federation_ip}\"/g" ./proxy_modify_json.py
-    sed -i "s/sip1=.*/sip1=\"${serving_ip1}\"/g" ./proxy_modify_json.py
-    sed -i "s/sip2=.*/sip2=\"${serving_ip2}\"/g" ./proxy_modify_json.py
-    sed -i "s/partyId=.*/partyId=\"${party_id}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/exchangeip=.*/exchangeip=\"${exchange_ip}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/fip=.*/fip=\"${federation_ip}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/flip=.*/flip=\"${federation_ip}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/sip1=.*/sip1=\"${serving_ip1}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/sip2=.*/sip2=\"${serving_ip2}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/partyId=.*/partyId=\"${party_id}\"/g" ./proxy_modify_json.py
     python proxy_modify_json.py ${module_name} ./conf/route_table.json
 }
 

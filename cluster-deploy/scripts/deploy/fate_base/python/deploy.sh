@@ -44,8 +44,8 @@ install() {
     cd ${deploy_dir}/${module_name}/miniconda3-fate-${python_version}
     echo "#!/bin/sh
 export PATH=${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin:\$PATH" > ./bin/activate
-	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda
-	sed -i "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda-env
+	sed -i.bak "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda
+	sed -i.bak "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda-env
 }
 
 init(){

@@ -84,26 +84,26 @@ config() {
 	cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
 
 	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
-    sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
-	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
+    sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
+	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
 
-	sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/egg.properties
-	sed -i "s/service.port=.*/service.port=${port}/g" ./conf/egg.properties
-	sed -i "s/engine.names=.*/engine.names=processor/g" ./conf/egg.properties
-	sed -i "s#bootstrap.script=.*#bootstrap.script=${deploy_dir}/${module_name}/processor-starter.sh#g" ./conf/egg.properties
-	sed -i "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
-	sed -i "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
-	sed -i "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
-	sed -i "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/eggroll/computing/processor.py#g" ./conf/egg.properties
-	sed -i "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
-	sed -i "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
-	sed -i "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
+	sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/egg.properties
+	sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/egg.properties
+	sed -i.bak "s/engine.names=.*/engine.names=processor/g" ./conf/egg.properties
+	sed -i.bak "s#bootstrap.script=.*#bootstrap.script=${deploy_dir}/${module_name}/processor-starter.sh#g" ./conf/egg.properties
+	sed -i.bak "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
+	sed -i.bak "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
+	sed -i.bak "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
+	sed -i.bak "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/eggroll/computing/processor.py#g" ./conf/egg.properties
+	sed -i.bak "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
+	sed -i.bak "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
+	sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
 	echo >> ./conf/egg.properties
 	echo "eggroll.computing.processor.python-path=${python_path}" >> ./conf/egg.properties
 }
@@ -135,20 +135,20 @@ install(){
     cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
 
     cd ${deploy_dir}/storage-service-cxx
-	sed -i "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
-	sed -i "34s#LDFLAGS += -L.*#LDFLAGS += -L${deploy_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
-	sed -i "36s#PROTOC =.*#PROTOC = ${deploy_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
-	sed -i "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
+	sed -i.bak "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
+	sed -i.bak "34s#LDFLAGS += -L.*#LDFLAGS += -L${deploy_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
+	sed -i.bak "36s#PROTOC =.*#PROTOC = ${deploy_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
+	sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
 	make
 
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
-	#sed -i "s/clustercommip=.*/clustercommip=\"$ip\"/g" $cwd/modify_json.py
-	#sed -i "s/clustercommport=.*/clustercommport=${clustercomm_port}/g" $cwd/modify_json.py
-	sed -i "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
-	sed -i "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
-	sed -i "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
-	sed -i "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
+	#sed -i.bak "s/clustercommip=.*/clustercommip=\"$ip\"/g" $cwd/modify_json.py
+	#sed -i.bak "s/clustercommport=.*/clustercommport=${clustercomm_port}/g" $cwd/modify_json.py
+	sed -i.bak "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
+	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
+	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
+	sed -i.bak "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
 	python ./modify_json.py python ./server_conf.json
 }
 

@@ -85,10 +85,10 @@ config_enter() {
 
 packaging_jdk() {
     cp configurations.sh configurations.sh.tmp
-    sed -i "s/jdk_version=.*/jdk_version=${jdk_version}/g" ./configurations.sh.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak.bak "s/jdk_version=.*/jdk_version=${jdk_version}/g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -98,17 +98,17 @@ config_jdk() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
     config_enter ${config_label} jdk
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_python() {
     cp configurations.sh configurations.sh.tmp
-    sed -i "s/python_version=.*/python_version=${python_version}/g" ./configurations.sh.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/python_version=.*/python_version=${python_version}/g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -118,21 +118,21 @@ config_python() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
     config_enter ${config_label} python
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_mysql() {
     cp configurations.sh configurations.sh.tmp
-    sed -i "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
-    sed -i "s/user=.*/user=${user}/g" ./configurations.sh.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
-    sed -i "s/fate_flow_db_name=.*/fate_flow_db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
-    sed -i "s/eggroll_meta_service_db_name=.*/eggroll_meta_service_db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
+    sed -i.bak "s/user=.*/user=${user}/g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/fate_flow_db_name=.*/fate_flow_db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
+    sed -i.bak "s/eggroll_meta_service_db_name=.*/eggroll_meta_service_db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -142,24 +142,24 @@ config_mysql() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
-    sed -i "s/mysql_ip=.*/mysql_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_ip=.*/mysql_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_redis() {
     cp configurations.sh configurations.sh.tmp
-    sed -i "s/redis_version=.*/redis_version=${redis_version}/g" ./configurations.sh.tmp
-    sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/redis_version=.*/redis_version=${redis_version}/g" ./configurations.sh.tmp
+    sed -i.bak "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -169,20 +169,20 @@ config_redis() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/common#g" ./configurations.sh.tmp
     config_enter ${config_label} redis
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_fate_flow() {
     cp configurations.sh configurations.sh.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
 
-    sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
-    sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
-    sed -i "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -192,12 +192,12 @@ config_fate_flow() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/python#g" ./configurations.sh.tmp
-    sed -i "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-    sed -i "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
-    sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
-    sed -i "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/python#g" ./configurations.sh.tmp
+    sed -i.bak "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+    sed -i.bak "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
+    sed -i.bak "s/redis_ip=.*/redis_ip=${node_ip}/g" ./configurations.sh.tmp
 	config_enter ${config_label} fate_flow
 	sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
@@ -205,9 +205,9 @@ config_fate_flow() {
 packaging_federatedml() {
     cp configurations.sh configurations.sh.tmp
 	cp services.env service.env.tmp
-    sed -i "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -217,24 +217,24 @@ config_federatedml() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/python#g" ./configurations.sh.tmp
-    sed -i "s/roll.host=.*/roll.host=${node_ip}/g" ./service.env.tmp
-    sed -i "s/federation.host=.*/federation.host=${node_ip}/g" ./service.env.tmp
-    sed -i "s/fateflow.host=.*/fateflow.host=${node_ip}/g" ./service.env.tmp
-    sed -i "s/fateboard.host=.*/fateboard.host=${node_ip}/g" ./service.env.tmp
-    sed -i "s/proxy.host=.*/proxy.host=${node_ip}/g" ./service.env.tmp
+    sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/python#g" ./configurations.sh.tmp
+    sed -i.bak "s/roll.host=.*/roll.host=${node_ip}/g" ./service.env.tmp
+    sed -i.bak "s/federation.host=.*/federation.host=${node_ip}/g" ./service.env.tmp
+    sed -i.bak "s/fateflow.host=.*/fateflow.host=${node_ip}/g" ./service.env.tmp
+    sed -i.bak "s/fateboard.host=.*/fateboard.host=${node_ip}/g" ./service.env.tmp
+    sed -i.bak "s/proxy.host=.*/proxy.host=${node_ip}/g" ./service.env.tmp
     config_enter ${config_label} federatedml
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_fateboard() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
-    sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
-    sed -i "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -244,19 +244,19 @@ config_fateboard() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
-    sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} fateboard
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_federation() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -266,20 +266,20 @@ config_federation() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
-    sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
-    sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} federation
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_proxy() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -290,22 +290,22 @@ config_proxy() {
     config_label=$2
     party_deploy_dir=$3
     exchange_ip=${node_list[1-party_index]}
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
-    sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
-    sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/federation_ip=.*/federation_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/exchange_ip=.*/exchange_ip=${exchange_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    sed -i.bak "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/federation_ip=.*/federation_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/fate_flow_ip=.*/fate_flow_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/exchange_ip=.*/exchange_ip=${exchange_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} proxy
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_roll() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -315,22 +315,22 @@ config_roll() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
-    sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
-    sed -i "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} roll
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_metaservice() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
-    sed -i "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
-    sed -i "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
-    sed -i "s/db_name=.*/db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_name=.*/db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -340,19 +340,19 @@ config_metaservice() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
-    sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
-    sed -i "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    sed -i.bak "s/db_ip=.*/db_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} meta-service
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
 
 packaging_egg() {
     cp configurations.sh configurations.sh.tmp
-    sed -i"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
     sh ./deploy.sh ${deploy_mode} packaging ./configurations.sh.tmp
 }
 
@@ -362,14 +362,14 @@ config_egg() {
     party_id=${party_list[${party_index}]}
     config_label=$2
     party_deploy_dir=$3
-    sed -i"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
-    sed -i"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
-    sed -i "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
-    sed -i "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-    sed -i "s#data_dir=.*#data_dir=${party_deploy_dir}/eggroll/data-dir#g" ./configurations.sh.tmp
-    sed -i "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
-    sed -i "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
-    sed -i "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/eggroll#g" ./configurations.sh.tmp
+    sed -i.bak "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+    sed -i.bak "s#data_dir=.*#data_dir=${party_deploy_dir}/eggroll/data-dir#g" ./configurations.sh.tmp
+    sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
+    sed -i.bak "s/roll_ip=.*/roll_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/proxy_ip=.*/proxy_ip=${node_ip}/g" ./configurations.sh.tmp
     config_enter ${config_label} egg
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }

@@ -44,18 +44,18 @@ config() {
 	cd ${output_packages_dir}/config/${config_label}
     cd ./${module_name}/conf
 	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
-    sed -i "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
+    sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/roll.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-roll.xml ./conf
 
-    sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/roll.properties
-    sed -i "s/service.port=.*/service.port=${port}/g" ./conf/roll.properties
-    sed -i "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/roll.properties
-    sed -i "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/roll.properties
+    sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/roll.properties
+    sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/roll.properties
+    sed -i.bak "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/roll.properties
+    sed -i.bak "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/roll.properties
 }
 
 init() {

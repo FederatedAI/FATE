@@ -38,9 +38,9 @@ config(){
 	cd ./${module_name}/conf
     cp ${output_packages_dir}/source/${module_name}/redis-${redis_version}/redis.conf ./
 	cp ${cwd}/service.sh ./
-	sed -i "s/bind 127.0.0.1/bind 0.0.0.0/g" ./redis.conf
-    sed -i "s/# requirepass foobared/requirepass ${redis_password}/g" ./redis.conf
-    sed -i "s/databases 16/databases 50/g" ./redis.conf
+	sed -i.bak "s/bind 127.0.0.1/bind 0.0.0.0/g" ./redis.conf
+    sed -i.bak "s/# requirepass foobared/requirepass ${redis_password}/g" ./redis.conf
+    sed -i.bak "s/databases 16/databases 50/g" ./redis.conf
     return 0
 }
 

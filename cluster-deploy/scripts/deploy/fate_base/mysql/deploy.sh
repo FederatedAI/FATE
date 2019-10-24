@@ -41,7 +41,7 @@ config(){
 
     cd ./${module_name}/conf/
 	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
-	sed -i "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+	sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
@@ -58,11 +58,11 @@ config(){
     echo "select * from node;" >> ./insert-node.sql
 
 	cd ./conf
-	sed -i "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
-	sed -i "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
-	sed -i "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
-	sed -i "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
-	sed -i "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
+	sed -i.bak "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
+	sed -i.bak "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
+	sed -i.bak "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
+	sed -i.bak "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
+	sed -i.bak "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
     return 0
 }
 

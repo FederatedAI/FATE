@@ -34,15 +34,15 @@ config() {
 	cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
 	cd ./${module_name}/conf
 
-	sed -i "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./service.sh
-	sed -i "s#venv=.*#venv=${venv_dir}#g" ./service.sh
-	sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
-	sed -i "s/'user':.*/'user': '${db_user}',/g" ./settings.py
-	sed -i "s/'passwd':.*/'passwd': '${db_password}',/g" ./settings.py
-	sed -i "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
-	sed -i "s/'name':.*/'name': '${db_name}',/g" ./settings.py
-	sed -i "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
-	sed -i "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
+	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./service.sh
+	sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ./service.sh
+	sed -i.bak "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
+	sed -i.bak "s/'user':.*/'user': '${db_user}',/g" ./settings.py
+	sed -i.bak "s/'passwd':.*/'passwd': '${db_password}',/g" ./settings.py
+	sed -i.bak "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
+	sed -i.bak "s/'name':.*/'name': '${db_name}',/g" ./settings.py
+	sed -i.bak "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
+	sed -i.bak "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
 	return 0
 }
 

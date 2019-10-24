@@ -45,19 +45,19 @@ config() {
 
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
-    sed -i "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
 
     mkdir conf
     cp  ${source_code_dir}/arch/driver/${module_name}/src/main/resources/federation.properties ./conf
     cp  ${source_code_dir}/arch/driver/${module_name}/src/main/resources/log4j2.properties ./conf
     cp  ${source_code_dir}/arch/driver/${module_name}/src/main/resources/applicationContext-federation.xml ./conf
 
-    sed -i "s/party.id=.*/party.id=${party_id}/g" ./conf/federation.properties
-    sed -i "s/service.port=.*/service.port=${port}/g" ./conf/federation.properties
-    sed -i "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/federation.properties
-    sed -i "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
-    sed -i "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
-    sed -i "s/proxy.port=.*/proxy.port=${proxy_port}/g" ./conf/federation.properties
+    sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/federation.properties
+    sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/federation.properties
+    sed -i.bak "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/federation.properties
+    sed -i.bak "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
+    sed -i.bak "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
+    sed -i.bak "s/proxy.port=.*/proxy.port=${proxy_port}/g" ./conf/federation.properties
 }
 
 init() {
