@@ -92,6 +92,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
+        if self.filter_result is None:
+            result_obj = feature_selection_param_pb2.FeatureSelectionParam()
+            return result_obj
+
         LOGGER.debug("in _get_param, self.left_cols: {}, self.original_header: {}".format(
             self.filter_result.get_left_cols, self.header
         ))
