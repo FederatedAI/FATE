@@ -48,12 +48,11 @@ get_all_node_ip() {
 	        fi
 	    done
 	done
-	#TODO:
-    for ((i=0;i<${#all_node_ips[*]};i++))
-    do
-        a_jdk[${#a_jdk[*]}]=${all_node_ips[i]}
-    done
-    echo ${#a_jdk[*]}
+	#TODO: not all node need to deploy all env
+    a_jdk=("${all_node_ips[@]}")
+    b_jdk=("${all_node_ips[@]}")
+    a_python=("${all_node_ips[@]}")
+    b_python=("${all_node_ips[@]}")
 }
 
 if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
@@ -62,7 +61,6 @@ if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
     mkdir -p ${output_packages_dir}/config
     get_all_node_ip
     for node_ip in ${all_node_ips[*]}; do
-        echo ${node_ip}
         mkdir -p ${output_packages_dir}/config/${node_ip}
     done
 else
@@ -433,9 +431,9 @@ config_egg() {
 
 distribute() {
     cd ${output_packages_dir}
-    echo "[INFO] compressed source"
+    echo "[INFO] Compressed source"
     tar czf source.tar.gz ./source
-    echo "[INFO] compressed source done"
+    echo "[INFO] Compressed source done"
     deploy_packages_dir=${deploy_dir}/packages
 	for node_ip in "${all_node_ips[@]}"; do
 	    echo "[INFO] distribute source to ${node_ip}"
@@ -454,20 +452,20 @@ eeooff
 
 install() {
 	for node_ip in "${all_node_ips[@]}"; do
-	    echo "[INFO] install on ${node_ip}"
+	    echo "[INFO] Decompressed on ${node_ip}"
 	    ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 tar xzf source.tar.gz
 tar xzf config.tar.gz -C config
 exit
 eeooff
+	    echo "[INFO] Decompressed on ${node_ip} done"
     done
 
     for ((i=0;i<${#party_list[*]};i++))
     do
         party_name=${party_names[i]}
         for module in "${deploy_modules[@]}"; do
-            echo "[INFO] -----------------------------------------------"
 	        echo "[INFO] Install ${module}"
             if_base ${module}
             if [[ $? -eq 0 ]];then
@@ -484,14 +482,38 @@ eeooff
 
             if_env ${module}
             if [[ $? -eq 0 ]];then
-                module_ips=${all_node_ips}
+                #TODO: improve
+                case ${party_name} in
+                    "a")
+                        case ${module} in
+                            "jdk")
+                                module_ips=("${a_jdk[*]}")
+                            ;;
+                            "python")
+                                module_ips=("${a_python[*]}")
+                            ;;
+                        esac
+                        ;;
+                    "b")
+                        case ${module} in
+                            "jdk")
+                                module_ips=("${b_jdk[*]}")
+                            ;;
+                            "python")
+                                module_ips=("${b_python[*]}")
+                            ;;
+                        esac
+                        ;;
+                esac
             else
                 eval module_ips=\${${party_name}_${module}[*]}
             fi
 
-            for node_ip in ${module_ips[@]}
+            for node_ip in ${module_ips[*]}
             do
+                #node_ip=${module_ips[j]}
 	            echo "[INFO] Install ${module} on ${node_ip}"
+                echo "[INFO] -----------------------------------------------"
                 ssh -tt ${user}@${node_ip} << eeooff
                     rm -rf ${module_deploy_dir}
                     cd ${deploy_packages_dir}/config/${module}
@@ -500,9 +522,9 @@ eeooff
                     exit
 eeooff
 	            echo "[INFO] Install ${module} on ${node_ip} done"
+                echo "[INFO] -----------------------------------------------"
             done
-
-            echo "[INFO] -----------------------------------------------"
+	        echo "[INFO] Install ${module} done"
         done
 	done
 }
