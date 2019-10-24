@@ -42,7 +42,7 @@ config() {
 	sed -i "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
 	sed -i "s/'name':.*/'name': '${db_name}',/g" ./settings.py
 	sed -i "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
-	sed "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
+	sed -i "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
 	return 0
 }
 
