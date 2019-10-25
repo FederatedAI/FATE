@@ -29,9 +29,9 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 
 
 
-##2.     Deployment Architecture
+## 2.     Deployment Architecture
 
-### **2.1. Unilateral Deployment Architecture **
+### **2.1. Unilateral Deployment Architecture**
 
 
 
@@ -192,7 +192,7 @@ Enter password:(please input the original password)
 After installing mysql, you need to use the following statement on the node where MySQL is installed to empower all IP in the party (replacing IP with actual ip):
 
 ```
-$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate_dev -p –S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
+$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate_dev -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
 Enter password: fate_dev
 >CREATE USER 'fate_dev'@'$ip' IDENTIFIED BY 'fate_dev';
 >GRANT ALL ON *.* TO 'fate_dev'@'$ip';
