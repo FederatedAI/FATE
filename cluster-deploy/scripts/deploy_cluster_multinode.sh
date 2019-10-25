@@ -31,7 +31,11 @@ get_all_node_ip() {
         for ((j=0;j<${#support_modules[*]};j++))
         do
             module=${support_modules[j]}
-            eval tmp_ips=\${${party_name}_${module}[*]}
+            if [[ "${module}" == "meta-service" ]]; then
+                eval tmp_ips=\${${party_name}_metaservice}
+            else
+                eval tmp_ips=\${${party_name}_${module}[*]}
+            fi
             for tmp_ip in ${tmp_ips[@]}
             do
                 all_node_ips[${#all_node_ips[*]}]=${tmp_ip}
@@ -265,21 +269,23 @@ packaging_federatedml() {
 config_federatedml() {
     party_index=$1
     party_name=${party_names[party_index]}
-    eval my_ip=\${${party_name}_fate_flow}
+    my_ips=("${all_node_ips[@]}")
 
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
     eval fateflow_ip=\${${party_name}_fate_flow}
     eval fateboard_ip=\${${party_name}_fateboard}
     eval proxy_ip=\${${party_name}_proxy}
-    sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
-    sed -i.bak "s/roll.host=.*/roll.host=${roll_ip}/g" ./service.env.tmp
-    sed -i.bak "s/federation.host=.*/federation.host=${federation_ip}/g" ./service.env.tmp
-    sed -i.bak "s/fateflow.host=.*/fateflow.host=${fateflow_ip}/g" ./service.env.tmp
-    sed -i.bak "s/fateboard.host=.*/fateboard.host=${fateboard_ip}/g" ./service.env.tmp
-    sed -i.bak "s/proxy.host=.*/proxy.host=${proxy_ip}/g" ./service.env.tmp
-    config_enter ${my_ip} federatedml
-    sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
+    for my_ip in ${my_ips[*]};do
+        sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
+        sed -i.bak "s/roll.host=.*/roll.host=${roll_ip}/g" ./service.env.tmp
+        sed -i.bak "s/federation.host=.*/federation.host=${federation_ip}/g" ./service.env.tmp
+        sed -i.bak "s/fateflow.host=.*/fateflow.host=${fateflow_ip}/g" ./service.env.tmp
+        sed -i.bak "s/fateboard.host=.*/fateboard.host=${fateboard_ip}/g" ./service.env.tmp
+        sed -i.bak "s/proxy.host=.*/proxy.host=${proxy_ip}/g" ./service.env.tmp
+        config_enter ${my_ip} federatedml
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
+    done
 }
 
 packaging_fateboard() {
@@ -426,10 +432,10 @@ config_egg() {
     party_index=$1
     party_name=${party_names[party_index]}
     party_id=${party_list[${party_index}]}
-    eval egg_ips=\${${party_name}_egg[*]}
+    eval my_ips=\${${party_name}_egg[*]}
     eval roll_ip=\${${party_name}_roll}
     eval proxy_ip=\${${party_name}_proxy}
-    for my_ip in ${egg_ips[*]};do
+    for my_ip in ${my_ips[*]};do
         sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
         sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
         sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
@@ -520,6 +526,8 @@ eeooff
                         esac
                         ;;
                 esac
+            elif [[ "${module}" == "federatedml" ]];then
+                module_ips=("${all_node_ips[*]}")
             else
                 eval module_ips=\${${party_name}_${module}[*]}
             fi
