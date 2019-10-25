@@ -40,11 +40,8 @@ class ScaleParam(BaseParam):
             feat_upper/feat_lower will act on all data column, so it will just be a value, and for "col", it just acts
             on one column they corresponding to, so feat_lower/feat_upper will be a list, which size will equal to the number of columns
 
-        feat_upper: int or float, used for "min_max_scale", the upper limit in the column. If the value is larger than feat_upper, it will be set to feat_upper. Default None.
-        feat_lower: int or float, used for "min_max_scale", the lower limit in the column. If the value is less than feat_lower, it will be set to feat_lower. Default None.
-        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
-        out_upper: int or float, used for "min_max_scale", The results of scale will be mapped to the area between out_lower and out_upper.Default None.
-
+        feat_upper: int or float, used for "min_max_scale", the upper limit in the column. If the scaled value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, used for "min_max_scale", the lower limit in the column. If the scaled value is less than feat_lower, it will be set to feat_lower. Default None.
 
         with_mean: bool, used for "standard_scale". Default False.
         with_std: bool, used for "standard_scale". Default False.

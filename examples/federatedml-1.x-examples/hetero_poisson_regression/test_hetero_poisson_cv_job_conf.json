@@ -35,7 +35,7 @@
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
-        "outlier_replace": [true]
+        "outlier_replace": [false]
       },
       "feature_scale_0": {
         "method": ["min_max_scale"]
@@ -100,7 +100,7 @@
       "dataio_0": {
         "with_label": [false],
         "output_format": ["dense"],
-        "outlier_replace": [true]
+        "outlier_replace": [false]
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
@@ -154,12 +154,12 @@
   },
   "algorithm_parameters": {
     "hetero_poisson_0": {
-      "penalty": "L2",
+      "penalty": "None",
       "optimizer": "sgd",
-      "eps": 1e2,
+      "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 10,
-      "converge_func": "weight_diff",
+      "max_iter": 50,
+      "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.01,
       "exposure_colname": "exposure",
