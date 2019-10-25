@@ -534,7 +534,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         # LOGGER.debug("self.grad and hess is {}".format(list(self.grad_and_hess.collect())))
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
-        root_node = Node(id=0, sitename=consts.GUEST, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
+        root_node = Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
                          weight=self.splitter.node_weight(root_sum_grad, root_sum_hess))
         self.tree_node_queue = [root_node]
 

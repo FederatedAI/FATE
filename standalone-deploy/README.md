@@ -29,7 +29,7 @@ FATE $ sh ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples/](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples/](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://host ip:8080.
