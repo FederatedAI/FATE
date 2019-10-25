@@ -28,7 +28,9 @@ packaging() {
         tar xzf miniconda3-fate-${python_version}.tar.gz
         rm -rf miniconda3-fate-${python_version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
+        get_module_binary ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
+        tar xzf miniconda3-fate-${python_version}.tar.gz
+        rm -rf miniconda3-fate-${python_version}.tar.gz
     fi
 	return 0
 }

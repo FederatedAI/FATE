@@ -27,13 +27,8 @@ packaging() {
         tar xzf eggroll-${module_name}-${version}.tar.gz
         rm -rf eggroll-${module_name}-${version}.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/eggroll/framework/${module_name}/target
-        if [[ -f ${target_path}/eggroll-${module_name}-${version}.jar ]];then
-            cp ${target_path}/eggroll-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/eggroll-${module_name}-${version}.jar: file doesn't exist."
-        fi
+        cp ${source_code_dir}/eggroll/framework/${module_name}/target/eggroll-${module_name}-${version}.jar ./
+        cp -r ${source_code_dir}/eggroll/framework/${module_name}/target/lib ./
     fi
 }
 

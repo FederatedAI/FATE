@@ -21,14 +21,10 @@ source ${config_path}
 packaging(){
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
-    fi
+    get_module_binary ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
 	return 0
 }
 

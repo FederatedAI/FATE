@@ -64,13 +64,39 @@ packaging() {
         rm -rf eggroll-conf-${version}.tar.gz
         cd ../
     elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/eggroll/framework/${module_name}/target
-        if [[ -f ${target_path}/eggroll-${module_name}-${version}.jar ]];then
-            cp ${target_path}/eggroll-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/eggroll-${module_name}-${version}.jar: file doesn't exist."
-        fi
+        mkdir ./egg-manager
+        cd ./egg-manager
+        cp ${source_code_dir}/eggroll/framework/${module_name}/target/eggroll-${module_name}-${version}.jar ./
+        cp -r ${source_code_dir}/eggroll/framework/${module_name}/target/lib ./
+        cd ../
+
+        mkdir ./egg-services
+        cd ./egg-services
+
+        mkdir storage-service-cxx
+        cd storage-service-cxx
+        cp -r ${source_code_dir}/eggroll/storage/storage-service-cxx/* ./
+        get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        tar xzf third_party_eggrollv1.tar.gz
+        rm -rf third_party_eggrollv1.tar.gz
+        cd ../
+
+        mkdir computing
+        cd computing
+        cp -r ${source_code_dir}/eggroll/computing/* ./
+        cd ../
+
+        mkdir eggroll-api
+        cd eggroll-api
+        cp -r ${source_code_dir}/eggroll/api/* ./
+        tar xzf eggroll-api-${version}.tar.gz
+        rm -rf eggroll-api-${version}.tar.gz
+        cd ../
+
+        mkdir eggroll-conf
+        cd eggroll-conf
+        cp -r ${source_code_dir}/eggroll/conf/* ./
+        cd ../
     fi
 }
 

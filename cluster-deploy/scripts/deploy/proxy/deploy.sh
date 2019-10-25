@@ -57,7 +57,7 @@ config() {
     cp ${cwd}/proxy_modify_json.py ./
     sed -i.bak "s/exchangeip=.*/exchangeip=\"${exchange_ip}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/fip=.*/fip=\"${federation_ip}\"/g" ./proxy_modify_json.py
-    sed -i.bak "s/flip=.*/flip=\"${federation_ip}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/flip=.*/flip=\"${fate_flow_ip}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/sip1=.*/sip1=\"${serving_ip1}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/sip2=.*/sip2=\"${serving_ip2}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/partyId=.*/partyId=\"${party_id}\"/g" ./proxy_modify_json.py

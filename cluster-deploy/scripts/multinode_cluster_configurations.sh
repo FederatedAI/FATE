@@ -13,21 +13,21 @@ a_mysql=10.211.55.6
 a_redis=10.211.55.6
 a_fate_flow=10.211.55.6
 a_fateboard=10.211.55.6
-a_federation=10.211.55.9
+a_federation=10.211.55.6
 a_proxy=10.211.55.6
 
 a_roll=10.211.55.6
 a_metaservice=10.211.55.6
-a_egg=(10.211.55.9)
+a_egg=(10.211.55.6)
 
 # services for b
 b_mysql=10.211.55.9
 b_redis=10.211.55.9
 b_fate_flow=10.211.55.9
 b_fateboard=10.211.55.9
-b_federation=10.211.55.6
+b_federation=10.211.55.9
 b_proxy=10.211.55.9
 
-b_roll=10.211.55.6
+b_roll=10.211.55.9
 b_metaservice=10.211.55.9
-b_egg=(10.211.55.6 10.211.55.10)
+b_egg=(10.211.55.9 10.211.55.10)

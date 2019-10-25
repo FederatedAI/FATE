@@ -23,17 +23,13 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
-        tar xzf jdk-${jdk_version}-linux-x64.tar.gz
-        rm -rf jdk-${jdk_version}-linux-x64.tar.gz
-        mkdir tmp
-        cp -r jdk*/* tmp
-        rm -rf jdk*
-        mv tmp jdk-${jdk_version}
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
-    fi
+    get_module_binary ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
+    tar xzf jdk-${jdk_version}-linux-x64.tar.gz
+    rm -rf jdk-${jdk_version}-linux-x64.tar.gz
+    mkdir tmp
+    cp -r jdk*/* tmp
+    rm -rf jdk*
+    mv tmp jdk-${jdk_version}
 	return 0
 }
 

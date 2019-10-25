@@ -12,6 +12,8 @@ env_modules=(jdk python)
 deploy_modules=()
 deploy_mode=$1
 all_node_ips=()
+a_ips=()
+b_ips=()
 a_jdk=()
 b_jdk=()
 a_python=()
@@ -39,6 +41,11 @@ get_all_node_ip() {
             for tmp_ip in ${tmp_ips[@]}
             do
                 all_node_ips[${#all_node_ips[*]}]=${tmp_ip}
+                if [[ "${party_name}" == "a" ]];then
+                    a_ips[${#a_ips[*]}]=${tmp_ip}
+                elif [[ "${party_name}" == "b" ]];then
+                    b_ips[${#b_ips[*]}]=${tmp_ip}
+                fi
             done
         done
 	done
@@ -75,7 +82,6 @@ fi
 
 init_env() {
     if [[ "${deploy_mode}" == "binary" ]]; then
-        # TODO: All modules support binary deployment mode and need to be removed here.
         for node_ip in ${all_node_ips[*]}; do
 		    ssh -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
@@ -89,6 +95,12 @@ exit
 eeooff
         done
     elif [[ "${deploy_mode}" == "build" ]]; then
+        cd ${source_code_dir}/eggroll
+        mvn clean package -DskipTests
+        cd ${source_code_dir}/fateboard
+        mvn clean package -DskipTests
+        cd ${source_code_dir}/arch
+        mvn clean package -DskipTests
         echo "not support"
     fi
 }
@@ -269,7 +281,11 @@ packaging_federatedml() {
 config_federatedml() {
     party_index=$1
     party_name=${party_names[party_index]}
-    my_ips=("${all_node_ips[@]}")
+    if [[ "${party_name}" == "a" ]];then
+        my_ips=("${a_ips[@]}")
+    elif [[ "${party_name}" == "b" ]];then
+        my_ips=("${b_ips[@]}")
+    fi
 
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
@@ -357,7 +373,6 @@ config_proxy() {
     eval roll_ip=\${${party_name}_roll}
     eval federation_ip=\${${party_name}_federation}
     eval fateflow_ip=\${${party_name}_fate_flow}
-    eval fateboard_ip=\${${party_name}_fateboard}
     eval proxy_ip=\${${party_name}_proxy}
     eval exchange_ip=\${${party_names[1-party_index]}_proxy}
     sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
@@ -528,6 +543,8 @@ eeooff
                 esac
             elif [[ "${module}" == "federatedml" ]];then
                 module_ips=("${all_node_ips[*]}")
+            elif [[ "${module}" == "meta-service" ]];then
+                eval module_ips=\${${party_name}_metaservice[*]}
             else
                 eval module_ips=\${${party_name}_${module}[*]}
             fi
@@ -624,7 +641,7 @@ all() {
 
 multiple() {
     total=$#
-    init_env
+    #init_env
     for ((i=2;i<total+1;i++)); do
         deploy_modules[i]=${!i//\//}
     done

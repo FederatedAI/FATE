@@ -22,7 +22,7 @@ export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
 export PYTHONPATH=$installdir/api
-modules=(clustercomm meta-service egg roll proxy storage-service-cxx)
+modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
 	mkdir -p $installdir/logs/storage-service-cxx
@@ -30,12 +30,6 @@ fi
 
 main() {
 	case "$module" in
-		clustercomm)
-			main_class=com.webank.ai.eggroll.driver.ClusterComm
-			;;
-		proxy)
-			main_class=com.webank.ai.eggroll.networking.Proxy
-			;;
 		egg)
 			main_class=com.webank.ai.eggroll.framework.egg.Egg
 			export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=''
@@ -54,7 +48,7 @@ main() {
 			export GLOG_log_dir=$installdir/logs/storage-service-cxx
 			;;
 		*)
-			echo "usage: $module {clustercomm|meta-service|egg|roll|proxy}"
+			echo "usage: $module {meta-service|egg|roll}"
 			exit -1
 	esac
 }

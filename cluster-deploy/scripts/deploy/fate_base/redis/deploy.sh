@@ -22,13 +22,9 @@ source ${config_path}
 packaging(){
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
-        tar xzf redis-${redis_version}.tar.gz
-        rm -rf redis-${redis_version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
-    fi
+    get_module_binary ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
+    tar xzf redis-${redis_version}.tar.gz
+    rm -rf redis-${redis_version}.tar.gz
 	return 0
 }
 
