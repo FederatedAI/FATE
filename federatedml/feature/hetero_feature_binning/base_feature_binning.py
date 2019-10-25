@@ -47,9 +47,6 @@ class BaseHeteroFeatureBinning(ModelBase):
     has_synchronized : bool
         Record whether the encryption information has been synchronized or not.
 
-    flowid : str
-        Use in cross validation
-
     binning_result: dict
         Record binning result of guest party. The format is {'col_name': 'iv_attr', ... }
 
