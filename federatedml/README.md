@@ -76,7 +76,7 @@ Data Output: Transformed DTable with new headers and filtered data instance.
 Model Output: Whether left or not for each column.
 
 
-#### 8. [Hetero-LR](./logistic_regression/README.md)
+#### 8. [Hetero-LR](./linear_model/logistic_regression/README.md)
 Build hetero logistic regression module through multiple parties.
 
 Corresponding module name: HeteroLR
@@ -84,7 +84,7 @@ Data Input: Input DTable.
 Model Output: Logistic Regression model.
 
 
-#### 9. [Hetero-LinR](./linear_regression/README.md)
+#### 9. [Hetero-LinR](./linear_model/linear_regression/README.md)
 Build hetero linear regression module through multiple parties.
 
 Corresponding module name: HeteroLinR
@@ -92,7 +92,7 @@ Data Input: Input DTable.
 Model Output: Linear Regression model.
 
 
-#### 10. [Hetero-Poisson](./poisson_regression/README.md)
+#### 10. [Hetero-Poisson](./linear_model/poisson_regression/README.md)
 Build hetero poisson regression module through multiple parties.
 
 Corresponding module name: HeteroPoisson
@@ -100,7 +100,7 @@ Data Input: Input DTable.
 Model Output: Poisson Regression model.
 
 
-#### 11. [Homo-LR](./logistic_regression/README.md)
+#### 11. [Homo-LR](./linear_model/logistic_regression/README.md)
 Build homo logistic regression module through multiple parties.
 
 Corresponding module name: HomoLR
