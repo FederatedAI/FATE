@@ -116,12 +116,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         Prediction of Poisson
         Parameters
         ----------
-        data_instances:DTable of Instance, input data
+        data_instances: DTable of Instance, input data
 
         Returns
         ----------
         DTable
-            include input data label, predict probably, label
+            include input data label, predict results
         """
         LOGGER.info("Start predict ...")
 

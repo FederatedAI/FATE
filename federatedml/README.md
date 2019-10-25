@@ -84,7 +84,23 @@ Data Input: Input DTable.
 Model Output: Logistic Regression model.
 
 
-#### 9. [Homo-LR](./logistic_regression/README.md)
+#### 9. [Hetero-LinR](./linear_regression/README.md)
+Build hetero linear regression module through multiple parties.
+
+Corresponding module name: HeteroLinR
+Data Input: Input DTable.
+Model Output: Linear Regression model.
+
+
+#### 10. [Hetero-Poisson](./poisson_regression/README.md)
+Build hetero poisson regression module through multiple parties.
+
+Corresponding module name: HeteroPoisson
+Data Input: Input DTable.
+Model Output: Poisson Regression model.
+
+
+#### 11. [Homo-LR](./logistic_regression/README.md)
 Build homo logistic regression module through multiple parties.
 
 Corresponding module name: HomoLR
@@ -92,7 +108,7 @@ Data Input: Input DTable.
 Model Output: Logistic Regression model.
 
 
-#### 10. [Hetero Secure Boosting](./tree/README.md)
+#### 12. [Hetero Secure Boosting](./tree/README.md)
 Build hetero secure boosting model through multiple parties.
 
 Corresponding module name: HeteroSecureBoost
@@ -101,7 +117,7 @@ Data Input: DTable, values are instances.
 Model Output: SecureBoost Model, consists of model-meta and model-param
 
 
-#### 11. [Evaluation](./evaluation/README.md)
+#### 13. [Evaluation](./evaluation/README.md)
 Output the model evaluation metrics for user.
 
 Corresponding module name: Evaluation

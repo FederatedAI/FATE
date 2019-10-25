@@ -1,20 +1,17 @@
 {
     "penalty": "L2",
     "optimizer": "sgd",
-    "eps": 1e-5,
+    "tol": 1e-5,
     "alpha": 0.01,
     "max_iter": 100,
-    "converge_func": "diff",
-    "re_encrypt_batches": 2,
-    "party_weight": 1,
-    "batch_size": 320,
+    "early_stop": "weight_diff",
+    "re_encrypt_batches": 1,
+    "batch_size": -1,
     "learning_rate": 0.01,
+    "decay": 10,
+    "decay_sqrt": false,
     "init_param": {
-        "init_method": "random_normal"
-    },
-    "predict_param": {
-        "with_proba": true,
-        "threshold": 0.5
+        "init_method": "zeros"
     },
     "encrypt_param": {
         "method": "Paillier",
@@ -26,7 +23,7 @@
     },
     "cv_param": {
         "n_splits": 5,
-        "shuffle": true,
+        "shuffle": false,
         "random_seed": 1,
         "evaluate_param": {
             "metrics": null,

@@ -92,6 +92,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
+        if self.filter_result is None:
+            result_obj = feature_selection_param_pb2.FeatureSelectionParam()
+            return result_obj
+
         LOGGER.debug("in _get_param, self.left_cols: {}, self.original_header: {}".format(
             self.filter_result.get_left_cols, self.header
         ))
@@ -136,7 +140,7 @@ class BaseHeteroFeatureSelection(ModelBase):
     def export_model(self):
         LOGGER.debug("Model output is : {}".format(self.model_output))
         if self.model_output is not None:
-            LOGGER.debug("Model output is : {}".format(self.model_output))
+            LOGGER.debug("model output is already exist, return directly")
             return self.model_output
 
         meta_obj = self._get_meta()

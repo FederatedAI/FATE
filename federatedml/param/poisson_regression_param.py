@@ -165,7 +165,7 @@ class PoissonParam(BaseParam):
         self.init_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
-                descr + "encrypt method supports 'Paillier' or None only")
+                descr + "encrypt method supports 'Paillier' only")
 
         if type(self.max_iter).__name__ != "int":
             raise ValueError(
@@ -196,6 +196,7 @@ class PoissonParam(BaseParam):
                 descr + "encrypt method supports 'Paillier' or None only"
             )
 
+        self.encrypted_mode_calculator_param.check()
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
                 descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)

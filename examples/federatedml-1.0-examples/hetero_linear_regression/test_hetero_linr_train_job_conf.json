@@ -11,7 +11,8 @@
       10000
     ],
     "host": [
-      10000
+      10000,
+      9999
     ],
     "arbiter": [
       10000
@@ -23,15 +24,15 @@
         "data": {
           "train_data": [
             {
-              "name": "vehicle_b",
-              "namespace": "vehicle"
+              "name": "motor_small_b",
+              "namespace": "motor_small"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["y"],
+        "label_name": ["motor_speed"],
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -47,19 +48,23 @@
         "data": {
           "train_data": [
             {
-              "name": "vehicle_a",
-              "namespace": "vehicle"
+              "name": "motor_small_a",
+              "namespace": "motor_small"
+            },
+            {
+              "name": "motor_small_a",
+              "namespace": "motor_small"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false],
-        "output_format": ["dense"],
-        "outlier_replace": [false]
+        "with_label": [false, false],
+        "output_format": ["dense", "dense"],
+        "outlier_replace": [false, false]
       },
       "evaluation_0": {
-        "need_run": [false]
+        "need_run": [false, false]
       }
     }
   },
@@ -67,9 +72,9 @@
     "hetero_linr_0": {
       "penalty": "L2",
       "optimizer": "sgd",
-      "eps": 1e-5,
+      "eps": 1e-3,
       "alpha": 0.01,
-      "max_iter": 10,
+      "max_iter": 50,
       "converge_func": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
