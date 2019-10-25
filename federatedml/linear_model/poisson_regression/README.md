@@ -1,6 +1,6 @@
 # Federated Poisson Regression
 
-Poisson distribution is a convenient model for modeling occurrences within a certain time period or geographical area. It is commonly used for predicting rates of low-frequency events. FATE provides Heterogeneous Poisson Regression(HeteroPoisson). The module can accept data with exposure variable, whose column name may be specified in job configuration file. Please refer to the [examples](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.0-examples/hetero_poisson_regression) on how to specify exposure element in job configuration.
+Poisson distribution is a convenient model for modeling occurrences within a certain time period or geographical area. It is commonly used for predicting rates of low-frequency events. FATE provides Heterogeneous Poisson Regression(HeteroPoisson). The module can accept data with exposure variable, whose column name may be specified in job configuration file. Please refer to the [examples](https://github.com/WeBankFinTech/FATE/tree/master/examples/federatedml-1.x-examples/hetero_poisson_regression) on how to specify exposure element in job configuration.
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible for generating private and public keys.
 
@@ -34,8 +34,9 @@ In the training process, party A and party B each compute the elements needed fo
 
 ## Notes on Training
 
-1. The effectiveness of poisson regression is highly dependent on model meta and underlying distribution of given data. We provide here some suggestions on modeling:
-2. The module uses log link function. We suggest that you start with large penalty scale and/or small learning step. For example, setting alpha to 100 and learning rate to 0.01.
-We suggest that you initialize model weights at 0 when learning rate is small.
+The performance of poisson regression is highly dependent on model meta and underlying distribution of given data. We provide here some suggestions on modeling:
+
+1. The module uses log link function. We suggest that you start with large penalty scale and/or small learning step. For example, setting alpha to 100 and learning rate to 0.01.
+2. We suggest that you initialize model weights at 0 when learning rate is small.
 3. The current version of HeteroPoisson module does not support multi-host, but it will accept weight difference as a stopping criteria.
 4. The current version does not support over-dispersion term.
