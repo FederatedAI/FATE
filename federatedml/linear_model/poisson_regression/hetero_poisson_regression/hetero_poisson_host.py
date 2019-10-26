@@ -107,7 +107,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
     def predict(self, data_instances):
         """
-        Prediction of lr
+        Prediction of poisson
         Parameters
         ----------
         data_instances:DTable of Instance, input data

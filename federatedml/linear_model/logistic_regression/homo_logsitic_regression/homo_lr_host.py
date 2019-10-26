@@ -118,10 +118,8 @@ class HomoLRHost(HomoLRBase):
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
-                LOGGER.debug('after compute_gradient, grad: {}'.format(grad))
                 grad /= n
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
-                LOGGER.debug('after update_model, model_weights: {}'.format(model_weights.unboxed))
 
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
                     LOGGER.debug("Current")
@@ -130,7 +128,6 @@ class HomoLRHost(HomoLRBase):
                                               batch_iter_num=batch_num)
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
                 batch_num += 1
-                LOGGER.debug('after re_encrypted, model_weights: {}'.format(model_weights.unboxed))
 
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1

@@ -102,7 +102,7 @@ class HeteroLinRHost(HeteroLinRBase):
 
     def predict(self, data_instances):
         """
-        Prediction of lr
+        Prediction of linR
         Parameters
         ----------
         data_instances:DTable of Instance, input data

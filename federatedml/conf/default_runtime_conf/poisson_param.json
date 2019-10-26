@@ -1,0 +1,36 @@
+{
+    "penalty": "L2",
+    "optimizer": "sgd",
+    "tol": 1e-5,
+    "alpha": 0.01,
+    "max_iter": 100,
+    "early_stop": "weight_diff",
+    "re_encrypt_batches": 1,
+    "batch_size": -1,
+    "learning_rate": 0.01,
+    "decay": 10,
+    "decay_sqrt": false,
+    "init_param": {
+        "init_method": "zeros"
+    },
+    "encrypt_param": {
+        "method": "Paillier",
+        "key_length": 1024
+    },
+    "encrypted_mode_calculator_param": {
+        "mode": "strict",
+        "re_encrypted_rate": 1
+    },
+    "cv_param": {
+        "n_splits": 5,
+        "shuffle": false,
+        "random_seed": 1,
+        "evaluate_param": {
+            "metrics": null,
+            "eval_type": "regression",
+            "pos_label": 1,
+            "thresholds": null
+        },
+        "need_cv": false
+    }
+}
