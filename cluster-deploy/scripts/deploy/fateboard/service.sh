@@ -19,7 +19,7 @@ basepath=$(cd `dirname $0`;pwd)
 configpath=$(cd $basepath/conf;pwd)
 
 export JAVA_HOME=
-export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$JAVA_HOME/bin:$PATH
 
 module=fateboard
 main_class=org.springframework.boot.loader.JarLauncher

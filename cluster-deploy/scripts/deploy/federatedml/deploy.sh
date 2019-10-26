@@ -51,16 +51,26 @@ config() {
 	cd ${output_packages_dir}/config/${config_label}/${module_name}/conf
 	python ${cwd}/generate_server_conf.py ${cwd}/service.env.tmp ./server_conf.json
 	cp ${source_code_dir}/cluster-deploy/scripts/deploy/services.sh ./
+	cp ${source_code_dir}/cluster-deploy/scripts/deploy/init_env.sh ./
+	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./init_env.sh
+	sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ./init_env.sh
+    sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./init_env.sh
+    rm -rf ./init_env.sh.bak
 	return 0
 }
 
 install () {
     mkdir -p ${deploy_dir}
     cp -r ${deploy_packages_dir}/source/${module_name}/* ${deploy_dir}/
+
+    # deal server conf
     mkdir -p ${deploy_dir}/arch/conf
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/arch/conf/
+
+    # deal services.sh and init_env.sh
     fate_deploy_dir=`dirname ${deploy_dir}`
     mv ${deploy_dir}/arch/conf/services.sh ${fate_deploy_dir}/
+    mv ${deploy_dir}/arch/conf/init_env.sh ${fate_deploy_dir}/
 }
 
 init (){

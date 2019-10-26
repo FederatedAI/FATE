@@ -97,28 +97,18 @@ else
 fi
 
 init_env() {
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        for node_ip in ${all_node_ips[*]}; do
-		    ssh -tt ${user}@${node_ip} << eeooff
+    for node_ip in ${all_node_ips[*]}; do
+        ssh -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
 exit
 eeooff
-	        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
-	        ssh -tt ${user}@${node_ip} << eeooff
+        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
+        ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 sh env.sh
 exit
 eeooff
-        done
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        cd ${source_code_dir}/eggroll
-        mvn clean package -DskipTests
-        cd ${source_code_dir}/fateboard
-        mvn clean package -DskipTests
-        cd ${source_code_dir}/arch
-        mvn clean package -DskipTests
-        echo "not support"
-    fi
+    done
 }
 
 if_base() {
@@ -310,6 +300,9 @@ config_federatedml() {
     eval proxy_ip=\${${party_name}_proxy}
     for my_ip in ${my_ips[*]};do
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
+        sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+        sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
         sed -i.bak "s/roll.host=.*/roll.host=${roll_ip}/g" ./service.env.tmp
         sed -i.bak "s/federation.host=.*/federation.host=${federation_ip}/g" ./service.env.tmp
         sed -i.bak "s/fateflow.host=.*/fateflow.host=${fateflow_ip}/g" ./service.env.tmp
@@ -338,7 +331,7 @@ config_fateboard() {
 
     eval db_ip=\${${party_name}_mysql}
     eval fateflow_ip=\${${party_name}_fate_flow}
-    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s/db_ip=.*/db_ip=${db_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/fate_flow_ip=.*/fate_flow_ip=${fateflow_ip}/g" ./configurations.sh.tmp

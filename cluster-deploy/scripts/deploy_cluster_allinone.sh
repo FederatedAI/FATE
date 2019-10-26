@@ -50,23 +50,18 @@ else
 fi
 
 init_env() {
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        # TODO: All modules support binary deployment mode and need to be removed here.
-        for node_ip in "${node_list[@]}"; do
-		    ssh -tt ${user}@${node_ip} << eeooff
+    for node_ip in "${node_list[@]}"; do
+        ssh -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
 exit
 eeooff
-	        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
-	        ssh -tt ${user}@${node_ip} << eeooff
+        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
+        ssh -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 sh env.sh
 exit
 eeooff
-        done
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
-    fi
+    done
 }
 
 if_base() {
@@ -234,6 +229,9 @@ config_federatedml() {
     config_label=$2
     party_deploy_dir=$3
     sed -i.bak "s#deploy_dir=.*#deploy_dir=${party_deploy_dir}/python#g" ./configurations.sh.tmp
+    sed -i.bak "s#python_path=.*#python_path=${party_deploy_dir}/python:${party_deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+    sed -i.bak "s#venv_dir=.*#venv_dir=${party_deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#java_dir=.*#java_dir=${party_deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak "s/roll.host=.*/roll.host=${node_ip}/g" ./service.env.tmp
     sed -i.bak "s/federation.host=.*/federation.host=${node_ip}/g" ./service.env.tmp
     sed -i.bak "s/fateflow.host=.*/fateflow.host=${node_ip}/g" ./service.env.tmp

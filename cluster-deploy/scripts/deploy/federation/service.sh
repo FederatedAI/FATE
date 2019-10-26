@@ -17,7 +17,7 @@
 #
 
 export JAVA_HOME=
-export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$JAVA_HOME/bin:$PATH
 
 module=federation
 main_class=com.webank.ai.fate.driver.Federation
