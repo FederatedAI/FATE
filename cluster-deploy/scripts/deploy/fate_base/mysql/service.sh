@@ -21,6 +21,7 @@ start() {
     if [[ ${pid} == "" ]]; then
         nohup $basepath/bin/mysqld_safe --defaults-file=$basepath/conf/my.cnf --user=$user &
         if [[ $? -eq 0 ]]; then
+            sleep 2
             getpid
             echo "service start sucessfully. pid: ${pid}"
         else

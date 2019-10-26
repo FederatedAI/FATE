@@ -144,6 +144,7 @@ start() {
 			java -cp "$installdir/${module}/conf/:$installdir/${module}/lib/*:$installdir/${module}/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
 		fi
+		sleep 2
 		getpid
 		if [[ $? -eq 0 ]]; then
             echo "service start sucessfully. pid: ${pid}"

@@ -21,6 +21,7 @@ start() {
     if [[ ${pid} == "" ]]; then
         nohup $basepath/bin/redis-server redis.conf &
         if [[ $? -eq 0 ]]; then
+            sleep 2
             getpid
             echo "service start sucessfully. pid: ${pid}"
         else
