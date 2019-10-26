@@ -23,7 +23,7 @@ get_module_binary() {
     source_code_dir=$1
     module_name=$2
     module_binary_package=$3
-    echo "[INFO] Get ${module_name} available binary"
+    echo "[INFO] Get ${module_name} package"
     copy_path=${source_code_dir}/cluster-deploy/packages/${module_binary_package}
     download_uri=${fate_cos_address}/${module_binary_package}
     if [[ -f ${copy_path} ]];then
@@ -36,5 +36,5 @@ get_module_binary() {
         echo "[INFO] Copying ${copy_path}"
         cp ${copy_path} ./
     fi
-    echo "[INFO] Finish get ${module_name} available binary"
+    echo "[INFO] Finish get ${module_name} package"
 }
