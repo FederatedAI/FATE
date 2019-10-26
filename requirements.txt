@@ -1,4 +1,4 @@
-absl-py==0.4.0
+absl-py==0.8.1
 astor==0.7.1
 audioread==2.1.6
 backcall==0.1.0
@@ -113,7 +113,7 @@ scipy==1.1.0
 seaborn==0.7.1
 Send2Trash==1.5.0
 simplegeneric==0.8.1
-six==1.10.0
+six==1.12.0
 sklearn==0.0
 socketIO-client==0.7.2
 SoundFile==0.9.0.post1

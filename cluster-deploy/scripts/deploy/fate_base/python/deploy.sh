@@ -79,7 +79,7 @@ pip_env_install() {
     ${miniconda3_dir}/bin/virtualenv -p ${miniconda3_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
     source ${venv_dir}/bin/activate
     pip install --upgrade ./pip-packages-fate-${python_version}/pip-18.1-py2.py3-none-any.whl
-    pip install ./pip-packages-fate-${python_version}/setuptools-40.6.3-py2.py3-none-any.whl
+    pip install ./pip-packages-fate-${python_version}/setuptools-41.4.0-py2.py3-none-any.whl
     pip install ./pip-packages-fate-${python_version}/wheel-0.32.3-py2.py3-none-any.whl
     pip install -r ./requirements.txt -f ./pip-packages-fate-${python_version} --no-index
     pip list | wc -l
