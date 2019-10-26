@@ -50,6 +50,7 @@ config() {
     sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
     sed -i.bak "s/^spring.datasource.username=.*/spring.datasource.username=${db_user}/g" ./conf/application.properties
     sed -i.bak "s/^spring.datasource.password=.*/spring.datasource.password=${db_password}/g" ./conf/application.properties
+    rm -rf ./conf/application.properties.bak
     for node in "${node_list[@]}"
     do
         echo ${node}
@@ -57,6 +58,7 @@ config() {
         sed -i.bak "/${node_info[0]}/d" ./ssh/ssh.properties
         echo "${node_info[0]}=${node_info[1]}|${node_info[2]}|${node_info[3]}" >> ./ssh/ssh.properties
     done
+    rm -rf ./ssh/ssh.properties.bak
 }
 
 

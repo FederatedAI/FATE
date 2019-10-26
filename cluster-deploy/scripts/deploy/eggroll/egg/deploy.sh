@@ -113,6 +113,7 @@ config() {
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
     sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
+    rm -rf ./services.sh.bak
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
@@ -132,6 +133,9 @@ config() {
 	sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
 	echo >> ./conf/egg.properties
 	echo "eggroll.computing.processor.python-path=${python_path}" >> ./conf/egg.properties
+
+    sed -i.bak "s#property.logDir=.*#property.logDir=logs/${module_name}#g" ./conf/log4j2.properties
+    rm -rf ./conf/log4j2.properties.bak ./conf/egg.properties.bak
 }
 
 init() {
@@ -169,8 +173,6 @@ install(){
 
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
-	#sed -i.bak "s/clustercommip=.*/clustercommip=\"$ip\"/g" $cwd/modify_json.py
-	#sed -i.bak "s/clustercommport=.*/clustercommport=${clustercomm_port}/g" $cwd/modify_json.py
 	sed -i.bak "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
 	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
 	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py

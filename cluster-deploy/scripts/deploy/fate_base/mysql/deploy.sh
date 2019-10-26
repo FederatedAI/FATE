@@ -38,6 +38,7 @@ config(){
     cd ./${module_name}/conf/
 	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
 	sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+	rm -rf ./create-meta-service.sql.bak
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
@@ -59,6 +60,7 @@ config(){
 	sed -i.bak "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
 	sed -i.bak "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
 	sed -i.bak "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
+	rm -rf ./my.cnf.bak
     return 0
 }
 

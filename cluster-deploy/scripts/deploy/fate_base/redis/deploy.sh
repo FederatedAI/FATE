@@ -37,6 +37,7 @@ config(){
 	sed -i.bak "s/bind 127.0.0.1/bind 0.0.0.0/g" ./redis.conf
     sed -i.bak "s/# requirepass foobared/requirepass ${redis_password}/g" ./redis.conf
     sed -i.bak "s/databases 16/databases 50/g" ./redis.conf
+    rm -rf ./redis.conf.bak
     return 0
 }
 

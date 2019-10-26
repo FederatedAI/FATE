@@ -46,6 +46,7 @@ config() {
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    rm -rf ./service.sh.bak
 
     mkdir conf
     cp  ${source_code_dir}/arch/driver/${module_name}/src/main/resources/federation.properties ./conf
@@ -58,6 +59,7 @@ config() {
     sed -i.bak "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
     sed -i.bak "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
     sed -i.bak "s/proxy.port=.*/proxy.port=${proxy_port}/g" ./conf/federation.properties
+    rm -rf ./conf/federation.properties.bak
 }
 
 init() {

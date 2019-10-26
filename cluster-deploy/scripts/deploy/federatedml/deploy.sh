@@ -34,6 +34,7 @@ config() {
     config_label=$4
 	cd ${output_packages_dir}/config/${config_label}/${module_name}/conf
 	python ${cwd}/generate_server_conf.py ${cwd}/service.env.tmp ./server_conf.json
+	cp ${source_code_dir}/cluster-deploy/scripts/deploy/services.sh ./
 	return 0
 }
 
@@ -42,6 +43,8 @@ install () {
     cp -r ${deploy_packages_dir}/source/${module_name}/* ${deploy_dir}/
     mkdir -p ${deploy_dir}/arch/conf
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/arch/conf/
+    fate_deploy_dir=`dirname ${deploy_dir}`
+    mv ${deploy_dir}/arch/conf/services.sh ${fate_deploy_dir}/
 }
 
 init (){
