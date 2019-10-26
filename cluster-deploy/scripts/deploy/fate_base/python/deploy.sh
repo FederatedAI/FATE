@@ -39,10 +39,22 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
+    pip_env_packaging
+	return 0
+}
+
+pip_env_packaging() {
+    get_module_package ${source_code_dir} "${module_name} miniconda" Miniconda3-4.5.4-Linux-x86_64.sh
+    get_module_package ${source_code_dir} "${module_name} pip packages" pip-packages-fate-${python_version}.tar.gz
+    tar xzf pip-packages-fate-${python_version}.tar.gz
+    rm -rf pip-packages-fate-${python_version}.tar.gz
+    cp ${source_code_dir}/requirements.txt ./
+}
+
+conda_env_packaging() {
     get_module_package ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
     tar xzf miniconda3-fate-${python_version}.tar.gz
     rm -rf miniconda3-fate-${python_version}.tar.gz
-	return 0
 }
 
 config(){
@@ -52,12 +64,35 @@ config(){
 
 install() {
     mkdir -p ${deploy_dir}
+    pip_env_install
+}
+
+pip_env_install() {
+    miniconda3_dir=${deploy_dir}/python/miniconda3
+    venv_dir=${deploy_dir}/python/venv
+    rm -rf ${miniconda3_dir}
+    rm -rf ${venv_dir}
+    cd ${deploy_packages_dir}/source/${module_name}
+    sh ./Miniconda3-*-Linux-x86_64.sh -b -p ${miniconda3_dir}
+    ${miniconda3_dir}/bin/pip install --upgrade ./pip-packages-fate-${python_version}/pip-18.1-py2.py3-none-any.whl
+    ${miniconda3_dir}/bin/pip install ./pip-packages-fate-${python_version}/virtualenv-16.1.0-py2.py3-none-any.whl
+    ${miniconda3_dir}/bin/virtualenv -p ${miniconda3_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
+    source ${venv_dir}/bin/activate
+    pip install --upgrade ./pip-packages-fate-${python_version}/pip-18.1-py2.py3-none-any.whl
+    pip install ./pip-packages-fate-${python_version}/setuptools-40.6.3-py2.py3-none-any.whl
+    pip install ./pip-packages-fate-${python_version}/wheel-0.32.3-py2.py3-none-any.whl
+    pip install -r ./requirements.txt -f ./pip-packages-fate-${python_version} --no-index
+    pip list | wc -l
+}
+
+conda_env_install() {
     cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
     cd ${deploy_dir}/${module_name}/miniconda3-fate-${python_version}
     echo "#!/bin/sh
 export PATH=${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin:\$PATH" > ./bin/activate
 	sed -i.bak "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda
 	sed -i.bak "s#!.*python#!${deploy_dir}/${module_name}/miniconda3-fate-${python_version}/bin/python#g" ./bin/conda-env
+	rm -rf ./bin/conda.bak ./bin/conda-env.bak
 }
 
 init(){

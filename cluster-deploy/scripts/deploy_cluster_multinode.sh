@@ -39,6 +39,7 @@ module_deploy_script_dir=${cwd}/deploy
 output_packages_dir=$(cd `dirname ${cwd}`;pwd)/output_packages
 deploy_packages_dir=${deploy_dir}/packages
 mkdir -p ${output_packages_dir}
+python_version=`md5sum ${source_code_dir}/requirements.txt | awk '{print $1}'`
 
 echo "[INFO] Check..."
 
@@ -267,7 +268,7 @@ config_fate_flow() {
     eval redis_ip=\${${party_name}_redis}
     sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
     sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-    sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/venv#g" ./configurations.sh.tmp
     sed -i.bak "s/db_ip=.*/db_ip=${db_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
     sed -i.bak "s/redis_ip=.*/redis_ip=${redis_ip}/g" ./configurations.sh.tmp
@@ -301,7 +302,7 @@ config_federatedml() {
     for my_ip in ${my_ips[*]};do
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
         sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/venv#g" ./configurations.sh.tmp
         sed -i.bak "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
         sed -i.bak "s/roll.host=.*/roll.host=${roll_ip}/g" ./service.env.tmp
         sed -i.bak "s/federation.host=.*/federation.host=${federation_ip}/g" ./service.env.tmp
@@ -462,7 +463,7 @@ config_egg() {
     for my_ip in ${my_ips[*]};do
         sed -i.bak "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
-        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
+        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/venv#g" ./configurations.sh.tmp
         sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
         sed -i.bak "s#data_dir=.*#data_dir=${deploy_dir}/eggroll/data-dir#g" ./configurations.sh.tmp
         sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
