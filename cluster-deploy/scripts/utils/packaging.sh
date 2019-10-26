@@ -59,4 +59,12 @@ mvn clean package -DskipTests
 cd ${source_code_dir}/arch/
 mvn clean package -DskipTests
 echo "[INFO] Compile fate done"
-cd ${source_code_dir}/fateboard/
+cp ${source_code_dir}/fateboard/target/fateboard-1.1.jar ${packages_dir}/
+
+cd ${source_code_dir}/arch/driver/federation/target
+tar czf fate-federation-1.1.tar.gz fate-federation-1.1.jar lib/
+mv fate-federation-1.1.tar.gz ${packages_dir}/
+
+cd ${source_code_dir}/arch/networking/proxy/target
+tar czf fate-proxy-1.1.tar.gz fate-proxy-1.1.jar lib/
+mv fate-proxy-1.1.tar.gz ${packages_dir}/
