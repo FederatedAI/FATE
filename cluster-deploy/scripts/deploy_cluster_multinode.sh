@@ -347,7 +347,7 @@ config_federation() {
     eval db_ip=\${${party_name}_mysql}
     eval metaservice_ip=\${${party_name}_metaservice}
     eval proxy_ip=\${${party_name}_proxy}
-    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${metaservice_ip}/g" ./configurations.sh.tmp
@@ -375,7 +375,7 @@ config_proxy() {
     eval fateflow_ip=\${${party_name}_fate_flow}
     eval proxy_ip=\${${party_name}_proxy}
     eval exchange_ip=\${${party_names[1-party_index]}_proxy}
-    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
     sed -i.bak "s/proxy_ip=.*/proxy_ip=${proxy_ip}/g" ./configurations.sh.tmp
@@ -401,7 +401,7 @@ config_roll() {
     eval my_ip=\${${party_name}_roll}
 
     eval metaservice_ip=\${${party_name}_metaservice}
-    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${metaservice_ip}/g" ./configurations.sh.tmp
@@ -427,7 +427,7 @@ config_metaservice() {
     eval my_ip=\${${party_name}_metaservice}
 
     eval db_ip=\${${party_name}_mysql}
-    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+    sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
     sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
     sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_ip=.*/db_ip=${db_ip}/g" ./configurations.sh.tmp
@@ -451,7 +451,7 @@ config_egg() {
     eval roll_ip=\${${party_name}_roll}
     eval proxy_ip=\${${party_name}_proxy}
     for my_ip in ${my_ips[*]};do
-        sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-8u192#g" ./configurations.sh.tmp
+        sed -i.bak"" "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
         sed -i.bak"" "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
         sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/miniconda3-fate-${python_version}#g" ./configurations.sh.tmp
         sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
@@ -641,7 +641,7 @@ all() {
 
 multiple() {
     total=$#
-    #init_env
+    init_env
     for ((i=2;i<total+1;i++)); do
         deploy_modules[i]=${!i//\//}
     done
