@@ -77,7 +77,7 @@ mv eggroll-conf-1.1.tar.gz ${packages_dir}/
 cd ${eggroll_source_code_dir}
 cd framework/egg/target
 tar czf eggroll-egg-1.1.tar.gz eggroll-egg-1.1.jar lib/
-mv eggroll-egg-1.1.jar ${packages_dir}/
+mv eggroll-egg-1.1.tar.gz ${packages_dir}/
 
 cd ${eggroll_source_code_dir}
 cd framework/meta-service/target
@@ -145,7 +145,8 @@ get_module_package ${source_code_dir} "python" miniconda3-fate-${python_version}
 get_module_package ${source_code_dir} "jdk" jdk-${jdk_version}-linux-x64.tar.gz
 get_module_package ${source_code_dir} "mysql" mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
 get_module_package ${source_code_dir} "redis" redis-${redis_version}.tar.gz
+get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1.tar.gz
 echo "[INFO] Package base module done"
 echo "[INFO] Package fate done"
-echo "[INFO] A total of `ls ${packages_dir} | wc -l` packages:"
+echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"
 ls -lrt ${packages_dir}

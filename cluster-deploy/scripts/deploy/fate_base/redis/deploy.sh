@@ -62,6 +62,7 @@ install () {
     cd ${deploy_dir}/${module_name}/redis-${redis_version}
     make
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}/redis-${redis_version}
+    sh service.sh stop
     mkdir bin
     cp ./src/redis-server ./bin
     cp ./src/redis-cli ./bin
@@ -72,6 +73,8 @@ install () {
 }
 
 init(){
+    cd ${deploy_dir}/${module_name}/redis-${redis_version}
+    sh service.sh restart
     return 0
 }
 

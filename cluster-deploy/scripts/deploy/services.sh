@@ -16,47 +16,39 @@
 #  limitations under the License.
 #
 
-modules=(federation proxy fateboard)
+modules=(meta-service egg storage-service-cxx roll federation proxy fate_flow fateboard)
+eggroll_modules=(meta-service egg storage-service-cxx roll)
 
 cwd=`pwd`
+
+main() {
+    module=$1
+    action=$2
+    echo "--------------"
+    echo "[INFO] processing: ${module}"
+    if [[ ${eggroll_modules[@]/${module}/} != ${eggroll_modules[@]} ]];then
+        cd ./eggroll/
+        bash services.sh ${module} ${action}
+    elif [[ "${module}" == "fate_flow" ]];then
+        cd ./python/fate_flow
+        bash service.sh ${action}
+    else
+        cd ${module}
+        bash service.sh ${action}
+    fi
+    echo "--------------"
+    echo
+}
 
 all() {
     echo "[INFO] processing all modules"
     echo "=================="
     echo
     for module in "${modules[@]}"; do
-	echo
-        echo "[INFO] processing: ${module}"
-        echo "--------------"
-        cd ${module}
-        bash service.sh $2
         cd ${cwd}
-        echo "=================="
+        main ${module} $2
     done
-}
-
-current() {
-    echo "[INFO] processing current active modules"
     echo "=================="
-    
-    action=${@: -1}
-
-    for module in "${modules[@]}"; do
-        echo
-        echo $module
-        echo "----------------"
-        cd ${module}
-        echo ""
-        `bash service.sh status >> /dev/null`
-	state=$?
-        if [[ ${state} -eq 1 ]]; then
-            echo "[INFO] processing ${module} ${action}"
-            bash service.sh ${action}
-        else
-            echo "[INFO] ${module} not running"
-        fi
-        cd ${cwd}
-    done
 }
 
 usage() {
@@ -67,23 +59,15 @@ multiple() {
     total=$#
     action=${!total}
     for (( i=1; i<total; i++)); do
+        cd ${cwd}
         module=${!i}
-        echo
-        echo "[INFO] processing: ${module} ${action}"
-        echo "=================="
-        cd ${module}
-        bash service.sh ${action}
-        cd -
-        echo "--------------"
+        main ${module} ${2}
     done
 }
 
 case "$1" in
     all)
         all $@
-        ;;
-    current)
-        current $@
         ;;
     usage)
         usage

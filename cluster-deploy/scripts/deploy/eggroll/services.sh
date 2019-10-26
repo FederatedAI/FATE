@@ -21,7 +21,7 @@ installdir=
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
-export PYTHONPATH=$installdir/api
+export PYTHONPATH=
 modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
@@ -80,9 +80,9 @@ all() {
 	for module in "${modules[@]}"; do
 		main
         echo
+        echo "--------------"
 		echo "[INFO] $module:${main_class}"
         echo "[INFO] processing: ${module} ${action}"
-        echo "=================="
         action
         echo "--------------"
 	done
@@ -99,9 +99,9 @@ multiple() {
         module=${!i//\//}
 		main
         echo
+        echo "--------------"
 		echo "[INFO] $module:${main_class}"
         echo "[INFO] processing: ${module} ${action}"
-        echo "=================="
         action
         echo "--------------"
     done
@@ -140,7 +140,6 @@ start() {
 			$module/${target} -p $port -d ${dirdata} >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
         else
-			#java -cp "$installdir/${module}/conf/:packages/lib/*:packages/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			java -cp "$installdir/${module}/conf/:$installdir/${module}/lib/*:$installdir/${module}/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
 		fi
