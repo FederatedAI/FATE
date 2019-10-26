@@ -71,21 +71,19 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     ----------
     data_instances: DTable, input data
     fore_gradient: DTable, fore_gradient
-    fit_intercept: bool, if model has interception or not
+    fit_intercept: bool, if model has intercept or not
 
     Returns
     ----------
     DTable
         the hetero regression model's gradient
     """
-    # LOGGER.debug(list(fore_gradient.collect()))
     feat_join_grad = data_instances.join(fore_gradient,
                                          lambda d, g: (d.features, g))
     f = functools.partial(__compute_partition_gradient,
                           fit_intercept=fit_intercept)
 
     gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
-    # LOGGER.debug(type(gradient_partition))
     gradient = gradient_partition / data_instances.count()
 
     return gradient

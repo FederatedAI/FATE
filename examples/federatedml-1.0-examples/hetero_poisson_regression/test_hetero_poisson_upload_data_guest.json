@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/dvisits_b.csv",
-  "head": 1,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "dvisits_b",
-  "namespace": "dvisits"
-}

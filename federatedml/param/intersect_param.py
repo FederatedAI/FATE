@@ -108,7 +108,7 @@ class IntersectParam(BaseParam):
 
     encode_params: EncodeParam, it effective only for with_encode is True
 
-    only_output_key: bool, if true, the results of intersection will include key and value which from input data; if false, it will just include key from input
+    only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
                     data and the value will be empty or some useless character like "intersect_id"
     """
 
