@@ -38,82 +38,59 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
+    mkdir ./egg-manager
+    cd ./egg-manager
+    get_module_package ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
+    tar xzf eggroll-${module_name}-${version}.tar.gz
+    rm -rf eggroll-${module_name}-${version}.tar.gz
+    cd ../
+
+    mkdir ./egg-services
+    cd ./egg-services
+
+    mkdir storage-service-cxx
+    cd storage-service-cxx
     if [[ "${deploy_mode}" == "binary" ]]; then
-        mkdir ./egg-manager
-        cd ./egg-manager
-        get_module_binary ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
-        tar xzf eggroll-${module_name}-${version}.tar.gz
-        rm -rf eggroll-${module_name}-${version}.tar.gz
-        cd ../
-
-        mkdir ./egg-services
-        cd ./egg-services
-
-        mkdir storage-service-cxx
-        cd storage-service-cxx
-        get_module_binary ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
+        #TODO: In the future, a complete binary package that can be copied directly will be provided.
+        get_module_package ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
         tar xzf eggroll-storage-service-cxx-${version}.tar.gz
         rm -rf eggroll-storage-service-cxx-${version}.tar.gz
-        get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
-        cd ../
-
-        mkdir computing
-        cd computing
-        get_module_binary ${source_code_dir} ${module_name} eggroll-computing-${version}.tar.gz
-        tar xzf eggroll-computing-${version}.tar.gz
-        rm -rf eggroll-computing-${version}.tar.gz
-        cd ../
-
-        mkdir eggroll-api
-        cd eggroll-api
-        get_module_binary ${source_code_dir} ${module_name} eggroll-api-${version}.tar.gz
-        tar xzf eggroll-api-${version}.tar.gz
-        rm -rf eggroll-api-${version}.tar.gz
-        cd ../
-
-        mkdir eggroll-conf
-        cd eggroll-conf
-        get_module_binary ${source_code_dir} ${module_name} eggroll-conf-${version}.tar.gz
-        tar xzf eggroll-conf-${version}.tar.gz
-        rm -rf eggroll-conf-${version}.tar.gz
-        cd ../
     elif [[ "${deploy_mode}" == "build" ]]; then
-        mkdir ./egg-manager
-        cd ./egg-manager
-        cp ${source_code_dir}/eggroll/framework/${module_name}/target/eggroll-${module_name}-${version}.jar ./
-        cp -r ${source_code_dir}/eggroll/framework/${module_name}/target/lib ./
-        cd ../
-
-        mkdir ./egg-services
-        cd ./egg-services
-
-        mkdir storage-service-cxx
-        cd storage-service-cxx
-        cp -r ${source_code_dir}/eggroll/storage/storage-service-cxx/* ./
-        get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        get_module_package ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
+        tar xzf eggroll-storage-service-cxx-${version}.tar.gz
+        rm -rf eggroll-storage-service-cxx-${version}.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
-        cd ../
-
-        mkdir computing
-        cd computing
-        cp -r ${source_code_dir}/eggroll/computing/* ./
-        cd ../
-
-        mkdir eggroll-api
-        cd eggroll-api
-        cp -r ${source_code_dir}/eggroll/api/* ./
-        tar xzf eggroll-api-${version}.tar.gz
-        rm -rf eggroll-api-${version}.tar.gz
-        cd ../
-
-        mkdir eggroll-conf
-        cd eggroll-conf
-        cp -r ${source_code_dir}/eggroll/conf/* ./
-        cd ../
+    else
+        echo "[INFO] Unsupported deployment method, exit"
+        exit 101
     fi
+    cd ../
+
+    mkdir computing
+    cd computing
+    get_module_package ${source_code_dir} ${module_name} eggroll-computing-${version}.tar.gz
+    tar xzf eggroll-computing-${version}.tar.gz
+    rm -rf eggroll-computing-${version}.tar.gz
+    cd ../
+
+    mkdir eggroll-api
+    cd eggroll-api
+    get_module_package ${source_code_dir} ${module_name} eggroll-api-${version}.tar.gz
+    tar xzf eggroll-api-${version}.tar.gz
+    rm -rf eggroll-api-${version}.tar.gz
+    cd ../
+
+    mkdir eggroll-conf
+    cd eggroll-conf
+    get_module_package ${source_code_dir} ${module_name} eggroll-conf-${version}.tar.gz
+    tar xzf eggroll-conf-${version}.tar.gz
+    rm -rf eggroll-conf-${version}.tar.gz
+    cd ../
 }
 
 

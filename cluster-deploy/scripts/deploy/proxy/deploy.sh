@@ -38,19 +38,9 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
-        tar xzf fate-${module_name}-${version}.tar.gz
-        rm -rf fate-${module_name}-${version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/arch/networking/${module_name}/target
-        if [[ -f ${target_path}/fate-${module_name}-${version}.jar ]];then
-            cp ${target_path}/fate-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/fate-${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
+    tar xzf fate-${module_name}-${version}.tar.gz
+    rm -rf fate-${module_name}-${version}.tar.gz
 }
 
 

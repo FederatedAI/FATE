@@ -19,7 +19,7 @@ package_init() {
     cd ${module_name}
 }
 
-get_module_binary() {
+get_module_package() {
     source_code_dir=$1
     module_name=$2
     module_binary_package=$3

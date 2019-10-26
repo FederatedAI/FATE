@@ -39,7 +39,7 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    get_module_binary ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
+    get_module_package ${source_code_dir} ${module_name} jdk-${jdk_version}-linux-x64.tar.gz
     tar xzf jdk-${jdk_version}-linux-x64.tar.gz
     rm -rf jdk-${jdk_version}-linux-x64.tar.gz
     mkdir tmp

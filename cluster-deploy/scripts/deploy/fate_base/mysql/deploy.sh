@@ -37,7 +37,7 @@ source ${config_path}
 packaging(){
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    get_module_binary ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    get_module_package ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
     tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
     rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
     mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}

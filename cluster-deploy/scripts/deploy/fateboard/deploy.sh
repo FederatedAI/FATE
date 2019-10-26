@@ -38,15 +38,7 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} ${module_name}-${version}.jar
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        if [[ -f "${source_code_dir}/${module_name}/target/${module_name}-${version}.jar" ]];then
-            cp ${source_code_dir}/${module_name}/target/${module_name}-${version}.jar ./
-        else
-            echo "[INFO] Build ${module_name} failed, ${source_code_dir}/${module_name}/target/${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} ${module_name}-${version}.jar
 }
 
 config() {

@@ -39,15 +39,9 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
-        tar xzf miniconda3-fate-${python_version}.tar.gz
-        rm -rf miniconda3-fate-${python_version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
-        tar xzf miniconda3-fate-${python_version}.tar.gz
-        rm -rf miniconda3-fate-${python_version}.tar.gz
-    fi
+    get_module_package ${source_code_dir} ${module_name} miniconda3-fate-${python_version}.tar.gz
+    tar xzf miniconda3-fate-${python_version}.tar.gz
+    rm -rf miniconda3-fate-${python_version}.tar.gz
 	return 0
 }
 

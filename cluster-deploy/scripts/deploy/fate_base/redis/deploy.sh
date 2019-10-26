@@ -38,7 +38,7 @@ source ${config_path}
 packaging(){
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    get_module_binary ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
+    get_module_package ${source_code_dir} ${module_name} redis-${redis_version}.tar.gz
     tar xzf redis-${redis_version}.tar.gz
     rm -rf redis-${redis_version}.tar.gz
 	return 0
