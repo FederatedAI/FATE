@@ -74,13 +74,10 @@ pip_env_install() {
     rm -rf ${venv_dir}
     cd ${deploy_packages_dir}/source/${module_name}
     sh ./Miniconda3-*-Linux-x86_64.sh -b -p ${miniconda3_dir}
-    ${miniconda3_dir}/bin/pip install --upgrade ./pip-packages-fate-${python_version}/pip-18.1-py2.py3-none-any.whl
-    ${miniconda3_dir}/bin/pip install ./pip-packages-fate-${python_version}/virtualenv-16.1.0-py2.py3-none-any.whl
+    ${miniconda3_dir}/bin/pip install virtualenv -f ./pip-packages-fate-${python_version} --no-index
     ${miniconda3_dir}/bin/virtualenv -p ${miniconda3_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
     source ${venv_dir}/bin/activate
-    pip install --upgrade ./pip-packages-fate-${python_version}/pip-18.1-py2.py3-none-any.whl
     pip install ./pip-packages-fate-${python_version}/setuptools-41.4.0-py2.py3-none-any.whl
-    pip install ./pip-packages-fate-${python_version}/wheel-0.32.3-py2.py3-none-any.whl
     pip install -r ./requirements.txt -f ./pip-packages-fate-${python_version} --no-index
     pip list | wc -l
 }
