@@ -17,8 +17,9 @@ import datetime
 import time
 
 from arch.api import session
+from arch.api.utils.core import current_timestamp
 from arch.api.utils import log_utils, version_control
-from arch.api.utils.dtable_utils import get_table_info
+from arch.api.utils.dtable_utils import get_table_info, gen_party_version
 from federatedml.statistic.intersect.rsa_cache.db_models import DB, IdLibraryCacheInfo, init_database_tables
 from federatedml.statistic.intersect.rsa_cache.redis_adaptor import RedisAdaptor
 
@@ -113,6 +114,7 @@ def store_rsa(host_party_id, id_type, encrypt_type, tag, namespace, version, rsa
         info.f_rsa_key_n = str(rsa.get('rsa_n'))
         info.f_rsa_key_d = str(rsa.get('rsa_d'))
         info.f_rsa_key_e = str(rsa.get('rsa_e'))
+        info.f_create_time = current_timestamp()
         if is_insert:
             info.save(force_insert=True)
         else:
@@ -220,5 +222,9 @@ def save_data(data_inst, namespace, version):
 def get_table_info_without_create(table_config):
     table_name, namespace = get_table_info(config=table_config, create=False)
     return {'table_name': table_name, 'namespace': namespace}
+
+def gen_cache_version(namespace, create=False):
+    return gen_party_version(namespace=namespace, create=create)
+
 
 
