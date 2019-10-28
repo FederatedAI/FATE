@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-#  Copyright 2019 The eggroll Authors. All Rights Reserved.
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 eval action=\$$#
 installdir=
 export JAVA_HOME=
-export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$JAVA_HOME/bin:$PATH
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
-export PYTHONPATH=$installdir/api
-modules=(clustercomm meta-service egg roll proxy storage-service-cxx)
+export PYTHONPATH=
+modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
 	mkdir -p $installdir/logs/storage-service-cxx
@@ -30,12 +30,6 @@ fi
 
 main() {
 	case "$module" in
-		clustercomm)
-			main_class=com.webank.ai.eggroll.driver.ClusterComm
-			;;
-		proxy)
-			main_class=com.webank.ai.eggroll.networking.Proxy
-			;;
 		egg)
 			main_class=com.webank.ai.eggroll.framework.egg.Egg
 			export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=''
@@ -54,7 +48,7 @@ main() {
 			export GLOG_log_dir=$installdir/logs/storage-service-cxx
 			;;
 		*)
-			echo "usage: $module {clustercomm|meta-service|egg|roll|proxy}"
+			echo "usage: $module {meta-service|egg|roll}"
 			exit -1
 	esac
 }
@@ -86,9 +80,9 @@ all() {
 	for module in "${modules[@]}"; do
 		main
         echo
+        echo "--------------"
 		echo "[INFO] $module:${main_class}"
         echo "[INFO] processing: ${module} ${action}"
-        echo "=================="
         action
         echo "--------------"
 	done
@@ -105,9 +99,9 @@ multiple() {
         module=${!i//\//}
 		main
         echo
+        echo "--------------"
 		echo "[INFO] $module:${main_class}"
         echo "[INFO] processing: ${module} ${action}"
-        echo "=================="
         action
         echo "--------------"
     done
@@ -146,10 +140,10 @@ start() {
 			$module/${target} -p $port -d ${dirdata} >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
         else
-			#java -cp "$installdir/${module}/conf/:packages/lib/*:packages/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			java -cp "$installdir/${module}/conf/:$installdir/${module}/lib/*:$installdir/${module}/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
 		fi
+		sleep 2
 		getpid
 		if [[ $? -eq 0 ]]; then
             echo "service start sucessfully. pid: ${pid}"

@@ -1,4 +1,20 @@
 #!/bin/bash
+
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 set -e
 module_name="mysql"
 cwd=$(cd `dirname $0`; pwd)
@@ -21,14 +37,10 @@ source ${config_path}
 packaging(){
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
-        mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        echo "not support"
-    fi
+    get_module_package ${source_code_dir} ${module_name} mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    tar xf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    rm -rf mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
+    mv mysql-${mysql_version}-linux-glibc2.12-x86_64 mysql-${mysql_version}
 	return 0
 }
 
@@ -42,10 +54,11 @@ config(){
     cd ./${module_name}/conf/
 	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
 	sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+	rm -rf ./create-meta-service.sql.bak
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
-    echo "INSERT INTO node (ip, port, type, status) values ('${proxy_port}', '${proxy_port}', 'PROXY', 'HEALTHY');" >> ./insert-node.sql
+    echo "INSERT INTO node (ip, port, type, status) values ('${proxy_ip}', '${proxy_port}', 'PROXY', 'HEALTHY');" >> ./insert-node.sql
     for ((i=0;i<${#egg_ip[*]};i++))
     do
         echo "INSERT INTO node (ip, port, type, status) values ('${egg_ip[i]}', '${egg_port}', 'EGG', 'HEALTHY');" >> ./insert-node.sql
@@ -63,6 +76,7 @@ config(){
 	sed -i.bak "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
 	sed -i.bak "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
 	sed -i.bak "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
+	rm -rf ./my.cnf.bak
     return 0
 }
 

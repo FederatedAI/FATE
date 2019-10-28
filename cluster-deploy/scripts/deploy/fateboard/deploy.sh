@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 set -e
 module_name="fateboard"
 cwd=$(cd `dirname $0`; pwd)
@@ -22,15 +38,7 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} ${module_name}-${version}.jar
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        if [[ -f "${source_code_dir}/${module_name}/target/${module_name}-${version}.jar" ]];then
-            cp ${source_code_dir}/${module_name}/target/${module_name}-${version}.jar ./
-        else
-            echo "[INFO] Build ${module_name} failed, ${source_code_dir}/${module_name}/target/${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} ${module_name}-${version}.jar
 }
 
 config() {
@@ -50,6 +58,7 @@ config() {
     sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
     sed -i.bak "s/^spring.datasource.username=.*/spring.datasource.username=${db_user}/g" ./conf/application.properties
     sed -i.bak "s/^spring.datasource.password=.*/spring.datasource.password=${db_password}/g" ./conf/application.properties
+    rm -rf ./conf/application.properties.bak
     for node in "${node_list[@]}"
     do
         echo ${node}
@@ -57,6 +66,7 @@ config() {
         sed -i.bak "/${node_info[0]}/d" ./ssh/ssh.properties
         echo "${node_info[0]}=${node_info[1]}|${node_info[2]}|${node_info[3]}" >> ./ssh/ssh.properties
     done
+    rm -rf ./ssh/ssh.properties.bak
 }
 
 

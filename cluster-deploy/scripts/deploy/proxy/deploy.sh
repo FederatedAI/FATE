@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 set -e
 module_name="proxy"
 cwd=$(cd `dirname $0`; pwd)
@@ -22,19 +38,9 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
-        tar xzf fate-${module_name}-${version}.tar.gz
-        rm -rf fate-${module_name}-${version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/arch/networking/${module_name}/target
-        if [[ -f ${target_path}/fate-${module_name}-${version}.jar ]];then
-            cp ${target_path}/fate-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/fate-${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
+    tar xzf fate-${module_name}-${version}.tar.gz
+    rm -rf fate-${module_name}-${version}.tar.gz
 }
 
 
@@ -44,6 +50,7 @@ config() {
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    rm -rf ./service.sh.bak
 
     mkdir conf
     cp ${source_code_dir}/arch/networking/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
@@ -54,14 +61,17 @@ config() {
     sed -i.bak "s#route.table=.*#route.table=${deploy_dir}/${module_name}/conf/route_table.json#g" ./conf/${module_name}.properties
     sed -i.bak "s/coordinator=.*/coordinator=${party_id}/g" ./conf/${module_name}.properties
     sed -i.bak "s/ip=.*/ip=${proxy_ip}/g" ./conf/${module_name}.properties
+    rm -rf ./conf/${module_name}.properties.bak
+
     cp ${cwd}/proxy_modify_json.py ./
     sed -i.bak "s/exchangeip=.*/exchangeip=\"${exchange_ip}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/fip=.*/fip=\"${federation_ip}\"/g" ./proxy_modify_json.py
-    sed -i.bak "s/flip=.*/flip=\"${federation_ip}\"/g" ./proxy_modify_json.py
+    sed -i.bak "s/flip=.*/flip=\"${fate_flow_ip}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/sip1=.*/sip1=\"${serving_ip1}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/sip2=.*/sip2=\"${serving_ip2}\"/g" ./proxy_modify_json.py
     sed -i.bak "s/partyId=.*/partyId=\"${party_id}\"/g" ./proxy_modify_json.py
     python proxy_modify_json.py ${module_name} ./conf/route_table.json
+    rm -rf ./proxy_modify_json.py.bak
 }
 
 init (){

@@ -17,9 +17,10 @@
 #
 basepath=$(cd `dirname $0`;pwd)
 configpath=$(cd $basepath/conf;pwd)
+fatepath=$(cd $basepath/..;pwd)
 
 export JAVA_HOME=
-export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$JAVA_HOME/bin:$PATH
 
 module=fateboard
 main_class=org.springframework.boot.loader.JarLauncher
@@ -58,10 +59,10 @@ start() {
     getpid
     if [[ $? -eq 0 ]]; then
         mklogsdir
-#        java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c conf/${module}.properties >> logs/console.log 2>>logs/error.log &
-         nohup $JAVA_HOME/bin/java   -Dspring.config.location=$configpath/application.properties  -Dssh_config_file=$configpath  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
-
+        #nohup $JAVA_HOME/bin/java  -Dspring.config.location=$configpath/application.properties  -Dssh_config_file=$configpath  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
+        nohup $JAVA_HOME/bin/java   -Dspring.config.location=$configpath/application.properties -DFATE_DEPLOY_PREFIX=$fatepath/python/logs/  -Dssh_config_file=$basepath/ssh/  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
         if [[ $? -eq 0 ]]; then
+            sleep 2
             getpid
             echo "service start sucessfully. pid: ${pid}"
         else

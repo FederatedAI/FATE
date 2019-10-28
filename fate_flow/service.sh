@@ -59,7 +59,7 @@ start() {
         source ${venv}/bin/activate
         nohup python ${run} >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         if [[ $? -eq 0 ]]; then
-            sleep 5
+            sleep 2
             getpid
             if [[ $? -eq 0 ]]; then
                 echo "service start sucessfully. pid: ${pid}"

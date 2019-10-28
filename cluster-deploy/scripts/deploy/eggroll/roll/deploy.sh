@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 set -e
 module_name="roll"
 cwd=$(cd `dirname $0`; pwd)
@@ -22,19 +38,9 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
-        tar xzf eggroll-${module_name}-${version}.tar.gz
-        rm -rf eggroll-${module_name}-${version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/eggroll/framework/${module_name}/target
-        if [[ -f ${target_path}/eggroll-${module_name}-${version}.jar ]];then
-            cp ${target_path}/eggroll-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/eggroll-${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
+    tar xzf eggroll-${module_name}-${version}.tar.gz
+    rm -rf eggroll-${module_name}-${version}.tar.gz
 }
 
 
@@ -46,6 +52,7 @@ config() {
 	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
     sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
+    rm -rf ./services.sh.bak
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/roll.properties ./conf
@@ -56,6 +63,9 @@ config() {
     sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/roll.properties
     sed -i.bak "s/meta.service.ip=.*/meta.service.ip=${meta_service_ip}/g" ./conf/roll.properties
     sed -i.bak "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/roll.properties
+
+    sed -i.bak "s#property.logDir=.*#property.logDir=logs/${module_name}#g" ./conf/log4j2.properties
+    rm -rf ./conf/log4j2.properties.bak ./conf/roll.properties.bak
 }
 
 init() {

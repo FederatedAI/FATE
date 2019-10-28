@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -15,6 +17,7 @@
 #
 
 export PYTHONPATH=
-rm -f nohup.out
-p=7888
-nohup python src/arch/processor/processor.py -p $p -d /data/projects/fate/data-dir > processor.out  2>&1 &
+venv=
+export JAVA_HOME=
+export PATH=$PATH:$JAVA_HOME/bin
+source ${venv}/bin/activate
