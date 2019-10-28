@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from collections import Iterable
 
 import gmpy2
 import hashlib
@@ -54,7 +55,7 @@ class RsaIntersectionGuest(RsaIntersect):
 
         return encrypt_common_id
 
-    def get_host_id_process(self):
+    def get_cache_version_match_info(self):
         if self.intersect_cache_param.use_cache:
             LOGGER.info("Use cache is true")
             # check local cache version for each host
@@ -76,15 +77,27 @@ class RsaIntersectionGuest(RsaIntersect):
 
             cache_version_match_info = self.transfer_variable.cache_version_match_info.get(idx=-1)
             LOGGER.info("Get cache version match info:{}".format(cache_version_match_info))
+        else:
+            cache_version_match_info = None
+            LOGGER.info("Not using cache, cache_version_match_info is None")
 
+        return cache_version_match_info
+
+
+    def get_host_id_process(self, cache_version_match_info):
+        if self.intersect_cache_param.use_cache:
             host_ids_process_list = [None for _ in self.host_party_id_list]
-            for i, version_info in enumerate(cache_version_match_info):
-                if version_info.get('version_match'):
-                    host_ids_process_list[i] = session.table(name=version_info.get('version'),
-                                                             namespace=version_info.get('namespace'),
-                                                             create_if_missing=True,
-                                                             error_if_exist=False)
-                    LOGGER.info("Read host {} 's host_ids_process from cache".format(self.host_party_id_list[i]))
+
+            if isinstance(cache_version_match_info, Iterable):
+                for i, version_info in enumerate(cache_version_match_info):
+                    if version_info.get('version_match'):
+                        host_ids_process_list[i] = session.table(name=version_info.get('version'),
+                                                                 namespace=version_info.get('namespace'),
+                                                                 create_if_missing=True,
+                                                                 error_if_exist=False)
+                        LOGGER.info("Read host {} 's host_ids_process from cache".format(self.host_party_id_list[i]))
+            else:
+                LOGGER.info("cache_version_match_info is not iterable, not use cache_version_match_info")
 
             host_ids_process_rev_idx_list = []
             for i, e in enumerate(host_ids_process_list):
@@ -129,8 +142,7 @@ class RsaIntersectionGuest(RsaIntersect):
         self.e = [int(public_key["e"]) for public_key in public_keys]
         self.n = [int(public_key["n"]) for public_key in public_keys]
 
-        host_ids_process_list = self.get_host_id_process()
-        LOGGER.info("Get host_ids_process")
+        cache_version_match_info = self.get_cache_version_match_info()
 
         # generate random value and sent intersect guest ids to guest
         # table(sid, r)
@@ -158,6 +170,9 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # table(r^e % n *hash(sid), sid)
         exchange_guest_id_kv = [guest_id.map(lambda k, v: (v, k)) for guest_id in guest_id_list]
+
+        host_ids_process_list = self.get_host_id_process(cache_version_match_info)
+        LOGGER.info("Get host_ids_process")
 
         # Recv process guest ids
         # table(r^e % n *hash(sid), guest_id_process)
