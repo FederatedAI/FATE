@@ -22,9 +22,9 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules,T
 | Storage-Service-cxx | 7778           | Party Multi-node deployment                         | Storage-Service module handles data storage on that single node. |
 | Egg-Processor       | 7888           | Party Multi-node deployment                         | Processor is used to execute user-defined functions.         |
 | Fate-Flow           | 9360/9380      | Single node deployment in one party current version | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
-| Fateboard           | 8080           | Single node deployment in one party                 | Fateboard is a web service to show informations and status of tasks running in FATE. |
+| Fateboard           | 8080           | Single node deployment in one party                 | Fateboard is a web service to show informations and status of tasks running in FATE |
 
-##2. Deployment Architecture
+## 2. Deployment Architecture
 
 ### **2.1. Unilateral Deployment Architecture **
 
