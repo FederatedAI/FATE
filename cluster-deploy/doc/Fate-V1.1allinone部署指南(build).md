@@ -137,7 +137,9 @@ ssh app\@192.168.0.2
 4.1 代码获取和打包
 ------------
 
-**在目标服务器（192.168.0.1 具备外网环境）app用户下执行**
+**在目标服务器（192.168.0.1 具备外网环境）app用户下执行**:
+
+**注意：服务器需已安装好git和maven 3.5+**
 
 进入执行节点的/data/projects/目录，执行：
 
@@ -150,8 +152,6 @@ cd FATE/cluster-deploy/scripts
 bash compile_and_packaging.sh 
 
 构建好的包会放在FATE/cluster-deploy/packages目录下。
-
-
 
 4.2 配置文件修改和示例
 ----------------

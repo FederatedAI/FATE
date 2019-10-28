@@ -9,6 +9,10 @@ The Cluster version provides four deployment methods, which can be selected acco
 - Install AllinOne [Chinese guide](./doc/Fate-V1.1allinone部署指南(install).md)
 - Build AllinOne from Source [Chinese guide](./doc/Fate-V1.1allinone部署指南(build).md)
 
+thirdparty：
+
+- Hadoop+Spark Deployment [Chinese guide](./doc/thirdparty_Spark/Hadoop+Spark集群部署指南.md)
+
 ## 1.     Module Information
 
 In a party, FATE (Federated AI Technology Enabler) has the following 8 modules,The specific module information is as follows:
@@ -122,6 +126,8 @@ scp \~/.ssh/authorized_keys app\@{ip}:/home/app/.ssh
 ### **4.1. Project Pull** and Packaging
 
 Go to the /data/projects/ directory of the execution node and execute the git command to pull the project from github,then Packaging:
+
+**Note: The server needs to have git and maven 3.5+ installed.**
 
 ```
 cd /data/projects/
