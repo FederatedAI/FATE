@@ -11,9 +11,7 @@ The Cluster version provides four deployment methods, which can be selected acco
 
 ## 1.     Module Information
 
-In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, including 7 offline related modules and 1 online related module. The specific module information is as follows:
-
-### **1.1. Offline Module**
+In a party, FATE (Federated AI Technology Enabler) has the following 8 modules,The specific module information is as follows:
 
 | Module Name         | Port of module | Method of deployment                                | Module function                                              |
 | ------------------- | -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
@@ -26,7 +24,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 | Fate-Flow           | 9360/9380      | Single node deployment in one party current version | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
 | Fateboard           | 8080           | Single node deployment in one party                 | Fateboard is a web service to show informations and status of tasks running in FATE. |
 
-##2.     Deployment Architecture
+##2. Deployment Architecture
 
 ### **2.1. Unilateral Deployment Architecture **
 
@@ -50,7 +48,7 @@ Each party can be deployed on one or more servers. In reality, you can balance t
 
 
 
-## 3.     Installation Preparation
+## 3. Installation Preparation
 
 ### **3.1. Server Configuration**
 
