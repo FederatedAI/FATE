@@ -1,0 +1,14 @@
+{
+    "components": {
+        "rsa_0": {
+            "module": "Rsa",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.id_library"
+                    ]
+                }
+            }
+        }
+    }
+}
