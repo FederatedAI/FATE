@@ -39,7 +39,6 @@ module_deploy_script_dir=${cwd}/deploy
 output_packages_dir=$(cd `dirname ${cwd}`;pwd)/output_packages
 deploy_packages_dir=${deploy_dir}/packages
 mkdir -p ${output_packages_dir}
-python_version=`md5sum ${source_code_dir}/requirements.txt | awk '{print $1}'`
 
 echo "[INFO] Check..."
 
