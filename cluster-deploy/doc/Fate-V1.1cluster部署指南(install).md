@@ -8,7 +8,7 @@
 |   数量   | >1（根据实际情况配置）                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
 | 操作系统 | CentOS linux 7.2及以上                                       |
-|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
+|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel <br />libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy <br />snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
@@ -177,7 +177,10 @@ tar -xf FATE_install_v1.1.tar.gz
 
 **1）两台主机partyA+partyB同时部署****
 
-\#!/bin/bash
+
+
+```
+#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
@@ -195,7 +198,6 @@ a_fate_flow=192.168.0.1
 a_fateboard=192.168.0.1
 a_federation=192.168.0.1
 a_proxy=192.168.0.1
-
 a_roll=192.168.0.1
 a_metaservice=192.168.0.1
 a_egg=(192.168.0.1)
@@ -208,14 +210,15 @@ b_fate_flow=192.168.0.2
 b_fateboard=192.168.0.2
 b_federation=192.168.0.2
 b_proxy=192.168.0.2
-
 b_roll=192.168.0.2
 b_metaservice=192.168.0.2
 b_egg=(192.168.0.2)
+```
 
 **2）只部署一个party**
 
-\#!/bin/bash
+```
+#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
@@ -233,10 +236,10 @@ a_fate_flow=192.168.0.1
 a_fateboard=192.168.0.1
 a_federation=192.168.0.1
 a_proxy=192.168.0.1
-
 a_roll=192.168.0.1
 a_metaservice=192.168.0.1
 a_egg=(192.168.0.1)
+```
 
 4.3 部署
 --------
