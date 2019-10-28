@@ -1,11 +1,11 @@
-#                     Fate AllinOne部署指南
+#                     Fate Cluster部署指南
 
 1.服务器配置
 ============
 
 |  服务器  |                                                              |
 | :------: | ------------------------------------------------------------ |
-|   数量   | 1 or 2                                                       |
+|   数量   | >1（根据实际情况配置）                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
 | 操作系统 | CentOS linux 7.2及以上                                       |
 |  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
@@ -134,43 +134,46 @@ ssh app\@192.168.0.2
 
 注：此指导安装目录默认为/data/projects/，执行用户为app，安装时根据具体实际情况修改。
 
-4.1 代码获取和打包
+4.1 获取项目
 ------------
 
-**在目标服务器（192.168.0.1 具备外网环境）app用户下执行**
+在目标服务器（192.168.0.1 具备外网环境）app用户下执行
 
 进入执行节点的/data/projects/目录，执行：
 
 cd /data/projects/
 
-git clone https://github.com/FederatedAI/FATE.git
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.tar.gz
 
-cd FATE/cluster-deploy/scripts
-
-bash compile_and_packaging.sh 
-
-构建好的包会放在FATE/cluster-deploy/packages目录下。
-
-
+tar -xf FATE_install_v1.1.tar.gz
 
 4.2 配置文件修改和示例
 ----------------
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-进入到FATE目录下的FATE/cluster-deploy/scripts目录下，修改配置文件allinone_cluster_configurations.sh.
+进入到FATE目录下的FATE/cluster-deploy/scripts目录下，修改配置文件multinode_cluster_configurations.sh.
 
-配置文件allinone_cluster_configurations.sh说明：
+配置文件multinode_cluster_configurations.sh说明：
 
-| 配置项           | 配置项意义                                   | 配置项值                                                     | 说明                                                         |
-| ---------------- | -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| user             | 操作用户                                     | 默认为app                                                    | 使用默认值                                                   |
-| deploy_dir       | Fate安装路径                                 | 默认为 /data/projects/fate                                   | 使用默认值                                                   |
-| party_list       | Party的id号                                  | 每个数组元素代表一个partyid，只支持数字，比如9999,10000.     | 只部署一个party，只填写一个partyid，部署两个party，填写两个partyid。 |
-| node_list        | 所有party的待部署服务器列表                  | 表示所有party中包含的服务器ip列表                            | 部署一个party，只填写一个ip，部署两个party，填写两个ip。如果需要一个节点部署两个party，party_list处填写两个id，此处只填写一个IP。 |
-| db_auth          | metaservice Jdbc连接数据库配置               | metaservice服务jdbc配置，填写数据库用户名和密码（此用户需要具有create database权限） | 两个party配置相同。                                          |
-| redis_password   | Redis密码                                    | 默认 : fate_dev                                              | 使用默认值，两个party配置相同。                              |
-| cxx_compile_flag | 用于Storage-Service-cxx节点complie方法的切换 | 默认：false                                                  | 如果服务器系统不满足Storage-Service-cxx节点的编译要求，请尝试使用true。 |
+| 配置项                       | 配置项意义                                   | 配置项值                                                     | 说明                                                         |
+| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| user                         | 操作用户                                     | 默认为app                                                    | 使用默认值                                                   |
+| deploy_dir                   | Fate安装路径                                 | 默认为 /data/projects/fate                                   | 使用默认值                                                   |
+| party_list                   | Party的id号                                  | 每个数组元素代表一个partyid，只支持数字，比如9999,10000.     | 只部署一个party，只填写一个partyid，部署两个party，填写两个partyid。 |
+| party_names                  | 每个party的名称                              | 默认为(a b)                                                  | 使用默认值                                                   |
+| db_auth                      | metaservice Jdbc连接数据库配置               | metaservice服务jdbc配置，填写数据库用户名和密码（此用户需要具有create database权限） | 两个party配置相同。                                          |
+| redis_password               | Redis密码                                    | 默认 : fate_dev                                              | 使用默认值，两个party配置相同。                              |
+| cxx_compile_flag             | 用于Storage-Service-cxx节点complie方法的切换 | 默认：false                                                  | 如果服务器系统不满足Storage-Service-cxx节点的编译要求，请尝试使用true。 |
+| a_mysql /b_mysql             | 部署mysql主机                                | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_redis/b_redis              | 部署redis主机                                | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_fateboard /b_fateboard     | 部署fateboard模块主机                        | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_fate_flow /b_fate_flow     | 部署fate_flow模块主机                        | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_federation /b_federation   | 部署federation模块主机                       | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_proxy /b_proxy             | 部署proxy模块主机                            | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_roll /b_roll               | 部署roll模块主机                             | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_metaservice /b_metaservice | 部署metaservice模块主机                      | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_egg /b_egg                 | 部署egg模块主机                              | 主机IP，可以填写多个IP                                       | 192.168.0.1/192.168.0.2                                      |
 
 **1）两台主机partyA+partyB同时部署****
 
@@ -179,49 +182,76 @@ bash compile_and_packaging.sh
 user=app
 deploy_dir=/data/projects/fate
 party_list=(10000 9999)
-node_list=(192.168.0.1 192.168.0.2)
-db_auth=(fate_dev fate_dev)
+party_names=(a b)
+db_auth=(root fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
 
-**2）一台主机partyA+partyB同时部署****
+*services for a
+
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
+
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
+
+*services for b
+
+b_mysql=192.168.0.2
+b_redis=192.168.0.2
+b_fate_flow=192.168.0.2
+b_fateboard=192.168.0.2
+b_federation=192.168.0.2
+b_proxy=192.168.0.2
+
+b_roll=192.168.0.2
+b_metaservice=192.168.0.2
+b_egg=(192.168.0.2)
+
+**2）只部署一个party**
 
 \#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
-party_list=(10000 9999)
-node_list=(192.168.0.1)
-db_auth=(fate_dev fate_dev)
+party_list=(1000)
+party_names=(a)
+db_auth=(root fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
 
-**3）只部署一个party**
+*services for a
 
-\#!/bin/bash
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
 
-user=app
-deploy_dir=/data/projects/fate
-party_list=(10000)
-node_list=(192.168.0.1)
-db_auth=(fate_dev fate_dev)
-redis_password=fate_dev
-cxx_compile_flag=false
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
 
 4.3 部署
 --------
 
-按照上述配置含义修改allinone_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
+按照上述配置含义修改multinode_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
 
 cd FATE/cluster-deploy/scripts
 
 如果需要部署所有组件，执行：
 
-bash deploy_cluster_allinone.sh build all 
+bash deploy_cluster_multinode.sh binary all 
 
 如果只部署部分组件：
 
-bash deploy_cluster_allinone.sh build fate_flow
+bash deploy_cluster_multinode.sh binary fate_flow
 
 5.配置检查
 ==========
@@ -236,7 +266,9 @@ bash deploy_cluster_allinone.sh build fate_flow
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-fateflow依赖eggroll的启动，需要先启动eggroll再启动fateflow。
+1) fateflow依赖eggroll的启动，需要先启动eggroll再启动fateflow。
+
+2) 每个节点是根据参数设定来部署模块，所以没设置则此模块不会部署和启动，启动的时候会提示此模块不能启动，请忽略。
 
 cd /data/projects/fate
 
