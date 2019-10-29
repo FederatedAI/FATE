@@ -2,8 +2,8 @@
 
 This module provides tools to help us implement homogeneous federated learning algorithms. Two levels of abstraction are provided:
 
-    1. sync: implement communication interaction in a logically independent process, witch could be reused sin different procedure.
-    2. procedure: use syncs to describe high-level logical. 
+1. sync: implement communication interaction in a logically independent process, witch could be reused sin different procedure.
+2. procedure: use syncs to describe high-level logical. 
 
 #### procedure
 FATE currently offers three prerequisite modules:
