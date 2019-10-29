@@ -159,14 +159,15 @@
       "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 10,
+      "max_iter": 20,
       "early_stop": "weight_diff",
-      "decay": 10,
+      "decay": 0.0,
+      "decay_sqrt": false,
       "batch_size": -1,
       "learning_rate": 0.01,
       "exposure_colname": "exposure",
       "init_param": {
-        "init_method": "const",
+        "init_method": "zeros",
         "init_const": 0
       },
       "encrypted_mode_calculator_param": {

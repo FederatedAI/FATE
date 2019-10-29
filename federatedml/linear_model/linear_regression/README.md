@@ -14,7 +14,7 @@ Figure 1： Federated HeteroLinR Principle</div>
 
 As shown in Figure 1, a sample alignment process is conducted before training. The sample alignment process identifies overlapping samples in databases of all parties. The federated model is built based on the overlapping samples. The whole sample alignment process is conducted in encryption mode, and so confidential information (e.g. sample ids) will not be leaked.
 
-In the training process, party A and party B each compute the elements needed for final gradients. Arbiter aggregates, calculate, and transfer back the final gradients to corresponding parties. For more details on the secure model-building process, please refer to the [paper](https://arxiv.org/abs/1711.10677).
+In the training process, party A and party B each compute the elements needed for final gradients. Arbiter aggregates, calculate, and transfer back the final gradients to corresponding parties. For more details on the secure model-building process, please refer to the [paper](https://arxiv.org/pdf/1902.04885.pdf).
 
 ## Features:
 1. L1 & L2 regularization
