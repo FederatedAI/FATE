@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. See accompanying LICENSE file.
+-->
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>3</value>
+    </property>
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>dfs.nameservices</name>
+        <value>cpu-cluster</value>
+    </property>
+    <property>
+        <name>dfs.ha.namenodes.cpu-cluster</name>
+        <value>nn1,nn2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.cpu-cluster.nn1</name>
+        <value>192.168.0.1:9000</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.cpu-cluster.nn1</name>
+        <value>192.168.0.1:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.cpu-cluster.nn2</name>
+        <value>192.168.0.2:9000</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.cpu-cluster.nn2</name>
+        <value>192.168.0.2:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://192.168.0.1:8485;192.168.0.2:8485;192.168.0.3:8485/cpu-cluster</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/data/projects/common/hadoop/data/journaldata</value>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file:///data/projects/common/hadoop/data/dfs/nn/local</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/data/projects/common/hadoop/data/dfs/dn/local</value>
+    </property>
+    <property>
+        <name>dfs.client.failover.proxy.provider.cpu-cluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>shell(/bin/true)</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/home/app/.ssh/id_rsa</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.connect-timeout</name>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+</configuration>

@@ -72,7 +72,7 @@ def search_require_modules(project_dir):
                          stderr=subprocess.STDOUT)
     stdout, stderr = p.communicate()
     import_lines = stdout.decode('utf-8').strip().split('\n')
-    python_standard_modules = get_python_standard_modules()
+    python_standard_modules = get_python_standard_modules('3.6')
     require_modules = set()
     require_lines = dict()
     all_imports = set()
@@ -102,7 +102,7 @@ def search_require_modules(project_dir):
     return require_modules, require_lines, all_imports
 
 
-def install(module):
+def conda_env_install(module):
     print('try install: {}'.format(module))
     install_cmd = 'conda install -y {}'.format(module)
     p = subprocess.Popen(install_cmd,
@@ -121,12 +121,23 @@ def install(module):
     return p.returncode
 
 
+def pip_env_install(module):
+    print('try install: {}'.format(module))
+    install_cmd = 'pip install {}'.format(module)
+    p = subprocess.Popen(install_cmd,
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+    stdout, stderr = p.communicate()
+    return p.returncode
+
+
 def try_import(module):
     try:
         import_module(module)
         return 0
     except Exception as e:
-        st = install(module)
+        st = pip_env_install(module)
         if st == 0:
             return 1
         else:

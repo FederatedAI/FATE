@@ -24,3 +24,13 @@ This intersection module implements the sample intersection method that A sends 
 
 ### Quick Start
 You can refer to *example/intersect/README.md* to quickly start running intersection in standalone mode and cluster mode. 
+
+### Feature
+Both RSA and RAW intersection supports the following features:
+1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located [Here](../../../doc/dsl_conf_setting_guide.md)
+
+RSA intersection support the following extra features:
+1. RSA support cache to speed up.
+
+RAW intersection support the following extra features:
+1. RAW support some encoders like md5 or sha256 to make it more safely.

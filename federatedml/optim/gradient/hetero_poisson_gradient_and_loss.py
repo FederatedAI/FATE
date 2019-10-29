@@ -39,15 +39,15 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights, encrypted_calculator,
                                        batch_index, offset=None):
-        """
+        '''
         Compute gradients:
-        gradient = (1/N)*\sum(exp(wx) -y)*x
+        gradient = (1/N) * \sum(exp(wx) - y) * x
 
         Define exp(wx) as mu, named it as guest_forward or host_forward
         Define (mu-y) as fore_gradient
         Then, gradient = fore_gradeint * x
 
-        """
+        '''
         if offset is None:
             raise ValueError("Offset should be provided when compute poisson forwards")
         mu = data_instances.join(offset, lambda d, m: np.exp(np.dot(d.features, model_weights.coef_)
@@ -59,13 +59,15 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         return fore_gradient
 
     def compute_loss(self, data_instances, model_weights, n_iter_, batch_index, offset, loss_norm=None):
-        """
+        '''
         Compute hetero poisson loss:
-            loss = sum(exp(mu_g)*exp(mu_h) - y(wx_g + wx_h) - log(exposure))
+            loss = sum(exp(mu_g)*exp(mu_h) - y(wx_g + wx_h) + log(exposure))
 
         Parameters:
         ___________
         data_instances: DTable, input data
+
+        model_weights: model weight object, stores intercept_ and coef_
 
         n_iter_: int, current number of iter.
 
@@ -75,7 +77,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         loss_norm: penalty term, default to None
 
-        """
+        '''
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
         guest_wx_y = data_instances.join(offset,
@@ -118,29 +120,31 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
     def compute_loss(self, data_instances, model_weights, encrypted_calculator,
                      optimizer, n_iter_, batch_index):
-        """
+        '''
         Compute hetero poisson loss:
-            loss = sum(exp(mu_g)*exp(mu_h) - y(wx_g + wx_h) - log(exposure))
+            h_loss = sum(exp(mu_h))
 
         Parameters:
         ___________
         data_instances: DTable, input data
 
+        model_weights: model weight object, stores intercept_ and coef_
+
+        encrypted_calculator: ecnrypted calculator object
+
+        optimizer: optimizer object
+
         n_iter_: int, current number of iter.
 
         batch_index: int, use to obtain current encrypted_calculator index
 
-        offset: log(exposure)
-
-        loss_norm: penalty term, default to None
-
-        """
+        '''
         current_suffix = (n_iter_, batch_index)
         self_wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
-        loss_regular = optimizer.loss_norm(model_weights.coef_)
+        loss_regular = optimizer.loss_norm(model_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
@@ -153,9 +157,9 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         self._register_loss_sync(transfer_variables.loss)
 
     def compute_loss(self, cipher, n_iter_, batch_index):
-        """
+        '''
         Decrypt loss from guest
-        """
+        '''
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)
