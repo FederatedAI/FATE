@@ -31,7 +31,17 @@ non-shared parts of the user sets.
 
 To ensure security, passive parties cannot get access to gradient and hessian directly. 
 We use a "XGBoost" like tree-learning algorithm. In order to keep gradient and hessian confidential, we require the active party to 
-encrypt gradient and hessian before sending them to passive parties. 
+encrypt gradient and hessian before sending them to passive parties. After encrypted the gradient and hessian, active party will
+send the encrypted [[gradient]] and [[hessian]] to passive party, the passive party use [[gradient]] and [[hessian]] to calculate the 
+encrypted feature histograms, then encodes the (feature, split_bin_val) and send the encode (feature, split_bin_val) with feature histograms to active party. 
+After receiving the feature histograms from passive party, the active party decrypt them and find the best gains, if the feature belongs to passive party, send back the encode (feature, split_bin_val) to passive party until finishing construct the trees.
+The following figure shows the process of federated split finding. 
+<div style="text-align:center" align=center>
+<img src="./images/split_finding.png" alt="framework" width="500" height="250" />
+<br/>
+Figure 2: Process of Federated Split Finding</div>
+
+
 
 By following the SecureBoost framework, multiple parties can jointly build tree ensembled model without leaking privacy 
 in federated learning. If you want to learn more about the algorithm details, you can read the paper attached above.
