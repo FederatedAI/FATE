@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 set -e
 module_name="egg"
 cwd=$(cd `dirname $0`; pwd)
@@ -22,56 +38,59 @@ source ${config_path}
 packaging() {
     source ../../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
+    mkdir ./egg-manager
+    cd ./egg-manager
+    get_module_package ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
+    tar xzf eggroll-${module_name}-${version}.tar.gz
+    rm -rf eggroll-${module_name}-${version}.tar.gz
+    cd ../
+
+    mkdir ./egg-services
+    cd ./egg-services
+
+    mkdir storage-service-cxx
+    cd storage-service-cxx
     if [[ "${deploy_mode}" == "binary" ]]; then
-        mkdir ./egg-manager
-        cd ./egg-manager
-        get_module_binary ${source_code_dir} ${module_name} eggroll-${module_name}-${version}.tar.gz
-        tar xzf eggroll-${module_name}-${version}.tar.gz
-        rm -rf eggroll-${module_name}-${version}.tar.gz
-        cd ../
-
-        mkdir ./egg-services
-        cd ./egg-services
-
-        mkdir storage-service-cxx
-        cd storage-service-cxx
-        get_module_binary ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
+        #TODO: In the future, a complete binary package that can be copied directly will be provided.
+        get_module_package ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
         tar xzf eggroll-storage-service-cxx-${version}.tar.gz
         rm -rf eggroll-storage-service-cxx-${version}.tar.gz
-        get_module_binary ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
-        cd ../
-
-        mkdir computing
-        cd computing
-        get_module_binary ${source_code_dir} ${module_name} eggroll-computing-${version}.tar.gz
-        tar xzf eggroll-computing-${version}.tar.gz
-        rm -rf eggroll-computing-${version}.tar.gz
-        cd ../
-
-        mkdir eggroll-api
-        cd eggroll-api
-        get_module_binary ${source_code_dir} ${module_name} eggroll-api-${version}.tar.gz
-        tar xzf eggroll-api-${version}.tar.gz
-        rm -rf eggroll-api-${version}.tar.gz
-        cd ../
-
-        mkdir eggroll-conf
-        cd eggroll-conf
-        get_module_binary ${source_code_dir} ${module_name} eggroll-conf-${version}.tar.gz
-        tar xzf eggroll-conf-${version}.tar.gz
-        rm -rf eggroll-conf-${version}.tar.gz
-        cd ../
     elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/eggroll/framework/${module_name}/target
-        if [[ -f ${target_path}/eggroll-${module_name}-${version}.jar ]];then
-            cp ${target_path}/eggroll-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/eggroll-${module_name}-${version}.jar: file doesn't exist."
-        fi
+        get_module_package ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
+        tar xzf eggroll-storage-service-cxx-${version}.tar.gz
+        rm -rf eggroll-storage-service-cxx-${version}.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        tar xzf third_party_eggrollv1.tar.gz
+        rm -rf third_party_eggrollv1.tar.gz
+    else
+        echo "[INFO] Unsupported deployment method, exit"
+        exit 101
     fi
+    cd ../
+
+    mkdir computing
+    cd computing
+    get_module_package ${source_code_dir} ${module_name} eggroll-computing-${version}.tar.gz
+    tar xzf eggroll-computing-${version}.tar.gz
+    rm -rf eggroll-computing-${version}.tar.gz
+    cd ../
+
+    mkdir eggroll-api
+    cd eggroll-api
+    get_module_package ${source_code_dir} ${module_name} eggroll-api-${version}.tar.gz
+    tar xzf eggroll-api-${version}.tar.gz
+    rm -rf eggroll-api-${version}.tar.gz
+    cd ../
+
+    mkdir eggroll-conf
+    cd eggroll-conf
+    get_module_package ${source_code_dir} ${module_name} eggroll-conf-${version}.tar.gz
+    tar xzf eggroll-conf-${version}.tar.gz
+    rm -rf eggroll-conf-${version}.tar.gz
+    cd ../
 }
 
 
@@ -87,6 +106,7 @@ config() {
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
     sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
 	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
+    rm -rf ./services.sh.bak
 
     mkdir conf
     cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
@@ -106,6 +126,9 @@ config() {
 	sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
 	echo >> ./conf/egg.properties
 	echo "eggroll.computing.processor.python-path=${python_path}" >> ./conf/egg.properties
+
+    sed -i.bak "s#property.logDir=.*#property.logDir=logs/${module_name}#g" ./conf/log4j2.properties
+    rm -rf ./conf/log4j2.properties.bak ./conf/egg.properties.bak
 }
 
 init() {
@@ -143,8 +166,6 @@ install(){
 
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
-	#sed -i.bak "s/clustercommip=.*/clustercommip=\"$ip\"/g" $cwd/modify_json.py
-	#sed -i.bak "s/clustercommport=.*/clustercommport=${clustercomm_port}/g" $cwd/modify_json.py
 	sed -i.bak "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
 	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
 	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py

@@ -11,7 +11,6 @@ cxx_compile_flag=false
 # services for a
 a_mysql=
 a_redis=
-a_fateboard=
 a_fate_flow=
 a_fateboard=
 a_federation=
@@ -20,12 +19,10 @@ a_proxy=
 a_roll=
 a_metaservice=
 a_egg=()
-a_storage_service=()
 
 # services for b
 b_mysql=
 b_redis=
-b_fateboard=
 b_fate_flow=
 b_fateboard=
 b_federation=
@@ -34,4 +31,3 @@ b_proxy=
 b_roll=
 b_metaservice=
 b_egg=()
-b_storage_service=()
