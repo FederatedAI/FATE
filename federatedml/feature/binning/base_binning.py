@@ -130,8 +130,25 @@ class Binning(object):
         return data_bin_dict
 
     def convert_feature_to_woe(self, data_instances):
-        # TODO
-        return data_instances
+        is_sparse = data_overview.is_sparse_data(data_instances)
+        schema = data_instances.schema
+        if is_sparse:
+            f = functools.partial(self._convert_sparse_data,
+                                  bin_inner_param=self.bin_inner_param,
+                                  bin_results=self.bin_results,
+                                  abnormal_list=self.abnormal_list,
+                                  convert_type='woe'
+                                  )
+            new_data = data_instances.mapValues(f)
+        else:
+            f = functools.partial(self._convert_dense_data,
+                                  bin_inner_param=self.bin_inner_param,
+                                  bin_results=self.bin_results,
+                                  abnormal_list=self.abnormal_list,
+                                  convert_type='woe')
+            new_data = data_instances.mapValues(f)
+        new_data.schema = schema
+        return new_data
 
     def convert_feature_to_bin(self, data_instances, split_points=None):
         is_sparse = data_overview.is_sparse_data(data_instances)
@@ -142,18 +159,18 @@ class Binning(object):
 
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
-                                  transform_cols_idx=self.bin_inner_param.transform_bin_indexes,
-                                  split_points_dict=split_points,
-                                  header=self.header,
-                                  abnormal_list=self.abnormal_list
+                                  bin_inner_param=self.bin_inner_param,
+                                  bin_results=self.bin_results,
+                                  abnormal_list=self.abnormal_list,
+                                  convert_type='bin_num'
                                   )
             new_data = data_instances.mapValues(f)
         else:
             f = functools.partial(self._convert_dense_data,
-                                  transform_cols_idx=self.bin_inner_param.transform_bin_indexes,
-                                  split_points_dict=split_points,
-                                  header=self.header,
-                                  abnormal_list=self.abnormal_list)
+                                  bin_inner_param=self.bin_inner_param,
+                                  bin_results=self.bin_results,
+                                  abnormal_list=self.abnormal_list,
+                                  convert_type='bin_num')
             new_data = data_instances.mapValues(f)
         new_data.schema = schema
         bin_sparse = self.get_sparse_bin(self.bin_inner_param.transform_bin_indexes, split_points)
@@ -162,11 +179,14 @@ class Binning(object):
         return new_data, split_points_result, bin_sparse
 
     @staticmethod
-    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
+    def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
+                             abnormal_list: list, convert_type: str='bin_num'):
         all_data = instances.features.get_all_data()
         data_shape = instances.features.get_shape()
         indice = []
         sparse_value = []
+        transform_cols_idx = bin_inner_param.transform_bin_indexes
+        split_points_dict = bin_results.all_split_points
 
         for col_idx, col_value in all_data:
             if col_idx in transform_cols_idx:
@@ -175,11 +195,18 @@ class Binning(object):
                     sparse_value.append(col_value)
                     continue
                 # Maybe it is because missing value add in sparse value, but
-                col_name = header[col_idx]
+                col_name = bin_inner_param.header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
                 indice.append(col_idx)
-                sparse_value.append(bin_num)
+                if convert_type == 'bin_num':
+                    sparse_value.append(bin_num)
+                elif convert_type == 'woe':
+                    col_results = bin_results.all_cols_results.get(col_name)
+                    woe_value = col_results.woe_array[bin_num]
+                    sparse_value.append(woe_value)
+                else:
+                    sparse_value.append(col_value)
             else:
                 indice.append(col_idx)
                 sparse_value.append(col_value)
@@ -201,17 +228,28 @@ class Binning(object):
         return result
 
     @staticmethod
-    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
+    def _convert_dense_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
+                             abnormal_list: list, convert_type: str='bin_num'):
         features = instances.features
+        transform_cols_idx = bin_inner_param.transform_bin_indexes
+        split_points_dict = bin_results.all_split_points
+
         for col_idx, col_value in enumerate(features):
             if col_idx in transform_cols_idx:
                 if col_value in abnormal_list:
                     features[col_idx] = col_value
                     continue
-                col_name = header[col_idx]
+                col_name = bin_inner_param.header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
-                features[col_idx] = bin_num
+                if convert_type == 'bin_num':
+                    features[col_idx] = bin_num
+                elif convert_type == 'woe':
+                    col_results = bin_results.all_cols_results.get(col_name)
+                    woe_value = col_results.woe_array[bin_num]
+                    features[col_idx] = woe_value
+                else:
+                    features[col_idx] = col_value
 
         instances.features = features
         return instances

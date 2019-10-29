@@ -30,7 +30,7 @@ class BinColResults(object):
         self.non_event_count_array = list(non_event_count_array)
         self.event_rate_array = list(event_rate_array)
         self.non_event_rate_array = list(non_event_rate_array)
-        self.__split_points = None
+        self.split_points = None
         if iv is None:
             iv = 0
             for idx, woe in enumerate(self.woe_array):
@@ -40,10 +40,10 @@ class BinColResults(object):
         self.iv = iv
 
     def set_split_points(self, split_points):
-        self.__split_points = split_points
+        self.split_points = split_points
 
     def get_split_points(self):
-        return self.__split_points
+        return self.split_points
 
     @property
     def is_woe_monotonic(self):
@@ -66,7 +66,6 @@ class BinColResults(object):
         save_dict = self.__dict__
         save_dict['is_woe_monotonic'] = self.is_woe_monotonic
         save_dict['bin_nums'] = self.bin_nums
-        save_dict['split_points'] = self.__split_points
         return save_dict
 
     def reconstruct(self, iv_obj):
@@ -76,7 +75,7 @@ class BinColResults(object):
         self.non_event_count_array = list(iv_obj.non_event_count_array)
         self.event_rate_array = list(iv_obj.event_rate_array)
         self.non_event_rate_array = list(iv_obj.non_event_rate_array)
-        self.__split_points = list(iv_obj.split_points)
+        self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
 
 

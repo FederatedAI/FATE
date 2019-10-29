@@ -82,7 +82,7 @@ class FeatureBinningParam(BaseParam):
         The max bin number for binning
 
     bin_indexes : list of int or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
+        Specify which columns need to be binned. -1 represent for all columns. If you need to indicate specific
         cols, provide a list of header index instead of -1.
 
     bin_names : list of string, default: []
@@ -91,6 +91,14 @@ class FeatureBinningParam(BaseParam):
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
         a bin. Please note that this parameter will NOT take effect for setting in host.
+
+    category_indexes : list of int or int, default: []
+        Specify which columns are category features. -1 represent for all columns. List of int indicate a set of
+        such features. For category features, bin_obj will take its original values as split_points and treat them
+        as have been binned.
+
+    category_names : list of string, default: []
+        Use column names to specify category features. Each element in the list represent for a column name in header.
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
@@ -109,7 +117,7 @@ class FeatureBinningParam(BaseParam):
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(),
-                 local_only=False,
+                 local_only=False, category_indexes=None, category_names=None,
                  need_run=True):
         super(FeatureBinningParam, self).__init__()
         if bin_names is None:
