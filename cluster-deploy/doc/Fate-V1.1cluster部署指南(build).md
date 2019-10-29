@@ -149,7 +149,7 @@ git clone https://github.com/FederatedAI/FATE.git
 
 cd FATE/cluster-deploy/scripts
 
-bash compile_and_packaging.sh 
+bash packaging.sh
 
 构建好的包会放在FATE/cluster-deploy/packages目录下。
 
