@@ -6,7 +6,7 @@ Here we simplify participants of the federation process into three parties. Part
 
 ## Heterogeneous LinR
 
-The process of HeteroLinR is shown below:
+The process of HeteroLinR training is shown below:
 
 <div style="text-align:center", align=center>
 <img src="./images/HeteroLinR.png" alt="samples" width="500" height="300" /><br/>
