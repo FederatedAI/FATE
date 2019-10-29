@@ -17,7 +17,7 @@
 #
 
 export JAVA_HOME=
-export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$JAVA_HOME/bin:$PATH
 
 module=proxy
 main_class=com.webank.ai.fate.networking.Proxy
@@ -56,6 +56,7 @@ start() {
         mklogsdir
         java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c conf/${module}.properties >> logs/console.log 2>>logs/error.log &
         if [[ $? -eq 0 ]]; then
+            sleep 2
             getpid
             echo "service start sucessfully. pid: ${pid}"
         else

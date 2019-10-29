@@ -11,8 +11,7 @@
       10000
     ],
     "host": [
-      10000,
-      9999
+      10000
     ],
     "arbiter": [
       10000
@@ -50,21 +49,17 @@
             {
               "name": "motor_mini_a",
               "namespace": "motor_mini"
-            },
-            {
-              "name": "motor_mini_a",
-              "namespace": "motor_mini"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false, false],
-        "output_format": ["dense", "dense"],
-        "outlier_replace": [false, false]
+        "with_label": [false],
+        "output_format": ["dense"],
+        "outlier_replace": [false]
       },
       "evaluation_0": {
-        "need_run": [false, false]
+        "need_run": [false]
       }
     }
   },

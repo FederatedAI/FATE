@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 set -e
 module_name="federation"
 cwd=$(cd `dirname $0`; pwd)
@@ -22,19 +38,9 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    if [[ "${deploy_mode}" == "binary" ]]; then
-        get_module_binary ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
-        tar xzf fate-${module_name}-${version}.tar.gz
-        rm -rf fate-${module_name}-${version}.tar.gz
-    elif [[ "${deploy_mode}" == "build" ]]; then
-        target_path=${source_code_dir}/arch/driver/${module_name}/target
-        if [[ -f ${target_path}/fate-${module_name}-${version}.jar ]];then
-            cp ${target_path}/fate-${module_name}-${version}.jar ${output_packages_dir}/source/${module_name}/
-            cp -r ${target_path}/lib ${output_packages_dir}/source/${module_name}/
-        else
-            echo "[INFO] Build ${module_name} failed, ${target_path}/fate-${module_name}-${version}.jar: file doesn't exist."
-        fi
-    fi
+    get_module_package ${source_code_dir} ${module_name} fate-${module_name}-${version}.tar.gz
+    tar xzf fate-${module_name}-${version}.tar.gz
+    rm -rf fate-${module_name}-${version}.tar.gz
 }
 
 
@@ -46,6 +52,7 @@ config() {
     cd ./${module_name}/conf
 	cp ${cwd}/service.sh ./
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./service.sh
+    rm -rf ./service.sh.bak
 
     mkdir conf
     cp  ${source_code_dir}/arch/driver/${module_name}/src/main/resources/federation.properties ./conf
@@ -58,6 +65,7 @@ config() {
     sed -i.bak "s/meta.service.port=.*/meta.service.port=${meta_service_port}/g" ./conf/federation.properties
     sed -i.bak "s/proxy.ip=.*/proxy.ip=${proxy_ip}/g" ./conf/federation.properties
     sed -i.bak "s/proxy.port=.*/proxy.port=${proxy_port}/g" ./conf/federation.properties
+    rm -rf ./conf/federation.properties.bak
 }
 
 init() {

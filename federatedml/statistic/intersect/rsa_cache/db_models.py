@@ -13,17 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import datetime
 import inspect
 import os
 import sys
 
 import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField, DateTimeField
+from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.apsw_ext import APSWDatabase
 
 from arch.api.utils import log_utils
+from arch.api.utils.core import current_timestamp
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DATABASE, USE_LOCAL_DATABASE, WORK_MODE, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -82,8 +82,8 @@ class DataBaseModel(Model):
         return self.__dict__['__data__']
 
     def save(self, *args, **kwargs):
-        if hasattr(self, "f_update_datetime"):
-            self.f_update_datetime = datetime.datetime.now()
+        if hasattr(self, "f_update_time"):
+            self.f_update_time = current_timestamp()
         super(DataBaseModel, self).save(*args, **kwargs)
 
 
@@ -110,10 +110,10 @@ class IdLibraryCacheInfo(DataBaseModel):
     f_rsa_key_n = CharField(max_length=512)
     f_rsa_key_d = CharField(max_length=512)
     f_rsa_key_e = CharField(max_length=32)
-    f_create_datetime = DateTimeField(default=datetime.datetime.now)
-    f_update_datetime = DateTimeField(default=datetime.datetime.now)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
     f_description = TextField(null=True, default='')
 
     class Meta:
-        db_table = "t_id_library_cache_info"
+        db_table = "t_id_library_cache_infos"
         primary_key = CompositeKey('f_party_id', 'f_id_type', 'f_encrypt_type', 'f_tag', 'f_namespcae', 'f_version')
