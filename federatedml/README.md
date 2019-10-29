@@ -116,7 +116,7 @@ Data Input: Input DTable.
 Model Output: Neural Network model.
 
 
-#### 12. [Hetero Secure Boosting](./tree/README.md)
+#### 13. [Hetero Secure Boosting](./tree/README.md)
 Build hetero secure boosting model through multiple parties.
 
 Corresponding module name: HeteroSecureBoost
@@ -125,7 +125,7 @@ Data Input: DTable, values are instances.
 Model Output: SecureBoost Model, consists of model-meta and model-param
 
 
-#### 13. [Evaluation](./evaluation/README.md)
+#### 14. [Evaluation](./evaluation/README.md)
 Output the model evaluation metrics for user.
 
 Corresponding module name: Evaluation
