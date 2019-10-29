@@ -27,8 +27,8 @@ Both rsa and raw intersection support multi-host. It means a guest can do inters
 <div style="text-align:center", align=center>
 <img src="./images/multi_hosts.png" alt="sample" width="500" height="250" /><br/>
 Figure 2 multi-hosts Intersection</div>
-See in Figure 2, Firstly, guest will do intersection with each host and get intersective ID respectively. Secondly, guest will find common ID from all intersective ID. Finally,
-guest will send common ID to every host if necessary.
+See in Figure 2, Firstly, guest will do intersection with each host and get intersective IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
+guest will send common IDs to every host if necessary.
 
 ### Quick Start
 You can refer to *example/intersect/README.md* to quickly start running intersection in standalone mode and cluster mode. 
