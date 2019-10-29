@@ -133,7 +133,7 @@ Go to the /data/projects/ directory of the execution node and execute the git co
 cd /data/projects/
 git clone https://github.com/FederatedAI/FATE.git
 cd FATE/cluster-deploy/scripts
-bash compile_and_packaging.sh 
+bash packaging.sh 
 ```
 
 This script file puts each module and configuration file into the FATE/cluster-deploy/packages directory. You can view the directory and files of each module in this directory as following packages:
