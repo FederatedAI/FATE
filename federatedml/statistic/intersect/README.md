@@ -26,7 +26,7 @@ This intersection module implements the sample intersection method that A sends 
 Both rsa and raw intersection support multi-host. It means a guest can do intersection with more than one host and finally get the common ID with all hosts. 
 <div style="text-align:center", align=center>
 <img src="./images/multi_hosts.png" alt="sample" width="500" height="250" /><br/>
-Figure 1 multi-hosts Intersection</div>
+Figure 2 multi-hosts Intersection</div>
 See in Figure 2, Firstly, guest will do intersection with each host and get intersective ID respectively. Secondly, guest will find common ID from all intersective ID. Finally,
 guest will send common ID to every host if necessary.
 
