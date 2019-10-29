@@ -33,6 +33,8 @@ class BinInnerParam(object):
         self.header = []
         self.transform_bin_indexes = []
         self.transform_bin_names = []
+        self.category_indexes = []
+        self.category_names = []
 
     def set_header(self, header):
         self.header = header
@@ -49,6 +51,8 @@ class BinInnerParam(object):
     def set_transform_all(self):
         self.transform_bin_indexes = self.bin_indexes
         self.transform_bin_names = self.bin_names
+        self.transform_bin_indexes.extend(self.category_indexes)
+        self.transform_bin_names.extend(self.category_names)
 
     def add_bin_indexes(self, bin_indexes):
         for idx in bin_indexes:
@@ -87,6 +91,27 @@ class BinInnerParam(object):
             if idx not in self.transform_bin_indexes:
                 self.transform_bin_indexes.append(idx)
                 self.transform_bin_names.append(self.header[idx])
+
+    def add_category_indexes(self, category_indexes):
+        if category_indexes == -1:
+            category_indexes = [i for i in range(len(self.header))]
+        for idx in category_indexes:
+            if idx >= len(self.header):
+                LOGGER.warning("Adding a index that out of header's bound")
+                continue
+            if idx not in self.category_indexes:
+                self.category_indexes.append(idx)
+                self.category_names.append(self.header[idx])
+
+    def add_category_names(self, category_names):
+        for bin_name in category_names:
+            idx = self.col_name_maps.get(bin_name)
+            if idx is None:
+                LOGGER.warning("Adding a col_name that is not exist in header")
+                continue
+            if idx not in self.category_indexes:
+                self.category_indexes.append(idx)
+                self.category_names.append(self.header[idx])
 
     @property
     def bin_cols_map(self):

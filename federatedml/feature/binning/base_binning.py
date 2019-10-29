@@ -77,6 +77,38 @@ class Binning(object):
         """
         raise NotImplementedError("Should not call this function directly")
 
+    def fit_category_features(self, data_instances):
+
+        def static_all_values(instances, bin_inner_param: BinInnerParam, bin_num):
+            result = {}
+            features = instances.features
+            for col_idx in bin_inner_param.category_indexes:
+                col_name = bin_inner_param.header[col_idx]
+                result.setdefault(col_name, set()).add(features[col_idx])
+                if len(result[col_name]) > bin_num:
+                    raise ValueError("Binning Category features, the possible values are more than bin_num set."
+                                     "Please set bin_num larger for availability")
+            return result
+
+        def reduce_static_result(a: dict, b: dict):
+            result = {}
+            for c_name, par_res in a.items():
+                result.setdefault(c_name, set()).union(par_res)
+            for c_name, par_res in b.items():
+                result.setdefault(c_name, set()).union(par_res)
+            return result
+
+        f = functools.partial(static_all_values, bin_inner_param=self.bin_inner_param, bin_num=self.bin_num)
+        static_results = data_instances.mapPartitions(f).reduce(reduce_static_result)
+        for col_name, result_set in static_results.items():
+            if len(result_set) > self.bin_num:
+                raise ValueError("Binning Category features, the possible values are more than bin_num set."
+                                 "Please set bin_num larger for availability")
+            split_points = list(result_set)
+            split_points.sort()
+            self.bin_results.put_col_split_points(col_name, split_points)
+
+
     def set_bin_inner_param(self, bin_inner_param):
         self.bin_inner_param = bin_inner_param
 

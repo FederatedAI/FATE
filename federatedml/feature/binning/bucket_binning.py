@@ -74,5 +74,5 @@ class BucketBinning(Binning):
             split_points.append(max_value)
             # final_split_points[col_name] = split_point
             self.bin_results.put_col_split_points(col_name, split_points)
-        # self.split_points = final_split_points
+        self.fit_category_features(data_instances)
         return self.bin_results.all_split_points

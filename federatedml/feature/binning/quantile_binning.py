@@ -98,6 +98,8 @@ class QuantileBinning(Binning):
                 if s_p not in split_point:
                     split_point.append(s_p)
             self.bin_results.put_col_split_points(col_name, split_point)
+
+        self.fit_category_features(data_instances)
         return self.bin_results.all_split_points
 
     @staticmethod

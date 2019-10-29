@@ -103,6 +103,9 @@ class BaseHeteroFeatureBinning(ModelBase):
             self.bin_inner_param.add_bin_indexes(params.bin_indexes)
             self.bin_inner_param.add_bin_names(params.bin_names)
 
+        self.bin_inner_param.add_category_indexes(params.category_indexes)
+        self.bin_inner_param.add_category_names(params.category_names)
+
         if params.transform_param.transform_cols == -1:
             self.bin_inner_param.set_transform_all()
         else:

@@ -95,7 +95,9 @@ class FeatureBinningParam(BaseParam):
     category_indexes : list of int or int, default: []
         Specify which columns are category features. -1 represent for all columns. List of int indicate a set of
         such features. For category features, bin_obj will take its original values as split_points and treat them
-        as have been binned.
+        as have been binned. If this is not what you expect, please do NOT put it into this parameters.
+
+        The number of categories should not exceed bin_num set above.
 
     category_names : list of string, default: []
         Use column names to specify category features. Each element in the list represent for a column name in header.
@@ -122,6 +124,10 @@ class FeatureBinningParam(BaseParam):
         super(FeatureBinningParam, self).__init__()
         if bin_names is None:
             bin_names = []
+        if category_indexes is None:
+            category_indexes = []
+        if category_names is None:
+            category_names = []
         self.method = method
         self.compress_thres = compress_thres
         self.head_size = head_size
@@ -130,6 +136,8 @@ class FeatureBinningParam(BaseParam):
         self.bin_num = bin_num
         self.bin_indexes = bin_indexes
         self.bin_names = bin_names
+        self.category_indexes = category_indexes
+        self.category_names = category_names
         self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
         self.need_run = need_run
