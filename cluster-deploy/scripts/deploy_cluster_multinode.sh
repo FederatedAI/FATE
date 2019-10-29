@@ -191,7 +191,7 @@ config_python() {
 packaging_mysql() {
     cp configurations.sh configurations.sh.tmp
     sed -i.bak "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
-    sed -i.bak "s/user=.*/user=${user}/g" ./configurations.sh.tmp
+    sed -i.bak "s/user=.*/user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -214,6 +214,11 @@ config_mysql() {
     eval proxy_ip=\${${party_name}_proxy}
     eval metaservice_ip=\${${party_name}_metaservice}
     eval egg_ips=\${${party_name}_egg[*]}
+    if [[ "${party_name}" == "a" ]];then
+        party_ips=("${a_ips[@]}")
+    elif [[ "${party_name}" == "b" ]];then
+        party_ips=("${b_ips[@]}")
+    fi
     sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
     sed -i.bak "s/mysql_ip=.*/mysql_ip=${db_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/proxy_ip=.*/proxy_ip=${proxy_ip}/g" ./configurations.sh.tmp
@@ -221,6 +226,7 @@ config_mysql() {
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${metaservice_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/egg_ip=.*/egg_ip=\(${egg_ips[*]}\)/g" ./configurations.sh.tmp
     sed -i.bak "s/storage_service_ip=.*/storage_service_ip=\(${egg_ips[*]}\)/g" ./configurations.sh.tmp
+    sed -i.bak "s/party_ips=.*/party_ips=\(${party_ips[*]}\)/g" ./configurations.sh.tmp
     config_enter ${my_ip} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
 }
@@ -261,18 +267,24 @@ config_fate_flow() {
     party_index=$1
     party_name=${party_names[party_index]}
     party_id=${party_list[${party_index}]}
-    eval my_ip=\${${party_name}_fate_flow}
+    if [[ "${party_name}" == "a" ]];then
+        my_ips=("${a_ips[@]}")
+    elif [[ "${party_name}" == "b" ]];then
+        my_ips=("${b_ips[@]}")
+    fi
 
     eval db_ip=\${${party_name}_mysql}
     eval redis_ip=\${${party_name}_redis}
-    sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
-    sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
-    sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/venv#g" ./configurations.sh.tmp
-    sed -i.bak "s/db_ip=.*/db_ip=${db_ip}/g" ./configurations.sh.tmp
-    sed -i.bak "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
-    sed -i.bak "s/redis_ip=.*/redis_ip=${redis_ip}/g" ./configurations.sh.tmp
-	config_enter ${my_ip} fate_flow
-	sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
+    for my_ip in ${my_ips[*]};do
+        sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/python#g" ./configurations.sh.tmp
+        sed -i.bak "s#python_path=.*#python_path=${deploy_dir}/python:${deploy_dir}/eggroll/python#g" ./configurations.sh.tmp
+        sed -i.bak "s#venv_dir=.*#venv_dir=${deploy_dir}/common/python/venv#g" ./configurations.sh.tmp
+        sed -i.bak "s/db_ip=.*/db_ip=${db_ip}/g" ./configurations.sh.tmp
+        sed -i.bak "s/db_name=.*/db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
+        sed -i.bak "s/redis_ip=.*/redis_ip=${redis_ip}/g" ./configurations.sh.tmp
+        config_enter ${my_ip} fate_flow
+        sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
+    done
 }
 
 packaging_federatedml() {

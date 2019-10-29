@@ -23,3 +23,4 @@ egg_ip=
 egg_port=7888
 storage_service_ip=
 storage_service_port=7778
+party_ips=

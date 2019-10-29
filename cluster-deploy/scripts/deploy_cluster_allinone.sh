@@ -137,7 +137,7 @@ config_python() {
 packaging_mysql() {
     cp configurations.sh configurations.sh.tmp
     sed -i.bak "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
-    sed -i.bak "s/user=.*/user=${user}/g" ./configurations.sh.tmp
+    sed -i.bak "s/user=.*/user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -160,6 +160,7 @@ config_mysql() {
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/party_ips=.*/party_ips=\(${node_ip[*]}\)/g" ./configurations.sh.tmp
     config_enter ${config_label} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }
