@@ -25,6 +25,35 @@ Encryption of Paillier follows the steps below.
 #### Addition and Scalar Multiplication
 Please refer to the same pages with encrypt step above for details.
 
+
+### Diffne Hellman Key Exchange
+
+Diffie–Hellman key exchange is a method of securely exchanging cryptographic keys over a public channel 
+
+#### protocol
+1. keygen: generate big prime number p and g, where g is a primitive root modulo p
+2. Alice generate random number r1;
+Bob generate random number r2.
+3. Alice calculate g^{r1} (mod p) then send to Bob; 
+Bob calculate g^{r2} (mod p) then send to Alice.
+4. Alice calculate (g^{r2} (mod p))^{r1} (mod p) = g^{r1 r2} (mod p);
+Bob calculate (g^{r1} (mod p))^{r2} (mod p) = g^{r1 r2} (mod p);
+
+g^{r1 r2} (mod p) is the share key.
+
+#### How to use
+
+```python
+>>> from federatedml.secureprotol.diffie_hellman import DiffieHellman
+>>> p, g = DiffieHellman.key_pair()
+>>> import random
+>>> r1 = random.randint(1, 10000000)
+>>> r2 = random.randint(1, 10000000)
+>>> key1 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r1), r2, p)
+>>> key2 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r2), r1, p)
+>>> assert key1 == key2
+
+
 ### RSA encryption
 This encryption method generates three very large positive integers e, d and n. Let e, n as the public-key and d as the privacy-key. While giving data v, the encrypt operator will do en_v = v ^ e （mod n）， and the decrypt operator will do de_v = en_v ^ d (mod n)
 
