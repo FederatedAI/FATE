@@ -108,7 +108,7 @@ Data Input: Input DTable.
 Model Output: Logistic Regression model.
 
 
-#### 12. [Homo-LR](./nn/homo_nn/README.md)
+#### 12. [Homo-NN](./nn/homo_nn/README.md)
 Build homo neural network module through multiple parties.
 
 Corresponding module name: HomoNN
