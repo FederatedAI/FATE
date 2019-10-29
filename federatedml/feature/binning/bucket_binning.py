@@ -30,8 +30,8 @@ class BucketBinning(Binning):
     where k is the index of a bin.
     """
 
-    def __init__(self, params, party_name='Base', abnormal_list=None):
-        super(BucketBinning, self).__init__(params, party_name, abnormal_list)
+    def __init__(self, params, abnormal_list=None):
+        super(BucketBinning, self).__init__(params, abnormal_list)
 
     def fit_split_points(self, data_instances):
         """
@@ -57,20 +57,22 @@ class BucketBinning(Binning):
         if is_sparse:
             raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
 
-        self._init_cols(data_instances)
+        # self._init_cols(data_instances)
 
-        statistics = MultivariateStatisticalSummary(data_instances, self.cols_index, abnormal_list=self.abnormal_list)
+        statistics = MultivariateStatisticalSummary(data_instances,
+                                                    self.bin_inner_param.bin_indexes,
+                                                    abnormal_list=self.abnormal_list)
         max_dict = statistics.get_max()
         min_dict = statistics.get_min()
-        final_split_points = {}
         for col_name, max_value in max_dict.items():
             min_value = min_dict.get(col_name)
-            split_point = []
+            split_points = []
             L = (max_value - min_value) / self.bin_num
             for k in range(self.bin_num - 1):
                 s_p = min_value + (k + 1) * L
-                split_point.append(s_p)
-            split_point.append(max_value)
-            final_split_points[col_name] = split_point
-        self.split_points = final_split_points
-        return final_split_points
+                split_points.append(s_p)
+            split_points.append(max_value)
+            # final_split_points[col_name] = split_point
+            self.bin_results.put_col_split_points(col_name, split_points)
+        # self.split_points = final_split_points
+        return self.bin_results.all_split_points

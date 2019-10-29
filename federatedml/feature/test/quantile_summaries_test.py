@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from federatedml.feature.quantile_summaries import QuantileSummaries
+from federatedml.feature.binning.quantile_summaries import QuantileSummaries
 
 
 class TestQuantileSummaries(unittest.TestCase):

@@ -32,14 +32,21 @@ class TransformParam(BaseParam):
         Specify which columns need to be transform. If column index is None, None of columns will be transformed.
         If it is -1, it will use same columns as cols in binning module.
 
+    transform_names: list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
+
+
     transform_type: str, 'bin_num'or None default: None
         Specify which value these columns going to replace. If it is set as None, nothing will be replaced.
 
     """
 
-    def __init__(self, transform_cols=-1, transform_type="bin_num"):
+    def __init__(self, transform_cols=-1, transform_names=None, transform_type="bin_num"):
         super(TransformParam, self).__init__()
+        if transform_names is None:
+            transform_names = []
         self.transform_cols = transform_cols
+        self.transform_names = transform_names
         self.transform_type = transform_type
 
     def check(self):
@@ -74,13 +81,16 @@ class FeatureBinningParam(BaseParam):
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
 
-    cols : list of int or int, default: -1
+    bin_indexes : list of int or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
         cols, provide a list of header index instead of -1.
 
+    bin_names : list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
+
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
-        a bin.
+        a bin. Please note that this parameter will NOT take effect for setting in host.
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
@@ -94,18 +104,21 @@ class FeatureBinningParam(BaseParam):
                  compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
-                 bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
+                 bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(),
                  local_only=False,
                  need_run=True):
         super(FeatureBinningParam, self).__init__()
+        if bin_names is None:
+            bin_names = []
         self.method = method
         self.compress_thres = compress_thres
         self.head_size = head_size
         self.error = error
         self.adjustment_factor = adjustment_factor
         self.bin_num = bin_num
-        self.cols = cols
+        self.bin_indexes = bin_indexes
+        self.bin_names = bin_names
         self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
         self.need_run = need_run
@@ -119,6 +132,7 @@ class FeatureBinningParam(BaseParam):
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)
         self.check_positive_integer(self.bin_num, descr)
-        self.check_defined_type(self.cols, descr, ['list', 'int', 'RepeatedScalarContainer'])
+        self.check_defined_type(self.bin_indexes, descr, ['list', 'int', 'RepeatedScalarContainer'])
+        self.check_defined_type(self.bin_names, descr, ['list'])
         self.check_open_unit_interval(self.adjustment_factor, descr)
 

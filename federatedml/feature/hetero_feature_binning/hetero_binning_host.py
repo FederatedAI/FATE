@@ -42,7 +42,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         """
         self._abnormal_detection(data_instances)
 
-        self._parse_cols(data_instances)
+        # self._parse_cols(data_instances)
+        self._setup_bin_inner_param(data_instances, self.model_param)
 
         # 1. Synchronize encryption information
         self.__synchronize_encryption()
