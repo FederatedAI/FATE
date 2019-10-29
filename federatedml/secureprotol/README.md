@@ -52,7 +52,7 @@ g^{r1 r2} (mod p) is the share key.
 >>> key1 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r1), r2, p)
 >>> key2 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r2), r1, p)
 >>> assert key1 == key2
-
+```
 
 ### RSA encryption
 This encryption method generates three very large positive integers e, d and n. Let e, n as the public-key and d as the privacy-key. While giving data v, the encrypt operator will do en_v = v ^ e （mod n）， and the decrypt operator will do de_v = en_v ^ d (mod n)
