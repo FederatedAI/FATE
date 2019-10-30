@@ -65,21 +65,24 @@ get_all_node_ip() {
             done
         done
 	done
-	len=${#all_node_ips[*]}
-	for ((i=0;i<$len;i++))
-	do
-	    for ((j=$len-1;j>i;j--))
-	    do
-	        if [[ ${all_node_ips[i]} = ${all_node_ips[j]} ]];then
-	            unset all_node_ips[i]
-	        fi
-	    done
-	done
+    all_node_ips=($(echo ${all_node_ips[*]} | sed 's/ /\n/g'|sort | uniq))
+    a_ips=($(echo ${a_ips[*]} | sed 's/ /\n/g'|sort | uniq))
+    b_ips=($(echo ${b_ips[*]} | sed 's/ /\n/g'|sort | uniq))
+	#len=${#all_node_ips[*]}
+	#for ((i=0;i<$len;i++))
+	#do
+	#    for ((j=$len-1;j>i;j--))
+	#    do
+	#        if [[ ${all_node_ips[i]} = ${all_node_ips[j]} ]];then
+	#            unset all_node_ips[i]
+	#        fi
+	#    done
+	#done
 	#TODO: not all node need to deploy all env
-    a_jdk=("${all_node_ips[@]}")
-    b_jdk=("${all_node_ips[@]}")
-    a_python=("${all_node_ips[@]}")
-    b_python=("${all_node_ips[@]}")
+    a_jdk=("${a_ips[@]}")
+    b_jdk=("${b_ips[@]}")
+    a_python=("${a_ips[@]}")
+    b_python=("${b_ips[@]}")
 }
 
 if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
