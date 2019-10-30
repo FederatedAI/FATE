@@ -152,6 +152,23 @@ install(){
     cd ${deploy_packages_dir}/source/${module_name}/egg-services
 
     mkdir -p ${deploy_dir}/storage-service-cxx
+
+    system=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+    echo ${system}
+    case "${system}" in
+        "\"CentOS Linux\"")
+                echo "CentOS System"
+                rm -rf ./storage-service-cxx/third_party_eggrollv1_ubuntu
+                ;;
+        \""Ubuntu\"")
+                echo "Ubuntu System"
+                rm -rf ./storage-service-cxx/third_party
+                mv ./storage-service-cxx/third_party_eggrollv1_ubuntu  ./storage-service-cxx/third_party
+                ;;
+        *)
+                echo "Not support this system."
+    esac
+
     cp -r ./storage-service-cxx/* ${deploy_dir}/storage-service-cxx/
 
     mkdir -p ${deploy_dir}/python/eggroll/computing
