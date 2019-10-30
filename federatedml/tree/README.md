@@ -85,7 +85,9 @@ max_split_nodes nodes instead of using all nodes of each level of the tree.
 * Support feature importance calculation
 * Support Multi-host and single guest to build model
 * Support different encrypt-mode to balance speed and security
-* Support missing value in train and predict process. 
+* Support missing value in train and predict process
+* Support evaluate training and validate data during training process
+* Support another homomorphic encryption method called "Iterative Affine" 
  
 
 
