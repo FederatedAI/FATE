@@ -16,9 +16,9 @@
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖docker和docker-compose，您可以使用以下命令验证docker环境：docker --version和docker-compose --version。.
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
-3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。.
+3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
 4. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
@@ -60,21 +60,21 @@ FATE $ bash ./federatedml/test/run_test.sh
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-1.1.tar.gz
-   tar -xvf  standalone-fate-1.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.1.tar.gz
+   tar -xvf  standalone-fate-master-1.1.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
 
    ```
-   cd standalone-fate-1.1
-   source init.sh
+   cd standalone-fate-master-1.1
+   source init.sh init
    ```
 
 4. 执行测试.
 
    ```
-   cd standalone-fate-1.1
+   cd standalone-fate-master-1.1
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -88,9 +88,9 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖docker和docker-compose，您可以使用以下命令验证docker环境：docker --version和docker-compose --version。.
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
-3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。.
+3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
 4. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
@@ -104,7 +104,7 @@ FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #执行部署
 FATE $ cd FATE/standalone-deploy
-FATE $ bash build_standalone_docker.sh
+FATE $ bash build_standalone_docker.sh init
 
 #验证和测试
 FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`

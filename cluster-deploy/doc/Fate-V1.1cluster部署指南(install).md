@@ -141,11 +141,11 @@ ssh app\@192.168.0.2
 
 进入执行节点的/data/projects/目录，执行：
 
+```
 cd /data/projects/
-
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.tar.gz
-
 tar -xf FATE_install_v1.1.tar.gz
+```
 
 4.2 配置文件修改和示例
 ----------------
@@ -201,6 +201,7 @@ a_proxy=192.168.0.1
 a_roll=192.168.0.1
 a_metaservice=192.168.0.1
 a_egg=(192.168.0.1)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.1 192.168.0.3 192.168.0.4)
 
 *services for b
 
@@ -213,6 +214,7 @@ b_proxy=192.168.0.2
 b_roll=192.168.0.2
 b_metaservice=192.168.0.2
 b_egg=(192.168.0.2)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.2 192.168.0.5 192.168.0.6)
 ```
 
 **2）只部署一个party**
@@ -239,6 +241,7 @@ a_proxy=192.168.0.1
 a_roll=192.168.0.1
 a_metaservice=192.168.0.1
 a_egg=(192.168.0.1)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.1 192.168.0.2 192.168.0.3)
 ```
 
 4.3 部署
@@ -246,15 +249,21 @@ a_egg=(192.168.0.1)
 
 按照上述配置含义修改multinode_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
 
+```
 cd FATE/cluster-deploy/scripts
+```
 
 如果需要部署所有组件，执行：
 
+```
 bash deploy_cluster_multinode.sh binary all 
+```
 
 如果只部署部分组件：
 
+```
 bash deploy_cluster_multinode.sh binary fate_flow
+```
 
 5.配置检查
 ==========
@@ -269,19 +278,25 @@ bash deploy_cluster_multinode.sh binary fate_flow
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-1) fateflow依赖eggroll的启动，需要先启动eggroll再启动fateflow。
-
 2) 每个节点是根据参数设定来部署模块，所以没设置则此模块不会部署和启动，启动的时候会提示此模块不能启动，请忽略。
 
+```
 cd /data/projects/fate
+```
 
 启动所有：
 
+```
 sh services.sh all start
+```
 
 启动单个模块：
 
+```
 sh services.sh proxy start
+```
+
+如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
 
 6.2 检查服务状态
 ----------------
@@ -290,15 +305,21 @@ sh services.sh proxy start
 
 查看各个服务进程是否启动成功：
 
+```
 cd /data/projects/fate
+```
 
 查看所有：
 
+```
 sh services.sh all status
+```
 
 查看单个模块：
 
+```
 sh services.sh proxy status
+```
 
 6.3 关机服务
 ------------
@@ -307,15 +328,21 @@ sh services.sh proxy status
 
 若要关闭服务则使用：
 
+```
 cd /data/projects/fate
+```
 
 关闭所有：
 
+```
 sh services.sh all stop
+```
 
 关闭单个模块：
 
+```
 sh services.sh proxy stop
+```
 
 7.测试
 ======
@@ -325,11 +352,11 @@ sh services.sh proxy stop
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python
-
 sh ./federatedml/test/run_test.sh
+```
 
 显示“ok”表示成功，显示 “FAILED”则表示失败，程序一般在一分钟内显示执行结果。
 
@@ -340,11 +367,11 @@ sh ./federatedml/test/run_test.sh
 
 此测试只需在guest方egg节点执行，选定9999为guest方，在192.168.0.2上执行：
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/toy_example/
-
 python run_toy_example.py 9999 10000 1
+```
 
 测试结果将显示在屏幕上。
 
@@ -359,21 +386,21 @@ python run_toy_example.py 9999 10000 1
 
 **在Host节点192.168.0.1上运行：**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/min_test_task /
-
 sh run.sh host fast
+```
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
 **在Guest节点192.168.0.2上运行：**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/min_test_task/
-
-sh run.sh guest fast \$ {host_table} \$ {host_namespace} 
+sh run.sh guest fast $ {host_table} $ {host_namespace} 
+```
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
 
@@ -384,4 +411,4 @@ sh run.sh guest fast \$ {host_table} \$ {host_namespace}
 7.4. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问http://192.168.0.1:8080和http://192.168.0.2:8080来查看任务信息。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问http://192.168.0.1:8080和http://192.168.0.2:8080来查看任务信息。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。

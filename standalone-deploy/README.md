@@ -16,7 +16,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
 
-2. Dependent on docker and docker-compose, You can verify the docker environment with the following command:docker --version and docker-compose --version.
+2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
 3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
 
@@ -61,21 +61,21 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it. 
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-1.1.tar.gz
-   tar -xvf  standalone-fate-1.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.1.tar.gz
+   tar -xvf  standalone-fate-master-1.1.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-1.1
-   source init.sh
+   cd standalone-fate-master-1.1
+   source init.sh init
    ```
 
 4. Execution test.
 
    ```
-   cd standalone-fate-1.1
+   cd standalone-fate-master-1.1
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -90,7 +90,7 @@ Http://hostip:8080.
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
 
-2. Dependent on docker and docker-compose, You can verify the docker environment with the following command:docker --version and docker-compose --version.
+2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
 3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
 
@@ -106,7 +106,7 @@ FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #Execute the command
 FATE $ cd FATE/standalone-deploy
-FATE $ bash build_standalone_docker.sh
+FATE $ bash build_standalone_docker.sh init
 
 #Validation results
 FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`
