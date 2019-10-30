@@ -4,7 +4,14 @@
     "party_id": 10000
   },
   "job_parameters": {
-    "work_mode": 0
+    "work_mode": 0,
+    "backend": 1,
+    "spark_submit_config": {
+        "driver-memory": "1g",
+        "num-executors": 10,
+        "executor-memory": "1g",
+        "executor-cores": 1
+    }
   },
   "role": {
     "guest": [

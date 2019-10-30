@@ -1,13 +1,13 @@
 {
     "initiator": {
         "role": "guest",
-        "party_id": 9999
+        "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 1
+        "work_mode": 0
     },
     "role": {
-        "guest": [9999],
+        "guest": [10000],
         "host": [10000],
         "arbiter": [10000]
     },
@@ -38,19 +38,25 @@
                 "label_name": ["y"],
                 "label_type": ["int"],
                "output_format": ["dense"]
+            },
+            "evaluation_0": {
+                "need_run": [false]
+            },
+            "evaluation_1": {
+                "need_run": [false]
             }
         }
     },
     "algorithm_parameters": {
         "homo_lr_0": {
             "penalty": "L2",
-            "optimizer": "nesterov_momentum_sgd",
+            "optimizer": "sgd",
             "eps": 1e-5,
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 20,
             "converge_func": "diff",
             "batch_size": 320,
-            "learning_rate": 0.01,
+            "learning_rate": 0.15,
             "init_param": {
 				"init_method": "zeros"
             },
@@ -62,9 +68,6 @@
             }
         },
         "evaluation_0": {
-            "eval_type": "binary"
-        },
-        "evaluation_1": {
             "eval_type": "binary"
         }
     }

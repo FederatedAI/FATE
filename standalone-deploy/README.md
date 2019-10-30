@@ -102,7 +102,7 @@ Http://hostip:8080.
 
 ```
 #Get code
-FATE $ git clone https://github.com/WeBankFinTech/FATE.git
+FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #Execute the command
 FATE $ cd FATE/standalone-deploy
