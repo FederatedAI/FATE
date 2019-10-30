@@ -101,8 +101,8 @@ init(){
     ALTER USER 'root'@'localhost' IDENTIFIED by "${mysql_password}";
     CREATE USER 'root'@"${mysql_ip}" IDENTIFIED BY "${mysql_password}";
     GRANT ALL ON *.* TO 'root'@"${mysql_ip}";
-    CREATE USER '${user}'@"localhost" IDENTIFIED BY "${mysql_password}";
-    GRANT ALL ON *.* TO '${user}'@"localhost";
+    CREATE USER '${mysql_user}'@"localhost" IDENTIFIED BY "${mysql_password}";
+    GRANT ALL ON *.* TO '${mysql_user}'@"localhost";
     CREATE DATABASE ${fate_flow_db_name};
     source ${mysql_dir}/create-meta-service.sql;
     source ${mysql_dir}/insert-node.sql;
@@ -111,9 +111,10 @@ EOF
 
     for ip in ${party_ips[*]};
     do
+        echo "[INFO] Grant to ${mysql_user} on ${ip}"
         ./bin/mysql -uroot -p"${mysql_password}" -S ./mysql.sock --connect-expired-password << EOF
-        CREATE USER '${user}'@"${ip}" IDENTIFIED BY "${mysql_password}";
-        GRANT ALL ON *.* TO '${user}'@"${ip}";
+        CREATE USER '${mysql_user}'@"${ip}" IDENTIFIED BY "${mysql_password}";
+        GRANT ALL ON *.* TO '${mysql_user}'@"${ip}";
 EOF
     done
 }
