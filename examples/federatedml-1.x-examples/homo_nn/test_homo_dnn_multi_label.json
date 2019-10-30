@@ -11,7 +11,7 @@
       10000
     ],
     "host": [
-      10000
+      10000, 9999
     ],
     "arbiter": [
       10000
@@ -51,22 +51,26 @@
             {
               "name": "homo_host",
               "namespace": "vehicle_scale"
+            },
+            {
+              "name": "homo_host",
+              "namespace": "vehicle_scale"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [
-          true
+          true, true
         ],
         "label_name": [
-          "y"
+          "y", "y"
         ],
         "label_type": [
-          "int"
+          "int", "int"
         ],
         "output_format": [
-          "dense"
+          "dense", "dense"
         ]
       }
     }
@@ -77,21 +81,20 @@
       "nn_define": [
         {
           "layer": "Dense",
-          "units": 4,
+          "units": 5,
           "use_bias": false,
           "activation": "relu"
         },
         {
           "layer": "Dense",
-          "units": 3,
+          "units": 4,
           "activation": "softmax"
         }
       ],
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adam",
-        "learning_rate": 0.05,
-        "rho": 0.95
+        "learning_rate": 0.05
       },
       "early_stop": {
         "early_stop": "diff",
