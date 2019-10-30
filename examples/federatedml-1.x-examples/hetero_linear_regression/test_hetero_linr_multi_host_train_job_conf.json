@@ -48,11 +48,11 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_a_1",
+              "name": "motor_mini_a",
               "namespace": "motor_mini"
             },
             {
-              "name": "motor_mini_a_2",
+              "name": "motor_mini_a",
               "namespace": "motor_mini"
             }
           ]
