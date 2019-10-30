@@ -25,16 +25,23 @@ class DataIOParam(BaseParam):
 
     Parameters
     ----------
-    input_format : str, accepted 'dense','sparse' 'tag' only in this version. default: 'dense'
+    input_format : str, accepted 'dense','sparse' 'tag' only in this version. default: 'dense'.
+                   please have a look at this tutorial at "DataIO" section of federatedml/util/README.md.
+                   Formally,
+                       dense input format data should be set to "dense",
+                       svm-light input format data should be set to "sparse",
+                       tag or tag:value input format data should be set to "tag".
 
     delimitor : str, the delimitor of data input, default: ','
 
-    data_type : str, the data type of data input, accedted 'float','float64','int','int64','str','long'
+    data_type : str, the data type of data input, accepted 'float','float64','int','int64','str','long'
                "default: "float64"
 
-    tag_with_value: bool, use if input_format is 'tag', if tag_with_value is True, input column data format should be tag[delimitor]value, otherwise is tag only
+    tag_with_value: bool, use if input_format is 'tag', if tag_with_value is True,
+                    input column data format should be tag[delimitor]value, otherwise is tag only
 
-    tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True, delimitor of tag[delimitor]value column value.
+    tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True,
+                         delimitor of tag[delimitor]value column value.
 
     missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
 

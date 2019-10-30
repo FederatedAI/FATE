@@ -383,3 +383,26 @@ Once predict task finished, the first 100 records of predict result are availabl
     ${component_name}: the component who has predict results
     ${predict_result_output_dir}: the directory which use download the predict result to.
 
+
+# Other Configuration
+
+## use spark
+
+1. deploy spark(yarn or standalone)
+2. export SPARK_HOME env before fate_flow service start(better adding env to service.sh)
+3. adjust runtime_conf, adjust job_parameters field:
+
+    ```json
+    "job_parameters": {
+        "work_mode": ?,
+        "backend": 1,
+        "spark_submit_config": {
+            "deploy-mode": "client",
+            "queue": "default",
+            "driver-memory": "1g",
+            "num-executors": 2,
+            "executor-memory": "1g",
+            "executor-cores": 1
+        }
+    }
+    ```

@@ -28,6 +28,15 @@ Figure 2： Federated HeteroLR Principle
 In the training process, party A and party B compute out the elements needed for final gradients. Arbiter aggregate them and compute
 out the gradient and then transfer back to each party. Check out the [paper](https://arxiv.org/abs/1711.10677) for more details.
 
+### Multi-host hetero-lr
+
+For multi-host scenario, the gradient computation still keep the same as single-host case. However, we use the second-norm of the difference of model weights between two consecutive iterations as the convergence criterion. Since the arbiter can obtain the completed model weight, the convergence decision is happening in Arbiter.
+
+ <div style="text-align:center", align=center>
+<img src="./images/hetero_lr_multi_host.png" alt="samples" width="500" height="300" /><br/>
+Figure 2： Federated Multi-host HeteroLR Principle
+</div>
+
 ## 3. Heterogeneous LR with Neural Network
 
 The heteroLR algorithm described in section 2 requires the input data to be given in tabular form. This requirement limits the application of the heteroLR algorithm. To address this issue to some extent, we extend the original heteroLR by adding neural networks in the loop. 
