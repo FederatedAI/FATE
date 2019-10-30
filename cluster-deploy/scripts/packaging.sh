@@ -147,6 +147,7 @@ get_module_package ${source_code_dir} "jdk" jdk-${jdk_version}-linux-x64.tar.gz
 get_module_package ${source_code_dir} "mysql" mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
 get_module_package ${source_code_dir} "redis" redis-${redis_version}.tar.gz
 get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1.tar.gz
+get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1_ubuntu.tar.gz
 echo "[INFO] Package base module done"
 echo "[INFO] Package fate done"
 echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"
