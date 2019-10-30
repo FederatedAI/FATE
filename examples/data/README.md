@@ -48,5 +48,9 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 - 18 features
 - [source](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes))
 
+#### ionosphere_scale
+- 34 features
+- [source](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/ionosphere_scale)
+
 
 

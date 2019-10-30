@@ -44,7 +44,7 @@ The following figure shows the process of federated split finding.
 Figure 2: Process of Federated Split Finding</div>
 
 The parties continue the split finding process until finishing constructed the tree. 
-Each parties only knows the detail split information of the tree nodes where the split features belong to its data. 
+Each party only knows the detailed split information of the tree nodes where the split features belong to its data. 
 The following figure shows the final structure of a single decision tree.
 <div style="text-align:center" align=center>
 <img src="./images/tree_structure.png" alt="tree_structure" width="500" height="250" />
@@ -74,7 +74,7 @@ The procedure of the data parallel algorithm in each party is:
 #### Applications
 SecureBoost supports the following applications.  
 * binary classification, the objective function is sigmoid cross-entropy  
-* multi classfication, the objective function is softmax cross-entropy
+* multi classification, the objective function is softmax cross-entropy
 * regression, objective function now support is least-squared-error-loss、least-absolutely-error-loss、huber-loss、
 tweedie-loss、fair-loss、 log-cosh-loss
 
@@ -87,7 +87,7 @@ max_split_nodes nodes instead of using all nodes of each level of the tree.
 * Support different encrypt-mode to balance speed and security
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
-* Support another homomorphic encryption method called "Iterative Affine" 
+* Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
  
 
 

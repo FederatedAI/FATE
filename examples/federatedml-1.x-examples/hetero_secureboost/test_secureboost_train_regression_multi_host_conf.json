@@ -8,47 +8,52 @@
     },
     "role": {
         "guest": [10000],
-        "host": [10000]
+        "host": [10000, 
+                 9999]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_b", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_b", "namespace": "hetero"}]
+                    "train_data": [{"name": "motor_mini_b", "namespace": "hetero"}],
+                    "eval_data": [{"name": "motor_mini_b", "namespace": "hetero"}]
                 }
             },
             "dataio_0":{
                 "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
+                "label_name": ["motor_speed"],
+                "label_type": ["float"],
                 "output_format": ["dense"]
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_a", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_a", "namespace": "hetero"}]
+                    "train_data": [{"name": "motor_mini_a_1", "namespace": "hetero"},
+                                   {"name": "motor_mini_a_2", "namespace": "hetero"}],
+                    "eval_data": [{"name": "motor_mini_a_1", "namespace": "hetero"},
+                                  {"name": "motor_mini_a_2", "namespace": "hetero"}]
                 }
             },
              "dataio_0":{
-                "with_label": [false],
-                "output_format": ["dense"]
+                "with_label": [false, 
+                               false],
+                "output_format": ["dense", 
+                                  "dense"]
             }
         }
     },
     "algorithm_parameters": {
         "secureboost_0": {
-            "task_type": "classification",
+            "task_type": "regression",
             "learning_rate": 0.1, 
-            "num_trees": 5,
+            "num_trees": 50,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
             "tol": 0.0001,
             "bin_num": 50,
             "objective_param": { 
-                "objective": "cross_entropy"
+                "objective": "lse"
             },
             "encrypt_param": {
                 "method": "paillier" 
@@ -57,19 +62,10 @@
                 "with_proba": true,
                 "threshold": 0.5 
             },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "binary"
-                }
-             },
-            "validation_freqs": 1
+            "validation_freqs": 5
         },
         "evaluation_0": {
-            "eval_type": "binary"
+            "eval_type": "regression"
         }
     }
 }
