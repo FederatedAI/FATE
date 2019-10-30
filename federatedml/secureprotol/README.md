@@ -58,7 +58,7 @@ Generate an key-tuple array, the element in the array is a tuple (a, inv_a, n), 
 
 #### Decrypt
 
-Dec(E(x)) = Dec_1 o ... o Dec_n(x), Dec_r(x) = (inv_a)_r * x % n
+Dec(E(x)) = Dec_1 o ... o Dec_n(x), Dec_r(x) = (inv_a)_r * (a_r * x) % n_r = x % n_r
 
 
 ### Diffne Hellman Key Exchange
