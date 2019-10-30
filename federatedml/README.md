@@ -8,6 +8,13 @@ Federatedml includes implementation of many common machine learning algorithms a
 
 3. Framework: Kits and base models for developing new algorithm modules. Framework provides reusable functions to standardize modules and make them compact.
 
+4. Secure Protocol: Provides multiple security protocols for more secure multi-party interaction calculations.
+
+ <div style="text-align:center", align=center>
+<img src="../doc/images/federatedml_structure.png" alt="samples" width="500" height="300" /><br/>
+Figure 2： Federated HeteroLR Principle
+</div>
+
 ### Algorithm List
 
 #### 1. [DataIO](./util/README.md)
