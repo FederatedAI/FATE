@@ -11,7 +11,7 @@
       10000
     ],
     "host": [
-      10000, 9999
+      10000
     ],
     "arbiter": [
       10000
@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_guest",
-              "namespace": "vehicle_scale"
+              "name": "homo_breast_guest",
+              "namespace": "homo_breast_guest"
             }
           ]
         }
@@ -49,48 +49,32 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_host",
-              "namespace": "vehicle_scale"
-            },
-            {
-              "name": "homo_host",
-              "namespace": "vehicle_scale"
+              "name": "homo_breast_host",
+              "namespace": "homo_breast_host"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [
-          true, true
+          true
         ],
         "label_name": [
-          "y", "y"
+          "y"
         ],
         "label_type": [
-          "int", "int"
+          "int"
         ],
         "output_format": [
-          "dense", "dense"
+          "dense"
         ]
       }
     }
   },
   "algorithm_parameters": {
     "homo_nn_0": {
-      "config_type": "nn",
-      "nn_define": [
-        {
-          "layer": "Dense",
-          "units": 5,
-          "use_bias": false,
-          "activation": "relu"
-        },
-        {
-          "layer": "Dense",
-          "units": 4,
-          "activation": "softmax"
-        }
-      ],
+      "config_type": "keras",
+      "nn_define": $nn_define,
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adam",
@@ -100,9 +84,10 @@
         "early_stop": "diff",
         "eps": 1e-4
       },
-      "loss": "categorical_crossentropy",
+      "loss": "binary_crossentropy",
       "metrics": [
-        "accuracy"
+        "accuracy",
+        "AUC"
       ],
       "max_iter": 10
     }
