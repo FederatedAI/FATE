@@ -30,7 +30,7 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 
 #### dvisits:
 - 12 features
-- [source](https://www.kaggle.com/mirichoi0218/insurance)
+- [source](https://cran.r-project.org/web/packages/faraway/index.html)
 
 #### give_credit:
 - 10 features
