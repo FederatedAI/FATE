@@ -60,7 +60,7 @@ transform an existing iterable data into a Table.
 **Parameters:**
 
 + **data** (Iterable): Data to be put.
-+ **include_key** (boolean): Whether to include key when parallelizing data into dtable.
++ **include_key** (boolean): Whether to include key when parallelizing data into table.
 + **name** (string): Table name of result Table. A default table name will be generated when `None` is used
 + **partition** (int): Number of partitions when parallelizing data.
 + **namespace** (string): Table namespace of result Table. job_id will be used when `None` is used.
@@ -106,7 +106,7 @@ Loads an existing Table.
 
 **Returns:**
 
-+ **dtable** (Table): A Table consisting data loaded.
++ **table** (Table): A Table consisting data loaded.
 
 **Example:**
 
@@ -127,7 +127,7 @@ Destroys Table(s). Wildcard can be used in `name` parameter.
 
 + **name** (string): Table name to be cleanup. Wildcard can be used here.
 + **namespace** (string): Table namespace to be cleanup. This needs to be a exact match.
-+ **persistent** (boolean): Where to delete the DTables, `True` from persistent storage and `False` from temporary storage.
++ **persistent** (boolean): Where to delete the Tables, `True` from persistent storage and `False` from temporary storage.
 
 **Returns:**
 
@@ -561,10 +561,13 @@ Stores a key-value record only if the key is not set.
 
 ``` python
 >>> a = sessiojn.parallelize(range(10))
->>> a.put(1, 1)
+>>> a.put_if_absent(1, 2)
 >>> b = a.collect()
 >>> list(b)
 [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]
+>>> a.put_if_absent(-1, -1)
+>>> list(b)
+[(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (-1, -1)]
 ```
 
 ### save_as
@@ -583,7 +586,7 @@ Transforms a temporary table to a persistent table.
 
 **Returns:**
 
-+ **dtable** (Table): Result persistent Table.
++ **table** (Table): Result persistent Table.
 
 **Example:**
 
@@ -784,7 +787,7 @@ In-place computing does not apply.
 
 **Returns:**
 
-+ **dtable** (Table): A new table containing results.
++ **table** (Table): A new table containing results.
 
 **Example:**
 
