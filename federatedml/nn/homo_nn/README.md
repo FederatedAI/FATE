@@ -1,13 +1,13 @@
 # Homogeneous Neural Networks 
 
 Neural networks are probably the most popular machine learning algorithms in recent years. FATE provides a federated homogeneous neural network implementation.
-We simplified the federation process into three parties. Party A represents Guest，which acting as a task trigger. 
-Party B represents Host, which is almost same with guest except not acting as a trigger of the task. 
-Party C, serve as a coordinator to aggregate models from guest/hosts and broadcast aggregated model.
+We simplified the federation process into three parties. Party A represents Guest，which acts as a task trigger.
+Party B represents Host, which is almost the same with guest except that Host does not initiate task.
+Party C serves as a coordinator to aggregate models from guest/hosts and broadcast aggregated model.
  
 ## 1. Basic Process
 
-As the name suggested, in Homogeneous Neural Networks, the feature spaces of guest and hosts are identical.
+As its name suggested, in Homogeneous Neural Networks, the feature spaces of guest and hosts are identical.
 An optional encryption mode for model is provided. 
 By doing this, no party can get the private model of other parties. 
 
@@ -18,7 +18,7 @@ Figure 1： Federated Homo NN Principle</div>
 The Homo NN process is shown in Figure 1. Models of Party A and Party B have the same neural networks structure.
 In each iteration, each party trains its model on its own data. After that, all parties upload their encrypted (with random mask) model parameters to arbiter. The arbiter aggregates these parameters to form a federated model parameter, which will then be distributed to all parties for updating their local models. Similar to traditional neural network, the training process will stop when the federated model converges or the whole training process reaches a predefined max-iteration threshold.
 
-Please note that random numbers are carefully generated so that the random numbers of all parties add up an zero matrix and thus disappear automatically. For more detailed explainations, we refer to [Secure Analytics: Federated Learning and Secure Aggregation](https://inst.eecs.berkeley.edu/~cs261/fa18/scribe/10_15.pdf). Since there is no model transferred in plaintext, except for the owner of the model, no other party can obtain the real information of the model.
+Please note that random numbers are carefully generated so that the random numbers of all parties add up an zero matrix and thus disappear automatically. For more detailed explanations, please refer to [Secure Analytics: Federated Learning and Secure Aggregation](https://inst.eecs.berkeley.edu/~cs261/fa18/scribe/10_15.pdf). Since there is no model transferred in plaintext, except for the owner of the model, no other party can obtain the real information of the model.
 
 ## 2. Features
  
@@ -149,10 +149,10 @@ Please note that random numbers are carefully generated so that the random numbe
 4. support multi-host. In fact, for model security reasons, at least two host parties are required.
 
 ## 3. Configuration
-If you have any confusion about task configuration, please refer to the [documentation](../../../examples/federatedml-1.x-examples/README.md) under example first. In this part we only talk about the parameter configuration. 
+For more information on task configuration, please refer to the [documentation](../../../examples/federatedml-1.x-examples/README.md) under example first. In this part we only talk about the parameter configuration.
 
 ### overview
-Since Homogeneous Neural Networks have same network structure in all parties, a common practice is to configure parameters under algorithm_parameters, which is shared with all parties. The basic structure is:
+Since all parties training Homogeneous Neural Networks have the same network structure, a common practice is to configure parameters under algorithm_parameters, which is shared across all parties. The basic structure is:
 ```json
 {
       "config_type": "nn",

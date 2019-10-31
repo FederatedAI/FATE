@@ -96,7 +96,7 @@ Http://hostip:8080.
 
 4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
-5. It takes about 40 minutes to complete the execution, please wait for a moment.
+5. It takes about 40 minutes to complete the build, please wait for a moment.
 
    please follow the below step:
 
@@ -117,10 +117,10 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
-You can also experience the fateboard access via a browser:
+You can also acess the fateboard via a browser:
 Http://hostip:8080.
 
-Please ignore the following tips:
+Please ignore the following messages:
 
 1. debconf: delaying package configuration, since apt-utils is not installed.
 
