@@ -87,7 +87,7 @@ Please note that random numbers are carefully generated so that the random numbe
     - [Ftrl](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/optimizers/Ftrl)
       ```json
       {
-            "optimizer": "Adamax",
+            "optimizer": "Ftrl",
             "learning_rate": 0.001,
             "learning_rate_power": -0.5,
             "initial_accumulator_value": 0.1,
