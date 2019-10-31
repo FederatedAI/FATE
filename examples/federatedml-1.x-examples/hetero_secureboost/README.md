@@ -33,6 +33,7 @@ This section introduces the dsl and conf relationships for usage.
                   (2) host: ionosphere_scale_a.csv  
     dsl: test_secureboost_train_dsl.json  
     runtime_config: test_secureboost_train_binary_with_missing_value_conf.json  
+    
     This example also contains another two feature since FATE-1.1.  
     (1) evaluate data during training process, check the "validation_freqs" field in runtime_config  
     (2) another homomorphic encryption method "Iterative Affine", check "encrypt_param" field in runtime_config.
