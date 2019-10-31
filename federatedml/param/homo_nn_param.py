@@ -99,8 +99,11 @@ class HomoNNParam(BaseParam):
         pb.aggregate_every_n_epoch = self.aggregate_every_n_epoch
         pb.config_type = self.config_type
 
-        for layer in self.nn_define:
-            pb.nn_define.append(json.dumps(layer))
+        if self.config_type == "nn":
+            for layer in self.nn_define:
+                pb.nn_define.append(json.dumps(layer))
+        elif self.config_type == "keras":
+            pb.nn_define.append(json.dumps(self.nn_define))
 
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
@@ -121,8 +124,13 @@ class HomoNNParam(BaseParam):
         self.aggregate_every_n_epoch = pb.aggregate_every_n_epoch
         self.config_type = pb.config_type
 
-        for layer in pb.nn_define:
-            self.nn_define.append(json.loads(layer))
+        if self.config_type == "nn":
+            for layer in pb.nn_define:
+                self.nn_define.append(json.loads(layer))
+        elif self.config_type == "keras":
+            self.nn_define = pb.nn_define[0]
+        else:
+            raise ValueError(f"{self.config_type} is not supported")
 
         self.batch_size = pb.batch_size
         self.max_iter = pb.max_iter

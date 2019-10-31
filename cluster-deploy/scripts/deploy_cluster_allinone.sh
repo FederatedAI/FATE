@@ -141,6 +141,7 @@ packaging_mysql() {
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_user=.*/mysql_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s/mysql_password=.*/mysql_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i.bak "s/fate_flow_db_name=.*/fate_flow_db_name=${fate_flow_db_name}/g" ./configurations.sh.tmp
     sed -i.bak "s/eggroll_meta_service_db_name=.*/eggroll_meta_service_db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp
@@ -160,6 +161,7 @@ config_mysql() {
     sed -i.bak "s/meta_service_ip=.*/meta_service_ip=${node_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/egg_ip=.*/egg_ip=${node_ip}/g" ./configurations.sh.tmp
     sed -i.bak "s/storage_service_ip=.*/storage_service_ip=${node_ip}/g" ./configurations.sh.tmp
+    sed -i.bak "s/party_ips=.*/party_ips=\(${node_ip[*]}\)/g" ./configurations.sh.tmp
     config_enter ${config_label} mysql
     sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${config_label}
 }

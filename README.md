@@ -6,7 +6,7 @@
 
 FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
-<https://www.fedai.org/>
+<https://fate.fedai.org>
 
 ## Getting Involved
 
@@ -50,7 +50,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["./examples/federatedml-1.0-examples"](./examples/federatedml-1.0-examples)
+We have provided a python script for quick starting modeling task. This scrip is located at ["examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
 #### Standalone Version
 1. Start standalone version hetero-lr task (default)

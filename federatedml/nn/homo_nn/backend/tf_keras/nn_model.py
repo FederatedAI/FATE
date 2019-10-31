@@ -66,7 +66,7 @@ def _load_model(nn_struct_json):
     return tf.keras.models.model_from_json(nn_struct_json, custom_objects={})
 
 
-def build_keras(nn_define, loss, optimizer, metrics):
+def build_keras(nn_define, loss, optimizer, metrics, **kwargs):
     import json
     nn_define_json = json.dumps(nn_define)
 
@@ -76,7 +76,7 @@ def build_keras(nn_define, loss, optimizer, metrics):
                            loss=loss,
                            optimizer=optimizer,
                            metrics=metrics)
-    return KerasNNModel(sess, model), KerasSequenceDataConverter()
+    return KerasNNModel(sess, model)
 
 
 def from_keras_sequential_model(model, loss, optimizer, metrics):

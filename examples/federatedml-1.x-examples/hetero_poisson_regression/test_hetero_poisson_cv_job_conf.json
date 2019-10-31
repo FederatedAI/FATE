@@ -154,11 +154,11 @@
   },
   "algorithm_parameters": {
     "hetero_poisson_0": {
-      "penalty": "None",
-      "optimizer": "sgd",
+      "penalty": "L2",
+      "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 50,
+      "max_iter": 10,
       "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.01,

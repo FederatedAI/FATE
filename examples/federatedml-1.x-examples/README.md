@@ -44,7 +44,7 @@ The log info is located in ${your install path}/examples/federatedml-1.0-example
 You can view the job on the url above or check out the log through the log file path.
 
 You can also define your own task through editing the following variables in quick_run.py:
-```
+```python
 # You can set up your own configuration files here
 DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
 SUBMIT_CONF_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_conf.json'
@@ -178,7 +178,7 @@ Before starting a task, you need to load data among all the data-providers. To d
 > python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c upload_data.json
 
 Here is an example of configuring upload_data.json:
-```
+``` json
     {
       "file": "examples/data/breast_b.csv",
       "head": 1,
@@ -225,13 +225,13 @@ Use your browser to open a website: http://{Your fate-board ip}:{your fate-board
 
 <div style="text-align:center", align=center>
 <img src="../image/JobList.png" alt="samples" width="500" height="250" /><br/>
-Figure 1： Federated HomoLR Principle</div>
+Figure 1： Job List</div>
 
 There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
 
 <div style="text-align:center", align=center>
 <img src="../image/JobOverview.png" alt="samples" width="500" height="250" /><br/>
-Figure 1： Job Overview</div>
+Figure 2： Job Overview</div>
 
 In the task page, all the components will be shown as a DAG. We use different color to indicate their running status.
 1. Green: run success
@@ -243,13 +243,13 @@ In the task page, all the components will be shown as a DAG. We use different co
 
 <div style="text-align:center", align=center>
 <img src="../image/ComponentOutput.png" alt="samples" width="500" height="250" /><br/>
-Figure 1： Job Overview</div>
+Figure 3： Component Output</div>
 
 If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
 
 <div style="text-align:center", align=center>
 <img src="../image/DashBoard.png" alt="samples" width="500" height="250" /><br/>
-Figure 1： Job Overview</div>
+Figure 4： Dash Board</div>
 
 1. Left window: showing data set used for each party in this task.
 2. Middle window: Running status or progress of the whole task.
@@ -383,3 +383,26 @@ Once predict task finished, the first 100 records of predict result are availabl
     ${component_name}: the component who has predict results
     ${predict_result_output_dir}: the directory which use download the predict result to.
 
+
+# Other Configuration
+
+## use spark
+
+1. deploy spark(yarn or standalone)
+2. export SPARK_HOME env before fate_flow service start(better adding env to service.sh)
+3. adjust runtime_conf, adjust job_parameters field:
+
+    ```json
+    "job_parameters": {
+        "work_mode": ?,
+        "backend": 1,
+        "spark_submit_config": {
+            "deploy-mode": "client",
+            "queue": "default",
+            "driver-memory": "1g",
+            "num-executors": 2,
+            "executor-memory": "1g",
+            "executor-cores": 1
+        }
+    }
+    ```

@@ -141,11 +141,13 @@ tar czf fate-proxy-1.1.tar.gz fate-proxy-1.1.jar lib/
 mv fate-proxy-1.1.tar.gz ${packages_dir}/
 
 echo "[INFO] Packaging base module"
-get_module_package ${source_code_dir} "python" miniconda3-fate-${python_version}.tar.gz
+get_module_package ${source_code_dir} "python" pip-packages-fate-${python_version}.tar.gz
+get_module_package ${source_code_dir} "python" Miniconda3-4.5.4-Linux-x86_64.sh
 get_module_package ${source_code_dir} "jdk" jdk-${jdk_version}-linux-x64.tar.gz
 get_module_package ${source_code_dir} "mysql" mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
 get_module_package ${source_code_dir} "redis" redis-${redis_version}.tar.gz
 get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1.tar.gz
+get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1_ubuntu.tar.gz
 echo "[INFO] Package base module done"
 echo "[INFO] Package fate done"
 echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"

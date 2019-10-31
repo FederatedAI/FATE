@@ -366,7 +366,7 @@ if __name__ == '__main__':
     try:
         args = parser.parse_args()
         upload_data()
-        if TASK == 'train':
+        if TASK == 'train' and args.role == GUEST:
             submit_job()
         else:
             if args.role == HOST:

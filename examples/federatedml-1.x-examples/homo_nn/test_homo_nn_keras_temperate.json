@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_guest",
-              "namespace": "vehicle_scale"
+              "name": "homo_breast_guest",
+              "namespace": "homo_breast_guest"
             }
           ]
         }
@@ -49,8 +49,8 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_host",
-              "namespace": "vehicle_scale"
+              "name": "homo_breast_host",
+              "namespace": "homo_breast_host"
             }
           ]
         }
@@ -73,33 +73,21 @@
   },
   "algorithm_parameters": {
     "homo_nn_0": {
-      "config_type": "nn",
-      "nn_define": [
-        {
-          "layer": "Dense",
-          "units": 4,
-          "use_bias": false,
-          "activation": "relu"
-        },
-        {
-          "layer": "Dense",
-          "units": 3,
-          "activation": "softmax"
-        }
-      ],
+      "config_type": "keras",
+      "nn_define": $nn_define,
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adam",
-        "learning_rate": 0.05,
-        "rho": 0.95
+        "learning_rate": 0.05
       },
       "early_stop": {
         "early_stop": "diff",
         "eps": 1e-4
       },
-      "loss": "categorical_crossentropy",
+      "loss": "binary_crossentropy",
       "metrics": [
-        "accuracy"
+        "accuracy",
+        "AUC"
       ],
       "max_iter": 10
     }

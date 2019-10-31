@@ -9,6 +9,7 @@ deploy_dir=
 deploy_packages_dir=
 
 mysql_ip=
+mysql_user=
 mysql_password=
 fate_flow_db_name=
 eggroll_meta_service_db_name=
@@ -23,3 +24,4 @@ egg_ip=
 egg_port=7888
 storage_service_ip=
 storage_service_port=7778
+party_ips=
