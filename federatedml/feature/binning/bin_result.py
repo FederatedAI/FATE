@@ -17,6 +17,8 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
+from federatedml.protobuf.generated import feature_binning_param_pb2
+
 import numpy as np
 LOGGER = log_utils.getLogger()
 
@@ -78,6 +80,19 @@ class BinColResults(object):
         self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
 
+    def generate_pb(self):
+        result = feature_binning_param_pb2.IVParam(woe_array=self.woe_array,
+                                                   iv_array=self.iv_array,
+                                                   event_count_array=self.event_count_array,
+                                                   non_event_count_array=self.non_event_count_array,
+                                                   event_rate_array=self.event_rate_array,
+                                                   non_event_rate_array=self.non_event_rate_array,
+                                                   split_points=self.split_points,
+                                                   iv=self.iv,
+                                                   is_woe_monotonic=self.is_woe_monotonic,
+                                                   bin_nums=self.bin_nums)
+        return result
+
 
 class BinResults(object):
     def __init__(self):
@@ -116,4 +131,10 @@ class BinResults(object):
             split_points_result.append(self.all_cols_results[bin_name].get_split_pionts())
         return np.array(split_points_result)
 
+    def generated_pb(self):
+        col_result_dict = {}
+        for col_name, col_bin_result in self.all_cols_results.items():
+            col_result_dict[col_name] = col_bin_result.generate_pb()
+        result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict)
+        return result_pb
 

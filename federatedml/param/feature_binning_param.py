@@ -36,9 +36,11 @@ class TransformParam(BaseParam):
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
 
-    transform_type: str, 'bin_num'or None default: None
-        Specify which value these columns going to replace. If it is set as None, nothing will be replaced.
-
+    transform_type: str, 'bin_num'or 'woe' or None default: 'bin_num'
+        Specify which value these columns going to replace.
+         1. bin_num: Transfer original feature value to bin index in which this value belongs to.
+         2. woe: This is valid for guest party only. It will replace original value to its woe value
+         3. None: nothing will be replaced.
     """
 
     def __init__(self, transform_cols=-1, transform_names=None, transform_type="bin_num"):

@@ -108,7 +108,6 @@ class Binning(object):
             split_points.sort()
             self.bin_results.put_col_split_points(col_name, split_points)
 
-
     def set_bin_inner_param(self, bin_inner_param):
         self.bin_inner_param = bin_inner_param
 
@@ -212,7 +211,7 @@ class Binning(object):
 
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
-                             abnormal_list: list, convert_type: str='bin_num'):
+                             abnormal_list: list, convert_type: str = 'bin_num'):
         all_data = instances.features.get_all_data()
         data_shape = instances.features.get_shape()
         indice = []
@@ -261,7 +260,7 @@ class Binning(object):
 
     @staticmethod
     def _convert_dense_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
-                             abnormal_list: list, convert_type: str='bin_num'):
+                            abnormal_list: list, convert_type: str = 'bin_num'):
         features = instances.features
         transform_cols_idx = bin_inner_param.transform_bin_indexes
         split_points_dict = bin_results.all_split_points
@@ -488,7 +487,7 @@ class Binning(object):
             self.bin_results.put_col_results(col_name, col_result_obj)
 
     @staticmethod
-    def add_label_in_partition(data_bin_with_table, split_points, cols_dict, encryptor=None, header=None):
+    def add_label_in_partition(data_bin_with_table, split_points, cols_dict):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -521,10 +520,7 @@ class Binning(object):
             result_col_sum = []
             split_point = split_points.get(col_name)
             for bin_index in range(len(split_point)):
-                if encryptor is not None:
-                    result_col_sum.append([encryptor.encrypt(0), encryptor.encrypt(0)])
-                else:
-                    result_col_sum.append([0, 0])
+                result_col_sum.append([0, 0])
             result_sum[col_name] = result_col_sum  # {'x1': [[0, 0], [0, 0] ... ],...}
 
         for _, datas in data_bin_with_table:
@@ -542,12 +538,12 @@ class Binning(object):
                 result_sum[col_name] = col_sum
 
         # Convert to col_index
-        if header is not None:
-            new_result = {}
-            for col_name, col_sum in result_sum.items():
-                col_idx = header.index(col_name)
-                new_result[col_idx] = col_sum
-            result_sum = new_result
+        # if header is not None:
+        #     new_result = {}
+        #     for col_name, col_sum in result_sum.items():
+        #         col_idx = header.index(col_name)
+        #         new_result[col_idx] = col_sum
+        #     result_sum = new_result
 
         return result_sum
 
@@ -594,7 +590,6 @@ class Binning(object):
 
 
 class HostBaseBinning(Binning):
-
     def fit_split_points(self, data_instances):
         LOGGER.warning("Should not fit split points in host binning object")
         return

@@ -20,6 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.feature.binning.base_binning import HostBaseBinning
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.framework.hetero.procedure import two_parties_paillier_cipher
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 
@@ -30,8 +31,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     def __init__(self):
         super(HeteroFeatureBinningGuest, self).__init__()
 
-        self.encryptor = PaillierEncrypt()
-        self.encryptor.generate_key()
+        # self.encryptor = PaillierEncrypt()
+        # self.encryptor.generate_key()
         self.local_transform_result = None
         # self.party_name = consts.GUEST
         # self._init_binning_obj()
@@ -51,112 +52,63 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.debug("After fit, binning_obj split_points: {}".format(self.binning_obj.split_points))
 
         is_binary_data = data_overview.is_binary_labels(data_instances)
-
         if not is_binary_data:
             LOGGER.warning("Iv calculation support binary-data only in this version.")
-            # data_instances = self.fit_local(data_instances)
             return data_instances
 
-        # 1. Synchronize encryption information
-        self.__synchronize_encryption()
-
-        # 2. Prepare labels
         data_instances = data_instances.mapValues(self.load_data)
         self.set_schema(data_instances)
-
         label_table = data_instances.mapValues(lambda x: x.label)
 
-        # 3. Transfer encrypted label
-        f = functools.partial(self.encrypt,
-                              encryptor=self.encryptor)
+        if self.model_param.local_only:
+            LOGGER.info("This is a local only binning fit")
+            self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+            self.transform(data_instances)
+            return self.data_output
+
+        cipher = PaillierEncrypt()
+        cipher.generate_key()
+
+        f = functools.partial(self.encrypt, encryptor=cipher)
         encrypted_label_table = label_table.mapValues(f)
 
         self.transfer_variable.encrypted_label.remote(encrypted_label_table,
                                                       role=consts.HOST,
                                                       idx=-1)
-
         LOGGER.info("Sent encrypted_label_table to host")
 
-        # 4. Calculates self's binning. In case the other party need time to compute its data,
-        #  do binning calculation at this point.
-        data_instances = self.fit_local(data_instances, label_table)
-
-        # 5. Received host result and calculate iv value
+        self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
 
         encrypted_bin_sums = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
 
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_sum in enumerate(encrypted_bin_sums):
             host_binning_obj = HostBaseBinning()
-            result_counts = self.__decrypt_bin_sum(encrypted_bin_sum)
+            result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
             host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             self.host_results.append(host_binning_obj)
 
         self.set_schema(data_instances)
-
-        LOGGER.debug("Before transform, binning_obj split_points: {}".format(self.binning_obj.split_points))
-
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
         return self.data_output
 
     @staticmethod
-    def encrypt(x, encryptor):
-        return encryptor.encrypt(x), encryptor.encrypt(1 - x)
+    def encrypt(x, encrypter):
+        return encrypter.encrypt(x), encrypter.encrypt(1 - x)
 
-    def transform_local(self, data_instances, label_table=None):
-        self._abnormal_detection(data_instances)
-        self._setup_bin_inner_param(data_instances, self.model_param)
-        split_points = {}
-        for col_name, iv_attr in self.binning_result.items():
-            split_points[col_name] = iv_attr.split_points
-
-        self.binning_obj.cal_local_iv(data_instances,
-                                      split_points=split_points,
-                                      label_table=label_table)
-
-        for col_name, col_index in self.local_transform_result.items():
-            LOGGER.info("The local feature {} 's iv is {}".format(col_name, self.local_transform_result[col_name].iv))
-        self.set_schema(data_instances)
-        return data_instances
-
-    def __synchronize_encryption(self):
-        pub_key = self.encryptor.get_public_key()
-        # pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
-
-        self.transfer_variable.paillier_pubkey.remote(pub_key,
-                                                      role=consts.HOST,
-                                                      idx=0)
-        """
-        federation.remote(pub_key, name=self.transfer_variable.paillier_pubkey.name,
-                          tag=pubkey_id, role=consts.HOST, idx=0)
-        """
-
-        LOGGER.info("send pubkey to host")
-        self.has_synchronized = True
-
-    def __decrypt_bin_sum(self, encrypted_bin_sum):
+    @staticmethod
+    def __decrypt_bin_sum(encrypted_bin_sum, cipher):
         # for feature_sum in encrypted_bin_sum:
+        decrypted_list = {}
         for col_name, count_list in encrypted_bin_sum.items():
             new_list = []
             for encrypted_event, encrypted_non_event in count_list:
-                event_count = self.encryptor.decrypt(encrypted_event)
-                non_event_count = self.encryptor.decrypt(encrypted_non_event)
+                event_count = cipher.decrypt(encrypted_event)
+                non_event_count = cipher.decrypt(encrypted_non_event)
                 new_list.append((event_count, non_event_count))
-            encrypted_bin_sum[col_name] = new_list
-        return encrypted_bin_sum
-
-    def fit_local(self, data_instances, label_table=None):
-        self._abnormal_detection(data_instances)
-        # self._parse_cols(data_instances)
-        self._setup_bin_inner_param(data_instances, self.model_param)
-
-        self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
-        for key, iv_attr in iv_attrs.items():
-            LOGGER.debug('col: {}, local iv result: {}'.format(key, iv_attr.result_dict()))
-        self.binning_result = iv_attrs
-        self.set_schema(data_instances)
-        return data_instances
+            decrypted_list[col_name] = new_list
+        return decrypted_list
 
     @staticmethod
     def load_data(data_instance):

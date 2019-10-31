@@ -73,8 +73,8 @@ class BinInnerParam(object):
                 self.bin_indexes.append(idx)
                 self.bin_names.append(self.header[idx])
 
-    def add_transform_bin_indexes(self, bin_indexes):
-        for idx in bin_indexes:
+    def add_transform_bin_indexes(self, transform_indexes):
+        for idx in transform_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
                 continue
@@ -117,3 +117,16 @@ class BinInnerParam(object):
     def bin_cols_map(self):
         assert len(self.bin_indexes) == len(self.bin_names)
         return dict(zip(self.bin_names, self.bin_indexes))
+
+    def encode_col_name_dict(self, col_name_dict: dict):
+        encoded_result = {}
+        for col_name, dict_value in col_name_dict.items():
+            encoded_result[self.__encode_col_name(col_name)] = dict_value
+        return encoded_result
+
+    def __encode_col_name(self, col_name):
+        col_index = self.col_name_maps.get(col_name)
+        if col_index is None:
+            LOGGER.warning("Encoding a non-exist column name")
+            return None
+        return '.'.join(['host', str(col_index)])
