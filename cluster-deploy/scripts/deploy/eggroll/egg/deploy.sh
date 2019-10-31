@@ -56,15 +56,21 @@ packaging() {
         tar xzf eggroll-storage-service-cxx-${version}.tar.gz
         rm -rf eggroll-storage-service-cxx-${version}.tar.gz
         get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1_ubuntu.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
+        tar xzf third_party_eggrollv1_ubuntu.tar.gz
+        rm -rf third_party_eggrollv1_ubuntu.tar.gz
     elif [[ "${deploy_mode}" == "build" ]]; then
         get_module_package ${source_code_dir} ${module_name} eggroll-storage-service-cxx-${version}.tar.gz
         tar xzf eggroll-storage-service-cxx-${version}.tar.gz
         rm -rf eggroll-storage-service-cxx-${version}.tar.gz
         get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1.tar.gz
+        get_module_package ${source_code_dir} ${module_name} third_party_eggrollv1_ubuntu.tar.gz
         tar xzf third_party_eggrollv1.tar.gz
         rm -rf third_party_eggrollv1.tar.gz
+        tar xzf third_party_eggrollv1_ubuntu.tar.gz
+        rm -rf third_party_eggrollv1_ubuntu.tar.gz
     else
         echo "[INFO] Unsupported deployment method, exit"
         exit 101

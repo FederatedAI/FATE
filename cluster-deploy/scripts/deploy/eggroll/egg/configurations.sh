@@ -10,7 +10,7 @@ deploy_packages_dir=
 
 party_id=
 port=7888
-processor_port=50000
+processor_port=5000
 processor_count=16
 venv_dir=
 python_path=
