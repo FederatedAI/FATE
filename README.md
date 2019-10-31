@@ -36,6 +36,11 @@ FATE also provides a distributed runtime architecture for Big Data scenario. Mig
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
+#### Get source
+```shell
+git clone --recursive git@github.com:FederatedAI/FATE.git
+```
+
 ## Running Tests
 
 A script to run all the unittests has been provided in ./federatedml/test folder. 
