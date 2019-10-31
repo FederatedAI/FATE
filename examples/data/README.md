@@ -10,7 +10,7 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
 
 #### give\_credit_homo:
-- 9 features
+- 10 features
 - [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
 
 #### vehicle\_scale_homo:
@@ -33,7 +33,7 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 - [source](https://www.kaggle.com/mirichoi0218/insurance)
 
 #### give_credit:
-- 9 features
+- 10 features
 - [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
 
 #### motor_mini:
