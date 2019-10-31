@@ -16,7 +16,7 @@
          backend: typing.Union[int, Backend] = Backend.EGGROLL)
 ```
 
-Initializes session， should be called before all.
+Initializes session, should be called before all.
 
 **Parameters:**
 
@@ -55,7 +55,7 @@ parallelize(data,
             in_place_computing=False)
 ```
 
-transform an existing iterable data into a Table.
+Transforms an existing iterable data into a Table.
 
 **Parameters:**
 
@@ -71,7 +71,7 @@ transform an existing iterable data into a Table.
 
 **Returns:**
 
-+ **table** (Table): A Table consisting data parallelized.
++ **table** (Table): A Table consisting of parallelized data.
 
 **Example:**
 
@@ -169,7 +169,7 @@ Generates a unique ID each time it is invoked.
 get_session_id()
 ```
 
-return session id.
+Returns session id.
 
 **Parameters:**
 
@@ -192,7 +192,7 @@ return session id.
 get_data_table(name, namespace)
 ```
 
-return table with given name and namespace.
+Returns the table with given name and namespace.
 
 **Parameters:**
 
@@ -223,7 +223,7 @@ save_data(kv_data: Iterable,
           version_log=None)
 ```
 
-Save data to table, optional add version.
+Saves data to table, optional add version.
 
 **Parameters:**
 
@@ -253,7 +253,7 @@ Save data to table, optional add version.
 save_data_table_meta(kv, data_table_name, data_table_namespace):
 ```
 
-Save metas(in kv) to meta table associated with the table named `data_table_name` and namespaced `data_table_namespace`.
+Saves metas(in kv) to meta table associated with the table named `data_table_name` and namespaced `data_table_namespace`.
 
 **Parameters:**
 
@@ -278,7 +278,7 @@ Save metas(in kv) to meta table associated with the table named `data_table_name
 get_data_table_meta(key, data_table_name, data_table_namespace):
 ```
 
-get meta keyed by `key` from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
+Gets meta keyed by `key` from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
 
 **Parameters:**
 
@@ -303,7 +303,7 @@ get meta keyed by `key` from meta table associated with table named `data_table_
 get_data_table_meta(data_table_name, data_table_namespace):
 ```
 
-get metas from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
+Gets metas from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
 
 **Parameters:**
 
@@ -327,7 +327,7 @@ get metas from meta table associated with table named `data_table_name` and name
 stop()
 ```
 
-stop session, clean all tables associated with this session.
+Stops session, clean all tables associated with this session.
 
 **Parameters:**
 
@@ -351,7 +351,7 @@ stop session, clean all tables associated with this session.
 collect(min_chunk_size=0)
 ``` 
 
-Returns an iterator of (key, value) 2-tuple from the Table. 
+Returns an iterator of (key, value) 2-tuple from the Table.
 
 **Parameters:**
 
@@ -447,7 +447,7 @@ Destroys this Table, freeing its associated storage resources.
 first(keysOnly=False)
 ```
 
-Returning the first element of a Table. Shortcut of `take(1, keysOnly)`
+Returns the first element of a Table. Shortcut of `take(1, keysOnly)`
 
 **Parameters:**
 
@@ -693,7 +693,7 @@ In-place computing does not apply.
 glom()
 ```
 
-Coalescing all elements within each partition into a list.
+Coalesces all elements within each partition into a list.
 
 **Parameters:**
 
@@ -717,11 +717,11 @@ Coalescing all elements within each partition into a list.
 join(other, func)
 ```
 
-Return an Table containing all pairs of elements with matching keys in self and other, i.e. 'inner join'.
+Returns a Table containing all pairs of elements with matching keys in self and other, i.e. 'inner join'.
 
-Each pair of elements will be returned as a (k, func(v1, v2)) tuple, where (k, v1) is in self and (k, v2) is in other.
+Each pair of elements will be returned as a (k, func(v1, v2)) tuple, where (k, v1) is in self and (k, v2) in other.
 
-In-place computing applies if enabled. Result will be in left Table (the caller).
+In-place computing applies if enabled. Results will be in left Table (the caller).
 
 **Parameters:**
 
@@ -750,7 +750,7 @@ In-place computing applies if enabled. Result will be in left Table (the caller)
 map(func)
 ```
 
-Return a new Table by applying a function to each (key, value) 2-tuple of this Table.
+Returns a new Table by applying a function to each (key, value) 2-tuple of this Table.
 
 In-place computing does not apply.
 
@@ -777,7 +777,7 @@ In-place computing does not apply.
 mapPartitions(func)
 ```
 
-Return a new Table by applying a function to each partition of this Table.
+Returns a new Table by applying a function to each partition of this Table.
 
 In-place computing does not apply.
 
@@ -809,7 +809,7 @@ In-place computing does not apply.
 mapValues(func)
 ```
 
-Return a Table by applying a function to each value of this Table, while keys does not change.
+Returns a Table by applying a function to each value of this Table, while keys do not change.
 
 In-place computing applies if enabled.
 
@@ -925,7 +925,7 @@ In-place computing applies if enabled. Result will be in left Table (the caller)
 union(other, func=lambda v1, v2 : v1)
 ```
 
-Returns union of this Table and the other Table. Function will be applied to values of keys exist in both table.
+Returns union of this Table and the other Table. Function will be applied to values of keys that exist in both table.
 
 In-place computing applies if enabled. Result will be in left Table (the caller).
 

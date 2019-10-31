@@ -68,7 +68,7 @@ Gets data from other participant. This method will block until the remote object
 
 >`remote(obj, name, tag, role=None, idx=-1)`
 
-Sends data to otehre parties. This method does not block.
+Sends data to other parties. This method does not block.
 
 **Parameters:**
 
