@@ -143,13 +143,12 @@ ssh app\@192.168.0.2
 
 进入执行节点的/data/projects/目录，执行：
 
+```
 cd /data/projects/
-
 git clone https://github.com/FederatedAI/FATE.git
-
 cd FATE/cluster-deploy/scripts
-
 bash packaging.sh
+```
 
 构建好的包会放在FATE/cluster-deploy/packages目录下。
 
@@ -219,15 +218,21 @@ cxx_compile_flag=false
 
 按照上述配置含义修改allinone_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
 
+```
 cd FATE/cluster-deploy/scripts
+```
 
 如果需要部署所有组件，执行：
 
-bash deploy_cluster_allinone.sh build all 
+```
+bash deploy_cluster_allinone.sh build all
+```
 
 如果只部署部分组件：
 
+```
 bash deploy_cluster_allinone.sh build fate_flow
+```
 
 5.配置检查
 ==========
@@ -242,17 +247,23 @@ bash deploy_cluster_allinone.sh build fate_flow
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-fateflow依赖eggroll的启动，需要先启动eggroll再启动fateflow。
-
+```
 cd /data/projects/fate
+```
 
-启动所有：
+启动所有模块：
 
+```
 sh services.sh all start
+```
 
 启动单个模块：
 
+```
 sh services.sh proxy start
+```
+
+如果逐个启动模块，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
 
 6.2 检查服务状态
 ----------------
@@ -261,15 +272,21 @@ sh services.sh proxy start
 
 查看各个服务进程是否启动成功：
 
+```
 cd /data/projects/fate
+```
 
 查看所有：
 
+```
 sh services.sh all status
+```
 
 查看单个模块：
 
+```
 sh services.sh proxy status
+```
 
 6.3 关机服务
 ------------
@@ -278,15 +295,21 @@ sh services.sh proxy status
 
 若要关闭服务则使用：
 
+```
 cd /data/projects/fate
+```
 
 关闭所有：
 
+```
 sh services.sh all stop
+```
 
 关闭单个模块：
 
+```
 sh services.sh proxy stop
+```
 
 7.测试
 ======
@@ -296,11 +319,11 @@ sh services.sh proxy stop
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python
-
 sh ./federatedml/test/run_test.sh
+```
 
 显示“ok”表示成功，显示 “FAILED”则表示失败，程序一般在一分钟内显示执行结果。
 
@@ -311,11 +334,11 @@ sh ./federatedml/test/run_test.sh
 
 此测试只需在guest方egg节点执行，选定9999为guest方，在192.168.0.2上执行：
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/toy_example/
-
 python run_toy_example.py 9999 10000 1
+```
 
 测试结果将显示在屏幕上。
 
@@ -330,21 +353,21 @@ python run_toy_example.py 9999 10000 1
 
 **在Host节点192.168.0.1上运行：**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/min_test_task /
-
 sh run.sh host fast
+```
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
 **在Guest节点192.168.0.2上运行：**
 
+```
 source /data/projects/fate/init_env.sh
-
 cd /data/projects/fate/python/examples/min_test_task/
-
-sh run.sh guest fast \$ {host_table} \$ {host_namespace} 
+sh run.sh guest fast $ {host_table} $ {host_namespace} 
+```
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
 
