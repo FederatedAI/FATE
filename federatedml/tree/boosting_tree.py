@@ -108,7 +108,7 @@ class BoostingTree(ModelBase):
         else:
             sparse_vec = row.features.get_sparse_vector()
             for key in sparse_vec:
-                if np.isnan(sparse_vec.get(key)):
+                if sparse_vec.get(key) == NoneType() or np.isnan(sparse_vec.get(key)):
                     sparse_vec[key] = NoneType()
 
             row.features.set_sparse_vector(sparse_vec)

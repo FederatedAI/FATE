@@ -86,4 +86,4 @@ _eval_keep_prob = 1.0
 
 
 def build_nn() -> TFNNModel:
-    return TFNNModel(optimizer, loss, accuracy)
+    return TFNNModel(optimizer, loss, accuracy, y_)

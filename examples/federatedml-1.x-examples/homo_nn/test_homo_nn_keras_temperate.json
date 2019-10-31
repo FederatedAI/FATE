@@ -4,8 +4,7 @@
     "party_id": 10000
   },
   "job_parameters": {
-    "work_mode": 0,
-    "backend": 0
+    "work_mode": 0
   },
   "role": {
     "guest": [
@@ -24,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "homo_breast_guest",
+              "namespace": "homo_breast_guest"
             }
           ]
         }
@@ -42,12 +41,6 @@
         ],
         "output_format": [
           "dense"
-        ],
-        "missing_fill": [
-          true
-        ],
-        "outlier_replace": [
-          true
         ]
       }
     },
@@ -56,44 +49,47 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "homo_breast_host",
+              "namespace": "homo_breast_host"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [
-          false
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "label_type": [
+          "int"
         ],
         "output_format": [
           "dense"
-        ],
-        "outlier_replace": [
-          true
         ]
       }
     }
   },
   "algorithm_parameters": {
-    "hetero_lr_0": {
-      "penalty": "L2",
-      "optimizer": "nesterov_momentum_sgd",
-      "eps": 1e-4,
-      "alpha": 0.01,
-      "max_iter": 30,
-      "converge_func": "diff",
+    "homo_nn_0": {
+      "config_type": "keras",
+      "nn_define": $nn_define,
       "batch_size": -1,
-      "learning_rate": 0.15,
-      "init_param": {
-        "init_method": "random_uniform"
+      "optimizer": {
+        "optimizer": "Adam",
+        "learning_rate": 0.05
       },
-      "cv_param": {
-        "n_splits": 5,
-        "shuffle": false,
-        "random_seed": 103,
-        "need_cv": true
-      }
+      "early_stop": {
+        "early_stop": "diff",
+        "eps": 1e-4
+      },
+      "loss": "binary_crossentropy",
+      "metrics": [
+        "accuracy",
+        "AUC"
+      ],
+      "max_iter": 10
     }
   }
 }

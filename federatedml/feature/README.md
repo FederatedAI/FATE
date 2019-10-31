@@ -22,9 +22,9 @@ As the figure shows, B party which has the data labels encrypt its labels with A
 
 # Hetero Feature Selection
 
-Feature selection is a process that select subset of features for use in model construction. Take good advantage of feature selection can improve the performance of a model.
+Feature selection is a process that selects a subset of features for model construction. Take good advantage of feature selection can improve model performance.
 
-In this version, we provides several filter methods for feature selection.
+In this version, we provide several filter methods for feature selection.
 
 ## Features
 
@@ -34,24 +34,24 @@ In this version, we provides several filter methods for feature selection.
 
 3. iv_percentile: Use information value to filter columns. A float ratio threshold need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around the threshold are same, all those columns will be keep.
 
-4. coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
+4. coefficient_of_variation_value_thres: Use coefficient of variation to judge whether to filter or not.
 
-5. outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+5. outlier_cols: Filter columns whose percentile value is larger than the given threshold.
 
-More feature selection methods will be provided. Please make a discussion in issues if you have any needs.
+More feature selection methods will be provided. Please make suggestions by submitting an issue.
 
 # Federated Sampling
 
 From Fate v0.2 supports sample method.
-Sample module supports two sample mode, they are Random sample mode and StratifiedSampler sample mode.
-* in random mode, "downsample" and "upsample" method is provided, users 
-can set the sample parameter "fractions", which is the sample ratio of data.
-* in stratified mode, "downsample" and "upsample" method is also provided, 
-users can set the sample parameter "fractions" too, but it should be a list of tuples of (label_i, ratio),
-which means that the sample ratios of different labels of data set. e.g. [(0, 1.5), (1, 2.5), (3, 3.5)]
+Sample module supports two sample modes: Random sample mode and StratifiedSampler sample mode.
+* In random mode, "downsample" and "upsample" methods are provided. Users
+can set the sample parameter "fractions", which is the sample ratio within data.
+* In stratified mode, "downsample" and "upsample" methods are also provided.
+Users can set the sample parameter "fractions" too, but it should be a list of tuples in the form (label_i, ratio).
+Tuples in the list each specify the sample ratio of corresponding label. e.g. [(0, 1.5), (1, 2.5), (3, 3.5)]
 
 # Feature scale
-Feature scale is a process that scale each feature along column. Now it supports min-max scale and standard scale. 
+Feature scale is a process that scales each feature along column. The feature scale module now supports min-max scale and standard scale.
 1. min-max scale: this estimator scales and translates each feature individually such that it is in the given range on the training set, e.g. between min and max value of each feature.
 2. standard scale: standardize features by removing the mean and scaling to unit variance
 

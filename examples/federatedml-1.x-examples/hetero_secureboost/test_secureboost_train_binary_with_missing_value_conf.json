@@ -14,13 +14,13 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_b", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_b", "namespace": "hetero"}]
+                    "train_data": [{"name": "ionosphere_scale_b", "namespace": "hetero"}],
+                    "eval_data": [{"name": "ionosphere_scale_b", "namespace": "hetero"}]
                 }
             },
             "dataio_0":{
                 "with_label": [true],
-                "label_name": ["y"],
+                "label_name": ["label"],
                 "label_type": ["int"],
                 "output_format": ["dense"]
             }
@@ -28,8 +28,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_a", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_a", "namespace": "hetero"}]
+                    "train_data": [{"name": "ionosphere_scale_a", "namespace": "hetero"}],
+                    "eval_data": [{"name": "ionosphere_scale_a", "namespace": "hetero"}]
                 }
             },
              "dataio_0":{
@@ -51,7 +51,7 @@
                 "objective": "cross_entropy"
             },
             "encrypt_param": {
-                "method": "paillier" 
+                "method": "IterativeAffine" 
             },
             "predict_param": {
                 "with_proba": true,
@@ -66,6 +66,7 @@
                     "eval_type": "binary"
                 }
              },
+            "use_missing": true,
             "validation_freqs": 1
         },
         "evaluation_0": {
