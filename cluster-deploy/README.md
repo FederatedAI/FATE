@@ -11,7 +11,7 @@ The Cluster version provides four deployment methods, which can be selected acco
 
 thirdparty：
 
-- Hadoop+Spark Deployment [Chinese guide](./doc/thirdparty_Spark/Hadoop+Spark集群部署指南.md)
+- Hadoop+Spark Deployment [Chinese guide](./doc/thirdparty_spark/Hadoop+Spark集群部署指南.md)
 
 ## 1.     Module Information
 
