@@ -34,7 +34,7 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 
 #### dvisits:
 - 12 features
-- [source](https://cran.r-project.org/web/packages/faraway/index.html)
+- [source](https://www.rdocumentation.org/packages/faraway/versions/1.0.7/topics/dvisits)
 
 #### give_credit:
 - 10 features
