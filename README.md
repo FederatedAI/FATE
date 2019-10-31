@@ -50,7 +50,7 @@ All the unittests shall pass if FATE is installed properly.
 
 ### Quick Start
 
-We have provided a python script for quick starting modeling task. This scrip is located at ["./examples/federatedml-1.0-examples"](./examples/federatedml-1.0-examples)
+We have provided a python script for quick starting modeling task. This scrip is located at ["examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
 #### Standalone Version
 1. Start standalone version hetero-lr task (default)
