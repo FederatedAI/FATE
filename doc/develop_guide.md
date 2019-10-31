@@ -23,7 +23,7 @@ Parameter object is the only way to pass user-define runtime parameters to the d
 In order to define a usable parameter object, three steps will be needed.
 
 a. Open a new python file, rename it as xxx_param.py where xxx stands for your module'name, putting it in folder federatedm/param/.
-   The class object define it xxx_param.py should inherit the BaseParam class that define in federatedml/param/base_param.py
+   The class object defined in xxx_param.py should inherit the BaseParam class that define in federatedml/param/base_param.py
 
 b. __init__ of your parameter class should specify all parameters that the module use.
 
