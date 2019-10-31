@@ -41,7 +41,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](../federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
@@ -102,7 +102,7 @@ Http://hostip:8080.
 
 ```
 #Get code
-FATE $ git clone https://github.com/WeBankFinTech/FATE.git
+FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #Execute the command
 FATE $ cd FATE/standalone-deploy
@@ -115,7 +115,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

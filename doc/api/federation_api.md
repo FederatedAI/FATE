@@ -38,7 +38,7 @@ Initializes federation module. This method should be called before calling other
 **Example:**
 
 ``` python
->>> from eggroll.api import federation
+>>> from arch.api import federation
 >>> federation.init('job_id', runtime_conf)
 ```
 

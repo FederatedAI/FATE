@@ -45,7 +45,7 @@ We use fate-flow to upload data. The command is as follows:
 
 > python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
 
-Note: This step is needed for every data-provide node(i.e. Guest and Host).
+Note: This step is needed for every data-provide party(i.e. Guest and Host).
 
 After running this command, the following information is shown if it is success.
 

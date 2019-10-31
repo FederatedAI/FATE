@@ -81,13 +81,13 @@
   "algorithm_parameters": {
     "hetero_lr_0": {
       "penalty": "L2",
-      "optimizer": "rmsprop",
+      "optimizer": "nesterov_momentum_sgd",
       "eps": 1e-5,
-      "alpha": 0.01,
-      "max_iter": 10,
+      "alpha": 0.0001,
+      "max_iter": 30,
       "converge_func": "diff",
       "multi_class": "ovr",
-      "batch_size": -1,
+      "batch_size": 32,
       "learning_rate": 0.15,
       "init_param": {
         "init_method": "random_uniform"

@@ -45,10 +45,10 @@
             "optimizer": "sgd",
             "eps": 1e-5,
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 20,
             "converge_func": "diff",
             "batch_size": 320,
-            "learning_rate": 0.01,
+            "learning_rate": 0.15,
             "decay": 1.0,
             "decay_sqrt": true,
             "init_param": {
