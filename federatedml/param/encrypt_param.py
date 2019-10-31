@@ -50,10 +50,18 @@ class EncryptParam(BaseParam):
             raise ValueError(
                 "encrypt_param's method {} not supported, should be str type".format(
                     self.method))
+        elif self.method is None:
+            pass
         else:
             user_input = self.method.lower()
-            if user_input == 'paillier':
+            if user_input == "paillier":
                 self.method = consts.PAILLIER
+            elif user_input == "iterativeaffine":
+                self.method = consts.ITERATIVEAFFINE
+            else:
+                raise ValueError(
+                    "encrypt_param's method {} not supported".format(user_input))
+
 
         if type(self.key_length).__name__ != "int":
             raise ValueError(

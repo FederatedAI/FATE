@@ -16,9 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from google.protobuf import json_format
-
-from arch.api.proto import feature_binning_meta_pb2, feature_binning_param_pb2
+from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning.bucket_binning import BucketBinning
@@ -28,7 +26,7 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_feature_binning_transfer_variable import \
+from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
 
 LOGGER = log_utils.getLogger()
@@ -49,9 +47,6 @@ class BaseHeteroFeatureBinning(ModelBase):
     has_synchronized : bool
         Record whether the encryption information has been synchronized or not.
 
-    flowid : str
-        Use in cross validation
-
     binning_result: dict
         Record binning result of guest party. The format is {'col_name': 'iv_attr', ... }
 
@@ -68,7 +63,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.cols = None
+        self.cols = []
         self.cols_dict = {}
         self.binning_obj = None
         self.header = []
@@ -79,10 +74,15 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.host_results = {}  # dict of host results
         self.party_name = 'Base'
         self.model_param = FeatureBinningParam()
+        self.transform_cols_idx = []
+        self.transform_type = ''
 
     def _init_model(self, params):
         self.model_param = params
         self.cols_index = params.cols
+        self.transform_cols_idx = self.model_param.transform_param.transform_cols
+        self.transform_type = self.model_param.transform_param.transform_type
+
         if self.model_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.model_param, self.party_name)
         elif self.model_param.method == consts.BUCKET:
@@ -93,10 +93,7 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     def transform(self, data_instances):
         self._parse_cols(data_instances)
-        transform_cols_idx = self.model_param.transform_param.transform_cols
-        transform_type = self.model_param.transform_param.transform_type
-        data_instances = self.binning_obj.transform(data_instances, transform_cols_idx, transform_type)
-
+        data_instances = self.binning_obj.transform(data_instances, self.transform_cols_idx, self.transform_type)
         self.set_schema(data_instances)
         self.data_output = data_instances
 
@@ -104,6 +101,13 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     def _get_meta(self):
         col_list = [str(x) for x in self.cols]
+        LOGGER.debug("In get_meta, transform_cols_idx: {}".format(self.transform_cols_idx))
+        if not isinstance(self.transform_cols_idx, (list, tuple)):
+            self.transform_cols_idx = []
+        transform_param = feature_binning_meta_pb2.TransformMeta(
+            transform_cols=self.transform_cols_idx,
+            transform_type=self.model_param.transform_param.transform_type
+        )
 
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
             method=self.model_param.method,
@@ -114,7 +118,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             cols=col_list,
             adjustment_factor=self.model_param.adjustment_factor,
             local_only=self.model_param.local_only,
-            need_run=self.need_run
+            need_run=self.need_run,
+            transform_param=transform_param
         )
         return meta_protobuf_obj
 
@@ -141,17 +146,20 @@ class BaseHeteroFeatureBinning(ModelBase):
             final_host_results[host_id] = feature_binning_param_pb2.FeatureBinningResult(binning_result=host_result)
 
         result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
-                                                                   host_results=final_host_results)
+                                                                   host_results=final_host_results,
+                                                                   header=self.header)
         # json_result = json_format.MessageToJson(result_obj)
         # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
     def _load_model(self, model_dict):
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
-        # self._parse_need_run(model_dict, MODEL_META_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
-        # model_meta.cols = list(model_meta.cols)
-        # model_meta.transform_param.transform_cols = list(model_meta.transform_param.transform_cols)
+
+        assert isinstance(model_meta, feature_binning_meta_pb2.FeatureBinningMeta)
+        self.transform_cols_idx = list(model_meta.transform_param.transform_cols)
+        self.transform_type = model_meta.transform_param.transform_type
+
         self.cols = list(map(int, model_meta.cols))
         bin_method = str(model_meta.method)
         if bin_method == consts.QUANTILE:
@@ -206,6 +214,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         header = get_header(data_instances)
         self.schema = data_instances.schema
         self.header = header
+
         # LOGGER.debug("data_instance count: {}, header: {}".format(data_instances.count(), header))
         if self.cols_index == -1:
             if header is None:
@@ -213,6 +222,9 @@ class BaseHeteroFeatureBinning(ModelBase):
             self.cols = [i for i in range(len(header))]
         else:
             self.cols = self.cols_index
+
+        if self.transform_cols_idx == -1:
+            self.transform_cols_idx = self.cols
 
         self.cols_dict = {}
         for col in self.cols:

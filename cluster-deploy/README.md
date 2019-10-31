@@ -1,14 +1,21 @@
 
 
-#                      **FATE-V1.0 Deployment Guide**
+#                      **FATE Deployment Guide**
 
-You can also refer to:[Chinese deployment guide](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc)
+The Cluster version provides four deployment methods, which can be selected according to your actual situation:
+
+- Install Cluster [Chinese guide](./doc/Fate-V1.1cluster部署指南(install).md) 
+- Build Cluster from Source [Chinese guide](./doc/Fate-V1.1cluster部署指南(build).md) 
+- Install AllinOne [Chinese guide](./doc/Fate-V1.1allinone部署指南(install).md)
+- Build AllinOne from Source [Chinese guide](./doc/Fate-V1.1allinone部署指南(build).md)
+
+thirdparty：
+
+- Hadoop+Spark Deployment [Chinese guide](./doc/thirdparty_spark/Hadoop+Spark集群部署指南.md)
 
 ## 1.     Module Information
 
-In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, including 7 offline related modules and 1 online related module. The specific module information is as follows:
-
-### **1.1. Offline Module**
+In a party, FATE (Federated AI Technology Enabler) has the following 8 modules,The specific module information is as follows:
 
 | Module Name         | Port of module | Method of deployment                                | Module function                                              |
 | ------------------- | -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
@@ -19,19 +26,11 @@ In a party, FATE (Federated AI Technology Enabler) has the following 8 modules, 
 | Storage-Service-cxx | 7778           | Party Multi-node deployment                         | Storage-Service module handles data storage on that single node. |
 | Egg-Processor       | 7888           | Party Multi-node deployment                         | Processor is used to execute user-defined functions.         |
 | Fate-Flow           | 9360/9380      | Single node deployment in one party current version | Task Manager is a service for managing tasks. It can be used to start training tasks, upload and download data, publish models to serving, etc. |
-| Fateboard           | 8080           | Single node deployment in one party                 | Fateboard is a web service to show informations and status of tasks running in FATE. |
+| Fateboard           | 8080           | Single node deployment in one party                 | Fateboard is a web service to show informations and status of tasks running in FATE |
 
-### **1.2. Online Module**
+## 2. Deployment Architecture
 
-| Module Name    | Port of module | Method of deployment                            | Module function                                              |
-| -------------- | -------------- | ----------------------------------------------- | ------------------------------------------------------------ |
-| Serving-server | 8001           | Party Multi-node deployment (two or more nodes) | Serving-Server is a online service for serving federated learning models. |
-
-
-
-## 2.     Deployment Architecture
-
-### **2.1. Unilateral Deployment Architecture**
+### **2.1. Unilateral Deployment Architecture **
 
 
 
@@ -49,13 +48,11 @@ A) Exchange role exists: each party communicates as a proxy through exchange.
 
 B) There is no exchange role: the party directly connects to the other party's proxy role for communication.
 
-*<u>Note: Exchanged must be available in the configuration.sh configuration file during unilateral deployment. If the exchange role does not exist, provide the server ip of the party with which you want to communicate as the exchange port;</u>*
-
 Each party can be deployed on one or more servers. In reality, you can balance the flexible deployment of modules that can be deployed on a single node based on the number of servers provided. In order to facilitate the use in actual applications, this guide describes the two exchange roles of unilateral deployment and bilateral deployment.
 
 
 
-## 3.     Installation Preparation
+## 3. Installation Preparation
 
 ### **3.1. Server Configuration**
 
@@ -90,118 +87,7 @@ c).Other Modules: The node where other modules are installed.
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
 
-### **3.3. Package Preparation**
-
-List of software involved:mysql-8.0.13, jdk1.8, python virtualenv surroundings, Python3.6, redis-5.0.2 Version: In order to facilitate the installation, a simple installation script is provided in the project. You can find the relevant script in the FATE/cluster-deploy/scripts/ fate-base directory of the project, download the corresponding version of the package and put it in the corresponding directory. The script is used to install the corresponding software package (because the software package is too large, you need to download it yourself during the actual installation process, so only the script file and txt file are kept here)
-The script directory structure is as follows:
-
-```
-fate-base
-|-- conf
-|   |-- my.cnf
-|
-|-- env.sh
-|-- install_java.sh
-|-- install_redis.sh
-|-- install_mysql.sh
-|-- install_py3.sh
-|
-|-- packages
-|   |-- jdk-8u172-linux-x64.tar.gz
-|   |-- redis-5.0.2.tar.gz
-|   |-- Miniconda3-4.5.4-Linux-x86_64.sh
-|   |-- mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
-|
-|-- pip-dependencies
-|   |-- requirements.txt
-|
-|-- pips
-|   |-- pip-18.1-py2.py3-none-any.whl
-|   |-- setuptools-40.6.3-py2.py3-none-any.whl
-|   |-- virtualenv-16.1.0-py2.py3-none-any.whl
-|   |-- wheel-0.32.3-py2.py3-none-any.whl
-```
-According to the above directory structure, the software packages and files needed by Python are placed in the corresponding directory. The dependency packages required by Python are given in the requirements. TXT file as a list. After downloading the dependency packages list, it can be placed in the pip-dependencies directory side by side with requirements. txt. The requirements.txt file can be obtained from [FATE/requirements.txt](https://github.com/WeBankFinTech/FATE/blob/master/requirements.txt) .
-
-You can also download fate-base like below:
-
-```
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-base.tar.gz
-tar -xzvf fate-base.tar.gz
-```
-
-
-
-### **3.4. Software environment initialization**
-
-After uploading, you can put the above-mentioned fate-base directory with dependencies into a fate-base .tar package and put it in the /data/app (optional) directory of the target server, and then decompress it:
-
-```
-cd /data/app
-tar –xf fate-base.tar.gz
-cd fate-base
-```
-
-Initialize the server and execute it under **root user**:
-
-```
-sh env.sh
-```
-
-The env.sh creates the default **app** user for you. You also can modify the app user password (according to actual needs).
-
-The following steps are performed under the **app user**.
-
-Check if jdk1.8 is installed. If the install_java.sh script is not installed, install it:
-
-```
-sh install_java.sh 
-```
-
-If you need to install the online module, check whether redis 5.0.2 is installed or not, and if not, execute the install_redis.sh script to install it:
-
-```
-sh install_redis.sh
-```
-
-*<u>Note:Using this script installation will initialize redis password to fate1234, which can be configured manually according to the actual situation.</u>*
-
-Check Python 3.6 and the virtualized environment. If it is not installed, execute the install_py3.sh script to install it:
-
-```
-sh install_py3.sh
-```
-
-Check if mysql8.0.13 is installed. If it is not installed, execute the install_mysql.sh script to install it:
-
-```
-sh install_mysql.sh 
-```
-
-After installing mysql, **change the mysql password to "fate_dev" and create database user "fate_dev"** (modified according to actual needs):
-
-```
-$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -uroot -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
-Enter password:(please input the original password)
->set password='fate_dev';
->CREATE USER 'fate_dev'@'localhost' IDENTIFIED BY 'fate_dev';
->GRANT ALL ON *.* TO 'fate_dev'@'localhost';
->flush privileges;
-```
-
-After installing mysql, you need to use the following statement on the node where MySQL is installed to empower all IP in the party (replacing IP with actual ip):
-
-```
-$/data/projects/common/mysql/mysql-8.0.13/bin/mysql -ufate_dev -p -S /data/projects/common/mysql/mysql-8.0.13/mysql.sock
-Enter password: fate_dev
->CREATE USER 'fate_dev'@'$ip' IDENTIFIED BY 'fate_dev';
->GRANT ALL ON *.* TO 'fate_dev'@'$ip';
->flush privileges;
-```
-
-After the check is completed, return to the execution node for project deployment.
-
-### 3.5.**Configuring sudo**
+### 3.3.**Configuring sudo**
 
 Executed by the **root** user:
 
@@ -233,352 +119,161 @@ chmod 600 ~/.ssh/authorized_keys
 
 scp \~/.ssh/authorized_keys app\@{ip}:/home/app/.ssh
 
-## 4.      Project Deployment
+## 4.Project Deployment
 
 *<u>Note: The default installation directory is /data/projects/, and the execution user is app. It is modified according to the actual situation during installation.</u>*
 
-### **4.1. Project Pull**
+### **4.1. Project Pull** and Packaging
 
-Go to the /data/projects/ directory of the execution node and execute the git command to pull the project from github:
+Go to the /data/projects/ directory of the execution node and execute the git command to pull the project from github,then Packaging:
+
+**Note: The server needs to have git and maven 3.5+ installed.**
 
 ```
 cd /data/projects/
-git clone https://github.com/WeBankFinTech/FATE.git
+git clone https://github.com/FederatedAI/FATE.git
+cd FATE/cluster-deploy/scripts
+bash packaging.sh 
 ```
 
-### **4.2. Maven Packaging**
-
-Go into the project's arch directory and do dependency packaging:
+This script file puts each module and configuration file into the FATE/cluster-deploy/packages directory. You can view the directory and files of each module in this directory as following packages:
 
 ```
-cd FATE/arch
-mvn clean package -DskipTests
-cd FATE/fate-serving
-mvn clean package -DskipTests
-cd FATE/fateboard
-mvn clean package -DskipTests
+packages
+|-- eggroll-api-1.1.tar.gz
+|-- eggroll-computing-1.1.tar.gz
+|-- eggroll-conf-1.1.tar.gz
+|-- eggroll-egg-1.1.jar
+|-- eggroll-egg-1.1.tar.gz
+|-- eggroll-meta-service-1.1.tar.gz
+|-- eggroll-roll-1.1.tar.gz
+|-- eggroll-storage-service-cxx-1.1.tar.gz
+|-- fateboard-1.1.jar
+|-- fate-federation-1.1.tar.gz
+|-- fate-proxy-1.1.tar.gz
+|-- __init__.py
+|-- jdk-8u192-linux-x64.tar.gz
+|-- Miniconda3-4.5.4-Linux-x86_64.sh
+|-- mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
+|-- pip-packages-fate-5548239776e18466e0d59835d489952f.tar.gz
+|-- redis-5.0.2.tar.gz
+`-- third_party_eggrollv1.tar.gz
 ```
 
-Get third-party C++ dependency packages and put them into the following directory tree: FATE/arch/eggroll/storage-service-cxx/third_party 
+### **4.2. Modify Configuration File and Example****
 
-```
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/third_party.tar.gz
-tar -xzvf third_party.tar.gz -C FATE/arch/eggroll/storage-service-cxx/third_party	
-```
+Go to the FATE/cluster-deploy/scripts directory in the FATE directory and modify the configuration file multinode_cluster_configurations.sh.
+The configuration file multinode_cluster_configurations.sh instructions:
 
-You can also pull the third-party C++ source code to compile:  
-
-cd FATE/
-git submodule update --init --recursive
-
-Note:This step takes a long time.
-
-```
-third_party
-|--- bin
-|--- boost
-|--- glog
-|--- grpc
-|--- include
-|--- lib
-|--- lmdb
-|   |--- libraries
-|      |---- liblmdb 
-|--- lmdb-safe
-|--- lmdb.sh
-|--- protobuf
-|--- share
-```
-
-
-
-### **4.3. Modify Configuration File**
-
-Go to the FATE/cluster-deploy/scripts directory in the FATE directory and modify the configuration file configurations.sh.
-The configuration file configurations.sh instructions:
-
-| Configuration item | Configuration item meaning                                   | Configuration Item Value                                     | Explanation                                                  |
-| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| user               | Server operation username                                    | Default : app                                                | Use the default value                                        |
-| dir                | Fate installation path                                       | Default :  /data/projects/fate                               | Use the default value                                        |
-| mysqldir           | Mysql installation directory                                 | Default : /data/projects/common/mysql/mysql-8.0.13           | Mysql installation path, use the default value               |
-| javadir            | JAVA_HOME                                                    | Default : /data/projects/common/jdk/jdk1.8.0_192             | Jdk installation path, use the default value                 |
-| venvdir            | Python virtualenv installation directory                     | Default : /data/projects/fate/venv                           | Use the default value                                        |
-| redispass          | The password of redis                                        | Default : fate_dev                                           | Use the default value                                        |
-| redisip            | redisip array                                                | Each array element represents a redisip                      | One party only needs to install a redis on the serving-service node. |
-| partylist          | Party.id array                                               | Each array element represents a partyid                      | Modify according to partyid                                  |
-| JDBC0              | Corresponding to the jdbc configuration of the party         | The corresponding jdbc configuration for each party: from left to right is ip dbname username password (this user needs to have create database permission) | If there are multiple parties, the order is JDBC0, JDBC1...the order corresponds to the partid order. |
-| fateflowdb0        | Corresponding to the datasource configuration of the fateflow in the party | The corresponding datasource configuration for fatflow in each party: from left to right is ip dbname username password (this user needs to have create database permission) | If there are multiple parties, the order is fateflowdb0, fateflowdb1...the order corresponds to the partid order. |
-| iplist             | A servers list of total party                                | Represents a list of server IPS contained in each party (except exchange roles) | All parties involved in the IP are placed in this list, repeat the IP once.All parties involved in the IP are placed in this list, repeat the IP once. |
-| iplist0            | A servers list of one party                                  | Include all  ips in one party                                | if there are more than one party, the order is iplist0, iplist1...                 Sequence corresponds to partyid. |
-| fateboard0         | A fateboard ip                                               | Represents the ip of fateboard in one party                  | if there are more than one party, the order is fateboard0, fateboard1...                 Sequence corresponds to partyid. |
-| Cxxcompile         | A toggle for Storage-Service-cxx node  complie method        | Default is false                                             | If server system doesn't  meet the compile requirement of Storage-Service-cxx node,  try it with true. |
-| fedlist0           | Federation role IP list                                      | Represents a list of servers with Federation roles in the party (only one in the current version) | If there are more than one party, the order is fedlist0, fedlist1... Sequence corresponds to partyid |
-| meta0              | Meta-Service role  IP list                                   | Represents a list of servers with Meta-Service roles in the party (only one in the current version) | If there are more than one party, the order is meta0, meta1... Sequence corresponds to partyid |
-| proxy0             | Proxy role IP list                                           | Represents a list of servers with Proxy roles in the party (only one in the current version) | If there are more than one party, the order is proxy0, proxy1... Sequence corresponds to partyid |
-| roll0              | Roll role IP list                                            | Represents a list of servers with Roll roles in the part (only one in the current version) | If there are more than one party, the order is roll0, roll1... Sequence corresponds to partyid |
-| egglist0           | Egg role list                                                | Represents a list of servers included in each party          | If there are multiple parties, the order is egeglist0, the order of egglist1... corresponds to the order of partyid |
-| fllist0            | The ip list of the fate-flow role                            | Represents a list of servers with Roll roles in the party (only one in the current version) | If there are more than one party, the order is fllist0, fllist1... Sequence corresponds to partyid |
-| serving0           | Serving-server role ip list                                  | Each party contains a list of Serving-server roles ip        | If there are multiple parties, the order is serving0, serving1...corresponding to the partyid |
-| exchangeip         | Exchange role ip                                             | Exchange role ip                                             | If the exchange role does not exist in the bilateral deployment, it can be empty. At this time, the two parties are directly connected. When the unilateral deployment is performed, the exchange value can be the proxy or exchange role of the other party. |
-
-
-
-*<u>Note: serving0, serving1 need to be configured only when online deployment is required, and configuration is not required only for offline deployment.</u>*
-
-### **4.4. For Example**
-
-Assume that each configuration is represented by the following code relationship:
-
-| Code representation | Code node description                                        | Example         |
-| ------------------- | ------------------------------------------------------------ | --------------- |
-| partyA.id           | Indicates the partyid of partyA                              | 10000           |
-| A.MS-ip             | Indicates the node where the meta-Service module of partyA is located. | 192.168.xxx.xxx |
-| A.FF-ip             | Indicates the database ip of fate-flow in partyA.            | 192.168.xxx.xxx |
-| A.F-ip              | Indicates the ip of the node where the federation module of partyA is located. | 192.168.xxx.xxx |
-| A.P-ip              | Indicates the ip of the node where partyA's Proxy module is located. | 192.168.xxx.xxx |
-| A.R-ip              | Indicates the ip of the node where the party module's Roll module is located. | 192.168.xxx.xxx |
-| A.FL-ip             | Indicates the fateflow ip of party A.                        | 192.168.xxx.xxx |
-| A.S-ip              | Indicates the server ip of the partyA's Serving-server. If there are multiple, the number is incremented. | 192.168.xxx.xxx |
-| A.E-ip              | Indicates the server ip of partyA's Egg. If there are more than one, add the number increment. | 192.168.xxx.xxx |
-| A.dbname1           | Indicates the name of database of partyA.                    | fate_dev        |
-| A.user              | Indicates the user of database of partyA.                    | fate_dev        |
-| A.password          | Indicates the password of database of partyA.                | fate_dev        |
-
-The role code representation in partyB is similar to the above description.
-
-*<u>Note: The above ip is based on the actual server ip assigned by each module. When the module is assigned to the same server, the ip is the same. Since the Storage-Service-cxx module and the Egg-Processor module are deployed at all nodes in the party, no special instructions are given.</u>*
-
-According to the above table, the configuration.sh configuration file can be modified like this:
-
-```
-user=app 
-dir=/data/projects/fate 
-mysqldir=/data/projects/common/mysql/mysql-8.0.13
-javadir=/data/projects/common/jdk/jdk1.8.0_192
-venvdir=/data/projects/fate/venv
-redisip=(A.redisip B.redisip)
-redispass=fate_dev
-partylist=(partyA.id partyB.id)
-JDBC0=(A.MS-ip A.dbname1 A.user A.password) 
-JDBC1=(B.MS-ip B.dbname1 B.user B.password) 
-fateflowdb0=(A.FF-ip A.dbname2 A.user A.password) 
-fateflowdb1=(B.FF-ip B.dbname2 B.user B.password) 
-iplist=(A.F-ip A.MS-ip A.P-ip A.R-ip A.FB-ip B.F-ip B.MS-ip B.P-ip B.R-ip B.FB-ip)
-iplist0=(A.F-ip A.MS-ip A.P-ip A.R-ip A.FB-ip A.E1-ip A.E2-ip A.E3-ip...)
-iplist1=(B.F-ip B.MS-ip B.P-ip B.R-ip B.FB-ip B.E1-ip B.E2-ip B.E3-ip...)
-fateboard0=(A.FB-ip)
-fateboard1=(B.FB-ip)
-Cxxcompile=false
-fedlist0=(A.F-ip)
-fedlist1=(B.F-ip)
-meta0=(A.MS-ip)
-meta1=(B.MS-ip)
-proxy0=(A.P-ip)
-proxy1=(B.P-ip)
-roll0=(A.R-ip)
-roll1=(B.R-ip)
-egglist0=(A.E1-ip A.E2-ip A.E3-ip...)
-egglist1=(B.E1-ip B.E2-ip B.E3-ip...) 
-fllist0=(A.FL-ip)
-fllist1=(B.FL-ip)
-serving0=(A.S1-ip A.S2-ip)
-serving1=(B.S1-ip B.S2-ip)
-exchangeip=exchangeip 
-```
+| Configuration item           | Configuration item meaning                                  | Configuration Item Value                                     | Explanation                                                  |
+| ---------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| user                         | Server operation username                                   | Default : app                                                | Use the default value                                        |
+| deploy_dir                   | Fate installation path                                      | Default :  /data/projects/fate                               | Use the default value                                        |
+| party_list                   | Party id                                                    | Each array element represents a partyid and only supports numbers, such as 9999, 10000. | Only deploy one party, just fill in one partyid, deploy two parties, and fill in two partyids. |
+| party_names                  | The name of each party                                      | Default : (a b)                                              | Use the default value                                        |
+| db_auth                      | Metaservice Jdbc connection database configuration          | Metaservice service jdbc configuration, fill in the database username and password (this user needs to have create database permission) | The configuration of the two parties is the same.            |
+| redis_password               | The password of redis                                       | Default : fate_dev                                           | Use the default value                                        |
+| cxx_compile_flag             | Switching for the Storage-Service-cxx module complie method | Default:false                                                | If the server system does not meet the compilation requirements for the Storage-Service-cxx node, try using true. |
+| a_mysql /b_mysql             | Deploy mysql host                                           | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_redis/b_redis              | Deploy redis host                                           | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_fateboard /b_fateboard     | Deploy the fateboard module host                            | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_fate_flow /b_fate_flow     | Deploy the fate_flow module host                            | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_federation /b_federation   | Deploy the federation module host                           | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_proxy /b_proxy             | Deploy the proxy module host                                | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_roll /b_roll               | Deploy the roll module host                                 | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_metaservice /b_metaservice | Deploy the metaservice module host                          | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
+| a_egg /b_egg                 | Deploy the egg module host                                  | Host IP, can only fill in one IP                             | 192.168.0.1/192.168.0.2                                      |
 
 example: 
 
-| surroundings | ip              | Business service                                             |
-| ------------ | --------------- | ------------------------------------------------------------ |
-| exchange     | 192.168.167xxx  | proxy                                                        |
-| partyA       | 192.168.168.xxx | proxy;meta-service;federation;fate-flow;roll;serving-server;fateboard;egg |
-| partyB       | 192.168.169.xxx | proxy;meta-service;federation;fate-flow;roll;serving-server;fateboard;egg |
+| Party  | Ip          | Business service                                             |
+| ------ | ----------- | ------------------------------------------------------------ |
+| partyA | 192.168.0.1 | mysql;redis;proxy;federation;fate-flow;fateboard;roll;egg;metaservice |
+| partyB | 192.168.0.2 | mysql;redis;proxy;federation;fate-flow;fateboard;roll;egg;metaservice |
+
+**1）Two hosts partyA+partyB are deployed together**
 
 ```
-user=app 
-dir=/data/projects/fate 
-mysqldir=/data/projects/common/mysql/mysql-8.0.13
-javadir=/data/projects/common/jdk/jdk1.8.0_192
-venvdir=/data/projects/fate/venv
-redisip=(192.168.168.xxx 192.168.169.xxx)
-redispass=fate_dev
-partylist=(192.168.168.xxx 192.168.169.xxx)
-JDBC0=(192.168.168.xxx eggroll_meta fate_dev fate_dev) 
-JDBC1=(192.168.169.xxx eggroll_meta fate_dev fate_dev) 
-fateflowdb0=(192.168.168.xxx fateflow fate_dev fate_dev) 
-fateflowdb1=(192.168.169.xxx fateflow fate_dev fate_dev) 
-iplist=(192.168.168.xxx  192.168.169.xxx)
-iplist0=(192.168.168.xxx)
-iplist1=(192.168.169.xxx)
-fateboard0=(192.168.168.xxx)
-fateboard1=(192.168.169.xxx)
-Cxxcompile=false
-fedlist0=(192.168.168.xxx)
-fedlist1=(192.168.169.xxx)
-meta0=(192.168.168.xxx)
-meta1=(192.168.169.xxx)
-proxy0=(192.168.168.xxx)
-proxy1=(192.168.169.xxx)
-roll0=(192.168.168.xxx)
-roll1=(192.168.169.xxx)
-egglist0=(192.168.168.xxx)
-egglist1=(192.168.169.xxx) 
-fllist0=(192.168.168.xxx)
-fllist1=(192.168.169.xxx)
-serving0=(192.168.168.xxx)
-serving1=(192.168.169.xxx)
-exchangeip=192.168.167.xxx
+#!/bin/bash
+
+user=app
+deploy_dir=/data/projects/fate
+party_list=(10000 9999)
+party_names=(a b)
+db_auth=(root fate_dev)
+redis_password=fate_dev
+cxx_compile_flag=false
+
+*services for a
+
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
+
+*services for b
+
+b_mysql=192.168.0.2
+b_redis=192.168.0.2
+b_fate_flow=192.168.0.2
+b_fateboard=192.168.0.2
+b_federation=192.168.0.2
+b_proxy=192.168.0.2
+b_roll=192.168.0.2
+b_metaservice=192.168.0.2
+b_egg=(192.168.0.2)
+```
+
+**2）Deploy one party**
+
+```
+#!/bin/bash
+
+user=app
+deploy_dir=/data/projects/fate
+party_list=(1000)
+party_names=(a)
+db_auth=(root fate_dev)
+redis_password=fate_dev
+cxx_compile_flag=false
+
+*services for a
+
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
 ```
 
 *<u>Note: According to the above configuration method, you can modify it according to the actual situation.</u>*
 
-After modifying the configuration items corresponding to the configurations.sh file according to the above configuration, execute the auto-packaging.sh script:
+### **4.3. Deployment**
+
+Modify the configuration item corresponding to the multinode_cluster_configurations.sh file according to the above configuration, and then execute the deployment script in the FATE/cluster-deploy/scripts directory:
 
 ```
-cd /data/projects/FATE/cluster-deploy/scripts
-bash auto-packaging.sh
+cd FATE/cluster-deploy/scripts
+
+#If you need to deploy all components,execute:
+bash deploy_cluster_multinode.sh build all 
+
+#If only deploy some components,execute:
+bash deploy_cluster_multinode.sh build fate_flow
 ```
-
-This script file puts each module and configuration file into the FATE/cluster-deploy/example-dir-tree directory. You can view the directory and files of each module in this directory as following example-dir-tree:
-
-
-
-```
-example-dir-tree
-|--- egg
-|    |- conf/
-|    |  |- applicationContext-egg.xml
-|    |  |- egg.properties
-|    |  |- log4j2.properties
-|    |
-|    |- fate-egg-0.3.jar
-|    |- fate-egg.jar -> fate-egg-0.3.jar
-|    |- lib/
-|    |- service.sh
-|
-|--- extract.sh
-|
-|--- fateboard
-|    |- conf/
-|    |  |- application.properties
-|    |  |- ssh.properties
-|    |
-|    |- fateboard-1.0.jar
-|    |- fateboard.jar -> fateboard-1.0.jar
-|    |- service.sh
-|    |- logs/
-|
-|--- federation
-|    |- conf/
-|    |  |- applicationContext-federation.xml
-|    |  |- federation.properties
-|    |  |- log4j2.properties
-|    |
-|    |- fate-federation-0.3.jar
-|    |- fate-federation.jar -> fate-federation-0.3.jar
-|    |- lib/
-|    |- logs/
-|    |- service.sh
-|
-|--- meta-service
-|    |- conf/
-|    |  |- applicationContext-meta-service.xml
-|    |  |- jdbc.properties
-|    |  |- log4j2.properties
-|    |  |- meta-service.properties
-|    |
-|    |- fate-meta-service-0.3.jar
-|    |- fate-meta-service.jar -> fate-meta-service-0.3.jar
-|    |- lib/
-|    |- logs/
-|    |- service.sh
-|
-|--- proxy
-|    |- conf/
-|    |  |- applicationContext-proxy.xml
-|    |  |- log4j2.properties
-|    |  |- proxy.properties
-|    |  |- route_table.json
-|    |
-|    |- fate-proxy-0.3.jar
-|    |- fate-proxy.jar -> fate-proxy-0.3.jar
-|    |- lib/
-|    |- logs/
-|    |- service.sh
-|
-|--- python
-|    |- arch
-|    |  |- api/
-|    |  |- build_py_proto.sh
-|    |  |- conf/
-|    |  |- core/
-|    |  |- driver/
-|    |  |- eggroll/
-|    |  |- _init_.py
-|    |  |- networking/
-|    |  |- pom.xml
-|    |  |- processor/
-|    |  |- proto
-|    |  |- target
-|    |
-|    |- conf/
-|    |- examples/
-|    |- fate_flow/
-|    |- federatedml/
-|    |- logs/
-|    |- processor.sh
-|    |- service.sh
-|    |- workflow/
-|
-|--- roll
-|    |- conf/
-|    |  |- applicationContext-roll.xml
-|    |  |- log4j2.properties
-|    |  |- roll.properties
-|    |
-|    |- lib/
-|    |- fate-roll-0.3.jar
-|    |- fate-roll.jar -> fate-roll-0.3.jar
-|    |- service.sh
-|    |- logs/
-|
-|--- services.sh
-|
-|--- serving-server
-|    |- conf/
-|    |  |- log4j2.properties
-|    |  |- serving-server.properties
-|    |
-|    |- lib/
-|    |- fate-serving-server-1.0.jar
-|    |- fate-serving-server.jar -> fate-serving-server-1.0.jar
-|    |- service.sh
-|
-|--- storage-service-cxx
-|    |- logs/
-|    |- Makefile
-|    |- proto
-|    |  |- storage.proto
-|    |
-|    |- src/
-|    |- third_party/
-|    |- service.sh
-|    |- storage-service.cc
-```
-
-Continue to execute the deployment script in the FATE/cluster-deploy/scripts directory:
-
-```
-cd /data/projects/FATE/cluster-deploy/scripts
-bash auto-deploy.sh
-```
-
-
 
 ## 5.     Configuration Check
 
-After the execution, you can check whether the configuration of the corresponding module is accurate on each target server. Users can find a detailed configuration document in [cluster-deploy/doc](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc) .
+After the execution, you can check whether the configuration of the corresponding module is accurate on each target server. Users can find a detailed configuration document in [cluster-deploy/doc](./doc/configuration.md).
 
 
 
@@ -588,72 +283,59 @@ After the execution, you can check whether the configuration of the correspondin
 
 Use ssh to log in to each node with **app user**. Go to the /data/projects/fate directory and run the following command to start all services:
 
+1) fateflow depends on the start of eggroll, you need to start eggroll and then start fateflow.
+
+2) Each node deploys the module according to the parameter settings, so if it is not set, the module will not be deployed and started. When starting, it will prompt that the module cannot be started. Please ignore it.
+
+Start all modules:
+
 ```
-cd  /data/projects/fate
+cd /data/projects/fate
 sh services.sh all start
 ```
 
-If the server is a serving-server node, you also need:
+Start a single module,like:
 
 ```
-cd /data/projects/fate/serving-server
-sh service.sh start
-```
-
-If the server is a fate_flow node, you also need:
-
-```
-cd /data/projects/fate/python/fate_flow
-sh service.sh start
+cd /data/projects/fate
+sh services.sh proxy start
 ```
 
 ### 6.2. Check service status
 
 Check whether each service process starts successfully:
 
+Check all modules:
+
 ```
-cd  /data/projects/fate
+cd /data/projects/fate
 sh services.sh all status
 ```
 
-If the server is a serving-server node, you also need:
+Check a single module,like:
 
 ```
-cd /data/projects/fate/serving-server
-sh service.sh status
-```
-
-If the server is a fate_flow node, you also need:
-
-```
-cd /data/projects/fate/python/fate_flow
-sh service.sh status
+cd /data/projects/fate
+sh services.sh proxy status
 ```
 
 ### 6.3. Shutdown service
 
 To turn off the service, use:
 
+Stop all modules:
+
 ```
-cd  /data/projects/fate
+cd /data/projects/fate
 sh services.sh all stop
 ```
 
-If the server is a serving-server node, you also need:
+Stop a single module,like:
 
 ```
-cd /data/projects/fate/serving-server
-sh service.sh stop
+cd /data/projects/fate
+sh services.sh proxy stop
 ```
-
-If the server is a fate_flow node, you also need:
-
-```
-cd /data/projects/fate/python/fate_flow
-sh service.sh stop
-```
-
-*<u>Note: If there is a start and stop operation for a single service, replace all in the above command with the corresponding module name.</u>*
 
 
 
@@ -664,8 +346,7 @@ sh service.sh stop
 Use ssh login to each node **app user**, run:
 
 ```
-source /data/projects/fate/venv/bin/activate
-export PYTHONPATH=/data/projects/fate/python
+source /data/projects/fate/init_env.sh
 cd $PYTHONPATH
 sh ./federatedml/test/run_test.sh
 ```
@@ -681,8 +362,7 @@ The work_mode is 1, the  guest_partyid and  host_partyid  should correspond to t
 Pass the right values for different version to following commands, and run:
 
 ```
-export PYTHONPATH=/data/projects/fate/python
-source /data/projects/fate/venv/bin/activate
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
 python run_toy_example.py ${guest_partyid} ${host_partyid} ${work_mode}
 ```
@@ -702,8 +382,7 @@ In the node of guest and host parts, set the fields: guest_id, host_id, arbiter_
 In the  node of host part, running:
 
 ```
-export PYTHONPATH=/data/projects/fate/python
-source /data/projects/fate/venv/bin/activate
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh host fast 		
 ```
@@ -713,8 +392,7 @@ Get the values of "host_table" and "host_namespace" from test results, and pass 
 In the node of guest part, running: 
 
 ```
-export PYTHONPATH=/data/projects/fate/python
-source /data/projects/fate/venv/bin/activate
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh guest fast ${host_table} ${host_namespace}
 ```

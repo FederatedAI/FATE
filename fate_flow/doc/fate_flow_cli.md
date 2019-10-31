@@ -16,6 +16,13 @@ python fate_flow_client.py -f $command
     * -d  --dsl: dsl path, Required
     
     
+
+#### cancel_job
+- description: cancel waiting job
+- parameter:
+    * -j --job_id: job id, Required
+ 
+      
     
 #### stop_job
 - description: stop job 

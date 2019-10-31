@@ -17,14 +17,14 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
-from arch.api import federation
-from arch.api.utils import log_utils
-from federatedml.util.transfer_variable.secure_add_example_transfer_variable import SecureAddExampleTransferVariable
-from federatedml.param.secure_add_example_param import SecureAddExampleParam
-from federatedml.model_base import ModelBase
 import numpy as np
 
+from arch.api import session
+from arch.api.utils import log_utils
+from federatedml.model_base import ModelBase
+from federatedml.param.secure_add_example_param import SecureAddExampleParam
+from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
+    SecureAddExampleTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -38,6 +38,8 @@ class SecureAddHost(ModelBase):
         self.x2_plus_y2 = None
         self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
+        self.data_output = None
+        self.model_output = None
 
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
@@ -46,7 +48,7 @@ class SecureAddHost(ModelBase):
 
     def _init_data(self):
         kvs = [(i, 1) for i in range(self.data_num)]
-        self.y = eggroll.parallelize(kvs, include_key=True, partition=self.partition)
+        self.y = session.parallelize(kvs, include_key=True, partition=self.partition)
 
     def share(self, y):
         first = np.random.uniform(y, -y)
@@ -63,23 +65,38 @@ class SecureAddHost(ModelBase):
         return host_sum
 
     def sync_share_to_guest(self):
+        self.transfer_inst.host_share.remote(self.y1,
+                                             role="guest",
+                                             idx=0)
+
+        """
         federation.remote(obj=self.y1,
                           name=self.transfer_inst.host_share.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_share),
                           role="guest",
                           idx=0)
+        """
 
     def recv_share_from_guest(self):
+        self.x2 = self.transfer_inst.guest_share.get(idx=0)
+        """
         self.x2 = federation.get(name=self.transfer_inst.guest_share.name,
                                  tag=self.transfer_inst.generate_transferid(self.transfer_inst.guest_share),
                                  idx=0)
+        """
 
     def sync_host_sum_to_guest(self, host_sum):
+        self.transfer_inst.host_sum.remote(host_sum,
+                                           role="guest",
+                                           idx=0)
+
+        """
         federation.remote(obj=host_sum,
                           name=self.transfer_inst.host_sum.name,
                           tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_sum),
                           role="guest",
                           idx=0)
+        """
 
     def run(self, component_parameters=None, args=None):
         LOGGER.info("begin to init parameters of secure add example host")
@@ -102,5 +119,3 @@ class SecureAddHost(ModelBase):
 
         LOGGER.info("send host sum to guest")
         self.sync_host_sum_to_guest(host_sum)
-
-

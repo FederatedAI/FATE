@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import uuid
 from arch.api.cluster.eggroll import _DTable, _EggRoll
-from arch.api import  eggroll
+from arch.api import  session
 from arch.api.cluster import federation
 from arch.api.proto import basic_meta_pb2, federation_pb2, federation_pb2_grpc, storage_basic_pb2
 from arch.api.utils import file_utils, eggroll_serdes

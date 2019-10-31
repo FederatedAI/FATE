@@ -1,3 +1,27 @@
+# Release 1.1
+## Major Features and Improvements
+>FederatedML
+* Provide a general algorithm framework for homogeneous federated learning, which supports Secure Aggregation 
+* Add homogeneous Deep Neural Network
+* Add heterogeneous Linear Regression
+* Add heterogeneous Poisson Regression
+* Support multi-host in heterogeneous Logistic Regression
+* Support multi-host in heterogeneous Linear Regression
+* Support multi-host Intersection
+* Accelerated Intersection by usage of cache
+* Reconstruct heterogeneous Generalized Linear Models Framework
+* Support affine homomorphic encryption in heterogeneous SecureBoost
+* Support input data with missing value in heterogeneous SecureBoost
+* Support evaluation during training on both train and validate data
+* Add spark as computing engine
+
+>FATE-Flow
+* Upload and Download support CLI for querying job status
+* Support for canceling waiting job
+* Support for setting job timeout
+* Support for storing a job scheduling log in the job log folder
+* Add authentication control Beta version, including component, command, role
+
 # Release 1.0.2
 ## Major Features and Improvements
 * Python and JDK environment are required only for running standalone version quick experiment

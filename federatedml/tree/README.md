@@ -31,7 +31,35 @@ non-shared parts of the user sets.
 
 To ensure security, passive parties cannot get access to gradient and hessian directly. 
 We use a "XGBoost" like tree-learning algorithm. In order to keep gradient and hessian confidential, we require the active party to 
-encrypt gradient and hessian before sending them to passive parties. 
+encrypt gradient and hessian before sending them to passive parties. After encrypted the gradient and hessian, active party will
+send the encrypted [[gradient]] and [[hessian]] to passive party, the passive party use [[gradient]] and [[hessian]] to calculate the 
+encrypted feature histograms, then encodes the (feature, split_bin_val) and construct a (feature, split_bin_val) lookup table, 
+sends the encode value of (feature, split_bin_val) with feature histograms to active party. 
+After receiving the feature histograms from passive party, the active party decrypt them and find the best gains, if the feature belongs to passive party, 
+send back the encode (feature, split_bin_val) to passive party.
+The following figure shows the process of federated split finding. 
+<div style="text-align:center" align=center>
+<img src="./images/split_finding.png" alt="split_finding" width="500" height="250" />
+<br/>
+Figure 2: Process of Federated Split Finding</div>
+
+The parties continue the split finding process until finishing constructed the tree. 
+Each party only knows the detailed split information of the tree nodes where the split features belong to its data. 
+The following figure shows the final structure of a single decision tree.
+<div style="text-align:center" align=center>
+<img src="./images/tree_structure.png" alt="tree_structure" width="500" height="250" />
+<br/>
+Figure 3: A Single Decision Tree</div>
+
+To use the learned model to classify a new instance, firstly the active party judge if current tree node belongs to it or not.
+IF the current tree belongs to active party, then it can use its (feature, split_bin_val) lookup table to decide going to left child node of right,
+otherwise, the active party sends the node id to designated passive party, the passive party looks at its lookup table and sends back to active party which branch should the current node goes to.
+This process stops until the current node is a leave. 
+The following figure shows the federated inference process.
+<div style="text-align:center" align=center>
+<img src="./images/federated_inference.png" alt="federated_inference" width="500" height="250" />
+<br/>
+Figure 4: Process of Federated Inference</div>
 
 By following the SecureBoost framework, multiple parties can jointly build tree ensembled model without leaking privacy 
 in federated learning. If you want to learn more about the algorithm details, you can read the paper attached above.
@@ -46,7 +74,7 @@ The procedure of the data parallel algorithm in each party is:
 #### Applications
 SecureBoost supports the following applications.  
 * binary classification, the objective function is sigmoid cross-entropy  
-* multi classfication, the objective function is softmax cross-entropy
+* multi classification, the objective function is softmax cross-entropy
 * regression, objective function now support is least-squared-error-loss、least-absolutely-error-loss、huber-loss、
 tweedie-loss、fair-loss、 log-cosh-loss
 
@@ -57,6 +85,9 @@ max_split_nodes nodes instead of using all nodes of each level of the tree.
 * Support feature importance calculation
 * Support Multi-host and single guest to build model
 * Support different encrypt-mode to balance speed and security
+* Support missing value in train and predict process
+* Support evaluate training and validate data during training process
+* Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
  
 
 

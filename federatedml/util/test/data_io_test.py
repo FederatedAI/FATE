@@ -24,17 +24,34 @@ from fate_flow.manager.tracking import Tracking
 
 from federatedml.util.data_io import DataIO
 from federatedml.param.dataio_param import DataIOParam
-from arch.api import eggroll
+from arch.api import session
 from federatedml.util import consts
 
 
 class TestDenseFeatureReader(unittest.TestCase):
     def setUp(self):
+        name1 = "dense_data_" + str(random.random())
+        name2 = "dense_data_" + str(random.random())
+        namespace = "data_io_dense_test"
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
-        self.table1 = eggroll.parallelize(data1, include_key=True)
+        schema = {"header": "x1,x2,x3,x4,x5,x6",
+                   "sid": "id"}
+        table1 = session.parallelize(data1, include_key=True)
+        table1.save_as(name1, namespace) 
+        session.save_data_table_meta(schema, 
+                                     name1, 
+                                     namespace)
+        self.table1 = session.table(name1, namespace)
 
         data2 = [("a", '-1,,na,null,null,2')]
-        self.table2 = eggroll.parallelize(data2, include_key=True)
+        table2 = session.parallelize(data2, include_key=True)
+        table2.save_as(name2, namespace)
+        session.save_data_table_meta(schema, 
+                                     name2, 
+                                     namespace)
+        self.table2 = session.table(name2, namespace)
+
+        
         self.args1 = {"data": 
                        {"data_io_0": {
                          "data": self.table1
@@ -115,7 +132,7 @@ class TestDenseFeatureReader(unittest.TestCase):
                              {"output_format": "dense",
                               "input_format": "dense",
                               "with_label": True,
-                              "label_idx": 2
+                              "label_name": "x3"
                              }
                            }
         reader.run(component_params, self.args1)
@@ -149,7 +166,7 @@ class TestSparseFeatureReader(unittest.TestCase):
              
             self.data.append((i, " ".join(row)))
 
-        self.table = eggroll.parallelize(self.data, include_key=True)
+        self.table = session.parallelize(self.data, include_key=True)
         self.args = {"data": 
                       {"data_io_0": {
                         "data": self.table
@@ -248,8 +265,8 @@ class TestSparseTagReader(unittest.TestCase):
             self.data.append((i, ' '.join(row)))
             self.data_with_value.append((i, ' '.join(row_with_value)))
 
-        self.table1 = eggroll.parallelize(self.data, include_key=True)
-        self.table2 = eggroll.parallelize(self.data_with_value, include_key=True)
+        self.table1 = session.parallelize(self.data, include_key=True)
+        self.table2 = session.parallelize(self.data_with_value, include_key=True)
         self.args1 = {"data": 
                        {"data_io_0": {
                          "data": self.table1
@@ -398,5 +415,5 @@ class TestSparseTagReader(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    eggroll.init("test_dataio" + str(int(time.time())))
+    session.init("test_dataio" + str(int(time.time())))
     unittest.main()

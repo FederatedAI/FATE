@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.driver.federation.transfer.model;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;

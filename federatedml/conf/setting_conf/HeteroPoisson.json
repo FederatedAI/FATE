@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/linear_model/poisson_regression/hetero_poisson_regression",
+    "default_runtime_conf": "poisson_regression_param.json",
+    "param_class" : "federatedml/param/poisson_regression_param.py/PoissonParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_poisson_guest.py/HeteroPoissonGuest"
+        },
+        "host":
+        {
+            "program": "hetero_poisson_host.py/HeteroPoissonHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_poisson_arbiter.py/HeteroPoissonArbiter"
+        }
+    }
+}

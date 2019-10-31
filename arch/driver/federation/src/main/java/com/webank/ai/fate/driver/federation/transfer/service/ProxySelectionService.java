@@ -16,7 +16,7 @@
 
 package com.webank.ai.fate.driver.federation.transfer.service;
 
-import com.webank.ai.fate.api.core.BasicMeta;
+import com.webank.ai.eggroll.api.core.BasicMeta;
 
 public interface ProxySelectionService {
     public BasicMeta.Endpoint select();

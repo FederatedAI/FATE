@@ -19,7 +19,7 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
-from federatedml.param.evaluation_param import EvaluateParam
+# from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util import consts
 
 
@@ -44,17 +44,20 @@ class CrossValidationParam(BaseParam):
     random_seed: int, default: 1
         Specify the random seed for numpy shuffle
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
+
     """
 
     def __init__(self, n_splits=5, mode=consts.HETERO, role=consts.GUEST, shuffle=True, random_seed=1,
-                 evaluate_param=EvaluateParam(), need_cv=False):
+                 need_cv=False):
         super(CrossValidationParam, self).__init__()
         self.n_splits = n_splits
         self.mode = mode
         self.role = role
         self.shuffle = shuffle
         self.random_seed = random_seed
-        self.evaluate_param = copy.deepcopy(evaluate_param)
+        # self.evaluate_param = copy.deepcopy(evaluate_param)
         self.need_cv = need_cv
 
     def check(self):
@@ -63,6 +66,5 @@ class CrossValidationParam(BaseParam):
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_boolean(self.shuffle, model_param_descr)
-        self.check_positive_integer(self.random_seed, model_param_descr)
-
-
+        if self.random_seed is not None:
+            self.check_positive_integer(self.random_seed, model_param_descr)

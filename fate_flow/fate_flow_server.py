@@ -26,7 +26,7 @@ from grpc._cython import cygrpc
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
-from arch.api import storage
+from arch.api import session, Backend
 from arch.api.proto import proxy_pb2_grpc
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_app import manager as job_app_manager
@@ -35,6 +35,7 @@ from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.schedule_app import manager as schedule_app_manager
+from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.db.db_models import init_database_tables
 from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -44,6 +45,7 @@ from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT
     API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 
 '''
@@ -70,7 +72,8 @@ if __name__ == '__main__':
             '/{}/table'.format(API_VERSION): table_app_manager,
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
-            '/{}/schedule'.format(API_VERSION): schedule_app_manager
+            '/{}/schedule'.format(API_VERSION): schedule_app_manager,
+            '/{}/permission'.format(API_VERSION): permission_app_manager
         }
     )
     # init
@@ -85,9 +88,10 @@ if __name__ == '__main__':
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
 
-    storage.init_storage(work_mode=RuntimeConfig.WORK_MODE)
+    session.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
+    PrivilegeAuth.init()
     # start job detector
     job_detector.JobDetector(interval=5 * 1000).start()
     # start scheduler

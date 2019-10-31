@@ -18,11 +18,19 @@ ARBITER = 'arbiter'
 HOST = 'host'
 GUEST = 'guest'
 
+
+MODEL_AGG = "model_agg"
+GRAD_AGG = "grad_agg"
+
 BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
+RANDOM_PADS = "RandomPads"
+NONE = "None"
+AFFINE = 'Affine'
+ITERATIVEAFFINE = 'IterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
@@ -109,3 +117,10 @@ MINMAXSCALE = 'min_max_scale'
 STANDARDSCALE = 'standard_scale'
 ALL = 'all'
 COL = 'col'
+
+# intersection cache
+PHONE = 'phone'
+IMEI = 'imei'
+MD5 = 'md5'
+SHA256 = 'sha256'
+INTERSECT_CACHE_TAG = 'Za'

@@ -19,7 +19,7 @@ import uuid
 
 import numpy as np
 
-from arch.api.eggroll import parallelize, table
+from arch.api.session import parallelize, table
 from federatedml.ftl.eggroll_computation.util import eggroll_compute_vAvg_XY, eggroll_compute_hSum_XY, \
     eggroll_encrypt, eggroll_decrypt, eggroll_compute_XY, eggroll_compute_X_plus_Y
 

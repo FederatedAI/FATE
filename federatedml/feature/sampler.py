@@ -14,17 +14,18 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
-from arch.api import federation
+from arch.api import session
+from arch.api.utils import log_utils
 from sklearn.utils import resample
-from fate_flow.manager.tracking import Tracking 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.param.sample_param import SampleParam
 from federatedml.util import consts
-from federatedml.util.transfer_variable.sample_transfer_variable import SampleTransferVariable
+from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
 from federatedml.model_base import ModelBase
 import random
+
+LOGGER = log_utils.getLogger()
 
 
 class RandomSampler(object):
@@ -40,6 +41,7 @@ class RandomSampler(object):
     method: str, supported "upsample", "downsample" only in this version, default: "downsample"
 
     """
+
     def __init__(self, fraction=0.1, random_state=None, method="downsample"):
         self.fraction = fraction
         self.random_state = random_state
@@ -60,12 +62,12 @@ class RandomSampler(object):
 
         sample_ids : None or list
             if None, will sample data from the class instance's parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+            otherwise, it will be sample transform process, which means use the samples_ids to generate data
 
         Returns
         -------
         new_data_inst: DTable
-            the output sample data, sample format with input
+            the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
 
@@ -93,17 +95,18 @@ class RandomSampler(object):
 
         sample_ids : None or list
             if None, will sample data from the class instance's parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+            otherwise, it will be sample transform process, which means use the samples_ids to generate data
 
         Returns
         -------
         new_data_inst: DTable
-            the output sample data, sample format with input
+            the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
 
 
         """
+        LOGGER.info("start to run random sampling")
 
         return_sample_ids = False
         if self.method == "downsample":
@@ -120,7 +123,7 @@ class RandomSampler(object):
                                       n_samples=sample_num,
                                       random_state=self.random_state)
 
-            sample_dtable = eggroll.parallelize(zip(sample_ids, range(len(sample_ids))),
+            sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
                                                 partition=data_inst._partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
@@ -153,7 +156,7 @@ class RandomSampler(object):
                 index = id_maps[sample_ids[i]]
                 new_data.append((i, data_set[index][1]))
 
-            new_data_inst = eggroll.parallelize(new_data,
+            new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
                                                 partition=data_inst._partitions)
 
@@ -176,23 +179,26 @@ class StratifiedSampler(object):
     ----------
     fractions : None or list of (category, sample ratio) tuple,
         sampling ratios of each category, default: None
+        e.g.
+        [(0, 0.5), (1, 0.1]) in down sample, [(1, 1.5), (0, 1.8)], where 0\1 are the the occurred category.
 
     random_state: int, RandomState instance or None, optional, default: None
 
     method: str, supported "upsample", "downsample" only in this version, default: "downsample"
 
     """
+
     def __init__(self, fractions=None, random_state=None, method="downsample"):
         self.fractions = fractions
         self.label_mapping = {}
         self.labels = []
         if fractions:
-            for (label, farc) in fractions:
+            for (label, frac) in fractions:
                 self.label_mapping[label] = len(self.labels)
                 self.labels.append(label)
 
             # self.label_mapping = [label for (label, frac) in fractions]
-        
+
         self.random_state = random_state
         self.method = method
         self.tracker = None
@@ -210,8 +216,8 @@ class StratifiedSampler(object):
             The input data
 
         sample_ids : None or list
-            if None, will sample data from the class instance's parameters,
-            otherwise, it will be sample transform process, which means use the samples_ids the generate data
+            if None, will sample data from the class instance's key by sample parameters,
+            otherwise, it will be sample transform process, which means use the samples_ids to generate data
 
         Returns
         -------
@@ -237,8 +243,8 @@ class StratifiedSampler(object):
             To use this method, a list of ratio should be give, and the list length
                 equals to the number of distinct labels
             support down sample and up sample
-                if use down sample: should give a list of float ratio between [0, 1]
-                otherwise: should give a list of float ratio larger than 1.0
+                if use down sample: should give a list of (category, ratio), where ratio is between [0, 1]
+                otherwise: should give a list (category, ratio), where the float ratio should no less than 1.0
 
 
         Parameters
@@ -259,6 +265,8 @@ class StratifiedSampler(object):
 
 
         """
+
+        LOGGER.info("start to run stratified sampling")
         return_sample_ids = False
         if self.method == "downsample":
             if sample_ids is None:
@@ -266,7 +274,7 @@ class StratifiedSampler(object):
                 for label, fraction in self.fractions:
                     if fraction < 0 or fraction > 1:
                         raise ValueError("sapmle fractions should be a numeric number between 0 and 1inclusive")
-                
+
                 return_sample_ids = True
                 for key, inst in data_inst.collect():
                     label = inst.label
@@ -299,7 +307,7 @@ class StratifiedSampler(object):
 
                 callback(self.tracker, "stratified", callback_metrics)
 
-            sample_dtable = eggroll.parallelize(zip(sample_ids, range(len(sample_ids))),
+            sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
                                                 partition=data_inst._partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
@@ -321,7 +329,7 @@ class StratifiedSampler(object):
                 for label, fraction in self.fractions:
                     if fraction <= 0:
                         raise ValueError("sapmle fractions should be a numeric number greater than 0")
-                
+
                 for key, inst in data_set:
                     label = inst.label
                     if label not in self.label_mapping:
@@ -334,7 +342,7 @@ class StratifiedSampler(object):
                 callback_metrics = []
                 for i in range(len(idset)):
                     label_name = self.labels[i]
-                    
+
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
 
@@ -344,23 +352,21 @@ class StratifiedSampler(object):
                                                random_state=self.random_state)
 
                         sample_ids.extend(_sample_ids)
-                        
+
                         callback_metrics.append(Metric(label_name, len(_sample_ids)))
                     else:
                         callback_metrics.append(Metric(label_name, 0))
 
-                
                 random.shuffle(sample_ids)
-                
-                callback(self.tracker, "stratified", callback_metrics)
 
+                callback(self.tracker, "stratified", callback_metrics)
 
             new_data = []
             for i in range(len(sample_ids)):
                 index = id_maps[sample_ids[i]]
                 new_data.append((i, data_set[index][1]))
 
-            new_data_inst = eggroll.parallelize(new_data,
+            new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
                                                 partition=data_inst._partitions)
 
@@ -380,9 +386,10 @@ class Sampler(ModelBase):
     Parameters
     ----------
     sample_param : object, self-define sample parameters,
-        define in federatedml.param.param
+        define in federatedml.param.sample_param
 
     """
+
     def __init__(self):
         super(Sampler, self).__init__()
         self.task_type = None
@@ -447,19 +454,16 @@ class Sampler(ModelBase):
 
     def sync_sample_ids(self, sample_ids):
         transfer_inst = SampleTransferVariable()
-        
-        federation.remote(obj=sample_ids,
-                          name=transfer_inst.sample_ids.name,
-                          tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
-                          role="host")
+
+        transfer_inst.sample_ids.remote(sample_ids,
+                                        role="host",
+                                        suffix=(self.flowid,))
 
     def recv_sample_ids(self):
         transfer_inst = SampleTransferVariable()
-        
-        sample_ids = federation.get(name=transfer_inst.sample_ids.name,
-                                    tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
-                                    idx=0)
 
+        sample_ids = transfer_inst.sample_ids.get(idx=0,
+                                                  suffix=(self.flowid,))
         return sample_ids
 
     def run_sample(self, data_inst, task_type, task_role):
@@ -489,12 +493,14 @@ class Sampler(ModelBase):
             the output sample data, same format with input
 
         """
+        LOGGER.info("begin to run sampling process")
+
         if task_type not in [consts.HOMO, consts.HETERO]:
             raise ValueError("{} task type not support yet".format(task_type))
-        
+
         if task_type == consts.HOMO:
             return self.sample(data_inst)[0]
-        
+
         elif task_type == consts.HETERO:
             if task_role == consts.GUEST:
                 sample_data_inst, sample_ids = self.sample(data_inst)
@@ -503,7 +509,7 @@ class Sampler(ModelBase):
             elif task_role == consts.HOST:
                 sample_ids = self.recv_sample_ids()
                 sample_data_inst = self.sample(data_inst, sample_ids)
-            
+
             else:
                 raise ValueError("{} role not support yet".format(task_role))
 
@@ -529,21 +535,22 @@ class Sampler(ModelBase):
 
 
 def callback(tracker, method, callback_metrics):
-    print ("method is {}".format(method))
+    LOGGER.debug("callback: method is {}".format(method))
     if method == "random":
         tracker.log_metric_data("sample_count",
                                 "random",
                                 callback_metrics)
-        
+
         tracker.set_metric_meta("sample_count",
                                 "random",
                                 MetricMeta(name="sample_count",
-                                            metric_type="SAMPLE_TEXT"))
+                                           metric_type="SAMPLE_TEXT"))
 
     else:
-        print ("name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
+        LOGGER.debug(
+            "callback: name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
         for metric in callback_metrics:
-            print ("metric is {}".format(metric))
+            LOGGER.debug("calback: metric is {}".format(metric))
 
         tracker.log_metric_data("sample_count",
                                 "stratified",
@@ -552,6 +559,4 @@ def callback(tracker, method, callback_metrics):
         tracker.set_metric_meta("sample_count",
                                 "stratified",
                                 MetricMeta(name="sample_count",
-                                            metric_type="SAMPLE_TABLE"))
-
-
+                                           metric_type="SAMPLE_TABLE"))

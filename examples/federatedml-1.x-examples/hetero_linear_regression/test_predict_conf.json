@@ -1,0 +1,33 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "job_type": "predict",
+        "model_id": "arbiter-10000#guest-10000#host-10000#model",
+        "model_version": ""
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "motor_mini_b", "namespace": "motor_mini"}]
+                }
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "motor_mini_a", "namespace": "motor_mini"}]
+                }
+            }
+        }
+    }
+}

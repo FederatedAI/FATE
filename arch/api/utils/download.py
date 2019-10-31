@@ -1,8 +1,7 @@
 import argparse
 import json
 import os
-from arch.api import eggroll
-from arch.api import storage
+from arch.api import session, Backend
 
 
 def do_export_file(job_id, _data):
@@ -13,10 +12,11 @@ def do_export_file(job_id, _data):
         delimitor = _data.get("delimitor", ",")
         output_path = _data.get("output_path")
 
-        eggroll.init(job_id, work_mode)
+        # todo: use eggroll as default storage backend
+        session.init(job_id=job_id, mode=work_mode, backend=Backend.EGGROLL)
 
         with open(os.path.abspath(output_path), "w") as fout:
-            data_table = storage.get_data_table(name=name, namespace=namespace)
+            data_table = session.get_data_table(name=name, namespace=namespace)
                
             print('===== begin to export data =====')
             lines = 0

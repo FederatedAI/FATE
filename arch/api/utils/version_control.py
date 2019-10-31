@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import eggroll
+from arch.api import session
 from arch.api.utils.core import json_loads, json_dumps, bytes_to_string
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
@@ -81,7 +81,7 @@ def version_history(data_table_namespace, commit_id=None, branch="master", limit
 
 
 def get_version_table(data_table_namespace):
-    version_table = eggroll.table(name=data_table_namespace, namespace="version_control",
+    version_table = session.table(name=data_table_namespace, namespace="version_control",
                                   partition=1, create_if_missing=True, error_if_exist=False)
     return version_table
 
@@ -122,7 +122,7 @@ def delete_commit_tmp(commit_id, data_table_namespace):
 
 
 def get_commit_tmp_table(data_table_namespace):
-    version_tmp_table = eggroll.table(name=data_table_namespace, namespace="version_tmp",
+    version_tmp_table = session.table(name=data_table_namespace, namespace="version_tmp",
                                       partition=1, create_if_missing=True, error_if_exist=False)
     return version_tmp_table
 

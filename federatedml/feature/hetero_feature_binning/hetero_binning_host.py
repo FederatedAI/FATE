@@ -54,21 +54,17 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
 
-        encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
-        encrypted_label_table = federation.get(name=self.transfer_variable.encrypted_label.name,
-                                               tag=encrypted_label_table_id,
-                                               idx=0)
+        # encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
+        encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
 
         LOGGER.info("Get encrypted_label_table from guest")
 
-        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table, self.cols_dict)
-        encrypted_bin_sum_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_bin_sum)
+        encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
+                                                              self.cols_dict, split_points)
 
-        federation.remote(encrypted_bin_sum,
-                          name=self.transfer_variable.encrypted_bin_sum.name,
-                          tag=encrypted_bin_sum_id,
-                          role=consts.GUEST,
-                          idx=0)
+        self.transfer_variable.encrypted_bin_sum.remote(encrypted_bin_sum,
+                                                        role=consts.GUEST,
+                                                        idx=0)
 
         LOGGER.info("Sent encrypted_bin_sum to guest")
         data_instances = self.transform(data_instances)
@@ -84,19 +80,21 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         self.binning_result = iv_objs
 
     def __synchronize_encryption(self):
-        pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
+        # pubkey_id = self.transfer_variable.generate_transferid(self.transfer_variable.paillier_pubkey)
+        pubkey = self.transfer_variable.paillier_pubkey.get(idx=0)
+        """
         pubkey = federation.get(name=self.transfer_variable.paillier_pubkey.name,
                                 tag=pubkey_id,
                                 idx=0)
-
+        """
         LOGGER.info("Received pub_key from guest")
         self.encryptor.set_public_key(pubkey)
         self.has_synchronized = True
 
-    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict):
+    def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
         f = functools.partial(self.binning_obj.add_label_in_partition,
-                              total_bin=self.model_param.bin_num,
+                              split_points=split_points,
                               cols_dict=cols_dict,
                               encryptor=self.encryptor,
                               header=self.header)

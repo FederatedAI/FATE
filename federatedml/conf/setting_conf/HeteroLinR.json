@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/linear_model/linear_regression/hetero_linear_regression",
+    "default_runtime_conf": "linear_regression_param.json",
+    "param_class" : "federatedml/param/linear_regression_param.py/LinearParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_linr_guest.py/HeteroLinRGuest"
+        },
+        "host":
+        {
+            "program": "hetero_linr_host.py/HeteroLinRHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_linr_arbiter.py/HeteroLinRArbiter"
+        }
+    }
+}

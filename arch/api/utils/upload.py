@@ -21,7 +21,7 @@ import traceback
 import csv
 import sys
 import time
-from arch.api import eggroll, storage
+from arch.api import session, Backend
 
 CSV = 'csv'
 LOAD_DATA_COUNT = 10000
@@ -29,20 +29,11 @@ MAX_PARTITION_NUM = 1024
 
 
 def list_to_str(input_list):
-    str1 = ''
-    size = len(input_list)
-    for i in range(size):
-        if i == size - 1:
-            str1 += str(input_list[i])
-        else:
-            str1 += str(input_list[i]) + ','
-
-    return str1
-
+    return ','.join(list(map(str, input_list)))
 
 def save_data_header(header_source, dst_table_name, dst_table_namespace):
     header_source_item = header_source.split(',')
-    storage.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}, dst_table_name,
+    session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}, dst_table_name,
                                  dst_table_namespace)
 
 
@@ -70,7 +61,6 @@ def read_data(input_file, dst_table_name, dst_table_namespace, head=True):
 
 
 def generate_table_name(input_file_path):
-    local_time = time.localtime(time.time())
     str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     file_name = input_file_path.split(".")[0]
     file_name = file_name.split("/")[-1]
@@ -140,10 +130,11 @@ if __name__ == "__main__":
                 namespace = _namespace
             if table_name is None:
                 table_name = _table_name
-            eggroll.init(job_id=args.job_id, mode=work_mode)
+            # todo: use eggroll as default storage backed
+            session.init(job_id=args.job_id, mode=work_mode, backend=Backend.EGGROLL)
             input_data = read_data(input_file_path, table_name, namespace, head)
             in_version = job_config.get('in_version', False)
-            data_table = storage.save_data(input_data, name=table_name, namespace=namespace, partition=partition, in_version=in_version)
+            data_table = session.save_data(input_data, name=table_name, namespace=namespace, partition=partition, in_version=in_version)
             print("------------load data finish!-----------------")
             print("file: {}".format(input_file_path))
             print("total data_count: {}".format(data_table.count()))

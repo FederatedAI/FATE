@@ -25,7 +25,7 @@ from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
@@ -42,11 +42,12 @@ def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path, job_runtime_conf_path, model_info, board_url = JobController.submit_job(request.json)
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
         return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
                                                     'job_runtime_conf_path': job_runtime_conf_path,
                                                     'model_info': model_info,
-                                                    'board_url': board_url
+                                                    'board_url': board_url,
+                                                    'logs_directory': logs_directory
                                                     })
     else:
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
@@ -59,8 +60,11 @@ def submit_job():
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    TaskScheduler.stop_job(job_id=request.json.get('job_id', ''))
-    return get_json_result(retcode=0, retmsg='success')
+    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
+    if not response:
+        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
+        return get_json_result(retcode=0, retmsg='kill job success')
+    return get_json_result(retcode=0, retmsg='cancel job success')
 
 
 @manager.route('/query', methods=['POST'])

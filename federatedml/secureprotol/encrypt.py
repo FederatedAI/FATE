@@ -22,9 +22,11 @@ from Cryptodome.PublicKey import RSA
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
+from federatedml.secureprotol.random import RandomPads
 
 
 # LOGGER = log_utils.getLogger()
+from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
 
 
 class Encrypt(object):
@@ -217,6 +219,62 @@ class AffineEncrypt(SymmetricEncrypt):
 
     def generate_key(self, key_size=1024):
         self.key = AffineCipher.generate_keypair(key_size=key_size)
+
+    def encrypt(self, plaintext):
+        if self.key is not None:
+            return self.key.encrypt(plaintext)
+        else:
+            return None
+
+    def decrypt(self, ciphertext):
+        if self.key is not None:
+            return self.key.decrypt(ciphertext)
+        else:
+            return None
+
+
+class PadsCipher(Encrypt):
+
+    def __init__(self):
+        super().__init__()
+        self._uuid = None
+        self._rands = None
+
+    def set_self_uuid(self, uuid):
+        self._uuid = uuid
+
+    def set_exchanged_keys(self, keys):
+        self._seeds = {uid: v & 0xffffffff for uid, v in keys.items() if uid != self._uuid}
+        self._rands = {uid: RandomPads(v & 0xffffffff) for uid, v in keys.items() if uid != self._uuid}
+
+    def encrypt(self, value):
+        if isinstance(value, np.ndarray):
+            ret = value
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret = rand.add_rand_pads(ret, 1.0)
+                else:
+                    ret = rand.add_rand_pads(ret, -1.0)
+            return ret
+        else:
+            ret = value
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret += rand.rand(1)[0]
+                else:
+                    ret -= rand.rand(1)[0]
+            return ret
+
+    def decrypt(self, value):
+        return value
+
+
+class IterativeAffineEncrypt(SymmetricEncrypt):
+    def __init__(self):
+        super(IterativeAffineEncrypt, self).__init__()
+
+    def generate_key(self, key_size=1024, key_round=5):
+        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size, key_round=key_round)
 
     def encrypt(self, plaintext):
         if self.key is not None:

@@ -22,17 +22,18 @@ import functools
 import numpy as np
 from google.protobuf import json_format
 
-from arch.api.proto import feature_selection_meta_pb2, feature_selection_param_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
+from federatedml.feature.hetero_feature_selection.filter_result import SelfFilterResult
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
+from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
 from federatedml.statistic.data_overview import get_header
+from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
+    HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.transfer_variable.hetero_feature_selection_transfer_variable import \
-    HeteroFeatureSelectionTransferVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -46,12 +47,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         super(BaseHeteroFeatureSelection, self).__init__()
         self.transfer_variable = HeteroFeatureSelectionTransferVariable()
         self.cols = []  # Current cols index to do selection
-        # self.left_col_names = []
-        self.left_cols = {}  # final result
-        self.left_cols_index = []
-        # self.cols_dict = {}
+
+        self.filter_result = None
         self.header = []
-        self.original_header = []
         self.schema = {}
         self.party_name = 'Base'
 
@@ -68,6 +66,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.iv_percentile_meta = None
         self.variance_coe_meta = None
         self.outlier_meta = None
+        self.cols_list = []
+        self.host_filter_result = None
 
         # Use to save each model's result
         self.results = []
@@ -92,23 +92,47 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
-        left_col_name_dict = {}
+        if self.filter_result is None:
+            result_obj = feature_selection_param_pb2.FeatureSelectionParam()
+            return result_obj
 
         LOGGER.debug("in _get_param, self.left_cols: {}, self.original_header: {}".format(
-            self.left_cols, self.original_header
+            self.filter_result.get_left_cols, self.header
         ))
 
-        for col_idx, is_left in self.left_cols.items():
-            col_name = self.original_header[col_idx]
-            left_col_name_dict[col_name] = is_left
         left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.header,
-                                                            left_cols=left_col_name_dict)
+                                                            left_cols=self.filter_result.get_left_cols())
 
-        result_obj = feature_selection_param_pb2.FeatureSelectionParam(results=self.results,
-                                                                       final_left_cols=left_col_obj)
+        # col_names = self.__make_cols_list(self.cols_list)
+        # host_col_names = self.__make_cols_list(self.host_cols_list)
+        if self.party_name == consts.GUEST:
+            host_col_names = self.host_filter_result.get_sorted_col_names()
+        else:
+            host_col_names = []
+
+        result_obj = feature_selection_param_pb2.FeatureSelectionParam(
+            results=self.results,
+            final_left_cols=left_col_obj,
+            col_names=self.filter_result.get_sorted_col_names(),
+            host_col_names=host_col_names,
+            header=self.header
+        )
+
         json_result = json_format.MessageToJson(result_obj)
         LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
+
+    def __make_cols_list(self, cols_list):
+        result_list = []
+        idx = len(cols_list) - 1
+        while idx >= 0:
+            this_left_list = cols_list[idx]
+            for col_name in this_left_list:
+                if col_name not in result_list:
+                    result_list.append(str(col_name))
+            idx -= 1
+        LOGGER.debug('in make_cols_list, cols_list: {}, result_list: {}'.format(cols_list, result_list))
+        return result_list
 
     def save_data(self):
         return self.data_output
@@ -116,7 +140,7 @@ class BaseHeteroFeatureSelection(ModelBase):
     def export_model(self):
         LOGGER.debug("Model output is : {}".format(self.model_output))
         if self.model_output is not None:
-            LOGGER.debug("Model output is : {}".format(self.model_output))
+            LOGGER.debug("model output is already exist, return directly")
             return self.model_output
 
         meta_obj = self._get_meta()
@@ -148,14 +172,15 @@ class BaseHeteroFeatureSelection(ModelBase):
 
             original_headers = list(left_col_obj.original_cols)
             self.header = original_headers
-            self.cols = [int(i) for i in self.cols]
             left_col_name_dict = dict(left_col_obj.left_cols)
             LOGGER.debug("In load model, left_col_name_dict: {}, original_headers: {}".format(left_col_name_dict,
                                                                                               original_headers))
+            left_cols = {}
             for col_name, is_left in left_col_name_dict.items():
-                col_idx = original_headers.index(col_name)
-                self.left_cols[col_idx] = is_left
-            LOGGER.debug("Self.left_cols: {}".format(self.left_cols))
+                left_cols[col_name] = is_left
+            LOGGER.debug("Self.left_cols: {}".format(left_cols))
+            self.filter_result = SelfFilterResult(header=original_headers, to_select_cols_all=list(left_cols.keys()))
+            self.filter_result.set_left_cols(left_cols)
 
         if 'isometric_model' in model_dict:
 
@@ -176,8 +201,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_feature = []
 
         for col_idx, col_name in enumerate(header):
-            is_left = left_cols.get(col_idx)
+
+            is_left = left_cols.get(col_name)
             if is_left is None:
+                new_feature.append(instance.features[col_idx])
                 continue
             if not is_left:
                 continue
@@ -192,8 +219,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         between left_cols and cols.
         """
         new_header = copy.deepcopy(self.header)
+        left_cols = self.filter_result.get_left_cols()
         for col_idx, col_name in enumerate(self.header):
-            is_left = self.left_cols.get(col_idx)
+            is_left = left_cols.get(col_name)
             if is_left is None:
                 continue
             if not is_left:
@@ -202,12 +230,13 @@ class BaseHeteroFeatureSelection(ModelBase):
 
     def _transfer_data(self, data_instances):
 
-        if len(self.left_cols) == 0:
-            raise ValueError("None left columns for feature selection. Please check if model has fit.")
-        LOGGER.debug("In transfer_data, left_cols: {}, header: {}".format(self.left_cols, self.header))
+        # if len(self.left_cols) == 0:
+        #     raise ValueError("None left columns for feature selection. Please check if model has fit.")
+        LOGGER.debug("In transfer_data, left_cols: {}, header: {}".format(self.filter_result.get_left_cols(),
+                                                                          self.header))
         before_one_data = data_instances.first()
         f = functools.partial(self.select_cols,
-                              left_cols=self.left_cols,
+                              left_cols=self.filter_result.get_left_cols(),
                               header=self.header)
 
         new_data = data_instances.mapValues(f)
@@ -216,9 +245,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_data = self.set_schema(new_data, new_header)
 
         one_data = new_data.first()[1]
-        LOGGER.debug("In feature selection transform, Before transform: {}, length: {} After transform: {}, length: {}".format(
-            before_one_data[1].features, len(before_one_data[1].features),
-            one_data.features, len(one_data.features)))
+        LOGGER.debug(
+            "In feature selection transform, Before transform: {}, length: {} After transform: {}, length: {}".format(
+                before_one_data[1].features, len(before_one_data[1].features),
+                one_data.features, len(one_data.features)))
 
         return new_data
 
@@ -229,19 +259,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    def _renew_final_left_cols(self, new_left_cols):
-        """
-        As for all columns including those not specified in user params, record which columns left.
-        """
-        left_col_list = []
-        for col_idx, is_left in new_left_cols.items():
-            if not is_left:
-                self.left_cols[col_idx] = False
-            elif is_left:
-                left_col_list.append(col_idx)
-                self.left_cols[col_idx] = True
-        self.cols = left_col_list
-
     def _transform_init_cols(self, data_instances):
         self.schema = data_instances.schema
         header = get_header(data_instances)
@@ -250,12 +267,11 @@ class BaseHeteroFeatureSelection(ModelBase):
     def _init_cols(self, data_instances):
         self.schema = data_instances.schema
         header = get_header(data_instances)
-        self.original_header = copy.deepcopy(header)
-        LOGGER.debug("When init, original_header: {}".format(self.original_header))
+
         if self.cols_index == -1:
-            self.cols = [i for i in range(len(header))]
+            to_select_cols_all = header
         else:
-            cols = []
+            to_select_cols_all = []
             for idx in self.cols_index:
                 try:
                     idx = int(idx)
@@ -265,25 +281,10 @@ class BaseHeteroFeatureSelection(ModelBase):
                 if idx >= len(header):
                     raise ValueError(
                         "In binning module, selected index: {} exceed length of data dimension".format(idx))
-                cols.append(idx)
-            self.cols = cols
+                to_select_cols_all.append(header[idx])
 
-        # self.left_col_names = self.cols.copy()
-
-        # Set all columns are left at the beginning.
-        self.left_cols_index = [i for i in range(len(header))]
-        for col_idx in self.cols:
-            self.left_cols[col_idx] = True
+        self.filter_result = SelfFilterResult(header=header, to_select_cols_all=to_select_cols_all)
         self.header = header
-
-    def _generate_result_idx(self):
-        self.left_col_names = []
-        for col_idx, col_name in enumerate(self.header):
-            if col_idx in self.left_cols_index:
-                # self.left_col_names.append(self.header[col_idx])
-                self.left_cols[col_name] = True
-            else:
-                self.left_cols[col_name] = False
 
     def set_schema(self, data_instance, header=None):
         if header is None:

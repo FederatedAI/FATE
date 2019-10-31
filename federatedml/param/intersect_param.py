@@ -59,10 +59,32 @@ class EncodeParam(BaseParam):
 
         if type(self.base64).__name__ != "bool":
             raise ValueError(
-                "encode param's base64 {} not supported, should be bool type".format(encode_param.base64))
+                "encode param's base64 {} not supported, should be bool type".format(self.base64))
 
         LOGGER.debug("Finish encode parameter check!")
         return True
+
+
+class IntersectCache(BaseParam):
+    def __init__(self, use_cache=False, id_type=consts.PHONE, encrypt_type=consts.SHA256):
+        super().__init__()
+        self.use_cache = use_cache
+        self.id_type = id_type
+        self.encrypt_type = encrypt_type
+
+    def check(self):
+        if type(self.use_cache).__name__ != "bool":
+            raise ValueError(
+                "encode param's salt {} not supported, should be bool type".format(
+                    self.use_cache))
+
+        descr = "intersect cache param's "
+        self.check_and_change_lower(self.id_type,
+                                    [consts.PHONE, consts.IMEI],
+                                    descr)
+        self.check_and_change_lower(self.encrypt_type,
+                                    [consts.MD5, consts.SHA256],
+                                    descr)
 
 
 class IntersectParam(BaseParam):
@@ -75,11 +97,9 @@ class IntersectParam(BaseParam):
 
     random_bit: positive int, it will define the encrypt length of rsa algorithm. It effective only for intersect_method is rsa
 
-    is_send_intersect_ids: bool. In rsa, 'is_send_intersect_ids' is True means guest will send intersect results to host, and False will not.
-                            while in raw, 'is_send_intersect_ids' is True means the role of "join_role" will send intersect results and the other will get them.
+    sync_intersect_ids: bool. In rsa, 'synchronize_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
+                            while in raw, 'synchronize_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
                             Default by True.
-
-    is_get_intersect_ids: bool, In rsa, it will get the results from other. It effective only for rsa and only be True will other's 'is_send_intersect_ids' is True.Default by True
 
     join_role: str, it supports "guest" and "host" only and effective only for raw. If it is "guest", the host will send its ids to guest and find the intersection of
                 ids in guest; if it is "host", the guest will send its ids. Default by "guest".
@@ -88,47 +108,42 @@ class IntersectParam(BaseParam):
 
     encode_params: EncodeParam, it effective only for with_encode is True
 
-    only_output_key: bool, if true, the results of intersection will include key and value which from input data; if false, it will just include key from input
+    only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
                     data and the value will be empty or some useless character like "intersect_id"
     """
 
-    def __init__(self, intersect_method=consts.RAW, random_bit=128, is_send_intersect_ids=True,
-                 is_get_intersect_ids=True, join_role="guest", with_encode=False, encode_params=EncodeParam(),
-                 only_output_key=False):
+    def __init__(self, intersect_method=consts.RAW, random_bit=128, sync_intersect_ids=True, join_role="guest",
+                 with_encode=False, only_output_key=False, encode_params=EncodeParam(),
+                 intersect_cache_param=IntersectCache()):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
-        self.is_send_intersect_ids = is_send_intersect_ids
-        self.is_get_intersect_ids = is_get_intersect_ids
+        self.sync_intersect_ids = sync_intersect_ids
         self.join_role = join_role
         self.with_encode = with_encode
         self.encode_params = copy.deepcopy(encode_params)
         self.only_output_key = only_output_key
+        self.intersect_cache_param = intersect_cache_param
 
     def check(self):
         descr = "intersect param's"
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
-                                                                  [consts.RSA, consts.RAW],
-                                                                  descr)
+                                                            [consts.RSA, consts.RAW],
+                                                            descr)
 
         if type(self.random_bit).__name__ not in ["int"]:
             raise ValueError("intersect param's random_bit {} not supported, should be positive integer".format(
                 self.random_bit))
 
-        if type(self.is_send_intersect_ids).__name__ != "bool":
+        if type(self.sync_intersect_ids).__name__ != "bool":
             raise ValueError(
-                "intersect param's is_send_intersect_ids {} not supported, should be bool type".format(
-                    self.is_send_intersect_ids))
-
-        if type(self.is_get_intersect_ids).__name__ != "bool":
-            raise ValueError(
-                "intersect param's is_get_intersect_ids {} not supported, should be bool type".format(
-                    self.is_get_intersect_ids))
+                "intersect param's sync_intersect_ids {} not supported, should be bool type".format(
+                    self.sync_intersect_ids))
 
         self.join_role = self.check_and_change_lower(self.join_role,
-                                                           [consts.GUEST, consts.HOST],
-                                                           descr)
+                                                     [consts.GUEST, consts.HOST],
+                                                     descr)
 
         if type(self.with_encode).__name__ != "bool":
             raise ValueError(
@@ -138,9 +153,8 @@ class IntersectParam(BaseParam):
         if type(self.only_output_key).__name__ != "bool":
             raise ValueError(
                 "intersect param's only_output_key {} not supported, should be bool type".format(
-                    self.is_send_intersect_ids))
+                    self.only_output_key))
 
         self.encode_params.check()
         LOGGER.debug("Finish intersect parameter check!")
         return True
-

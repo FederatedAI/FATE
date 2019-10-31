@@ -17,8 +17,8 @@
 package com.webank.ai.fate.driver.federation.transfer.api.grpc.observer;
 
 import com.webank.ai.fate.api.networking.proxy.Proxy;
-import com.webank.ai.fate.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
-import com.webank.ai.fate.core.model.DelayedResult;
+import com.webank.ai.eggroll.core.api.grpc.observer.CallerWithSameTypeDelayedResultResponseStreamObserver;
+import com.webank.ai.eggroll.core.model.DelayedResult;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

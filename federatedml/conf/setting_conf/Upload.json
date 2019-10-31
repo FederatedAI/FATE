@@ -1,0 +1,12 @@
+{
+    "module_path":  "fate_flow/utils",
+    "default_runtime_conf": "upload_param.json",
+    "param_class" : "fate_flow/param/upload_param.py/UploadParam",
+    "role":
+    {
+        "local":
+        {
+            "program": "upload.py/Upload"
+        }
+    }
+}

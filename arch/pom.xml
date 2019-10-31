@@ -26,15 +26,15 @@
     <modules>
         <module>core</module>
         <module>driver</module>
-        <module>eggroll</module>
         <module>networking</module>
+        <module>../eggroll</module>
     </modules>
 
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <fate.version>0.3</fate.version>
+        <fate.version>1.1</fate.version>
         <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

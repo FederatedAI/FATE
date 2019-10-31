@@ -19,63 +19,13 @@
 import copy
 
 from federatedml.param.base_param import BaseParam
+from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.init_model_param import InitParam
 from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.util import consts
-
-
-class InitParam(BaseParam):
-    """
-    Initialize Parameters used in initializing a model.
-
-    Parameters
-    ----------
-    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
-        Initial method.
-
-    init_const : int or float, default: 1
-        Required when init_method is 'const'. Specify the constant.
-
-    fit_intercept : bool, default: True
-        Whether to initialize the intercept or not.
-
-    """
-
-    def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True, random_seed=None):
-        super().__init__()
-        self.init_method = init_method
-        self.init_const = init_const
-        self.fit_intercept = fit_intercept
-        self.random_seed = random_seed
-
-    def check(self):
-        if type(self.init_method).__name__ != "str":
-            raise ValueError(
-                "Init param's init_method {} not supported, should be str type".format(self.init_method))
-        else:
-            self.init_method = self.init_method.lower()
-            if self.init_method not in ['random_uniform', 'random_normal', 'ones', 'zeros', 'const']:
-                raise ValueError(
-                    "Init param's init_method {} not supported, init_method should in 'random_uniform',"
-                    " 'random_normal' 'ones', 'zeros' or 'const'".format(self.init_method))
-
-        if type(self.init_const).__name__ not in ['int', 'float']:
-            raise ValueError(
-                "Init param's init_const {} not supported, should be int or float type".format(self.init_const))
-
-        if type(self.fit_intercept).__name__ != 'bool':
-            raise ValueError(
-                "Init param's fit_intercept {} not supported, should be bool type".format(self.fit_intercept))
-
-        if self.random_seed is not None:
-            if type(self.random_seed).__name__ not in ['int', 'float']:
-                raise ValueError(
-                    "Init param's random_seed {} not supported, should be int or float type".format(self.random_seed))
-
-        return True
 
 
 class LogisticParam(BaseParam):
@@ -88,7 +38,7 @@ class LogisticParam(BaseParam):
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
-    eps : float, default: 1e-5
+    tol : float, default: 1e-5
         The tolerance of convergence
 
     alpha : float, default: 1.0
@@ -97,77 +47,90 @@ class LogisticParam(BaseParam):
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
         Optimize method
 
-    party_weight : int or float, default: 1
-        Required in Homo LR. Setting the weight of model updated for this party.
-        The higher weight set, the higher influence made for this party when updating model.
-
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
 
     learning_rate : float, default: 0.01
         Learning rate
 
+    init_param: InitParam object, default: default InitParam object
+        Init param method object.
+
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    converge_func : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
+    early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
+    decay: int or float, default: 1
+        Decay rate for learning rate. learning rate will follow the following decay schedule.
+        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
+        where t is the iter number.
+
+    decay_sqrt: Bool, default: True
+        lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    encrypt_param: EncryptParam object, default: default EncryptParam object
+
+    predict_param: PredictParam object, default: default PredictParam object
+
+    cv_param: CrossValidationParam object, default: default CrossValidationParam object
+
+    multi_class: str, 'ovr', default: 'ovr'
+        If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
     """
 
     def __init__(self, penalty='L2',
-                 eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, converge_func='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam(), one_vs_rest_param=OneVsRestParam()):
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None
+                 ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
-        self.eps = eps
+        self.tol = tol
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
-        self.converge_func = converge_func
-        self.encrypt_param = copy.deepcopy(encrypt_param)
-        self.re_encrypt_batches = re_encrypt_batches
-        self.party_weight = party_weight
-        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.need_run = need_run
+        self.early_stop = early_stop
+        self.encrypt_param = encrypt_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.one_vs_rest_param = copy.deepcopy(one_vs_rest_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
+        self.multi_class = multi_class
+        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "logistic_param's"
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            pass
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
                 raise ValueError(
                     "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
-        if type(self.eps).__name__ != "float":
+        if not isinstance(self.tol, (int, float)):
             raise ValueError(
-                "logistic_param's eps {} not supported, should be float type".format(self.eps))
+                "logistic_param's tol {} not supported, should be float type".format(self.tol))
 
-        if type(self.alpha).__name__ != "float":
+        if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
-                "logistic_param's alpha {} not supported, should be float type".format(self.alpha))
+                "logistic_param's alpha {} not supported, should be float or int type".format(self.alpha))
 
         if type(self.optimizer).__name__ != "str":
             raise ValueError(
@@ -179,11 +142,8 @@ class LogisticParam(BaseParam):
                     "logistic_param's optimizer not supported, optimizer should be"
                     " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
-        if type(self.batch_size).__name__ != "int":
-            raise ValueError(
-                "logistic_param's batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
+            if type(self.batch_size).__name__ not in ["int"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
@@ -202,19 +162,69 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's max_iter must be greater or equal to 1")
 
-        if type(self.converge_func).__name__ != "str":
+        if type(self.early_stop).__name__ != "str":
             raise ValueError(
-                "logistic_param's converge_func {} not supported, should be str type".format(
-                    self.converge_func))
+                "logistic_param's early_stop {} not supported, should be str type".format(
+                    self.early_stop))
         else:
-            self.converge_func = self.converge_func.lower()
-            if self.converge_func not in ['diff', 'abs', 'weight_diff']:
+            self.early_stop = self.early_stop.lower()
+            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
-                    "logistic_param's converge_func not supported, converge_func should be"
+                    "logistic_param's early_stop not supported, converge_func should be"
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
+        if self.encrypt_param.method not in [consts.PAILLIER, None]:
+            raise ValueError(
+                "logistic_param's encrypted method support 'Paillier' or None only")
 
+        if type(self.decay).__name__ not in ["int", 'float']:
+            raise ValueError(
+                "logistic_param's decay {} not supported, should be 'int' or 'float'".format(
+                    self.decay))
+
+        if type(self.decay_sqrt).__name__ not in ['bool']:
+            raise ValueError(
+                "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
+                    self.decay_sqrt))
+        return True
+
+
+class HomoLogisticParam(LogisticParam):
+    """
+    Parameters
+    ----------
+    re_encrypt_batches : int, default: 2
+        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
+        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
+        this parameter. Too large batches may cause training failure.
+
+    aggregate_iters : int, default: 1
+        Indicate how many iterations are aggregated once.
+
+    """
+    def __init__(self, penalty='L2',
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff',
+                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None
+                 ):
+        super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                batch_size=batch_size,
+                                                learning_rate=learning_rate,
+                                                init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                encrypt_param=encrypt_param, predict_param=predict_param,
+                                                cv_param=cv_param, multi_class=multi_class,
+                                                validation_freqs=validation_freqs,
+                                                decay=decay, decay_sqrt=decay_sqrt)
+        self.re_encrypt_batches = re_encrypt_batches
+        self.aggregate_iters = aggregate_iters
+
+    def check(self):
+        super().check()
         if type(self.re_encrypt_batches).__name__ != "int":
             raise ValueError(
                 "logistic_param's re_encrypt_batches {} not supported, should be int type".format(
@@ -223,8 +233,43 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's re_encrypt_batches must be greater or equal to 0")
 
-        if type(self.party_weight).__name__ not in ["int", 'float']:
+        if not isinstance(self.aggregate_iters, int):
             raise ValueError(
-                "logistic_param's party_weight {} not supported, should be 'int' or 'float'".format(
-                    self.party_weight))
+                "logistic_param's aggregate_iters {} not supported, should be int type".format(
+                    self.aggregate_iters))
+
+        if self.encrypt_param.method == consts.PAILLIER:
+            if self.optimizer != 'sgd':
+                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
+
+            if self.penalty == consts.L1_PENALTY:
+                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
+        return True
+
+
+class HeteroLogisticParam(LogisticParam):
+    def __init__(self, penalty='L2',
+                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None
+                 ):
+        super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                  batch_size=batch_size,
+                                                  learning_rate=learning_rate, encrypt_param=encrypt_param,
+                                                  init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                  predict_param=predict_param, cv_param=cv_param,
+                                                  decay=decay,
+                                                  decay_sqrt=decay_sqrt, multi_class=multi_class,
+                                                  validation_freqs=validation_freqs)
+        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
+
+    def check(self):
+        super().check()
+        self.encrypted_mode_calculator_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError("Hetero LR support Paillier encryption mode only")
         return True

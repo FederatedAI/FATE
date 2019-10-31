@@ -157,6 +157,7 @@ class Binning(object):
             self.cols_index = [i for i in range(len(header))]
         else:
             cols = []
+            cols_index = []
             for idx in self.cols_index:
                 try:
                     idx = int(idx)
@@ -167,7 +168,9 @@ class Binning(object):
                     raise ValueError(
                         "In binning module, selected index: {} exceed length of data dimension".format(idx))
                 cols.append(header[idx])
+                cols_index.append(idx)
             self.cols = cols
+            self.cols_index = cols_index
 
         self.cols_dict = {}
         for col in self.cols:
@@ -229,6 +232,9 @@ class Binning(object):
             transform_cols_idx = self.cols_index
         else:
             assert isinstance(transform_cols_idx, (list, tuple))
+            LOGGER.debug('In convert_feature_to_bin, transform_cols_idx: {}, col_index: {}, cols: {}'.format(
+                transform_cols_idx, self.cols_index, self.cols
+            ))
             for col in transform_cols_idx:
                 if col not in self.cols_index:
                     raise RuntimeError("Binning Transform cols: {} should be fit before transform".format(col))
@@ -239,12 +245,17 @@ class Binning(object):
 
         is_sparse = data_overview.is_sparse_data(data_instances)
 
+        LOGGER.debug("In convert_feature_to_bin, split_points: {}, header: {}, transform_cols_idx: {}".format(
+            split_points, self.header, transform_cols_idx
+        ))
+
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
                                   transform_cols_idx=transform_cols_idx,
                                   split_points_dict=split_points,
                                   header=self.header,
-                                  abnormal_list=self.abnormal_list)
+                                  abnormal_list=self.abnormal_list
+                                  )
             new_data = data_instances.mapValues(f)
         else:
             f = functools.partial(self._convert_dense_data,
@@ -263,20 +274,27 @@ class Binning(object):
             s_ps = np.array(s_ps)
             split_points_result.append(s_ps)
         split_points_result = np.array(split_points_result)
+        assert len(split_points_result) == len(self.split_points)
+        LOGGER.debug("Original split_points: {}, changed split_point: {}".format(self.split_points, split_points_result))
+        LOGGER.debug("In convert_feature_to_bin, new_data: {}, split_point_result: {}, bin_sparse: {}".format(
+            new_data, split_points_result, bin_sparse
+        ))
         return new_data, split_points_result, bin_sparse
 
     @staticmethod
-    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list):
+    def _convert_sparse_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
         all_data = instances.features.get_all_data()
         data_shape = instances.features.get_shape()
         indice = []
         sparse_value = []
 
         for col_idx, col_value in all_data:
-            if col_value in abnormal_list:
-                indice.append(col_idx)
-                sparse_value.append(col_value)
-            elif col_idx in transform_cols_idx:
+            if col_idx in transform_cols_idx:
+                if col_value in abnormal_list:
+                    indice.append(col_idx)
+                    sparse_value.append(col_value)
+                    continue
+                # Maybe it is because missing value add in sparse value, but
                 col_name = header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
@@ -303,12 +321,13 @@ class Binning(object):
         return result
 
     @staticmethod
-    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list):
+    def _convert_dense_data(instances, transform_cols_idx, split_points_dict, header, abnormal_list: list):
         features = instances.features
         for col_idx, col_value in enumerate(features):
-            if col_value in abnormal_list:
-                features[col_idx] = col_value
-            elif col_idx in transform_cols_idx:
+            if col_idx in transform_cols_idx:
+                if col_value in abnormal_list:
+                    features[col_idx] = col_value
+                    continue
                 col_name = header[col_idx]
                 split_points = split_points_dict[col_name]
                 bin_num = Binning.get_bin_num(col_value, split_points)
@@ -365,7 +384,7 @@ class Binning(object):
         event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
         data_bin_with_label = data_bin_table.join(event_count_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
-                              total_bin=self.bin_num,
+                              split_points=split_points,
                               cols_dict=self.cols_dict)
 
         result_sum = data_bin_with_label.mapPartitions(f)
@@ -440,12 +459,13 @@ class Binning(object):
 
     @staticmethod
     def get_bin_num(value, split_points):
-        col_bin_num = len(split_points)
+        col_bin_num = len(split_points) - 1
         for bin_num, split_point in enumerate(split_points):
             if value <= split_point:
                 col_bin_num = bin_num
                 break
-        col_bin_num = int(col_bin_num)
+        # col_bin_num = int(col_bin_num)
+        assert col_bin_num < len(split_points)
         return col_bin_num
 
     @staticmethod
@@ -489,8 +509,7 @@ class Binning(object):
         iv_array = []
 
         for event_count, non_event_count in data_event_count:
-            if event_count == 0 and non_event_count == 0:
-                continue
+
             if event_count == 0 or non_event_count == 0:
                 event_rate = 1.0 * (event_count + adjustment_factor) / event_total
                 non_event_rate = 1.0 * (non_event_count + adjustment_factor) / non_event_total
@@ -551,7 +570,7 @@ class Binning(object):
         return result_ivs
 
     @staticmethod
-    def add_label_in_partition(data_bin_with_table, total_bin, cols_dict, encryptor=None, header=None):
+    def add_label_in_partition(data_bin_with_table, split_points, cols_dict, encryptor=None, header=None):
         """
         Add all label, so that become convenient to calculate woe and iv
 
@@ -561,8 +580,8 @@ class Binning(object):
             The input data, the DTable is like:
             (id, {'x1': 1, 'x2': 5, 'x3': 2}, y, 1 - y)
 
-        total_bin : int, > 0
-            Specify the largest bin number
+        split_points : dict
+            Split points dict. Use to find out total bin num for each feature
 
         cols_dict: dict
             Record key, value pairs where key is cols' name, and value is cols' index.
@@ -582,7 +601,8 @@ class Binning(object):
         result_sum = {}
         for col_name in cols_dict:
             result_col_sum = []
-            for bin_index in range(total_bin):
+            split_point = split_points.get(col_name)
+            for bin_index in range(len(split_point)):
                 if encryptor is not None:
                     result_col_sum.append([encryptor.encrypt(0), encryptor.encrypt(0)])
                 else:
@@ -597,7 +617,14 @@ class Binning(object):
             inverse_y = y_combo[1]
             for col_name, bin_idx in bin_idx_dict.items():
                 col_sum = result_sum[col_name]
-                label_sum = col_sum[bin_idx]
+                try:
+                    label_sum = col_sum[bin_idx]
+                except:
+                    LOGGER.debug(
+                        "In add_label_in_partition, col_name: {}, col_sum: {}, bin_index: {}".format(
+                            col_name, col_sum, bin_idx
+                        ))
+
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + inverse_y
                 col_sum[bin_idx] = label_sum

@@ -13,19 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.proto import pipeline_pb2
+from fate_flow.utils.authentication_utils import authentication_check
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
 from arch.api.utils.core import current_timestamp, json_dumps, json_loads
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking import Tracking
-from fate_flow.settings import schedule_logger, BOARD_DASHBOARD_URL
+from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser
+from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
 
 
 class JobController(object):
@@ -38,7 +40,7 @@ class JobController(object):
     @staticmethod
     def submit_job(job_data):
         job_id = generate_job_id()
-        schedule_logger.info('submit job, job_id {}, body {}'.format(job_id, job_data))
+        schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
@@ -58,9 +60,11 @@ class JobController(object):
             pipeline_model = job_tracker.get_output_model('pipeline')
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-        job_dsl_path, job_runtime_conf_path = save_job_conf(job_id=job_id,
-                                                            job_dsl=job_dsl,
-                                                            job_runtime_conf=job_runtime_conf)
+        path_dict = save_job_conf(job_id=job_id,
+                                  job_dsl=job_dsl,
+                                  job_runtime_conf=job_runtime_conf,
+                                  train_runtime_conf=train_runtime_conf,
+                                  pipeline_dsl=None)
 
         job = Job()
         job.f_job_id = job_id
@@ -75,50 +79,64 @@ class JobController(object):
         job.f_progress = 0
         job.f_create_time = current_timestamp()
 
-        # save job info
+        initiator_role = job_initiator['role']
+        initiator_party_id = job_initiator['party_id']
+        if initiator_party_id not in job_runtime_conf['role'][initiator_role]:
+            schedule_logger(job_id).info("initiator party id error:{}".format(initiator_party_id))
+            raise Exception("initiator party id error {}".format(initiator_party_id))
+
+        get_job_dsl_parser(dsl=job_dsl,
+                           runtime_conf=job_runtime_conf,
+                           train_runtime_conf=train_runtime_conf)
+
         TaskScheduler.distribute_job(job=job, roles=job_runtime_conf['role'], job_initiator=job_initiator)
 
         # push into queue
-        RuntimeConfig.JOB_QUEUE.put_event({
-            'job_id': job_id,
-            "initiator_role": job_initiator['role'],
-            "initiator_party_id": job_initiator['party_id']
-        }
-        )
-        schedule_logger.info(
+        job_event = job_utils.job_event(job_id, initiator_role,  initiator_party_id)
+        try:
+            RuntimeConfig.JOB_QUEUE.put_event(job_event)
+        except Exception as e:
+            raise Exception('push job into queue failed')
+
+        schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
         board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
-        return job_id, job_dsl_path, job_runtime_conf_path, {'model_id': job_parameters['model_id'],
-                                                             'model_version': job_parameters[
-                                                                 'model_version']}, board_url
+        logs_directory = get_job_log_directory(job_id)
+        return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
+               {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
 
     @staticmethod
-    def kill_job(job_id, role, party_id, job_initiator):
-        schedule_logger.info('{} {} get kill job {} command'.format(role, party_id, job_id))
+    def kill_job(job_id, role, party_id, job_initiator, timeout=False):
+        schedule_logger(job_id).info('{} {} get kill job {} command'.format(role, party_id, job_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False
             try:
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
             except Exception as e:
-                schedule_logger.exception(e)
+                schedule_logger(job_id).exception(e)
             finally:
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} process {} kill {}'.format(job_id, task.f_component_name, task.f_role,
                                                                              task.f_party_id, task.f_run_pid,
                                                                              'success' if kill_status else 'failed'))
+            status = TaskStatus.FAILED if not timeout else TaskStatus.TIMEOUT
+
             if task.f_status != TaskStatus.SUCCESS:
-                task.f_status = TaskStatus.FAILED
-            TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
-                                          role=role,
-                                          party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
-                                          task_info=task.to_json())
+                task.f_status = status
+            try:
+                TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
+                                              role=role,
+                                              party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
+                                              task_info=task.to_json(), initiator_role=job_initiator.get('role', None))
+            except Exception as e:
+                schedule_logger(job_id).exception(e)
 
     @staticmethod
     def update_task_status(job_id, component_name, task_id, role, party_id, task_info):
         tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name, task_id=task_id)
         tracker.save_task(role=role, party_id=party_id, task_info=task_info)
-        schedule_logger.info(
+        schedule_logger(job_id).info(
             'job {} component {} {} {} status {}'.format(job_id, component_name, role, party_id,
                                                          task_info.get('f_status', '')))
 
@@ -130,9 +148,14 @@ class JobController(object):
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
             train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])
+            if USE_AUTHENTICATION:
+                authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
+                                     dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
             save_job_conf(job_id=job_id,
                           job_dsl=dsl,
-                          job_runtime_conf=runtime_conf)
+                          job_runtime_conf=runtime_conf,
+                          train_runtime_conf=train_runtime_conf,
+                          pipeline_dsl=None)
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}
@@ -193,15 +216,36 @@ class JobController(object):
 
     @staticmethod
     def clean_job(job_id, role, party_id):
-        schedule_logger.info('job {} on {} {} start to clean'.format(job_id, role, party_id))
+        schedule_logger(job_id).info('job {} on {} {} start to clean'.format(job_id, role, party_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             try:
                 Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task()
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} clean done'.format(job_id, task.f_component_name, role, party_id))
             except Exception as e:
-                schedule_logger.info(
+                schedule_logger(job_id).info(
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
-                schedule_logger.exception(e)
-        schedule_logger.info('job {} on {} {} clean done'.format(job_id, role, party_id))
+                schedule_logger(job_id).exception(e)
+        schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
+
+    @staticmethod
+    def cancel_job(job_id, role, party_id, job_initiator):
+        schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if jobs:
+            job = jobs[0]
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = job_utils.job_event(job.f_job_id,
+                                        job_runtime_conf['initiator']['role'],
+                                        job_runtime_conf['initiator']['party_id'])
+            RuntimeConfig.JOB_QUEUE.del_event(event)
+
+            schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+        else:
+            raise Exception('role {} party_id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+
+
+
+
+

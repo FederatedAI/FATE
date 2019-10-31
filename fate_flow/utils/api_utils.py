@@ -28,26 +28,36 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=None):
-    return jsonify({"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta})
+    result_dict = {"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta}
+    response = {}
+    for key, value in result_dict.items():
+        if not value and key != "retcode":
+            continue
+        else:
+            response[key] = value
+    return jsonify(response)
 
 
 def error_response(response_code, retmsg):
     return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 
-def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, work_mode,
+def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+    if int(dest_party_id) == 0:
+        return local_api(method=method, endpoint=endpoint, json_body=json_body)
     if work_mode == WorkMode.STANDALONE:
         return local_api(method=method, endpoint=endpoint, json_body=json_body)
     elif work_mode == WorkMode.CLUSTER:
-        return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id,
+        return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
                           dest_party_id=dest_party_id, json_body=json_body, overall_timeout=overall_timeout)
     else:
         raise Exception('{} work mode is not supported'.format(work_mode))
 
 
-def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body,
+def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+    json_body['src_role'] = src_role
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
     try:

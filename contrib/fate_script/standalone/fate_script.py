@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import uuid
-from arch.api import  eggroll
+from arch.api import  session
 from arch.api.standalone import federation
 from arch.api.standalone.federation import FederationRuntime
 from arch.api.utils import file_utils

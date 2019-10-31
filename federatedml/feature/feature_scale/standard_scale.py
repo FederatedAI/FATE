@@ -18,9 +18,9 @@ import functools
 
 import numpy as np
 
-from arch.api.proto.feature_scale_meta_pb2 import ScaleMeta
-from arch.api.proto.feature_scale_param_pb2 import ScaleParam
-from arch.api.proto.feature_scale_param_pb2 import ColumnScaleParam
+from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
+from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
+from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
 from arch.api.utils import log_utils
 from federatedml.feature.feature_scale.base_scale import BaseScale
 from federatedml.statistic.statics import MultivariateStatisticalSummary
@@ -132,7 +132,7 @@ class StandardScale(BaseScale):
 
         return transform_data
 
-    def __get_meta(self):
+    def __get_meta(self, need_run):
         if self.header:
             scale_column = [self.header[i] for i in self.scale_column_idx]
         else:
@@ -147,29 +147,29 @@ class StandardScale(BaseScale):
                                    feat_upper=self._get_upper(self.data_shape),
                                    feat_lower=self._get_lower(self.data_shape),
                                    with_mean=self.with_mean,
-                                   with_std=self.with_std
+                                   with_std=self.with_std,
+                                   need_run=need_run
                                    )
         return meta_proto_obj
 
-    def __get_param(self, need_run):
+    def __get_param(self):
         column_scale_param_dict = {}
         if self.header:
             for i, header in enumerate(self.header):
                 if i in self.scale_column_idx:
-                    param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
-                                                 column_lower=self.column_min_value[i],
-                                                 mean=self.mean[i],
-                                                 std=self.std[i])
+                    param_obj = ColumnScaleParam(column_upper=np.round(self.column_max_value[i], self.round_num),
+                                                 column_lower=np.round(self.column_min_value[i], self.round_num),
+                                                 mean=np.round(self.mean[i], self.round_num),
+                                                 std=np.round(self.std[i], self.round_num))
                     column_scale_param_dict[header] = param_obj
 
         param_proto_obj = ScaleParam(col_scale_param=column_scale_param_dict,
-                                     header=self.header,
-                                     need_run=need_run)
+                                     header=self.header)
         return param_proto_obj
 
     def export_model(self, need_run):
-        meta_obj = self.__get_meta()
-        param_obj = self.__get_param(need_run)
+        meta_obj = self.__get_meta(need_run)
+        param_obj = self.__get_param()
         result = {
             self.model_meta_name: meta_obj,
             self.model_param_name: param_obj

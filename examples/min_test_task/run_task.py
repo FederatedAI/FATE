@@ -247,8 +247,8 @@ def upload(config_file, role, data_file):
     print("Upload data config json: {}".format(json_info))
     stdout = exec_task(json_info, "upload", role)
     print("Upload output is {}".format(stdout))
-    parse_result = parse_exec_task(stdout)
-    return parse_result["table_name"], parse_result["namespace"]
+    # parse_result = parse_exec_task(stdout)
+    return this_table_name, this_table_namespace
 
 
 def task_status_checker(jobid, component_name):
@@ -375,9 +375,9 @@ def train(dsl_file, config_file, guest_id, host_id, arbiter_id, guest_name, gues
 
 
 def get_table_count(name, namespace):
-    from arch.api import eggroll
-    eggroll.init("get_intersect_output", mode=work_mode)
-    table = eggroll.table(name, namespace)
+    from arch.api import session
+    session.init(job_id="get_intersect_output", mode=work_mode)
+    table = session.table(name=name, namespace=namespace)
     count = table.count()
     print("table count:{}".format(count))
     return count
@@ -525,8 +525,9 @@ if __name__ == "__main__":
                     auc = metric_value
             print("[Train] train eval:{}".format(eval_results))
             # eval_res = get_table_collect(eval_output_name, eval_output_namespace)
-            if auc > task_hetero_lr_base_auc:
-                TEST_TASK["TEST_TRAIN"] = 0
+            TEST_TASK["TEST_TRAIN"] = 0
+            if auc < task_hetero_lr_base_auc:
+                print("[Warning] The auc: {} is lower than expect value: {}.")
         else:
             print("[Train] train task is failed")
             TEST_TASK["TEST_TRAIN"] = 1

@@ -21,7 +21,7 @@ component_name = 'secure_add_example_0'
 GUEST = 'guest'
 HOST = 'host'
 
-MAX_TIME = 10
+MAX_TIME = 100
 WATI_LOG_TIME = 3
 
 
@@ -160,7 +160,7 @@ def show_log(jobid, log_level):
 def exec_toy_example(runtime_config):
     jobid = exec_task(dsl_path, runtime_config)
 
-    print ("toy example is running, jobid is {}".format(jobid))
+    # print ("toy example is running, jobid is {}".format(jobid))
 
     for i in range(MAX_TIME):
         time.sleep(1)
@@ -177,7 +177,6 @@ def exec_toy_example(runtime_config):
             print ("job status is {}".format((status)))
 
     raise ValueError("job running time exceed, please check federation or eggroll log")
-
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()

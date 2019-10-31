@@ -33,12 +33,15 @@ class EvaluateParam(BaseParam):
 
     pos_label: specify positive label type, can be int, float and str, this depend on the data's label, this parameter effective only for 'binary'
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
     """
 
-    def __init__(self, eval_type="binary", pos_label=1):
+    def __init__(self, eval_type="binary", pos_label=1, need_run=True):
         super().__init__()
         self.eval_type = eval_type
         self.pos_label = pos_label
+        self.need_run = need_run
 
     def check(self):
         descr = "evaluate param's "
@@ -50,6 +53,11 @@ class EvaluateParam(BaseParam):
             raise ValueError(
                 "evaluate param's pos_label {} not supported, should be str or float or int type".format(
                     self.pos_label))
+
+        if type(self.need_run).__name__ != "bool":
+            raise ValueError(
+                "evaluate param's need_run {} not supported, should be bool".format(
+                    self.need_run))
 
         LOGGER.info("Finish evaluation parameter check!")
         return True

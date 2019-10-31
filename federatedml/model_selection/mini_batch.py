@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.model_selection import indices
 
@@ -34,7 +34,7 @@ class MiniBatch:
         else:
             self.batch_size = batch_size
 
-        self.batch_data_sids = self.__mini_batch_data_seperator(data_inst, batch_size)
+        self.__mini_batch_data_seperator(data_inst, batch_size)
         # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
 
     def mini_batch_data_generator(self, result='data'):
@@ -50,6 +50,7 @@ class MiniBatch:
         -------
         A generator that might generate data or index.
         """
+        LOGGER.debug("Currently, len of all_batch_data: {}".format(len(self.all_batch_data)))
         if result == 'index':
             for index_table in self.all_index_data:
                 yield index_table
@@ -88,7 +89,7 @@ class MiniBatch:
         all_index_data = []
         for index_data in batch_data_sids:
             # LOGGER.debug('in generator, index_data is {}'.format(index_data))
-            index_table = eggroll.parallelize(index_data, include_key=True, partition=data_insts._partitions)
+            index_table = session.parallelize(index_data, include_key=True, partition=data_insts._partitions)
             batch_data = index_table.join(data_insts, lambda x, y: y)
 
             # yield batch_data
@@ -96,4 +97,3 @@ class MiniBatch:
             all_index_data.append(index_table)
         self.all_batch_data = all_batch_data
         self.all_index_data = all_index_data
-        return batch_data_sids

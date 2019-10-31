@@ -15,9 +15,8 @@
 #
 
 from arch.api import RuntimeInstance
-from arch.api import WorkMode
-from arch.api.standalone import federation as standalone_federation
-from arch.api.cluster import federation as cluster_federation
+from arch.api.transfer import FederationBuilder
+from arch.api.utils.profile_util import log_elapsed
 
 
 def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
@@ -39,16 +38,28 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
             "guest": [10002]
         }
      }
+
     """
     if RuntimeInstance.MODE is None:
-        raise EnvironmentError("eggroll should be initialized before federation")
-    if RuntimeInstance.MODE == WorkMode.STANDALONE:
-        RuntimeInstance.FEDERATION = standalone_federation.init(job_id=job_id, runtime_conf=runtime_conf)
-    else:
-        RuntimeInstance.FEDERATION = cluster_federation.init(job_id=job_id, runtime_conf=runtime_conf,
-                                                             server_conf_path=server_conf_path)
+        raise EnvironmentError(
+            "table manager should be initialized before federation")
+
+    if RuntimeInstance.Backend.is_eggroll():
+        RuntimeInstance.FEDERATION = \
+            FederationBuilder.build_eggroll_backend(job_id=job_id,
+                                                    runtime_conf=runtime_conf,
+                                                    work_mode=RuntimeInstance.MODE,
+                                                    server_conf_path=server_conf_path)
+
+    elif RuntimeInstance.Backend.is_spark():
+        RuntimeInstance.FEDERATION = \
+            FederationBuilder.build_spark_backend(job_id=job_id,
+                                                  runtime_conf=runtime_conf,
+                                                  work_mode=RuntimeInstance.MODE,
+                                                  server_conf_path=server_conf_path)
 
 
+@log_elapsed
 def get(name, tag: str, idx=-1):
     """
     This method will block until the remote object is fetched.
@@ -57,9 +68,11 @@ def get(name, tag: str, idx=-1):
     :param idx: idx of the party_ids in runtime role list, if out-of-range, list of all objects will be returned.
     :return: The object itself if idx is in range, else return list of all objects from possible source.
     """
+
     return RuntimeInstance.FEDERATION.get(name=name, tag=tag, idx=idx)
 
 
+@log_elapsed
 def remote(obj, name: str, tag: str, role=None, idx=-1):
     """
     This method will send an object to other parties
@@ -70,9 +83,12 @@ def remote(obj, name: str, tag: str, role=None, idx=-1):
     :param idx: The idx of the party_ids of the role, if out-of-range, will send to all parties of the role.
     :return: None
     """
-    return RuntimeInstance.FEDERATION.remote(obj=obj, name=name, tag=tag, role=role, idx=idx)
+    return RuntimeInstance.FEDERATION.remote(obj=obj,
+                                             name=name,
+                                             tag=tag,
+                                             role=role,
+                                             idx=idx)
 
 
 def get_runtime_conf():
     return RuntimeInstance.FEDERATION.runtime_conf
-

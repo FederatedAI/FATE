@@ -27,10 +27,10 @@ import os
 
 import numpy as np
 
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from arch.api.model_manager import manager as model_manager
-from arch.api.proto import pipeline_pb2
+from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
@@ -53,7 +53,7 @@ from federatedml.util import consts
 from federatedml.util import param_checker
 from federatedml.util.data_io import SparseTagReader
 from federatedml.util.param_checker import AllChecker
-from federatedml.util.transfer_variable import HeteroWorkFlowTransferVariable
+from federatedml.util.transfer import HeteroWorkFlowTransferVariable
 from workflow import status_tracer_decorator
 
 from federatedml.one_vs_rest.one_vs_rest import OneVsRest
@@ -235,7 +235,7 @@ class WorkFlow(object):
         return predict_result
 
     def save_eval_result(self, eval_data):
-        eggroll.parallelize([eval_data],
+        session.parallelize([eval_data],
                             include_key=False,
                             name=self.workflow_param.evaluation_output_table,
                             namespace=self.workflow_param.evaluation_output_namespace,
@@ -638,7 +638,7 @@ class WorkFlow(object):
                 self._initialize_model(self.config_path)
 
     def load_eval_result(self):
-        eval_data = eggroll.table(
+        eval_data = session.table(
             name=self.workflow_param.evaluation_output_table,
             namespace=self.workflow_param.evaluation_output_namespace,
         )
@@ -827,7 +827,7 @@ class WorkFlow(object):
         self._initialize(config_path)
         with open(config_path) as conf_f:
             runtime_json = json.load(conf_f)
-        eggroll.init(self.job_id, self.workflow_param.work_mode)
+        session.init(self.job_id, self.workflow_param.work_mode)
         LOGGER.debug("The job id is {}".format(self.job_id))
         federation.init(self.job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")

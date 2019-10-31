@@ -21,7 +21,7 @@ import os
 import copy
 
 
-class ParameterOverride(object):
+class ParameterUtil(object):
     @staticmethod
     def override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_dict=None, module=None,
                            module_alias=None):
@@ -39,12 +39,12 @@ class ParameterOverride(object):
         param_module_path = ".".join(param_class_path.split("/", -1)[:-1]).replace(".py", "")
         param_module = importlib.import_module(param_module_path)
         param_obj = getattr(param_module, param_class)()
-        default_runtime_dict = ParameterOverride.change_object_to_dict(param_obj) 
+        default_runtime_dict = ParameterUtil.change_object_to_dict(param_obj)
 
         default_runtime_conf_suf = _module_setting["default_runtime_conf"]
         try:
             with open(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf), "r") as fin:
-                default_runtime_dict = ParameterOverride.merge_parameters(default_runtime_dict, json.loads(fin.read()), param_obj);
+                default_runtime_dict = ParameterUtil.merge_parameters(default_runtime_dict, json.loads(fin.read()), param_obj);
         except:
             raise Exception("default runtime conf should be a json file")
         
@@ -79,14 +79,14 @@ class ParameterOverride(object):
                 if "algorithm_parameters" in submit_dict:
                     if module_alias in submit_dict["algorithm_parameters"]:
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
-                        merge_dict = ParameterOverride.merge_parameters(runtime_dict[param_class], common_parameters, param_obj)
+                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class], common_parameters, param_obj)
                         runtime_dict[param_class] = merge_dict
                 
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
                     if module_alias in role_dict:
                         role_parameters = role_dict.get(module_alias)
-                        merge_dict = ParameterOverride.merge_parameters(runtime_dict[param_class], role_parameters, param_obj, idx)
+                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class], role_parameters, param_obj, idx)
                         runtime_dict[param_class] = merge_dict
                 
                 runtime_dict['local'] = submit_dict.get('local', {})
@@ -119,7 +119,7 @@ class ParameterOverride(object):
             else:
                 if key not in runtime_dict:
                     runtime_dict[key] = {}
-                runtime_dict[key] = ParameterOverride.merge_parameters(runtime_dict.get(key), val_list, attr, idx)
+                runtime_dict[key] = ParameterUtil.merge_parameters(runtime_dict.get(key), val_list, attr, idx)
 
         return runtime_dict
 
@@ -166,8 +166,22 @@ class ParameterOverride(object):
         for variable in variable_dict:
             attr = getattr(obj, variable)
             if attr and type(attr).__name__ not in dir(builtins):
-                ret_dict[variable] = ParameterOverride.change_object_to_dict(attr)
+                ret_dict[variable] = ParameterUtil.change_object_to_dict(attr)
             else:
                 ret_dict[variable] = attr
 
         return ret_dict
+
+    @staticmethod
+    def get_param_class_name(setting_conf_prefix, module):
+        _module_setting_path = os.path.join(setting_conf_prefix, module + ".json")
+        _module_setting = None
+        with open(_module_setting_path, "r") as fin:
+            _module_setting = json.loads(fin.read())
+
+        param_class_path = _module_setting["param_class"]
+        param_class = param_class_path.split("/", -1)[-1]
+
+        return param_class
+
+

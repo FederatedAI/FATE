@@ -32,14 +32,51 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.webank.ai.fate</groupId>
-            <artifactId>fate-storage-service</artifactId>
-            <version>${fate.version}</version>
+            <groupId>com.webank.ai.eggroll</groupId>
+            <artifactId>eggroll-core</artifactId>
+            <version>1.1</version>
         </dependency>
         <dependency>
-            <groupId>com.webank.ai.fate</groupId>
-            <artifactId>fate-roll</artifactId>
-            <version>${fate.version}</version>
+            <groupId>com.webank.ai.eggroll</groupId>
+            <artifactId>eggroll-meta-service</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.webank.ai.eggroll</groupId>
+            <artifactId>eggroll-roll</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.webank.ai.eggroll</groupId>
+            <artifactId>eggroll-storage-service-java</artifactId>
+            <version>1.1</version>
         </dependency>
     </dependencies>
+    <build>
+
+    <plugins>
+        <plugin>
+            <groupId>org.xolstice.maven.plugins</groupId>
+            <artifactId>protobuf-maven-plugin</artifactId>
+            <version>${protobuf-maven-plugin.version}</version>
+            <configuration>
+                <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
+                </protocArtifact>
+                <pluginId>grpc-java</pluginId>
+                <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+                </pluginArtifact>
+                <protoSourceRoot>${project.basedir}/proto</protoSourceRoot>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>compile</goal>
+                        <goal>compile-custom</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+    </plugins>
+    </build>
 </project>

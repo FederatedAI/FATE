@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 from federatedml.util.param_extract import ParamExtract
+from federatedml.param.evaluation_param import EvaluateParam
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -25,6 +26,7 @@ class ModelBase(object):
     def __init__(self):
         self.model_output = None
         self.mode = None
+        self.role = None
         self.data_output = None
         self.model_param = None
         self.transfer_variable = None
@@ -35,10 +37,13 @@ class ModelBase(object):
         self.need_one_vs_rest = False
         self.tracker = None
         self.cv_fold = 0
+        self.validation_freqs = None
 
     def _init_runtime_parameters(self, component_parameters):
         param_extracter = ParamExtract()
+
         param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+
         param.check()
         self._init_model(param)
         try:
@@ -51,12 +56,6 @@ class ModelBase(object):
         except AttributeError:
             need_run = True
         self.need_run = need_run
-
-        try:
-            need_one_vs_rest = param.one_vs_rest_param.need_one_vs_rest
-        except AttributeError:
-            need_one_vs_rest = False
-        self.need_one_vs_rest = need_one_vs_rest
 
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
 
@@ -94,35 +93,9 @@ class ModelBase(object):
             LOGGER.info("Need cross validation.")
             self.cross_validation(train_data)
 
-        elif stage == "one_vs_rest":
-            LOGGER.info("Need one_vs_rest.")
-            if train_data:
-                self.one_vs_rest_fit(train_data)
-                self.data_output = self.one_vs_rest_predict(train_data)
-                if self.data_output:
-                    self.data_output = self.data_output.mapValues(lambda d: d + ["train"])
-
-                if eval_data:
-                    eval_data_predict_res = self.one_vs_rest_predict(eval_data)
-                    if eval_data_predict_res:
-                        predict_output_res = eval_data_predict_res.mapValues(lambda d: d + ["validation"])
-
-                        if self.data_output:
-                            self.data_output = self.data_output.union(predict_output_res)
-                        else:
-                            self.data_output = predict_output_res
-
-                self.set_predict_data_schema(self.data_output, train_data.schema)
-
-            elif eval_data:
-                self.data_output = self.one_vs_rest_predict(eval_data)
-                if self.data_output:
-                    self.data_output = self.data_output.mapValues(lambda d: d + ["test"])
-                    self.set_predict_data_schema(self.data_output, eval_data.schema)
-
-        elif train_data:
-            self.set_flowid('train')
-            self.fit(train_data)
+        elif train_data is not None:
+            self.set_flowid('fit')
+            self.fit(train_data, eval_data)
             self.set_flowid('predict')
             self.data_output = self.predict(train_data)
 
@@ -143,7 +116,7 @@ class ModelBase(object):
 
             self.set_predict_data_schema(self.data_output, train_data.schema)
 
-        elif eval_data:
+        elif eval_data is not None:
             self.set_flowid('predict')
             self.data_output = self.predict(eval_data)
 
@@ -169,10 +142,6 @@ class ModelBase(object):
 
         if self.need_cv:
             stage = 'cross_validation'
-        elif self.need_one_vs_rest:
-            stage = "one_vs_rest"
-            if "model" in args:
-                self._load_model(args)
         elif "model" in args:
             self._load_model(args)
             stage = "transform"
@@ -187,10 +156,14 @@ class ModelBase(object):
 
         self._run_data(args["data"], stage)
 
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="binary",
+                             pos_label=1)
+
     def predict(self, data_inst):
         pass
 
-    def fit(self, data_inst):
+    def fit(self, *args):
         pass
 
     def transform(self, data_inst):
@@ -205,17 +178,18 @@ class ModelBase(object):
     def one_vs_rest_predict(self, train_data):
         pass
 
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        pass
+
     def save_data(self):
         return self.data_output
 
     def export_model(self):
-        # self.model_output = {"XXXMeta": "model_meta",
-        #                     "XXXParam": "model_param"}
         return self.model_output
 
     def set_flowid(self, flowid):
-        # self.flowid = '_'.join(map(str, [self.flowid, flowid]))
-        self.flowid = '.'.join([self.taskid, str(flowid)])
+        # self.flowid = '.'.join([self.taskid, str(flowid)])
+        self.flowid = flowid
         self.set_transfer_variable()
 
     def set_transfer_variable(self):
@@ -224,6 +198,7 @@ class ModelBase(object):
             self.transfer_variable.set_flowid(self.flowid)
 
     def set_taskid(self, taskid):
+        """ taskid: jobid + component_name, reserved variable """
         self.taskid = taskid
 
     def get_metric_name(self, name_prefix):

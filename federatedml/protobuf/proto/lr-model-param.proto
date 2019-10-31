@@ -1,0 +1,45 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "LRModelParamProto";
+
+message LRModelParam {
+    int32 iters = 1;
+    repeated double loss_history = 2;
+    bool is_converged = 3;
+    map<string, double> weight = 4;
+    double intercept = 5;
+    repeated string header = 6;
+    OneVsRestResult one_vs_rest_result = 7;
+    bool need_one_vs_rest = 8;
+}
+
+message SingleModel {
+    int32 iters = 1;
+    repeated double loss_history = 2;
+    bool is_converged = 3;
+    map<string, double> weight = 4;
+    double intercept = 5;
+    repeated string header = 6;
+}
+
+message OneVsRestResult {
+    repeated SingleModel completed_models = 1;
+    repeated string one_vs_rest_classes = 2;
+}

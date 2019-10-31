@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api.eggroll import init
+from arch.api.session import init
 from federatedml.feature.instance import Instance
 from federatedml.ftl.data_util.common_data_util import create_table
 from federatedml.ftl.hetero_ftl.hetero_ftl_guest import HeteroPlainFTLGuest
@@ -26,7 +26,7 @@ from federatedml.ftl.plain_ftl import PlainFTLGuestModel
 from federatedml.ftl.plain_ftl import PlainFTLHostModel
 from federatedml.ftl.test.mock_models import MockAutoencoder, MockDiffConverge
 from federatedml.param.param import FTLModelParam
-from federatedml.util.transfer_variable import HeteroFTLTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_ftl_transfer_variable import HeteroFTLTransferVariable
 
 
 class TestHeteroFTLGuest(HeteroPlainFTLGuest):

@@ -56,8 +56,9 @@ class IVValueSelectionParam(BaseParam):
         self.value_threshold = value_threshold
 
     def check(self):
-        descr = "IV selection param's"
-        self.check_decimal_float(self.value_threshold, descr)
+        if not isinstance(self.value_threshold, (float, int)):
+            raise ValueError("IV selection param's value_threshold should be float or int")
+
         return True
 
 
@@ -148,18 +149,21 @@ class FeatureSelectionParam(BaseParam):
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
-        unique_value: filter the columns if all values in this feature is the same
+    unique_value: filter the columns if all values in this feature is the same
 
-        iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
-            Filter those columns whose iv is smaller than threshold.
+    iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+        Filter those columns whose iv is smaller than threshold.
 
-        iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
-            need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
-            the threshold are same, all those columns will be keep.
+    iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+        need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
+        the threshold are same, all those columns will be keep.
 
-        coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
+    coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
 
-        outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+    outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+
+    need_run: bool, default True
+        Indicate if this module needed to be run
 
     """
 
@@ -197,8 +201,6 @@ class FeatureSelectionParam(BaseParam):
                                               "coefficient_of_variation_value_thres",
                                               "outlier_cols"])
             self.filter_methods[idx] = method
-        # if "iv_value_thres" in self.filter_method and "iv_percentile" in self.filter_method:
-        #     raise ValueError("Two iv methods should not exist at the same time.")
 
         self.check_defined_type(self.select_cols, descr, ['list', 'int'])
 

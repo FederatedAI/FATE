@@ -24,6 +24,7 @@ from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 import copy
+import collections
 
 
 class ObjectiveParam(BaseParam):
@@ -117,12 +118,18 @@ class DecisionTreeParam(BaseParam):
                              default: 'split'
 
     tol: float, only use when n_iter_no_change is set to True, default: 0.001
+
+    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+
+    zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
+                     will be use only if use_missing=True, default: False
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1], max_depth=5,
                  min_sample_split=2, min_imputiry_split=1e-3, min_leaf_node=1,
                  max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
-                 n_iter_no_change=True, tol=0.001):
+                 n_iter_no_change=True, tol=0.001,
+                 use_missing=False, zero_as_missing=False):
         self.criterion_method = criterion_method
         self.criterion_params = criterion_params
         self.max_depth = max_depth
@@ -133,6 +140,8 @@ class DecisionTreeParam(BaseParam):
         self.feature_importance_type = feature_importance_type
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.use_missing = use_missing
+        self.zero_as_missing = zero_as_missing
 
     def check(self):
         descr = "decision tree param"
@@ -216,6 +225,18 @@ class BoostingTreeParam(BaseParam):
 
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
                                      default: EncryptedModeCalculatorParam()
+
+    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+
+    zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
+                     will be use only if use_missing=True, default: False
+
+    validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                      if equals None, will not do validation in train process;
+                      if equals positive integer, will validate data every validation_freqs epochs passes;
+                      if container object in python, will validate data if epochs belong to this container.
+                        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                      Default: None
     """
 
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -223,8 +244,10 @@ class BoostingTreeParam(BaseParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(), 
                  bin_num=32,
+                 use_missing=False, zero_as_missing=False,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam(), cv_param=CrossValidationParam()):
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 validation_freqs=None):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -235,9 +258,12 @@ class BoostingTreeParam(BaseParam):
         self.tol = tol
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.bin_num = bin_num
+        self.use_missing = use_missing
+        self.zero_as_missing = zero_as_missing
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
+        self.validation_freqs = validation_freqs
 
     def check(self):
         self.tree_param.check()
@@ -275,6 +301,16 @@ class BoostingTreeParam(BaseParam):
             raise ValueError(
                 "boosting tree param's bin_num {} not supported, should be positive integer greater than 1".format(
                     self.bin_num))
+
+        self.encrypted_mode_calculator_param.check()
+
+        if self.validation_freqs is None:
+            pass
+        elif isinstance(self.validation_freqs, int):
+            if self.validation_freqs < 1:
+                raise ValueError("validation_freqs should be larger than 0 when it's integer")
+        elif not isinstance(self.validation_freqs, collections.Container):
+            raise ValueError("validation_freqs should be None or positive integer or container")
 
         return True
 

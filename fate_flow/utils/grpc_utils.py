@@ -16,7 +16,7 @@
 import requests
 import json
 from arch.api.proto import proxy_pb2, proxy_pb2_grpc
-from arch.api.proto import basic_meta_pb2
+from arch.api.proto import fate_meta_pb2
 import grpc
 from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -29,7 +29,7 @@ def get_proxy_data_channel():
 
 
 def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
-    _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
+    _src_end_point = fate_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=ROLE, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=ROLE, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
@@ -55,6 +55,9 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         src = header.src
         dst = header.dst
         method = header.operator
+        param_dict = json.loads(param)
+        param_dict['src_party_id'] = str(src.partyId)
+        param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 
         action = getattr(requests, method.lower(), None)
         stat_logger.info('rpc receive: {}'.format(packet))

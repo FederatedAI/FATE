@@ -17,7 +17,7 @@
 import json
 import sys
 from workflow.hetero_ftl_workflow.hetero_arbiter_workflow import FTLArbiterWorkFlow
-from arch.api import eggroll
+from arch.api import session
 from arch.api import federation
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
@@ -37,7 +37,7 @@ class TestFTLArbiter(FTLArbiterWorkFlow):
 
         LOGGER.debug("The Arbiter job id is {}".format(job_id))
         LOGGER.debug("The Arbiter work mode id is {}".format(self.workflow_param.work_mode))
-        eggroll.init(job_id, self.workflow_param.work_mode)
+        session.init(job_id, self.workflow_param.work_mode)
         federation.init(job_id, runtime_json)
         LOGGER.debug("Finish eggroll and federation init")
 

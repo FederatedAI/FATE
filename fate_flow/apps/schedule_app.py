@@ -21,6 +21,7 @@ from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils.authentication_utils import request_authority_certification
 
 manager = Flask(__name__)
 
@@ -32,6 +33,7 @@ def internal_server_error(e):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
+@request_authority_certification
 def create_job(job_id, role, party_id):
     JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json,
                                     create=True)
@@ -46,6 +48,7 @@ def job_status(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
+@request_authority_certification
 def save_pipeline(job_id, role, party_id, model_id, model_version):
     JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_id=base64_decode(model_id),
                                 model_version=base64_decode(model_version))
@@ -55,17 +58,26 @@ def save_pipeline(job_id, role, party_id, model_id, model_version):
 @manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
 def kill_job(job_id, role, party_id):
     JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
-                           job_initiator=request.json.get('job_initiator', {}))
+                           job_initiator=request.json.get('job_initiator', {}), timeout=request.json.get('timeout', False))
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
+def cancel_job(job_id, role, party_id):
+    JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id),
+                             job_initiator=request.json.get('job_initiator', {}))
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
+@request_authority_certification
 def clean(job_id, role, party_id):
     JobController.clean_job(job_id=job_id, role=role, party_id=party_id)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run', methods=['POST'])
+@request_authority_certification
 def run_task(job_id, component_name, task_id, role, party_id):
     TaskScheduler.start_task(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')

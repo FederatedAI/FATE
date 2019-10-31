@@ -15,6 +15,7 @@
 #
 import sys
 from collections import defaultdict
+import math
 import numpy as np
 import logging
 
@@ -62,7 +63,6 @@ class Evaluation(ModelBase):
             consts.EXPLAINED_VARIANCE,
             consts.MEAN_ABSOLUTE_ERROR,
             consts.MEAN_SQUARED_ERROR,
-            consts.MEAN_SQUARED_LOG_ERROR,
             consts.MEDIAN_ABSOLUTE_ERROR,
             consts.R2_SCORE,
             consts.ROOT_MEAN_SQUARED_ERROR
@@ -97,6 +97,9 @@ class Evaluation(ModelBase):
         self.pos_label = self.model_param.pos_label
 
     def _run_data(self, data_sets=None, stage=None):
+        if not self.need_run:
+            return
+
         data = {}
         for data_key in data_sets:
             if data_sets[data_key].get("data", None):
@@ -149,7 +152,15 @@ class Evaluation(ModelBase):
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
-            if res:
+            if res is not None:
+                LOGGER.debug("res:{}".format(res))
+                try:
+                    if math.isinf(res):
+                        res = float(-9999999)
+                        LOGGER.debug("res is inf, set to {}".format(res))
+                except:
+                    pass
+                   
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 

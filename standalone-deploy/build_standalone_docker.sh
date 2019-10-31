@@ -15,55 +15,130 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+set -e
 set -x
+version=1.1
 
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate.tar.gz
+basepath=$(cd `dirname $0`;pwd)
+fatepath=$(cd $basepath/..;pwd)
+cd ${fatepath}
 
-tar -xf fate.tar.gz
 
-rm -rf init.sh requirments.txt requirements.txt
-
-cp ../requirements.txt ./docker/python
-
-#sed -i "s/'user':.*/'user': 'fate_dev',/g" ./fate_flow/settings.py
-#sed -i "s/'passwd':.*/'passwd': 'fate_dev',/g" ./fate_flow/settings.py
-#sed -i "s/'host':.*/'host': 'mysql',/g" ./fate_flow/settings.py
-
-tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research
-
-logPath="/var/lib/fate/log"
-if [ ! -d "$logPath" ]; then
-   mkdir -p "$logPath"
+eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+eggroll_git_branch=`grep -A 3 '"eggroll"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
+if [[ -e "eggroll" ]];then
+    while [[ true ]];do
+        read -p "The eggroll directory already exists, delete and re-download? [y/n] " input
+        case ${input} in
+        [yY]*)
+                echo "[INFO] Delete the original eggroll"
+                rm -rf eggroll
+                git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+                break
+                ;;
+        [nN]*)
+                echo "[INFO] Use the original eggroll"
+                break
+                ;;
+        *)
+                echo "Just enter y or n, please."
+                ;;
+        esac
+    done
+else
+    git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
 fi
 
-dataPath="/var/lib/fate/data"
-if [ ! -d "$dataPath" ]; then
-   mkdir -p "$dataPath"
+cd ${fatepath}
+fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
+if [[ -e "fateboard" ]];then
+    while [[ true ]];do
+        read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
+        case ${input} in
+        [yY]*)
+                echo "[INFO] Delete the original fateboard"
+                rm -rf fateboard
+                git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+                break
+                ;;
+        [nN]*)
+                echo "[INFO] Use the original fateboard"
+                break
+                ;;
+        *)
+                echo "Just enter y or n, please."
+                ;;
+        esac
+    done
+else
+    git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
 fi
-cp -r ./fate_flow/* /var/lib/fate/data
 
+cd ${fatepath}
 
-sed -i "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
-sed -i "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
-#sed -i "s/^spring.datasource.username=.*/spring.datasource.username=fate_dev/g" ./fateboard/conf/application.properties
-#sed -i "s/^spring.datasource.password=.*/spring.datasource.password=fate_dev/g" ./fateboard/conf/application.properties
-cd fateboard
-ln -s fateboard-1.0.jar fateboard.jar
-cd ..
-tar -cf ./docker/fateboard/fateboard.tar fateboard
+init() {
+    cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
+    docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
+    mkdir -p ${basepath}/fateboard
+    cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
+    cd ${basepath}/fateboard
+    ln -s fateboard-$version.jar fateboard.jar
+    mkdir conf ssh
+    cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
+    touch ./ssh/ssh.properties
 
-docker-compose -f ./docker/docker-compose-build.yml up -d
+    cd ${basepath}
+    cp ../requirements.txt ./docker/python
+    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research eggroll
 
-#sleep 15
-docker restart fate_python
-sleep 5
-docker restart fate_fateboard
+    logPath="/var/lib/fate/log"
+    if [ ! -d "$logPath" ]; then
+     mkdir -p "$logPath"
+    fi
 
-rm -rf examples workflow arch federatedml fateboard fate_flow research fate.tar.gz data
+    dataPath="/var/lib/fate/data"
+    if [ ! -d "$dataPath" ]; then
+     mkdir -p "$dataPath"
+    fi
+    cp -r ./fate_flow/* /var/lib/fate/data
 
-rm docker/python/fate.tar
+    sed -i"" "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
+    sed -i"" "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+    sed -i"" "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
+    tar -cf ./docker/fateboard/fateboard.tar fateboard
 
-rm docker/python/requirements.txt
+    docker-compose -f ./docker/docker-compose-build.yml up -d
+    docker restart fate_python
+    sleep 5
+    docker restart fate_fateboard
+    rm -rf examples workflow arch federatedml fateboard fate_flow research  data eggroll
+    rm docker/python/fate.tar
+    rm docker/python/requirements.txt
+    rm docker/fateboard/fateboard.tar
+}
+start() {
+    docker start `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
+    docker start `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
+}
+stop(){
+    docker stop `docker ps -a | grep -i "docker_python" | awk '{print $1}'`
+    docker stop `docker ps -a | grep -i "docker_fateboard" | awk '{print $1}'`
 
-rm docker/fateboard/fateboard.tar
+}
+case "$1" in
+    init)
+        init
+        ;;
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    *)
+        echo "usage: $0 {init|start|stop}."
+        exit -1
+esac

@@ -72,7 +72,7 @@ class Scale(ModelBase):
             fit_data.schema = data.schema
 
             self.callback_meta(metric_name="scale", metric_namespace="train",
-                                        metric_meta=MetricMeta(name="scale", metric_type="SCALE", extra_metas={"method":self.model_param.method}))
+                               metric_meta=MetricMeta(name="scale", metric_type="SCALE", extra_metas={"method":self.model_param.method}))
         else:
             fit_data = data
 
@@ -121,8 +121,9 @@ class Scale(ModelBase):
 
     def _load_model(self, model_dict):
         model_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.header = list(model_obj.header)
-        self.need_run = model_obj.need_run
+        self.need_run = meta_obj.need_run
 
         shape = len(self.header)
         self.column_max_value = [ 0 for _ in range(shape) ]

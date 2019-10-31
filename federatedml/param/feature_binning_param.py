@@ -88,6 +88,9 @@ class FeatureBinningParam(BaseParam):
     transform_param: TransformParam
         Define how to transfer the binned data.
 
+    need_run: bool, default True
+        Indicate if this module needed to be run
+
     """
 
     def __init__(self, method=consts.QUANTILE,
@@ -114,7 +117,7 @@ class FeatureBinningParam(BaseParam):
         descr = "hetero binning param's"
         self.check_string(self.method, descr)
         self.method = self.method.lower()
-        self.check_valid_value(self.method, descr, [consts.QUANTILE])
+        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET])
         self.check_positive_integer(self.compress_thres, descr)
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)

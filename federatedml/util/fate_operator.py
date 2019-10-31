@@ -14,20 +14,28 @@
 #  limitations under the License.
 #
 
-import types
 from collections import Iterable
 
 import numpy as np
 
 from federatedml.feature.instance import Instance
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def _one_dimension_dot(X, w):
     res = 0
+    # LOGGER.debug("_one_dimension_dot, len of w: {}, len of X: {}".format(len(w), len(X)))
     for i in range(len(X)):
         if np.fabs(X[i]) < 1e-5:
             continue
         res += w[i] * X[i]
+
+    if res == 0:
+        if isinstance(w[0], PaillierEncryptedNumber):
+            res = 0 * w[0]
     return res
 
 
@@ -39,6 +47,7 @@ def dot(value, w):
 
     # # dot(a, b)[i, j, k, m] = sum(a[i, j, :] * b[k, :, m])
     # # One-dimension dot, which is the inner product of these two arrays
+
     if np.ndim(X) == np.ndim(w) == 1:
         return _one_dimension_dot(X, w)
     elif np.ndim(X) == 2 and np.ndim(w) == 1:
@@ -63,9 +72,14 @@ def reduce_add(x, y):
         return x
     if not isinstance(x, Iterable):
         result = x + y
+    elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+        result = x + y
     else:
         result = []
         for idx, acc in enumerate(x):
+            if acc is None:
+                result.append(acc)
+                continue
             result.append(acc + y[idx])
     return result
 
@@ -87,5 +101,3 @@ def norm(vector, p=2):
         vector = np.array(vector)
 
     return np.linalg.norm(vector, p)
-
-

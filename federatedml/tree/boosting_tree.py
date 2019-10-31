@@ -28,11 +28,13 @@ import numpy as np
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.param.boosting_tree_param import BoostingTreeParam
-from federatedml.model_selection.KFold import KFold
+from federatedml.model_selection.k_fold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.validation_strategy import ValidationStrategy
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
+from federatedml.feature.fate_element_type import NoneType
 
 
 class BoostingTree(ModelBase):
@@ -49,10 +51,13 @@ class BoostingTree(ModelBase):
         self.encrypt_param = None
         self.tol = 0.0
         self.bin_num = None
+        self.use_missing = False
+        self.zero_as_missing = False
         self.calculated_mode = None
         self.re_encrypted_rate = None
         self.predict_param = None
         self.cv_param = None
+        self.validation_freqs = None
         self.feature_name_fid_mapping = {}
         self.role = ''
         self.mode = consts.HETERO
@@ -70,10 +75,17 @@ class BoostingTree(ModelBase):
         self.encrypt_param = boostingtree_param.encrypt_param
         self.tol = boostingtree_param.tol
         self.bin_num = boostingtree_param.bin_num
+        self.use_missing = boostingtree_param.use_missing
+        self.zero_as_missing = boostingtree_param.zero_as_missing
         self.calculated_mode = boostingtree_param.encrypted_mode_calculator_param.mode
         self.re_encrypted_rate = boostingtree_param.encrypted_mode_calculator_param.re_encrypted_rate
         self.predict_param = boostingtree_param.predict_param
         self.cv_param = boostingtree_param.cv_param
+        self.validation_freqs = boostingtree_param.validation_freqs
+
+        if self.use_missing:
+            self.tree_param.use_missing = self.use_missing
+            self.tree_param.zero_as_missing = self.zero_as_missing
 
     @staticmethod
     def data_format_transform(row):
@@ -83,13 +95,23 @@ class BoostingTree(ModelBase):
             data = []
 
             for i in range(feature_shape):
-                if np.abs(row.features[i]) < consts.FLOAT_ZERO:
+                if np.isnan(row.features[i]):
+                    indices.append(i)
+                    data.append(NoneType())
+                elif np.abs(row.features[i]) < consts.FLOAT_ZERO:
                     continue
-
-                indices.append(i)
-                data.append(row.features[i])
+                else:
+                    indices.append(i)
+                    data.append(row.features[i])
 
             row.features = SparseVector(indices, data, feature_shape)
+        else:
+            sparse_vec = row.features.get_sparse_vector()
+            for key in sparse_vec:
+                if sparse_vec.get(key) == NoneType() or np.isnan(sparse_vec.get(key)):
+                    sparse_vec[key] = NoneType()
+
+            row.features.set_sparse_vector(sparse_vec)
 
         return row
 
@@ -106,29 +128,23 @@ class BoostingTree(ModelBase):
 
     def gen_feature_fid_mapping(self, schema):
         header = schema.get("header")
-        for i in range(len(header)):
-            self.feature_name_fid_mapping[header[i]] = i
+        self.feature_name_fid_mapping = dict(zip(range(len(header)), header))
+        print ("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
+        # for i in range(len(header)):
+        #     self.feature_name_fid_mapping[header[i]] = i
     
-    """
-    def callback_meta(self, metric_namespace, metric_name, metric_meta):
-        tracker = Tracking("abc", "123")
-        tracker.set_metric_meta(metric_namespace,
-                                metric_name,
-                                metric_meta)
-
-    def callback_metric(self, metric_namespace, metric_name, metric_data):
-        tracker = Tracking("abc", "123")
-        tracker.log_metric_data(metric_namespace,
-                                metric_name,
-                                metric_data)
-    """
-
     def fit(self, data_inst):
         pass
 
     def predict(self, data_inst):
         pass
 
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy.set_train_data(train_data)
+        validation_strategy.set_validate_data(validate_data)
+        return validation_strategy
+    
     def cross_validation(self, data_instances):
         if not self.need_run:
             return data_instances

@@ -1,0 +1,65 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 9999
+  },
+  "job_parameters": {
+    "work_mode": 1
+  },
+  "role": {
+    "guest": [
+      9999
+    ],
+    "host": [
+      9999, 10000
+    ]  
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data": [
+            {
+              "name": "9999_guest",
+              "namespace": "hetero"
+            }
+        ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "data": [{ "name": "9999_host", "namespace": "hetero"}, { "name": "10000_host", "namespace": "hetero"}]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false, false
+        ],
+        "output_format": [
+          "dense", "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+      "intersect_0": {
+          "intersect_method": "rsa",
+          "sync_intersect_ids": true,
+          "only_output_key": true,
+          
+          "intersect_cache_param": {
+              "use_cache": false
+          }
+      }
+  }
+}
