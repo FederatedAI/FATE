@@ -9,6 +9,10 @@ Data for running example tasks. Many of the data sets have been scaled or transf
 - 30 features
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
 
+#### default_credit_homo:
+- 23 features
+- [source](https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients)
+
 #### give\_credit_homo:
 - 10 features
 - [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
