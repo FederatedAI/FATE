@@ -66,6 +66,9 @@ class Splitter(object):
         missing_bin = 0
         if use_missing:
             missing_bin = 1
+        
+        # in default, missing value going to right
+        missing_dir = 1
 
         for fid in range(len(histogram)):
             if valid_features[fid] is False:
@@ -76,9 +79,6 @@ class Splitter(object):
             sum_grad = histogram[fid][bin_num - 1][0]
             sum_hess = histogram[fid][bin_num - 1][1]
             node_cnt = histogram[fid][bin_num - 1][2]
-
-            # in default, missing value going to right
-            missing_dir = 1
 
             if node_cnt < self.min_sample_split:
                 break
