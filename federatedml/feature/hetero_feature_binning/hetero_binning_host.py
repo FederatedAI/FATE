@@ -29,11 +29,11 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
-    def __init__(self):
-        super(HeteroFeatureBinningHost, self).__init__()
-
-        # self.party_name = consts.HOST
-        # self._init_binning_obj()
+    # def __init__(self):
+    #     super(HeteroFeatureBinningHost, self).__init__()
+    #
+    #     # self.party_name = consts.HOST
+    #     # self._init_binning_obj()
 
     def fit(self, data_instances):
         """

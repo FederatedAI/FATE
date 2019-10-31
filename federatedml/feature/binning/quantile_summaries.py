@@ -252,7 +252,7 @@ class SparseQuantileSummaries(QuantileSummaries):
         super(SparseQuantileSummaries, self).insert(x)
 
     def query(self, quantile):
-        if self.zero_lower_bound <= quantile <= self.zero_upper_bound:
+        if self.zero_lower_bound < quantile < self.zero_upper_bound:
             return 0.0
 
         non_zero_quantile = self._convert_query_percentile(quantile)

@@ -128,7 +128,7 @@ class BinResults(object):
         for bin_name in bin_names:
             if bin_name not in self.all_cols_results:
                 continue
-            split_points_result.append(self.all_cols_results[bin_name].get_split_pionts())
+            split_points_result.append(self.all_cols_results[bin_name].get_split_points())
         return np.array(split_points_result)
 
     def generated_pb(self):

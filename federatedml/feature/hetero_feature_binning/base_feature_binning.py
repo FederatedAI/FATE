@@ -16,21 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from arch.api.utils import log_utils
-# from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.binning import bin_result
 from federatedml.feature.binning.base_binning import Binning
+from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
 from federatedml.statistic.data_overview import get_header
-from federatedml.util import abnormal_detection
-from federatedml.feature.binning.bin_inner_param import BinInnerParam
-from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
+from federatedml.util import abnormal_detection
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -52,14 +51,6 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     binning_result: dict
         Record binning result of guest party. The format is {'col_name': 'iv_attr', ... }
-
-    host_results: dict
-        This attribute uses to record host results. For future version which may record multiple host results,
-        the format is dict of dict.
-        e.g.
-        host_results = {'host1': {'x1': iv1, 'x2: iv2}
-                        'host2': ...
-                        }
 
     """
 
@@ -206,36 +197,10 @@ class BaseHeteroFeatureBinning(ModelBase):
     def save_data(self):
         return self.data_output
 
-    # def _parse_cols(self, data_instances):
-    #     if self.header is not None and len(self.header) != 0:
-    #         return
-    #
-    #     LOGGER.debug("Before Binning, schema is : {}".format(data_instances.schema))
-    #     header = get_header(data_instances)
-    #     self.schema = data_instances.schema
-    #     self.header = header
-    #
-    #     # LOGGER.debug("data_instance count: {}, header: {}".format(data_instances.count(), header))
-    #     if self.cols_index == -1:
-    #         if header is None:
-    #             raise RuntimeError('Cannot get feature header, please check input data')
-    #         self.cols = [i for i in range(len(header))]
-    #     else:
-    #         self.cols = self.cols_index
-    #
-    #     if self.transform_cols_idx == -1:
-    #         self.transform_cols_idx = self.cols
-    #
-    #     self.cols_dict = {}
-    #     for col in self.cols:
-    #         col_name = header[col]
-    #         self.cols_dict[col_name] = col
-
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
         LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
-
 
     def _abnormal_detection(self, data_instances):
         """

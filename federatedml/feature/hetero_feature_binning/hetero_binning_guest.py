@@ -17,10 +17,9 @@
 import functools
 
 from arch.api.utils import log_utils
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.feature.binning.base_binning import HostBaseBinning
+from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.framework.hetero.procedure import two_parties_paillier_cipher
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 
@@ -28,14 +27,9 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
-    def __init__(self):
-        super(HeteroFeatureBinningGuest, self).__init__()
-
-        # self.encryptor = PaillierEncrypt()
-        # self.encryptor.generate_key()
-        self.local_transform_result = None
-        # self.party_name = consts.GUEST
-        # self._init_binning_obj()
+    # def __init__(self):
+    #     super(HeteroFeatureBinningGuest, self).__init__()
+    #
 
     def fit(self, data_instances):
         """
@@ -69,7 +63,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         cipher = PaillierEncrypt()
         cipher.generate_key()
 
-        f = functools.partial(self.encrypt, encryptor=cipher)
+        f = functools.partial(self.encrypt, cipher=cipher)
         encrypted_label_table = label_table.mapValues(f)
 
         self.transfer_variable.encrypted_label.remote(encrypted_label_table,
@@ -94,8 +88,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         return self.data_output
 
     @staticmethod
-    def encrypt(x, encrypter):
-        return encrypter.encrypt(x), encrypter.encrypt(1 - x)
+    def encrypt(x, cipher):
+        return cipher.encrypt(x), cipher.encrypt(1 - x)
 
     @staticmethod
     def __decrypt_bin_sum(encrypted_bin_sum, cipher):
