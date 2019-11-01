@@ -151,6 +151,6 @@ class HomoLRArbiter(HomoLRBase):
                 self.predict()
         else:
             LOGGER.info("Task is predict")
-            self._load_model(args)
+            self.load_model(args)
             self.set_flowid('predict')
             self.predict()

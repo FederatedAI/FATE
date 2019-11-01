@@ -252,7 +252,7 @@ class OneHotEncoder(ModelBase):
         }
         return result
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         self._parse_need_run(model_dict, MODEL_META_NAME)
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)

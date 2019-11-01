@@ -143,7 +143,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
 

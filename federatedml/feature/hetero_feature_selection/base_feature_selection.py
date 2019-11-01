@@ -152,7 +152,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.model_output = result
         return result
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
 
         if 'model' in model_dict:
             # self._parse_need_run(model_dict, MODEL_META_NAME)
@@ -191,7 +191,7 @@ class BaseHeteroFeatureSelection(ModelBase):
                 self.binning_model = HeteroFeatureBinningHost()
 
             new_model_dict = {'model': model_dict['isometric_model']}
-            self.binning_model._load_model(new_model_dict)
+            self.binning_model.load_model(new_model_dict)
 
     @staticmethod
     def select_cols(instance, left_cols, header):
