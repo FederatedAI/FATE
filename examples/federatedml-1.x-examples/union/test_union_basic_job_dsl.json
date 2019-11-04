@@ -1,0 +1,57 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.data0"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+         },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.data1"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+         },
+        "dataio_2": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.data2"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+         },
+        "union_0": {
+            "module": "Union",
+            "input": {
+                "data": {
+                        "data": ["dataio_0.data", "dataio_1.data", "dataio_2.data"]
+                }
+            },
+            "output": {
+                "data": ["data"]
+            }
+        }
+    }
+}
