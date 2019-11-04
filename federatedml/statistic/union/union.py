@@ -144,14 +144,10 @@ class Union(ModelBase):
             local_schema = local_table.schema
             metrics.append(Metric(key, num_data))
 
-            if num_data == 0:
-                LOGGER.warning("DTable {} is empty.".format(key))
-                empty_count += 1
-                continue
-
             is_empty_feature = data_overview.is_empty_feature(local_table)
-            if is_empty_feature:
+            if is_empty_feature or num_data == 0:
                 LOGGER.warning("DTable {} has no features.".format(key))
+                empty_count += 1
                 continue
 
             if combined_table is None:
