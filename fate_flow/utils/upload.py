@@ -21,6 +21,7 @@ import time
 from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
+from fate_flow.driver.job_controller import JobController
 
 LOGGER = log_utils.getLogger()
 
@@ -37,6 +38,7 @@ class Upload(object):
         self.parameters = component_parameters["UploadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
+        job_id = "_".join(self.taskid.split("_")[:2])
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
@@ -60,7 +62,7 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         session.init(mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(table_name, namespace, head)
+        data_table_count = self.save_data_table(table_name, namespace, head, job_id)
         LOGGER.info("------------load data finish!-----------------")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
@@ -72,11 +74,14 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def save_data_table(self, dst_table_name, dst_table_namespace, head=True):
+    def save_data_table(self, dst_table_name, dst_table_namespace, head=True, job_id=None):
         input_file = self.parameters["file"]
+        count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
+            lines_count = 0
             if head is True:
                 data_head = fin.readline()
+                count -= 1
                 self.save_data_header(data_head, dst_table_name, dst_table_namespace)
             while True:
                 data = list()
@@ -85,6 +90,10 @@ class Upload(object):
                     for line in lines:
                         values = line.replace("\n", "").replace("\t", ",").split(",")
                         data.append((values[0], self.list_to_str(values[1:])))
+                    lines_count += len(data)
+                    f_progress = lines_count/count*100//1
+                    job_info = {'f_progress': f_progress}
+                    self.update_job_status(job_id, self.parameters["local"]['role'], self.parameters["local"]['party_id'], job_info)
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
                                                    partition=self.parameters["partition"])
                 else:
@@ -95,6 +104,16 @@ class Upload(object):
         session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
                                      dst_table_name,
                                      dst_table_namespace)
+
+    def get_count(self, input_file):
+        with open(input_file, 'r', encoding='utf-8') as fp:
+            count = 0
+            for line in fp:
+                count += 1
+        return count
+
+    def update_job_status(self, job_id, role, party_id, job_info):
+        JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=job_info, create=False)
 
 
     def list_to_str(self, input_list):

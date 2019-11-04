@@ -18,6 +18,7 @@ import os
 from arch.api import session
 
 from arch.api.utils import log_utils, dtable_utils
+from fate_flow.driver.job_controller import JobController
 
 LOGGER = log_utils.getLogger()
 
@@ -34,23 +35,33 @@ class Download(object):
         self.parameters["local"] = component_parameters["local"]
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
                                                             create=False)
-        job_id = "_".join(self.taskid.split("_")[:2])
+        job_id = self.taskid.split("_")[0]
         session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
             data_table = session.get_data_table(name=table_name, namespace=namespace)
+            count = data_table.count()
             LOGGER.info('===== begin to export data =====')
             lines = 0
             for key, value in data_table.collect():
                 if not value:
                     fout.write(key + "\n")
                 else:
-                    fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
+                    fout.write(key + self.parameters.get("delimitor", ",") + value + "\n")
                 lines += 1
                 if lines % 2000 == 0:
                     LOGGER.info("===== export {} lines =====".format(lines))
+                if lines % 10000 == 0:
+                    job_info = {'f_progress': lines/count*100//1}
+                    self.update_job_status(job_id, self.parameters["local"]['role'],
+                                           self.parameters["local"]['party_id'], job_info)
+            self.update_job_status(job_id, self.parameters["local"]['role'],
+                                   self.parameters["local"]['party_id'], {'f_progress': 100})
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
+
+    def update_job_status(self, job_id, role, party_id, job_info):
+        JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=job_info, create=False)
 
     def set_taskid(self, taskid):
         self.taskid = taskid
