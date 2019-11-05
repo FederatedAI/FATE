@@ -108,7 +108,7 @@ class TaskScheduler(object):
             if not run_status:
                 break
         if len(top_level_task_status) == 2:
-            job.f_status = JobStatus.PARTIAL
+            job.f_status = JobStatus.FAILED
         elif True in top_level_task_status:
             job.f_status = JobStatus.SUCCESS
         else:
