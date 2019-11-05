@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/local_train/",
+    "default_runtime_conf": "local_train_param.json",
+    "param_class" : "federatedml/param/local_train_param.py/LocalTrainParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "local_train.py/LocalTrain"
+        }
+    }
+}
