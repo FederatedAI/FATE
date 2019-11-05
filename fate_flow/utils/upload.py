@@ -22,6 +22,7 @@ from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
 from fate_flow.driver.job_controller import JobController
+from fate_flow.entity.metric import Metric
 
 LOGGER = log_utils.getLogger()
 
@@ -97,6 +98,9 @@ class Upload(object):
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
                                                    partition=self.parameters["partition"])
                 else:
+                    self.callback_metric(metric_name='data_access',
+                                         metric_namespace='upload',
+                                         metric_data=[Metric("count", data_table.count())])
                     return data_table.count()
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
@@ -130,3 +134,8 @@ class Upload(object):
 
     def export_model(self):
         return None
+
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
+        self.tracker.log_metric_data(metric_name=metric_name,
+                                     metric_namespace=metric_namespace,
+                                     metrics=metric_data)

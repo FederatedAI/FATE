@@ -19,6 +19,7 @@ from arch.api import session
 
 from arch.api.utils import log_utils, dtable_utils
 from fate_flow.driver.job_controller import JobController
+from fate_flow.entity.metric import Metric
 
 LOGGER = log_utils.getLogger()
 
@@ -56,6 +57,9 @@ class Download(object):
                                            self.parameters["local"]['party_id'], job_info)
             self.update_job_status(job_id, self.parameters["local"]['role'],
                                    self.parameters["local"]['party_id'], {'f_progress': 100})
+            self.callback_metric(metric_name='data_access',
+                                 metric_namespace='download',
+                                 metric_data=[Metric("count", data_table.count())])
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
@@ -74,6 +78,11 @@ class Download(object):
 
     def export_model(self):
         return None
+
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
+        self.tracker.log_metric_data(metric_name=metric_name,
+                                     metric_namespace=metric_namespace,
+                                     metrics=metric_data)
 
 
 
