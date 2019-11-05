@@ -1,0 +1,74 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}],
+                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo_breast_test"}]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_name": ["y"],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}],
+                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo_breast_test"}]
+                }
+            },
+            "dataio_0":{
+               "with_label": [true],
+                "label_name": ["y"],
+                "label_type": ["int"],
+               "output_format": ["dense"]
+            },
+            "evaluation_0": {
+                "need_run": [false]
+            },
+            "evaluation_1": {
+                "need_run": [false]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "homo_lr_0": {
+            "penalty": "L2",
+            "optimizer": "sgd",
+            "eps": 1e-5,
+            "alpha": 0.01,
+            "max_iter": 20,
+            "converge_func": "diff",
+            "batch_size": 320,
+            "learning_rate": 0.15,
+            "init_param": {
+				"init_method": "zeros"
+            },
+            "cv_param": {
+                "n_splits": 4,
+                "shuffle": true,
+                "random_seed": 33,
+                "need_cv": false
+            }
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
+        }
+    }
+}

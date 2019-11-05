@@ -186,7 +186,7 @@ class RDDTable(Table):
     @log_elapsed
     def subtractByKey(self, other, **kwargs):
         from arch.api.table.pyspark.rdd_func import _subtract_by_key
-        return self._tmp_table_from_rdd(_subtract_by_key(self.rdd(), other.rdd))
+        return self._tmp_table_from_rdd(_subtract_by_key(self.rdd(), other.rdd()))
 
     @log_elapsed
     def filter(self, func, **kwargs):
@@ -196,7 +196,7 @@ class RDDTable(Table):
     @log_elapsed
     def union(self, other, func=lambda v1, v2: v1, **kwargs):
         from arch.api.table.pyspark.rdd_func import _union
-        return self._tmp_table_from_rdd(_union(self.rdd(), other.rdd, func))
+        return self._tmp_table_from_rdd(_union(self.rdd(), other.rdd(), func))
 
     @log_elapsed
     def flatMap(self, func, **kwargs):

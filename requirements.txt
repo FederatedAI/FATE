@@ -1,4 +1,4 @@
-absl-py==0.4.0
+absl-py==0.8.0
 astor==0.7.1
 audioread==2.1.6
 backcall==0.1.0
@@ -118,7 +118,7 @@ sklearn==0.0
 socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
-tensorboard==1.12.2
+tensorboard==1.14
 tensorflow==1.14
 termcolor==1.1.0
 terminado==0.8.1

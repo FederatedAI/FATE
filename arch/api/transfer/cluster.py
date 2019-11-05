@@ -161,6 +161,8 @@ class FederationRuntime(object):
                     '''
                     If it is a table, send the meta right away.
                     '''
+                    # added by bryce
+                    obj.set_gc_disable()
                     desc = federation_pb2.TransferDataDesc(transferDataType=federation_pb2.DTABLE,
                                                            storageLocator=self.__get_locator(obj),
                                                            taggedVariableName=_serdes.serialize(_tagged_key))

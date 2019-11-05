@@ -1,14 +1,14 @@
-#                     Fate allinone部署指南
+#                     Fate AllinOne部署指南
 
 1.服务器配置
 ============
 
 |  服务器  |                                                              |
 | :------: | ------------------------------------------------------------ |
-|   数量   | 2                                                            |
+|   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
 | 操作系统 | CentOS linux 7.2及以上                                       |
-|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
+|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel <br />libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy <br />snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
@@ -23,7 +23,7 @@
 3.基础环境配置
 ==============
 
-3.1 hostname配置
+3.1 hostname配置(可选)
 ----------------
 
 **1）修改主机名**
@@ -46,7 +46,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-3.2 关闭selinux
+3.2 关闭selinux(可选)
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -66,7 +66,7 @@ vim /etc/security/limits.conf
 
 \* hard nofile 65536
 
-3.4 关闭防火墙
+3.4 关闭防火墙(可选)
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
@@ -80,29 +80,7 @@ systemctl status firewalld.service
 3.5 软件环境初始化
 ------------------
 
-**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
-
-mkdir -p /data/app
-
-cd /data/app
-
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-base.tar.gz
-
-tar -xf fate-base .tar
-
-cd fate-base
-
-### 3.5.1 初始化服务器
-
-**1）初始化服务器**
-
-**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
-
-sh env.sh
-
-chown –R app:apps /data/app
-
-**2）配置sudo**
+**1）配置sudo**
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
@@ -114,7 +92,7 @@ app ALL=(ALL) NOPASSWD: ALL
 
 Defaults !env_reset
 
-**3）配置ssh无密登录**
+**2）配置ssh无密登录**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -163,90 +141,99 @@ ssh app\@192.168.0.2
 
 进入执行节点的/data/projects/目录，执行：
 
+```
 cd /data/projects/
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.tar.gz
+tar -xf FATE_install_v1.1.tar.gz
+```
 
-wget xxxxxxx
-
-4.2 修改配置文件
+4.2 配置文件修改和示例
 ----------------
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-进入到FATE目录下的FATE/cluster-deploy/scripts目录下，修改配置文件configurations.sh
+进入到FATE目录下的FATE/cluster-deploy/scripts目录下，修改配置文件allinone_cluster_configurations.sh.
 
-配置文件configurations.sh说明：
+配置文件allinone_cluster_configurations.sh说明：
 
 | 配置项           | 配置项意义                                   | 配置项值                                                     | 说明                                                         |
 | ---------------- | -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | user             | 操作用户                                     | 默认为app                                                    | 使用默认值                                                   |
 | deploy_dir       | Fate安装路径                                 | 默认为 /data/projects/fate                                   | 使用默认值                                                   |
 | party_list       | Party的id号                                  | 每个数组元素代表一个partyid，只支持数字，比如9999,10000.     | 只部署一个party，只填写一个partyid，部署两个party，填写两个partyid。 |
-| party_ip         | 所有party的待部署服务器列表                  | 表示所有party中包含的服务器ip列表                            | 只部署一个party，只填写一个ip，部署两个party，填写两个ip。如果需要一个节点部署两个party，party_list处填写两个id，此处只填写一个IP。 |
+| node_list        | 所有party的待部署服务器列表                  | 表示所有party中包含的服务器ip列表                            | 部署一个party，只填写一个ip，部署两个party，填写两个ip。如果需要一个节点部署两个party，party_list处填写两个id，此处只填写一个IP。 |
 | db_auth          | metaservice Jdbc连接数据库配置               | metaservice服务jdbc配置，填写数据库用户名和密码（此用户需要具有create database权限） | 两个party配置相同。                                          |
 | redis_password   | Redis密码                                    | 默认 : fate_dev                                              | 使用默认值，两个party配置相同。                              |
 | cxx_compile_flag | 用于Storage-Service-cxx节点complie方法的切换 | 默认：false                                                  | 如果服务器系统不满足Storage-Service-cxx节点的编译要求，请尝试使用true。 |
 
-4.3 用例
---------
-
 **1）两台主机partyA+partyB同时部署****
 
-\#!/bin/bash
+```
+#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
 party_list=(10000 9999)
-party_ip=(192.168.0.1 192.168.0.2)
+node_list=(192.168.0.1 192.168.0.2)
 db_auth=(fate_dev fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
+```
 
 **2）一台主机partyA+partyB同时部署****
 
-\#!/bin/bash
+```
+#!/bin/bash
 
 user=app
+
 deploy_dir=/data/projects/fate
 party_list=(10000 9999)
-party_ip=(192.168.0.1)
+node_list=(192.168.0.1)
 db_auth=(fate_dev fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
+```
 
 **3）只部署一个party**
 
-\#!/bin/bash
+```
+#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
 party_list=(10000)
-party_ip=(192.168.0.1)
+node_list=(192.168.0.1)
 db_auth=(fate_dev fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
+```
 
-按照上述配置含义修改configurations.sh文件对应的配置项后，然后执行auto-packaging.sh脚本：
+4.3 部署
+--------
 
-cd /data/projects/FATE/cluster-deploy/scripts
+按照上述配置含义修改allinone_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
 
-bash auto-packaging.sh
-
-继续在FATE/cluster-deploy/scripts目录下执行部署脚本：
-
-cd /data/projects/FATE/cluster-deploy/scripts
+```
+cd FATE/cluster-deploy/scripts
+```
 
 如果需要部署所有组件，执行：
 
-bash deploy_allinone.sh all 
+```
+bash deploy_cluster_allinone.sh binary all 
+```
 
 如果只部署部分组件：
 
-bash deploy_allinone.sh fate_flow fate_board 
+```
+bash deploy_cluster_allinone.sh binary fate_flow
+```
 
 5.配置检查
 ==========
 
-执行后可到各个目标服务器上进行检查对应模块的配置是否准确，每个模块的对应配置文件所在路径可在此配置文件下查看[cluster-deploy/doc](https://github.com/WeBankFinTech/FATE/tree/master/cluster-deploy/doc) 。
+执行后可到各个目标服务器上进行检查对应模块的配置是否准确，每个模块的对应配置文件所在路径可在此配置文件下查看[cluster-deploy/doc](./configuration.md) 
 
 6.启动和停止服务
 ================
@@ -256,13 +243,23 @@ bash deploy_allinone.sh fate_flow fate_board
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
+```
 cd /data/projects/fate
+```
 
+启动所有：
+
+```
 sh services.sh all start
+```
 
-cd /data/projects/fate/python/fate_flow
+启动单个模块：
 
-sh service.sh start
+```
+sh services.sh proxy start
+```
+
+如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
 
 6.2 检查服务状态
 ----------------
@@ -271,13 +268,21 @@ sh service.sh start
 
 查看各个服务进程是否启动成功：
 
+```
 cd /data/projects/fate
+```
 
+查看所有：
+
+```
 sh services.sh all status
+```
 
-cd /data/projects/fate/python/fate_flow
+查看单个模块：
 
-sh service.sh status
+```
+sh services.sh proxy status
+```
 
 6.3 关机服务
 ------------
@@ -286,15 +291,21 @@ sh service.sh status
 
 若要关闭服务则使用：
 
+```
 cd /data/projects/fate
+```
 
+关闭所有：
+
+```
 sh services.sh all stop
+```
 
-cd /data/projects/fate/python/fate_flow
+关闭单个模块：
 
-sh service.sh stop
-
-注：若有对单个服务进行启停操作则将上述命令中的all替换为相应的模块名称即可，若要启动fate_flow则需要到对应目录/data/projects/fate/python/fate_flow下执行sh service.sh start。
+```
+sh services.sh proxy stop
+```
 
 7.测试
 ======
@@ -304,13 +315,11 @@ sh service.sh stop
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-source /data/projects/fate/venv/bin/activate
-
-export PYTHONPATH=/data/projects/fate/python
-
-cd \$PYTHONPATH
-
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python
 sh ./federatedml/test/run_test.sh
+```
 
 显示“ok”表示成功，显示 “FAILED”则表示失败，程序一般在一分钟内显示执行结果。
 
@@ -321,13 +330,11 @@ sh ./federatedml/test/run_test.sh
 
 此测试只需在guest方egg节点执行，选定9999为guest方，在192.168.0.2上执行：
 
-export PYTHONPATH = /data /projects/fat /python
-
-source /data/projects/fate/venv/bin/activate
-
+```
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
-
 python run_toy_example.py 9999 10000 1
+```
 
 测试结果将显示在屏幕上。
 
@@ -342,25 +349,21 @@ python run_toy_example.py 9999 10000 1
 
 **在Host节点192.168.0.1上运行：**
 
-export PYTHONPATH = /data/projects/fate/python
-
-source /data/projects/fate/venv/bin/activate
-
+```
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task /
-
 sh run.sh host fast
+```
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
 **在Guest节点192.168.0.2上运行：**
 
-export PYTHONPATH = /data/projects/fate/python
-
-source /data/projects/fate/venv/bin/activate
-
+```
+source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-
-sh run.sh guest fast \$ {host_table} \$ {host_namespace} 
+sh run.sh guest fast $ {host_table} $ {host_namespace} 
+```
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
 

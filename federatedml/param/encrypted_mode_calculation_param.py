@@ -45,7 +45,7 @@ class EncryptedModeCalculatorParam(BaseParam):
             if type(self.re_encrypted_rate).__name__ not in ["int", "long", "float"]:
                 raise ValueError("re_encrypted_rate should be a numeric number")
 
-            if not self.re_encrypted_rate >= 0.0 and self.re_encrypted_rate <= 1:
+            if not (self.re_encrypted_rate >= 0.0 and self.re_encrypted_rate <= 1):
                 raise ValueError("r_encrypted_rate should  in [0, 1]")
 
         return True

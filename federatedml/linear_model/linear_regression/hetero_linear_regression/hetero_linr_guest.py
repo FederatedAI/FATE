@@ -60,7 +60,6 @@ class HeteroLinRGuest(HeteroLinRBase):
         self.header = self.get_header(data_instances)
         
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
-        #data_instances = data_instances.mapValues(HeteroLinRGuest.load_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -119,13 +118,13 @@ class HeteroLinRGuest(HeteroLinRBase):
         Prediction of linR
         Parameters
         ----------
-        data_instances:DTable of Instance, input data
+        data_instances: DTable of Instance, input data
         predict_param: PredictParam, the setting of prediction.
 
         Returns
         ----------
         DTable
-            include input data label, predict probably, label
+            include input data label, predict results
         """
         LOGGER.info("Start predict ...")
 

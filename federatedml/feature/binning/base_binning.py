@@ -459,13 +459,13 @@ class Binning(object):
 
     @staticmethod
     def get_bin_num(value, split_points):
-        col_bin_num = len(split_points)
+        col_bin_num = len(split_points) - 1
         for bin_num, split_point in enumerate(split_points):
             if value <= split_point:
                 col_bin_num = bin_num
                 break
-        col_bin_num = int(col_bin_num)
-        assert col_bin_num <= len(split_points)
+        # col_bin_num = int(col_bin_num)
+        assert col_bin_num < len(split_points)
         return col_bin_num
 
     @staticmethod
@@ -617,7 +617,14 @@ class Binning(object):
             inverse_y = y_combo[1]
             for col_name, bin_idx in bin_idx_dict.items():
                 col_sum = result_sum[col_name]
-                label_sum = col_sum[bin_idx]
+                try:
+                    label_sum = col_sum[bin_idx]
+                except:
+                    LOGGER.debug(
+                        "In add_label_in_partition, col_name: {}, col_sum: {}, bin_index: {}".format(
+                            col_name, col_sum, bin_idx
+                        ))
+
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + inverse_y
                 col_sum[bin_idx] = label_sum

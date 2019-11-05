@@ -391,6 +391,7 @@ class TaskScheduler(object):
                               json_body={},
                               work_mode=job_parameters['work_mode'])
                 # clean
+                """
                 federated_api(job_id=job_id,
                               method='POST',
                               endpoint='/{}/schedule/{}/{}/{}/clean'.format(
@@ -403,6 +404,7 @@ class TaskScheduler(object):
                               src_role=job_initiator['role'],
                               json_body={},
                               work_mode=job_parameters['work_mode'])
+                """
         schedule_logger(job_id, delete=True)
 
     @staticmethod

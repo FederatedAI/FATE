@@ -135,7 +135,6 @@ class BasePoissonRegression(BaseLinearModel):
         return param_protobuf_obj
 
     def _load_model(self, model_dict):
-        # LOGGER.debug("In load model, model_dict: {}".format(model_dict))
         result_obj = list(model_dict.get('model').values())[0].get(
             self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
@@ -143,7 +142,6 @@ class BasePoissonRegression(BaseLinearModel):
         self.exposure_colname = meta_obj.exposure_colname
 
         self.header = list(result_obj.header)
-        # LOGGER.debug("In load model, header: {}".format(self.header))
         # For poisson regression arbiter predict function
         if self.header is None:
             return
@@ -162,4 +160,3 @@ class BasePoissonRegression(BaseLinearModel):
     
     def get_metrics_param(self):
         return EvaluateParam(eval_type="regression")
-
