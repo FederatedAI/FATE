@@ -122,11 +122,12 @@ Http://hostip:8080.
 
 Please ignore the following messages:
 
-1. debconf: delaying package configuration, since apt-utils is not installed.
+1. WARNING: Image for service mysql was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
 
-2. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
+2. debconf: delaying package configuration, since apt-utils is not installed.
 
-3. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+3. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
 
-     
+4. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+
 
