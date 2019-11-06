@@ -15,6 +15,7 @@
 #
 
 from arch.api import session
+from arch.api.utils import log_utils
 from sklearn.utils import resample
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -23,6 +24,8 @@ from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
 from federatedml.model_base import ModelBase
 import random
+
+LOGGER = log_utils.getLogger()
 
 
 class RandomSampler(object):
@@ -103,6 +106,7 @@ class RandomSampler(object):
 
 
         """
+        LOGGER.info("start to run random sampling")
 
         return_sample_ids = False
         if self.method == "downsample":
@@ -189,7 +193,7 @@ class StratifiedSampler(object):
         self.label_mapping = {}
         self.labels = []
         if fractions:
-            for (label, farc) in fractions:
+            for (label, frac) in fractions:
                 self.label_mapping[label] = len(self.labels)
                 self.labels.append(label)
 
@@ -261,6 +265,8 @@ class StratifiedSampler(object):
 
 
         """
+
+        LOGGER.info("start to run stratified sampling")
         return_sample_ids = False
         if self.method == "downsample":
             if sample_ids is None:
@@ -380,7 +386,7 @@ class Sampler(ModelBase):
     Parameters
     ----------
     sample_param : object, self-define sample parameters,
-        define in federatedml.param.param
+        define in federatedml.param.sample_param
 
     """
 
@@ -452,23 +458,12 @@ class Sampler(ModelBase):
         transfer_inst.sample_ids.remote(sample_ids,
                                         role="host",
                                         suffix=(self.flowid,))
-        """
-        federation.remote(obj=sample_ids,
-                          name=transfer_inst.sample_ids.name,
-                          tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
-                          role="host")
-        """
 
     def recv_sample_ids(self):
         transfer_inst = SampleTransferVariable()
 
         sample_ids = transfer_inst.sample_ids.get(idx=0,
                                                   suffix=(self.flowid,))
-        """
-        sample_ids = federation.get(name=transfer_inst.sample_ids.name,
-                                    tag=transfer_inst.generate_transferid(transfer_inst.sample_ids, self.flowid),
-                                    idx=0)
-        """
         return sample_ids
 
     def run_sample(self, data_inst, task_type, task_role):
@@ -498,6 +493,8 @@ class Sampler(ModelBase):
             the output sample data, same format with input
 
         """
+        LOGGER.info("begin to run sampling process")
+
         if task_type not in [consts.HOMO, consts.HETERO]:
             raise ValueError("{} task type not support yet".format(task_type))
 
@@ -538,7 +535,7 @@ class Sampler(ModelBase):
 
 
 def callback(tracker, method, callback_metrics):
-    print ("method is {}".format(method))
+    LOGGER.debug("callback: method is {}".format(method))
     if method == "random":
         tracker.log_metric_data("sample_count",
                                 "random",
@@ -550,9 +547,10 @@ def callback(tracker, method, callback_metrics):
                                            metric_type="SAMPLE_TEXT"))
 
     else:
-        print ("name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
+        LOGGER.debug(
+            "callback: name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
         for metric in callback_metrics:
-            print ("metric is {}".format(metric))
+            LOGGER.debug("calback: metric is {}".format(metric))
 
         tracker.log_metric_data("sample_count",
                                 "stratified",

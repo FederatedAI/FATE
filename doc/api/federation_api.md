@@ -38,7 +38,7 @@ Initializes federation module. This method should be called before calling other
 **Example:**
 
 ``` python
->>> from eggroll.api import federation
+>>> from arch.api import federation
 >>> federation.init('job_id', runtime_conf)
 ```
 
@@ -68,7 +68,7 @@ Gets data from other participant. This method will block until the remote object
 
 >`remote(obj, name, tag, role=None, idx=-1)`
 
-Sends data to otehre parties. This method does not block.
+Sends data to other parties. This method does not block.
 
 **Parameters:**
 

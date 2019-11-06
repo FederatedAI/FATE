@@ -65,7 +65,8 @@
                 "evaluate_param": {
                     "eval_type": "binary"
                 }
-             }
+             },
+            "validation_freqs": 1
         },
         "evaluation_0": {
             "eval_type": "binary"

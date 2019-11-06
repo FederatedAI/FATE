@@ -48,11 +48,11 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_a_1",
+              "name": "motor_mini_a",
               "namespace": "motor_mini"
             },
             {
-              "name": "motor_mini_a_2",
+              "name": "motor_mini_a",
               "namespace": "motor_mini"
             }
           ]
@@ -79,7 +79,7 @@
       "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
-      "decay": 10,
+      "decay": 0.0,
       "decay_sqrt": false,
       "init_param": {
         "init_method": "zeros"

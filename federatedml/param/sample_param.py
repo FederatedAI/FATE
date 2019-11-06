@@ -25,7 +25,7 @@ class SampleParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    mode: str, accepted 'random','stratified'' only in this version, specify sample to use, default: 'random'
 
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
 

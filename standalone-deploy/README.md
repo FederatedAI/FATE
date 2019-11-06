@@ -16,7 +16,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
 
-2. Dependent on docker and docker-compose, You can verify the docker environment with the following command:docker --version and docker-compose --version.
+2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
 3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
 
@@ -41,7 +41,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
@@ -61,21 +61,21 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it. 
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-1.1.tar.gz
-   tar -xvf  standalone-fate-1.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.1.tar.gz
+   tar -xvf  standalone-fate-master-1.1.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-1.1
-   source init.sh
+   cd standalone-fate-master-1.1
+   source init.sh init
    ```
 
 4. Execution test.
 
    ```
-   cd standalone-fate-1.1
+   cd standalone-fate-master-1.1
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -90,23 +90,23 @@ Http://hostip:8080.
 
 1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
 
-2. Dependent on docker and docker-compose, You can verify the docker environment with the following command:docker --version and docker-compose --version.
+2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
 3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
 
 4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
-5. It takes about 40 minutes to complete the execution, please wait for a moment.
+5. It takes about 40 minutes to complete the build, please wait for a moment.
 
    please follow the below step:
 
 ```
 #Get code
-FATE $ git clone https://github.com/WeBankFinTech/FATE.git
+FATE $ git clone https://github.com/FederatedAI/FATE.git
 
 #Execute the command
 FATE $ cd FATE/standalone-deploy
-FATE $ bash build_standalone_docker.sh
+FATE $ bash build_standalone_docker.sh init
 
 #Validation results
 FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`
@@ -115,18 +115,19 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
-You can also experience the fateboard access via a browser:
+You can also acess the fateboard via a browser:
 Http://hostip:8080.
 
-Please ignore the following tips:
+Please ignore the following messages:
 
-1. debconf: delaying package configuration, since apt-utils is not installed.
+1. WARNING: Image for service mysql was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
 
-2. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
+2. debconf: delaying package configuration, since apt-utils is not installed.
 
-3. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+3. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
 
-     
+4. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+
 

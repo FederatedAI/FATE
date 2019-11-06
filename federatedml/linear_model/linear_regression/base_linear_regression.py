@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-from google.protobuf import json_format
 
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LinearRegressionWeights
@@ -92,8 +91,6 @@ class BaseLinearRegression(BaseLinearModel):
                                                                  weight=weight_dict,
                                                                  intercept=intercept_,
                                                                  header=header)
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
 
     def _load_model(self, model_dict):

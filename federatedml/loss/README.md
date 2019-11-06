@@ -1,5 +1,5 @@
 # Loss
-Loss Module now only used in SecureBoost, it supports the following loss functions.
+Loss Module now only used in SecureBoost, it supports the following loss functions:
 * Binary Classification: sigmoid-cross-entropy loss function
 * Multi Classification: softmax-cross-entropy loss function
 * Regression:  
