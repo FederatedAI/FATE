@@ -26,12 +26,6 @@
               "name": "union_b",
               "namespace": "union"
             }
-          ],
-          "data2": [
-            {
-              "name": "union_a",
-              "namespace": "union"
-            }
           ]
         }
       },
@@ -49,15 +43,8 @@
         "missing_fill": [false],
         "outlier_replace": [false]
       },
-      "dataio_2": {
-        "with_label": [false],
-        "output_format": ["dense"],
-        "missing_fill": [false],
-        "outlier_replace": [false]
-      },
       "union_0": {
         "need_run": [true],
-        "union_func": ["last"],
         "allow_missing": [false]
       }
     }
