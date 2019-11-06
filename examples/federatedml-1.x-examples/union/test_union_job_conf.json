@@ -20,7 +20,7 @@
         "data": {
           "data0": [
             {
-              "name": "union_b",
+              "name": "union_a",
               "namespace": "union"
             }
           ],
@@ -33,9 +33,8 @@
         }
       },
       "dataio_0": {
-        "with_label": [true],
+        "with_label": [false],
         "output_format": ["dense"],
-        "label_name": ["y"],
         "missing_fill": [false],
         "outlier_replace": [false]
       },
@@ -46,8 +45,7 @@
         "outlier_replace": [false]
       },
       "union_0": {
-        "need_run": [true],
-        "union_func": ["all"]
+        "need_run": [true]
       }
     },
     "host": {
@@ -61,7 +59,7 @@
           ],
           "data1": [
             {
-              "name": "union_a_2",
+              "name": "union_a",
               "namespace": "union"
             }
           ]
@@ -80,8 +78,7 @@
         "outlier_replace": [false]
       },
       "union_0": {
-        "need_run": [true],
-        "union_func": ["first"]
+        "need_run": [true]
       }
     }
   }
