@@ -32,24 +32,24 @@ LOGGER = log_utils.getLogger()
 '''
 
 '''
-return: a dictionary contains table_name and namespace, 
+return: a dict contains table_name and namespace, 
 '''
-def host_get_current_verison(host_party_id, id_type, encrypt_type, tag, timeout=600):
-    return get_current_version(id_type, encrypt_type, tag, host_party_id, timeout=timeout)
+def host_get_current_verison(host_party_id, id_type, encrypt_type, tag, idx=None, timeout=600):
+    return get_current_version(id_type, encrypt_type, tag, host_party_id, idx=idx, timeout=timeout)
 
 
 '''
-return: a dictionary contains table_name and namespace, 
+return: a dict contains table_name and namespace, 
 '''
-def guest_get_current_version(host_party_id, guest_party_id, id_type, encrypt_type, tag, timeout=600):
-    return get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, timeout=timeout)
+def guest_get_current_version(host_party_id, guest_party_id, id_type, encrypt_type, tag, idx=None, timeout=600):
+    return get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, idx=idx, timeout=timeout)
 
 
 '''
 return: a dictionary contains rsa_n, rsa_e, and rsa_d
 '''
-def get_rsa_of_current_version(host_party_id, id_type, encrypt_type, tag, timeout=60):
-    table_info = host_get_current_verison(host_party_id, id_type, encrypt_type, tag, timeout=timeout)
+def get_rsa_of_current_version(host_party_id, id_type, encrypt_type, tag, idx=None, timeout=60):
+    table_info = host_get_current_verison(host_party_id, id_type, encrypt_type, tag, idx=idx, timeout=timeout)
     if table_info is None:
         LOGGER.info('no cache exists.')
         return None
@@ -78,9 +78,9 @@ def get_rsa_of_current_version(host_party_id, id_type, encrypt_type, tag, timeou
             return None
 
 
-def store_cache(dtable, guest_party_id, host_party_id, version, id_type, encrypt_type, tag='Za', namespace=None):
+def store_cache(dtable, guest_party_id, host_party_id, version, id_type, encrypt_type, tag='Za', idx=None, namespace=None):
     if namespace is None:
-        namespace = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id)
+        namespace = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, idx=idx)
     table_config = {}
     table_config['gen_table_info'] = True
     table_config['namespace'] = namespace
@@ -121,8 +121,8 @@ def store_rsa(host_party_id, id_type, encrypt_type, tag, namespace, version, rsa
             info.save()
 
 
-def clean_all_cache(host_party_id, id_type, encrypt_type, tag='Za', guest_party_id=None):
-    namespace = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id)
+def clean_all_cache(host_party_id, id_type, encrypt_type, tag='Za', guest_party_id=None, idx=None):
+    namespace = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, idx=idx)
     session.cleanup(name='*', namespace=namespace, persistent=True)
     version_table = version_control.get_version_table(data_table_namespace=namespace)
     version_table.destroy()
@@ -157,16 +157,19 @@ def clean_rsa(namespace, version):
 ########## intra-face ###########################################################
 ################################################################################
 '''
-def gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=None, data_type='id_library_cache'):
+def gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=None, data_type='id_library_cache', idx=None):
     if guest_party_id is None:
         guest_party_id = 'all'
-    return '#'.join([data_type, str(host_party_id), str(guest_party_id), id_type, encrypt_type, tag])
+    namespace = '#'.join([data_type, str(host_party_id), str(guest_party_id), id_type, encrypt_type, tag])
+    if idx:
+        namespace = namespace + '#' + str(idx)
+    return namespace
 
 
-def get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_id=None, timeout=600):
+def get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_id=None, idx=None, timeout=600):
     config = {}
     config['gen_table_info'] = True
-    config['namespace'] = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id)
+    config['namespace'] = gen_cache_namespace(id_type, encrypt_type, tag, host_party_id, guest_party_id=guest_party_id, idx=idx)
 
     LOGGER.info(config)
     table_info = get_table_info_without_create(table_config=config)
@@ -175,7 +178,7 @@ def get_current_version(id_type, encrypt_type, tag, host_party_id, guest_party_i
     if table_info.get('table_name'):
         LOGGER.info('table exists, namepsace={}, version={}.'.format(table_info.get('namespace'), table_info.get('table_name')))
         return table_info
-    
+
     redis_adapter = RedisAdaptor()
     cache_job = redis_adapter.get(config['namespace'])
     if cache_job is None:
