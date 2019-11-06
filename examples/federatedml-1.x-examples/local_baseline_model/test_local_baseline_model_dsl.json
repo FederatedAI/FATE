@@ -50,7 +50,7 @@
                 "data": ["evaluate"]
             }
         },
-        "local_train_0": {
+        "local_baseline_model_0": {
             "module": "LocalTrain",
             "input": {
                 "data": {
@@ -59,14 +59,14 @@
             },
             "output": {
                 "data": ["train"],
-                "model": ["local_train"]
+                "model": ["local_baseline_model"]
             }
         },
         "evaluation_1": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_train_0.train"]
+                    "data": ["local_baseline_model_0.train"]
                 }
             },
             "output": {

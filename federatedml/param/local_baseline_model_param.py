@@ -19,42 +19,25 @@
 
 from federatedml.param.base_param import BaseParam
 
-class LocalTrainParam(BaseParam):
+class LocalBaselineModelParam(BaseParam):
     """
-    Define the local train method
+    Define the local baseline model param
 
     Parameters
     ----------
     model_name: str, sklearn model used to train on local model
 
-    need_cv: bool, default False
-        Indicate whether cv is needed
-
-    n_splits: int, default 5
-        Number of CV folds if need_cv
-
     model_opts: dict or None, default None
         Param to be used as input into sklearn model
-
-    shuffle: bool, default False
-        Indicate whether to shuffle data for CV
-
-    random_seed: int or None, default 42
-        Specify random seed if shuffle
 
     need_run: bool, default True
         Indicate if this module needed to be run
     """
 
-    def __init__(self, model_name="LogisticRegression", need_cv=False, n_splits=5, model_opts=None,
-                 shuffle=False, random_seed=42, need_run=True):
-        super(LocalTrainParam, self).__init__()
+    def __init__(self, model_name="LogisticRegression", model_opts=None, need_run=True):
+        super(LocalBaselineModelParam, self).__init__()
         self.model_name = model_name
-        self.need_cv = need_cv
-        self.n_splits = n_splits
         self.model_opts = model_opts
-        self.shuffle = shuffle
-        self.random_seed = random_seed
         self.need_run = need_run
 
     def check(self):
@@ -63,15 +46,9 @@ class LocalTrainParam(BaseParam):
         self.mode = self.check_and_change_lower(self.model_name,
                                                    ["logisticregression"],
                                                    descr)
-        self.check_boolean(self.need_cv, descr)
         self.check_boolean(self.need_run, descr)
-        self.check_positive_integer(self.n_splits, descr)
-        self.check_boolean(self.shuffle, descr)
         if self.model_opts is not None:
             if not isinstance(self.model_opts, dict):
                 raise ValueError(descr + " model_opts must be None or dict.")
-        if self.random_seed is not None:
-            if not isinstance(self.random_seed, int):
-                raise ValueError(descr + " randome_state must be None or int.")
 
         return True

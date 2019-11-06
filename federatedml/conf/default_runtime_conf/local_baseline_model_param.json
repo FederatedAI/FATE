@@ -1,9 +1,5 @@
 {
   "model_name": "LogisticRegression",
-  "need_cv": false,
-  "shuffle": false,
-  "n_splits": 5,
-  "random_seed": 42,
   "model_opts": null,
   "need_run": true
 }

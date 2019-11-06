@@ -43,9 +43,8 @@
         "missing_fill": [true],
         "outlier_replace": [true]
       },
-      "local_train_0": {
+      "local_baseline_model_0": {
         "model_name": ["LogisticRegression"],
-        "nee_cv": [false],
         "need_run": [true],
         "model_opts": [null]
       },
