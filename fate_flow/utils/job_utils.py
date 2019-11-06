@@ -163,11 +163,20 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     return dsl_parser
 
 
-def get_job_configuration(job_id, role, party_id):
+def get_job_configuration(job_id, role, party_id, tasks=None):
     with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
-                                                                                         Job.f_role == role,
-                                                                                         Job.f_party_id == party_id)
+        if tasks:
+            jobs_run_conf = {}
+            for task in tasks:
+                jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
+                job = jobs[0]
+                jobs_run_conf[job.f_job_id] = json_loads(job.f_runtime_conf)["role_parameters"]["local"]["upload_0"]
+                jobs_run_conf[job.f_job_id]["notes"] = job.f_description
+            return jobs_run_conf
+        else:
+            jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+                                                                                             Job.f_role == role,
+                                                                                             Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
             return json_loads(job.f_dsl), json_loads(job.f_runtime_conf), json_loads(job.f_train_runtime_conf)

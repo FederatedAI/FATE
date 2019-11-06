@@ -39,7 +39,7 @@ class Upload(object):
         self.parameters = component_parameters["UploadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
-        job_id = "_".join(self.taskid.split("_")[:2])
+        job_id = self.taskid.split("_")[0]
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):

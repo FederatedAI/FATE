@@ -17,11 +17,12 @@ import os
 
 from flask import Flask, request
 
-from arch.api.utils import file_utils
+from arch.api import session
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-from fate_flow.utils import detect_utils
+from fate_flow.utils import detect_utils, job_utils
 from fate_flow.driver.job_controller import JobController
+from fate_flow.utils.job_utils import get_job_configuration
 
 manager = Flask(__name__)
 
@@ -52,6 +53,45 @@ def download_upload(access_module):
     data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                  'board_url': board_url, 'logs_directory': logs_directory})
     return get_json_result(job_id=job_id, data=data)
+
+
+@manager.route('/upload/history', methods=['POST'])
+def upload_history():
+    tasks = get_upload_history()
+    return get_json_result(retcode=0, retmsg='success', data=tasks)
+
+
+def get_upload_history():
+    request_data = request.json
+    if request_data.get('job_id'):
+        tasks = job_utils.query_task(component_name='upload_0', status='success', job_id=request_data.get('job_id'))
+    else:
+        tasks = job_utils.query_task(component_name='upload_0', status='success')
+    num = request_data.get('number')
+    if not num:
+        tasks = tasks[-1::-1]
+    else:
+        tasks = tasks[-1:-num - 1:-1]
+    jobs_run_conf = get_job_configuration(None, None, None, tasks)
+    return get_upload_info(jobs_run_conf)
+
+
+def get_upload_info(jobs_run_conf):
+    data = []
+    for job_id, job_run_conf in jobs_run_conf.items():
+        info = {}
+        table_name = job_run_conf["table_name"][0]
+        namespace = job_run_conf["namespace"][0]
+        partition = job_run_conf["partition"][0]
+        info["upload_info"] = {
+            "table_name": table_name,
+            "namespace": namespace,
+            "partition": partition,
+        }
+        info["notes"] = job_run_conf["notes"]
+        info["meta"] = session.get_data_table_metas(table_name, namespace)
+        data.append({job_id: info})
+    return data
 
 
 def gen_data_access_job_config(config_data, access_module):

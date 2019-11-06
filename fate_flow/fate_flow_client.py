@@ -35,7 +35,7 @@ JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
                  "component_output_model", 'component_output_data']
-DATA_FUNC = ["download", "upload"]
+DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info"]
 MODEL_FUNC = ["load", "online", "version"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
@@ -143,7 +143,7 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
         if response.json()['retcode'] == 999:
             start_cluster_standalone_job_server()
             response = requests.post("/".join([server_url, "data", func]), json=config_data)
