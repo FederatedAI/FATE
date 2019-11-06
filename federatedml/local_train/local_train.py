@@ -21,13 +21,15 @@ from arch.api import session
 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
+from federatedml.evaluation import Evaluation
 from federatedml.param.local_train_param import LocalTrainParam
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.model_base import ModelBase
+from federatedml.model_selection.k_fold import KFold
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_validate
+#from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
 
 import numpy as np
@@ -47,35 +49,21 @@ class LocalTrain(ModelBase):
         self.n_splits = params.n_splits
         self.shuffle = params.shuffle
         self.model_opts = params.model_opts
-        self.random_state = params.random_state
+        self.random_seed = params.random_seed
         self.need_run = params.need_run
 
-
-    def get_features_shape(self, data_instances):
-        return data_overview.get_features_shape(data_instances)
+    def get_metrics_param(self):
+        # extend in future with more model types
+        param =  EvaluateParam(eval_type="binary",
+                             pos_label=1)
+        return param
 
     def get_model(self):
+        # extend in future with more model types
         model = LogisticRegression(**self.model_opts)
         return model
 
-    def fit(self, data_instances):
-        abnormal_detection.empty_table_detection(data_instances)
-        abnormal_detection.empty_feature_detection(data_instances)
-
-        # get X, y arrays
-        X_table = data_instances.mapValues(lambda v: v.features)
-        y_table = data_instances.mapValues(lambda v: v.label)
-
-        X = np.array(list(X_table.collect()))[:,1:]
-        y = np.array(list(y_table.collect()))[:,1]
-        # get model
-        model = self.get_model()
-
-        if self.need_cv:
-            kf = KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state)
-            return
-
-        model_fit = model.fit(X, y)
+    def run_predict(self, model_fit, data_instances):
         pred_label = data_instances.mapValues(lambda v: model_fit.predict(v.features))
         pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features))
         predict_result = data_instances.mapValues(lambda x: x.label)
@@ -83,8 +71,54 @@ class LocalTrain(ModelBase):
         predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1], {"0": x[1][0], "1": x[1][1]}])
         return predict_result
 
+    def run_evaluate(self, eval_data, fold_name):
+        eval_obj = Evaluation()
+        eval_param = self.get_metrics_param()
+        eval_obj._init_model(eval_param)
+        eval_data = {fold_name: eval_data}
+        eval_obj.fit(eval_data)
+        eval_obj.save_data()
 
+    def fit(self, data_instances):
+        # check if empty table
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+        # get model
+        model = self.get_model()
 
+        if not self.need_cv:
+            X_table = data_instances.mapValues(lambda v: v.features)
+            y_table = data_instances.mapValues(lambda v: v.label)
 
+            X = np.array([v[1] for v in list(X_table.collect())])
+            y = np.array(list(y_table.collect()))[:, 1]
+            model_fit = model.fit(X, y)
+            results = self.run_predict(model_fit, data_instances)
+            return results
 
+        kf = KFold()
+        kf.n_splits = self.n_splits
+        kf.shuffle = self.shuffle
+        kf.random_seed = self.random_seed
+        generator = kf.split(data_instances)
 
+        fold_num = 0
+        for data_train, data_test in generator:
+            X_table = data_train.mapValues(lambda v: v.features)
+            y_table = data_train.mapValues(lambda v: v.label)
+
+            X_train = np.array([v[1] for v in list(X_table.collect())])
+            y_train = np.array(list(y_table.collect()))[:, 1]
+
+            model_fit = model.fit(X_train, y_train)
+            predict_train = self.run_predict(model_fit, data_train)
+            fold_name = "_".join(['train', 'fold', str(fold_num)])
+            pred_res = predict_train.mapValues(lambda value: value + ['train'])
+            self.run_evaluate(pred_res, fold_name)
+
+            predict_test = self.run_predict(model_fit, data_test)
+            fold_name = "_".join(['test', 'fold', str(fold_num)])
+            pred_res = predict_test.mapValues(lambda value: value + ['test'])
+            self.run_evaluate(pred_res, fold_name)
+
+            fold_num += 1

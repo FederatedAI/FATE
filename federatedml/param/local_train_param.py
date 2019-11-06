@@ -33,28 +33,28 @@ class LocalTrainParam(BaseParam):
     n_splits: int, default 5
         Number of CV folds if need_cv
 
-    shuffle: bool, default False
-        Indicate whether to shuffle data for CV
-
     model_opts: dict or None, default None
         Param to be used as input into sklearn model
 
-    random_state: int or None, default 42
-        Specify random seed for numpy shuffle
+    shuffle: bool, default False
+        Indicate whether to shuffle data for CV
+
+    random_seed: int or None, default 42
+        Specify random seed if shuffle
 
     need_run: bool, default True
         Indicate if this module needed to be run
     """
 
     def __init__(self, model_name="LogisticRegression", need_cv=False, n_splits=5, model_opts=None,
-                 shuffle=False, random_state = 42, need_run=True):
+                 shuffle=False, random_seed=42, need_run=True):
         super(LocalTrainParam, self).__init__()
         self.model_name = model_name
         self.need_cv = need_cv
         self.n_splits = n_splits
         self.model_opts = model_opts
         self.shuffle = shuffle
-        self.random_state = random_state
+        self.random_seed = random_seed
         self.need_run = need_run
 
     def check(self):
@@ -70,8 +70,8 @@ class LocalTrainParam(BaseParam):
         if self.model_opts is not None:
             if not isinstance(self.model_opts, dict):
                 raise ValueError(descr + " model_opts must be None or dict.")
-        if self.random_state is not None:
-            if not isinstance(self.random_state, int):
+        if self.random_seed is not None:
+            if not isinstance(self.random_seed, int):
                 raise ValueError(descr + " randome_state must be None or int.")
 
         return True
