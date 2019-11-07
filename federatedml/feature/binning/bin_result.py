@@ -138,3 +138,11 @@ class BinResults(object):
         result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict)
         return result_pb
 
+    def reconstruct(self, result_pb):
+        binning_result = dict(result_pb.binning_result)
+        for col_name, col_bin_result in binning_result.items():
+            col_bin_obj = BinColResults()
+            col_bin_obj.reconstruct(col_bin_result)
+            self.all_cols_results[col_name] = col_bin_obj
+        return self
+

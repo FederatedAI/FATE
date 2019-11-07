@@ -17,7 +17,6 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
@@ -89,6 +88,7 @@ class Initializer(object):
         else:
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
 
-        LOGGER.debug("Initialed model: {}".format(w))
-        lr_weights = LinearModelWeights(w, init_params.fit_intercept)
-        return lr_weights
+        return w
+        # LOGGER.debug("Initialed model: {}".format(w))
+        # lr_weights = LinearModelWeights(w, init_params.fit_intercept)
+        # return lr_weights

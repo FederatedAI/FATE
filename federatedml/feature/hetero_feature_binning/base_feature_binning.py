@@ -18,7 +18,7 @@
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning import bin_result
-from federatedml.feature.binning.base_binning import Binning
+from federatedml.feature.binning.base_binning import HostBaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
@@ -57,18 +57,18 @@ class BaseHeteroFeatureBinning(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.binning_obj: Binning = None
+        self.binning_obj = None
         self.header = None
         self.schema = None
         self.host_results = []
+        self.transform_type = None
 
         self.model_param = FeatureBinningParam()
         self.bin_inner_param = BinInnerParam()
 
     def _init_model(self, params: FeatureBinningParam):
         self.model_param = params
-        # self.cols_index = params.cols
-        # self.transform_cols_idx = self.model_param.transform_param.transform_cols
+
         self.transform_type = self.model_param.transform_param.transform_type
 
         if self.model_param.method == consts.QUANTILE:
@@ -156,30 +156,22 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.bin_inner_param.set_header(self.header)
 
         self.bin_inner_param.add_transform_bin_indexes(list(model_meta.transform_param.transform_cols))
+        self.bin_inner_param.add_bin_names(list(model_meta.cols))
         self.transform_type = model_meta.transform_param.transform_type
 
-        self.cols = list(map(int, model_meta.cols))
         bin_method = str(model_meta.method)
         if bin_method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(model_meta)
         else:
             self.binning_obj = BucketBinning(model_meta)
+        self.binning_obj.set_bin_inner_param(self.bin_inner_param)
+        self.binning_obj.bin_results.reconstruct(model_param.binning_result)
 
-        binning_result_obj = dict(model_param.binning_result.binning_result)
-        host_params = list(model_param.host_results)
-
-        for col_name, iv_attr_obj in binning_result_obj.items():
-            col_results = bin_result.BinColResults()
-            col_results.reconstruct(iv_attr_obj)
-            self.binning_obj.bin_results.put_col_results(col_name, col_results)
-
-        for host_result_obj in host_params:
-            bin_results = bin_result.BinResults()
-            for host_col_name, bin_col_results in host_result_obj.items():
-                col_results = bin_result.BinColResults()
-                col_results.reconstruct(bin_col_results)
-                bin_results.put_col_results(host_col_name, col_results)
-            self.host_results.append(bin_results)
+        self.host_results = []
+        for host_pb in model_param.host_results:
+            host_bin_obj = HostBaseBinning()
+            host_bin_obj.bin_results.reconstruct(host_pb)
+            self.host_results.append(host_bin_obj)
 
     def export_model(self):
         if self.model_output is not None:

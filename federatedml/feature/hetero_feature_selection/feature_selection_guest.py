@@ -21,6 +21,7 @@ from arch.api.utils import log_utils
 from federatedml.feature import feature_selection
 from federatedml.feature.hetero_feature_selection import filter_result
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
+from federatedml.feature.feature_selection import filter_factory
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -39,7 +40,8 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
     def fit(self, data_instances):
         LOGGER.info("Start Hetero Selection Fit and transform.")
         self._abnormal_detection(data_instances)
-        self._init_cols(data_instances)
+        # self._init_cols(data_instances)
+        self._init_select_params(data_instances)
 
         for method in self.filter_methods:
             self.filter_one_method(data_instances, method)
@@ -64,50 +66,59 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
         if method == consts.IV_VALUE_THRES:
             iv_param = self.model_param.iv_value_param
+            iv_filter = filter_factory.get_filter(filter_name=method, filter_param=iv_param, role=consts.GUEST)
+            iv_filter.set_host_party_ids(self.component_properties.host_party_idlist)
+            iv_filter.set_selection_param(self.curt_select_param)
+            iv_filter.set_binning_obj(self.binning_model)
+            iv_filter.set_transfer_variable(self.transfer_variable)
+            iv_filter.fit(data_instances)
+            self.update_curt_select_param()
+            self.completed_selection_result.add_filter_results(filter_name=method, select_param=se)
 
-            if not self.local_only:
-                host_select_cols = self._get_host_select_cols(consts.IV_VALUE_THRES)
-                LOGGER.debug("In iv value filter, host_select_cols: {}".format(host_select_cols))
-                iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                                  self.filter_result.this_to_select_cols_index,
-                                                                  self.binning_model,
-                                                                  host_select_cols=host_select_cols)
-                new_left_cols = iv_filter.fit(data_instances, fit_host=True)
-                # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_col_index(new_left_cols)
 
-                host_left_cols = iv_filter.host_cols
-                left_cols = host_left_cols.get(consts.HOST)
+            # if not self.local_only:
+            #     host_select_cols = self._get_host_select_cols(consts.IV_VALUE_THRES)
+            #     LOGGER.debug("In iv value filter, host_select_cols: {}".format(host_select_cols))
+            #     iv_filter = feature_selection.IVValueSelectFilter(iv_param,
+            #                                                       self.filter_result.this_to_select_cols_index,
+            #                                                       self.binning_model,
+            #                                                       host_select_cols=host_select_cols)
+            #     new_left_cols = iv_filter.fit(data_instances, fit_host=True)
+            #     # self._renew_final_left_cols(new_left_cols)
+            #     self.filter_result.add_left_col_index(new_left_cols)
+            #
+            #     host_left_cols = iv_filter.host_cols
+            #     left_cols = host_left_cols.get(consts.HOST)
+            #
+            #     left_cols = {int(k): v for k, v in left_cols.items()}
+            #     self.host_filter_result.add_left_cols(left_cols)
+            #     LOGGER.debug("In Guest IV filter, host_select_cols: {}, host_left_cols: {}".format(host_select_cols,
+            #                                                                                        host_left_cols))
+            #     # new_result = {}
+            #     # for host_col_idx, _ in host_select_cols.items():
+            #     #     host_col_idx = int(host_col_idx)
+            #     #     is_left = left_cols.get(host_col_idx)
+            #     #     new_result[host_col_idx] = is_left
+            #     # self.host_left_cols = new_result
+            #     # self._add_host_left_cols(self.host_left_cols)
+            #     self._send_host_result_cols(consts.IV_VALUE_THRES)
+            #     LOGGER.debug(
+            #         "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Host left cols are: {}".format(
+            #             self.host_filter_result.get_left_cols()))
+            #
+            # else:
+            #     iv_filter = feature_selection.IVValueSelectFilter(iv_param,
+            #                                                       self.filter_result.this_to_select_cols_index,
+            #                                                       self.binning_model)
+            #     new_left_cols = iv_filter.fit(data_instances)
+            #     # self._renew_final_left_cols(new_left_cols)
+            #     self.filter_result.add_left_col_index(new_left_cols)
 
-                left_cols = {int(k): v for k, v in left_cols.items()}
-                self.host_filter_result.add_left_cols(left_cols)
-                LOGGER.debug("In Guest IV filter, host_select_cols: {}, host_left_cols: {}".format(host_select_cols,
-                                                                                                   host_left_cols))
-                # new_result = {}
-                # for host_col_idx, _ in host_select_cols.items():
-                #     host_col_idx = int(host_col_idx)
-                #     is_left = left_cols.get(host_col_idx)
-                #     new_result[host_col_idx] = is_left
-                # self.host_left_cols = new_result
-                # self._add_host_left_cols(self.host_left_cols)
-                self._send_host_result_cols(consts.IV_VALUE_THRES)
-                LOGGER.debug(
-                    "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Host left cols are: {}".format(
-                        self.host_filter_result.get_left_cols()))
-
-            else:
-                iv_filter = feature_selection.IVValueSelectFilter(iv_param,
-                                                                  self.filter_result.this_to_select_cols_index,
-                                                                  self.binning_model)
-                new_left_cols = iv_filter.fit(data_instances)
-                # self._renew_final_left_cols(new_left_cols)
-                self.filter_result.add_left_col_index(new_left_cols)
-
-            LOGGER.debug(
-                "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Self left cols are: {}".format(
-                    self.filter_result.get_left_cols()))
-            self.iv_value_meta = iv_filter.get_meta_obj()
-            self.results.append(iv_filter.get_param_obj())
+            # LOGGER.debug(
+            #     "[Result][FeatureSelection][Guest] Finish iv value threshold filter. Self left cols are: {}".format(
+            #         self.filter_result.get_left_cols()))
+            # self.iv_value_meta = iv_filter.get_meta_obj()
+            # self.results.append(iv_filter.get_param_obj())
             # self._renew_left_col_names()
 
         if method == consts.IV_PERCENTILE:

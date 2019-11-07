@@ -119,10 +119,10 @@ class BinInnerParam(object):
         return dict(zip(self.bin_names, self.bin_indexes))
 
     def encode_col_name_dict(self, col_name_dict: dict):
-        encoded_result = {}
-        for col_name, dict_value in col_name_dict.items():
-            encoded_result[self.__encode_col_name(col_name)] = dict_value
-        return encoded_result
+        return {self.__encode_col_name(x): y for x, y in col_name_dict.items()}
+
+    def encode_col_name_list(self, col_name_list: list):
+        return [self.__encode_col_name(x) for x in col_name_list]
 
     def __encode_col_name(self, col_name):
         col_index = self.col_name_maps.get(col_name)
@@ -130,3 +130,11 @@ class BinInnerParam(object):
             LOGGER.warning("Encoding a non-exist column name")
             return None
         return '.'.join(['host', str(col_index)])
+
+    def __decode_col_name(self, encoded_name: str):
+        try:
+            col_index = int(encoded_name.split('.')[1])
+        except IndexError or ValueError:
+            raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
+        return self.header[col_index]
+

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -17,9 +19,7 @@
 #  limitations under the License.
 #
 from federatedml.param.base_param import BaseParam
-from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
-import copy
 
 
 class UniqueValueParam(BaseParam):
@@ -50,14 +50,28 @@ class IVValueSelectionParam(BaseParam):
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
 
+    host_threshold: List of float or None, default: None
+        Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
+        the host id setting.
+
     """
 
-    def __init__(self, value_threshold=0.0):
+    def __init__(self, value_threshold=0.0, host_threshold=None, local_only=False):
+        super().__init__()
         self.value_threshold = value_threshold
+        self.host_threshold = host_threshold
+        self.local_only = local_only
 
     def check(self):
         if not isinstance(self.value_threshold, (float, int)):
             raise ValueError("IV selection param's value_threshold should be float or int")
+
+        if self.host_threshold is not None:
+            if not isinstance(self.host_threshold, list):
+                raise ValueError("IV selection param's host_threshold should be list or None")
+
+        if not isinstance(self.local_only, bool):
+            raise ValueError("IV selection param's local_only should be bool")
 
         return True
 
@@ -135,8 +149,11 @@ class FeatureSelectionParam(BaseParam):
 
     Parameters
     ----------
-    select_cols: list or int, default: -1
+    select_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
+
+    select_names : list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
     filter_methods: list, ["unique_value", "iv_value_thres", "iv_percentile",
                 "coefficient_of_variation_value_thres", "outlier_cols"],
@@ -149,25 +166,25 @@ class FeatureSelectionParam(BaseParam):
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
-    unique_value: filter the columns if all values in this feature is the same
+    unique_param: filter the columns if all values in this feature is the same
 
-    iv_value_thres: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+    iv_value_param: Use information value to filter columns. If this method is set, a float threshold need to be provided.
         Filter those columns whose iv is smaller than threshold.
 
-    iv_percentile: Use information value to filter columns. If this method is set, a float ratio threshold
+    iv_percentile_param: Use information value to filter columns. If this method is set, a float ratio threshold
         need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
         the threshold are same, all those columns will be keep.
 
-    coefficient_of_variation_value_thres: Use coefficient of variation to judge whether filtered or not.
+    variance_coe_param: Use coefficient of variation to judge whether filtered or not.
 
-    outlier_cols: Filter columns whose certain percentile value is larger than a threshold.
+    outlier_param: Filter columns whose certain percentile value is larger than a threshold.
 
     need_run: bool, default True
         Indicate if this module needed to be run
 
     """
 
-    def __init__(self, select_cols=-1, filter_methods=None, local_only=False,
+    def __init__(self, select_col_indexes=-1, select_names=None, filter_methods=None,
                  unique_param=UniqueValueParam(),
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
@@ -176,13 +193,17 @@ class FeatureSelectionParam(BaseParam):
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
-        self.select_cols = select_cols
+        self.select_col_indexes = select_col_indexes
+        if select_names is None:
+            self.select_names = []
+        else:
+            self.select_names = select_names
         if filter_methods is None:
             self.filter_methods = [consts.UNIQUE_VALUE]
         else:
             self.filter_methods = filter_methods
 
-        self.local_only = local_only
+        # self.local_only = local_only
         self.unique_param = copy.deepcopy(unique_param)
         self.iv_value_param = copy.deepcopy(iv_value_param)
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
@@ -198,16 +219,14 @@ class FeatureSelectionParam(BaseParam):
         for idx, method in enumerate(self.filter_methods):
             method = method.lower()
             self.check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
-                                              "coefficient_of_variation_value_thres",
-                                              "outlier_cols"])
+                                                   "coefficient_of_variation_value_thres",
+                                                   "outlier_cols"])
             self.filter_methods[idx] = method
 
-        self.check_defined_type(self.select_cols, descr, ['list', 'int'])
+        self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])
 
-        self.check_boolean(self.local_only, descr)
         self.unique_param.check()
         self.iv_value_param.check()
         self.iv_percentile_param.check()
         self.variance_coe_param.check()
         self.outlier_param.check()
-

@@ -20,6 +20,7 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.secureprotol import EncryptModeCalculator
 
 from federatedml.util import consts
@@ -94,7 +95,8 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = LinearModelWeights(w, self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))

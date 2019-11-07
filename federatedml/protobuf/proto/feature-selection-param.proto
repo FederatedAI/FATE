@@ -31,9 +31,9 @@ message LeftCols {
 
 message FeatureSelectionFilterParam{
     map<string, double> feature_values = 1;
-    map<string, FeatureValue> host_feature_values = 2;
+    repeated FeatureValue host_feature_values = 2;
     LeftCols left_cols = 3;
-    map<string, LeftCols> host_left_cols = 4;
+    repeated LeftCols host_left_cols = 4;
     string filter_name = 5;
 }
 

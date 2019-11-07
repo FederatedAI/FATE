@@ -26,6 +26,9 @@ from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.hetero_feature_selection.filter_result import SelfFilterResult
+
+from federatedml.feature.feature_selection.selection_params import SelectionParams, CompletedSelectionResults
+
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
@@ -46,10 +49,13 @@ class BaseHeteroFeatureSelection(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureSelection, self).__init__()
         self.transfer_variable = HeteroFeatureSelectionTransferVariable()
-        self.cols = []  # Current cols index to do selection
+        # self.cols = []  # Current cols index to do selection
+
+        self.curt_select_param = SelectionParams()
+        self.completed_selection_result = CompletedSelectionResults()
 
         self.filter_result = None
-        self.header = []
+        # self.header = []
         self.schema = {}
         self.party_name = 'Base'
 
@@ -58,7 +64,7 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         # Possible previous model
         self.binning_model = None
-        self.model_param = FeatureSelectionParam()
+        self.model_param: FeatureSelectionParam = None
 
         # All possible meta
         self.unique_meta = None
@@ -70,13 +76,23 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.host_filter_result = None
 
         # Use to save each model's result
-        self.results = []
+        # self.results = []
 
     def _init_model(self, params):
         self.model_param = params
-        self.cols_index = params.select_cols
+        # self.cols_index = params.select_cols
         self.filter_methods = params.filter_methods
-        self.local_only = params.local_only
+        # self.local_only = params.local_only
+
+    def _init_select_params(self, data_instances):
+        header = get_header(data_instances)
+        self.curt_select_param.set_header(header)
+        # self.final_select_param.set_header(header)
+        self.curt_select_param.add_select_col_indexes(self.model_param.select_col_indexes)
+        self.curt_select_param.add_select_col_names(self.model_param.select_names)
+        # self.final_select_param.add_select_col_indexes(self.model_param.select_col_indexes)
+        # self.final_select_param.add_select_col_names(self.model_param.select_names)
+        self.completed_selection_result.set_header(header)
 
     def _get_meta(self):
         cols = [str(i) for i in self.cols]
@@ -264,27 +280,27 @@ class BaseHeteroFeatureSelection(ModelBase):
         header = get_header(data_instances)
         self.header = header
 
-    def _init_cols(self, data_instances):
-        self.schema = data_instances.schema
-        header = get_header(data_instances)
-
-        if self.cols_index == -1:
-            to_select_cols_all = header
-        else:
-            to_select_cols_all = []
-            for idx in self.cols_index:
-                try:
-                    idx = int(idx)
-                except ValueError:
-                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
-
-                if idx >= len(header):
-                    raise ValueError(
-                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
-                to_select_cols_all.append(header[idx])
-
-        self.filter_result = SelfFilterResult(header=header, to_select_cols_all=to_select_cols_all)
-        self.header = header
+    # def _init_cols(self, data_instances):
+    #     self.schema = data_instances.schema
+    #     header = get_header(data_instances)
+    #
+    #     if self.cols_index == -1:
+    #         to_select_cols_all = header
+    #     else:
+    #         to_select_cols_all = []
+    #         for idx in self.cols_index:
+    #             try:
+    #                 idx = int(idx)
+    #             except ValueError:
+    #                 raise ValueError("In binning module, selected index: {} is not integer".format(idx))
+    #
+    #             if idx >= len(header):
+    #                 raise ValueError(
+    #                     "In binning module, selected index: {} exceed length of data dimension".format(idx))
+    #             to_select_cols_all.append(header[idx])
+    #
+    #     self.filter_result = SelfFilterResult(header=header, to_select_cols_all=to_select_cols_all)
+    #     self.header = header
 
     def set_schema(self, data_instance, header=None):
         if header is None:
@@ -293,3 +309,12 @@ class BaseHeteroFeatureSelection(ModelBase):
             self.schema["header"] = header
         data_instance.schema = self.schema
         return data_instance
+
+    def update_curt_select_param(self):
+        new_select_param = SelectionParams()
+        new_select_param.set_header(self.header)
+        new_select_param.set_last_left_col_indexes(self.curt_select_param.all_left_col_indexes)
+        new_select_param.add_select_col_names(self.curt_select_param.select_col_names)
+        self.curt_select_param = new_select_param
+
+

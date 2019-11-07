@@ -90,9 +90,6 @@ class SummaryStatistics(object):
 
 
 class MultivariateStatisticalSummary(object):
-    """
-
-    """
 
     def __init__(self, data_instances, cols_index=-1, abnormal_list=None):
         self.finish_fit_statics = False     # Use for static data
