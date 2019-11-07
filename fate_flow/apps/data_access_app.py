@@ -57,8 +57,8 @@ def download_upload(access_module):
 
 @manager.route('/upload/history', methods=['POST'])
 def upload_history():
-    tasks = get_upload_history()
-    return get_json_result(retcode=0, retmsg='success', data=tasks)
+    data = get_upload_history()
+    return get_json_result(retcode=0, retmsg='success', data=data)
 
 
 def get_upload_history():
@@ -67,11 +67,11 @@ def get_upload_history():
         tasks = job_utils.query_task(component_name='upload_0', status='success', job_id=request_data.get('job_id'))
     else:
         tasks = job_utils.query_task(component_name='upload_0', status='success')
-    num = request_data.get('number')
-    if not num:
+    limit= request_data.get('limit')
+    if not limit:
         tasks = tasks[-1::-1]
     else:
-        tasks = tasks[-1:-num - 1:-1]
+        tasks = tasks[-1:-limit - 1:-1]
     jobs_run_conf = get_job_configuration(None, None, None, tasks)
     return get_upload_info(jobs_run_conf)
 

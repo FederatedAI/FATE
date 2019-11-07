@@ -227,13 +227,13 @@ def component_output_data_download():
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
-    num = request_data.get('number', -1)
+    limit = request_data.get('limit', -1)
     with open(output_data_file_path, 'w') as fw:
         for k, v in output_data_table.collect():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
             fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
             output_data_count += 1
-            if output_data_count == num:
+            if output_data_count == limit:
                 break
 
     if output_data_count:

@@ -308,10 +308,14 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.PARTIAL, JobStatus.DELETED]:
+                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
+                if job.f_status == JobStatus.FAILED and not job.f_end_time:
+                    job.f_end_time = current_timestamp()
+                    job.f_elapsed = job.f_end_time - job.f_start_time
+                    job.f_update_time = current_timestamp()
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:

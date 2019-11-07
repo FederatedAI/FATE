@@ -199,7 +199,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--work_mode', required=False, type=int, help="work mode")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
-    parser.add_argument('-num', '--number', required=False, type=int, help="output_data_num")
+    parser.add_argument('-limit', '--limit', required=False, type=int, help="limit_number")
     parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src_party_id")
     parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src_role")
     parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege_role")
