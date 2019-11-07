@@ -153,14 +153,14 @@ install(){
 
     mkdir -p ${deploy_dir}/storage-service-cxx
 
-    system=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
     echo ${system}
     case "${system}" in
-        "\"CentOS Linux\"")
+        "CentOS Linux")
                 echo "CentOS System"
                 rm -rf ./storage-service-cxx/third_party_eggrollv1_ubuntu
                 ;;
-        \""Ubuntu\"")
+        "Ubuntu")
                 echo "Ubuntu System"
                 rm -rf ./storage-service-cxx/third_party
                 mv ./storage-service-cxx/third_party_eggrollv1_ubuntu  ./storage-service-cxx/third_party
@@ -186,6 +186,17 @@ install(){
 	sed -i.bak "36s#PROTOC =.*#PROTOC = ${deploy_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
 	sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
 	make
+
+    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
+    echo ${system}
+    pwd
+    if [[ "${system}" == "Ubuntu" ]];then
+        cd ${deploy_dir}/storage-service-cxx/third_party
+        cd rocksdb
+        sudo cp librocksdb.so /usr/local/lib
+        sudo mkdir -p /usr/local/include/rocksdb/
+        sudo cp -r ./include/* /usr/local/include/
+    fi
 
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
