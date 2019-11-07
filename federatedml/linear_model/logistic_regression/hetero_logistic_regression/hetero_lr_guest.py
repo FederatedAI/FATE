@@ -17,6 +17,7 @@
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
@@ -94,7 +95,8 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -102,7 +104,6 @@ class HeteroLRGuest(HeteroLRBase):
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
@@ -112,12 +113,12 @@ class HeteroLRGuest(HeteroLRBase):
                                                                                         batch_feat_inst.count()))
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
                     compute_gradient_procedure(
-                        batch_feat_inst,
-                        self.encrypted_calculator,
-                        self.model_weights,
-                        self.optimizer,
-                        self.n_iter_,
-                        batch_index
+                    batch_feat_inst,
+                    self.encrypted_calculator,
+                    self.model_weights,
+                    self.optimizer,
+                    self.n_iter_,
+                    batch_index
                 )
                 LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
