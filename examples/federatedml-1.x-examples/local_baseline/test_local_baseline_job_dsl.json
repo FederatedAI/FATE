@@ -10,63 +10,69 @@
                 }
             },
             "output": {
-                "data": ["train"],
+                "data": ["train_data"],
                 "model": ["dataio"]
             }
          },
-         "intersection_0": {
-             "module": "Intersection",
-             "input": {
-                 "data": {
-                     "data": [
-                         "dataio_0.train"
-                     ]
-                 }
-             },
-             "output": {
-                 "data": ["train"]
-             }
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval_data"],
+                "model": ["dataio"]
+            }
          },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": ["intersection_0.train"]
+                    "train_data": ["dataio_0.train_data"],
+                    "eval_data": ["dataio_1.eval_data"]
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["hetero_lr"]
+                "data": ["hetero_lr_data"],
+                "model": ["hetero_lr_model"]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_lr_0.train"]
+                    "data": ["hetero_lr_0.hetero_lr_data"]
                 }
             },
             "output": {
                 "data": ["evaluate"]
             }
         },
-        "local_baseline_model_0": {
-            "module": "LocalTrain",
+        "local_baseline_0": {
+            "module": "LocalBaseline",
             "input": {
                 "data": {
-                    "train_data": ["intersection_0.train"]
+                    "train_data": ["dataio_0.train_data"],
+                    "eval_data": ["dataio_1.eval_data"]
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["local_baseline_model"]
+                "data": ["local_baseline_data"],
+                "model": ["local_baseline"]
             }
         },
         "evaluation_1": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_baseline_model_0.train"]
+                    "data": ["local_baseline_0.local_baseline_data"]
                 }
             },
             "output": {

@@ -43,10 +43,10 @@
         "missing_fill": [true],
         "outlier_replace": [true]
       },
-      "local_baseline_model_0": {
+      "local_baseline_0": {
         "model_name": ["LogisticRegression"],
-        "need_run": [true],
-        "model_opts": [null]
+        "model_opts": [null],
+        "need_run": [true]
       },
       "evaluation_0": {
           "eval_type": ["binary"],
@@ -79,8 +79,14 @@
         "output_format": ["dense"],
         "outlier_replace": [true]
       },
+      "local_baseline_0": {
+        "need_run": [false]
+      },
       "evaluation_0": {
         "need_run": [false]
+      },
+      "evaluation_1": {
+          "need_run": [false]
       }
     }
   },

@@ -19,29 +19,29 @@
 
 from federatedml.param.base_param import BaseParam
 
-class LocalBaselineModelParam(BaseParam):
+class LocalBaselineParam(BaseParam):
     """
     Define the local baseline model param
 
     Parameters
     ----------
-    model_name: str, sklearn model used to train on local model
+    model_name: str, sklearn model used to train on baseline model
 
-    model_opts: dict or None, default None
-        Param to be used as input into sklearn model
+    model_opts: dict or none, default None
+        Param to be used as input into baseline model
 
     need_run: bool, default True
         Indicate if this module needed to be run
     """
 
     def __init__(self, model_name="LogisticRegression", model_opts=None, need_run=True):
-        super(LocalBaselineModelParam, self).__init__()
+        super(LocalBaselineParam, self).__init__()
         self.model_name = model_name
         self.model_opts = model_opts
         self.need_run = need_run
 
     def check(self):
-        descr = "local train param"
+        descr = "local baseline param"
 
         self.mode = self.check_and_change_lower(self.model_name,
                                                    ["logisticregression"],
@@ -50,5 +50,7 @@ class LocalBaselineModelParam(BaseParam):
         if self.model_opts is not None:
             if not isinstance(self.model_opts, dict):
                 raise ValueError(descr + " model_opts must be None or dict.")
+        if self.model_opts is None:
+            self.model_opts = {}
 
         return True
