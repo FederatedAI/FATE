@@ -157,6 +157,31 @@ class Task(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
 
 
+class DataView(DataBaseModel):
+    f_job_id = CharField(max_length=100)
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=50, index=True)
+    f_table_name = CharField(max_length=100, null=True)
+    f_table_namespace = CharField(max_length=100, null=True)
+    f_component_name = TextField()
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_table_key_count = IntegerField(default=0)
+    f_partition = IntegerField(null=True)
+    f_task_id = CharField(max_length=100)
+    f_type = CharField(max_length=50, null=True)
+    f_ttl = IntegerField(default=0)
+    f_party_model_id = CharField(max_length=100, null=True)
+    f_model_version = CharField(max_length=100, null=True)
+    f_size = BigIntegerField(default=0)
+    f_description = TextField(null=True, default='')
+    f_tag = CharField(max_length=50, null=True, index=True, default='')
+
+    class Meta:
+        db_table = "t_data_view"
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
+
+
 class MachineLearningModelMeta(DataBaseModel):
     f_id = BigIntegerField(primary_key=True)
     f_role = CharField(max_length=50, index=True)

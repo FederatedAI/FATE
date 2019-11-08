@@ -17,7 +17,7 @@ from typing import List
 
 from arch.api import session
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
-from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
+from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
 from fate_flow.settings import stat_logger, API_VERSION
@@ -189,6 +189,11 @@ class Tracking(object):
             name=Tracking.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
+        self.save_data_view(self.role, self.party_id,
+                            data_info={'f_table_name': Tracking.output_table_name('data'),
+                                       'f_table_namespace': self.table_namespace,
+                                       'f_partition': 48,
+                                       'f_table_key_count': data_table.count() if data_table else 0})
 
     def get_output_data_table(self, data_name: str = 'component'):
         output_data_info_table = session.table(name=Tracking.output_table_name('data'),
@@ -210,6 +215,9 @@ class Tracking(object):
                                                model_buffers=model_buffers,
                                                party_model_id=self.party_model_id,
                                                model_version=self.model_version)
+            self.save_data_view(self.role, self.party_id,
+                                data_info={'f_party_model_id': self.party_model_id,
+                                           'f_model_version': self.model_version})
             self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
     def get_output_model(self, model_name):
@@ -366,6 +374,39 @@ class Tracking(object):
             else:
                 task.save()
             return task
+
+    def save_data_view(self, role, party_id, data_info, upload=False):
+        with DB.connection_context():
+            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                 DataView.f_component_name == self.component_name,
+                                                 DataView.f_task_id == self.task_id,
+                                                 DataView.f_role == role,
+                                                 DataView.f_party_id == party_id)
+            is_insert = True
+            if not upload and self.component_name == "upload_0":
+                return
+            if data_views:
+                data_view = data_views[0]
+                is_insert = False
+            else:
+                data_view = DataView()
+                data_view.f_create_time = current_timestamp()
+            data_view.f_job_id = self.job_id
+            data_view.f_component_name = self.component_name
+            data_view.f_task_id = self.task_id
+            data_view.f_role = role
+            data_view.f_party_id = party_id
+            data_view.f_update_time = current_timestamp()
+            for k, v in data_info.items():
+                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(
+                        DataView, k).default:
+                    continue
+                setattr(DataView, k, v)
+            if is_insert:
+                data_view.save(force_insert=True)
+            else:
+                data_view.save()
+            return data_view
 
     def clean_task(self):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))

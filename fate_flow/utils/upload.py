@@ -94,10 +94,18 @@ class Upload(object):
                     lines_count += len(data)
                     f_progress = lines_count/count*100//1
                     job_info = {'f_progress': f_progress}
-                    self.update_job_status(job_id, self.parameters["local"]['role'], self.parameters["local"]['party_id'], job_info)
+                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
+                                           job_info)
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
                                                    partition=self.parameters["partition"])
                 else:
+                    self.tracker.save_data_view(role=self.parameters["local"]['role'],
+                                                party_id=self.parameters["local"]['party_id'],
+                                                data_info={'f_table_name': dst_table_name,
+                                                           'f_table_namespace': dst_table_namespace,
+                                                           'f_partition': self.parameters["partition"],
+                                                           'f_table_key_count': data_table.count()},
+                                                upload=True)
                     self.callback_metric(metric_name='data_access',
                                          metric_namespace='upload',
                                          metric_data=[Metric("count", data_table.count())])
@@ -116,9 +124,8 @@ class Upload(object):
                 count += 1
         return count
 
-    def update_job_status(self, job_id, role, party_id, job_info):
-        JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=job_info, create=False)
-
+    def update_job_status(self, role, party_id, job_info):
+        self.tracker.save_job_info(role=role, party_id=party_id, job_info=job_info)
 
     def list_to_str(self, input_list):
         return ','.join(list(map(str, input_list)))

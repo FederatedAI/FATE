@@ -53,8 +53,8 @@ class Download(object):
                     LOGGER.info("===== export {} lines =====".format(lines))
                 if lines % 10000 == 0:
                     job_info = {'f_progress': lines/count*100//1}
-                    self.update_job_status(job_id, self.parameters["local"]['role'],
-                                           self.parameters["local"]['party_id'], job_info)
+                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
+                                           job_info)
             self.update_job_status(job_id, self.parameters["local"]['role'],
                                    self.parameters["local"]['party_id'], {'f_progress': 100})
             self.callback_metric(metric_name='data_access',
@@ -64,8 +64,8 @@ class Download(object):
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
 
-    def update_job_status(self, job_id, role, party_id, job_info):
-        JobController.update_job_status(job_id=job_id, role=role, party_id=int(party_id), job_info=job_info, create=False)
+    def update_job_status(self, role, party_id, job_info):
+        self.tracker.save_job_info(role=role, party_id=party_id, job_info=job_info)
 
     def set_taskid(self, taskid):
         self.taskid = taskid
