@@ -1,43 +1,34 @@
 ARG PREFIX=prefix
-ARG BASE_TAG=base_tag
-ARG BUILDER_TAG=builder_tag
-
-# build image
-FROM ${PREFIX}/storage-service-builder:${BUILDER_TAG}
-
+ARG BASE_TAG=tag
 FROM ${PREFIX}/base-image:${BASE_TAG}
 
-# install which
-RUN yum install -y which
+COPY eggroll-computing-1.1.tar.gz /data/projects/fate/eggroll/
+COPY eggroll-api-1.1.tar.gz /data/projects/fate/eggroll/
+COPY eggroll-egg-1.1.tar.gz /data/projects/fate/eggroll/
+COPY eggroll-storage-service-cxx-1.1.tar.gz  /data/projects/fate/eggroll/
+COPY third_party_eggrollv1.tar.gz /data/projects/fate/eggroll/
+COPY federatedml /data/projects/fate/eggroll/python/federatedml
+COPY arch /data/projects/fate/eggroll/python/arch
+COPY fate_flow /data/projects/fate/eggroll/python/fate_flow
 
-# copy source
-COPY storage-service /data/projects/fate/storage-service-cxx
-COPY egg-service /data/projects/fate/egg
-COPY egg-processor /data/projects/fate/python
-
-COPY --from=0 /data/projects/fate/third_party/include /data/projects/fate/storage-service-cxx/third_party/include
-COPY --from=0 /data/projects/fate/third_party/share /data/projects/fate/storage-service-cxx/third_party/share
-COPY --from=0 /data/projects/fate/third_party/bin /data/projects/fate/storage-service-cxx/third_party/bin
-COPY --from=0 /data/projects/fate/third_party/lib /data/projects/fate/storage-service-cxx/third_party/lib
-
-# build storage-service
-RUN cd /data/projects/fate/storage-service-cxx && \
-    sed -ie "20s#-I. -I.*#-I. -I/data/projects/fate/storage-service-cxx/third_party/include#g" ./Makefile && \
-    sed -ie "34s#LDFLAGS += -L.*#LDFLAGS += -L/data/projects/fate/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile && \
-    sed -ie "36s#PROTOC =.*#PROTOC = /data/projects/fate/storage-service-cxx/third_party/bin/protoc#g" ./Makefile && \
-    sed -ie "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = /data/projects/fate/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile && \
+RUN rpm --rebuilddb && yum install -y which java-1.8.0-openjdk java-1.8.0-openjdk-devel && \
+    cd /data/projects/fate/eggroll/ && \
+    mkdir -p egg python/eggroll/api python/eggroll/computing storage-service-cxx && \
+    tar -C ./egg -xvf eggroll-egg-1.1.tar.gz && rm eggroll-egg-1.1.tar.gz && \
+    tar -C ./python/eggroll/computing -xvf eggroll-computing-1.1.tar.gz && rm eggroll-computing-1.1.tar.gz && \
+    tar -C ./python/eggroll/api -xvf eggroll-api-1.1.tar.gz && rm eggroll-api-1.1.tar.gz && \
+    tar -C ./storage-service-cxx -xvf eggroll-storage-service-cxx-1.1.tar.gz && rm eggroll-storage-service-cxx-1.1.tar.gz && \
+    tar -C ./storage-service-cxx -xvf third_party_eggrollv1.tar.gz && rm third_party_eggrollv1.tar.gz && \
+    cd storage-service-cxx && \
+    sed -i "20s#-I. -I.*#-I. -I/data/projects/fate/eggroll/storage-service-cxx/third_party/include#g" ./Makefile && \
+    sed -i "34s#LDFLAGS += -L.*#LDFLAGS += -L/data/projects/fate/eggroll/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile && \
+    sed -i "36s#PROTOC =.*#PROTOC = /data/projects/fate/eggroll/storage-service-cxx/third_party/bin/protoc#g" ./Makefile && \
+    sed -i "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = /data/projects/fate/eggroll/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile && \
     make
 
-# create volume
-VOLUME /data/projects/fate/data-dir
-
-# work dir
-WORKDIR /data/projects/fate
-
-# start services
-CMD cd /data/projects/fate/storage-service-cxx && \
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/data/projects/fate/storage-service-cxx/third_party/lib && \
+CMD cd /data/projects/fate/eggroll/storage-service-cxx && \
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/data/projects/fate/eggroll/storage-service-cxx/third_party/lib && \
+    mkdir logs && \
     ./storage-service -p 7778 -d /data/projects/fate/data-dir >> logs/console.log 2>>logs/error.log & \
-    cd /data/projects/fate/egg && \
-    java -cp "conf/:lib/*:fate-egg.jar" com.webank.ai.fate.eggroll.Egg -c conf/egg.properties
-
+    cd /data/projects/fate/eggroll/egg && \
+    java -cp "conf/:lib/*:eggroll-egg-1.1.jar" com.webank.ai.eggroll.framework.egg.Egg -c conf/egg.properties
