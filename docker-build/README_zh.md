@@ -21,27 +21,24 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 配置镜像名称
 为了减少镜像的容量，我们把镜像划分为以下几类：
 - 基础镜像： 安装了必要的依赖包，作为模块镜像的基础镜像(Base Image)。
-- 构建镜像： 用于构建第三方依赖如gRPC和boost等，该镜像用于构建storage-service镜像。
 - 模块镜像： 包含了FATE中某个特定的模块。
 
 用户在开始构建镜像之前需要配置“.env”，通过该文件，镜像在构建完毕后会被打上相应的标签以后续使用，例子如下：
 ```
   PREFIX=federatedai
-  BASE_TAG=1.0.2-release
-  BUILDER_TAG=1.0.2-release
-  TAG=1.0.2-release
+  BASE_TAG=1.1-release
+  TAG=1.1-release
 
   # PREFIX: 用于要推送的镜像仓库(Registry)以及其命名空间
   # BASE_TAG: 基础镜像的标签
-  # BUILDER_TAG: 构建镜像的标签
   # TAG: 模块镜像的标签 
 ```
 
 
 ## 运行构建镜像的脚本
-默认情况下，镜像的构建依赖于很多国外的镜像源。对于大多数中国用户来说，下载这些资源会比较缓慢，然而用户在执行脚本的时候可以带上`--useChineseMirror`参数，让脚本到国内的镜像源处拉取必要的资源，使用以下命令来构建镜像：
 
-```$ bash build_cluster_docker.sh --useChineseMirror modules```
+用户可以使用以下命令来构建镜像：
+```$ $ bash build_cluster_docker.sh all```
 
 所有用于构建镜像的“ Dockerfile”文件都存储在“docker/“子目录下。在脚本运行完之后，用户可以通过以下命令来检查构建好的镜像：
 
@@ -49,17 +46,15 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 
 一个输出的例子如下：
 ```
-   REPOSITORY                         TAG  
-   federatedai/egg                       1.0.2-release    
-   federatedai/fateboard                 1.0.2-release    
-   federatedai/serving-server            1.0.2-release     
-   federatedai/meta-service              1.0.2-release    
-   federatedai/python                    1.0.2-release     
-   federatedai/roll                      1.0.2-release    
-   federatedai/proxy                     1.0.2-release    
-   federatedai/federation                1.0.2-release    
-   federatedai/storage-service-builder   1.0.2-release       
-   federatedai/base-image                1.0.2-release 
+  REPOSITORY                            TAG
+  federatedai/egg                       1.1-release
+  federatedai/fateboard                 1.1-release
+  federatedai/meta-service              1.1-release
+  federatedai/python                    1.1-release
+  federatedai/roll                      1.1-release
+  federatedai/proxy                     1.1-release
+  federatedai/federation                1.1-release
+  federatedai/base-image                1.1-release
 ```
 
 ## 把镜像推送到镜像仓库（可选）
