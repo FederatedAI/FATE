@@ -42,8 +42,8 @@ class LocalBaseline(ModelBase):
         super(LocalBaseline, self).__init__()
         self.model_param = LocalBaselineParam()
         self.model_name = "LocalBaseline"
-        self.model_param_name = "LogisticRegressionParam"
-        self.model_meta_name = ""
+        self.model_param_name = "LocalBaselineParam"
+        self.model_meta_name = "LocalBaselineMeta"
 
     def _init_model(self, params):
         self.model_name = params.model_name
@@ -53,11 +53,6 @@ class LocalBaseline(ModelBase):
         self.model_fit = None
         self.header = None
         self.model_weights = None
-        #self.fit_intercept = True
-        #self.n_iter = 0
-        #self.is_converged = False
-        #self.coef = []
-        #self.intercept = 0
 
     def get_model(self):
         # extend in future with more model types
