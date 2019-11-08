@@ -64,7 +64,18 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
 
     def filter_one_method(self, data_instances, method):
 
-        if method == consts.IV_VALUE_THRES:
+        if method == consts.UNIQUE_VALUE:
+            unique_param = self.model_param.unique_param
+            uni_filter = filter_factory.get_filter(filter_name=method, filter_param=unique_param)
+            uni_filter.set_selection_param(self.curt_select_param)
+            uni_filter.set_statics_obj(self.static_obj)
+            uni_filter.set_transfer_variable(self.transfer_variable)
+            uni_filter.fit(data_instances)
+            self.completed_selection_result.add_filter_results(filter_name=method,
+                                                               select_param=self.curt_select_param)
+            self.update_curt_select_param()
+
+        elif method == consts.IV_VALUE_THRES:
             iv_param = self.model_param.iv_value_param
             iv_filter = filter_factory.get_filter(filter_name=method, filter_param=iv_param, role=consts.GUEST)
             iv_filter.set_host_party_ids(self.component_properties.host_party_idlist)
@@ -72,8 +83,11 @@ class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):
             iv_filter.set_binning_obj(self.binning_model)
             iv_filter.set_transfer_variable(self.transfer_variable)
             iv_filter.fit(data_instances)
+            self.completed_selection_result.add_filter_results(filter_name=method,
+                                                               select_param=self.curt_select_param,
+                                                               host_select_params=iv_filter.host_selection_inner_params)
             self.update_curt_select_param()
-            self.completed_selection_result.add_filter_results(filter_name=method, select_param=se)
+
 
 
             # if not self.local_only:

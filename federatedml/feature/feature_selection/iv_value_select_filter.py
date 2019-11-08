@@ -16,17 +16,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import abc
+
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.feature.feature_selection.selection_params import SelectionParams
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVValueSelectionParam
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class IVValueSelectFilter(BaseFilterMethod):
+class IVValueSelectFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     """
     filter the columns if all values in this feature is the same
 
@@ -34,12 +36,14 @@ class IVValueSelectFilter(BaseFilterMethod):
 
     def __init__(self, filter_param: IVValueSelectionParam):
         super().__init__(filter_param)
-        self.binning_obj: BaseHeteroFeatureBinning = None
-        self.fit_local = False
+        self.binning_obj = None
+        self.local_only = False
         self.transfer_variable = None
+        self.sync_obj = None
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
+        self.sync_obj.register_selection_trans_vars(transfer_variable)
 
     def set_binning_obj(self, binning_model):
         if binning_model is None:
@@ -53,11 +57,12 @@ class Guest(IVValueSelectFilter):
         super().__init__(filter_param)
         self.host_thresholds = None
         self.host_selection_inner_params = []
+        self.sync_obj = selection_info_sync.Guest()
 
     def _parse_filter_param(self, filter_param):
         self.value_threshold = filter_param.value_threshold
         self.host_thresholds = filter_param.host_thresholds
-        self.fit_local = filter_param.fit_local
+        self.local_only = filter_param.local_only
 
     def set_host_party_ids(self, host_party_ids):
         if self.host_thresholds is None:
@@ -70,16 +75,17 @@ class Guest(IVValueSelectFilter):
                                  " The length should match host party numbers ")
 
     def fit(self, data_instances):
-        self._sync_select_cols()
         self.selection_param = self.__unilateral_fit(self.binning_obj.binning_obj,
                                                      self.value_threshold,
                                                      self.selection_param)
-        for host_id, host_threshold in enumerate(self.host_thresholds):
-            self.__unilateral_fit(self.binning_obj.host_results[host_id],
-                                  self.host_thresholds[host_id],
-                                  self.host_selection_inner_params[host_id])
+        if not self.local_only:
+            self.sync_obj.sync_select_cols()
+            for host_id, host_threshold in enumerate(self.host_thresholds):
+                self.__unilateral_fit(self.binning_obj.host_results[host_id],
+                                      self.host_thresholds[host_id],
+                                      self.host_selection_inner_params[host_id])
 
-        self._sync_select_results()
+            self.sync_obj.sync_select_results(self.host_selection_inner_params)
         return self
 
     def __unilateral_fit(self, binning_model, threshold, selection_param):
@@ -90,36 +96,17 @@ class Guest(IVValueSelectFilter):
                 selection_param.add_feature_value(col_name, iv)
         return selection_param
 
-    def _sync_select_cols(self):
-        host_select_col_names = self.transfer_variable.host_select_cols.get(idx=-1)
-        for host_id, select_names in enumerate(host_select_col_names):
-            host_inner_param = SelectionParams()
-            host_inner_param.set_header(select_names)
-            host_inner_param.add_select_col_names(select_names)
-            self.host_selection_inner_params.append(host_inner_param)
-
-    def _sync_select_results(self):
-        for host_id, host_select_results in enumerate(self.host_selection_inner_params):
-            self.transfer_variable.result_left_cols.remote(host_select_results.left_col_names,
-                                                           role=consts.HOST,
-                                                           idx=host_id)
-
 
 class Host(IVValueSelectFilter):
+    def __init__(self, filter_param: IVValueSelectionParam):
+        super().__init__(filter_param)
+        self.sync_obj = selection_info_sync.Host()
+
     def _parse_filter_param(self, filter_param):
-        self.fit_local = False
+        self.local_only = False
 
     def fit(self, data_instances):
-        self._sync_select_cols()
-        self._sync_select_results()
-
-    def _sync_select_cols(self):
         encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_param.select_col_names)
-        self.transfer_variable.host_select_cols.remote(encoded_names,
-                                                       role=consts.GUEST,
-                                                       idx=0)
+        self.sync_obj.sync_select_cols(encoded_names)
+        self.sync_obj.sync_select_results(self.selection_param)
 
-    def _sync_select_results(self):
-        left_cols_names = self.transfer_variable.result_left_cols.get(idx=0)
-        for col_name in left_cols_names:
-            self.selection_param.add_left_col_name(col_name)

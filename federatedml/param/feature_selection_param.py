@@ -88,12 +88,15 @@ class IVPercentileSelectionParam(BaseParam):
 
     """
 
-    def __init__(self, percentile_threshold=1.0):
+    def __init__(self, percentile_threshold=1.0, local_only=False):
+        super().__init__()
         self.percentile_threshold = percentile_threshold
+        self.local_only = local_only
 
     def check(self):
         descr = "IV selection param's"
         self.check_decimal_float(self.percentile_threshold, descr)
+        self.check_boolean(self.local_only, descr)
         return True
 
 

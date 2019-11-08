@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.protobuf.generated import feature_selection_meta_pb2, feature_selection_param_pb2
+from federatedml.protobuf.generated import feature_selection_param_pb2
 
 LOGGER = log_utils.getLogger()
 
@@ -116,7 +116,7 @@ class CompletedSelectionResults(object):
         for idx, col_name in enumerate(self.header):
             self.col_name_maps[col_name] = idx
 
-    def add_filter_results(self, filter_name, select_param: SelectionParams, host_select_params: list=None):
+    def add_filter_results(self, filter_name, select_param: SelectionParams, host_select_params: list = None):
         if host_select_params is None:
             host_select_params = []
 
@@ -129,16 +129,17 @@ class CompletedSelectionResults(object):
                                                                left_cols=host_result.all_left_col_names)
             host_left_cols.append(left_col_pb)
 
-        this_filter_result = feature_selection_param_pb2. \
-            FeatureSelectionFilterParam(feature_values=select_param.feature_values,
-                                        host_feature_values=host_feature_values,
-                                        left_cols=select_param.all_left_col_names,
-                                        host_left_cols=host_left_cols,
-                                        filter_name=filter_name)
+        # this_filter_result = feature_selection_param_pb2. \
+        #     FeatureSelectionFilterParam(feature_values=select_param.feature_values,
+        #                                 host_feature_values=host_feature_values,
+        #                                 left_cols=select_param.all_left_col_names,
+        #                                 host_left_cols=host_left_cols,
+        #                                 filter_name=filter_name)
+        this_filter_result = {
+            'feature_values': select_param.feature_values,
+            'host_feature_values': host_feature_values,
+            'left_cols': select_param.all_left_col_names,
+            'host_left_cols': host_left_cols,
+            'filter_name': filter_name
+        }
         self.filter_results.append(this_filter_result)
-
-
-
-
-
-
