@@ -24,6 +24,8 @@ import copy
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
+from federatedml.protobuf.generated import lr_model_meta_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
 
@@ -40,6 +42,8 @@ class LocalBaseline(ModelBase):
         super(LocalBaseline, self).__init__()
         self.model_param = LocalBaselineParam()
         self.model_name = "LocalBaseline"
+        self.model_param_name = "LogisticRegressionParam"
+        self.model_meta_name = ""
 
     def _init_model(self, params):
         self.model_name = params.model_name
@@ -49,27 +53,54 @@ class LocalBaseline(ModelBase):
         self.model_fit = None
         self.header = None
         self.model_weights = None
-        self.fit_intercept = True
+        #self.fit_intercept = True
+        #self.n_iter = 0
+        #self.is_converged = False
+        #self.coef = []
+        #self.intercept = 0
 
     def get_model(self):
         # extend in future with more model types
-        self.fit_intercept = self.model_opts.get("fit_intercept", True)
         model = LogisticRegression(**self.model_opts)
         self.model = copy.deepcopy(model)
         return model
 
-    def get_model_param(self, coef, intercept):
+    def _get_model_param(self):
         weight_dict = {}
+        n_iter = self.model_fit.n_iter_[0]
+        is_converged = n_iter < self.model_fit.max_iter
+        coef = self.model_fit.coef_[0]
+        intercept = self.model_fit.intercept_[0]
         for idx, header_name in enumerate(self.header):
             coef_i = coef[idx]
             weight_dict[header_name] = coef_i
 
-        result = {'iters': self.n_iter_,
-                  'is_converged': self.is_converged,
+        result = {'iters': n_iter,
+                  'is_converged': is_converged,
                   'weight': weight_dict,
                   'intercept': intercept,
-                  'header': self.header
+                  'header': self.header,
                   }
+        return result
+
+    def _get_param(self):
+        header = self.header
+        LOGGER.debug("In get_param, header: {}".format(header))
+        if header is None:
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam()
+            return param_protobuf_obj
+        result = self._get_model_param()
+        LOGGER.debug("in _get_param, result: {}".format(result))
+        param_protobuf_obj = lr_model_param_pb2.LRModelParam(**result)
+        return param_protobuf_obj
+
+    def export_model(self):
+        meta_obj = lr_model_meta_pb2.LRModelMeta()
+        param_obj = self._get_param()
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
         return result
 
     def predict(self, data_instances):
@@ -98,11 +129,3 @@ class LocalBaseline(ModelBase):
         y = np.array(list(y_table.collect()))[:, 1]
 
         self.model_fit = model.fit(X, y)
-        #@TODO: get model output: convergence, iterations, coefficients & intercetp
-        coef = model.coef_
-        intercept  = model.intercept_
-        #w = np.hstack((coef, intercept[None,:]))
-        #self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
-        model_param = self.get_model_param(coef, intercept)
-
-
