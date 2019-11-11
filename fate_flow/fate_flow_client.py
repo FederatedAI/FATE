@@ -30,7 +30,7 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job']
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job', "data_view_query"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
@@ -73,6 +73,8 @@ def call_fun(func, config_data, dsl_path, config_path):
             if response.json()['retcode'] == 999:
                 start_cluster_standalone_job_server()
                 response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+        elif func == 'data_view_query':
+            response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
         else:
             if func != 'query_job':
                 detect_utils.check_config(config=config_data, required_arguments=['job_id'])

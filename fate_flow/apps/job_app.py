@@ -130,3 +130,11 @@ def query_task():
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
+
+@manager.route('/data/view/query', methods=['POST'])
+def query_data_view():
+    data_views = job_utils.query_data_view(**request.json)
+    if not data_views:
+        return get_json_result(retcode=101, retmsg='find data_view failed')
+    return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

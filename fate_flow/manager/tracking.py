@@ -401,7 +401,7 @@ class Tracking(object):
                 if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(
                         DataView, k).default:
                     continue
-                setattr(DataView, k, v)
+                setattr(data_view, k, v)
             if is_insert:
                 data_view.save(force_insert=True)
             else:
