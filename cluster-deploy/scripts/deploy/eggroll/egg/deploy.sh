@@ -204,6 +204,7 @@ install(){
 	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
 	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
 	sed -i.bak "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
+	sed -i.bak "s/clustercommip=.*/clustercommip=\"${clustercomm_ip}\"/g" ./modify_json.py
 	python ./modify_json.py python ./server_conf.json
 }
 
