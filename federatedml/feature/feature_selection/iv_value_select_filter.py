@@ -20,12 +20,19 @@ import abc
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.feature.feature_selection.selection_params import SelectionParams
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVValueSelectionParam
-from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
+
+
+def fit_iv_values(binning_model, threshold, selection_param):
+    for col_name, col_results in binning_model.bin_results.all_cols_results.items():
+        iv = col_results.iv
+        if iv > threshold:
+            selection_param.add_left_col_name(col_name)
+            selection_param.add_feature_value(col_name, iv)
+    return selection_param
 
 
 class IVValueSelectFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
@@ -75,26 +82,18 @@ class Guest(IVValueSelectFilter):
                                  " The length should match host party numbers ")
 
     def fit(self, data_instances):
-        self.selection_param = self.__unilateral_fit(self.binning_obj.binning_obj,
-                                                     self.value_threshold,
-                                                     self.selection_param)
+        self.selection_param = fit_iv_values(self.binning_obj.binning_obj,
+                                             self.value_threshold,
+                                             self.selection_param)
         if not self.local_only:
             self.sync_obj.sync_select_cols()
             for host_id, host_threshold in enumerate(self.host_thresholds):
-                self.__unilateral_fit(self.binning_obj.host_results[host_id],
-                                      self.host_thresholds[host_id],
-                                      self.host_selection_inner_params[host_id])
+                fit_iv_values(self.binning_obj.host_results[host_id],
+                              self.host_thresholds[host_id],
+                              self.host_selection_inner_params[host_id])
 
             self.sync_obj.sync_select_results(self.host_selection_inner_params)
         return self
-
-    def __unilateral_fit(self, binning_model, threshold, selection_param):
-        for col_name, col_results in binning_model.bin_results.all_cols_results.items():
-            iv = col_results.iv
-            if iv > threshold:
-                selection_param.add_left_col_name(col_name)
-                selection_param.add_feature_value(col_name, iv)
-        return selection_param
 
 
 class Host(IVValueSelectFilter):
@@ -109,4 +108,3 @@ class Host(IVValueSelectFilter):
         encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_param.select_col_names)
         self.sync_obj.sync_select_cols(encoded_names)
         self.sync_obj.sync_select_results(self.selection_param)
-
