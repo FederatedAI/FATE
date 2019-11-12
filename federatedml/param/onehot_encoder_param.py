@@ -28,19 +28,22 @@ class OneHotEncoderParam(BaseParam):
     Parameters
     ----------
 
-    cols: list or int, default: -1
+    transform_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
 
     need_run: bool, default True
         Indicate if this module needed to be run
     """
 
-    def __init__(self, cols=-1, need_run=True):
+    def __init__(self, transform_col_indexes=-1, transform_col_names=None, need_run=True):
         super(OneHotEncoderParam, self).__init__()
-        self.cols = cols
+        if transform_col_names is None:
+            transform_col_names = []
+        self.transform_col_indexes = transform_col_indexes
+        self.transform_col_names = transform_col_names
         self.need_run = need_run
 
     def check(self):
         descr = "One-hot encoder param's"
-        self.check_defined_type(self.cols, descr, ['list', 'int'])
+        self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int'])
         return True
