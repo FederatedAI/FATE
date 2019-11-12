@@ -23,19 +23,23 @@ import six
 
 from arch.api import WorkMode, Backend
 from arch.api.table.table import Table
+from eggroll.api import StoreType
 
 
-def build_session(job_id=None, work_mode: WorkMode = WorkMode.STANDALONE, backend: Backend = Backend.EGGROLL):
+def build_session(job_id=None,
+                  work_mode: WorkMode = WorkMode.STANDALONE,
+                  backend: Backend = Backend.EGGROLL,
+                  persistent_engine: StoreType = StoreType.LMDB):
     from arch.api.table import eggroll_util
     eggroll_session = eggroll_util.build_eggroll_session(work_mode=work_mode, job_id=job_id)
 
     if backend.is_eggroll():
         from arch.api.table.eggroll import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode)
+        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
 
     elif backend.is_spark():
         from arch.api.table.pyspark import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode)
+        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
 
     else:
         raise ValueError(f"work_mode: {work_mode} not supported")
@@ -58,6 +62,10 @@ class FateSession(object):
     @staticmethod
     def get_instance():
         return FateSession._instance
+
+    @abc.abstractmethod
+    def get_persistent_engine(self):
+        pass
 
     @abc.abstractmethod
     def table(self,
