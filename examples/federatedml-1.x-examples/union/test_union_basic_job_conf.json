@@ -26,6 +26,12 @@
               "name": "union_b",
               "namespace": "union"
             }
+          ],
+          "data2": [
+            {
+              "name": "union_b",
+              "namespace": "union"
+            }
           ]
         }
       },
@@ -37,6 +43,13 @@
         "outlier_replace": [false]
       },
       "dataio_1": {
+        "with_label": [true],
+        "label_name": ["y"],
+        "output_format": ["dense"],
+        "missing_fill": [false],
+        "outlier_replace": [false]
+      },
+      "dataio_2": {
         "with_label": [true],
         "label_name": ["y"],
         "output_format": ["dense"],

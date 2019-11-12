@@ -20,26 +20,28 @@
         "data": {
           "data0": [
             {
-              "name": "union_a",
-              "namespace": "union"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_guest_breast"
             }
           ],
           "data1": [
             {
-              "name": "union_a",
-              "namespace": "union"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_guest_breast"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false],
+        "with_label": [true],
+        "label_name": ["y"],
         "output_format": ["dense"],
         "missing_fill": [false],
         "outlier_replace": [false]
       },
       "dataio_1": {
-        "with_label": [false],
+        "with_label": [true],
+        "label_name": ["y"],
         "output_format": ["dense"],
         "missing_fill": [false],
         "outlier_replace": [false]
@@ -53,14 +55,14 @@
             "data": {
           "data0": [
             {
-              "name": "union_a",
-              "namespace": "union"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_host_breast"
             }
           ],
           "data1": [
             {
-              "name": "union_a",
-              "namespace": "union"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_host_breast"
             }
           ]
         }

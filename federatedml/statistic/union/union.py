@@ -22,8 +22,6 @@ from federatedml.model_base import ModelBase
 from federatedml.statistic import data_overview
 from federatedml.util.data_io import make_schema
 
-import numpy as np
-
 LOGGER = log_utils.getLogger()
 
 

@@ -28,11 +28,25 @@
                 "model": ["dataio"]
             }
          },
+        "dataio_2": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.data2"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+         },
         "union_0": {
             "module": "Union",
             "input": {
                 "data": {
-                        "data": ["dataio_0.data", "dataio_1.data"]
+                        "data": ["dataio_0.data", "dataio_1.data", "dataio_2.data"]
                 }
             },
             "output": {
