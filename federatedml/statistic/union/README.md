@@ -8,4 +8,4 @@ Union currently only supports joining by entry id. The tables being joined must 
 
 When an id appears more than once in the joining tables, only the entry from its first appearance will be kept in the final combined table.
 
-For example job conf and dsl setting for Union module, please refer [here](../../examples/federatedml-1.x-examples/union).
+For example job conf and dsl setting for Union module, please refer [here](../../../examples/federatedml-1.x-examples/union).
