@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-param.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x12onehot-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"G\n\x07\x43olsMap\x12\x0e\n\x06values\x18\x01 \x03(\t\x12\x19\n\x11\x65ncoded_variables\x18\x02 \x03(\t\x12\x11\n\tdata_type\x18\x03 \x01(\t\"\xbf\x01\n\x0bOneHotParam\x12P\n\x07\x63ol_map\x18\x01 \x03(\x0b\x32?.com.webank.ai.fate.core.mlmodel.buffer.OneHotParam.ColMapEntry\x1a^\n\x0b\x43olMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12>\n\x05value\x18\x02 \x01(\x0b\x32/.com.webank.ai.fate.core.mlmodel.buffer.ColsMap:\x02\x38\x01\x42\x12\x42\x10OneHotParamProtob\x06proto3')
+  serialized_pb=_b('\n\x12onehot-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"6\n\x07\x43olsMap\x12\x0e\n\x06values\x18\x01 \x03(\t\x12\x1b\n\x13transformed_headers\x18\x02 \x03(\t\"\xd6\x01\n\x0bOneHotParam\x12P\n\x07\x63ol_map\x18\x01 \x03(\x0b\x32?.com.webank.ai.fate.core.mlmodel.buffer.OneHotParam.ColMapEntry\x12\x15\n\rresult_header\x18\x02 \x03(\t\x1a^\n\x0b\x43olMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12>\n\x05value\x18\x02 \x01(\x0b\x32/.com.webank.ai.fate.core.mlmodel.buffer.ColsMap:\x02\x38\x01\x42\x12\x42\x10OneHotParamProtob\x06proto3')
 )
 
 
@@ -40,16 +40,9 @@ _COLSMAP = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='encoded_variables', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColsMap.encoded_variables', index=1,
+      name='transformed_headers', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColsMap.transformed_headers', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='data_type', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColsMap.data_type', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -66,7 +59,7 @@ _COLSMAP = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=62,
-  serialized_end=133,
+  serialized_end=116,
 )
 
 
@@ -103,8 +96,8 @@ _ONEHOTPARAM_COLMAPENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=233,
-  serialized_end=327,
+  serialized_start=239,
+  serialized_end=333,
 )
 
 _ONEHOTPARAM = _descriptor.Descriptor(
@@ -121,6 +114,13 @@ _ONEHOTPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='result_header', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotParam.result_header', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -133,8 +133,8 @@ _ONEHOTPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=136,
-  serialized_end=327,
+  serialized_start=119,
+  serialized_end=333,
 )
 
 _ONEHOTPARAM_COLMAPENTRY.fields_by_name['value'].message_type = _COLSMAP
