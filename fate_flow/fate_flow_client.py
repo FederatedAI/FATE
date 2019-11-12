@@ -36,7 +36,7 @@ TASK_OPERATE_FUNC = ['query_task']
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
                  "component_output_model", 'component_output_data']
 DATA_FUNC = ["download", "upload", "upload_history"]
-TABLE_FUNC = ["table_info"]
+TABLE_FUNC = ["table_info", "table_delete"]
 MODEL_FUNC = ["load", "online", "version"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
@@ -150,8 +150,11 @@ def call_fun(func, config_data, dsl_path, config_path):
             start_cluster_standalone_job_server()
             response = requests.post("/".join([server_url, "data", func]), json=config_data)
     elif func in TABLE_FUNC:
-        detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
-        response = requests.post("/".join([server_url, "table", func]), json=config_data)
+        if func == "table_info":
+            detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
+            response = requests.post("/".join([server_url, "table", func]), json=config_data)
+        else:
+            response = requests.post("/".join([server_url, "table", func.lstrip('table_')]), json=config_data)
     elif func in MODEL_FUNC:
         if func == "version":
             detect_utils.check_config(config=config_data, required_arguments=['namespace'])

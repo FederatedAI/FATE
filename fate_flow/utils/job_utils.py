@@ -232,7 +232,7 @@ def query_data_view(**kwargs):
         if filters:
             data_views = DataView.select().where(*filters)
         else:
-            data_views = DataView.select()
+            data_views = []
         return [data_view for data_view in data_views]
 
 

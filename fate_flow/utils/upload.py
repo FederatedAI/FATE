@@ -21,7 +21,6 @@ import time
 from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
-from fate_flow.driver.job_controller import JobController
 from fate_flow.entity.metric import Metric
 
 LOGGER = log_utils.getLogger()
@@ -106,8 +105,7 @@ class Upload(object):
                                                            'f_partition': self.parameters["partition"],
                                                            'f_table_key_count': data_table.count(),
                                                            'f_metric_name': 'data_access',
-                                                           'f_metric_namespace': 'upload'},
-                                                upload=True)
+                                                           'f_metric_namespace': 'upload'})
                     self.callback_metric(metric_name='data_access',
                                          metric_namespace='upload',
                                          metric_data=[Metric("count", data_table.count())])

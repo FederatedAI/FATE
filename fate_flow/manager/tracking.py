@@ -193,7 +193,8 @@ class Tracking(object):
                             data_info={'f_table_name': Tracking.output_table_name('data'),
                                        'f_table_namespace': self.table_namespace,
                                        'f_partition': 48,
-                                       'f_table_key_count': data_table.count() if data_table else 0})
+                                       'f_table_key_count': data_table.count() if data_table else 0},
+                            mark=True)
 
     def get_output_data_table(self, data_name: str = 'component'):
         output_data_info_table = session.table(name=Tracking.output_table_name('data'),
@@ -375,7 +376,7 @@ class Tracking(object):
                 task.save()
             return task
 
-    def save_data_view(self, role, party_id, data_info, upload=False):
+    def save_data_view(self, role, party_id, data_info, mark=False):
         with DB.connection_context():
             data_views = DataView.select().where(DataView.f_job_id == self.job_id,
                                                  DataView.f_component_name == self.component_name,
@@ -383,7 +384,7 @@ class Tracking(object):
                                                  DataView.f_role == role,
                                                  DataView.f_party_id == party_id)
             is_insert = True
-            if not upload and self.component_name == "upload_0":
+            if mark and self.component_name == "upload_0":
                 return
             if data_views:
                 data_view = data_views[0]

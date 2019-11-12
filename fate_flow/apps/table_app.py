@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_flow.manager.tracking import Tracking
+from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from arch.api.utils.dtable_utils import get_table_info
@@ -26,6 +28,30 @@ manager = Flask(__name__)
 def internal_server_error(e):
     stat_logger.exception(e)
     return get_json_result(retcode=100, retmsg=str(e))
+
+
+@manager.route('/delete', methods=['post'])
+def table_delete():
+    request_data = request.json
+    data_views = job_utils.query_data_view(**request_data)
+    table_name = request_data.get('table_name')
+    namespace = request_data.get('namespace')
+    data = []
+    if table_name and namespace:
+        session.cleanup(name=table_name, namespace=namespace, persistent=True)
+        data.append({'table_name': table_name,
+                     'namespace': namespace})
+    elif data_views:
+        for data_view in data_views:
+            table_name = data_view.f_table_name
+            namespace = data_view.f_table_namespace
+            table_info = {'table_name': table_name, 'namespace': namespace}
+            if table_name and namespace and table_info not in data:
+                session.cleanup(name=table_name, namespace=namespace, persistent=True)
+                data.append(table_info)
+    else:
+        return get_json_result(retcode=101, retmsg='no find table')
+    return get_json_result(retcode=0, retmsg='success', data=data)
 
 
 @manager.route('/<table_func>', methods=['post'])
