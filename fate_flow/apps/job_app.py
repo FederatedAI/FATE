@@ -136,5 +136,5 @@ def query_task():
 def query_data_view():
     data_views = job_utils.query_data_view(**request.json)
     if not data_views:
-        return get_json_result(retcode=101, retmsg='find data_view failed')
+        return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

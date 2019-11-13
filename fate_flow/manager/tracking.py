@@ -193,7 +193,7 @@ class Tracking(object):
                             data_info={'f_table_name': Tracking.output_table_name('data'),
                                        'f_table_namespace': self.table_namespace,
                                        'f_partition': 48,
-                                       'f_table_key_count': data_table.count() if data_table else 0},
+                                       'f_table_create_count': data_table.count() if data_table else 0},
                             mark=True)
 
     def get_output_data_table(self, data_name: str = 'component'):
