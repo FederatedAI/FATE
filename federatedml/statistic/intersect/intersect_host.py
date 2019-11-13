@@ -42,10 +42,6 @@ class RsaIntersectionHost(RsaIntersect):
         self.is_version_match = False
         self.has_cache_version = True
 
-    @staticmethod
-    def hash(value):
-        return hashlib.sha256(bytes(str(value), encoding='utf-8')).hexdigest()
-
     def cal_host_ids_process_pair(self, data_instances: session.table) -> session.table:
         return data_instances.map(
             lambda k, v: (
@@ -71,21 +67,22 @@ class RsaIntersectionHost(RsaIntersect):
             else:
                 self.has_cache_version = False
                 LOGGER.info("Use cache but can not find any version in cache, set has_cache_version to false")
-                LOGGER.info("Stay to generate rsa key")
+                LOGGER.info("Start to generate rsa key")
                 e, d, n = self.generate_rsa_key()
         else:
             LOGGER.info("Not use cache, generate rsa keys.")
             e, d, n = self.generate_rsa_key()
         return e, d, n
 
-    def store_cache(self, host_id, rsa_key:dict):
+    def store_cache(self, host_id, rsa_key: dict, assign_version=None, assign_namespace=None):
         store_cache_ret = cache_utils.store_cache(dtable=host_id,
                                                   guest_party_id=None,
                                                   host_party_id=self.host_party_id,
-                                                  version=None,
+                                                  version=assign_version,
                                                   id_type=self.intersect_cache_param.id_type,
                                                   encrypt_type=self.intersect_cache_param.encrypt_type,
-                                                  tag='Za')
+                                                  tag='Za',
+                                                  namespace=assign_namespace)
         LOGGER.info("Finish store host_ids_process to cache")
 
         version = store_cache_ret.get('table_name')
@@ -101,7 +98,6 @@ class RsaIntersectionHost(RsaIntersect):
         LOGGER.info("Finish store rsa key to cache")
 
         return version, namespace
-
 
     def host_ids_process(self, data_instances):
         # (host_id_process, 1)
@@ -125,9 +121,16 @@ class RsaIntersectionHost(RsaIntersect):
                 else:
                     self.is_version_match = False
 
+                version_match_info = {'version_match': self.is_version_match,
+                                      'version': version,
+                                      'namespace': namespace}
+                self.transfer_variable.cache_version_match_info.remote(version_match_info,
+                                                                       role=consts.GUEST,
+                                                                       idx=0)
+
                 host_ids_process_pair = None
                 if not self.is_version_match or self.sync_intersect_ids:
-                    # if self.synchronize_intersect_ids is true, host will get the encrypted intersect id from guest,
+                    # if self.sync_intersect_ids is true, host will get the encrypted intersect id from guest,
                     # which need the Za to decrypt them
                     LOGGER.info("read Za from cache")
                     host_ids_process_pair = session.table(name=version,
@@ -137,20 +140,27 @@ class RsaIntersectionHost(RsaIntersect):
                     if host_ids_process_pair.count() == 0:
                         host_ids_process_pair = self.cal_host_ids_process_pair(data_instances)
                         rsa_key = {'rsa_e': self.e, 'rsa_d': self.d, 'rsa_n': self.n}
-                        version, namespace = self.store_cache(host_ids_process_pair, rsa_key=rsa_key)
+                        self.store_cache(host_ids_process_pair, rsa_key=rsa_key)
             else:
                 self.is_version_match = False
+                LOGGER.info("is version_match:{}".format(self.is_version_match))
+                namespace = cache_utils.gen_cache_namespace(id_type=self.intersect_cache_param.id_type,
+                                                            encrypt_type=self.intersect_cache_param.encrypt_type,
+                                                            tag='Za',
+                                                            host_party_id=self.host_party_id)
+                version = cache_utils.gen_cache_version(namespace=namespace,
+                                                        create=True)
+                version_match_info = {'version_match': self.is_version_match,
+                                      'version': version,
+                                      'namespace': namespace}
+                self.transfer_variable.cache_version_match_info.remote(version_match_info,
+                                                                       role=consts.GUEST,
+                                                                       idx=0)
+
                 host_ids_process_pair = self.cal_host_ids_process_pair(data_instances)
                 rsa_key = {'rsa_e': self.e, 'rsa_d': self.d, 'rsa_n': self.n}
-                version, namespace = self.store_cache(host_ids_process_pair, rsa_key=rsa_key)
+                self.store_cache(host_ids_process_pair, rsa_key=rsa_key, assign_version=version, assign_namespace=namespace)
 
-            LOGGER.info("is version_match:{}".format(self.is_version_match))
-            version_match_info = {'version_match': self.is_version_match,
-                                  'version': version,
-                                  'namespace': namespace}
-            self.transfer_variable.cache_version_match_info.remote(version_match_info,
-                                                                   role=consts.GUEST,
-                                                                   idx=0)
             LOGGER.info("remote version match info to guest")
         else:
             LOGGER.info("Not using cache, calculate Za using raw id")

@@ -32,10 +32,10 @@ class FateSessionImpl(FateSession):
     def __init__(self, eggroll_session, work_mode: WorkMode):
         self._session_id = eggroll_session.get_session_id()
         self._eggroll_session = eggroll_session
-        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
 
         self._sc = self._build_spark_context()
         eggroll_util.broadcast_eggroll_session(self._sc, work_mode, eggroll_session)
+        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
 
         FateSession.set_instance(self)
 
