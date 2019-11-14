@@ -76,7 +76,7 @@ class HomoLRHost(HomoLRBase):
         total_batch_num = mini_batch_obj.batch_nums
 
         if self.use_encrypt:
-            re_encrypt_times = total_batch_num // self.re_encrypt_batches + 1
+            re_encrypt_times = (total_batch_num - 1) // self.re_encrypt_batches + 1
             LOGGER.debug("re_encrypt_times is :{}, batch_size: {}, total_batch_num: {}, re_encrypt_batches: {}".format(
                 re_encrypt_times, self.batch_size, total_batch_num, self.re_encrypt_batches))
             self.cipher.set_re_cipher_time(re_encrypt_times)
@@ -122,7 +122,7 @@ class HomoLRHost(HomoLRBase):
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
 
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
-                    LOGGER.debug("Current")
+                    LOGGER.debug("Before accept re_encrypted_model, batch_iter_num: {}".format(batch_num))
                     w = self.cipher.re_cipher(w=model_weights.unboxed,
                                               iter_num=self.n_iter_,
                                               batch_iter_num=batch_num)
