@@ -37,7 +37,7 @@ class UnionParam(BaseParam):
 
     """
 
-    def __init__(self, union_func='first', need_run=True, allow_missing=False):
+    def __init__(self, need_run=True, allow_missing=False):
         super().__init__()
         self.need_run = need_run
         self.allow_missing = allow_missing
