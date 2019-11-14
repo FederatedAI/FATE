@@ -56,18 +56,18 @@ class IVValueSelectionParam(BaseParam):
 
     """
 
-    def __init__(self, value_threshold=0.0, host_threshold=None, local_only=False):
+    def __init__(self, value_threshold=0.0, host_thresholds=None, local_only=False):
         super().__init__()
         self.value_threshold = value_threshold
-        self.host_threshold = host_threshold
+        self.host_thresholds = host_thresholds
         self.local_only = local_only
 
     def check(self):
         if not isinstance(self.value_threshold, (float, int)):
             raise ValueError("IV selection param's value_threshold should be float or int")
 
-        if self.host_threshold is not None:
-            if not isinstance(self.host_threshold, list):
+        if self.host_thresholds is not None:
+            if not isinstance(self.host_thresholds, list):
                 raise ValueError("IV selection param's host_threshold should be list or None")
 
         if not isinstance(self.local_only, bool):
@@ -146,6 +146,38 @@ class OutlierColsSelectionParam(BaseParam):
         return True
 
 
+class ManuallyFilterParam(BaseParam):
+    """
+    Specified columns that need to be filtered. If exist, it will be filtered directly, otherwise, ignore it.
+
+    Parameters
+    ----------
+    filter_out_indexes: list or int, default: []
+        Specify columns' indexes to be filtered out
+
+    filter_out_names : list of string, default: []
+        Specify columns' names to be filtered out
+
+    """
+
+    def __init__(self, filter_out_indexes=None, filter_out_names=None):
+        super().__init__()
+        if filter_out_indexes is None:
+            filter_out_indexes = []
+
+        if filter_out_names is None:
+            filter_out_names = []
+
+        self.filter_out_indexes = filter_out_indexes
+        self.filter_out_names = filter_out_names
+
+    def check(self):
+        descr = "Manually Filter param's"
+        self.check_defined_type(self.filter_out_indexes, descr, ['list'])
+        self.check_defined_type(self.filter_out_names, descr, ['list'])
+        return True
+
+
 class FeatureSelectionParam(BaseParam):
     """
     Define the feature selection parameters.
@@ -158,7 +190,7 @@ class FeatureSelectionParam(BaseParam):
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
-    filter_methods: list, ["unique_value", "iv_value_thres", "iv_percentile",
+    filter_methods: list, ["manually", "unique_value", "iv_value_thres", "iv_percentile",
                 "coefficient_of_variation_value_thres", "outlier_cols"],
                  default: ["unique_value"]
 
@@ -193,6 +225,7 @@ class FeatureSelectionParam(BaseParam):
                  iv_percentile_param=IVPercentileSelectionParam(),
                  variance_coe_param=VarianceOfCoeSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(),
+                 manually_param=ManuallyFilterParam(),
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -212,6 +245,7 @@ class FeatureSelectionParam(BaseParam):
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
         self.variance_coe_param = copy.deepcopy(variance_coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
+        self.manually_param = copy.deepcopy(manually_param)
         self.need_run = need_run
 
     def check(self):
@@ -223,7 +257,7 @@ class FeatureSelectionParam(BaseParam):
             method = method.lower()
             self.check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
                                                    "coefficient_of_variation_value_thres",
-                                                   "outlier_cols"])
+                                                   "outlier_cols", "manually"])
             self.filter_methods[idx] = method
 
         self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])
@@ -233,3 +267,4 @@ class FeatureSelectionParam(BaseParam):
         self.iv_percentile_param.check()
         self.variance_coe_param.check()
         self.outlier_param.check()
+        self.manually_param.check()

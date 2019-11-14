@@ -131,7 +131,7 @@ class BinInnerParam(object):
             return None
         return '.'.join(['host', str(col_index)])
 
-    def __decode_col_name(self, encoded_name: str):
+    def decode_col_name(self, encoded_name: str):
         try:
             col_index = int(encoded_name.split('.')[1])
         except IndexError or ValueError:

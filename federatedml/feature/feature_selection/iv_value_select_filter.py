@@ -22,6 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVValueSelectionParam
+from federatedml.protobuf.generated import feature_selection_meta_pb2
 
 LOGGER = log_utils.getLogger()
 
@@ -37,8 +38,7 @@ def fit_iv_values(binning_model, threshold, selection_param):
 
 class IVValueSelectFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     """
-    filter the columns if all values in this feature is the same
-
+    filter the columns if iv value is less than a threshold
     """
 
     def __init__(self, filter_param: IVValueSelectionParam):
@@ -63,7 +63,7 @@ class Guest(IVValueSelectFilter):
     def __init__(self, filter_param: IVValueSelectionParam):
         super().__init__(filter_param)
         self.host_thresholds = None
-        self.host_selection_inner_params = []
+        self.host_selection_properties = []
         self.sync_obj = selection_info_sync.Guest()
 
     def _parse_filter_param(self, filter_param):
@@ -82,18 +82,24 @@ class Guest(IVValueSelectFilter):
                                  " The length should match host party numbers ")
 
     def fit(self, data_instances):
-        self.selection_param = fit_iv_values(self.binning_obj.binning_obj,
-                                             self.value_threshold,
-                                             self.selection_param)
+        self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
+                                                  self.value_threshold,
+                                                  self.selection_properties)
         if not self.local_only:
-            self.sync_obj.sync_select_cols()
+            self.host_selection_properties = self.sync_obj.sync_select_cols()
             for host_id, host_threshold in enumerate(self.host_thresholds):
                 fit_iv_values(self.binning_obj.host_results[host_id],
                               self.host_thresholds[host_id],
-                              self.host_selection_inner_params[host_id])
+                              self.host_selection_properties[host_id])
 
-            self.sync_obj.sync_select_results(self.host_selection_inner_params)
+            self.sync_obj.sync_select_results(self.host_selection_properties)
         return self
+
+    def get_meta_obj(self, meta_dicts):
+        result = feature_selection_meta_pb2.IVValueSelectionMeta(value_threshold=self.value_threshold,
+                                                                 local_only=self.local_only)
+        meta_dicts['iv_value_meta'] = result
+        return meta_dicts
 
 
 class Host(IVValueSelectFilter):
@@ -105,6 +111,13 @@ class Host(IVValueSelectFilter):
         self.local_only = False
 
     def fit(self, data_instances):
-        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_param.select_col_names)
+        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(
+            self.selection_properties.select_col_names)
         self.sync_obj.sync_select_cols(encoded_names)
-        self.sync_obj.sync_select_results(self.selection_param)
+        self.sync_obj.sync_select_results(self.selection_properties,
+                                          decode_func=self.binning_obj.bin_inner_param.decode_col_name)
+
+    def get_meta_obj(self, meta_dicts):
+        result = feature_selection_meta_pb2.IVValueSelectionMeta(local_only=self.local_only)
+        meta_dicts['iv_value_meta'] = result
+        return meta_dicts

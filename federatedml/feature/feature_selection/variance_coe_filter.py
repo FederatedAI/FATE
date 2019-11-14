@@ -16,24 +16,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.param.feature_selection_param import UniqueValueParam
-from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.param.feature_selection_param import VarianceOfCoeSelectionParam
+from federatedml.protobuf.generated import feature_selection_meta_pb2
 import math
 
+LOGGER = log_utils.getLogger()
 
-class UniqueValueFilter(BaseFilterMethod):
-    """
-    filter the columns if all values in this feature is the same
 
+class VarianceCoeFilter(BaseFilterMethod):
     """
-    def __init__(self, filter_param: UniqueValueParam):
+    Filter the columns if coefficient of variance is less than a threshold.
+    """
+    def __init__(self, filter_param: VarianceOfCoeSelectionParam):
         super().__init__(filter_param)
         self.statics_obj = None
 
     def _parse_filter_param(self, filter_param):
-        self.eps = filter_param.eps
+        self.value_threshold = filter_param.value_threshold
 
     def set_statics_obj(self, statics_obj):
         self.statics_obj = statics_obj
@@ -42,20 +44,21 @@ class UniqueValueFilter(BaseFilterMethod):
         if self.statics_obj is None:
             self.statics_obj = MultivariateStatisticalSummary(data_instances)
 
-        max_values = self.statics_obj.get_max()
-        min_values = self.statics_obj.get_min()
+        std_var = self.statics_obj.get_std_variance()
+        mean_value = self.statics_obj.get_mean()
 
         for col_name in self.selection_properties.select_col_names:
-            min_max_diff = math.fabs(max_values[col_name] - min_values[col_name])
-            if min_max_diff >= self.eps:
+            s_v = std_var.get(col_name)
+            m_v = mean_value.get(col_name)
+            coeff_of_var = math.fabs(s_v / m_v)
+
+            if coeff_of_var >= self.value_threshold:
                 self.selection_properties.add_left_col_name(col_name)
-                self.selection_properties.add_feature_value(col_name, min_max_diff)
+                self.selection_properties.add_feature_value(col_name, coeff_of_var)
         self._keep_one_feature(pick_high=True)
         return self
 
     def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.UniqueValueMeta(eps=self.eps)
-        meta_dicts['unique_meta'] = result
+        result = feature_selection_meta_pb2.VarianceOfCoeSelectionMeta(value_threshold=self.value_threshold)
+        meta_dicts['variance_coe_meta'] = result
         return meta_dicts
-
-

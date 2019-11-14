@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.feature.feature_selection.selection_params import SelectionParams
+from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -33,10 +33,10 @@ class Guest(object):
         host_select_col_names = self._host_select_cols_transfer.get(idx=-1)
         host_selection_params = []
         for host_id, select_names in enumerate(host_select_col_names):
-            host_inner_param = SelectionParams()
-            host_inner_param.set_header(select_names)
-            host_inner_param.add_select_col_names(select_names)
-            host_selection_params.append(host_inner_param)
+            host_selection_properties = SelectionProperties()
+            host_selection_properties.set_header(select_names)
+            host_selection_properties.add_select_col_names(select_names)
+            host_selection_params.append(host_selection_properties)
         return host_selection_params
 
     def sync_select_results(self, host_selection_inner_params):
@@ -57,7 +57,9 @@ class Host(object):
                                                                 role=consts.GUEST,
                                                                 idx=0)
 
-    def sync_select_results(self, selection_param):
+    def sync_select_results(self, selection_param, decode_func=None):
         left_cols_names = self._result_left_cols_transfer.get(idx=0)
         for col_name in left_cols_names:
+            if decode_func is not None:
+                col_name = decode_func(col_name)
             selection_param.add_left_col_name(col_name)

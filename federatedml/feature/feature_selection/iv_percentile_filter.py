@@ -21,12 +21,16 @@ from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.util import consts
 import math
 import abc
 
 
 class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
+    """
+    filter the columns if iv value is less than a percentile threshold
+    """
     def __init__(self, filter_param):
         super().__init__(filter_param)
         self.transfer_variable = None
@@ -52,26 +56,26 @@ class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
 class Guest(IVPercentileFilter):
     def __init__(self, filter_param: IVPercentileSelectionParam):
         super().__init__(filter_param)
-        self.host_selection_inner_params = []
+        self.host_selection_properties = []
         self.sync_obj = selection_info_sync.Guest()
 
     def fit(self, data_instances):
         value_threshold = self.get_value_threshold()
-        self.selection_param = fit_iv_values(self.binning_obj.binning_obj,
-                                             value_threshold,
-                                             self.selection_param)
+        self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
+                                                  value_threshold,
+                                                  self.selection_properties)
         if not self.local_only:
-            self.sync_obj.sync_select_cols()
+            self.host_selection_properties = self.sync_obj.sync_select_cols()
             for host_id, host_binning_obj in self.binning_obj.host_results.items():
                 fit_iv_values(host_binning_obj,
                               value_threshold,
-                              self.host_selection_inner_params[host_id])
-            self.sync_obj.sync_select_results(self.host_selection_inner_params)
+                              self.host_selection_properties[host_id])
+            self.sync_obj.sync_select_results(self.host_selection_properties)
 
     def get_value_threshold(self):
         total_values = []
         for col_name, col_results in self.binning_obj.binning_obj.bin_results.all_cols_results.items():
-            if col_name in self.selection_param.select_col_names:
+            if col_name in self.selection_properties.select_col_names:
                 total_values.append(col_results.iv)
 
         if not self.local_only:
@@ -84,6 +88,12 @@ class Guest(IVPercentileFilter):
         thres_idx = int(math.floor(self.percentile_threshold * len(sorted_value) - consts.FLOAT_ZERO))
         return sorted_value[thres_idx]
 
+    def get_meta_obj(self, meta_dicts):
+        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_threshold,
+                                                                      local_only=self.local_only)
+        meta_dicts['iv_percentile_meta'] = result
+        return meta_dicts
+
 
 class Host(IVPercentileFilter):
     def __init__(self, filter_param: IVPercentileSelectionParam):
@@ -94,6 +104,12 @@ class Host(IVPercentileFilter):
         self.local_only = False
 
     def fit(self, data_instances):
-        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_param.select_col_names)
+        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_properties.select_col_names)
         self.sync_obj.sync_select_cols(encoded_names)
-        self.sync_obj.sync_select_results(self.selection_param)
+        self.sync_obj.sync_select_results(self.selection_properties,
+                                          decode_func=self.binning_obj.bin_inner_param.decode_col_name)
+
+    def get_meta_obj(self, meta_dicts):
+        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)
+        meta_dicts['iv_percentile_meta'] = result
+        return meta_dicts

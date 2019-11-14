@@ -152,6 +152,7 @@ class ModelBase(object):
         todo_func_list, todo_func_params = self.component_properties.extract_running_rules(args, self)
         data_output = None
         for func, params in zip(todo_func_list, todo_func_params):
+            LOGGER.debug("func: {}, params: {}".format(func, params))
             this_data_output = func(*params)
             if this_data_output is not None:
                 if data_output is None:

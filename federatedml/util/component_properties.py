@@ -106,19 +106,19 @@ class ComponentProperties(object):
 
         if self.has_train_data:
             todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-            todo_func_params.append([['fit'], [train_data], ['validate'], [eval_data, 'validate']])
+            todo_func_params.extend([['fit'], [train_data], ['validate'], [eval_data, 'validate']])
 
         if self.has_eval_data:
             todo_func_list.extend([model.set_flowid, model.predict])
-            todo_func_params.append([['predict'], [eval_data, 'predict']])
+            todo_func_params.extend([['predict'], [eval_data, 'predict']])
 
         if self.has_normal_input_data and not self.has_model:
             todo_func_list.extend([model.set_flowid, model.fit])
-            todo_func_params.append([['fit'], [data]])
+            todo_func_params.extend([['fit'], [data]])
 
         if self.has_normal_input_data and self.has_model:
             todo_func_list.extend([model.set_flowid, model.transform])
-            todo_func_params.append([['transform'], [data]])
+            todo_func_params.extend([['transform'], [data]])
 
         return todo_func_list, todo_func_params
 
