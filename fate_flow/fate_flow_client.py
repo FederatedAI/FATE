@@ -33,8 +33,8 @@ server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job', "data_view_query"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
-TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
-                 "component_output_model", 'component_output_data']
+TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
+                 "component_output_model", "component_output_data"]
 DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info", "table_delete"]
 MODEL_FUNC = ["load", "online", "version"]
@@ -122,8 +122,9 @@ def call_fun(func, config_data, dsl_path, config_path):
     elif func in TASK_OPERATE_FUNC:
         response = requests.post("/".join([server_url, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
-        detect_utils.check_config(config=config_data,
-                                  required_arguments=['job_id', 'component_name', 'role', 'party_id'])
+        if func != 'component_metric_delete':
+            detect_utils.check_config(config=config_data,
+                                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         if func == 'component_output_data':
             detect_utils.check_config(config=config_data, required_arguments=['output_path'])
             tar_file_name = 'job_{}_{}_{}_{}_output_data.tar.gz'.format(config_data['job_id'],
@@ -204,6 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--work_mode', required=False, type=int, help="work mode")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
+    parser.add_argument('-m', '--model', required=False, type=str, help="TrackingMetric model id")
     parser.add_argument('-limit', '--limit', required=False, type=int, help="limit_number")
     parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src_party_id")
     parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src_role")

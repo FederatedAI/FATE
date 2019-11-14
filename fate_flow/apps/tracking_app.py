@@ -126,6 +126,12 @@ def get_metric_all_data(tracker, metric_namespace, metric_name):
         return [], {}
 
 
+@manager.route('/component/metric/delete', methods=['post'])
+def component_metric_delete():
+    sql = Tracking.delete_metric_data(request.json)
+    return get_json_result(retcode=0, retmsg='success', data=sql)
+
+
 @manager.route('/component/parameters', methods=['post'])
 def component_parameters():
     request_data = request.json

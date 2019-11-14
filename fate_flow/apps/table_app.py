@@ -38,17 +38,12 @@ def table_delete():
     namespace = request_data.get('namespace')
     data = []
     if table_name and namespace:
-        session.cleanup(name=table_name, namespace=namespace, persistent=True)
+        table = session.get_data_table(name=table_name, namespace=namespace)
+        table.destroy()
         data.append({'table_name': table_name,
                      'namespace': namespace})
     elif data_views:
-        for data_view in data_views:
-            table_name = data_view.f_table_name
-            namespace = data_view.f_table_namespace
-            table_info = {'table_name': table_name, 'namespace': namespace}
-            if table_name and namespace and table_info not in data:
-                session.cleanup(name=table_name, namespace=namespace, persistent=True)
-                data.append(table_info)
+        data = delete_table(data_views)
     else:
         return get_json_result(retcode=101, retmsg='no find table')
     return get_json_result(retcode=0, retmsg='success', data=data)
@@ -73,3 +68,19 @@ def dtable(table_func):
         return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition})
     else:
         return get_json_result()
+
+
+def delete_table(data_views):
+    data = []
+    for data_view in data_views:
+        table_name = data_view.f_table_name
+        namespace = data_view.f_table_namespace
+        table_info = {'table_name': table_name, 'namespace': namespace}
+        if table_name and namespace and table_info not in data:
+            table = session.get_data_table(name=table_name, namespace=namespace)
+            try:
+                table.destroy()
+                data.append(table_info)
+            except:
+                pass
+    return data
