@@ -55,6 +55,8 @@ class BinInnerParam(object):
         self.transform_bin_names.extend(self.category_names)
 
     def add_bin_indexes(self, bin_indexes):
+        if bin_indexes is None:
+            return
         for idx in bin_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
@@ -64,6 +66,9 @@ class BinInnerParam(object):
                 self.bin_names.append(self.header[idx])
 
     def add_bin_names(self, bin_names):
+        if bin_names is None:
+            return
+
         for bin_name in bin_names:
             idx = self.col_name_maps.get(bin_name)
             if idx is None:
@@ -74,6 +79,9 @@ class BinInnerParam(object):
                 self.bin_names.append(self.header[idx])
 
     def add_transform_bin_indexes(self, transform_indexes):
+        if transform_indexes is None:
+            return
+
         for idx in transform_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
@@ -82,8 +90,10 @@ class BinInnerParam(object):
                 self.transform_bin_indexes.append(idx)
                 self.transform_bin_names.append(self.header[idx])
 
-    def add_transform_bin_names(self, bin_names):
-        for bin_name in bin_names:
+    def add_transform_bin_names(self, transform_names):
+        if transform_names is None:
+            return
+        for bin_name in transform_names:
             idx = self.col_name_maps.get(bin_name)
             if idx is None:
                 LOGGER.warning("Adding a col_name that is not exist in header")
@@ -95,6 +105,9 @@ class BinInnerParam(object):
     def add_category_indexes(self, category_indexes):
         if category_indexes == -1:
             category_indexes = [i for i in range(len(self.header))]
+        elif category_indexes is None:
+            return
+
         for idx in category_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
@@ -104,6 +117,9 @@ class BinInnerParam(object):
                 self.category_names.append(self.header[idx])
 
     def add_category_names(self, category_names):
+        if category_names is None:
+            return
+
         for bin_name in category_names:
             idx = self.col_name_maps.get(bin_name)
             if idx is None:

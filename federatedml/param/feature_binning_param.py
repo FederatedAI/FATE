@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,8 +15,13 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+
+from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class TransformParam(BaseParam):
@@ -45,8 +47,6 @@ class TransformParam(BaseParam):
 
     def __init__(self, transform_cols=-1, transform_names=None, transform_type="bin_num"):
         super(TransformParam, self).__init__()
-        if transform_names is None:
-            transform_names = []
         self.transform_cols = transform_cols
         self.transform_names = transform_names
         self.transform_type = transform_type
@@ -55,7 +55,8 @@ class TransformParam(BaseParam):
         descr = "Transform Param's "
         if self.transform_cols is not None and self.transform_cols != -1:
             self.check_defined_type(self.transform_cols, descr, ['list'])
-        self.check_defined_type(self.transform_type, descr, ['bin_num', None])
+        self.check_defined_type(self.transform_names, descr, ['list', "NoneType"])
+        self.check_valid_value(self.transform_type, descr, ['bin_num', 'woe', None])
 
 
 class FeatureBinningParam(BaseParam):
@@ -124,12 +125,6 @@ class FeatureBinningParam(BaseParam):
                  local_only=False, category_indexes=None, category_names=None,
                  need_run=True):
         super(FeatureBinningParam, self).__init__()
-        if bin_names is None:
-            bin_names = []
-        if category_indexes is None:
-            category_indexes = []
-        if category_names is None:
-            category_names = []
         self.method = method
         self.compress_thres = compress_thres
         self.head_size = head_size
@@ -153,7 +148,9 @@ class FeatureBinningParam(BaseParam):
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)
         self.check_positive_integer(self.bin_num, descr)
-        self.check_defined_type(self.bin_indexes, descr, ['list', 'int', 'RepeatedScalarContainer'])
-        self.check_defined_type(self.bin_names, descr, ['list'])
+        self.check_defined_type(self.bin_indexes, descr, ['list', 'int', 'RepeatedScalarContainer', "NoneType"])
+        self.check_defined_type(self.bin_names, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
-
+        self.transform_param.check()

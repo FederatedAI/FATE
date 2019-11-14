@@ -418,3 +418,6 @@ class MultivariateStatisticalSummary(object):
     def get_label_histogram(self):
         label_histogram = self.data_instances.mapPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
         return label_histogram
+
+
+

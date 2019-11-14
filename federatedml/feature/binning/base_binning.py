@@ -504,9 +504,6 @@ class Binning(object):
         cols_dict: dict
             Record key, value pairs where key is cols' name, and value is cols' index.
 
-        encryptor: Paillier Object
-            If encryptor is not None, y and 1-y is indicated to be encrypted and will initialize 0 with encryption.
-
         Returns
         -------
         result_sum: the result DTable. It is like:
@@ -517,12 +514,12 @@ class Binning(object):
 
         """
         result_sum = {}
-        for col_name in cols_dict:
-            result_col_sum = []
-            split_point = split_points.get(col_name)
-            for bin_index in range(len(split_point)):
-                result_col_sum.append([0, 0])
-            result_sum[col_name] = result_col_sum  # {'x1': [[0, 0], [0, 0] ... ],...}
+        # for col_name in cols_dict:
+        #     result_col_sum = []
+        #     split_point = split_points.get(col_name)
+        #     for bin_index in range(len(split_point)):
+        #         result_col_sum.append([0, 0])
+        #     result_sum[col_name] = result_col_sum  # {'x1': [[0, 0], [0, 0] ... ],...}
 
         for _, datas in data_bin_with_table:
             bin_idx_dict = datas[0]
@@ -531,20 +528,18 @@ class Binning(object):
             y = y_combo[0]
             inverse_y = y_combo[1]
             for col_name, bin_idx in bin_idx_dict.items():
+                result_sum.setdefault(col_name, [])
                 col_sum = result_sum[col_name]
+                while bin_idx >= len(col_sum):
+                    col_sum.append([0, 0])
+                LOGGER.debug("in add_label_in_partition, col_sum: {}, bin_idx: {}".format(
+                    col_sum, bin_idx
+                ))
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + inverse_y
                 col_sum[bin_idx] = label_sum
                 result_sum[col_name] = col_sum
-
-        # Convert to col_index
-        # if header is not None:
-        #     new_result = {}
-        #     for col_name, col_sum in result_sum.items():
-        #         col_idx = header.index(col_name)
-        #         new_result[col_idx] = col_sum
-        #     result_sum = new_result
 
         return result_sum
 
@@ -578,16 +573,20 @@ class Binning(object):
         if sum2 is None:
             return sum1
 
-        new_result = {}
-        for col_name, count_sum1 in sum1.items():
-            count_sum2 = sum2[col_name]
-            tmp_list = []
-            for idx, label_sum1 in enumerate(count_sum1):
-                label_sum2 = count_sum2[idx]
-                tmp = (label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1])
-                tmp_list.append(tmp)
-            new_result[col_name] = tmp_list
-        return new_result
+        for col_name, count_sum2 in sum2.items():
+            if col_name not in sum1:
+                sum1[col_name] = count_sum2
+                continue
+            count_sum1 = sum1[col_name]
+            for idx, label_sum2 in enumerate(count_sum2):
+                if idx >= len(count_sum1):
+                    count_sum1.append(label_sum2)
+                else:
+                    label_sum1 = count_sum1[idx]
+                    tmp = (label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1])
+                    count_sum1[idx] = tmp
+
+        return sum1
 
 
 class HostBaseBinning(Binning):

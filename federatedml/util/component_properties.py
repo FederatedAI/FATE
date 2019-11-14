@@ -106,7 +106,7 @@ class ComponentProperties(object):
 
         if self.has_train_data:
             todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-            todo_func_params.extend([['fit'], [train_data], ['validate'], [eval_data, 'validate']])
+            todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
 
         if self.has_eval_data:
             todo_func_list.extend([model.set_flowid, model.predict])

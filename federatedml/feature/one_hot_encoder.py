@@ -17,6 +17,7 @@
 import functools
 
 import numpy as np
+import math
 
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
@@ -208,7 +209,7 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                feature_value = int(feature[col_idx])
+                feature_value = math.ceil(feature[col_idx])
                 pair_obj.add_value(feature_value)
         return col_maps
 
