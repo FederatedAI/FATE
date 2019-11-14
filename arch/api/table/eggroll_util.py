@@ -42,7 +42,8 @@ def build_eggroll_runtime(work_mode: WorkMode, eggroll_session: EggrollSession):
         from eggroll.api.cluster.eggroll import eggroll_init, _EggRoll
         if _EggRoll.instance is None:
             return eggroll_init(eggroll_session)
-    raise ValueError(f"work_mode: {work_mode} not supported!")
+    else:
+        raise ValueError(f"work_mode: {work_mode} not supported!")
 
 
 def broadcast_eggroll_session(sc, work_mode, eggroll_session):

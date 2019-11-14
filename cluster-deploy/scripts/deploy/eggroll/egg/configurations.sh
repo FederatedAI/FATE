@@ -19,3 +19,4 @@ roll_ip=
 roll_port=8011
 proxy_ip=
 proxy_port=9370
+clustercomm_ip=
