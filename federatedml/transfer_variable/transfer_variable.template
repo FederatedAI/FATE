@@ -23,6 +23,11 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
+# noinspection PyAttributeOutsideInit
+class {class_name}(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        {create_variable}

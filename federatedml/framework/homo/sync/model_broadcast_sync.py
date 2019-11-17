@@ -16,7 +16,7 @@
 
 from federatedml.framework.weights import Weights
 from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import Variable
+from federatedml.transfer_variable.base_transfer_variable import Variable
 
 
 class Arbiter(object):
