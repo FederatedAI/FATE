@@ -16,6 +16,7 @@
 
 
 from enum import IntEnum, Enum
+
 from arch.api.transfer import FederationWrapped, Federation
 
 

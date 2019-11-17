@@ -43,7 +43,7 @@ class Party(object):
         return f"Party(role={self.role}, party_id={self.party_id})"
 
     def __repr__(self):
-        return self. __str__()
+        return self.__str__()
 
 
 class Cleaner(object):

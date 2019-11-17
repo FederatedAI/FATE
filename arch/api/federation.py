@@ -52,9 +52,7 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
                                                                      server_conf_path=server_conf_path)
 
 
-@deprecated.deprecated(version='1.2.0',
-                       reason="We reserve this interface for compatibility requirements, "
-                              "please use `get` api in transfer_variable instead")
+@deprecated.deprecated(version='1.2.0', reason="please use `get` api in transfer_variable instead")
 def get(name, tag: str, idx=-1):
     """
     This method will block until the remote object is fetched.
@@ -74,9 +72,7 @@ def get(name, tag: str, idx=-1):
         return RuntimeInstance.TABLE_WRAPPER.boxed(rtn)
 
 
-@deprecated.deprecated(version='1.2.0',
-                       reason="We reserve this interface for compatibility requirements, "
-                              "please use `remote` api in transfer_variable instead")
+@deprecated.deprecated(version='1.2.0', reason="please use `remote` api in transfer_variable instead")
 def remote(obj, name: str, tag: str, role=None, idx=-1):
     """
     This method will send an object to other parties
