@@ -23,12 +23,15 @@ from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVValueSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 
 LOGGER = log_utils.getLogger()
 
 
-def fit_iv_values(binning_model, threshold, selection_param):
+def fit_iv_values(binning_model, threshold, selection_param: SelectionProperties):
     for col_name, col_results in binning_model.bin_results.all_cols_results.items():
+        if col_name not in selection_param.select_col_names:
+            continue
         iv = col_results.iv
         if iv > threshold:
             selection_param.add_left_col_name(col_name)
@@ -71,15 +74,15 @@ class Guest(IVValueSelectFilter):
         self.host_thresholds = filter_param.host_thresholds
         self.local_only = filter_param.local_only
 
-    def set_host_party_ids(self, host_party_ids):
-        if self.host_thresholds is None:
-            self.host_thresholds = [self.value_threshold for _ in range(len(host_party_ids))]
-        else:
-            try:
-                assert len(host_party_ids) == len(self.host_thresholds)
-            except AssertionError:
-                raise ValueError("Iv value filters param host_threshold set error."
-                                 " The length should match host party numbers ")
+    # def set_host_party_ids(self, host_party_ids):
+    #     if self.host_thresholds is None:
+    #         self.host_thresholds = [self.value_threshold for _ in range(len(host_party_ids))]
+    #     else:
+    #         try:
+    #             assert len(host_party_ids) == len(self.host_thresholds)
+    #         except AssertionError:
+    #             raise ValueError("Iv value filters param host_threshold set error."
+    #                              " The length should match host party numbers ")
 
     def fit(self, data_instances):
         self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
@@ -87,10 +90,20 @@ class Guest(IVValueSelectFilter):
                                                   self.selection_properties)
         if not self.local_only:
             self.host_selection_properties = self.sync_obj.sync_select_cols()
-            for host_id, host_threshold in enumerate(self.host_thresholds):
+            for host_id, host_properties in enumerate(self.host_selection_properties):
+                if self.host_thresholds is None:
+                    threshold = self.value_threshold
+                else:
+                    threshold = self.host_thresholds[host_id]
+                LOGGER.debug("host_properties.header: {}, host_bin_results: {}".format(
+                    host_properties.header, self.binning_obj.host_results[host_id].bin_results.all_cols_results))
+
                 fit_iv_values(self.binning_obj.host_results[host_id],
-                              self.host_thresholds[host_id],
-                              self.host_selection_properties[host_id])
+                              threshold,
+                              host_properties)
+                LOGGER.debug("In iv_value fit, host_properties.left_col_indexes: {}, last_left_col_indexes: {}".format(
+                    host_properties.left_col_indexes, host_properties.last_left_col_indexes
+                ))
 
             self.sync_obj.sync_select_results(self.host_selection_properties)
         return self
@@ -113,6 +126,10 @@ class Host(IVValueSelectFilter):
     def fit(self, data_instances):
         encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(
             self.selection_properties.select_col_names)
+        LOGGER.debug("selection_properties.select_col_names: {}, encoded_names: {}".format(
+            self.selection_properties.select_col_names, encoded_names
+        ))
+
         self.sync_obj.sync_select_cols(encoded_names)
         self.sync_obj.sync_select_results(self.selection_properties,
                                           decode_func=self.binning_obj.bin_inner_param.decode_col_name)

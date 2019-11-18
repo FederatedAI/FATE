@@ -173,8 +173,8 @@ class ManuallyFilterParam(BaseParam):
 
     def check(self):
         descr = "Manually Filter param's"
-        self.check_defined_type(self.filter_out_indexes, descr, ['list'])
-        self.check_defined_type(self.filter_out_names, descr, ['list'])
+        self.check_defined_type(self.filter_out_indexes, descr, ['list', 'NoneType'])
+        self.check_defined_type(self.filter_out_names, descr, ['list', 'NoneType'])
         return True
 
 

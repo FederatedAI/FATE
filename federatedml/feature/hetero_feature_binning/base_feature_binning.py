@@ -17,7 +17,6 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.feature.binning import bin_result
 from federatedml.feature.binning.base_binning import HostBaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning

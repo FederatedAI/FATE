@@ -69,6 +69,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.schema = data_instances.schema
         header = get_header(data_instances)
         self.curt_select_properties.set_header(header)
+        self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         if self.model_param.select_col_indexes == -1:
             self.curt_select_properties.set_select_all_cols()
         else:
@@ -90,11 +91,17 @@ class BaseHeteroFeatureSelection(ModelBase):
             original_cols=self.completed_selection_result.get_select_col_names(),
             left_cols=left_cols
         )
+
+        host_col_names = []
+        for this_host_name in self.completed_selection_result.get_host_sorted_col_names():
+            LOGGER.debug("In _get_param, this_host_name: {}".format(this_host_name))
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name))
+
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
             results=self.completed_selection_result.filter_results,
             final_left_cols=final_left_cols,
             col_names=self.completed_selection_result.get_sorted_col_names(),
-            host_col_names=self.completed_selection_result.get_host_sorted_col_names(),
+            host_col_names=host_col_names,
             header=self.curt_select_properties.header
         )
 
@@ -138,7 +145,7 @@ class BaseHeteroFeatureSelection(ModelBase):
             header = list(model_param.header)
             self.curt_select_properties.set_header(header)
             self.completed_selection_result.set_header(header)
-            self.curt_select_properties.set_last_left_col_indexes(header)
+            self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
             for col_name, _ in dict(model_param.final_left_cols.left_cols):
                 self.curt_select_properties.add_left_col_name(col_name)
             self.completed_selection_result.add_filter_results(filter_name='conclusion',
@@ -199,6 +206,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_select_properties.set_header(self.curt_select_properties.header)
         new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
+        LOGGER.debug("In update_curt_select_param, header: {}, cols_map: {},"
+                     "all_left_col_indexes: {}, select_col_names: {}".format(
+            new_select_properties.header,
+            new_select_properties.col_name_maps,
+            new_select_properties.all_left_col_indexes,
+            new_select_properties.select_col_names
+        ))
         self.curt_select_properties = new_select_properties
 
     def _filter(self, data_instances, method):
@@ -209,10 +223,17 @@ class BaseHeteroFeatureSelection(ModelBase):
         this_filter.set_transfer_variable(self.transfer_variable)
         this_filter.fit(data_instances)
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
+        LOGGER.debug("method: {}, host_select_properties: {}".format(
+            method, host_select_properties))
+
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
                                                            host_select_properties=host_select_properties)
+        LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
+            method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
         self.update_curt_select_param()
+        LOGGER.debug("After updated, method: {}, selection_cols: {}, left_cols: {}".format(
+            method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
         self.meta_dicts = this_filter.get_meta_obj(self.meta_dicts)
 
     def fit(self, data_instances):

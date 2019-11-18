@@ -18,6 +18,8 @@
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
+from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
+    HeteroFeatureSelectionTransferVariable
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -35,6 +37,7 @@ class Guest(object):
         for host_id, select_names in enumerate(host_select_col_names):
             host_selection_properties = SelectionProperties()
             host_selection_properties.set_header(select_names)
+            host_selection_properties.set_last_left_col_indexes([x for x in range(len(select_names))])
             host_selection_properties.add_select_col_names(select_names)
             host_selection_params.append(host_selection_properties)
         return host_selection_params
@@ -48,14 +51,14 @@ class Guest(object):
 
 class Host(object):
     # noinspection PyAttributeOutsideInit
-    def register_selection_trans_vars(self, transfer_variable):
+    def register_selection_trans_vars(self, transfer_variable: HeteroFeatureSelectionTransferVariable):
         self._host_select_cols_transfer = transfer_variable.host_select_cols
         self._result_left_cols_transfer = transfer_variable.result_left_cols
 
     def sync_select_cols(self, encoded_names):
-        self._host_select_cols_transfer.host_select_cols.remote(encoded_names,
-                                                                role=consts.GUEST,
-                                                                idx=0)
+        self._host_select_cols_transfer.remote(encoded_names,
+                                               role=consts.GUEST,
+                                               idx=0)
 
     def sync_select_results(self, selection_param, decode_func=None):
         left_cols_names = self._result_left_cols_transfer.get(idx=0)

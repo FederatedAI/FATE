@@ -33,6 +33,11 @@ class ManuallyFilter(BaseFilterMethod):
     def _parse_filter_param(self, filter_param):
         self.filter_out_indexes = filter_param.filter_out_indexes
         self.filter_out_names = filter_param.filter_out_names
+        if self.filter_out_indexes is None:
+            self.filter_out_indexes = []
+
+        if self.filter_out_names is None:
+            self.filter_out_names = []
 
     def fit(self, data_instances):
         all_filter_out_names = []

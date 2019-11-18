@@ -40,7 +40,7 @@ class SelectionProperties(object):
             self.col_name_maps[col_name] = idx
 
     def set_last_left_col_indexes(self, left_cols):
-        self.last_left_col_indexes = left_cols
+        self.last_left_col_indexes = left_cols.copy()
 
     def set_select_all_cols(self):
         self.select_col_indexes = [i for i in range(len(self.header))]
@@ -74,6 +74,7 @@ class SelectionProperties(object):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
             LOGGER.warning("Adding a col_name that is not exist in header")
+            return
         if idx not in self.left_col_indexes:
             self.left_col_indexes.append(idx)
             self.left_col_names.append(self.header[idx])
@@ -96,8 +97,7 @@ class SelectionProperties(object):
 
     @property
     def all_left_col_names(self):
-        left_indexes = self.all_left_col_indexes
-        return [self.header[x] for x in left_indexes]
+        return [self.header[x] for x in self.all_left_col_indexes]
 
     @property
     def left_col_dicts(self):
@@ -145,9 +145,12 @@ class CompletedSelectionResults(object):
         host_feature_values = []
         host_left_cols = []
         for idx, host_result in enumerate(host_select_properties):
+            LOGGER.debug("In add_filter_results, idx: {}, host_all_left_col_names: {}, "
+                         "__host_pass_filter_nums_list: {}".format(idx, host_result.all_left_col_names,
+                                                                   self.__host_pass_filter_nums_list))
             if idx >= len(self.__host_pass_filter_nums_list):
                 _host_pass_filter_nums = {}
-                self.__host_pass_filter_nums_list[idx] = _host_pass_filter_nums
+                self.__host_pass_filter_nums_list.append(_host_pass_filter_nums)
             else:
                 _host_pass_filter_nums = self.__host_pass_filter_nums_list[idx]
             for col_name in host_result.all_left_col_names:

@@ -24,6 +24,7 @@ from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+# from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
 
@@ -77,37 +78,48 @@ class Binning(object):
         """
         raise NotImplementedError("Should not call this function directly")
 
+    # def fit_category_features(self, data_instances):
+    #
+    #     def static_all_values(instances, bin_inner_param: BinInnerParam, bin_num):
+    #         result = {}
+    #         for _, instance in instances:
+    #             features = instance.features
+    #             for col_idx in bin_inner_param.category_indexes:
+    #                 c_name = bin_inner_param.header[col_idx]
+    #                 result.setdefault(c_name, set()).add(features[col_idx])
+    #                 if len(result[c_name]) > bin_num:
+    #                     raise ValueError("Binning Category features, the possible values are more than bin_num set."
+    #                                      "Please set bin_num larger for availability")
+    #         return result
+    #
+    #     def reduce_static_result(a: dict, b: dict):
+    #         result = {}
+    #         for c_name, par_res in a.items():
+    #             result.setdefault(c_name, set()).union(par_res)
+    #         for c_name, par_res in b.items():
+    #             result.setdefault(c_name, set()).union(par_res)
+    #         return result
+    #
+    #     f = functools.partial(static_all_values, bin_inner_param=self.bin_inner_param, bin_num=self.bin_num)
+    #     static_results = data_instances.mapPartitions(f).reduce(reduce_static_result)
+    #     for col_name, result_set in static_results.items():
+    #         if len(result_set) > self.bin_num:
+    #             raise ValueError("Binning Category features, the possible values are more than bin_num set."
+    #                              "Please set bin_num larger for availability")
+    #         split_points = list(result_set)
+    #         split_points.sort()
+    #         self.bin_results.put_col_split_points(col_name, split_points)
+
     def fit_category_features(self, data_instances):
+        is_sparse = data_overview.is_sparse_data(data_instances)
 
-        def static_all_values(instances, bin_inner_param: BinInnerParam, bin_num):
-            result = {}
-            for _, instance in instances:
-                features = instance.features
-                for col_idx in bin_inner_param.category_indexes:
-                    c_name = bin_inner_param.header[col_idx]
-                    result.setdefault(c_name, set()).add(features[col_idx])
-                    if len(result[c_name]) > bin_num:
-                        raise ValueError("Binning Category features, the possible values are more than bin_num set."
-                                         "Please set bin_num larger for availability")
-            return result
-
-        def reduce_static_result(a: dict, b: dict):
-            result = {}
-            for c_name, par_res in a.items():
-                result.setdefault(c_name, set()).union(par_res)
-            for c_name, par_res in b.items():
-                result.setdefault(c_name, set()).union(par_res)
-            return result
-
-        f = functools.partial(static_all_values, bin_inner_param=self.bin_inner_param, bin_num=self.bin_num)
-        static_results = data_instances.mapPartitions(f).reduce(reduce_static_result)
-        for col_name, result_set in static_results.items():
-            if len(result_set) > self.bin_num:
-                raise ValueError("Binning Category features, the possible values are more than bin_num set."
-                                 "Please set bin_num larger for availability")
-            split_points = list(result_set)
-            split_points.sort()
-            self.bin_results.put_col_split_points(col_name, split_points)
+        if len(self.bin_inner_param.category_indexes) > 0:
+            statics_obj = data_overview.DataStatistics()
+            category_col_values = statics_obj.static_all_values(data_instances,
+                                                                self.bin_inner_param.category_indexes,
+                                                                is_sparse)
+            for col_name, split_points in zip(self.bin_inner_param.category_names, category_col_values):
+                self.bin_results.put_col_split_points(col_name, split_points)
 
     def set_bin_inner_param(self, bin_inner_param):
         self.bin_inner_param = bin_inner_param
@@ -150,6 +162,7 @@ class Binning(object):
         """
         # self._init_cols(data_instances)
         is_sparse = data_overview.is_sparse_data(data_instances)
+
         if split_points is None:
             split_points = self.fit_split_points(data_instances)
 
@@ -373,6 +386,7 @@ class Binning(object):
             sparse_data = instance.features.get_all_data()
             for col_idx, col_value in sparse_data:
                 col_name = header[col_idx]
+
                 if col_name in cols_dict:
                     col_split_points = split_points[col_name]
                     col_bin_num = Binning.get_bin_num(col_value, col_split_points)

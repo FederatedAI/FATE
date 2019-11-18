@@ -16,21 +16,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import abc
+import math
+
+from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
-from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.framework.hetero.sync import selection_info_sync
+from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.util import consts
-import math
-import abc
+
+LOGGER = log_utils.getLogger()
 
 
 class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     """
     filter the columns if iv value is less than a percentile threshold
     """
+
     def __init__(self, filter_param):
         super().__init__(filter_param)
         self.transfer_variable = None
@@ -60,13 +65,16 @@ class Guest(IVPercentileFilter):
         self.sync_obj = selection_info_sync.Guest()
 
     def fit(self, data_instances):
+        if not self.local_only:
+            self.host_selection_properties = self.sync_obj.sync_select_cols()
+
         value_threshold = self.get_value_threshold()
         self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
                                                   value_threshold,
                                                   self.selection_properties)
+
         if not self.local_only:
-            self.host_selection_properties = self.sync_obj.sync_select_cols()
-            for host_id, host_binning_obj in self.binning_obj.host_results.items():
+            for host_id, host_binning_obj in enumerate(self.binning_obj.host_results):
                 fit_iv_values(host_binning_obj,
                               value_threshold,
                               self.host_selection_properties[host_id])
@@ -79,8 +87,12 @@ class Guest(IVPercentileFilter):
                 total_values.append(col_results.iv)
 
         if not self.local_only:
-            for host_id, host_binning_obj in self.binning_obj.host_results.items():
-                host_select_param = self.host_selection_inner_params[host_id]
+            LOGGER.debug("host_results: {}, host_selection_properties: {}".format(
+                self.binning_obj.host_results, self.host_selection_properties
+            ))
+
+            for host_id, host_binning_obj in enumerate(self.binning_obj.host_results):
+                host_select_param = self.host_selection_properties[host_id]
                 for col_name, col_results in host_binning_obj.bin_results.all_cols_results.items():
                     if col_name in host_select_param.select_col_names:
                         total_values.append(col_results.iv)
@@ -104,7 +116,8 @@ class Host(IVPercentileFilter):
         self.local_only = False
 
     def fit(self, data_instances):
-        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(self.selection_properties.select_col_names)
+        encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(
+            self.selection_properties.select_col_names)
         self.sync_obj.sync_select_cols(encoded_names)
         self.sync_obj.sync_select_results(self.selection_properties,
                                           decode_func=self.binning_obj.bin_inner_param.decode_col_name)
