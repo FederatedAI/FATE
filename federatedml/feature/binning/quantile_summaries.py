@@ -252,7 +252,7 @@ class SparseQuantileSummaries(QuantileSummaries):
         super(SparseQuantileSummaries, self).insert(x)
 
     def query(self, quantile):
-        if self.zero_lower_bound <= quantile <= self.zero_upper_bound:
+        if self.zero_lower_bound < quantile < self.zero_upper_bound:
             return 0.0
 
         non_zero_quantile = self._convert_query_percentile(quantile)
@@ -287,3 +287,11 @@ class SparseQuantileSummaries(QuantileSummaries):
             return self._total_count
         zeros_num = self._total_count - self.smaller_num - self.bigger_num
         return (self.smaller_num + zeros_num) / self._total_count
+
+
+def quantile_summary_factory(is_sparse, param_dict):
+    if is_sparse:
+        return SparseQuantileSummaries(**param_dict)
+    else:
+        return QuantileSummaries(**param_dict)
+

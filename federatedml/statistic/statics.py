@@ -20,7 +20,7 @@ import sys
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.feature.quantile_summaries import QuantileSummaries
+from federatedml.feature.binning.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
@@ -329,7 +329,7 @@ class MultivariateStatisticalSummary(object):
 
     def _get_quantile_median(self):
         cols_index = self._get_cols_index()
-        bin_param = FeatureBinningParam(bin_num=2, cols=cols_index)
+        bin_param = FeatureBinningParam(bin_num=2, bin_indexes=cols_index)
         binning_obj = QuantileBinning(bin_param, abnormal_list=self.abnormal_list)
         split_points = binning_obj.fit_split_points(self.data_instances)
         medians = {}
@@ -421,3 +421,6 @@ class MultivariateStatisticalSummary(object):
     def get_label_histogram(self):
         label_histogram = self.data_instances.mapPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
         return label_histogram
+
+
+

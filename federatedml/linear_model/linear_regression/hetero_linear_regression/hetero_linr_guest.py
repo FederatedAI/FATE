@@ -17,6 +17,7 @@
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
@@ -58,7 +59,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-        
+
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -73,7 +74,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -100,14 +102,14 @@ class HeteroLinRGuest(HeteroLinRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                LOGGER.debug("model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
-
+                LOGGER.debug(
+                    "model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
             LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
-            
+
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
             if self.is_converged:

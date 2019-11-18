@@ -68,7 +68,7 @@ class TestQuantileBinning(unittest.TestCase):
 
         bin_param = FeatureBinningParam(method='quantile', compress_thres=compress_thres, head_size=head_size,
                                         error=error,
-                                        cols=-1,
+                                        bin_indexes=-1,
                                         bin_num=bin_num)
         bin_obj = QuantileBinning(bin_param, abnormal_list=abnormal_list)
         return bin_obj

@@ -19,6 +19,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
@@ -110,7 +111,8 @@ class HeteroLRHost(HeteroLRBase):
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
-        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))

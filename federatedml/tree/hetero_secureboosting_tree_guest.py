@@ -529,7 +529,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         return self.model_output
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_param = None
         model_meta = None
         for _, value in model_dict["model"].items():
@@ -557,7 +557,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         if self.need_cv:
             stage = 'cross_validation'
         elif "model" in args:
-            self._load_model(args)
+            self.load_model(args)
             stage = "transform"
         else:
             stage = "fit"
