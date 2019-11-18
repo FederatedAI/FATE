@@ -58,7 +58,7 @@ def get(name, tag: str, idx=-1):
     This method will block until the remote object is fetched.
     :param name: {algorithm}.{variableName} defined in transfer_conf.json.
     :param tag: object version, should be a string.
-    :param idx: idx of the party_ids in runtime role list, if out-of-range, list of all objects will be returned.
+    :param idx: idx of the party_ids in runtime role list, if idx < 0, list of all objects will be returned.
     :return: The object itself if idx is in range, else return list of all objects from possible source.
     """
     src_role = RuntimeInstance.FEDERATION.authorized_src_roles(name)[0]
@@ -77,10 +77,10 @@ def remote(obj, name: str, tag: str, role=None, idx=-1):
     """
     This method will send an object to other parties
     :param obj: The object itself which can be pickled.
-    :param name: {alogrithm}.{variableName} defined in transfer_conf.json.
+    :param name: {algorithm}.{variableName} defined in transfer_conf.json.
     :param tag: tag: object version, should be a string.
     :param role: The role you want to send to.
-    :param idx: The idx of the party_ids of the role, if out-of-range, will send to all parties of the role.
+    :param idx: The idx of the party_ids of the role, if idx < 0, will send to all parties of the role.
     :return: None
     """
     obj = RuntimeInstance.TABLE_WRAPPER.unboxed(obj)

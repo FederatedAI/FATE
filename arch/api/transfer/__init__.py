@@ -233,7 +233,7 @@ def init_table_wrapper(session_id, work_mode, backend):
 
 def init_federation(session_id, work_mode, runtime_conf, server_conf_path) -> Federation:
     if work_mode.is_standalone():
-        from .local import FederationRuntime
+        from .standalone import FederationRuntime
         return FederationRuntime(session_id, runtime_conf)
     elif work_mode.is_cluster():
         from .cluster import FederationRuntime
