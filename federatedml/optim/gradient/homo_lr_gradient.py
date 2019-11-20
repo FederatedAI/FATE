@@ -78,7 +78,6 @@ class TaylorLogisticGradient(object):
         grad_batch = grad_batch.transpose()
         if fit_intercept:
             grad_batch = np.c_[grad_batch, d]
-        # grad = sum(grad_batch) / batch_size
         grad = sum(grad_batch)
         LOGGER.debug("Finish compute_gradient")
         return grad

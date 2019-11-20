@@ -41,7 +41,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
@@ -96,7 +96,7 @@ Http://hostip:8080.
 
 4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
-5. It takes about 40 minutes to complete the execution, please wait for a moment.
+5. It takes about 40 minutes to complete the build, please wait for a moment.
 
    please follow the below step:
 
@@ -115,18 +115,19 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
-You can also experience the fateboard access via a browser:
+You can also acess the fateboard via a browser:
 Http://hostip:8080.
 
-Please ignore the following tips:
+Please ignore the following messages:
 
-1. debconf: delaying package configuration, since apt-utils is not installed.
+1. WARNING: Image for service mysql was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
 
-2. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
+2. debconf: delaying package configuration, since apt-utils is not installed.
 
-3. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+3. WARNING: You are using pip version 19.2.1, however version 19.2.2 is available.You should consider upgrading via the 'pip install --upgrade pip' command.
 
-     
+4. WARNING: Image for service xxx was built because it did not already exist. To rebuild this image you must use docker-compose build or docker-compose up --build.
+
 

@@ -53,6 +53,9 @@ class LogisticParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
+    init_param: InitParam object, default: default InitParam object
+        Init param method object.
+
     max_iter : int, default: 100
         The maximum iteration for training.
 
@@ -69,6 +72,12 @@ class LogisticParam(BaseParam):
 
     decay_sqrt: Bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
+
+    encrypt_param: EncryptParam object, default: default EncryptParam object
+
+    predict_param: PredictParam object, default: default PredictParam object
+
+    cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
@@ -242,7 +251,7 @@ class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, early_stop='diff',
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
@@ -250,7 +259,7 @@ class HeteroLogisticParam(LogisticParam):
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
-                                                  learning_rate=learning_rate,
+                                                  learning_rate=learning_rate, encrypt_param=encrypt_param,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   decay=decay,
@@ -261,4 +270,6 @@ class HeteroLogisticParam(LogisticParam):
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
+        if self.encrypt_param.method != consts.PAILLIER:
+            raise ValueError("Hetero LR support Paillier encryption mode only")
         return True

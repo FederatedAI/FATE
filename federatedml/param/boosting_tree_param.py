@@ -302,6 +302,8 @@ class BoostingTreeParam(BaseParam):
                 "boosting tree param's bin_num {} not supported, should be positive integer greater than 1".format(
                     self.bin_num))
 
+        self.encrypted_mode_calculator_param.check()
+
         if self.validation_freqs is None:
             pass
         elif isinstance(self.validation_freqs, int):

@@ -18,13 +18,69 @@
 set -e
 set -x
 version=1.1
-#wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate.tar.gz
+
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
 cd ${fatepath}
 
+
+eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+eggroll_git_branch=`grep -A 3 '"eggroll"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
+if [[ -e "eggroll" ]];then
+    while [[ true ]];do
+        read -p "The eggroll directory already exists, delete and re-download? [y/n] " input
+        case ${input} in
+        [yY]*)
+                echo "[INFO] Delete the original eggroll"
+                rm -rf eggroll
+                git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+                break
+                ;;
+        [nN]*)
+                echo "[INFO] Use the original eggroll"
+                break
+                ;;
+        *)
+                echo "Just enter y or n, please."
+                ;;
+        esac
+    done
+else
+    git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+fi
+
+cd ${fatepath}
+fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
+if [[ -e "fateboard" ]];then
+    while [[ true ]];do
+        read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
+        case ${input} in
+        [yY]*)
+                echo "[INFO] Delete the original fateboard"
+                rm -rf fateboard
+                git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+                break
+                ;;
+        [nN]*)
+                echo "[INFO] Use the original fateboard"
+                break
+                ;;
+        *)
+                echo "Just enter y or n, please."
+                ;;
+        esac
+    done
+else
+    git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+fi
+
+cd ${fatepath}
+
 init() {
-    cp -r arch federatedml workflow examples fate_flow research ${basepath}
+    cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
     docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
     mkdir -p ${basepath}/fateboard
     cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
@@ -36,7 +92,7 @@ init() {
 
     cd ${basepath}
     cp ../requirements.txt ./docker/python
-    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research
+    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research eggroll
 
     logPath="/var/lib/fate/log"
     if [ ! -d "$logPath" ]; then
@@ -58,7 +114,7 @@ init() {
     docker restart fate_python
     sleep 5
     docker restart fate_fateboard
-    rm -rf examples workflow arch federatedml fateboard fate_flow research  data
+    rm -rf examples workflow arch federatedml fateboard fate_flow research  data eggroll
     rm docker/python/fate.tar
     rm docker/python/requirements.txt
     rm docker/fateboard/fateboard.tar

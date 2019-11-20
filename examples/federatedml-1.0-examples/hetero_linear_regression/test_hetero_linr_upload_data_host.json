@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/vehicle_scale_a.csv",
-  "head": 0,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "vehicle_a",
-  "namespace": "vehicle"
-}

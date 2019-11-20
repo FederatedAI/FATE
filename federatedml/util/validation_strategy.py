@@ -29,6 +29,28 @@ LOGGER = log_utils.getLogger()
 
 
 class ValidationStrategy(object):
+    """
+    This module is used for evaluating the performance of model during training process.
+        it will be called only in fit process of models.
+
+    Attributes
+    ----------
+
+    validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                      if equals None, will not do validation in train process;
+                      if equals positive integer, will validate data every validation_freqs epochs passes;
+                      if container object in python, will validate data if epochs belong to this container.
+                        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                      Default: None
+
+    train_data: None or DTable,
+                if train_data not equal to None, and judge need to validate data according to validation_freqs,
+                training data will be used for evaluating
+
+    validate_data: None or DTable,
+                if validate_data not equal to None, and judge need to validate data according to validation_freqs,
+                validate data will be used for evaluating
+    """
     def __init__(self, role=None, mode=None, validation_freqs=None):
         self.validation_freqs = validation_freqs
         self.role = role

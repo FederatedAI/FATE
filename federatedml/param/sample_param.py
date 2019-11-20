@@ -25,7 +25,7 @@ class SampleParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, accepted 'random','stratified'' only in this version, specify samplet to use, default: 'random'
+    mode: str, accepted 'random','stratified'' only in this version, specify sample to use, default: 'random'
 
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
 
@@ -33,6 +33,9 @@ class SampleParam(BaseParam):
      otherwise a list of float elements. default: None
 
     random_state: int, RandomState instance or None, default: None
+
+    need_run: bool, default True
+        Indicate if this module needed to be run
     """
 
     def __init__(self, mode="random", method="downsample", fractions=None, random_state=None, task_type="hetero", need_run=True):

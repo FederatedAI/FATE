@@ -47,9 +47,6 @@ class BaseHeteroFeatureBinning(ModelBase):
     has_synchronized : bool
         Record whether the encryption information has been synchronized or not.
 
-    flowid : str
-        Use in cross validation
-
     binning_result: dict
         Record binning result of guest party. The format is {'col_name': 'iv_attr', ... }
 
@@ -104,7 +101,9 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     def _get_meta(self):
         col_list = [str(x) for x in self.cols]
-
+        LOGGER.debug("In get_meta, transform_cols_idx: {}".format(self.transform_cols_idx))
+        if not isinstance(self.transform_cols_idx, (list, tuple)):
+            self.transform_cols_idx = []
         transform_param = feature_binning_meta_pb2.TransformMeta(
             transform_cols=self.transform_cols_idx,
             transform_type=self.model_param.transform_param.transform_type
