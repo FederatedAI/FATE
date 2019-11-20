@@ -94,7 +94,7 @@ class Union(ModelBase):
 
     def check_is_data_instance(self, table):
         entry = table.first()
-        self.is_data_instance = isinstance(entry, Instance)
+        self.is_data_instance = isinstance(entry[1], Instance)
 
     def fit(self, data):
         if len(data) <= 0:
