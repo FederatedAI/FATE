@@ -79,7 +79,7 @@ install(){
     cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}
     cd ${deploy_dir}/${module_name}
-    ln -s eggroll-${module_name}-${version}.jar eggroll-${module_name}.jar
+    ln -s eggroll-${module_name}-${jar_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
 }
 

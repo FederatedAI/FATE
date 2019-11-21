@@ -38,7 +38,7 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-    get_module_package ${source_code_dir} ${module_name} ${module_name}-${version}.jar
+    get_module_package ${source_code_dir} ${module_name} ${module_name}-${jar_version}.jar
 }
 
 config() {
@@ -75,7 +75,7 @@ install() {
     cp -r ${deploy_packages_dir}/source/${module_name} ${deploy_dir}/
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}
     cd ${deploy_dir}/${module_name}
-    ln -s ${module_name}-${version}.jar ${module_name}.jar
+    ln -s ${module_name}-${jar_version}.jar ${module_name}.jar
 }
 
 init() {

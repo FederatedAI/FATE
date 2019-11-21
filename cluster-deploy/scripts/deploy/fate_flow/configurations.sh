@@ -1,7 +1,8 @@
 #!/bin/bash
 #fate_flow
 
-version=1.1
+version=1.1.1
+jar_version=1.1
 source_code_dir=
 output_packages_dir=
 deploy_dir=

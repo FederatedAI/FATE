@@ -1,5 +1,12 @@
 #!/bin/bash
 fate_cos_address=https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com
+version=1.1.1
+egg_jar_version=1.1
+meta_service_jar_version=1.1
+roll_jar_version=1.1
+federation_jar_version=1.1
+proxy_jar_version=1.1
+fateboard_jar_version=1.1
 python_version=1.1
 jdk_version=8u192
 mysql_version=8.0.13
