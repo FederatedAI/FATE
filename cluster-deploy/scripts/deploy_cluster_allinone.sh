@@ -189,6 +189,8 @@ config_redis() {
 
 packaging_fate_flow() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${fateflow_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -245,6 +247,8 @@ config_federatedml() {
 
 packaging_fateboard() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${fateboard_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -270,6 +274,8 @@ config_fateboard() {
 
 packaging_federation() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${federation_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -293,6 +299,8 @@ config_federation() {
 
 packaging_proxy() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${proxy_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -319,6 +327,8 @@ config_proxy() {
 
 packaging_roll() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${roll_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -341,6 +351,8 @@ config_roll() {
 
 packaging_metaservice() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${meta_service_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -366,6 +378,8 @@ config_metaservice() {
 
 packaging_egg() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#jar_version=.*#jar_version=${egg_jar_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp

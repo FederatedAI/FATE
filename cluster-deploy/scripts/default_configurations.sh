@@ -7,6 +7,7 @@ roll_jar_version=1.1
 federation_jar_version=1.1
 proxy_jar_version=1.1
 fateboard_jar_version=1.1
+fateflow_jar_version=1.1
 python_version=1.1
 jdk_version=8u192
 mysql_version=8.0.13
