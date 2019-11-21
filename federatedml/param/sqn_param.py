@@ -35,15 +35,18 @@ class StochasticQuasiNewtonParam(BaseParam):
         Sample size of data that used to update Hess matrix
 
     """
-    def __init__(self, update_interval_L=3, memory_M=5, sample_size=5000):
+    def __init__(self, update_interval_L=3, memory_M=5, sample_size=5000, random_seed=None):
         super().__init__()
         self.update_interval_L = update_interval_L
         self.memory_M = memory_M
         self.sample_size = sample_size
+        self.random_seed = random_seed
 
     def check(self):
         descr = "hetero sqn param's"
         self.check_positive_integer(self.update_interval_L, descr)
         self.check_positive_integer(self.memory_M, descr)
         self.check_positive_integer(self.sample_size, descr)
+        if self.random_seed is not None:
+            self.check_positive_integer(self.random_seed, descr)
         return True

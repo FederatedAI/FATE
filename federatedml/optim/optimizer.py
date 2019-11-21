@@ -124,6 +124,14 @@ class _Optimizer(object):
             loss_norm_value = None
         return loss_norm_value
 
+    def hess_vector_norm(self, delta_s: LinearModelWeights):
+        if self.penalty == consts.L1_PENALTY:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+        elif self.penalty == consts.L2_PENALTY:
+            return LinearModelWeights(self.alpha * delta_s.unboxed, fit_intercept=delta_s.fit_intercept)
+        else:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+
     def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
 
         if not has_applied:

@@ -80,6 +80,8 @@ class HeteroBaseArbiter(BaseLinearModel):
 
         self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
+
         validation_strategy = self.init_validation_strategy()
 
         while self.n_iter_ < self.max_iter:

@@ -86,6 +86,12 @@
       "dst": [
         "guest"
       ]
+    },
+    "sqn_sample_index": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
     }
   }
 }

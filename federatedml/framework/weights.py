@@ -96,8 +96,13 @@ class Weights(object):
 
     def __add__(self, other):
         LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
-
         return self.binary_op(other, operator.add, inplace=False)
+
+    def __isub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=True)
+
+    def __sub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=False)
 
     def __truediv__(self, other):
         return self.map_values(lambda x: x / other, inplace=False)

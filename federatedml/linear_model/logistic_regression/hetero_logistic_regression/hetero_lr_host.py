@@ -101,6 +101,7 @@ class HeteroLRHost(HeteroLRBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,

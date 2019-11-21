@@ -53,6 +53,9 @@ class BucketBinning(Binning):
                             ...]                         # Other features
 
         """
+        header = data_overview.get_header(data_instances)
+        self._default_setting(header)
+
         is_sparse = data_overview.is_sparse_data(data_instances)
         if is_sparse:
             raise RuntimeError("Bucket Binning method has not supported sparse data yet.")

@@ -65,6 +65,8 @@ class QuantileBinning(Binning):
                             ...]                         # Other features
 
         """
+        header = data_overview.get_header(data_instances)
+        self._default_setting(header)
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
 

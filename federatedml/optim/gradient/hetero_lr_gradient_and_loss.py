@@ -95,6 +95,23 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
+    def compute_forward_hess(self, data_instances, delta_s, host_forwards):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
+        define forward_hess = (0.25 * x * s)
+        """
+        forwards = data_instances.mapValues(
+            lambda v: np.dot(v.features, delta_s.coef_) + delta_s.intercept_)
+        for host_forward in host_forwards:
+            forwards = forwards.join(host_forward, lambda g, h: g + h)
+        forward_hess = forwards.mapValues(lambda x: 0.25 * x)
+        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
+                                                                    forward_hess,
+                                                                    delta_s.fit_intercept)
+        return forward_hess, hess_vector
+
 
 class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
@@ -131,6 +148,30 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         loss_regular = optimizer.loss_norm(lr_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
+
+    def compute_sqn_forwards(self, data_instances, delta_s):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
+        define forward_hess = ∑(0.25 * x * s)
+        """
+        sqn_forwards = data_instances.mapValues(
+            lambda v: np.dot(v.features, delta_s.coef_) + delta_s.intercept_)
+        # forward_sum = sqn_forwards.reduce(reduce_add)
+        return sqn_forwards
+
+    def compute_forward_hess(self, data_instances, delta_s, forward_hess):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
+        define forward_hess = (0.25 * x * s)
+        """
+        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
+                                                                    forward_hess,
+                                                                    delta_s.fit_intercept)
+        return hess_vector
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

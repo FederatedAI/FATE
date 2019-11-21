@@ -86,6 +86,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
