@@ -67,7 +67,7 @@ def split_remote(obj):
         return head, kv
 
 
-def split_table_tag(tag, k):
+def make_fragment_tag(tag, k):
     return f"{tag}.__frag__{k}"
 
 
