@@ -2,7 +2,7 @@
 #federation
 
 version=
-jar_version=
+federation_version=
 java_dir=
 source_code_dir=
 output_packages_dir=

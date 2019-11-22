@@ -1,13 +1,13 @@
 #!/bin/bash
 fate_cos_address=https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com
 version=1.1.1
-egg_jar_version=1.1
-meta_service_jar_version=1.1
-roll_jar_version=1.1
-federation_jar_version=1.1
-proxy_jar_version=1.1
-fateboard_jar_version=1.1
-fateflow_jar_version=1.1
+egg_version=1.1
+meta_service_version=1.1
+roll_version=1.1
+federation_version=1.1
+proxy_version=1.1
+fateboard_version=1.1
+fateflow_version=1.1
 python_version=1.1
 jdk_version=8u192
 mysql_version=8.0.13
@@ -39,7 +39,7 @@ get_module_package() {
         cp ${copy_path} ./
     else
         echo "[INFO] Downloading ${download_uri}"
-        wget -P ${source_code_dir}/cluster-deploy/packages/ ${download_uri}
+        wget -P ${source_code_dir}/cluster-deploy/packages/${download_uri}
         echo "[INFO] Finish downloading ${download_uri}"
         echo "[INFO] Copying ${copy_path}"
         cp ${copy_path} ./

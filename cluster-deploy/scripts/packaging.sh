@@ -76,17 +76,17 @@ mv eggroll-conf-${version}.tar.gz ${packages_dir}/
 
 cd ${eggroll_source_code_dir}
 cd framework/egg/target
-tar czf eggroll-egg-${version}.tar.gz eggroll-egg-${egg_jar_version}.jar lib/
+tar czf eggroll-egg-${version}.tar.gz eggroll-egg-${egg_version}.jar lib/
 mv eggroll-egg-${version}.tar.gz ${packages_dir}/
 
 cd ${eggroll_source_code_dir}
 cd framework/meta-service/target
-tar czf eggroll-meta-service-${version}.tar.gz eggroll-meta-service-${meta_service_jar_version}.jar lib/
+tar czf eggroll-meta-service-${version}.tar.gz eggroll-meta-service-${meta_service_version}.jar lib/
 mv eggroll-meta-service-${version}.tar.gz ${packages_dir}/
 
 cd ${eggroll_source_code_dir}
 cd framework/roll/target
-tar czf eggroll-roll-${version}.tar.gz eggroll-roll-${roll_jar_version}.jar lib/
+tar czf eggroll-roll-${version}.tar.gz eggroll-roll-${roll_version}.jar lib/
 mv eggroll-roll-${version}.tar.gz ${packages_dir}/
 
 cd ${eggroll_source_code_dir}
@@ -130,14 +130,14 @@ mvn clean package -DskipTests
 echo "[INFO] Compile fate done"
 
 echo "[INFO] Packaging fate"
-cp ${source_code_dir}/fateboard/target/fateboard-${fateboard_jar_version}.jar ${packages_dir}/
+cp ${source_code_dir}/fateboard/target/fateboard-${fateboard_version}.jar ${packages_dir}/
 
 cd ${source_code_dir}/arch/driver/federation/target
-tar czf fate-federation-${version}.tar.gz fate-federation-${federation_jar_version}.jar lib/
+tar czf fate-federation-${version}.tar.gz fate-federation-${federation_version}.jar lib/
 mv fate-federation-${version}.tar.gz ${packages_dir}/
 
 cd ${source_code_dir}/arch/networking/proxy/target
-tar czf fate-proxy-${version}.tar.gz fate-proxy-${proxy_jar_version}.jar lib/
+tar czf fate-proxy-${version}.tar.gz fate-proxy-${proxy_version}.jar lib/
 mv fate-proxy-${version}.tar.gz ${packages_dir}/
 
 echo "[INFO] Packaging base module"

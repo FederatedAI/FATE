@@ -2,7 +2,7 @@
 #fateboard
 
 version=
-jar_version=
+fateboard_version=
 java_dir=
 source_code_dir=
 output_packages_dir=

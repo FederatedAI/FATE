@@ -1,7 +1,7 @@
 #!/bin/bash
 
 version=
-jar_version=
+proxy_version=
 java_dir=
 proxy_port=9370
 source_code_dir=

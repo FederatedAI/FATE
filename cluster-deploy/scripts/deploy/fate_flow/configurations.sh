@@ -2,7 +2,7 @@
 #fate_flow
 
 version=
-jar_version=
+fateflow_version=
 source_code_dir=
 output_packages_dir=
 deploy_dir=
