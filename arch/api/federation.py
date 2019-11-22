@@ -52,6 +52,20 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
                                                                      server_conf_path=server_conf_path)
 
 
+def all_parties():
+    """
+    get all parties in order
+    """
+    return RuntimeInstance.FEDERATION.all_parties
+
+
+def local_party():
+    """
+    get local party
+    """
+    return RuntimeInstance.FEDERATION.local_party
+
+
 @deprecated.deprecated(version='1.2.0', reason="please use `get` api in transfer_variable instead")
 def get(name, tag: str, idx=-1):
     """

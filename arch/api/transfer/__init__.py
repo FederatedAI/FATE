@@ -45,6 +45,12 @@ class Party(object):
     def __repr__(self):
         return self.__str__()
 
+    def __lt__(self, other):
+        return (self.role, self.party_id) < (other.role, other.party_id)
+
+    def __eq__(self, other):
+        return self.party_id == other.party_id and self.role == other.role
+
 
 class Cleaner(object):
     def __init__(self):
@@ -60,6 +66,11 @@ class Cleaner(object):
             self._kv[(table._name, table._namespace)] = (table, [])
         else:
             self._kv[(table._name, table._namespace)][1].append(key)
+
+    def extend(self, other: 'Cleaner'):
+        self._tables.extend(other._tables)
+        self._kv.update(other._kv)
+        return self
 
     # noinspection PyBroadException
     def clean(self):
@@ -147,14 +158,27 @@ class Federation(object):
     def __init__(self, session_id, runtime_conf):
         if CONF_KEY_LOCAL not in runtime_conf:
             raise EnvironmentError("runtime_conf should be a dict containing key: {}".format(CONF_KEY_LOCAL))
+
         self._role = runtime_conf.get(CONF_KEY_LOCAL).get("role")
         self._party_id = runtime_conf.get(CONF_KEY_LOCAL).get("party_id")
+        self._local_party = Party(self._role, self._party_id)
         self._session_id = session_id
         self._authorize = FederationAuthorization(TRANSFER_CONF_PATH)
         self._role_to_parties_map = {}
+        self._all_parties = []
         for role in ROLES:
-            party_ids_list = runtime_conf.get('role').get(role, [])
-            self._role_to_parties_map[role] = [Party(role, party_id) for party_id in party_ids_list]
+            party_id_list = runtime_conf.get('role').get(role, [])
+            role_parties = [Party(role, party_id) for party_id in party_id_list]
+            self._role_to_parties_map[role] = role_parties
+            self._all_parties.extend(role_parties)
+
+    @property
+    def local_party(self):
+        return self._local_party
+
+    @property
+    def all_parties(self):
+        return self._all_parties
 
     def roles_to_parties(self, roles: list) -> list:
         nodes = []
