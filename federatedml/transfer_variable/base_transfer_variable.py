@@ -51,7 +51,7 @@ class Variable(object):
 
     @property
     def authorized_src_roles(self):
-        return RuntimeInstance.FEDERATION.authorized_dst_roles(self.name)
+        return RuntimeInstance.FEDERATION.authorized_src_roles(self.name)
 
     def remote_parties(self, obj, parties: Union[list, Party], suffix=tuple()):
         if not isinstance(suffix, tuple):
