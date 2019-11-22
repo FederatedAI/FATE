@@ -1,7 +1,8 @@
 #!/bin/bash
 #federation
 
-version=1.1
+version=
+egg_version=
 java_dir=
 source_code_dir=
 output_packages_dir=
