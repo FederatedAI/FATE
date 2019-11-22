@@ -1064,6 +1064,48 @@
    ]
   }
  },
+ "SecretShareTransferVariable": {
+  "share": {
+   "src": [
+    "guest",
+    "host"
+   ],
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "rescontruct": {
+   "src": [
+    "guest",
+    "host"
+   ],
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "multiply_triplets_encrypted": {
+   "src": [
+    "guest",
+    "host"
+   ],
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "multiply_triplets_cross": {
+   "src": [
+    "guest",
+    "host"
+   ],
+   "dst": [
+    "guest",
+    "host"
+   ]
+  }
+ },
  "SecureAddExampleTransferVariable": {
   "guest_share": {
    "src": "guest",
