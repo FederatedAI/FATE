@@ -5,7 +5,7 @@ This section introduces the dsl and conf relationships for usage.
 #### Training Task.
 
 1. Binary-Class:  
-    example-data: (1) guest: breast_b.csv  (2) host: breast_b.csv  
+    example-data: (1) guest: breast_b.csv  (2) host: breast_a.csv  
    dsl: test_secureboost_train_dsl.json  
     runtime_config: test_secureboost_train_binary_conf.json
      
