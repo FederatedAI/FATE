@@ -80,7 +80,17 @@ systemctl status firewalld.service
 3.5 软件环境初始化
 ------------------
 
-**1）配置sudo**
+**1）创建用户**
+
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
+
+```
+groupadd -g 6000 apps
+useradd -s /bin/bash -g apps -d /home/app app
+passwd app
+```
+
+**2）配置sudo**
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
@@ -92,7 +102,7 @@ app ALL=(ALL) NOPASSWD: ALL
 
 Defaults !env_reset
 
-**2）配置ssh无密登录**
+**3）配置ssh无密登录**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 

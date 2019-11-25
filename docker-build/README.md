@@ -9,7 +9,6 @@
 ##### Configure the Image Name
 To minimize the size of images, we categorize the images into three types, they are described as follows:
 - ***base Image*** with the minimum dependencies of the modules of FATE.
-- ***builder Image*** contains the third-party dependencies for storage service.
 - ***module Image*** contains a specified module of FATE, it is built on the top of ***base image***
 
 Before building the images, we need to configure `.env` file to name and tag the images, so that a user can easily identify the version of codebase according to image name and tag.
@@ -17,13 +16,11 @@ Before building the images, we need to configure `.env` file to name and tag the
 A sample content of `.env` is as follows:
 ```bash
 PREFIX=federatedai
-BASE_TAG=1.0.2-release
-BUILDER_TAG=1.0.2-release
-TAG=1.0.2-release
+BASE_TAG=1.1-release
+TAG=1.1-release
 
 # PREFIX: namespace on the registry's server.
 # BASE_TAG: tag of base image.
-# BUILDER_TAG: tag of builder image.
 # TAG: tag of module images.
 ```
 
@@ -31,35 +28,27 @@ TAG=1.0.2-release
 
 Use this command to build all images:
 ```bash
-$ bash build_cluster_docker.sh modules
+$ bash build_cluster_docker.sh all
 ```
 
-For **Chinese developer**, it will take a long time to download the resource from the overseas server. In this case, a user could provide the `useChineseMirror` to enable the building process download resource from Chinese mirror:
-```bash
-$ bash build_cluster_docker.sh --useChineseMirror modules 
-```
 The "Dockerfile" of all images are stored under the "./docker" sub-directory. 
 
-While creating the `builder` image, the script will clone the third-party repo to a container and build them within the container. 
-
 The process of building module images can be separated into 3 steps:
-- Start an official "maven" container to build "jar" targets
-- Run bash auto-packaging.sh script to place jar files to "example-tree-dir/"
-- Build module images with files in the "example-tree-dir/"
+- Start an official "maven" container to build "jar" targets, and package to "tar" files
+- Place tar files to "./docker" sub-directory
+- Build module images with files in the "./docker" sub-directory
 
 After the command finishes, use `docker images` to check the newly generated images:
 ```
 REPOSITORY                         TAG  
-federatedai/egg                       1.0.2-release    
-federatedai/fateboard                 1.0.2-release    
-federatedai/serving-server            1.0.2-release     
-federatedai/meta-service              1.0.2-release    
-federatedai/python                    1.0.2-release     
-federatedai/roll                      1.0.2-release
-federatedai/proxy                     1.0.2-release
-federatedai/federation                1.0.2-release
-federatedai/storage-service-builder   1.0.2-release   
-federatedai/base-image                1.0.2-release
+federatedai/egg                       1.1-release
+federatedai/fateboard                 1.1-release
+federatedai/meta-service              1.1-release
+federatedai/python                    1.1-release
+federatedai/roll                      1.1-release
+federatedai/proxy                     1.1-release
+federatedai/federation                1.1-release
+federatedai/base-image                1.1-release
 ```
 
 ##### Push Images to a Registry (optional)
