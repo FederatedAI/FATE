@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 
-import csv
 import os
 import time
 
 from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
-from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import Metric, MetricMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -146,3 +145,7 @@ class Upload(object):
         self.tracker.log_metric_data(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
                                      metrics=metric_data)
+        self.tracker.set_metric_meta(metric_namespace,
+                                     metric_name,
+                                     MetricMeta(name='upload',
+                                                metric_type='UPLOAD'))
