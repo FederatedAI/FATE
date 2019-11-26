@@ -16,6 +16,7 @@
 
 import grpc
 
+from arch.api import session
 from arch.api.proto import model_service_pb2
 from arch.api.proto import model_service_pb2_grpc
 from fate_flow.settings import stat_logger
@@ -88,3 +89,9 @@ def publish_online(config_data):
             if response.statusCode != 0:
                 success = False
     return success
+
+
+def download_model(request_data):
+    model_table = session.table(name=request_data.get('table_name'), namespace=request_data.get('namespace'))
+    model_data = model_table.collect()
+    return dict(model_data)

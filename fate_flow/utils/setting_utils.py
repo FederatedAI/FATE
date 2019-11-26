@@ -18,6 +18,7 @@ from urllib import parse
 from kazoo.client import KazooClient
 
 from arch.api.utils import file_utils
+from arch.api.utils.core import get_lan_ip
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 
@@ -55,12 +56,15 @@ class CenterConfig(object):
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
     @staticmethod
-    def init(hosts, use_configuation_center, servings_zk_path):
+    def init(hosts, use_configuation_center, servings_zk_path, fate_flow_zk_path, fate_flow_port):
         if not use_configuation_center:
             CenterConfig.SERVERS = CenterConfig.get_settings('/servers/servings')
         else:
             zk = KazooClient(hosts=hosts)
             zk.start()
+            model_host = 'http://{}:{}/v1/model/transfer'.format(get_lan_ip(), fate_flow_port)
+            fate_flow_zk_path = '{}/{}'.format(fate_flow_zk_path, parse.quote(model_host, safe=' '))
+            zk.create(fate_flow_zk_path, makepath=True)
             RuntimeConfig.init_config(ZK=zk)
             CenterConfig.USE_CONFIGURATION_CENTER = True
             CenterConfig.SERVINGS_ZK_PATH = servings_zk_path

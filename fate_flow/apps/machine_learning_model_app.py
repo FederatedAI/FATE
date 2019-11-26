@@ -87,3 +87,10 @@ def publish_model_online():
 def query_model_version_history():
     history = version_history(data_table_namespace=request.json.get("namespace"))
     return get_json_result(data=history)
+
+
+@manager.route('/transfer', methods=['post'])
+def transfer_model():
+    model_data = publish_model.download_model(request.json)
+    return get_json_result(retcode=0, retmsg="success", data=model_data)
+

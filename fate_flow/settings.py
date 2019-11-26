@@ -37,6 +37,7 @@ API_VERSION = "v1"
 ROLE = 'fateflow'
 SERVERS = 'servers'
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
+FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
