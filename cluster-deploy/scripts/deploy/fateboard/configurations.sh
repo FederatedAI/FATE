@@ -1,7 +1,8 @@
 #!/bin/bash
 #fateboard
 
-version=1.1
+version=
+fateboard_version=
 java_dir=
 source_code_dir=
 output_packages_dir=
