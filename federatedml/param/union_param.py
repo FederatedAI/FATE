@@ -33,7 +33,7 @@ class UnionParam(BaseParam):
         Indicate if this module needed to be run
 
     allow_missing: bool, default False
-        Whether allow empty instances in the result. Note that empty tables will always be skipped regardless of this param setting.
+        Whether allow mismatch between feature length and header length in the result. Note that empty tables will always be skipped regardless of this param setting.
 
     """
 
