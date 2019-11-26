@@ -20,12 +20,12 @@ import copy
 
 import numpy as np
 
-from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from arch.api.utils import log_utils
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.optim.gradient import sqn_sync
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
+from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
-from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
 
@@ -61,57 +61,56 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
         self.transfer_variable = transfer_variable
         self.sqn_sync.register_transfer_variable(self.transfer_variable)
 
-    def compute_gradient_procedure(self, *args):
+    def _renew_w_tilde(self):
+        self.last_w_tilde = self.this_w_tilde
+        self.this_w_tilde = LinearModelWeights(np.zeros_like(self.last_w_tilde.unboxed),
+                                               self.last_w_tilde.fit_intercept)
+
+    def _update_hessian(self, *args):
         raise NotImplementedError("Should not call here")
 
+    def _update_w_tilde(self, *args):
+        if self.iter_k % self.update_interval_L == 0:
+            self.count_t += 1
+            self.this_w_tilde /= self.update_interval_L
+            if self.count_t > 0:
+                LOGGER.info("iter_k: {}, count_t: {}, start to update hessian".format(self.iter_k, self.count_t))
+                self._update_hessian(*args)
+            self.last_w_tilde = self.this_w_tilde
+            self.this_w_tilde = LinearModelWeights(np.zeros_like(self.last_w_tilde.unboxed),
+                                                   self.last_w_tilde.fit_intercept)
+
+    def compute_gradient_procedure(self, *args):
+        data_instances = args[0]
+        model_weights = args[2]
+        optimizer = args[3]
+        self.batch_index = args[5]
+        self.n_iter = args[4]
+
+        if self.this_w_tilde is None:
+            self.this_w_tilde = copy.deepcopy(model_weights)
+        else:
+            self.this_w_tilde += model_weights
+
+        one_data = data_instances.first()
+        LOGGER.debug("data shape: {}, model weights shape: {}, model weights coef: {}, intercept: {}".format(
+            one_data[1].features.shape, model_weights.unboxed.shape, model_weights.coef_, model_weights.intercept_
+        ))
+
+        gradient_results = self.gradient_computer.compute_gradient_procedure(*args)
+        self._update_w_tilde(data_instances, optimizer)
+
+        return gradient_results
+
     def compute_loss(self, *args):
-        raise NotImplementedError("Should not call here")
+        loss = self.gradient_computer.compute_loss(*args)
+        return loss
 
 
 class HeteroStochasticQuansiNewtonGuest(HeteroStochasticQuansiNewton):
     def __init__(self, sqn_param):
         super().__init__(sqn_param)
         self.sqn_sync = sqn_sync.Guest()
-
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
-                                   n_iter_, batch_index, offset=None):
-        self.batch_index = batch_index
-        self.n_iter = n_iter_
-        if self.this_w_tilde is None:
-            self.this_w_tilde = copy.deepcopy(model_weights)
-        else:
-            self.this_w_tilde += model_weights
-
-        if self.iter_k % self.update_interval_L != 0:
-            assert isinstance(self.gradient_computer, hetero_linear_model_gradient.Guest)
-            optim_guest_gradient, fore_gradient, host_forwards = self.gradient_computer.compute_gradient_procedure(
-                data_instances,
-                encrypted_calculator,
-                model_weights,
-                optimizer,
-                n_iter_,
-                batch_index
-            )
-        else:
-            self.count_t += 1
-            self.this_w_tilde /= self.update_interval_L
-            if self.count_t > 0:
-                LOGGER.info("iter_k: {}, count_t: {}, start to update hessian".format(self.iter_k, self.count_t))
-                self._update_hessian(data_instances, optimizer)
-            self.last_w_tilde = self.this_w_tilde
-            self.this_w_tilde = LinearModelWeights(np.zeros_like(self.last_w_tilde.unboxed),
-                                                   self.last_w_tilde.fit_intercept)
-
-        # static w_tilde i.e. sum(w)
-        # if iter_k % L == 0:
-        #   if count > 0: (i.e. iter_k > 2L)
-        #       1. sample data
-        #       2. get delta_s = self.this_w_tilde - self.last_w_tilde
-        #       3. Compute hess_vector = 1/4 * (W * delta_s) * batch_size / sample_size + alpha * delta_s(if L2)
-        #       4. Send hess_vector to arbiter
-        #   else:
-        #       last_w_tilde = this_w_tilde
-        #       this_w_tilde = zero_like()
 
     def _update_hessian(self, data_instances, optimizer):
         suffix = (self.n_iter, self.batch_index)
@@ -130,20 +129,6 @@ class HeteroStochasticQuansiNewtonHost(HeteroStochasticQuansiNewton):
         super().__init__(sqn_param)
         self.sqn_sync = sqn_sync.Host()
 
-    def compute_gradient_procedure(self):
-        # static w_tilde i.e. sum(w)
-        # if iter_k % L == 0:
-        #   if count > 0: (i.e. iter_k > 2L)
-        #       1. sample data
-        #       2. get delta_s = self.this_w_tilde - self.last_w_tilde
-        #       3. Compute hess_vector = 1/4 * (W * delta_s) * batch_size / sample_size + alpha * delta_s(if L2)
-        #       4. Send hess_vector to arbiter
-        #   else:
-        #       last_w_tilde = this_w_tilde
-        #       this_w_tilde = zero_like()
-
-        pass
-
     def _update_hessian(self, data_instances, optimizer):
         suffix = (self.n_iter, self.batch_index)
         sampled_data = self.sqn_sync.sync_sample_data(data_instances, suffix=suffix)
@@ -156,7 +141,6 @@ class HeteroStochasticQuansiNewtonHost(HeteroStochasticQuansiNewton):
         self.sqn_sync.sync_hess_vector(hess_vector, suffix)
 
 
-
 class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
     def __init__(self, sqn_param):
         super().__init__(sqn_param)
@@ -164,30 +148,38 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
         self.opt_v = None
         self.opt_s = None
         self.sqn_sync = sqn_sync.Arbiter()
+        self.model_weight: LinearModelWeights = None
+
+    def _init_this_w_tilde(self, gradient: LinearModelWeights):
+        if self.model_weight is None:
+            self.model_weight = copy.deepcopy(gradient)
+        else:
+            self.model_weight -= gradient
+
+        if self.this_w_tilde is None:
+            self.this_w_tilde = copy.deepcopy(self.model_weight)
+        else:
+            self.this_w_tilde += self.model_weight
 
     def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
-        # Step 1: add w_tilde
-
-        # step 2: Accept gradient from guest and hosts
-
-        # if iter_k < 2L:
-        #   sgd update directly
-        # else:
-        #   Hess update
-
-        # if iter_k % L == 0:
-        #   Update Hessian Matrix
-        pass
+        self.batch_index = batch_index
+        self.n_iter = n_iter_
+        optimizer.set_hess_matrix(self.opt_Hess)
+        delta_grad = self.gradient_computer.compute_gradient_procedure(
+            cipher_operator, optimizer, n_iter_, batch_index)
+        self._init_this_w_tilde(LinearModelWeights(delta_grad, fit_intercept=False))
+        self._update_w_tilde(cipher_operator)
 
     def _update_hessian(self, cipher_operator):
         suffix = (self.n_iter, self.batch_index)
         hess_vectors = self.sqn_sync.sync_hess_vector(suffix)
         hess_vectors = cipher_operator.decrypt_list(hess_vectors)
         delta_s = self.this_w_tilde - self.last_w_tilde
-        self.update_memory_vars(hess_vectors, self.opt_v)
-        self.update_memory_vars(delta_s, self.opt_s)
+        self._update_memory_vars(hess_vectors, self.opt_v)
+        self._update_memory_vars(delta_s, self.opt_s)
+        self._compute_hess_matrix()
 
-    def update_memory_vars(self, new_vars, memory_vars):
+    def _update_memory_vars(self, new_vars, memory_vars):
         if memory_vars is None:
             memory_vars = [0, ]
             memory_vars[0] = new_vars.reshape(-1, 1)
@@ -197,7 +189,25 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
             memory_vars.pop(0)
             memory_vars.append(new_vars.reshape(-1, 1))
 
+    def _compute_hess_matrix(self):
+        rho = sum(self.opt_v[-1] * self.opt_s[-1]) / sum(self.opt_v[-1] * self.opt_v[-1])
+        LOGGER.debug("in _compute_hess_matrix, rho0 = {}".format(rho))
+        n = self.opt_s[0].shape[0]
+        Hess = rho * np.identity(n)
+        iter_num = 0
+        for y, s in zip(self.opt_v, self.opt_s):
+            rho = 1.0 / (y.T.dot(s))
+            Hess = (np.identity(n) - rho * s.dot(y.T)).dot(Hess).dot(np.identity(n) - rho * y.dot(s.T)) + rho * s.dot(
+                s.T)
+            iter_num += 1
+            LOGGER.info(
+                "hessian updating algorithm iter_num = {}, rho = {} \n ||s|| is {} \n ||y|| is {}".format(iter_num, rho,
+                                                                                                          np.linalg.norm(
+                                                                                                              s),
+                                                                                                          np.linalg.norm(
+                                                                                                              y)))
 
+        self.opt_Hess = Hess
 
 
 def sqn_factory(role, sqn_param):

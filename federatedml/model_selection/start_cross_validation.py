@@ -37,25 +37,3 @@ def run(model, data_instances):
     LOGGER.info("Finish KFold run")
     return data_instances
 
-
-class SomeModel(ModelBase):
-
-    def __init__(self):
-        self.sklearn_obj = None # 自定义一下
-
-    def fit(self, data_instances):
-        X,y = self.load(data_instances)
-        self.sklearn_obj.fit(X, y)
-
-    def predict(self, data_instances):
-        X,y = self.load(data_instances)
-        predict_result = self.sklearn_obj.predict(X, y)
-        return self.transfer_predict_result(predict_result)  # 转成现在用的格式
-
-    def run_cv(self, data_instances):
-        kflod_obj = KFold()
-        kflod_obj.mode = 'unilateral'  #  避免alignment
-        cv_param = _get_cv_param(self)
-        kflod_obj.run(cv_param, data_instances, self)
-        LOGGER.info("Finish KFold run")
-        return data_instances

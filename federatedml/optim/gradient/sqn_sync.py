@@ -38,6 +38,7 @@ class Guest(SqnSyncBase):
     def register_transfer_variable(self, transfer_variable):
         self.batch_data_index_transfer = transfer_variable.sqn_sample_index
         self.guest_hess_vector = transfer_variable.guest_hess_vector
+        self.host_forwards_transfer = transfer_variable.host_sqn_forwards
 
     def sync_sample_data(self, data_instances, sample_size, random_seed, suffix=tuple()):
         n = data_instances.count()
@@ -76,7 +77,7 @@ class Host(SqnSyncBase):
 
     def register_transfer_variable(self, transfer_variable):
         self.batch_data_index_transfer = transfer_variable.sqn_sample_index
-        self.host_forwards_transfer = transfer_variable.sqn_host_forwards
+        self.host_forwards_transfer = transfer_variable.host_sqn_forwards
         self.host_hess_vector = transfer_variable.host_hess_vector
 
     def sync_sample_data(self, data_instances, suffix=tuple()):

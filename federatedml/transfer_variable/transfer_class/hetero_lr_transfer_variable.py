@@ -44,4 +44,7 @@ class HeteroLRTransferVariable(BaseTransferVariable):
         self.host_gradient = Variable(name='HeteroLRTransferVariable.host_gradient', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         self.host_prob = Variable(name='HeteroLRTransferVariable.host_prob', auth=dict(src='host', dst=['guest']), transfer_variable=self)
         self.sqn_sample_index = Variable(name='HeteroLRTransferVariable.sqn_sample_index', auth=dict(src='guest', dst=['host']), transfer_variable=self)
+        self.guest_hess_vector = Variable(name='HeteroLRTransferVariable.guest_hess_vector', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
+        self.host_sqn_forwards = Variable(name='HeteroLRTransferVariable.host_sqn_forwards', auth=dict(src='host', dst=['guest']), transfer_variable=self)
+        self.host_hess_vector = Variable(name='HeteroLRTransferVariable.host_hess_vector', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
         pass

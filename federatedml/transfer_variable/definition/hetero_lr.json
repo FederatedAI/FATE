@@ -92,6 +92,24 @@
       "dst": [
         "host"
       ]
+    },
+    "guest_hess_vector": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_sqn_forwards": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_hess_vector": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
     }
   }
 }

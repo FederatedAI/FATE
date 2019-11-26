@@ -181,9 +181,8 @@ class Host(HeteroGradientBase):
     def compute_unilateral_gradient(self, data_instances, fore_gradient, model_weights, optimizer):
         raise NotImplementedError("Function should not be called here")
 
-    def compute_gradient_procedure(self, data_instances, model_weights,
-                                   encrypted_calculator, optimizer,
-                                   n_iter_, batch_index):
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
+                                   optimizer, n_iter_, batch_index):
         """
         Linear model gradient procedure
         Step 1: get host forwards which differ from different algorithm
