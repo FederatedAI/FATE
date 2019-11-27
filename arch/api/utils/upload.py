@@ -49,14 +49,13 @@ def read_data(input_file, dst_table_name, dst_table_namespace, head=True):
             for row in csv_reader:
                 yield (row[0], list_to_str(row[1:]))
     else:
-        with open(input_file, 'r') as fin:
+        with open(input_file, 'rb') as fin:
             if head is True:
-                data_head = fin.readline()
+                data_head = fin.readline().decode()
                 save_data_header(data_head, dst_table_name, dst_table_namespace)
 
-            lines = fin.readlines()
-            for line in lines:
-                values = line.replace("\n", "").replace("\t", ",").split(",")
+            for line in fin:
+                values = line.decode().replace("\n", "").replace("\t", ",").split(",")
                 yield (values[0], list_to_str(values[1:]))
 
 
