@@ -409,13 +409,13 @@ class Tracking(object):
                 data_view.save()
             return data_view
 
-    def clean_task(self):
+    def clean_task(self, roles, party_ids):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))
-        try:
-            session.clean_tables(namespace=self.task_id, regex_string='*')
-            session.clean_tables(namespace=self.task_id + '_' + self.role + '_' + str(self.party_id), regex_string='*')
-        except Exception as e:
-            pass
+        session.clean_tables(namespace=self.task_id, regex_string='*')
+        for role in roles.split(','):
+            for party_id in party_ids.split(','):
+                session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+
 
     def job_quantity_constraint(self):
         if self.role == 'host':

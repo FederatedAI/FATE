@@ -216,12 +216,12 @@ class JobController(object):
         job_tracker.save_output_model({'Pipeline': pipeline}, 'pipeline')
 
     @staticmethod
-    def clean_job(job_id, role, party_id):
+    def clean_job(job_id,role, party_id, roles, party_ids):
         schedule_logger(job_id).info('job {} on {} {} start to clean'.format(job_id, role, party_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             try:
-                Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task()
+                Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
                 schedule_logger(job_id).info(
                     'job {} component {} on {} {} clean done'.format(job_id, task.f_component_name, role, party_id))
             except Exception as e:
