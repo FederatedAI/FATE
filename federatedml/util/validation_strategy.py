@@ -137,12 +137,12 @@ class ValidationStrategy(object):
         if train_predicts is None and validate_predicts is None:
             return
         else:
-            LOGGER.debug("train_predicts data is {}".format(list(train_predicts.collect())))
+            # LOGGER.debug("train_predicts data is {}".format(list(train_predicts.collect())))
             predicts = train_predicts
             if validate_predicts:
-                LOGGER.debug("validate_predicts data is {}".format(list(validate_predicts.collect())))
+                # LOGGER.debug("validate_predicts data is {}".format(list(validate_predicts.collect())))
                 predicts = predicts.union(validate_predicts)
 
-            LOGGER.debug("predicts data is {}".format(list(predicts.collect())))
+            # LOGGER.debug("predicts data is {}".format(list(predicts.collect())))
             self.evaluate(predicts, model, epoch)
 

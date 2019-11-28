@@ -25,22 +25,41 @@ FATE already supports a number of federated learning algorithms, including verti
 
 
 ## Install
-FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.
 
+FATE can be installed on Linux or Mac. Now, FATE can support：
+
+* Native installation: standalone and cluster deployments;
+
+* KubeFATE installation:
+
+	- Multipal parties deployment by docker-compose, which for devolopment and test purpose;
+
+	- Cluster (multi-node) deployment by Kubernetes
+
+### Native installation: 
 Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
 
-#### Standalone
+##### Standalone
 FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
 
-#### Cluster
+##### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
-#### Get source
+##### Get source
 ```shell
 git clone --recursive git@github.com:FederatedAI/FATE.git
 ```
+
+### KubeFATE installation:
+With KubeFATE, FATE can be deployed with docker-compose or Kubernetes:
+
+* For development or test purpose, we recommend using docker-compose, which only Docker enviroment required. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+
+* For product or large scale deployment, we recommend using Kubernetes cluster as an underlaying infrastructure to manage FATE system. For more detail, please refer to: [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+
+Verfication steps, please refer to related instructions in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
 ## Running Tests
 

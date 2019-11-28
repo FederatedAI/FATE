@@ -1,6 +1,6 @@
 ### Union
 
-Union module combines given tables into one while keeping unique entry ids. Union is a local module. Like DataIO, this module can be run on the side of Host or Guest, and it does not require any interaction with outside parties.
+Union module combines given tables into one while keeping unique entry ids. Union is a local module. Like DataIO, this module can be run on the side of Host or Guest, and running this module does not require any interaction with outside parties.
 
 ### Use
 
