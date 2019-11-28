@@ -85,8 +85,17 @@ init() {
     mkdir -p ${basepath}/fateboard
     cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
     cd ${basepath}/fateboard
-    ln -s fateboard-$version.jar fateboard.jar
-    mkdir conf ssh
+    if [ ! -f "fateboard.jar" ];then
+       ln -s fateboard-$version.jar fateboard.jar
+    fi
+    if [ ! -d "conf" ];then
+    then
+       mkdir conf
+    fi 
+    if [ ! -d "ssh" ];then
+    then
+       mkdir ssh
+    fi
     cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
     touch ./ssh/ssh.properties
 
