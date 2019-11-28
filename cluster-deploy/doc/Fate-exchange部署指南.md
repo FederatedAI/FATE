@@ -128,11 +128,11 @@ cxx_compile_flag=false
 
 按照上述配置含义修改allinone_cluster_configurations.sh文件对应的配置项后，然后在FATE/cluster-deploy/scripts目录下执行部署脚本：
 
+```
 cd FATE/cluster-deploy/scripts
-
 bash deploy_cluster_allinone.sh build jdk
-
 bash deploy_cluster_allinone.sh build proxy
+```
 
 # 5.修改route信息
 
@@ -140,6 +140,7 @@ bash deploy_cluster_allinone.sh build proxy
 
 修改/data/projects/fate/proxy/conf/route_table.json：
 
+```
 {
     "route_table": {
         "10000": {
@@ -163,11 +164,13 @@ bash deploy_cluster_allinone.sh build proxy
         "default_allow": true
     }
 }
+```
 
-**需要连接exchange的party，app用户下修改**
+**需要连接exchange的各party的proxy模块，app用户修改**
 
 修改/data/projects/fate/proxy/conf/route_table.json部分：
 
+```
  "default": {
             "default": [
                 {
@@ -176,6 +179,7 @@ bash deploy_cluster_allinone.sh build proxy
                 }
             ]
         },
+```
 
 6.启动和停止服务
 ================
