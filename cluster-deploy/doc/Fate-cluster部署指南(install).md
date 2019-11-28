@@ -398,7 +398,7 @@ python run_toy_example.py 9999 10000 1
 
 ```
 source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task /
+cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh host fast
 ```
 
@@ -421,4 +421,4 @@ sh run.sh guest fast $ {host_table} $ {host_namespace}
 7.4. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问http://192.168.0.1:8080和http://192.168.0.2:8080来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。

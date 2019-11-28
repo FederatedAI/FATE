@@ -351,7 +351,7 @@ python run_toy_example.py 9999 10000 1
 
 ```
 source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task /
+cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh host fast
 ```
 
