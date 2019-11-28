@@ -15,7 +15,7 @@
 #
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Union, Tuple
 
 # noinspection PyPackageRequirements
@@ -106,28 +106,24 @@ class FederationRuntime(Federation):
                            dst_party=party, cleaner=cleaner, table=obj_table, obj=fragment)
         return cleaner
 
+    # todo: this block until all task complete, make it async
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
         if isinstance(parties, Party):
             parties = [parties]
         self._get_side_auth(name=name, parties=parties)
         cleaner = Cleaner()
+        rtn = {}
 
         # async get
-        meta_futures = [(party, self._receive(name, tag, party)) for party in parties]
-        # block here, todo: any improvements?
-        received_metas = [(party, meta.result()) for party, meta in meta_futures]
-
-        rtn = []
-        for party, recv_meta in received_metas:
+        meta_futures = {self._receive(name, tag, party): party for party in parties}
+        for future in as_completed(meta_futures):
+            party = meta_futures[future]
+            recv_meta = future.result()
             desc = recv_meta.dataDesc
             if desc.transferDataType == federation_pb2.DTABLE:
                 dest_table = self._get_table(recv_meta.dataDesc)
-                src = recv_meta.src
-                dst = recv_meta.dst
-                LOGGER.debug(
-                    f"[GET] Got remote table {dest_table} from {src.name} {src.partyId} to {dst.name} {dst.partyId}")
                 cleaner.add_table(dest_table)
-                rtn.append(dest_table)
+                rtn[party] = dest_table
             elif desc.transferDataType == federation_pb2.OBJECT:
                 obj_table = self._get_side_obj_storage_table(src_party=party)
                 __tagged_key = _ser_des.deserialize(desc.taggedVariableName)
@@ -135,7 +131,7 @@ class FederationRuntime(Federation):
 
                 if not is_split_head(obj):
                     cleaner.add_obj(obj_table, __tagged_key)
-                    rtn.append(obj)
+                    rtn[party] = obj
                 else:
                     num_split = obj.num_split()
                     fragments = []
@@ -146,10 +142,10 @@ class FederationRuntime(Federation):
                         __fragment_tagged_key = _ser_des.deserialize(meta.dataDesc.taggedVariableName)
                         fragments.append(obj_table.get(__fragment_tagged_key))
                         cleaner.add_obj(obj_table, __fragment_tagged_key)
-                    rtn.append(split_get(fragments))
+                    rtn[party] = split_get(fragments)
             else:
                 raise IOError(f"unknown transfer type: {recv_meta.dataDesc.transferDataType}")
-        return rtn, cleaner
+        return [rtn[party] for party in parties], cleaner
 
     """internal utils"""
 
