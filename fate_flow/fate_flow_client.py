@@ -70,9 +70,12 @@ def call_fun(func, config_data, dsl_path, config_path):
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
-            if response.json()['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+            try:
+                if response.json()['retcode'] == 999:
+                    start_cluster_standalone_job_server()
+                    response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+            except:
+                pass
         elif func == 'data_view_query':
             response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
         else:
@@ -147,9 +150,12 @@ def call_fun(func, config_data, dsl_path, config_path):
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
         response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
-        if response.json()['retcode'] == 999:
-            start_cluster_standalone_job_server()
-            response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        try:
+            if response.json()['retcode'] == 999:
+                start_cluster_standalone_job_server()
+                response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        except:
+            pass
     elif func in TABLE_FUNC:
         if func == "table_info":
             detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
@@ -228,9 +234,13 @@ if __name__ == "__main__":
                 config_data['local']['party_id'] = args.party_id
             if args.role:
                 config_data['local']['role'] = args.role
-
+        if config_data.get('output_path'):
+            config_data['output_path'] = os.path.abspath(config_data["output_path"])
         response = call_fun(args.function, config_data, dsl_path, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
         response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
+        if 'Connection refused' in str(e):
+            response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
+            del response['traceback']
     response_dict = prettify(response)
