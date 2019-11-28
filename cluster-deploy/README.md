@@ -79,15 +79,24 @@ c).Other Modules: The node where other modules are installed.
 
 *<u>Note: The above nodes can be the same node, but to distinguish the description, the following is explained in the case of full distribution.</u>*
 
-| node           | Node description                                  | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
-| -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Execution node | The operation node that executes the script       | Git tool   rsync Maven 3.5 and above                         | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
-| Meta-Service   | The node where the meta service module is located | Jdk1.8+       Python3.6  python virtualenv mysql8.0.13       | /data/projects/common/jdk/jdk1.8  /data/projects/common/miniconda3  /data/projects/fate/venv  /data/projects/common/mysql/mysql-8.0.13 | In the same area or under the same VPC as other nodes        |
-| Other Modules  | Node where other modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2(One party only needs to install a redis on the serving-service node.) | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2 | In the same area or under the same VPC as other nodes.       |
+| node           | Node description                            | Software configuration                                       | Software installation path                                   | Network Configuration                                        |
+| -------------- | ------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Execution node | The operation node that executes the script | Git tool   rsync Maven 3.5 and above                         | Install it using the yum install command.                    | Interworking with the public network, you can log in to other node app users without encryption. |
+| Modules        | Node where modules are located              | Jdk1.8+  Python3.6  python virtualenv redis5.0.2(One party only needs to install a redis on the serving-service node.)      mysql8.0.13(One party only needs to install a redis on the Meta-Service node.) | /data/projects/common/jdk/jdk1.8 /data/projects/common/miniconda3 /data/projects/fate/venv /data/projects/common/redis/redis-5.0.2                                                                   /data/projects/common/mysql/mysql-8.0.13 | In the same area or under the same VPC as other nodes.       |
 
 Check whether the above software environment is reasonable in the corresponding server. If the software environment already exists and the correct installation path corresponds to the above list, you can skip this step. If not, refer to the following initialization steps to initialize the environment:
 
-### 3.3.**Configuring sudo**
+### 3.3.**create user**
+
+Executed by the **root** user:
+
+```
+groupadd -g 6000 apps
+useradd -s /bin/bash -g apps -d /home/app app
+passwd app
+```
+
+### 3.4.**Configuring sudo**
 
 Executed by the **root** user:
 
@@ -101,7 +110,7 @@ app ALL=(ALL) NOPASSWD: ALL
 
 Defaults !env_reset
 
-### 3.6.Configure password-free login from the execution node to the node to be deployed
+### 3.5.Configure password-free login from the execution node to the node to be deployed
 
 1.Generate a key on the all node,Contains the execution node and the node to be deployed
 

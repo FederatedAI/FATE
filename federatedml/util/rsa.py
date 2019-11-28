@@ -37,6 +37,7 @@ class RsaModel(ModelBase):
     """
     def __init__(self):
         super(RsaModel, self).__init__()
+        self.data_processed = None
         self.model_param = RsaParam()
 
 
@@ -45,22 +46,22 @@ class RsaModel(ModelBase):
         LOGGER.debug("data_inst={}, count={}".format(data_inst, data_inst.count()))
 
         key_pair = {"d": self.model_param.rsa_key_d, "n": self.model_param.rsa_key_n}
-        data_processed = self.encrypt_data_using_rsa(data_inst, key_pair)
+        self.data_processed = self.encrypt_data_using_rsa(data_inst, key_pair)
 
-        return self.save_data(data_processed)
+        self.save_data()
 
-    def save_data(self, data_inst):
-        LOGGER.debug("save data: data_inst={}, count={}".format(data_inst, data_inst.count()))
-        persistent_table = data_inst.save_as(namespace=self.model_param.save_out_table_namespace, name=self.model_param.save_out_table_name)
+    def save_data(self):
+        #LOGGER.debug("save data: data_inst={}, count={}".format(self.data_processed, self.data_processed.count()))
+        persistent_table = self.data_processed.save_as(namespace=self.model_param.save_out_table_namespace, name=self.model_param.save_out_table_name)
         LOGGER.info("save data to namespace={}, name={}".format(persistent_table._namespace, persistent_table._name))
     
         session.save_data_table_meta(
-            {'schema': data_inst.schema, 'header': data_inst.schema.get('header', [])},
+            {'schema': self.data_processed.schema, 'header': self.data_processed.schema.get('header', [])},
             data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
         
         version_log = "[AUTO] save data at %s." % datetime.datetime.now()
         version_control.save_version(name=persistent_table._name, namespace=persistent_table._namespace, version_log=version_log)
-        return persistent_table
+        return None
 
 
     @staticmethod

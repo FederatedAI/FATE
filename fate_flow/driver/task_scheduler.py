@@ -372,6 +372,8 @@ class TaskScheduler(object):
         job_initiator = job_runtime_conf['initiator']
         model_id_base64 = base64_encode(job_parameters['model_id'])
         model_version_base64 = base64_encode(job_parameters['model_version'])
+        roles = ','.join(job_runtime_conf['role'].keys())
+        party_ids = ','.join([','.join([str(j) for j in i]) for i in job_runtime_conf['role'].values()])
         for role, partys in job_runtime_conf['role'].items():
             for party_id in partys:
                 # save pipeline
@@ -391,20 +393,21 @@ class TaskScheduler(object):
                               json_body={},
                               work_mode=job_parameters['work_mode'])
                 # clean
-                """
                 federated_api(job_id=job_id,
                               method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/clean'.format(
+                              endpoint='/{}/schedule/{}/{}/{}/{}/{}/clean'.format(
                                   API_VERSION,
                                   job_id,
                                   role,
-                                  party_id),
+                                  party_id,
+                                  roles,
+                                  party_ids
+                              ),
                               src_party_id=job_initiator['party_id'],
                               dest_party_id=party_id,
                               src_role=job_initiator['role'],
                               json_body={},
                               work_mode=job_parameters['work_mode'])
-                """
         schedule_logger(job_id, delete=True)
 
     @staticmethod
