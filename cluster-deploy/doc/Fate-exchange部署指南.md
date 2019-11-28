@@ -111,7 +111,8 @@ bash packaging.sh
 
 **配置示例参考：**
 
-\#!/bin/bash
+```
+#!/bin/bash
 
 user=app
 deploy_dir=/data/projects/fate
@@ -120,6 +121,7 @@ node_list=(192.168.0.2)
 db_auth=(fate_dev fate_dev)
 redis_password=fate_dev
 cxx_compile_flag=false
+```
 
 4.3 部署
 --------
