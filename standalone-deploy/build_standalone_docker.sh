@@ -91,11 +91,9 @@ init() {
        ln -s fateboard-$version.jar fateboard.jar
     fi
     if [ ! -d "conf" ];then
-    then
        mkdir conf
     fi 
     if [ ! -d "ssh" ];then
-    then
        mkdir ssh
     fi
     cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
