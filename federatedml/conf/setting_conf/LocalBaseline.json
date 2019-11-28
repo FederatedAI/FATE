@@ -4,7 +4,7 @@
     "param_class" : "federatedml/param/local_baseline_param.py/LocalBaselineParam",
     "role":
     {
-        "guest":
+        "guest|host":
         {
             "program": "local_baseline.py/LocalBaseline"
         }

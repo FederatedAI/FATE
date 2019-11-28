@@ -42,6 +42,7 @@ class LocalBaseline(ModelBase):
         super(LocalBaseline, self).__init__()
         self.model_param = LocalBaselineParam()
         self.model_name = "LocalBaseline"
+        self.metric_type = ""
         self.model_param_name = "LocalBaselineParam"
         self.model_meta_name = "LocalBaselineMeta"
 
@@ -99,6 +100,8 @@ class LocalBaseline(ModelBase):
         return result
 
     def predict(self, data_instances):
+        if not self.need_run:
+            return
         model_fit = self.model_fit
         pred_label = data_instances.mapValues(lambda v: model_fit.predict(v.features[None,:])[0])
         pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None,:])[0])
@@ -109,6 +112,8 @@ class LocalBaseline(ModelBase):
         return predict_result
 
     def fit(self, data_instances, validate_data=None):
+        if not self.need_run:
+            return
         # check if empty table
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
