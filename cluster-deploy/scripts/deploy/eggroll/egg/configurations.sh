@@ -1,7 +1,8 @@
 #!/bin/bash
 #federation
 
-version=1.1
+version=
+egg_version=
 java_dir=
 source_code_dir=
 output_packages_dir=
@@ -19,3 +20,4 @@ roll_ip=
 roll_port=8011
 proxy_ip=
 proxy_port=9370
+clustercomm_ip=
