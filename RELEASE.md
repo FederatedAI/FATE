@@ -1,4 +1,4 @@
-# Release 1.0.2
+# Release 1.1.1
 ## Major Features and Improvements
 * Add cluster deployment support based on ubuntu operating system。
 * Add union component which support data merging. 
