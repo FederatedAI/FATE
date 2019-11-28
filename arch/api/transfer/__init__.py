@@ -16,6 +16,7 @@
 import abc
 from typing import Tuple, Union
 
+from arch.api.proto import federation_pb2
 from arch.api.utils import file_utils
 
 __all__ = ["Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
@@ -24,7 +25,7 @@ ROLES = ["arbiter", "guest", "host"]
 TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.json"
 CONF_KEY_LOCAL = "local"
 CONF_KEY_FEDERATION = "federation"
-CONF_KEY_SERVER = "server"
+CONF_KEY_SERVER = "servers"
 
 
 class Party(object):
@@ -50,6 +51,9 @@ class Party(object):
 
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
+
+    def to_pb(self):
+        return federation_pb2.Party(partyId=f"{self.party_id}", name=self.role)
 
 
 class Cleaner(object):

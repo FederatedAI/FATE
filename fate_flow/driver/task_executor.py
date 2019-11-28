@@ -105,7 +105,7 @@ class TaskExecutor(object):
                                                            input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
-            # run_object.set_taskid(taskid=task_id)
+            run_object.set_taskid(taskid=task_id)
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
