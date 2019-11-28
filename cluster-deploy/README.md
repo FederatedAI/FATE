@@ -4,10 +4,11 @@
 
 The Cluster version provides four deployment methods, which can be selected according to your actual situation:
 
-- Install Cluster [Chinese guide](./doc/Fate-V1.1cluster部署指南(install).md) 
-- Build Cluster from Source [Chinese guide](./doc/Fate-V1.1cluster部署指南(build).md) 
-- Install AllinOne [Chinese guide](./doc/Fate-V1.1allinone部署指南(install).md)
-- Build AllinOne from Source [Chinese guide](./doc/Fate-V1.1allinone部署指南(build).md)
+- Install Cluster [Chinese guide](./doc/Fate-cluster部署指南(install).md) 
+- Build Cluster from Source [Chinese guide](./doc/Fate-cluster部署指南(build).md) 
+- Install AllinOne [Chinese guide](./doc/Fate-allinone部署指南(install).md)
+- Build AllinOne from Source [Chinese guide](./doc/Fate-allinone部署指南(build).md)
+- Build Exchange from Source [Chinese guide](./doc/Fate-exchange部署指南.md)
 
 thirdparty：
 

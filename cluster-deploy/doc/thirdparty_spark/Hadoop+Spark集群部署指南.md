@@ -1,4 +1,4 @@
-Hadoop+Spark集群部署指南
+# Hadoop+Spark集群部署指南
 
 1.集群规划
 ==========
@@ -126,8 +126,7 @@ scp \~/.ssh/authorized_keys app\@192.168.0.2:/home/app/.ssh
 
 cat \~/.ssh/id_rsa.pub \>\> /home/app/.ssh/authorized_keys
 
-scp \~/.ssh/authorized_keys
-[app\@192.168.0.3:/home/app/.ssh](mailto:app@172.16.153.70:/home/app/.ssh)
+scp \~/.ssh/authorized_keys app\@192.168.0.3:/home/app/.ssh
 
 输入密码：fate_dev
 
