@@ -52,12 +52,13 @@ class BaseLinearModel(ModelBase):
         self.validation_freqs = None
         self.need_one_vs_rest = False
         self.in_one_vs_rest = False
+        self.init_param_obj = None
 
     def _init_model(self, params):
         self.model_param = params
         self.alpha = params.alpha
         self.init_param_obj = params.init_param
-        self.fit_intercept = self.init_param_obj.fit_intercept
+        # self.fit_intercept = self.init_param_obj.fit_intercept
         self.batch_size = params.batch_size
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)

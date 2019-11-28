@@ -19,6 +19,7 @@ from federatedml.util.param_extract import ParamExtract
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
 from arch.api.utils import log_utils
+import copy
 
 LOGGER = log_utils.getLogger()
 
@@ -58,108 +59,33 @@ class ModelBase(object):
         need_run = meta_obj.need_run
         self.need_run = need_run
 
-    # def _run_data(self, data_sets=None, stage=None):
-    #     train_data = None
-    #     eval_data = None
-    #     data = None
-    #
-    #     for data_key in data_sets:
-    #         if data_sets[data_key].get("train_data", None):
-    #             train_data = data_sets[data_key]["train_data"]
-    #
-    #         if data_sets[data_key].get("eval_data", None):
-    #             eval_data = data_sets[data_key]["eval_data"]
-    #
-    #         if data_sets[data_key].get("data", None):
-    #             data = data_sets[data_key]["data"]
-    #
-    #     if not self.need_run:
-    #         self.data_output = data
-    #         return data
-    #
-    #     if stage == 'cross_validation':
-    #         LOGGER.info("Need cross validation.")
-    #         self.cross_validation(train_data)
-    #
-    #     elif train_data is not None:
-    #         self.set_flowid('fit')
-    #         self.fit(train_data, eval_data)
-    #         self.set_flowid('predict')
-    #         self.data_output = self.predict(train_data)
-    #
-    #         if self.data_output:
-    #             self.data_output = self.data_output.mapValues(lambda value: value + ["train"])
-    #
-    #         if eval_data:
-    #             self.set_flowid('validate')
-    #             eval_data_output = self.predict(eval_data)
-    #
-    #             if eval_data_output:
-    #                 eval_data_output = eval_data_output.mapValues(lambda value: value + ["validation"])
-    #
-    #             if self.data_output and eval_data_output:
-    #                 self.data_output = self.data_output.union(eval_data_output)
-    #             elif not self.data_output and eval_data_output:
-    #                 self.data_output = eval_data_output
-    #
-    #         self.set_predict_data_schema(self.data_output, train_data.schema)
-    #
-    #     elif eval_data is not None:
-    #         self.set_flowid('predict')
-    #         self.data_output = self.predict(eval_data)
-    #
-    #         if self.data_output:
-    #             self.data_output = self.data_output.mapValues(lambda value: value + ["test"])
-    #
-    #         self.set_predict_data_schema(self.data_output, eval_data.schema)
-    #
-    #     else:
-    #         if stage == "fit":
-    #             self.set_flowid('fit')
-    #             self.data_output = self.fit(data)
-    #         else:
-    #             self.set_flowid('transform')
-    #             self.data_output = self.transform(data)
-    #
-    #     if self.data_output:
-    #         # LOGGER.debug("data is {}".format(self.data_output.first()[1].features))
-    #         LOGGER.debug("In model base, data_output schema: {}".format(self.data_output.schema))
-
-    # def run(self, component_parameters=None, args=None):
-    #     self._init_runtime_parameters(component_parameters)
-    #
-    #     if self.need_cv:
-    #         stage = 'cross_validation'
-    #     elif "model" in args:
-    #         self.load_model(args)
-    #         stage = "transform"
-    #     elif "isometric_model" in args:
-    #         self.load_model(args)
-    #         stage = "fit"
-    #     else:
-    #         stage = "fit"
-    #
-    #     if args.get("data", None) is None:
-    #         return
-    #
-    #     self._run_data(args["data"], stage)
-
     def run(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)
         self.role = self.component_properties.parse_component_param(component_parameters).role
         self.component_properties.parse_dsl_args(args)
 
-        todo_func_list, todo_func_params = self.component_properties.extract_running_rules(args, self)
-        data_output = None
-        for func, params in zip(todo_func_list, todo_func_params):
-            LOGGER.debug("func: {}, params: {}".format(func, params))
-            this_data_output = func(*params)
-            if this_data_output is not None:
-                if data_output is None:
-                    data_output = this_data_output
-                else:
-                    data_output = data_output.union(this_data_output)
-        self.data_output = data_output
+        running_funcs = self.component_properties.extract_running_rules(args, self)
+        saved_result = []
+        for func, params, save_result, use_previews in running_funcs:
+            # for func, params in zip(todo_func_list, todo_func_params):
+            if use_previews:
+                real_param = [save_result]
+                if params:
+                    real_param.append(params)
+                LOGGER.debug("func: {}, params: {}".format(func, real_param))
+                this_data_output = func(*real_param)
+                saved_result = []
+            else:
+                this_data_output = func(*params)
+
+            if save_result:
+                saved_result.append(this_data_output)
+
+        if len(saved_result) == 1:
+            self.data_output = saved_result[0]
+            # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
+        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -245,3 +171,12 @@ class ModelBase(object):
 
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold
+
+    @staticmethod
+    def extract_data(data: dict):
+        LOGGER.debug("In extract_data, data input: {}".format(data))
+        if len(data) == 0:
+            return data
+        if len(data) == 1:
+            return list(data.values())[0]
+        return data

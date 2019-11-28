@@ -23,7 +23,7 @@ from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.util import consts
-from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+
 
 class HeteroLRBase(BaseLogisticRegression):
     def __init__(self):

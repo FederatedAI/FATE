@@ -148,8 +148,10 @@ class HeteroLRGuest(HeteroLRBase):
         Prediction of lr
         Parameters
         ----------
-        data_instances:DTable of Instance, input data
-        predict_param: PredictParam, the setting of prediction.
+        data_instances: DTable of Instance, input data
+
+        result_name: str,
+            Showing the output type name
 
         Returns
         ----------
@@ -175,6 +177,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1], {"0": (1 - x[1]), "1": x[1]}])
+        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                       {"0": (1 - x[1]), "1": x[1]}])
 
         return predict_result

@@ -21,6 +21,25 @@ from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
+class RunningFuncs(object):
+    def __init__(self):
+        self.todo_func_list = []
+        self.todo_func_params = []
+        self.save_result = []
+        self.use_previews_result = []
+
+    def add_func(self, func, params, save_result=False, use_previews=False):
+        self.todo_func_list.append(func)
+        self.todo_func_params.append(params)
+        self.save_result.append(save_result)
+        self.use_previews_result.append(use_previews)
+
+    def __iter__(self):
+        for func, params, save_result, use_previews in zip(self.todo_func_list, self.todo_func_params,
+                                                           self.save_result, self.use_previews_result):
+            yield func, params, save_result, use_previews
+
+
 class ComponentProperties(object):
     def __init__(self):
         self.need_cv = False
@@ -33,6 +52,7 @@ class ComponentProperties(object):
         self.role = None
         self.host_party_idlist = []
         self.local_partyid = -1
+        self.guest_partyid = -1
 
     def parse_component_param(self, component_parameters):
         try:
@@ -49,6 +69,7 @@ class ComponentProperties(object):
         self.role = component_parameters["local"]["role"]
         self.host_party_idlist = component_parameters["role"]["host"]
         self.local_partyid = component_parameters["local"]["party_id"]
+        self.guest_partyid = component_parameters["role"]["guest"][0]
         return self
 
     def parse_dsl_args(self, args):
@@ -71,7 +92,7 @@ class ComponentProperties(object):
         data_sets = args["data"]
         train_data = None
         eval_data = None
-        data = None
+        data = {}
 
         for data_key in data_sets:
             if data_sets[data_key].get("train_data", None):
@@ -81,47 +102,94 @@ class ComponentProperties(object):
                 eval_data = data_sets[data_key]["eval_data"]
 
             if data_sets[data_key].get("data", None):
-                data = data_sets[data_key]["data"]
+                # data = data_sets[data_key]["data"]
+                data[data_key] = data_sets[data_key]["data"]
+
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
         train_data, eval_data, data = self.extract_input_data(args)
 
-        todo_func_list = []
-        todo_func_params = []
+        running_funcs = RunningFuncs()
 
         if not self.need_run:
-            todo_func_list.append(self.pass_data)
-            todo_func_params.append([data])
-            return todo_func_list, todo_func_params
+            running_funcs.add_func(self.pass_data, [data], save_result=True)
+            # todo_func_list.append(self.pass_data)
+            # todo_func_params.append([data])
+            # use_previews_result.append(False)
+            return running_funcs
 
         if self.need_cv:
-            todo_func_list.append(model.cross_validation)
-            todo_func_params.append([train_data])
-            return todo_func_list, todo_func_params
+            running_funcs.add_func(model.cross_validation, [train_data])
+            # todo_func_list.append(model.cross_validation)
+            # todo_func_params.append([train_data])
+            # return todo_func_list, todo_func_params
+            return running_funcs
 
         if self.has_model or self.has_isometric_model:
-            todo_func_list.append(model.load_model)
-            todo_func_params.append([args])
+            # todo_func_list.append(model.load_model)
+            # todo_func_params.append([args])
+            running_funcs.add_func(model.load_model, [args])
 
-        if self.has_train_data:
-            todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
-            todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
+        if self.has_train_data and self.has_eval_data:
+            # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
+            # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
+            running_funcs.add_func(model.set_flowid, ['fit'])
+            running_funcs.add_func(model.fit, [train_data])
+            running_funcs.add_func(model.set_flowid, ['validate'])
+            running_funcs.add_func(model.predict, [train_data], save_result=True)
+            running_funcs.add_func(model.set_flowid, ['predict'])
+            running_funcs.add_func(model.predict, [eval_data], save_result=True)
+            running_funcs.add_func(self.union_data, [], use_previews=True, save_result=True)
 
-        if self.has_eval_data:
-            todo_func_list.extend([model.set_flowid, model.predict])
-            todo_func_params.extend([['predict'], [eval_data, 'predict']])
+        elif self.has_train_data:
+            running_funcs.add_func(model.set_flowid, ['fit'])
+            running_funcs.add_func(model.fit, [train_data])
+            running_funcs.add_func(model.set_flowid, ['validate'])
+            running_funcs.add_func(model.predict, [train_data], save_result=True)
+
+        elif self.has_eval_data:
+            running_funcs.add_func(model.set_flowid, ['predict'])
+            running_funcs.add_func(model.predict, [eval_data], save_result=True)
 
         if self.has_normal_input_data and not self.has_model:
-            todo_func_list.extend([model.set_flowid, model.fit])
-            todo_func_params.extend([['fit'], [data]])
+            running_funcs.add_func(model.extract_data, [data], save_result=True)
+            running_funcs.add_func(model.set_flowid, ['fit'])
+            running_funcs.add_func(model.fit, [], use_previews=True, save_result=True)
+
+            # todo_func_list.extend([model.set_flowid, model.fit])
+            # todo_func_params.extend([['fit'], [data]])
 
         if self.has_normal_input_data and self.has_model:
-            todo_func_list.extend([model.set_flowid, model.transform])
-            todo_func_params.extend([['transform'], [data]])
-
-        return todo_func_list, todo_func_params
+            running_funcs.add_func(model.set_flowid, ['transform'])
+            running_funcs.add_func(model.transform, [data], save_result=True)
+        LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
+            running_funcs.todo_func_list, running_funcs.todo_func_params,
+            running_funcs.save_result, running_funcs.use_previews_result
+        ))
+        return running_funcs
 
     @staticmethod
     def pass_data(data):
         return data
+
+    @staticmethod
+    def union_data(previews_data, name_list):
+        if len(previews_data) == 0:
+            return None
+
+        if any([x is None for x in previews_data]):
+            return None
+
+        result_data = None
+        for data, name in zip(previews_data, name_list):
+            data.mapValues
+
+        if len(previews_data) == 1:
+            result_data = previews_data[0]
+        else:
+            result_data = previews_data[0]
+            for data in previews_data[1:]:
+                result_data = result_data.union(data)
+        LOGGER.debug("union result: {}".format(result_data.first()))
+        return result_data

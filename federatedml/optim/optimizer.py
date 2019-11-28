@@ -249,6 +249,7 @@ class _StochasticQuansiNewtonOptimizer(_Optimizer):
             delta_grad = learning_rate * grad
         else:
             delta_grad = learning_rate * self.__opt_hess.dot(grad)
+            LOGGER.debug("In sqn updater, grad: {}, delta_grad: {}".format(grad, delta_grad))
         return delta_grad
 
     def set_hess_matrix(self, hess_matrix):
