@@ -53,12 +53,14 @@ async def _async_receive(stub, transfer_meta):
 
 
 def _thread_receive(receive_func, check_func, transfer_meta):
+    LOGGER.debug(f"[GET] getting: transfer_meta={transfer_meta}")
     resp_meta = receive_func(transfer_meta)
     while resp_meta.transferStatus != federation_pb2.COMPLETE:
         if resp_meta.transferStatus in ERROR_STATES:
             raise IOError(
                 "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
         resp_meta = check_func(resp_meta)
+    LOGGER.debug(f"[GET] done: transfer_meta={transfer_meta}")
     return resp_meta
 
 
@@ -111,7 +113,7 @@ class FederationRuntime(Federation):
         cleaner = Cleaner()
 
         # async get
-        meta_futures = [(party, self._receive_meta(name, tag, party)) for party in parties]
+        meta_futures = [(party, self._receive(name, tag, party)) for party in parties]
         # block here, todo: any improvements?
         received_metas = [(party, meta.result()) for party, meta in meta_futures]
 
@@ -137,7 +139,7 @@ class FederationRuntime(Federation):
                 else:
                     num_split = obj.num_split()
                     fragments = []
-                    fragment_meta_futures = [self._receive_meta(name, self._fragment_tag(tag, i), party) for i in
+                    fragment_meta_futures = [self._receive(name, self._fragment_tag(tag, i), party) for i in
                                              range(num_split)]
                     fragment_metas = [meta.result() for meta in fragment_meta_futures]
                     for meta in fragment_metas:
@@ -199,7 +201,7 @@ class FederationRuntime(Federation):
         self._stub.send(transfer_meta)
         LOGGER.debug(f"[REMOTE] done: type={transfer_type}, table={table}, tagged_key={tagged_key}")
 
-    def _receive_meta(self, name, tag, party: Party):
+    def _receive(self, name, tag, party: Party):
         job = basic_meta_pb2.Job(jobId=self._session_id, name=name)
         transfer_meta = TransferMeta(job=job, tag=tag, src=party.to_pb(), dst=self.local_party.to_pb(),
                                      type=federation_pb2.RECV)
