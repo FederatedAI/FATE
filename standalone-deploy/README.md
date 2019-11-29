@@ -2,11 +2,11 @@
 
 The stand-alone version provides three deployment methods, which can be selected according to your actual situation:
 
-- Install FATE using Docker [Chinese guide](./doc/Fate-V1.1单机版部署指南.md) *(Recommended)* 
+- Install FATE using Docker [Chinese guide](./doc/Fate单机版部署指南.md) *(Recommended)* 
 
-- Install FATE  in Host [Chinese guide](./doc/Fate-V1.1单机版部署指南.md) 
+- Install FATE  in Host [Chinese guide](./doc/Fate单机版部署指南.md) 
 
-- Build FATE from Source with Docker [Chinese guide](./doc/Fate-V1.1单机版部署指南.md)(It takes 40 minutes or more)
+- Build FATE from Source with Docker [Chinese guide](./doc/Fate单机版部署指南.md)(It takes 40 minutes or more)
 
   
 
