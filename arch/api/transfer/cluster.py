@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-import asyncio
+import typing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Union, Tuple
 
@@ -41,27 +41,92 @@ ERROR_STATES = [federation_pb2.CANCELLED, federation_pb2.ERROR]
 LOGGER = getLogger()
 
 
-async def _async_receive(stub, transfer_meta):
-    resp_meta = stub.recv(transfer_meta)
-    while resp_meta.transferStatus != federation_pb2.COMPLETE:
-        if resp_meta.transferStatus in ERROR_STATES:
-            raise IOError(
-                "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
-        resp_meta = stub.checkStatusNow(resp_meta)
-        await asyncio.sleep(1)
-    return resp_meta
-
-
-def _thread_receive(receive_func, check_func, transfer_meta):
-    LOGGER.debug(f"[GET] getting: transfer_meta={transfer_meta}")
+def _await_ready(receive_func, check_func, transfer_meta):
     resp_meta = receive_func(transfer_meta)
     while resp_meta.transferStatus != federation_pb2.COMPLETE:
         if resp_meta.transferStatus in ERROR_STATES:
             raise IOError(
                 "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
         resp_meta = check_func(resp_meta)
-    LOGGER.debug(f"[GET] done: transfer_meta={transfer_meta}")
-    return resp_meta
+
+
+def _thread_receive(receive_func, check_func, name, tag, session_id, src_party, dst_party):
+    log_msg = f"src={src_party}, dst={dst_party}, name={name}, tag={tag}, session_id={session_id}"
+    LOGGER.debug(f"[GET] start: {log_msg}")
+    job = basic_meta_pb2.Job(jobId=session_id, name=name)
+    transfer_meta = TransferMeta(job=job, tag=tag, src=src_party.to_pb(), dst=dst_party.to_pb(),
+                                 type=federation_pb2.RECV)
+    recv_meta = _await_ready(receive_func, check_func, transfer_meta)
+    desc = recv_meta.dataDesc
+
+    if desc.transferDataType == federation_pb2.DTABLE:
+        LOGGER.debug(
+            f"[GET] table ready: src={src_party}, dst={dst_party}, name={name}, tag={tag}, session_id={session_id}")
+        table = _get_table(recv_meta)
+        return table, table
+
+    if desc.transferDataType == federation_pb2.OBJECT:
+        obj_table = _cache_get_obj_storage_table[src_party]
+        __tagged_key = _ser_des.deserialize(desc.taggedVariableName)
+        obj = obj_table.get(__tagged_key)
+        keys = [__tagged_key]
+
+        if not is_split_head(obj):
+            LOGGER.debug(f"[GET] object ready: {log_msg}")
+            return obj, (obj_table, keys)
+        num_split = obj.num_split()
+        for i in range(num_split):
+            LOGGER.debug(f"[GET] getting fragments({i + 1}/{num_split}): {log_msg}")
+            job = basic_meta_pb2.Job(jobId=session_id, name=name)
+            transfer_meta = TransferMeta(job=job, tag=_fragment_tag(tag, i), src=src_party.to_pb(),
+                                         dst=dst_party.to_pb(), type=federation_pb2.RECV)
+            _resp_meta = _await_ready(receive_func, check_func, transfer_meta)
+            LOGGER.debug(f"[GET] fragments({i + 1}/{num_split}) ready: {log_msg}")
+            __fragment_tagged_key = _ser_des.deserialize(_resp_meta.dataDesc.taggedVariableName)
+            keys.append(__fragment_tagged_key)
+        LOGGER.debug(f"[GET] large object ready: {log_msg}")
+        return obj, (obj_table, keys)
+    else:
+        raise IOError(f"unknown transfer type: {recv_meta.dataDesc.transferDataType}")
+
+
+def _fragment_tag(tag, idx):
+    return f"{tag}.__frag__{idx}"
+
+
+def _get_table(transfer_data_desc):
+    name = transfer_data_desc.storageLocator.name,
+    namespace = transfer_data_desc.storageLocator.namespace,
+    persistent = transfer_data_desc.storageLocator.type != storage_basic_pb2.IN_MEMORY
+    return _EggRoll.get_instance().table(name=name, namespace=namespace, persistent=persistent)
+
+
+# noinspection PyProtectedMember
+def _get_storage_locator(table):
+    return storage_basic_pb2.StorageLocator(type=table._type,
+                                            namespace=table._namespace,
+                                            name=table._name,
+                                            fragment=table._partitions)
+
+
+def _create_table(name, namespace, persistent=True):
+    return _EggRoll.get_instance().table(name=name, namespace=namespace, persistent=persistent)
+
+
+_cache_remote_obj_storage_table = {}
+_cache_get_obj_storage_table = {}
+
+
+def _get_obj_storage_table_name(src, dst):
+    return f"{OBJECT_STORAGE_NAME}.{src.role}-{src.party_id}-{dst.role}-{dst.party_id}"
+
+
+def _fill_cache(parties, local, session_id):
+    for party in parties:
+        if party == local:
+            continue
+        _cache_get_obj_storage_table[party] = _create_table(_get_obj_storage_table_name(party, local), session_id)
+        _cache_remote_obj_storage_table[party] = _create_table(_get_obj_storage_table_name(local, party), session_id)
 
 
 class FederationRuntime(Federation):
@@ -74,8 +139,9 @@ class FederationRuntime(Federation):
                                                  ('grpc.max_receive_message_length', -1)])
         self._stub = federation_pb2_grpc.TransferSubmitServiceStub(channel)
         self.__pool = ThreadPoolExecutor()
-        self._cache_remote_obj_storage_table = {}
-        self._cache_get_obj_storage_table = {}
+
+        # init object storage tables
+        _fill_cache(self.all_parties, self.local_party, self._session_id)
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Cleaner:
         if isinstance(parties, Party):
@@ -87,126 +153,88 @@ class FederationRuntime(Federation):
         if isinstance(obj, _DTable):
             obj.set_gc_disable()
             for party in parties:
+                log_msg = f"src={self.local_party}, dst={party}, name={name}, tag={tag}, session_id={self._session_id}"
+                LOGGER.debug(f"[REMOTE] sending table: {log_msg}")
                 self._send(transfer_type=federation_pb2.DTABLE, name=name, tag=tag, dst_party=party, cleaner=cleaner,
                            table=obj)
+                LOGGER.debug(f"[REMOTE] table done: {log_msg}")
             return cleaner
 
         # if obj is object, put it in specified dtable, then remote the dtable
         first, fragments = maybe_split_object(obj)
         for party in parties:
-            obj_table = self._remote_side_obj_storage_table(dst_party=party)
+            log_msg = f"src={self.local_party}, dst={party}, name={name}, tag={tag}, session_id={self._session_id}"
+            LOGGER.debug(f"[REMOTE] sending object: {log_msg}")
+            obj_table = _cache_remote_obj_storage_table[party]
 
             # remote object or remote fragment header
             self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=tag, dst_party=party, cleaner=cleaner,
                        table=obj_table, obj=first)
+            if not fragments:
+                LOGGER.debug(f"[REMOTE] object done: {log_msg}")
 
             # remote fragments
+            num_fragment = len(fragments)
             for fragment_index, fragment in fragments:
-                self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=self._fragment_tag(tag, fragment_index),
+                LOGGER.debug(f"[REMOTE] sending fragment({fragment_index}/{num_fragment}): {log_msg}")
+                self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=_fragment_tag(tag, fragment_index),
                            dst_party=party, cleaner=cleaner, table=obj_table, obj=fragment)
+                LOGGER.debug(f"[REMOTE] done fragment({fragment_index}/{num_fragment}): {log_msg}")
         return cleaner
 
-    # todo: this block until all task complete, make it async
-    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+    def _check_get_status_async(self, name: str, tag: str, parties: Union[Party, list]) -> dict:
         if isinstance(parties, Party):
             parties = [parties]
         self._get_side_auth(name=name, parties=parties)
+
+        futures = {
+            self.__pool.submit(_thread_receive, self._stub.recv, self._stub.checkStatus, name, tag,
+                               self._session_id, party,
+                               self.local_party): party
+            for party in parties}
+        return futures
+
+    def async_get(self, name: str, tag: str, parties: Union[Party, list]) -> typing.Generator:
         cleaner = Cleaner()
-        rtn = {}
-
-        # async get
-        meta_futures = {self._receive(name, tag, party): party for party in parties}
-        for future in as_completed(meta_futures):
-            party = meta_futures[future]
-            recv_meta = future.result()
-            desc = recv_meta.dataDesc
-            if desc.transferDataType == federation_pb2.DTABLE:
-                dest_table = self._get_table(recv_meta.dataDesc)
-                cleaner.add_table(dest_table)
-                rtn[party] = dest_table
-            elif desc.transferDataType == federation_pb2.OBJECT:
-                obj_table = self._get_side_obj_storage_table(src_party=party)
-                __tagged_key = _ser_des.deserialize(desc.taggedVariableName)
-                obj = obj_table.get(__tagged_key)
-
-                if not is_split_head(obj):
-                    cleaner.add_obj(obj_table, __tagged_key)
-                    rtn[party] = obj
-                else:
-                    num_split = obj.num_split()
-                    fragments = []
-                    fragment_meta_futures = [self._receive(name, self._fragment_tag(tag, i), party) for i in
-                                             range(num_split)]
-                    fragment_metas = [meta.result() for meta in fragment_meta_futures]
-                    for meta in fragment_metas:
-                        __fragment_tagged_key = _ser_des.deserialize(meta.dataDesc.taggedVariableName)
-                        fragments.append(obj_table.get(__fragment_tagged_key))
-                        cleaner.add_obj(obj_table, __fragment_tagged_key)
-                    rtn[party] = split_get(fragments)
+        futures = self._check_get_status_async(name, tag, parties)
+        for future in as_completed(futures):
+            party = futures[future]
+            obj, additions = future.result()
+            if isinstance(obj, _DTable):
+                cleaner.add_table(obj)
+                yield (party, obj)
             else:
-                raise IOError(f"unknown transfer type: {recv_meta.dataDesc.transferDataType}")
-        return [rtn[party] for party in parties], cleaner
+                table, keys = additions
+                for key in keys:
+                    cleaner.add_obj(table, key)
+                if not is_split_head(obj):
+                    yield (party, obj)
+                else:
+                    fragments = [table.get(key) for key in keys]
+                    yield (party, split_get(fragments))
+        yield (None, cleaner)
 
-    """internal utils"""
-
-    @staticmethod
-    def _fragment_tag(tag, idx):
-        return f"{tag}.__frag__{idx}"
-
-    def _create_storage_table(self, src_party, dst_party):
-        name = f"{OBJECT_STORAGE_NAME}.{src_party.role}-{src_party.party_id}-{dst_party.role}-{dst_party.party_id}"
-        return _EggRoll.get_instance().table(name=name, namespace=self._session_id)
-
-    def _remote_side_obj_storage_table(self, dst_party: Party):
-        if dst_party in self._cache_remote_obj_storage_table:
-            return self._cache_remote_obj_storage_table[dst_party]
-
-        table = self._create_storage_table(self.local_party, dst_party)
-        self._cache_remote_obj_storage_table[dst_party] = table
-        return table
-
-    def _get_side_obj_storage_table(self, src_party: Party):
-        if src_party in self._cache_get_obj_storage_table:
-            return self._cache_get_obj_storage_table[src_party]
-
-        table = self._create_storage_table(src_party, self.local_party)
-        self._cache_get_obj_storage_table[src_party] = table
-        return table
-
-    @staticmethod
-    def _get_table(transfer_data_desc):
-        name = transfer_data_desc.storageLocator.name,
-        namespace = transfer_data_desc.storageLocator.namespace,
-        persistent = transfer_data_desc.storageLocator.type != storage_basic_pb2.IN_MEMORY
-        return _EggRoll.get_instance().table(name=name, namespace=namespace, persistent=persistent)
+    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+        rtn = {}
+        cleaner = None
+        for p, v in self.async_get(name, tag, parties):
+            if p is not None:
+                rtn[p] = v
+            else:
+                cleaner = v
+        return [rtn[p] for p in parties], cleaner
 
     def _send(self, transfer_type, name: str, tag: str, dst_party: Party, cleaner: Cleaner, table: _DTable, obj=None):
         tagged_key = f"{name}-{tag}"
-        LOGGER.debug(f"[REMOTE] sending: type={transfer_type}, table={table}, tagged_key={tagged_key}")
         if transfer_type == federation_pb2.OBJECT:
             table.put(tagged_key, obj)
             cleaner.add_obj(table, tagged_key)
         else:
             cleaner.add_table(table)
         data_desc = TransferDataDesc(transferDataType=transfer_type,
-                                     storageLocator=self.get_storage_locator(table),
+                                     storageLocator=_get_storage_locator(table),
                                      taggedVariableName=_ser_des.serialize(tagged_key))
         job = basic_meta_pb2.Job(jobId=self._session_id, name=name)
         transfer_meta = TransferMeta(job=job, tag=tag, src=self.local_party.to_pb(), dst=dst_party.to_pb(),
                                      dataDesc=data_desc, type=federation_pb2.SEND)
         self._stub.send(transfer_meta)
-        LOGGER.debug(f"[REMOTE] done: type={transfer_type}, table={table}, tagged_key={tagged_key}")
-
-    def _receive(self, name, tag, party: Party):
-        job = basic_meta_pb2.Job(jobId=self._session_id, name=name)
-        transfer_meta = TransferMeta(job=job, tag=tag, src=party.to_pb(), dst=self.local_party.to_pb(),
-                                     type=federation_pb2.RECV)
-        return self.__pool.submit(_thread_receive, self._stub.recv, self._stub.checkStatus, transfer_meta)
-
-    # noinspection PyProtectedMember
-    @staticmethod
-    def get_storage_locator(table):
-        return storage_basic_pb2.StorageLocator(type=table._type,
-                                                namespace=table._namespace,
-                                                name=table._name,
-                                                fragment=table._partitions)
