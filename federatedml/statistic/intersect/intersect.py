@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import hashlib
 
 from arch.api.utils import log_utils
 from federatedml.secureprotol.encode import Encode
@@ -59,7 +60,8 @@ class Intersect(object):
     @host_party_id_list.setter
     def host_party_id_list(self, host_id_list):
         if not isinstance(host_id_list, list):
-            raise ValueError("type host_party_id should be list, but get {} with {}".format(type(host_id_list), host_id_list))
+            raise ValueError(
+                "type host_party_id should be list, but get {} with {}".format(type(host_id_list), host_id_list))
         self._host_id_list = host_id_list
 
     def run(self, data_instances):
@@ -82,6 +84,9 @@ class Intersect(object):
         return intersect_ids
 
     def get_common_intersection(self, intersect_ids_list: list):
+        if len(intersect_ids_list) == 1:
+            return intersect_ids_list[0]
+
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
             if intersect_ids is None:
@@ -97,6 +102,10 @@ class RsaIntersect(Intersect):
         super().__init__(intersect_params)
         self.intersect_cache_param = intersect_params.intersect_cache_param
 
+    @staticmethod
+    def hash(value):
+        return hashlib.sha256(bytes(str(value), encoding='utf-8')).hexdigest()
+
 
 class RawIntersect(Intersect):
     def __init__(self, intersect_params):
@@ -105,6 +114,8 @@ class RawIntersect(Intersect):
         self.with_encode = intersect_params.with_encode
         self.transfer_variable = RawIntersectTransferVariable()
         self.encode_params = intersect_params.encode_params
+
+        self.task_id = None
 
     def intersect_send_id(self, data_instances):
         sid_encode_pair = None
@@ -149,15 +160,13 @@ class RawIntersect(Intersect):
 
             ids_list_size = len(recv_intersect_ids_list)
             LOGGER.info("recv_intersect_ids_list's size is {}".format(ids_list_size))
-            if ids_list_size == 1:
-                recv_intersect_ids = recv_intersect_ids_list[0]
-            elif ids_list_size > 1:
-                recv_intersect_ids = self.get_common_intersection(recv_intersect_ids_list)
-            else:
-                recv_intersect_ids = None
+
+            recv_intersect_ids = self.get_common_intersection(recv_intersect_ids_list)
 
             if self.role == consts.GUEST and len(self.host_party_id_list) > 1:
-                LOGGER.info("raw intersect send role is guest, and has {} hosts, remote the final intersect_ids to hosts".format(len(self.host_party_id_list)))
+                LOGGER.info(
+                    "raw intersect send role is guest, and has {} hosts, remote the final intersect_ids to hosts".format(
+                        len(self.host_party_id_list)))
                 self.transfer_variable.sync_intersect_ids_multi_hosts.remote(recv_intersect_ids,
                                                                              role=consts.HOST,
                                                                              idx=-1)
@@ -229,7 +238,9 @@ class RawIntersect(Intersect):
             LOGGER.info("Remote intersect ids to role-send")
 
             if self.role == consts.HOST and len(self.host_party_id_list) > 1:
-                LOGGER.info("raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(len(self.host_party_id_list)))
+                LOGGER.info(
+                    "raw intersect join role is host, and has {} hosts, get the final intersect_ids from guest".format(
+                        len(self.host_party_id_list)))
                 encode_intersect_ids = self.transfer_variable.sync_intersect_ids_multi_hosts.get(idx=0)
 
         if sid_encode_pair:
@@ -240,5 +251,12 @@ class RawIntersect(Intersect):
 
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
+
+        if self.task_id is not None:
+            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
+            for k, v in enumerate(recv_ids_list):
+                table_name = '_'.join([self.task_id, str(k)])
+                v.save_as(table_name, namespace)
+                LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids

@@ -12,7 +12,7 @@ Federatedml includes implementation of many common machine learning algorithms a
 
  <div style="text-align:center", align=center>
 <img src="../doc/images/federatedml_structure.png" alt="samples" width="500" height="300" /><br/>
-Figure 1： Federated HeteroLR Principle
+Figure 1： Federated Machine Learning Framework
 </div>
 
 ### Algorithm List

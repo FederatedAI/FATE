@@ -136,3 +136,4 @@ Werkzeug==0.15.3
 widgetsnbextension==3.4.0
 xlrd==1.1.0
 apsw==3.9.2.post1
+deprecated

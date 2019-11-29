@@ -363,9 +363,13 @@ class Tracking(object):
                 task.save()
             return task
 
-    def clean_task(self):
+    def clean_task(self, roles, party_ids):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))
         session.clean_tables(namespace=self.task_id, regex_string='*')
+        for role in roles.split(','):
+            for party_id in party_ids.split(','):
+                session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace

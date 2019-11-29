@@ -80,6 +80,16 @@ systemctl status firewalld.service
 3.5 软件环境初始化
 ------------------
 
+**1）创建用户**
+
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
+
+```
+groupadd -g 6000 apps
+useradd -s /bin/bash -g apps -d /home/app app
+passwd app
+```
+
 **1）配置sudo**
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
@@ -185,21 +195,7 @@ redis_password=fate_dev
 cxx_compile_flag=false
 ```
 
-**2）一台主机partyA+partyB同时部署****
-
-```
-#!/bin/bash
-
-user=app
-deploy_dir=/data/projects/fate
-party_list=(10000 9999)
-node_list=(192.168.0.1)
-db_auth=(fate_dev fate_dev)
-redis_password=fate_dev
-cxx_compile_flag=false
-```
-
-**3）只部署一个party**
+**2）只部署一个party**
 
 ```
 #!/bin/bash
