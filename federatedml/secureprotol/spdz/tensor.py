@@ -17,80 +17,21 @@
 import operator
 from typing import Union
 
+import gmpy2
 import numpy as np
 
 from arch.api.transfer import Party
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
-from federatedml.secureprotol.spdz import Q_FIELD
 from federatedml.secureprotol.spdz import naming
+from federatedml.secureprotol.spdz.fix_point import FixPointEndec
 from federatedml.secureprotol.spdz.random_device import RandomDevice
 from federatedml.transfer_variable.transfer_class.secret_share_transfer_variable import SecretShareTransferVariable
 
-
-class SPDZTensorShare(object):
-    def __init__(self, value, tensor_name: str = None):
-        self.value = value
-        self.tensor_name = naming.next_name() if tensor_name is None else tensor_name
-
-    def __str__(self):
-        return f"{self.tensor_name}: {self.value}"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def rename(self, tensor_name):
-        return SPDZTensorShare(value=self.value, tensor_name=tensor_name)
-
-    def __add__(self, other):
-        return add(self, other)
-
-    def __sub__(self, other):
-        return sub(self, other)
-
-    def __mul__(self, other):
-        return mul(self, other)
-
-    def __truediv__(self, other):
-        return div(self, other)
-
-    def __matmul__(self, other):
-        return SPDZ.get_instance().tensor_dot(self, other, "ij,jk->ik")
-
-    def rescontruct(self):
-        return SPDZ.get_instance().rescontruct(self)
-
-
-def binary(op, x, y, out_name=None):
-    if isinstance(x, SPDZTensorShare):
-        x_value = x.value
-    else:  # assuming x is np.ndarray or a numeric
-        x_value = x
-    if isinstance(y, SPDZTensorShare):
-        y_value = y.value
-    else:
-        y_value = y
-    z_value = op(x_value, y_value)
-    return SPDZTensorShare(z_value, out_name)
-
-
-def add(x, y, out_name=None):
-    return binary(operator.add, x, y, out_name)
-
-
-def sub(x, y, out_name=None):
-    return binary(operator.sub, x, y, out_name)
-
-
-def mul(x, y, out_name=None):
-    return binary(operator.mul, x, y, out_name)
-
-
-def div(x, y, out_name=None):
-    return binary(operator.truediv, x, y, out_name)
+Q_BITS = 60
+Q_FIELD = 2 << Q_BITS
 
 
 class SPDZ(object):
-
     __instance = None
 
     @classmethod
@@ -101,7 +42,7 @@ class SPDZ(object):
     def set_instance(cls, instance):
         cls.__instance = instance
 
-    def __init__(self, name="ss", local_party=None, all_parties=None):
+    def __init__(self, name="ss", q_field=Q_FIELD, local_party=None, all_parties=None):
 
         self._name_service = naming.NamingService(name)
         self._prev_name_service = None
@@ -122,7 +63,10 @@ class SPDZ(object):
         # paillier's keypair for multiply triplets
         self._public_key, self._private_key = PaillierKeypair.generate_keypair(1024)
 
+        self._fix_point_encoder = FixPointEndec(Q_FIELD)
+
         self.set_instance(self)
+        self._r_device = RandomDevice(q_field)
 
     def __enter__(self):
         self._prev_name_service = naming.set_naming_service(self._name_service)
@@ -138,12 +82,12 @@ class SPDZ(object):
     def __reduce__(self):
         raise PermissionError("it's unsafe to transfer this")
 
-    def share(self, tensor_name, source: Union[np.ndarray, Party]) -> SPDZTensorShare:
+    def share(self, tensor_name, source: Union[np.ndarray, Party]) -> 'SPDZTensorShare':
         if isinstance(source, np.ndarray):
-            _pre = RandomDevice.rand(source)
+            _pre = self._r_device.rand(source)
             self._remote_share(share=_pre, tensor_name=tensor_name, party=self._other_parties[0])
             for _party in self._other_parties[1:]:
-                r = RandomDevice.rand(source)
+                r = self._r_device.rand(source)
                 self._remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
             share = SPDZTensorShare(source - _pre, tensor_name)
@@ -159,7 +103,7 @@ class SPDZ(object):
             target_name = self._next_name()
 
         def _dot(_x, _y):
-            return np.einsum(einsum_expr, _x, _y, optimize=True)
+            return np.einsum(einsum_expr, _x, _y, optimize=True) % Q_FIELD
 
         a, b, c = self.tensor_dot_triplets(x, y, einsum_expr, target_name, schema="rectangle")
 
@@ -171,6 +115,8 @@ class SPDZ(object):
         cross = c - _dot(a, mix_r) - _dot(mix_l, b)
         if self._party_idx == 0:
             cross += _dot(mix_l, mix_r)
+        cross = cross % Q_FIELD
+        cross = self._fix_point_encoder.scaler2(cross, self._party_idx)
         share = SPDZTensorShare(cross, target_name)
         return share
 
@@ -282,7 +228,7 @@ class SPDZ(object):
         else:
             raise ValueError(f"schema {schema} unknown")
 
-        return random_tensor_a, random_tensor_b, c
+        return random_tensor_a % Q_FIELD, random_tensor_b % Q_FIELD, c % Q_FIELD
 
     def rescontruct(self, operand, tensor_name=None):
         if isinstance(operand, SPDZTensorShare):
@@ -303,8 +249,8 @@ class SPDZ(object):
         # get shares from other parties
         acc = share
         for other_share in self._get_rescontruct_shares(name):
-            acc = acc + other_share
-        return acc
+            acc = (acc + other_share) % Q_FIELD
+        return acc % Q_FIELD
 
     def partial_rescontruct(self):
         # todo: partial parties gets rescontructed tensor
@@ -333,3 +279,68 @@ class SPDZ(object):
 
     def _get_encrypted_cross_tensors(self, parties, tag):
         return self._mul_triplets_cross_variable.get_parties(parties=parties, suffix=tag)
+
+
+class SPDZTensorShare(object):
+    def __init__(self, value, tensor_name: str = None):
+        self.value = value
+        self.tensor_name = naming.next_name() if tensor_name is None else tensor_name
+
+    def shape(self):
+        return self.value.shape
+
+    def __str__(self):
+        return f"{self.tensor_name}: {self.value}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def rename(self, tensor_name):
+        return SPDZTensorShare(value=self.value, tensor_name=tensor_name)
+
+    def __add__(self, other):
+        return add(self, other)
+
+    def __sub__(self, other):
+        return sub(self, other)
+
+    def __mul__(self, other):
+        return mul(self, other)
+
+    def __truediv__(self, other):
+        return div(self, other)
+
+    def __matmul__(self, other):
+        return SPDZ.get_instance().tensor_dot(self, other, "ij,jk->ik")
+
+    def rescontruct(self):
+        return SPDZ.get_instance().rescontruct(self)
+
+
+def binary(op, x, y, out_name=None):
+    if isinstance(x, SPDZTensorShare):
+        x_value = x.value
+    else:  # assuming x is np.ndarray or a numeric
+        x_value = x
+    if isinstance(y, SPDZTensorShare):
+        y_value = y.value
+    else:
+        y_value = y
+    z_value = op(x_value, y_value) % Q_FIELD
+    return SPDZTensorShare(z_value, out_name)
+
+
+def add(x, y, out_name=None):
+    return binary(operator.add, x, y, out_name)
+
+
+def sub(x, y, out_name=None):
+    return binary(operator.sub, x, y, out_name)
+
+
+def mul(x, y, out_name=None):
+    return binary(operator.mul, x, y, out_name)
+
+
+def div(x, y, out_name=None):
+    return binary(operator.truediv, x, y, out_name)

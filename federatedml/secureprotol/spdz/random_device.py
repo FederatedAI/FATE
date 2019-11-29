@@ -18,18 +18,16 @@ import random
 import numpy as np
 
 
-#  need system random?
-from federatedml.secureprotol.spdz import Q_FIELD
-
-
 class RandomDevice(object):
     r = random.SystemRandom()
 
-    @classmethod
-    def rand(cls, value, field=Q_FIELD):
+    def __init__(self, q_field):
+        self._q_field = q_field
+
+    def rand(self, value):
         shape = value.shape
-        ret = np.zeros(shape)
+        ret = np.zeros(shape, dtype=np.int64)
         view = ret.view().reshape(-1)
         for i in range(ret.size):
-            view[i] = cls.r.randint(1, field)
+            view[i] = self.r.randint(1, self._q_field)
         return ret

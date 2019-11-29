@@ -34,6 +34,7 @@ def set_naming_service(service):
     __global_naming_service = service
     return prev
 
+
 def next_name():
     global __global_naming_service
     return __global_naming_service.next()

@@ -13,7 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-
-Q_BITS = 5
-Q_FIELD = 2 << Q_BITS
