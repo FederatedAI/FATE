@@ -16,7 +16,6 @@
 import abc
 from typing import Tuple, Union
 
-from arch.api.proto import federation_pb2
 from arch.api.utils import file_utils
 
 __all__ = ["Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
@@ -53,6 +52,7 @@ class Party(object):
         return self.party_id == other.party_id and self.role == other.role
 
     def to_pb(self):
+        from arch.api.proto import federation_pb2
         return federation_pb2.Party(partyId=f"{self.party_id}", name=self.role)
 
 

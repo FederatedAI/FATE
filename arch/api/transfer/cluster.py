@@ -28,9 +28,10 @@ from arch.api.transfer import Party, Federation
 from arch.api.utils import eggroll_serdes
 from arch.api.utils.log_utils import getLogger
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
-# noinspection PyProtectedMember
 from eggroll.api.cluster.eggroll import _DTable, _EggRoll
 from eggroll.api.proto import basic_meta_pb2, storage_basic_pb2
+
+# noinspection PyProtectedMember
 
 _ser_des = eggroll_serdes.PickleSerdes
 
@@ -48,6 +49,7 @@ def _await_ready(receive_func, check_func, transfer_meta):
             raise IOError(
                 "receive terminated, state: {}".format(federation_pb2.TransferStatus.Name(resp_meta.transferStatus)))
         resp_meta = check_func(resp_meta)
+    return resp_meta
 
 
 def _thread_receive(receive_func, check_func, name, tag, session_id, src_party, dst_party):
@@ -62,7 +64,7 @@ def _thread_receive(receive_func, check_func, name, tag, session_id, src_party, 
     if desc.transferDataType == federation_pb2.DTABLE:
         LOGGER.debug(
             f"[GET] table ready: src={src_party}, dst={dst_party}, name={name}, tag={tag}, session_id={session_id}")
-        table = _get_table(recv_meta)
+        table = _get_table(desc)
         return table, table
 
     if desc.transferDataType == federation_pb2.OBJECT:
@@ -95,8 +97,8 @@ def _fragment_tag(tag, idx):
 
 
 def _get_table(transfer_data_desc):
-    name = transfer_data_desc.storageLocator.name,
-    namespace = transfer_data_desc.storageLocator.namespace,
+    name = transfer_data_desc.storageLocator.name
+    namespace = transfer_data_desc.storageLocator.namespace
     persistent = transfer_data_desc.storageLocator.type != storage_basic_pb2.IN_MEMORY
     return _EggRoll.get_instance().table(name=name, namespace=namespace, persistent=persistent)
 
@@ -182,9 +184,7 @@ class FederationRuntime(Federation):
                 LOGGER.debug(f"[REMOTE] done fragment({fragment_index}/{num_fragment}): {log_msg}")
         return cleaner
 
-    def _check_get_status_async(self, name: str, tag: str, parties: Union[Party, list]) -> dict:
-        if isinstance(parties, Party):
-            parties = [parties]
+    def _check_get_status_async(self, name: str, tag: str, parties: list) -> dict:
         self._get_side_auth(name=name, parties=parties)
 
         futures = {
@@ -194,7 +194,7 @@ class FederationRuntime(Federation):
             for party in parties}
         return futures
 
-    def async_get(self, name: str, tag: str, parties: Union[Party, list]) -> typing.Generator:
+    def async_get(self, name: str, tag: str, parties: list) -> typing.Generator:
         cleaner = Cleaner()
         futures = self._check_get_status_async(name, tag, parties)
         for future in as_completed(futures):
@@ -215,6 +215,8 @@ class FederationRuntime(Federation):
         yield (None, cleaner)
 
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+        if isinstance(parties, Party):
+            parties = [parties]
         rtn = {}
         cleaner = None
         for p, v in self.async_get(name, tag, parties):
