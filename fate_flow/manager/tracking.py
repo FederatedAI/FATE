@@ -15,7 +15,7 @@
 #
 from typing import List
 
-from arch.api import session
+from arch.api import session, WorkMode
 from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64, get_lan_ip
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -418,10 +418,11 @@ class Tracking(object):
 
 
     def job_quantity_constraint(self):
-        if self.role == 'host':
-            running_jobs = job_utils.query_job(status='running', role=self.role)
-            if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
-                raise Exception('The job running on the host side exceeds the maximum running amount')
+        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
+            if self.role == 'host':
+                running_jobs = job_utils.query_job(status='running', role=self.role)
+                if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
+                    raise Exception('The job running on the host side exceeds the maximum running amount')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace
