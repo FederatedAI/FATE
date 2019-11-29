@@ -46,7 +46,7 @@ def _attr_injected_meta_class(**attrs):
     return _AttrInjected
 
 
-def segment_transfer_enabled(max_part_size=0x100000000):
+def segment_transfer_enabled(max_part_size=0x1fffc00):
     """
     a metaclass, indicate objects in this class should be transfer in segments
     Args:
@@ -59,7 +59,7 @@ def maybe_split_object(obj):
     if not is_splitable_obj(obj):
         return obj, ()
 
-    obj_bytes = Pickle.dumps(obj)
+    obj_bytes = Pickle.dumps(obj, protocol=4)
     byte_size = len(obj_bytes)
     num_slice = num_split_parts(obj, byte_size)
     if num_slice <= 1:

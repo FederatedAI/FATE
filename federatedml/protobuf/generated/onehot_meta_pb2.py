@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-meta.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
-  serialized_pb=_b('\n\x11onehot-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\",\n\nOneHotMeta\x12\x0c\n\x04\x63ols\x18\x01 \x03(\t\x12\x10\n\x08need_run\x18\x02 \x01(\x08\x42\x11\x42\x0fOneHotMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x11onehot-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"K\n\nOneHotMeta\x12\x1b\n\x13transform_col_names\x18\x01 \x03(\t\x12\x0e\n\x06header\x18\x02 \x03(\t\x12\x10\n\x08need_run\x18\x03 \x01(\x08\x42\x11\x42\x0fOneHotMetaProtob\x06proto3')
 )
 
 
@@ -33,15 +33,22 @@ _ONEHOTMETA = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='cols', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.cols', index=0,
+      name='transform_col_names', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.transform_col_names', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.need_run', index=1,
-      number=2, type=8, cpp_type=7, label=1,
+      name='header', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.header', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.need_run', index=2,
+      number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -59,7 +66,7 @@ _ONEHOTMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=105,
+  serialized_end=136,
 )
 
 DESCRIPTOR.message_types_by_name['OneHotMeta'] = _ONEHOTMETA
