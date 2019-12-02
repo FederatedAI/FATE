@@ -65,29 +65,42 @@ def _thread_receive(receive_func, check_func, name, tag, session_id, src_party, 
         LOGGER.debug(
             f"[GET] table ready: src={src_party}, dst={dst_party}, name={name}, tag={tag}, session_id={session_id}")
         table = _get_table(desc)
-        return table, table
+        return table, table, None
 
     if desc.transferDataType == federation_pb2.OBJECT:
         obj_table = _cache_get_obj_storage_table[src_party]
         __tagged_key = _ser_des.deserialize(desc.taggedVariableName)
         obj = obj_table.get(__tagged_key)
-        keys = [__tagged_key]
 
         if not is_split_head(obj):
             LOGGER.debug(f"[GET] object ready: {log_msg}")
-            return obj, (obj_table, keys)
+            return obj, (obj_table, __tagged_key), None
+
         num_split = obj.num_split()
-        for i in range(num_split):
-            LOGGER.debug(f"[GET] getting fragments({i + 1}/{num_split}): {log_msg}")
+        LOGGER.debug(f"[GET] num_fragments={num_split}: {log_msg}")
+        fragment_keys = []
+        fragment_table = obj_table
+        if REMOTE_FRAGMENT_OBJECT_USE_D_TABLE:
+            LOGGER.debug(f"[GET] getting fragments table: {log_msg}")
             job = basic_meta_pb2.Job(jobId=session_id, name=name)
-            transfer_meta = TransferMeta(job=job, tag=_fragment_tag(tag, i), src=src_party.to_pb(),
+            transfer_meta = TransferMeta(job=job, tag=f"{tag}.fragments_table", src=src_party.to_pb(),
                                          dst=dst_party.to_pb(), type=federation_pb2.RECV)
             _resp_meta = _await_ready(receive_func, check_func, transfer_meta)
-            LOGGER.debug(f"[GET] fragments({i + 1}/{num_split}) ready: {log_msg}")
-            __fragment_tagged_key = _ser_des.deserialize(_resp_meta.dataDesc.taggedVariableName)
-            keys.append(__fragment_tagged_key)
+            table = _get_table(_resp_meta.dataDesc)
+            fragment_table = table
+            fragment_keys.extend(list(range(num_split)))
+        else:
+            for i in range(num_split):
+                LOGGER.debug(f"[GET] getting fragments({i + 1}/{num_split}): {log_msg}")
+                job = basic_meta_pb2.Job(jobId=session_id, name=name)
+                transfer_meta = TransferMeta(job=job, tag=_fragment_tag(tag, i), src=src_party.to_pb(),
+                                             dst=dst_party.to_pb(), type=federation_pb2.RECV)
+                _resp_meta = _await_ready(receive_func, check_func, transfer_meta)
+                LOGGER.debug(f"[GET] fragments({i + 1}/{num_split}) ready: {log_msg}")
+                __fragment_tagged_key = _ser_des.deserialize(_resp_meta.dataDesc.taggedVariableName)
+                fragment_keys.append(__fragment_tagged_key)
         LOGGER.debug(f"[GET] large object ready: {log_msg}")
-        return obj, (obj_table, keys)
+        return obj, (obj_table, __tagged_key), (fragment_table, fragment_keys)
     else:
         raise IOError(f"unknown transfer type: {recv_meta.dataDesc.transferDataType}")
 
@@ -220,18 +233,19 @@ class FederationRuntime(Federation):
         futures = self._check_get_status_async(name, tag, parties)
         for future in as_completed(futures):
             party = futures[future]
-            obj, additions = future.result()
+            obj, head, frags = future.result()
             if isinstance(obj, _DTable):
                 cleaner.add_table(obj)
                 yield (party, obj)
             else:
-                table, keys = additions
-                for key in keys:
-                    cleaner.add_obj(table, key)
+                table, key = head
+                cleaner.add_obj(table, key)
                 if not is_split_head(obj):
                     yield (party, obj)
                 else:
-                    fragments = [table.get(key) for key in keys]
+                    frag_table, frag_keys = frags
+                    cleaner.add_table(frag_table)
+                    fragments = [frag_table.get(key) for key in frag_keys]
                     yield (party, split_get(fragments))
         yield (None, cleaner)
 
