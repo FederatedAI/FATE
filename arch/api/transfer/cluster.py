@@ -28,16 +28,16 @@ from arch.api.transfer import Party, Federation
 from arch.api.utils import eggroll_serdes
 from arch.api.utils.log_utils import getLogger
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
+# noinspection PyProtectedMember
 from eggroll.api.cluster.eggroll import _DTable, _EggRoll
 from eggroll.api.proto import basic_meta_pb2, storage_basic_pb2
-
-# noinspection PyProtectedMember
 
 _ser_des = eggroll_serdes.PickleSerdes
 
 OBJECT_STORAGE_NAME = "__federation__"
 
 ERROR_STATES = [federation_pb2.CANCELLED, federation_pb2.ERROR]
+REMOTE_FRAGMENT_OBJECT_USE_D_TABLE = True
 
 LOGGER = getLogger()
 
@@ -115,6 +115,12 @@ def _create_table(name, namespace, persistent=True):
     return _EggRoll.get_instance().table(name=name, namespace=namespace, persistent=persistent)
 
 
+def _create_fragment_obj_table(namespace, persistent=True):
+    eggroll = _EggRoll.get_instance()
+    name = eggroll.generateUniqueId()
+    return eggroll.table(name=name, namespace=namespace, persistent=persistent)
+
+
 _cache_remote_obj_storage_table = {}
 _cache_get_obj_storage_table = {}
 
@@ -164,6 +170,12 @@ class FederationRuntime(Federation):
 
         # if obj is object, put it in specified dtable, then remote the dtable
         first, fragments = maybe_split_object(obj)
+        num_fragment = len(fragments)
+
+        if REMOTE_FRAGMENT_OBJECT_USE_D_TABLE and num_fragment > 1:
+            fragment_storage_table = _create_fragment_obj_table(self._session_id)
+            fragment_storage_table.put_all(fragments)
+
         for party in parties:
             log_msg = f"src={self.local_party}, dst={party}, name={name}, tag={tag}, session_id={self._session_id}"
             LOGGER.debug(f"[REMOTE] sending object: {log_msg}")
@@ -176,12 +188,21 @@ class FederationRuntime(Federation):
                 LOGGER.debug(f"[REMOTE] object done: {log_msg}")
 
             # remote fragments
-            num_fragment = len(fragments)
-            for fragment_index, fragment in fragments:
-                LOGGER.debug(f"[REMOTE] sending fragment({fragment_index}/{num_fragment}): {log_msg}")
-                self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=_fragment_tag(tag, fragment_index),
-                           dst_party=party, cleaner=cleaner, table=obj_table, obj=fragment)
-                LOGGER.debug(f"[REMOTE] done fragment({fragment_index}/{num_fragment}): {log_msg}")
+            # impl 1
+            if REMOTE_FRAGMENT_OBJECT_USE_D_TABLE and num_fragment > 1:
+                LOGGER.debug(f"[REMOTE] sending fragment table: {log_msg}")
+                # noinspection PyUnboundLocalVariable
+                self._send(transfer_type=federation_pb2.DTABLE, name=name, tag=f"{tag}.fragments_table",
+                           dst_party=party, cleaner=cleaner, table=fragment_storage_table)
+                LOGGER.debug(f"[REMOTE] done fragment table: {log_msg}")
+            # impl 2
+            elif not REMOTE_FRAGMENT_OBJECT_USE_D_TABLE:
+                for fragment_index, fragment in fragments:
+                    LOGGER.debug(f"[REMOTE] sending fragment({fragment_index}/{num_fragment}): {log_msg}")
+                    self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=_fragment_tag(tag, fragment_index),
+                               dst_party=party, cleaner=cleaner, table=obj_table, obj=fragment)
+                    LOGGER.debug(f"[REMOTE] done fragment({fragment_index}/{num_fragment}): {log_msg}")
+
         return cleaner
 
     def _check_get_status_async(self, name: str, tag: str, parties: list) -> dict:
