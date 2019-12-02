@@ -69,10 +69,10 @@ def cancel_job(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
+@manager.route('/<job_id>/<role>/<party_id>/<roles>/<party_ids>/clean', methods=['POST'])
 @request_authority_certification
-def clean(job_id, role, party_id):
-    JobController.clean_job(job_id=job_id, role=role, party_id=party_id)
+def clean(job_id, role, party_id, roles, party_ids):
+    JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=roles, party_ids=party_ids)
     return get_json_result(retcode=0, retmsg='success')
 
 

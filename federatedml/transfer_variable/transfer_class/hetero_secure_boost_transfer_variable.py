@@ -23,12 +23,12 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.tree_dim = Variable(name='HeteroSecureBoostingTreeTransferVariable.tree_dim', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.stop_flag = Variable(name='HeteroSecureBoostingTreeTransferVariable.stop_flag', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        pass
+class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.stop_flag = self._create_variable(name='stop_flag')
+        self.tree_dim = self._create_variable(name='tree_dim')

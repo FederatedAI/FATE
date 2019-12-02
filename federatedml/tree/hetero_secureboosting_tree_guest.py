@@ -263,7 +263,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def check_convergence(self, loss):
         LOGGER.info("check convergence")
         if self.convegence is None:
-            self.convegence = converge_func_factory(params.converge_func, params.eps)
+            self.convegence = converge_func_factory("diff", self.tol)
 
         return self.convegence.is_converge(loss)
 

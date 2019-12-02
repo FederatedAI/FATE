@@ -246,7 +246,7 @@ class NumpyWeights(Weights):
     def map_values(self, func, inplace):
         if inplace:
             size = self._weights.size
-            view = self._weights.view.reshape(size)
+            view = self._weights.view().reshape(size)
             for i in range(size):
                 view[i] = func(view[i])
             return self
@@ -258,7 +258,7 @@ class NumpyWeights(Weights):
     def binary_op(self, other: 'NumpyWeights', func, inplace):
         if inplace:
             size = self._weights.size
-            view = self._weights.view.reshape(size)
+            view = self._weights.view().reshape(size)
             view_other = other._weights.view.reshpae(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
@@ -270,8 +270,8 @@ class NumpyWeights(Weights):
 
     def axpy(self, a, y: 'NumpyWeights'):
         size = self._weights.size
-        view = self._weights.view.reshape(size)
-        view_other = y._weights.view.reshpae(size)
+        view = self._weights.view().reshape(size)
+        view_other = y._weights.view().reshpae(size)
         for i in range(size):
             view[i] += a * view_other[i]
         return self

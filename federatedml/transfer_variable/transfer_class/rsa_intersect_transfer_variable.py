@@ -23,17 +23,17 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class RsaIntersectTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.rsa_pubkey = Variable(name='RsaIntersectTransferVariable.rsa_pubkey', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_guest_ids = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.intersect_host_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_host_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_guest_ids_process = Variable(name='RsaIntersectTransferVariable.intersect_guest_ids_process', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_ids = Variable(name='RsaIntersectTransferVariable.intersect_ids', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.cache_version_info = Variable(name='RsaIntersectTransferVariable.cache_version_info', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.cache_version_match_info = Variable(name='RsaIntersectTransferVariable.cache_version_match_info', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        pass
+class RsaIntersectTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.cache_version_info = self._create_variable(name='cache_version_info')
+        self.cache_version_match_info = self._create_variable(name='cache_version_match_info')
+        self.intersect_guest_ids = self._create_variable(name='intersect_guest_ids')
+        self.intersect_guest_ids_process = self._create_variable(name='intersect_guest_ids_process')
+        self.intersect_host_ids_process = self._create_variable(name='intersect_host_ids_process')
+        self.intersect_ids = self._create_variable(name='intersect_ids')
+        self.rsa_pubkey = self._create_variable(name='rsa_pubkey')

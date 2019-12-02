@@ -19,7 +19,7 @@ from eggroll.api.core import EggrollSession
 _EGGROLL_CLIENT = "_eggroll_client"
 
 
-def build_eggroll_session(work_mode:WorkMode, job_id=None, server_conf_path="eggroll/conf/server_conf.json"):
+def build_eggroll_session(work_mode: WorkMode, job_id=None, server_conf_path="eggroll/conf/server_conf.json"):
     if work_mode.is_standalone():
         from eggroll.api.core import EggrollSession
         import uuid
@@ -61,4 +61,13 @@ def maybe_create_eggroll_client():
     import pickle
     from pyspark.taskcontext import TaskContext
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
-    build_eggroll_runtime(WorkMode(mode), eggroll_session)
+    if mode == 1:
+        from eggroll.api.cluster.eggroll import _EggRoll
+        if _EggRoll.instance is None:
+            from eggroll.api import ComputingEngine
+            from eggroll.api.cluster.eggroll import _EggRoll
+            eggroll_runtime = _EggRoll(eggroll_session=eggroll_session)
+            eggroll_session.set_runtime(ComputingEngine.EGGROLL_DTABLE, eggroll_runtime)
+    else:
+        from eggroll.api.standalone.eggroll import Standalone
+        Standalone(eggroll_session)
