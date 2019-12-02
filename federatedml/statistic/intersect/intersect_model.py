@@ -84,21 +84,6 @@ class IntersectModelBase(ModelBase):
             LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
         return self.intersect_ids
 
-    # def run(self, component_parameters=None, args=None):
-    #     self.guest_party_id = component_parameters["role"]["guest"][0]
-    #     self.host_party_id_list = component_parameters["role"]["host"]
-
-    #     if component_parameters["local"]["role"] == consts.HOST:
-    #         self.host_party_id = component_parameters["local"]["party_id"]
-
-    #     self._init_runtime_parameters(component_parameters)
-
-    #     if args.get("data", None) is None:
-    #         return
-
-    #     self._run_data(args["data"], stage='fit')
-
-
 class IntersectHost(IntersectModelBase):
     def __init__(self):
         super().__init__()

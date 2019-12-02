@@ -48,7 +48,7 @@ class RepeatedIDIntersect(object):
         final_id_map = {}
 
         for _data in local_data:
-            all_id_map[_data[1]].append(_data[0])
+            all_id_map[str(int(_data[1]))].append(_data[0])
 
         for k, v in all_id_map.items():
             if len(v) >= 2:
@@ -58,22 +58,13 @@ class RepeatedIDIntersect(object):
 
     @staticmethod
     def __func_restructure_id(k, v, id_map: dict):
-        result = []
         if id_map.get(k) is not None:
+            result = []
             for new_id in id_map[k]:
                 result.append((new_id, v))
-        else:
-            result.append((k, v))
+            return result
 
-        return result
-
-    def __restructure_new_data(self, data, id_map):
-        repeared_ids = [k for k, _ in id_map.items()]
-        table_repeared_ids = session.parallelize(repeared_ids)
-        _data = data.flatMap(functools.partial(self.__func_restructure_id), id_map=id_map).subtractByKey(
-            table_repeared_ids)
-
-        return _data
+        return [(k, v)]
 
     def run(self, data):
         id_map_federation = self.transfer_variable.id_map_from_guest
@@ -81,7 +72,8 @@ class RepeatedIDIntersect(object):
         if self.repeated_id_owner == consts.HOST:
             id_map_federation = self.transfer_variable.id_map_from_host
             party_role = consts.GUEST
-        LOGGER.debug("role:{}".format(self.role))
+
+        original_schema = data.schema
 
         if self.repeated_id_owner == self.role:
             id_map = self.__generate_id_map(data)
@@ -91,13 +83,18 @@ class RepeatedIDIntersect(object):
 
             one_feature = data.first()
             if isinstance(one_feature[1], Instance):
-                data = data.mapValues(lambda v: v.features[1:])
+                data = data.mapValues(
+                    lambda v: Instance(features=v.features[1:], label=v.label, inst_id=v.inst_id, weight=v.weight))
             else:
                 data = data.mapValues(lambda v: v[1:])
+            data.schema = original_schema
+            if data.schema.get('header') is not None:
+                data.schema['header'] = data.schema['header'][1:]
 
-            LOGGER.debug("data schema:{}".format(data.schema))
         else:
             id_map = id_map_federation.get(idx=0)
-            data = self.__restructure_new_data(data, id_map)
+            data = data.flatMap(functools.partial(self.__func_restructure_id, id_map=id_map))
+            # _data = data.save_as(uuid.uuid1().hex, "test", data._partitions)
+            data.schema = original_schema
 
         return data
