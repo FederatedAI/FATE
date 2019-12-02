@@ -4,6 +4,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest
+from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -51,7 +52,18 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.host_party_id_list = self.host_party_id_list
 
     def fit(self, data):
+        self.host_party_id_list = self.component_properties.host_party_idlist
+        self.guest_party_id = self.component_properties.guest_partyid
+        if self.role == consts.HOST:
+            self.host_party_id = self.component_properties.local_partyid
+
+
         self.__init_intersect_method()
+        # check cache not support repeated id
+        if self.model_param.repeated_id_process:
+            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
+            data = proc_obj.run(data=data)
+
         self.intersect_ids = self.intersection_obj.run(data)
         LOGGER.info("Finish intersection")
 
@@ -72,19 +84,19 @@ class IntersectModelBase(ModelBase):
             LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
         return self.intersect_ids
 
-    def run(self, component_parameters=None, args=None):
-        self.guest_party_id = component_parameters["role"]["guest"][0]
-        self.host_party_id_list = component_parameters["role"]["host"]
+    # def run(self, component_parameters=None, args=None):
+    #     self.guest_party_id = component_parameters["role"]["guest"][0]
+    #     self.host_party_id_list = component_parameters["role"]["host"]
 
-        if component_parameters["local"]["role"] == consts.HOST:
-            self.host_party_id = component_parameters["local"]["party_id"]
+    #     if component_parameters["local"]["role"] == consts.HOST:
+    #         self.host_party_id = component_parameters["local"]["party_id"]
 
-        self._init_runtime_parameters(component_parameters)
+    #     self._init_runtime_parameters(component_parameters)
 
-        if args.get("data", None) is None:
-            return
+    #     if args.get("data", None) is None:
+    #         return
 
-        self._run_data(args["data"], stage='fit')
+    #     self._run_data(args["data"], stage='fit')
 
 
 class IntersectHost(IntersectModelBase):
