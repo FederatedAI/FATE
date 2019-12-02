@@ -39,7 +39,7 @@ class ManuallyFilter(BaseFilterMethod):
         if self.filter_out_names is None:
             self.filter_out_names = []
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         all_filter_out_names = []
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):

@@ -40,7 +40,7 @@ class OutlierFilter(BaseFilterMethod):
     def set_statics_obj(self, statics_obj):
         self.statics_obj = statics_obj
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         if self.statics_obj is None:
             self.statics_obj = MultivariateStatisticalSummary(data_instances)
 

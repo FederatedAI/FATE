@@ -54,22 +54,27 @@ class ComponentProperties(object):
         self.local_partyid = -1
         self.guest_partyid = -1
 
-    def parse_component_param(self, component_parameters):
+    def parse_component_param(self, component_parameters, param):
+
         try:
-            need_cv = component_parameters.cv_param.need_cv
+            need_cv = param.cv_param.need_cv
         except AttributeError:
             need_cv = False
         self.need_cv = need_cv
+        LOGGER.debug(component_parameters)
+
         try:
-            need_run = component_parameters.need_run
+            need_run = param.need_run
         except AttributeError:
             need_run = True
         self.need_run = need_run
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
         self.role = component_parameters["local"]["role"]
-        self.host_party_idlist = component_parameters["role"]["host"]
-        self.local_partyid = component_parameters["local"]["party_id"]
-        self.guest_partyid = component_parameters["role"]["guest"][0]
+        self.host_party_idlist = component_parameters["role"].get("host")
+        self.local_partyid = component_parameters["local"].get("party_id")
+        self.guest_partyid = component_parameters["role"].get("guest")
+        if self.guest_partyid is not None:
+            self.guest_partyid = self.guest_partyid[0]
         return self
 
     def parse_dsl_args(self, args):
@@ -112,6 +117,12 @@ class ComponentProperties(object):
 
         running_funcs = RunningFuncs()
 
+        schema = None
+        for d in [train_data, eval_data]:
+            if d is not None:
+                schema = d.schema
+                break
+
         if not self.need_run:
             running_funcs.add_func(self.pass_data, [data], save_result=True)
             # todo_func_list.append(self.pass_data)
@@ -140,17 +151,25 @@ class ComponentProperties(object):
             running_funcs.add_func(model.predict, [train_data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['predict'])
             running_funcs.add_func(model.predict, [eval_data], save_result=True)
-            running_funcs.add_func(self.union_data, [], use_previews=True, save_result=True)
+            running_funcs.add_func(self.union_data, ["train", "validate"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
 
         elif self.has_train_data:
             running_funcs.add_func(model.set_flowid, ['fit'])
             running_funcs.add_func(model.fit, [train_data])
             running_funcs.add_func(model.set_flowid, ['validate'])
             running_funcs.add_func(model.predict, [train_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
 
         elif self.has_eval_data:
             running_funcs.add_func(model.set_flowid, ['predict'])
             running_funcs.add_func(model.predict, [eval_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["predict"], use_previews=True, save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
 
         if self.has_normal_input_data and not self.has_model:
             running_funcs.add_func(model.extract_data, [data], save_result=True)
@@ -161,8 +180,10 @@ class ComponentProperties(object):
             # todo_func_params.extend([['fit'], [data]])
 
         if self.has_normal_input_data and self.has_model:
+            running_funcs.add_func(model.extract_data, [data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['transform'])
-            running_funcs.add_func(model.transform, [data], save_result=True)
+            running_funcs.add_func(model.transform, [], use_previews=True, save_result=True)
+
         LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
             running_funcs.todo_func_list, running_funcs.todo_func_params,
             running_funcs.save_result, running_funcs.use_previews_result
@@ -171,6 +192,8 @@ class ComponentProperties(object):
 
     @staticmethod
     def pass_data(data):
+        if isinstance(data, dict) and len(data) >= 1:
+            data = list(data.values())[0]
         return data
 
     @staticmethod
@@ -181,15 +204,15 @@ class ComponentProperties(object):
         if any([x is None for x in previews_data]):
             return None
 
+        assert len(previews_data) == len(name_list)
+
         result_data = None
         for data, name in zip(previews_data, name_list):
-            data.mapValues
-
-        if len(previews_data) == 1:
-            result_data = previews_data[0]
-        else:
-            result_data = previews_data[0]
-            for data in previews_data[1:]:
+            data = data.mapValues(lambda value: value + [name])
+            if result_data is None:
+                result_data = data
+            else:
                 result_data = result_data.union(data)
+
         LOGGER.debug("union result: {}".format(result_data.first()))
         return result_data

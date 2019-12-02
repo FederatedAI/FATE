@@ -128,7 +128,7 @@ class _Optimizer(object):
         if self.penalty == consts.L1_PENALTY:
             return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
         elif self.penalty == consts.L2_PENALTY:
-            return LinearModelWeights(self.alpha * delta_s.unboxed, fit_intercept=delta_s.fit_intercept)
+            return LinearModelWeights(self.alpha * np.array(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
         else:
             return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
 
@@ -245,6 +245,7 @@ class _StochasticQuansiNewtonOptimizer(_Optimizer):
 
     def apply_gradients(self, grad):
         learning_rate = self.decay_learning_rate()
+        LOGGER.debug("__opt_hess is: {}".format(self.__opt_hess))
         if self.__opt_hess is None:
             delta_grad = learning_rate * grad
         else:

@@ -79,6 +79,10 @@ class BaseLinearModel(ModelBase):
             return self.header
         return data_instances.schema.get("header")
 
+    @property
+    def fit_intercept(self):
+        return self.init_param_obj.fit_intercept
+
     def _get_meta(self):
         raise NotImplementedError("This method should be be called here")
 

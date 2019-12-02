@@ -24,6 +24,7 @@ from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+from federatedml.util import consts
 # from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
@@ -46,6 +47,9 @@ class Binning(object):
             self.abnormal_list = []
         else:
             self.abnormal_list = abnormal_list
+
+    def set_role_party(self, role, party_id):
+        self.bin_results.set_role_party(role, party_id)
 
     @property
     def header(self):
@@ -581,6 +585,7 @@ class Binning(object):
 
 
 class HostBaseBinning(Binning):
+
     def fit_split_points(self, data_instances):
         LOGGER.warning("Should not fit split points in host binning object")
         return

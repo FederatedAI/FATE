@@ -45,7 +45,7 @@ class BinColResults(object):
         self.split_points = split_points
 
     def get_split_points(self):
-        return self.split_points
+        return np.array(self.split_points)
 
     @property
     def is_woe_monotonic(self):
@@ -97,6 +97,12 @@ class BinColResults(object):
 class BinResults(object):
     def __init__(self):
         self.all_cols_results = {}
+        self.role = ''
+        self.party_id = ''
+
+    def set_role_party(self, role, party_id):
+        self.role = role
+        self.party_id = party_id
 
     def put_col_results(self, col_name, col_results: BinColResults):
         ori_col_results = self.all_cols_results.get(col_name)
@@ -135,10 +141,15 @@ class BinResults(object):
         col_result_dict = {}
         for col_name, col_bin_result in self.all_cols_results.items():
             col_result_dict[col_name] = col_bin_result.generate_pb()
-        result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict)
+        LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
+        result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict,
+                                                                   role=self.role,
+                                                                   party_id=str(self.party_id))
         return result_pb
 
     def reconstruct(self, result_pb):
+        self.role = result_pb.role
+        self.party_id = result_pb.party_id
         binning_result = dict(result_pb.binning_result)
         for col_name, col_bin_result in binning_result.items():
             col_bin_obj = BinColResults()

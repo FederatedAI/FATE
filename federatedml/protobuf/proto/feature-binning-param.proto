@@ -40,6 +40,8 @@ message IVParam {
 
 message FeatureBinningResult {
     map<string, IVParam> binning_result = 1;
+    string role = 2;
+    string party_id = 3;
 }
 
 

@@ -93,6 +93,12 @@
         "host"
       ]
     },
+    "forward_hess": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
     "guest_hess_vector": {
       "src": "guest",
       "dst": [

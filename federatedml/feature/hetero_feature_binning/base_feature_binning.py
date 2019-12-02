@@ -40,17 +40,6 @@ class BaseHeteroFeatureBinning(ModelBase):
     """
     Do binning method through guest and host
 
-    Attributes
-    ----------
-    header : list
-        record headers of input table
-
-    has_synchronized : bool
-        Record whether the encryption information has been synchronized or not.
-
-    binning_result: dict
-        Record binning result of guest party. The format is {'col_name': 'iv_attr', ... }
-
     """
 
     def __init__(self):
@@ -77,9 +66,11 @@ class BaseHeteroFeatureBinning(ModelBase):
         else:
             # self.binning_obj = QuantileBinning(self.bin_param)
             raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
+        LOGGER.debug("in _init_model, role: {}, local_partyid: {}".format(self.role, self.component_properties))
+        self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
     def _setup_bin_inner_param(self, data_instances, params: FeatureBinningParam):
-        if self.header is not None:
+        if self.schema is not None:
             return
 
         self.header = get_header(data_instances)
@@ -160,9 +151,11 @@ class BaseHeteroFeatureBinning(ModelBase):
 
         bin_method = str(model_meta.method)
         if bin_method == consts.QUANTILE:
-            self.binning_obj = QuantileBinning(model_meta)
+            self.binning_obj = QuantileBinning(params=model_meta)
         else:
-            self.binning_obj = BucketBinning(model_meta)
+            self.binning_obj = BucketBinning(params=model_meta)
+
+        self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
         self.binning_obj.bin_results.reconstruct(model_param.binning_result)
 

@@ -31,8 +31,8 @@ class Guest(object):
         self._host_select_cols_transfer = transfer_variable.host_select_cols
         self._result_left_cols_transfer = transfer_variable.result_left_cols
 
-    def sync_select_cols(self):
-        host_select_col_names = self._host_select_cols_transfer.get(idx=-1)
+    def sync_select_cols(self, suffix=tuple()):
+        host_select_col_names = self._host_select_cols_transfer.get(idx=-1, suffix=suffix)
         host_selection_params = []
         for host_id, select_names in enumerate(host_select_col_names):
             host_selection_properties = SelectionProperties()
@@ -42,11 +42,13 @@ class Guest(object):
             host_selection_params.append(host_selection_properties)
         return host_selection_params
 
-    def sync_select_results(self, host_selection_inner_params):
+    def sync_select_results(self, host_selection_inner_params, suffix=tuple()):
         for host_id, host_select_results in enumerate(host_selection_inner_params):
+            LOGGER.debug("Send host selected result, left_col_names: {}".format(host_select_results.left_col_names))
             self._result_left_cols_transfer.remote(host_select_results.left_col_names,
                                                    role=consts.HOST,
-                                                   idx=host_id)
+                                                   idx=host_id,
+                                                   suffix=suffix)
 
 
 class Host(object):
@@ -55,14 +57,18 @@ class Host(object):
         self._host_select_cols_transfer = transfer_variable.host_select_cols
         self._result_left_cols_transfer = transfer_variable.result_left_cols
 
-    def sync_select_cols(self, encoded_names):
+    def sync_select_cols(self, encoded_names, suffix=tuple()):
         self._host_select_cols_transfer.remote(encoded_names,
                                                role=consts.GUEST,
-                                               idx=0)
+                                               idx=0,
+                                               suffix=suffix)
 
-    def sync_select_results(self, selection_param, decode_func=None):
-        left_cols_names = self._result_left_cols_transfer.get(idx=0)
+    def sync_select_results(self, selection_param, decode_func=None, suffix=tuple()):
+        left_cols_names = self._result_left_cols_transfer.get(idx=0, suffix=suffix)
         for col_name in left_cols_names:
             if decode_func is not None:
                 col_name = decode_func(col_name)
             selection_param.add_left_col_name(col_name)
+        LOGGER.debug("Received host selected result, original left_cols: {},"
+                     " left_col_names: {}".format(left_cols_names, selection_param.left_col_names))
+

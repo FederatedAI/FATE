@@ -79,6 +79,7 @@ class Guest(IVPercentileFilter):
                               value_threshold,
                               self.host_selection_properties[host_id])
             self.sync_obj.sync_select_results(self.host_selection_properties)
+        return self
 
     def get_value_threshold(self):
         total_values = []
@@ -115,12 +116,14 @@ class Host(IVPercentileFilter):
     def _parse_filter_param(self, filter_param):
         self.local_only = False
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(
             self.selection_properties.select_col_names)
-        self.sync_obj.sync_select_cols(encoded_names)
+        self.sync_obj.sync_select_cols(encoded_names, suffix=suffix)
         self.sync_obj.sync_select_results(self.selection_properties,
-                                          decode_func=self.binning_obj.bin_inner_param.decode_col_name)
+                                          decode_func=self.binning_obj.bin_inner_param.decode_col_name,
+                                          suffix=suffix)
+        return self
 
     def get_meta_obj(self, meta_dicts):
         result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)

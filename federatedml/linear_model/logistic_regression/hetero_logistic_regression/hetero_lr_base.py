@@ -16,13 +16,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from arch.api.utils import log_utils
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
-from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class HeteroLRBase(BaseLogisticRegression):
@@ -54,6 +57,9 @@ class HeteroLRBase(BaseLogisticRegression):
             gradient_loss_operator.register_gradient_computer(self.gradient_loss_operator)
             gradient_loss_operator.register_transfer_variable(self.transfer_variable)
             self.gradient_loss_operator = gradient_loss_operator
+            LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
+                params.optimizer, self.gradient_loss_operator
+            ))
 
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
         """
@@ -110,6 +116,3 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj
-
-
-

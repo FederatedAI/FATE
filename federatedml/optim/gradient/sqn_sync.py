@@ -16,9 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.util import consts
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -28,6 +29,7 @@ class SqnSyncBase(object):
         self.batch_data_index_transfer = None
         self.host_forwards_transfer = None
         self.forward_hess = None
+        self.forward_hess_transfer = None
 
 
 class Guest(SqnSyncBase):
@@ -39,6 +41,7 @@ class Guest(SqnSyncBase):
         self.batch_data_index_transfer = transfer_variable.sqn_sample_index
         self.guest_hess_vector = transfer_variable.guest_hess_vector
         self.host_forwards_transfer = transfer_variable.host_sqn_forwards
+        self.forward_hess_transfer = transfer_variable.forward_hess
 
     def sync_sample_data(self, data_instances, sample_size, random_seed, suffix=tuple()):
         n = data_instances.count()
@@ -60,9 +63,9 @@ class Guest(SqnSyncBase):
         return host_forwards
 
     def remote_forward_hess(self, forward_hess, suffix=tuple()):
-        self.host_forwards_transfer.remote(obj=forward_hess,
-                                           role=consts.HOST,
-                                           suffix=suffix)
+        self.forward_hess_transfer.remote(obj=forward_hess,
+                                          role=consts.HOST,
+                                          suffix=suffix)
 
     def sync_hess_vector(self, hess_vector, suffix):
         self.guest_hess_vector.remote(obj=hess_vector,
@@ -79,6 +82,7 @@ class Host(SqnSyncBase):
         self.batch_data_index_transfer = transfer_variable.sqn_sample_index
         self.host_forwards_transfer = transfer_variable.host_sqn_forwards
         self.host_hess_vector = transfer_variable.host_hess_vector
+        self.forward_hess_transfer = transfer_variable.forward_hess
 
     def sync_sample_data(self, data_instances, suffix=tuple()):
         batch_index = self.batch_data_index_transfer.get(idx=0,
@@ -92,8 +96,8 @@ class Host(SqnSyncBase):
                                            suffix=suffix)
 
     def get_forward_hess(self, suffix=tuple()):
-        forward_hess = self.host_forwards_transfer.get(idx=0,
-                                                       suffix=suffix)
+        forward_hess = self.forward_hess_transfer.get(idx=0,
+                                                      suffix=suffix)
         return forward_hess
 
     def sync_hess_vector(self, hess_vector, suffix):
@@ -116,7 +120,7 @@ class Arbiter(object):
         guest_hess_vector = self.guest_hess_vector.get(idx=0,
                                                        suffix=suffix)
         host_hess_vectors = self.host_hess_vector.get(idx=-1,
-                                                     suffix=suffix)
+                                                      suffix=suffix)
         host_hess_vectors = [x.reshape(-1) for x in host_hess_vectors]
         hess_vectors = np.hstack((h for h in host_hess_vectors))
         hess_vectors = np.hstack((hess_vectors, guest_hess_vector))

@@ -77,7 +77,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_sum in enumerate(encrypted_bin_sums):
+            host_party_id = self.component_properties.host_party_idlist[host_idx]
             host_binning_obj = HostBaseBinning()
+            host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
             result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
             host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             self.host_results.append(host_binning_obj)

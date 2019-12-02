@@ -51,9 +51,7 @@ class BaseLogisticRegression(BaseLinearModel):
     #     if params.multi_class == 'ovr':
     #         self.need_one_vs_rest = True
 
-    @property
-    def fit_intercept(self):
-        return self.init_param_obj.fit_intercept
+
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)

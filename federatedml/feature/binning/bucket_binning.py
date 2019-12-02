@@ -30,9 +30,6 @@ class BucketBinning(Binning):
     where k is the index of a bin.
     """
 
-    def __init__(self, params, abnormal_list=None):
-        super(BucketBinning, self).__init__(params, abnormal_list)
-
     def fit_split_points(self, data_instances):
         """
         Apply the binning method

@@ -49,7 +49,7 @@ class BaseFilterMethod(object):
     def feature_values(self):
         return self.selection_properties.feature_values
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         """
         Filter data_instances for the specified columns
 
@@ -57,6 +57,9 @@ class BaseFilterMethod(object):
         ----------
         data_instances : DTable,
             Input data
+
+        suffix : string,
+            Use for transfer_variables
 
         Returns
         -------

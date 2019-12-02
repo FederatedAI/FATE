@@ -15,11 +15,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.util.param_extract import ParamExtract
+from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
-from arch.api.utils import log_utils
-import copy
+from federatedml.util.param_extract import ParamExtract
 
 LOGGER = log_utils.getLogger()
 
@@ -34,8 +33,6 @@ class ModelBase(object):
         self.transfer_variable = None
         self.flowid = ''
         self.taskid = ''
-        self.need_run = True
-        self.need_cv = False
         self.need_one_vs_rest = False
         self.tracker = None
         self.cv_fold = 0
@@ -46,7 +43,17 @@ class ModelBase(object):
         param_extracter = ParamExtract()
         param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
         param.check()
+        self.role = self.component_properties.parse_component_param(component_parameters, param).role
         self._init_model(param)
+        return param
+
+    @property
+    def need_cv(self):
+        return self.component_properties.need_cv
+
+    @property
+    def need_run(self):
+        return self.component_properties.need_run
 
     def _init_model(self, model):
         pass
@@ -57,11 +64,11 @@ class ModelBase(object):
     def _parse_need_run(self, model_dict, model_meta_name):
         meta_obj = list(model_dict.get('model').values())[0].get(model_meta_name)
         need_run = meta_obj.need_run
-        self.need_run = need_run
+        # self.need_run = need_run
+        self.component_properties.need_run = need_run
 
     def run(self, component_parameters=None, args=None):
         self._init_runtime_parameters(component_parameters)
-        self.role = self.component_properties.parse_component_param(component_parameters).role
         self.component_properties.parse_dsl_args(args)
 
         running_funcs = self.component_properties.extract_running_rules(args, self)
@@ -69,9 +76,10 @@ class ModelBase(object):
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
             if use_previews:
-                real_param = [save_result]
                 if params:
-                    real_param.append(params)
+                    real_param = [saved_result, params]
+                else:
+                    real_param = saved_result
                 LOGGER.debug("func: {}, params: {}".format(func, real_param))
                 this_data_output = func(*real_param)
                 saved_result = []
@@ -85,7 +93,6 @@ class ModelBase(object):
             self.data_output = saved_result[0]
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
-
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -141,10 +148,19 @@ class ModelBase(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def set_predict_data_schema(self, predict_data, schema):
+    def set_predict_data_schema(self, predict_datas, schemas):
+        if predict_datas is None:
+            return predict_datas
+        if isinstance(predict_datas, list):
+            predict_data = predict_datas[0]
+            schema = schemas[0]
+        else:
+            predict_data = predict_datas
+            schema = schemas
         if predict_data is not None:
             predict_data.schema = {"header": ["label", "predict_result", "predict_score", "predict_detail", "type"],
                                    "sid_name": schema.get('sid_name')}
+        return predict_data
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:

@@ -207,21 +207,21 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
         LOGGER.debug("In update_curt_select_param, header: {}, cols_map: {},"
-                     "all_left_col_indexes: {}, select_col_names: {}".format(
+                     "last_left_col_indexes: {}, select_col_names: {}".format(
             new_select_properties.header,
             new_select_properties.col_name_maps,
-            new_select_properties.all_left_col_indexes,
+            new_select_properties.last_left_col_indexes,
             new_select_properties.select_col_names
         ))
         self.curt_select_properties = new_select_properties
 
-    def _filter(self, data_instances, method):
+    def _filter(self, data_instances, method, suffix):
         this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param, role=self.role)
         this_filter.set_selection_properties(self.curt_select_properties)
         this_filter.set_statics_obj(self.static_obj)
         this_filter.set_binning_obj(self.binning_model)
         this_filter.set_transfer_variable(self.transfer_variable)
-        this_filter.fit(data_instances)
+        self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
         LOGGER.debug("method: {}, host_select_properties: {}".format(
             method, host_select_properties))
@@ -241,8 +241,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
 
-        for method in self.filter_methods:
-            self._filter(data_instances, method)
+        for filter_idx, method in enumerate(self.filter_methods):
+            self._filter(data_instances, method, suffix=str(filter_idx))
 
         new_data = self._transfer_data(data_instances)
         LOGGER.info("Finish Hetero Selection Fit and transform.")

@@ -53,20 +53,20 @@ class HeteroBaseArbiter(BaseLinearModel):
         """
         pass
 
-    def run(self, component_parameters=None, args=None):
-        self._init_runtime_parameters(component_parameters)
-
-        if self.need_cv:
-            LOGGER.info("Task is cross validation.")
-            self.cross_validation(None)
-            return
-
-        elif not "model" in args:
-            LOGGER.info("Task is fit")
-            self.set_flowid('fit')
-            self.fit()
-        else:
-            LOGGER.info("Task is predict, No need for arbiter to involve.")
+    # def run(self, component_parameters=None, args=None):
+    #     self._init_runtime_parameters(component_parameters)
+    #
+    #     if self.need_cv:
+    #         LOGGER.info("Task is cross validation.")
+    #         self.cross_validation(None)
+    #         return
+    #
+    #     elif not "model" in args:
+    #         LOGGER.info("Task is fit")
+    #         self.set_flowid('fit')
+    #         self.fit()
+    #     else:
+    #         LOGGER.info("Task is predict, No need for arbiter to involve.")
 
     def fit(self, data_instances=None, validate_data=None):
         """
