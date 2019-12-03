@@ -733,6 +733,10 @@ class Evaluation(ModelBase):
         else:
             logging.warning("error:can not find classification type:".format(self.eval_type))
 
+    @staticmethod
+    def extract_data(data: dict):
+        return data
+
 
 class Lift(object):
     """

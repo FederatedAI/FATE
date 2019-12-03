@@ -40,6 +40,7 @@ class Union(ModelBase):
         self.allow_missing = params.allow_missing
         self.feature_count = 0
         self.is_data_instance = False
+        self.is_empty_feature = False
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -87,14 +88,14 @@ class Union(ModelBase):
             raise ValueError("Table headers do not match! Please check header.")
 
     def check_feature_length(self, data_instance):
-        if not self.is_data_instance:
+        if not self.is_data_instance or self.allow_missing:
             return
         if len(data_instance.features) != self.feature_count:
             raise ValueError("Feature length {} mismatch with header length {}.".format(len(data_instance.features), self.feature_count))
 
     def check_is_data_instance(self, table):
         entry = table.first()
-        self.is_data_instance = isinstance(entry, Instance)
+        self.is_data_instance = isinstance(entry[1], Instance)
 
     def fit(self, data):
         if len(data) <= 0:
@@ -108,6 +109,7 @@ class Union(ModelBase):
         for (key, local_table) in data.items():
             LOGGER.debug("table to combine name: {}".format(key))
             num_data = local_table.count()
+            LOGGER.debug("table count: {}".format(num_data))
             local_schema = local_table.schema
             metrics.append(Metric(key, num_data))
 
@@ -117,12 +119,10 @@ class Union(ModelBase):
                 continue
             if combined_table is None:
                 self.check_is_data_instance(local_table)
-            if self.is_data_instance and num_data > 0:
-                is_empty_feature = data_overview.is_empty_feature(local_table)
-                if is_empty_feature:
+            if self.is_data_instance:
+                self.is_empty_feature = data_overview.is_empty_feature(local_table)
+                if self.is_empty_feature:
                     LOGGER.warning("Table {} has no entries.".format(key))
-                    empty_count += 1
-                    continue
 
             if combined_table is None:
                 # first table to combine
@@ -132,19 +132,21 @@ class Union(ModelBase):
                 self.check_schema_label_name(local_schema, combined_schema)
                 self.check_schema_header(local_schema, combined_schema)
                 combined_table = combined_table.union(local_table, self._keep_first)
-            if self.is_data_instance:
-                combined_schema = make_schema(local_table.schema.get("header"),
+
+            combined_schema = make_schema(local_table.schema.get("header"),
                                               local_table.schema.get("sid"),
                                               local_table.schema.get("label_name"))
-                combined_table.schema = combined_schema
+            combined_table.schema = combined_schema
+            # only check feature length if not empty
+            if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
+                LOGGER.debug("feature count: {}".format(self.feature_count))
+                combined_table.mapValues(self.check_feature_length)
 
         if combined_table is None:
             num_data = 0
             LOGGER.warning("All tables provided are empty or have empty features.")
         else:
-            if not self.allow_missing:
-                combined_table.mapValues(self.check_feature_length)
             num_data = combined_table.count()
         metrics.append(Metric("Total", num_data))
 

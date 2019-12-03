@@ -21,14 +21,14 @@ option java_outer_classname = "FeatureSelectionMetaProto";
 
 message FeatureSelectionMeta {
     repeated string filter_methods = 1;
-    bool local_only = 2;
     repeated string cols = 3;
     UniqueValueMeta unique_meta = 4;
     IVValueSelectionMeta iv_value_meta = 5;
     IVPercentileSelectionMeta iv_percentile_meta = 6;
     VarianceOfCoeSelectionMeta variance_coe_meta = 7;
     OutlierColsSelectionMeta outlier_meta = 8;
-    bool need_run = 9;
+    ManuallyFilterMeta manually_meta = 9;
+    bool need_run = 10;
 }
 
 message UniqueValueMeta {
@@ -37,10 +37,12 @@ message UniqueValueMeta {
 
 message IVValueSelectionMeta{
     double value_threshold = 1;
+    bool local_only = 2;
 }
 
 message IVPercentileSelectionMeta{
     double percentile_threshold = 1;
+    bool local_only = 2;
 }
 
 message VarianceOfCoeSelectionMeta {
@@ -50,4 +52,8 @@ message VarianceOfCoeSelectionMeta {
 message OutlierColsSelectionMeta {
     double percentile = 1;
     double upper_threshold = 2;
+}
+
+message ManuallyFilterMeta {
+    repeated string filter_out_names = 1;
 }

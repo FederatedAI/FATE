@@ -23,14 +23,14 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroDNNLRTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.guest_dec_gradient = Variable(name='HeteroDNNLRTransferVariable.guest_dec_gradient', auth=dict(src='arbiter', dst=['guest']), transfer_variable=self)
-        self.guest_enc_gradient = Variable(name='HeteroDNNLRTransferVariable.guest_enc_gradient', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.host_dec_gradient = Variable(name='HeteroDNNLRTransferVariable.host_dec_gradient', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
-        self.host_enc_gradient = Variable(name='HeteroDNNLRTransferVariable.host_enc_gradient', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
-        pass
+class HeteroDNNLRTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.guest_dec_gradient = self._create_variable(name='guest_dec_gradient')
+        self.guest_enc_gradient = self._create_variable(name='guest_enc_gradient')
+        self.host_dec_gradient = self._create_variable(name='host_dec_gradient')
+        self.host_enc_gradient = self._create_variable(name='host_enc_gradient')

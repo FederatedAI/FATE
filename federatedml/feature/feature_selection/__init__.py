@@ -15,14 +15,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-
-################################################################################
-#
-# AUTO GENERATED TRANSFER VARIABLE CLASS. DO NOT MODIFY
-#
-################################################################################
-
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
-
-

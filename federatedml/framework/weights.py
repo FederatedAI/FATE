@@ -96,8 +96,13 @@ class Weights(object):
 
     def __add__(self, other):
         LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
-
         return self.binary_op(other, operator.add, inplace=False)
+
+    def __isub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=True)
+
+    def __sub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=False)
 
     def __truediv__(self, other):
         return self.map_values(lambda x: x / other, inplace=False)
@@ -150,14 +155,11 @@ class ListWeights(Weights):
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(self._weights[k], other._weights[k])
-            LOGGER.debug("In binary_op1, _w: {}".format(self._weights))
-            LOGGER.debug("In binary_op1, self: {}".format(self))
             return self
         else:
             _w = []
             for k, v in enumerate(self._weights):
                 _w.append(func(self._weights[k], other._weights[k]))
-            LOGGER.debug("In binary_op2, _w: {}".format(_w))
             return ListWeights(_w)
 
     def axpy(self, a, y: 'ListWeights'):
@@ -244,7 +246,7 @@ class NumpyWeights(Weights):
     def map_values(self, func, inplace):
         if inplace:
             size = self._weights.size
-            view = self._weights.view.reshape(size)
+            view = self._weights.view().reshape(size)
             for i in range(size):
                 view[i] = func(view[i])
             return self
@@ -256,7 +258,7 @@ class NumpyWeights(Weights):
     def binary_op(self, other: 'NumpyWeights', func, inplace):
         if inplace:
             size = self._weights.size
-            view = self._weights.view.reshape(size)
+            view = self._weights.view().reshape(size)
             view_other = other._weights.view.reshpae(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
@@ -268,8 +270,8 @@ class NumpyWeights(Weights):
 
     def axpy(self, a, y: 'NumpyWeights'):
         size = self._weights.size
-        view = self._weights.view.reshape(size)
-        view_other = y._weights.view.reshpae(size)
+        view = self._weights.view().reshape(size)
+        view_other = y._weights.view().reshpae(size)
         for i in range(size):
             view[i] += a * view_other[i]
         return self

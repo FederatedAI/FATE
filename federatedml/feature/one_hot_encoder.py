@@ -17,6 +17,7 @@
 import functools
 
 import numpy as np
+import math
 
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
@@ -173,10 +174,14 @@ class OneHotEncoder(ModelBase):
         LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
 
     def _init_params(self, data_instances):
+        if len(self.schema) == 0:
+            self.schema = data_instances.schema
+
         if self.inner_param is not None:
             return
         self.inner_param = OneHotInnerParam()
-        self.schema = data_instances.schema
+        # self.schema = data_instances.schema
+        LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
         self.inner_param.set_header(header)
 
@@ -208,7 +213,7 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                feature_value = int(feature[col_idx])
+                feature_value = math.ceil(feature[col_idx])
                 pair_obj.add_value(feature_value)
         return col_maps
 
@@ -298,7 +303,7 @@ class OneHotEncoder(ModelBase):
         }
         return result
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         self._parse_need_run(model_dict, MODEL_META_NAME)
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
