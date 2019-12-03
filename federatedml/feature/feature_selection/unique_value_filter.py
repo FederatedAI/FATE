@@ -49,7 +49,7 @@ class UniqueValueFilter(BaseFilterMethod):
             min_max_diff = math.fabs(max_values[col_name] - min_values[col_name])
             if min_max_diff >= self.eps:
                 self.selection_properties.add_left_col_name(col_name)
-                self.selection_properties.add_feature_value(col_name, min_max_diff)
+            self.selection_properties.add_feature_value(col_name, min_max_diff)
         self._keep_one_feature(pick_high=True)
         return self
 

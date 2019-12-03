@@ -176,9 +176,6 @@ class ComponentProperties(object):
             running_funcs.add_func(model.set_flowid, ['fit'])
             running_funcs.add_func(model.fit, [], use_previews=True, save_result=True)
 
-            # todo_func_list.extend([model.set_flowid, model.fit])
-            # todo_func_params.extend([['fit'], [data]])
-
         if self.has_normal_input_data and self.has_model:
             running_funcs.add_func(model.extract_data, [data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['transform'])

@@ -78,9 +78,9 @@ class SelectionProperties(object):
         if idx not in self.left_col_indexes:
             self.left_col_indexes.append(idx)
             self.left_col_names.append(self.header[idx])
-        LOGGER.debug("After add_left_col_name, select_col_indexes: {}, select_col_names: {}".format(
-            self.left_col_indexes, self.left_col_names
-        ))
+        # LOGGER.debug("After add_left_col_name, select_col_indexes: {}, select_col_names: {}".format(
+        #     self.left_col_indexes, self.left_col_names
+        # ))
 
     def add_feature_value(self, col_name, feature_value):
         self.feature_values[col_name] = feature_value
@@ -153,9 +153,10 @@ class CompletedSelectionResults(object):
                 self.__host_pass_filter_nums_list.append(_host_pass_filter_nums)
             else:
                 _host_pass_filter_nums = self.__host_pass_filter_nums_list[idx]
-            for col_name in host_result.all_left_col_names:
+            for col_name in host_result.last_left_col_names:
                 _host_pass_filter_nums.setdefault(col_name, 0)
-                _host_pass_filter_nums[col_name] += 1
+                if col_name in host_result.all_left_col_names:
+                    _host_pass_filter_nums[col_name] += 1
 
             feature_value_pb = feature_selection_param_pb2.FeatureValue(feature_values=host_result.feature_values)
             host_feature_values.append(feature_value_pb)
@@ -163,9 +164,11 @@ class CompletedSelectionResults(object):
                                                                left_cols=host_result.left_col_dicts)
             host_left_cols.append(left_col_pb)
 
-        for col_name in select_properties.all_left_col_names:
+        # for col_name in select_properties.all_left_col_names:
+        for col_name in select_properties.last_left_col_names:
             self.__guest_pass_filter_nums.setdefault(col_name, 0)
-            self.__guest_pass_filter_nums[col_name] += 1
+            if col_name in select_properties.all_left_col_names:
+                self.__guest_pass_filter_nums[col_name] += 1
 
         left_cols_pb = feature_selection_param_pb2.LeftCols(original_cols=select_properties.last_left_col_names,
                                                             left_cols=select_properties.left_col_dicts)

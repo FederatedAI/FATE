@@ -50,7 +50,7 @@ class OutlierFilter(BaseFilterMethod):
             quantile_value = quantile_points.get(col_name)
             if quantile_value < self.upper_threshold:
                 self.selection_properties.add_left_col_name(col_name)
-                self.selection_properties.add_feature_value(col_name, quantile_value)
+            self.selection_properties.add_feature_value(col_name, quantile_value)
         self._keep_one_feature(pick_high=True)
         return self
 

@@ -64,9 +64,9 @@ class Guest(IVPercentileFilter):
         self.host_selection_properties = []
         self.sync_obj = selection_info_sync.Guest()
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         if not self.local_only:
-            self.host_selection_properties = self.sync_obj.sync_select_cols()
+            self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
 
         value_threshold = self.get_value_threshold()
         self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
@@ -78,7 +78,7 @@ class Guest(IVPercentileFilter):
                 fit_iv_values(host_binning_obj,
                               value_threshold,
                               self.host_selection_properties[host_id])
-            self.sync_obj.sync_select_results(self.host_selection_properties)
+            self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
         return self
 
     def get_value_threshold(self):

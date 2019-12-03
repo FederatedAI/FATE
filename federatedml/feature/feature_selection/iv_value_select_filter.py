@@ -35,7 +35,7 @@ def fit_iv_values(binning_model, threshold, selection_param: SelectionProperties
         iv = col_results.iv
         if iv > threshold:
             selection_param.add_left_col_name(col_name)
-            selection_param.add_feature_value(col_name, iv)
+        selection_param.add_feature_value(col_name, iv)
     return selection_param
 
 
@@ -74,22 +74,12 @@ class Guest(IVValueSelectFilter):
         self.host_thresholds = filter_param.host_thresholds
         self.local_only = filter_param.local_only
 
-    # def set_host_party_ids(self, host_party_ids):
-    #     if self.host_thresholds is None:
-    #         self.host_thresholds = [self.value_threshold for _ in range(len(host_party_ids))]
-    #     else:
-    #         try:
-    #             assert len(host_party_ids) == len(self.host_thresholds)
-    #         except AssertionError:
-    #             raise ValueError("Iv value filters param host_threshold set error."
-    #                              " The length should match host party numbers ")
-
-    def fit(self, data_instances):
+    def fit(self, data_instances, suffix):
         self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
                                                   self.value_threshold,
                                                   self.selection_properties)
         if not self.local_only:
-            self.host_selection_properties = self.sync_obj.sync_select_cols()
+            self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
             for host_id, host_properties in enumerate(self.host_selection_properties):
                 if self.host_thresholds is None:
                     threshold = self.value_threshold
@@ -105,7 +95,7 @@ class Guest(IVValueSelectFilter):
                     host_properties.left_col_indexes, host_properties.last_left_col_indexes
                 ))
 
-            self.sync_obj.sync_select_results(self.host_selection_properties)
+            self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
         return self
 
     def get_meta_obj(self, meta_dicts):

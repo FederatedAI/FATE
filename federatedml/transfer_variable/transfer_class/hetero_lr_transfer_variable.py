@@ -23,29 +23,29 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroLRTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.paillier_pubkey = Variable(name='HeteroLRTransferVariable.paillier_pubkey', auth=dict(src='arbiter', dst=['host', 'guest']), transfer_variable=self)
-        self.batch_data_index = Variable(name='HeteroLRTransferVariable.batch_data_index', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.host_forward_dict = Variable(name='HeteroLRTransferVariable.host_forward_dict', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.fore_gradient = Variable(name='HeteroLRTransferVariable.fore_gradient', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.guest_gradient = Variable(name='HeteroLRTransferVariable.guest_gradient', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.guest_optim_gradient = Variable(name='HeteroLRTransferVariable.guest_optim_gradient', auth=dict(src='arbiter', dst=['guest']), transfer_variable=self)
-        self.host_loss_regular = Variable(name='HeteroLRTransferVariable.host_loss_regular', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.loss = Variable(name='HeteroLRTransferVariable.loss', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.loss_intermediate = Variable(name='HeteroLRTransferVariable.loss_intermediate', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.converge_flag = Variable(name='HeteroLRTransferVariable.converge_flag', auth=dict(src='arbiter', dst=['host', 'guest']), transfer_variable=self)
-        self.batch_info = Variable(name='HeteroLRTransferVariable.batch_info', auth=dict(src='guest', dst=['host', 'arbiter']), transfer_variable=self)
-        self.host_optim_gradient = Variable(name='HeteroLRTransferVariable.host_optim_gradient', auth=dict(src='arbiter', dst=['host']), transfer_variable=self)
-        self.host_gradient = Variable(name='HeteroLRTransferVariable.host_gradient', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
-        self.host_prob = Variable(name='HeteroLRTransferVariable.host_prob', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.sqn_sample_index = Variable(name='HeteroLRTransferVariable.sqn_sample_index', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.forward_hess = Variable(name='HeteroLRTransferVariable.forward_hess', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.guest_hess_vector = Variable(name='HeteroLRTransferVariable.guest_hess_vector', auth=dict(src='guest', dst=['arbiter']), transfer_variable=self)
-        self.host_sqn_forwards = Variable(name='HeteroLRTransferVariable.host_sqn_forwards', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.host_hess_vector = Variable(name='HeteroLRTransferVariable.host_hess_vector', auth=dict(src='host', dst=['arbiter']), transfer_variable=self)
-        pass
+class HeteroLRTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.batch_data_index = self._create_variable(name='batch_data_index')
+        self.batch_info = self._create_variable(name='batch_info')
+        self.converge_flag = self._create_variable(name='converge_flag')
+        self.fore_gradient = self._create_variable(name='fore_gradient')
+        self.forward_hess = self._create_variable(name='forward_hess')
+        self.guest_gradient = self._create_variable(name='guest_gradient')
+        self.guest_hess_vector = self._create_variable(name='guest_hess_vector')
+        self.guest_optim_gradient = self._create_variable(name='guest_optim_gradient')
+        self.host_forward_dict = self._create_variable(name='host_forward_dict')
+        self.host_gradient = self._create_variable(name='host_gradient')
+        self.host_hess_vector = self._create_variable(name='host_hess_vector')
+        self.host_loss_regular = self._create_variable(name='host_loss_regular')
+        self.host_optim_gradient = self._create_variable(name='host_optim_gradient')
+        self.host_prob = self._create_variable(name='host_prob')
+        self.host_sqn_forwards = self._create_variable(name='host_sqn_forwards')
+        self.loss = self._create_variable(name='loss')
+        self.loss_intermediate = self._create_variable(name='loss_intermediate')
+        self.paillier_pubkey = self._create_variable(name='paillier_pubkey')
+        self.sqn_sample_index = self._create_variable(name='sqn_sample_index')

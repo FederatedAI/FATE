@@ -26,9 +26,9 @@ LOGGER = log_utils.getLogger()
 
 class ManuallyFilter(BaseFilterMethod):
     def __init__(self, filter_param: ManuallyFilterParam):
-        super().__init__(filter_param)
         self.filter_out_indexes = []
         self.filter_out_names = []
+        super().__init__(filter_param)
 
     def _parse_filter_param(self, filter_param):
         self.filter_out_indexes = filter_param.filter_out_indexes
@@ -38,11 +38,17 @@ class ManuallyFilter(BaseFilterMethod):
 
         if self.filter_out_names is None:
             self.filter_out_names = []
+        LOGGER.debug("In _parse_filter_param, filter_out_indexes: {}, filter_out_names: {}".format(
+            filter_param.filter_out_indexes, filter_param.filter_out_names
+        ))
 
     def fit(self, data_instances, suffix):
         all_filter_out_names = []
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):
+            LOGGER.debug("Col_idx: {}, col_names: {}, filter_out_indexes: {}, filter_out_names: {}".format(
+                col_idx, col_name, self.filter_out_indexes, self.filter_out_names
+            ))
             if col_idx not in self.filter_out_indexes and col_name not in self.filter_out_names:
                 self.selection_properties.add_left_col_name(col_name)
             else:
