@@ -67,16 +67,20 @@ class RepeatedIDIntersect(object):
         return [(k, v)]
 
     def run(self, data):
+        LOGGER.info("Start repeated id processing.")
         id_map_federation = self.transfer_variable.id_map_from_guest
         party_role = consts.HOST
         if self.repeated_id_owner == consts.HOST:
             id_map_federation = self.transfer_variable.id_map_from_host
             party_role = consts.GUEST
 
-        original_schema = data.schema
+        LOGGER.info("repeated_id_owner:{}".format(self.repeated_id_owner))
 
+        original_schema = data.schema
         if self.repeated_id_owner == self.role:
             id_map = self.__generate_id_map(data)
+            LOGGER.info("finish generate id_map, id_map:{}".format(id_map))
+
             id_map_federation.remote(id_map,
                                      role=party_role,
                                      idx=-1)
@@ -90,11 +94,12 @@ class RepeatedIDIntersect(object):
             data.schema = original_schema
             if data.schema.get('header') is not None:
                 data.schema['header'] = data.schema['header'][1:]
-
         else:
             id_map = id_map_federation.get(idx=0)
+            LOGGER.info("Get id_map from owner.")
             data = data.flatMap(functools.partial(self.__func_restructure_id, id_map=id_map))
-            # _data = data.save_as(uuid.uuid1().hex, "test", data._partitions)
             data.schema = original_schema
+
+        LOGGER.info("Finish repeated id process for owner")
 
         return data
