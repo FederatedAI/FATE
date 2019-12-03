@@ -53,13 +53,13 @@ git clone --recursive git@github.com:FederatedAI/FATE.git
 ```
 
 ### KubeFATE installation:
-With KubeFATE, FATE can be deployed with docker-compose or Kubernetes:
+Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
 
-* For development or test purpose, we recommend using docker-compose, which only Docker enviroment required. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+* For development or testing purposes, docker-compose is recommended. It only requires Docker enviroment. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
 
-* For product or large scale deployment, we recommend using Kubernetes cluster as an underlaying infrastructure to manage FATE system. For more detail, please refer to: [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+* For a production or a large scale deployment, Kubernetes is recommended as an underlying infrastructure to manage FATE system. For more detail, please refer to [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
 
-Verfication steps, please refer to related instructions in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
+More instructions can be found in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
 ## Running Tests
 
