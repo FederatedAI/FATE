@@ -101,6 +101,7 @@ class HeteroLRHost(HeteroLRBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
@@ -112,7 +113,8 @@ class HeteroLRHost(HeteroLRBase):
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
+        LOGGER.debug("model_shape: {}, w shape: {}, w: {}".format(model_shape, w.shape, w))
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
@@ -125,7 +127,7 @@ class HeteroLRHost(HeteroLRBase):
                 LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
+                    batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)
                 LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
@@ -151,12 +153,7 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     def predict(self, data_instances):
-        """
-        Prediction of lr
-        Parameters
-        ----------
-        data_instances:DTable of Instance, input data
-        """
+
         LOGGER.info("Start predict ...")
         if self.need_one_vs_rest:
             self.one_vs_rest_obj.predict(data_instances)

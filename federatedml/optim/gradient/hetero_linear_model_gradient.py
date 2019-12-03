@@ -89,8 +89,21 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     return gradient
 
 
-class Guest(object):
+class HeteroGradientBase(object):
+
+    def compute_gradient_procedure(self, *args):
+        raise NotImplementedError("Should not call here")
+
+    def set_total_batch_nums(self, total_batch_nums):
+        """
+        Use for sqn gradient.
+        """
+        pass
+
+
+class Guest(HeteroGradientBase):
     def __init__(self):
+        super().__init__()
         self.host_forwards = None
         self.forwards = None
         self.aggregated_forwards = None
@@ -150,7 +163,7 @@ class Guest(object):
         return optimized_gradient
 
 
-class Host(object):
+class Host(HeteroGradientBase):
     def __init__(self):
         self.forwards = None
         self.fore_gradient = None
@@ -168,9 +181,8 @@ class Host(object):
     def compute_unilateral_gradient(self, data_instances, fore_gradient, model_weights, optimizer):
         raise NotImplementedError("Function should not be called here")
 
-    def compute_gradient_procedure(self, data_instances, model_weights,
-                                   encrypted_calculator, optimizer,
-                                   n_iter_, batch_index):
+    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
+                                   optimizer, n_iter_, batch_index):
         """
         Linear model gradient procedure
         Step 1: get host forwards which differ from different algorithm
@@ -208,7 +220,7 @@ class Host(object):
         return optimized_gradient
 
 
-class Arbiter(object):
+class Arbiter(HeteroGradientBase):
     def __init__(self):
         self.has_multiple_hosts = False
 

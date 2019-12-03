@@ -16,16 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import copy
 import functools
 
-import numpy as np
 from google.protobuf import json_format
 
 from arch.api.utils import log_utils
+from federatedml.feature.feature_selection import filter_factory
+from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
-from federatedml.feature.hetero_feature_selection.filter_result import SelfFilterResult
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
@@ -46,93 +45,69 @@ class BaseHeteroFeatureSelection(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureSelection, self).__init__()
         self.transfer_variable = HeteroFeatureSelectionTransferVariable()
-        self.cols = []  # Current cols index to do selection
 
-        self.filter_result = None
-        self.header = []
-        self.schema = {}
+        self.curt_select_properties = SelectionProperties()
+        self.completed_selection_result = CompletedSelectionResults()
+
+        self.schema = None
         self.party_name = 'Base'
-
-        self.filter_meta_list = []
-        self.filter_param_list = []
-
         # Possible previous model
         self.binning_model = None
+        self.static_obj = None
         self.model_param = FeatureSelectionParam()
-
-        # All possible meta
-        self.unique_meta = None
-        self.iv_value_meta = None
-        self.iv_percentile_meta = None
-        self.variance_coe_meta = None
-        self.outlier_meta = None
-        self.cols_list = []
-        self.host_filter_result = None
-
-        # Use to save each model's result
-        self.results = []
+        self.meta_dicts = {}
 
     def _init_model(self, params):
         self.model_param = params
-        self.cols_index = params.select_cols
+        # self.cols_index = params.select_cols
         self.filter_methods = params.filter_methods
-        self.local_only = params.local_only
+        # self.local_only = params.local_only
+
+    def _init_select_params(self, data_instances):
+        if self.schema is not None:
+            return
+        self.schema = data_instances.schema
+        header = get_header(data_instances)
+        self.curt_select_properties.set_header(header)
+        self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
+        if self.model_param.select_col_indexes == -1:
+            self.curt_select_properties.set_select_all_cols()
+        else:
+            self.curt_select_properties.add_select_col_indexes(self.model_param.select_col_indexes)
+        self.curt_select_properties.add_select_col_names(self.model_param.select_names)
+        self.completed_selection_result.set_header(header)
+        self.completed_selection_result.set_select_col_names(self.curt_select_properties.select_col_names)
 
     def _get_meta(self):
-        cols = [str(i) for i in self.cols]
-        meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(filter_methods=self.filter_methods,
-                                                                            local_only=self.model_param.local_only,
-                                                                            cols=cols,
-                                                                            unique_meta=self.unique_meta,
-                                                                            iv_value_meta=self.iv_value_meta,
-                                                                            iv_percentile_meta=self.iv_percentile_meta,
-                                                                            variance_coe_meta=self.variance_coe_meta,
-                                                                            outlier_meta=self.outlier_meta,
-                                                                            need_run=self.need_run)
+        self.meta_dicts['filter_methods'] = self.filter_methods
+        self.meta_dicts['cols'] = self.completed_selection_result.get_select_col_names()
+        self.meta_dicts['need_run'] = self.need_run
+        meta_protobuf_obj = feature_selection_meta_pb2.FeatureSelectionMeta(**self.meta_dicts)
         return meta_protobuf_obj
 
     def _get_param(self):
-        if self.filter_result is None:
-            result_obj = feature_selection_param_pb2.FeatureSelectionParam()
-            return result_obj
+        left_cols = {x: True for x in self.curt_select_properties.left_col_names}
+        final_left_cols = feature_selection_param_pb2.LeftCols(
+            original_cols=self.completed_selection_result.get_select_col_names(),
+            left_cols=left_cols
+        )
 
-        LOGGER.debug("in _get_param, self.left_cols: {}, self.original_header: {}".format(
-            self.filter_result.get_left_cols, self.header
-        ))
-
-        left_col_obj = feature_selection_param_pb2.LeftCols(original_cols=self.header,
-                                                            left_cols=self.filter_result.get_left_cols())
-
-        # col_names = self.__make_cols_list(self.cols_list)
-        # host_col_names = self.__make_cols_list(self.host_cols_list)
-        if self.party_name == consts.GUEST:
-            host_col_names = self.host_filter_result.get_sorted_col_names()
-        else:
-            host_col_names = []
+        host_col_names = []
+        for this_host_name in self.completed_selection_result.get_host_sorted_col_names():
+            LOGGER.debug("In _get_param, this_host_name: {}".format(this_host_name))
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name))
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
-            results=self.results,
-            final_left_cols=left_col_obj,
-            col_names=self.filter_result.get_sorted_col_names(),
+            results=self.completed_selection_result.filter_results,
+            final_left_cols=final_left_cols,
+            col_names=self.completed_selection_result.get_sorted_col_names(),
             host_col_names=host_col_names,
-            header=self.header
+            header=self.curt_select_properties.header
         )
 
         json_result = json_format.MessageToJson(result_obj)
         LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
-
-    def __make_cols_list(self, cols_list):
-        result_list = []
-        idx = len(cols_list) - 1
-        while idx >= 0:
-            this_left_list = cols_list[idx]
-            for col_name in this_left_list:
-                if col_name not in result_list:
-                    result_list.append(str(col_name))
-            idx -= 1
-        LOGGER.debug('in make_cols_list, cols_list: {}, result_list: {}'.format(cols_list, result_list))
-        return result_list
 
     def save_data(self):
         return self.data_output
@@ -152,7 +127,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.model_output = result
         return result
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
 
         if 'model' in model_dict:
             # self._parse_need_run(model_dict, MODEL_META_NAME)
@@ -166,21 +141,16 @@ class BaseHeteroFeatureSelection(ModelBase):
                 MODEL_META_NAME: model_meta,
                 MODEL_PARAM_NAME: model_param
             }
-            LOGGER.debug("Model output set, model_output is :{}".format(self.model_output))
-            self.results = list(model_param.results)
-            left_col_obj = model_param.final_left_cols
 
-            original_headers = list(left_col_obj.original_cols)
-            self.header = original_headers
-            left_col_name_dict = dict(left_col_obj.left_cols)
-            LOGGER.debug("In load model, left_col_name_dict: {}, original_headers: {}".format(left_col_name_dict,
-                                                                                              original_headers))
-            left_cols = {}
-            for col_name, is_left in left_col_name_dict.items():
-                left_cols[col_name] = is_left
-            LOGGER.debug("Self.left_cols: {}".format(left_cols))
-            self.filter_result = SelfFilterResult(header=original_headers, to_select_cols_all=list(left_cols.keys()))
-            self.filter_result.set_left_cols(left_cols)
+            header = list(model_param.header)
+            self.curt_select_properties.set_header(header)
+            self.completed_selection_result.set_header(header)
+            self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
+            for col_name, _ in dict(model_param.final_left_cols.left_cols):
+                self.curt_select_properties.add_left_col_name(col_name)
+            self.completed_selection_result.add_filter_results(filter_name='conclusion',
+                                                               select_properties=self.curt_select_properties)
+            self.update_curt_select_param()
 
         if 'isometric_model' in model_dict:
 
@@ -191,58 +161,22 @@ class BaseHeteroFeatureSelection(ModelBase):
                 self.binning_model = HeteroFeatureBinningHost()
 
             new_model_dict = {'model': model_dict['isometric_model']}
-            self.binning_model._load_model(new_model_dict)
+            self.binning_model.load_model(new_model_dict)
 
     @staticmethod
-    def select_cols(instance, left_cols, header):
-        """
-        Replace filtered columns to original data
-        """
-        new_feature = []
-
-        for col_idx, col_name in enumerate(header):
-
-            is_left = left_cols.get(col_name)
-            if is_left is None:
-                new_feature.append(instance.features[col_idx])
-                continue
-            if not is_left:
-                continue
-            new_feature.append(instance.features[col_idx])
-        new_feature = np.array(new_feature)
-        instance.features = new_feature
+    def select_cols(instance, left_col_idx):
+        instance.features = instance.features[left_col_idx]
         return instance
-
-    def _reset_header(self):
-        """
-        The cols and left_cols record the index of header. Replace header based on the change
-        between left_cols and cols.
-        """
-        new_header = copy.deepcopy(self.header)
-        left_cols = self.filter_result.get_left_cols()
-        for col_idx, col_name in enumerate(self.header):
-            is_left = left_cols.get(col_name)
-            if is_left is None:
-                continue
-            if not is_left:
-                new_header.remove(col_name)
-        return new_header
 
     def _transfer_data(self, data_instances):
 
-        # if len(self.left_cols) == 0:
-        #     raise ValueError("None left columns for feature selection. Please check if model has fit.")
-        LOGGER.debug("In transfer_data, left_cols: {}, header: {}".format(self.filter_result.get_left_cols(),
-                                                                          self.header))
         before_one_data = data_instances.first()
         f = functools.partial(self.select_cols,
-                              left_cols=self.filter_result.get_left_cols(),
-                              header=self.header)
+                              left_col_idx=self.completed_selection_result.all_left_col_indexes)
 
         new_data = data_instances.mapValues(f)
-        new_header = self._reset_header()
-        # new_data.schema['header'] = new_header
-        new_data = self.set_schema(new_data, new_header)
+
+        new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
 
         one_data = new_data.first()[1]
         LOGGER.debug(
@@ -259,37 +193,63 @@ class BaseHeteroFeatureSelection(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    def _transform_init_cols(self, data_instances):
-        self.schema = data_instances.schema
-        header = get_header(data_instances)
-        self.header = header
-
-    def _init_cols(self, data_instances):
-        self.schema = data_instances.schema
-        header = get_header(data_instances)
-
-        if self.cols_index == -1:
-            to_select_cols_all = header
-        else:
-            to_select_cols_all = []
-            for idx in self.cols_index:
-                try:
-                    idx = int(idx)
-                except ValueError:
-                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
-
-                if idx >= len(header):
-                    raise ValueError(
-                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
-                to_select_cols_all.append(header[idx])
-
-        self.filter_result = SelfFilterResult(header=header, to_select_cols_all=to_select_cols_all)
-        self.header = header
-
     def set_schema(self, data_instance, header=None):
         if header is None:
-            self.schema["header"] = self.header
+            self.schema["header"] = self.curt_select_properties.header
         else:
             self.schema["header"] = header
         data_instance.schema = self.schema
         return data_instance
+
+    def update_curt_select_param(self):
+        new_select_properties = SelectionProperties()
+        new_select_properties.set_header(self.curt_select_properties.header)
+        new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
+        new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
+        LOGGER.debug("In update_curt_select_param, header: {}, cols_map: {},"
+                     "last_left_col_indexes: {}, select_col_names: {}".format(
+            new_select_properties.header,
+            new_select_properties.col_name_maps,
+            new_select_properties.last_left_col_indexes,
+            new_select_properties.select_col_names
+        ))
+        self.curt_select_properties = new_select_properties
+
+    def _filter(self, data_instances, method, suffix):
+        this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param, role=self.role)
+        this_filter.set_selection_properties(self.curt_select_properties)
+        this_filter.set_statics_obj(self.static_obj)
+        this_filter.set_binning_obj(self.binning_model)
+        this_filter.set_transfer_variable(self.transfer_variable)
+        self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
+        host_select_properties = getattr(this_filter, 'host_selection_properties', None)
+        LOGGER.debug("method: {}, host_select_properties: {}".format(
+            method, host_select_properties))
+
+        self.completed_selection_result.add_filter_results(filter_name=method,
+                                                           select_properties=self.curt_select_properties,
+                                                           host_select_properties=host_select_properties)
+        LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
+            method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
+        self.update_curt_select_param()
+        LOGGER.debug("After updated, method: {}, selection_cols: {}, left_cols: {}".format(
+            method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
+        self.meta_dicts = this_filter.get_meta_obj(self.meta_dicts)
+
+    def fit(self, data_instances):
+        LOGGER.info("Start Hetero Selection Fit and transform.")
+        self._abnormal_detection(data_instances)
+        self._init_select_params(data_instances)
+
+        for filter_idx, method in enumerate(self.filter_methods):
+            self._filter(data_instances, method, suffix=str(filter_idx))
+
+        new_data = self._transfer_data(data_instances)
+        LOGGER.info("Finish Hetero Selection Fit and transform.")
+        return new_data
+
+    def transform(self, data_instances):
+        self._abnormal_detection(data_instances)
+        self._init_select_params(data_instances)
+        new_data = self._transfer_data(data_instances)
+        return new_data

@@ -40,7 +40,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
                                        encrypted_calculator, batch_index, offset=None):
-        '''
+        """
         Compute gradients:
         gradient = (1/N)*\sum(wx -y)*x
 
@@ -55,12 +55,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         encrypted_calculator: Use for different encrypted methods
 
-        optimizer: optimizer object
-
-        n_iter_: int, current number of iter.
+        offset: Used in Poisson only.
 
         batch_index: int, use to obtain current encrypted_calculator index:
-        '''
+        """
         wx = data_instances.mapValues(
             lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = wx
@@ -144,9 +142,9 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         self._register_loss_sync(transfer_variables.loss)
 
     def compute_loss(self, cipher, n_iter_, batch_index):
-        '''
+        """
         Decrypt loss from guest
-        '''
+        """
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)

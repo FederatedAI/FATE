@@ -712,7 +712,7 @@ class DataIO(ModelBase):
 
         self.model_param = model_param
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         input_model_param = None
         input_model_meta = None
         for _, value in model_dict["model"].items():

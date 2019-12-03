@@ -124,33 +124,33 @@ class HomoLRArbiter(HomoLRBase):
                                                          suffix=current_suffix)
             self.host_predict_results.append((prob_table, predict_table))
 
-    def run(self, component_parameters=None, args=None):
-        self._init_runtime_parameters(component_parameters)
-        data_sets = args["data"]
-
-        data_statement_dict = list(data_sets.values())[0]
-        need_eval = False
-        for data_key in data_sets:
-            if 'eval_data' in data_sets[data_key]:
-                need_eval = True
-
-        LOGGER.debug("data_sets: {}, data_statement_dict: {}".format(data_sets, data_statement_dict))
-        if self.need_cv:
-            LOGGER.info("Task is cross validation.")
-            self.cross_validation(None)
-            return
-
-        elif not "model" in args:
-            LOGGER.info("Task is fit")
-            self.set_flowid('fit')
-            self.fit()
-            self.set_flowid('predict')
-            self.predict()
-            if need_eval:
-                self.set_flowid('validate')
-                self.predict()
-        else:
-            LOGGER.info("Task is predict")
-            self._load_model(args)
-            self.set_flowid('predict')
-            self.predict()
+    # def run(self, component_parameters=None, args=None):
+    #     self._init_runtime_parameters(component_parameters)
+    #     data_sets = args["data"]
+    #
+    #     data_statement_dict = list(data_sets.values())[0]
+    #     need_eval = False
+    #     for data_key in data_sets:
+    #         if 'eval_data' in data_sets[data_key]:
+    #             need_eval = True
+    #
+    #     LOGGER.debug("data_sets: {}, data_statement_dict: {}".format(data_sets, data_statement_dict))
+    #     if self.need_cv:
+    #         LOGGER.info("Task is cross validation.")
+    #         self.cross_validation(None)
+    #         return
+    #
+    #     elif not "model" in args:
+    #         LOGGER.info("Task is fit")
+    #         self.set_flowid('fit')
+    #         self.fit()
+    #         self.set_flowid('predict')
+    #         self.predict()
+    #         if need_eval:
+    #             self.set_flowid('validate')
+    #             self.predict()
+    #     else:
+    #         LOGGER.info("Task is predict")
+    #         self.load_model(args)
+    #         self.set_flowid('predict')
+    #         self.predict()

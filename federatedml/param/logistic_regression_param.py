@@ -23,8 +23,8 @@ from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
-from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
 
 
@@ -34,7 +34,7 @@ class LogisticParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1' or 'L2'. default: 'L2'
+    penalty : str, 'L1', 'L2' or None. default: 'L2'
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
@@ -44,17 +44,14 @@ class LogisticParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
-        Optimize method
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'sgd'
+        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
 
     learning_rate : float, default: 0.01
         Learning rate
-
-    init_param: InitParam object, default: default InitParam object
-        Init param method object.
 
     max_iter : int, default: 100
         The maximum iteration for training.
@@ -137,20 +134,20 @@ class LogisticParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd', 'sqn']:
                 raise ValueError(
                     "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than 10 or "
-                                         "-1 represent for all data".format(self.batch_size))
+                raise ValueError(descr + " {} not supported, should be larger than {} or "
+                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
 
-        if type(self.learning_rate).__name__ != "float":
+        if not isinstance(self.learning_rate, (float, int)):
             raise ValueError(
-                "logistic_param's learning_rate {} not supported, should be float type".format(
+                "logistic_param's learning_rate {} not supported, should be float or int type".format(
                     self.learning_rate))
 
         self.init_param.check()
@@ -171,9 +168,10 @@ class LogisticParam(BaseParam):
             if self.early_stop not in ['diff', 'abs', 'weight_diff']:
                 raise ValueError(
                     "logistic_param's early_stop not supported, converge_func should be"
-                    " 'diff' or 'abs'")
+                    " 'diff', 'weight_diff' or 'abs'")
 
         self.encrypt_param.check()
+        self.predict_param.check()
         if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
@@ -244,6 +242,10 @@ class HomoLogisticParam(LogisticParam):
 
             if self.penalty == consts.L1_PENALTY:
                 raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
+
+        if self.optimizer == 'sqn':
+            raise ValueError("'sqn' optimizer is supported for hetero mode only.")
+
         return True
 
 
@@ -251,25 +253,25 @@ class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
+                 max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
+                 decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
-                                                  learning_rate=learning_rate, encrypt_param=encrypt_param,
+                                                  learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   decay=decay,
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
                                                   validation_freqs=validation_freqs)
-        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.sqn_param = copy.deepcopy(sqn_param)
 
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
-        if self.encrypt_param.method != consts.PAILLIER:
-            raise ValueError("Hetero LR support Paillier encryption mode only")
+        self.sqn_param.check()
         return True

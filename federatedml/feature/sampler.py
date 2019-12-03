@@ -284,10 +284,12 @@ class StratifiedSampler(object):
 
                 sample_ids = []
 
-                callback_metrics = []
+                callback_sample_metrics = []
+                callback_original_metrics = []
 
                 for i in range(len(idset)):
                     label_name = self.labels[i]
+                    callback_original_metrics.append(Metric(label_name, len(idset[i])))
 
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
@@ -299,13 +301,13 @@ class StratifiedSampler(object):
 
                         sample_ids.extend(_sample_ids)
 
-                        callback_metrics.append(Metric(label_name, len(_sample_ids)))
+                        callback_sample_metrics.append(Metric(label_name, len(_sample_ids)))
                     else:
-                        callback_metrics.append(Metric(label_name, 0))
+                        callback_sample_metrics.append(Metric(label_name, 0))
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_metrics)
+                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics)
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
@@ -339,9 +341,12 @@ class StratifiedSampler(object):
                 return_sample_ids = True
 
                 sample_ids = []
-                callback_metrics = []
+                callback_sample_metrics = []
+                callback_original_metrics = []
+
                 for i in range(len(idset)):
                     label_name = self.labels[i]
+                    callback_original_metrics.append(Metric(label_name, len(idset[i])))
 
                     if idset[i]:
                         sample_num = max(1, int(self.fractions[i][1] * len(idset[i])))
@@ -353,13 +358,13 @@ class StratifiedSampler(object):
 
                         sample_ids.extend(_sample_ids)
 
-                        callback_metrics.append(Metric(label_name, len(_sample_ids)))
+                        callback_sample_metrics.append(Metric(label_name, len(_sample_ids)))
                     else:
-                        callback_metrics.append(Metric(label_name, 0))
+                        callback_sample_metrics.append(Metric(label_name, 0))
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_metrics)
+                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics)
 
             new_data = []
             for i in range(len(sample_ids)):
@@ -393,7 +398,7 @@ class Sampler(ModelBase):
     def __init__(self):
         super(Sampler, self).__init__()
         self.task_type = None
-        self.task_role = None
+        # self.task_role = None
         self.flowid = 0
         self.model_param = SampleParam()
 
@@ -516,11 +521,12 @@ class Sampler(ModelBase):
             return sample_data_inst
 
     def fit(self, data_inst):
-        return self.run_sample(data_inst, self.task_type, self.task_role)
+        return self.run_sample(data_inst, self.task_type, self.role)
 
     def transform(self, data_inst):
-        return self.run_sample(data_inst, self.task_type, self.task_role)
+        return self.run_sample(data_inst, self.task_type, self.role)
 
+    """
     def run(self, component_parameters, args=None):
         self._init_runtime_parameters(component_parameters)
         self._init_role(component_parameters)
@@ -529,12 +535,13 @@ class Sampler(ModelBase):
             return
 
         self._run_data(args["data"], stage)
+    """
 
     def save_data(self):
         return self.data_output
 
 
-def callback(tracker, method, callback_metrics):
+def callback(tracker, method, callback_metrics, other_metrics=None):
     LOGGER.debug("callback: method is {}".format(method))
     if method == "random":
         tracker.log_metric_data("sample_count",
@@ -549,8 +556,6 @@ def callback(tracker, method, callback_metrics):
     else:
         LOGGER.debug(
             "callback: name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
-        for metric in callback_metrics:
-            LOGGER.debug("calback: metric is {}".format(metric))
 
         tracker.log_metric_data("sample_count",
                                 "stratified",
@@ -559,4 +564,13 @@ def callback(tracker, method, callback_metrics):
         tracker.set_metric_meta("sample_count",
                                 "stratified",
                                 MetricMeta(name="sample_count",
+                                           metric_type="SAMPLE_TABLE"))
+
+        tracker.log_metric_data("original_count",
+                                "stratified",
+                                other_metrics)
+
+        tracker.set_metric_meta("original_count",
+                                "stratified",
+                                MetricMeta(name="original_count",
                                            metric_type="SAMPLE_TABLE"))

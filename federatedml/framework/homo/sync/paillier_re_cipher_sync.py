@@ -53,6 +53,7 @@ class Arbiter(object):
                                                                                                total))
 
             for idx in idx_remind:
+                LOGGER.debug("Before accept re_encrypted_model, batch_iter_num: {}".format(batch_iter_num))
                 re_encrypt_model = self._model_to_re_encrypt_transfer.get(idx=idx,
                                                                           suffix=(*suffix, iter_num, batch_iter_num))
                 cipher = host_ciphers_dict[idx]
