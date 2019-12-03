@@ -9,6 +9,7 @@ from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
+
 class IntersectModelBase(ModelBase):
     def __init__(self):
         super().__init__()
@@ -88,6 +89,7 @@ class IntersectModelBase(ModelBase):
         if self.intersect_ids is not None:
             LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
         return self.intersect_ids
+
 
 class IntersectHost(IntersectModelBase):
     def __init__(self):
