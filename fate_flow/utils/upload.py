@@ -102,9 +102,8 @@ class Upload(object):
                                                 data_info={'f_table_name': dst_table_name,
                                                            'f_table_namespace': dst_table_namespace,
                                                            'f_partition': self.parameters["partition"],
-                                                           'f_table_create_count': data_table.count(),
-                                                           'f_metric_name': 'data_access',
-                                                           'f_metric_namespace': 'upload'})
+                                                           'f_table_create_count': data_table.count()
+                                                           })
                     self.callback_metric(metric_name='data_access',
                                          metric_namespace='upload',
                                          metric_data=[Metric("count", data_table.count())])
