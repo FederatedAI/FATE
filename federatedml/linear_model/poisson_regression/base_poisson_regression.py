@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-from google.protobuf import json_format
 
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
@@ -130,8 +129,6 @@ class BasePoissonRegression(BaseLinearModel):
                                                                        weight=weight_dict,
                                                                        intercept=intercept_,
                                                                        header=header)
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
 
     def load_model(self, model_dict):
