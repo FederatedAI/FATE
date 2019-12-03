@@ -37,7 +37,7 @@ TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metr
                  "component_output_model", 'component_output_data']
 DATA_FUNC = ["download", "upload"]
 TABLE_FUNC = ["table_info"]
-MODEL_FUNC = ["load", "online", "version"]
+MODEL_FUNC = ["load", "bind", "version"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 
