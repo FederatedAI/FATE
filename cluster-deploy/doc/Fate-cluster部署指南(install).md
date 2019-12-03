@@ -153,8 +153,8 @@ ssh app\@192.168.0.2
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.tar.gz
-tar -xf FATE_install_v1.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.1.tar.gz
+tar -xf FATE_install_v1.1.1.tar.gz
 ```
 
 4.2 配置文件修改和示例
