@@ -204,6 +204,82 @@
    ]
   }
  },
+
+ "HeteroDNNLRTransferVariable": {
+  "guest_dec_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "guest"
+   ]
+  },
+  "guest_enc_gradient": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_dec_gradient": {
+   "src": "arbiter",
+   "dst": [
+    "host"
+   ]
+  },
+  "host_enc_gradient": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  }
+ },
+ "HeteroFeatureBinningTransferVariable": {
+  "paillier_pubkey": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_label": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "encrypted_bin_sum": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+ "CrossValidationTransferVariable": {
+  "train_sid": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "test_sid": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "RepeatedIDIntersectTransferVariable": {
+  "id_map_from_guest": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  },
+  "id_map_from_host": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  }
+ },
+
  "HeteroFTLTransferVariable": {
   "paillier_pubkey": {
    "src": "arbiter",

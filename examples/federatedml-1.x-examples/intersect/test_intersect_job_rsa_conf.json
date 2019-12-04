@@ -28,7 +28,7 @@
       },
       "dataio_0": {
         "with_label": [
-          true
+          false
         ],
         "output_format": [
           "dense"

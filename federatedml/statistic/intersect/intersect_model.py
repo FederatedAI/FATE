@@ -19,6 +19,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest
+from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -43,6 +44,11 @@ class IntersectModelBase(ModelBase):
 
     def __init_intersect_method(self):
         LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
+        self.host_party_id_list = self.component_properties.host_party_idlist
+        self.guest_party_id = self.component_properties.guest_partyid
+        if self.role == consts.HOST:
+            self.host_party_id = self.component_properties.local_partyid
+
         if self.model_param.intersect_method == "rsa":
             if self.role == consts.HOST:
                 self.intersection_obj = RsaIntersectionHost(self.model_param)
@@ -82,6 +88,17 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         self.__init_intersect_method()
+
+        if self.model_param.repeated_id_process:
+            if self.model_param.intersect_cache_param.use_cache is True and self.model_param.intersect_method == consts.RSA:
+                raise ValueError("Not support cache module while repeated id process.")
+
+            if len(self.host_party_id_list) > 1 and self.model_param.repeated_id_owner != consts.GUEST:
+                raise ValueError("While multi-host, repeated_id_owner should be guest.")
+
+            proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
+            data = proc_obj.run(data=data)
+
         self.intersect_ids = self.intersection_obj.run(data)
         LOGGER.info("Finish intersection")
 

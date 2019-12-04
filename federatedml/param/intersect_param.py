@@ -53,9 +53,9 @@ class EncodeParam(BaseParam):
         descr = "encode param's "
 
         self.encode_method = self.check_and_change_lower(self.encode_method,
-                                                            ["none", "md5", "sha1", "sha224", "sha256", "sha384",
-                                                             "sha512"],
-                                                            descr)
+                                                         ["none", "md5", "sha1", "sha224", "sha256", "sha384",
+                                                          "sha512"],
+                                                         descr)
 
         if type(self.base64).__name__ != "bool":
             raise ValueError(
@@ -110,11 +110,15 @@ class IntersectParam(BaseParam):
 
     only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
                     data and the value will be empty or some useless character like "intersect_id"
+
+    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable
+
+    repeated_id_owner: str, which role has the repeated ids
     """
 
     def __init__(self, intersect_method=consts.RAW, random_bit=128, sync_intersect_ids=True, join_role="guest",
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
-                 intersect_cache_param=IntersectCache()):
+                 intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner="guest"):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -124,6 +128,8 @@ class IntersectParam(BaseParam):
         self.encode_params = copy.deepcopy(encode_params)
         self.only_output_key = only_output_key
         self.intersect_cache_param = intersect_cache_param
+        self.repeated_id_process = repeated_id_process
+        self.repeated_id_owner = repeated_id_owner
 
     def check(self):
         descr = "intersect param's"
@@ -154,6 +160,15 @@ class IntersectParam(BaseParam):
             raise ValueError(
                 "intersect param's only_output_key {} not supported, should be bool type".format(
                     self.only_output_key))
+
+        if type(self.repeated_id_process).__name__ != "bool":
+            raise ValueError(
+                "intersect param's repeated_id_process {} not supported, should be bool type".format(
+                    self.repeated_id_process))
+
+        self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
+                                                             [consts.GUEST, consts.HOST],
+                                                             descr)
 
         self.encode_params.check()
         LOGGER.debug("Finish intersect parameter check!")
