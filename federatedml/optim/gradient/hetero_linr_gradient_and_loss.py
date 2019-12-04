@@ -101,6 +101,22 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
+    def compute_forward_hess(self, data_instances, delta_s, host_forwards):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(wx - y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(x * s) * x
+        define forward_hess = (1/N)*∑(x * s)
+        """
+        forwards = data_instances.mapValues(
+            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+        for host_forward in host_forwards:
+            forwards = forwards.join(host_forward, lambda g, h: g + h)
+        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
+                                                                    forwards,
+                                                                    delta_s.fit_intercept)
+        return forwards, np.array(hess_vector)
+
 
 class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 

@@ -56,6 +56,7 @@ class HeteroLinRHost(HeteroLinRBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
@@ -72,7 +73,7 @@ class HeteroLinRHost(HeteroLinRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
             batch_data_generator = self.batch_generator.generate_batch_data()
             batch_index = 0
             for batch_data in batch_data_generator:
