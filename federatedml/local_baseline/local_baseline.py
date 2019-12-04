@@ -49,7 +49,6 @@ class LocalBaseline(ModelBase):
     def _init_model(self, params):
         self.model_name = params.model_name
         self.model_opts = params.model_opts
-        self.need_run = params.need_run
         self.model = None
         self.model_fit = None
         self.header = None
