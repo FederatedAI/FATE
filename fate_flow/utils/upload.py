@@ -14,13 +14,13 @@
 #  limitations under the License.
 #
 
-import csv
 import os
 import time
 
 from arch.api import session
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
+from fate_flow.entity.metric import Metric, MetricMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -37,6 +37,7 @@ class Upload(object):
         self.parameters = component_parameters["UploadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
+        job_id = self.taskid.split("_")[0]
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
@@ -60,7 +61,7 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         session.init(mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(table_name, namespace, head)
+        data_table_count = self.save_data_table(table_name, namespace, head, job_id)
         LOGGER.info("------------load data finish!-----------------")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
@@ -72,11 +73,14 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def save_data_table(self, dst_table_name, dst_table_namespace, head=True):
+    def save_data_table(self, dst_table_name, dst_table_namespace, head=True, job_id=None):
         input_file = self.parameters["file"]
+        count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
+            lines_count = 0
             if head is True:
                 data_head = fin.readline()
+                count -= 1
                 self.save_data_header(data_head, dst_table_name, dst_table_namespace)
             while True:
                 data = list()
@@ -85,9 +89,24 @@ class Upload(object):
                     for line in lines:
                         values = line.replace("\n", "").replace("\t", ",").split(",")
                         data.append((values[0], self.list_to_str(values[1:])))
+                    lines_count += len(data)
+                    f_progress = lines_count/count*100//1
+                    job_info = {'f_progress': f_progress}
+                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
+                                           job_info)
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
                                                    partition=self.parameters["partition"])
                 else:
+                    self.tracker.save_data_view(role=self.parameters["local"]['role'],
+                                                party_id=self.parameters["local"]['party_id'],
+                                                data_info={'f_table_name': dst_table_name,
+                                                           'f_table_namespace': dst_table_namespace,
+                                                           'f_partition': self.parameters["partition"],
+                                                           'f_table_create_count': data_table.count()
+                                                           })
+                    self.callback_metric(metric_name='data_access',
+                                         metric_namespace='upload',
+                                         metric_data=[Metric("count", data_table.count())])
                     return data_table.count()
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
@@ -96,6 +115,15 @@ class Upload(object):
                                      dst_table_name,
                                      dst_table_namespace)
 
+    def get_count(self, input_file):
+        with open(input_file, 'r', encoding='utf-8') as fp:
+            count = 0
+            for line in fp:
+                count += 1
+        return count
+
+    def update_job_status(self, role, party_id, job_info):
+        self.tracker.save_job_info(role=role, party_id=party_id, job_info=job_info)
 
     def list_to_str(self, input_list):
         return ','.join(list(map(str, input_list)))
@@ -111,3 +139,12 @@ class Upload(object):
 
     def export_model(self):
         return None
+
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
+        self.tracker.log_metric_data(metric_name=metric_name,
+                                     metric_namespace=metric_namespace,
+                                     metrics=metric_data)
+        self.tracker.set_metric_meta(metric_namespace,
+                                     metric_name,
+                                     MetricMeta(name='upload',
+                                                metric_type='UPLOAD'))

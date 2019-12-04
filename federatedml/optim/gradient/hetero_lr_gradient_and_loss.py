@@ -102,7 +102,6 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
         define forward_hess = (1/N)*∑(0.25 * x * s)
         """
-        sample_size = data_instances.count()
         forwards = data_instances.mapValues(
             lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
@@ -150,29 +149,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         loss_regular = optimizer.loss_norm(lr_weights)
         self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
-    def compute_sqn_forwards(self, data_instances, delta_s, cipher_operator):
-        """
-        To compute Hessian matrix, y, s are needed.
-        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
-        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
-        define forward_hess = ∑(0.25 * x * s)
-        """
-        sqn_forwards = data_instances.mapValues(
-            lambda v: cipher_operator.encrypt(np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
-        # forward_sum = sqn_forwards.reduce(reduce_add)
-        return sqn_forwards
 
-    def compute_forward_hess(self, data_instances, delta_s, forward_hess):
-        """
-        To compute Hessian matrix, y, s are needed.
-        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
-        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
-        define forward_hess = (0.25 * x * s)
-        """
-        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
-                                                                    forward_hess,
-                                                                    delta_s.fit_intercept)
-        return np.array(hess_vector)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

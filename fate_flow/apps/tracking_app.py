@@ -126,6 +126,12 @@ def get_metric_all_data(tracker, metric_namespace, metric_name):
         return [], {}
 
 
+@manager.route('/component/metric/delete', methods=['post'])
+def component_metric_delete():
+    sql = Tracking.delete_metric_data(request.json)
+    return get_json_result(retcode=0, retmsg='success', data=sql)
+
+
 @manager.route('/component/parameters', methods=['post'])
 def component_parameters():
     request_data = request.json
@@ -227,11 +233,14 @@ def component_output_data_download():
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
+    limit = request_data.get('limit', -1)
     with open(output_data_file_path, 'w') as fw:
         for k, v in output_data_table.collect():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
             fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
             output_data_count += 1
+            if output_data_count == limit:
+                break
 
     if output_data_count:
         # get meta

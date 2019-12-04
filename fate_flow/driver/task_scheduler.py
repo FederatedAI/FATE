@@ -60,7 +60,8 @@ class TaskScheduler(object):
                                                   initiator_party_id=job_initiator['party_id'],
                                                   initiator_role=job_initiator['role'],
                                                   job_info=job.to_json())
-                    raise Exception(response_json["retmsg"])
+                    raise Exception("an error occurred while creating the job: role {} party_id {}".format(role, party_id)
+                                    + "\n" + str(response_json["retmsg"]))
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -108,7 +109,7 @@ class TaskScheduler(object):
             if not run_status:
                 break
         if len(top_level_task_status) == 2:
-            job.f_status = JobStatus.PARTIAL
+            job.f_status = JobStatus.FAILED
         elif True in top_level_task_status:
             job.f_status = JobStatus.SUCCESS
         else:

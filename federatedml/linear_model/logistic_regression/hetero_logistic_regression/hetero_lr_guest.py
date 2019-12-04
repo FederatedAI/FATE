@@ -114,13 +114,13 @@ class HeteroLRGuest(HeteroLRBase):
                                                                                         batch_feat_inst.count()))
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
                     compute_gradient_procedure(
-                    batch_feat_inst,
-                    self.encrypted_calculator,
-                    self.model_weights,
-                    self.optimizer,
-                    self.n_iter_,
-                    batch_index
-                )
+                        batch_feat_inst,
+                        self.encrypted_calculator,
+                        self.model_weights,
+                        self.optimizer,
+                        self.n_iter_,
+                        batch_index
+                    )
                 LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
