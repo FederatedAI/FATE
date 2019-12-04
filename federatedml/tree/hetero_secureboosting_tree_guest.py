@@ -477,6 +477,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                                                   fid=fid,
                                                                   importance=_importance))
         model_param.feature_importances.extend(feature_importance_param)
+
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
         param_name = "HeteroSecureBoostingTreeGuestParam"
@@ -490,6 +491,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.classes_ = list(model_param.classes_)
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
+        self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
     def get_metrics_param(self):
         if self.task_type == consts.CLASSIFICATION:
@@ -513,7 +515,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         return self.model_output
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_param = None
         model_meta = None
         for _, value in model_dict["model"].items():
