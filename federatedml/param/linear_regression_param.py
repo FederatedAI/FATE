@@ -25,6 +25,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
 
 
@@ -44,7 +45,7 @@ class LinearParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'sgd'
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'sqn', or 'adagrad', default: 'sgd'
         Optimize method
 
     batch_size : int, default: -1
@@ -90,7 +91,7 @@ class LinearParam(BaseParam):
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', predict_param=PredictParam(),
-                 encrypt_param=EncryptParam(),
+                 encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None):
         super(LinearParam, self).__init__()
@@ -110,6 +111,7 @@ class LinearParam(BaseParam):
         self.decay = decay
         self.decay_sqrt = decay_sqrt
         self.validation_freqs = validation_freqs
+        self.sqn_param = copy.deepcopy(sqn_param)
 
     def check(self):
         descr = "linear_regression_param's "
@@ -136,10 +138,10 @@ class LinearParam(BaseParam):
                 descr + "optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'sqn']:
                 raise ValueError(
                     descr + "optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'sqn' or 'adagrad'")
 
         if type(self.batch_size).__name__ not in ["int", "long"]:
             raise ValueError(

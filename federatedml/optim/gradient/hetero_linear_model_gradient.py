@@ -90,7 +90,6 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
 
 
 class HeteroGradientBase(object):
-
     def compute_gradient_procedure(self, *args):
         raise NotImplementedError("Should not call here")
 
@@ -218,6 +217,30 @@ class Host(HeteroGradientBase):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
         optimized_gradient = self.unilateral_optim_gradient_transfer.get(idx=0, suffix=suffix)
         return optimized_gradient
+
+    def compute_sqn_forwards(self, data_instances, delta_s, cipher_operator):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
+        define forward_hess = ∑(0.25 * x * s)
+        """
+        sqn_forwards = data_instances.mapValues(
+            lambda v: cipher_operator.encrypt(np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+        # forward_sum = sqn_forwards.reduce(reduce_add)
+        return sqn_forwards
+
+    def compute_forward_hess(self, data_instances, delta_s, forward_hess):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
+        define forward_hess = (0.25 * x * s)
+        """
+        hess_vector = compute_gradient(data_instances,
+                                       forward_hess,
+                                       delta_s.fit_intercept)
+        return np.array(hess_vector)
 
 
 class Arbiter(HeteroGradientBase):
