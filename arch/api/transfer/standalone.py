@@ -64,6 +64,7 @@ class FederationRuntime(Federation):
                                                     party.party_id)
             _status_table = _get_meta_table(STATUS_TABLE_NAME, self._session_id)
             if isinstance(obj, _DTable):
+                obj.set_gc_disable()
                 # noinspection PyProtectedMember
                 _status_table.put(_tagged_key, (obj._type, obj._name, obj._namespace, obj._partitions))
                 cleaner.add_table(object)
