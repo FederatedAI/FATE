@@ -23,6 +23,7 @@ class RuntimeConfig(object):
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
     JOB_SERVER_HOST = None
+    ZK = None
 
     @staticmethod
     def init_config(**kwargs):

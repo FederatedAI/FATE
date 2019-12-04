@@ -145,6 +145,7 @@ class JobController(object):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
         job_info['f_run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if create:
+            job_tracker.job_quantity_constraint()
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
             train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])

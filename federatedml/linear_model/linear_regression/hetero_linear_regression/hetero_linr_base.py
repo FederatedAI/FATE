@@ -16,9 +16,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from arch.api.utils import log_utils
 from federatedml.linear_model.linear_regression.base_linear_regression import BaseLinearRegression
+from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.transfer_variable.transfer_class.hetero_linr_transfer_variable import HeteroLinRTransferVariable
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class HeteroLinRBase(BaseLinearRegression):
@@ -41,6 +45,15 @@ class HeteroLinRBase(BaseLinearRegression):
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
+
+        if params.optimizer == 'sqn':
+            gradient_loss_operator = sqn_factory(self.role, params.sqn_param)
+            gradient_loss_operator.register_gradient_computer(self.gradient_loss_operator)
+            gradient_loss_operator.register_transfer_variable(self.transfer_variable)
+            self.gradient_loss_operator = gradient_loss_operator
+            LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
+                params.optimizer, self.gradient_loss_operator
+            ))
 
     def transform(self, data_inst):
         return data_inst
