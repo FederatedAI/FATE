@@ -120,7 +120,7 @@ class HeteroLRGuest(HeteroLRBase):
                         self.optimizer,
                         self.n_iter_,
                         batch_index
-                    )
+                )
                 LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)

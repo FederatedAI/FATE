@@ -186,6 +186,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
         self.tree_dim = model_param.tree_dim
+        self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
     def export_model(self):
         if self.need_cv:
@@ -199,7 +200,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
         return self.model_output
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         LOGGER.info("load model")
         model_param = None
         model_meta = None

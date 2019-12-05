@@ -212,7 +212,6 @@ class TrainTask(TaskManager):
         for cpn in components:
             self._check_cpn_status(jobid, cpn)
 
-
     def _upload_data(self):
         upload_obj = UploadTask()
         upload_obj.role = GUEST
@@ -273,13 +272,3 @@ class TrainTask(TaskManager):
         stdout = self.start_block_task(check_cmd, MAX_INTERSECT_TIME)
         if stdout is None:
             pass
-
-
-
-
-
-
-
-
-
-

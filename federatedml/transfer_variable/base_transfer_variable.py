@@ -38,8 +38,8 @@ class Variable(object):
         return self
 
     def clean(self):
-        self._get_cleaner.clean()
-        self._remote_cleaner.clean()
+        self._get_cleaner.maybe_clean()
+        self._remote_cleaner.maybe_clean()
 
     @staticmethod
     def roles_to_parties(roles):
@@ -57,25 +57,27 @@ class Variable(object):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
         obj = RuntimeInstance.TABLE_WRAPPER.unboxed(obj)
+        tag = self.generate_tag(*suffix)
         cleaner = RuntimeInstance.FEDERATION.remote(obj=obj,
                                                     name=self.name,
-                                                    tag=self.generate_tag(*suffix),
+                                                    tag=tag,
                                                     parties=parties)
         if self._remote_cleaner:
             if self._auto_clean:
-                self._remote_cleaner.clean()
-                self._remote_cleaner = cleaner
+                self._remote_cleaner.maybe_clean(tag)
+                self._remote_cleaner = cleaner.update_tag(tag)
             else:
                 self._remote_cleaner.extend(cleaner)
         else:
-            self._remote_cleaner = cleaner
+            self._remote_cleaner = cleaner.update_tag(tag)
 
     def get_parties(self, parties: Union[list, Party], suffix=tuple()):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
+        tag = self.generate_tag(*suffix)
 
         if self._get_cleaner and self._auto_clean:
-            self._get_cleaner.clean()
+            self._get_cleaner.maybe_clean(tag)
         rtn, cleaner = RuntimeInstance.FEDERATION.get(name=self.name,
                                                       tag=self.generate_tag(*suffix),
                                                       parties=parties)
@@ -83,11 +85,11 @@ class Variable(object):
 
         if self._get_cleaner:
             if self._auto_clean:
-                self._get_cleaner = cleaner
+                self._get_cleaner = cleaner.update_tag(tag)
             else:
                 self._get_cleaner.extend(cleaner)
         else:
-            self._get_cleaner = cleaner
+            self._get_cleaner = cleaner.update_tag(tag)
         return rtn
 
     def remote(self, obj, role=None, idx=-1, suffix=tuple()):
