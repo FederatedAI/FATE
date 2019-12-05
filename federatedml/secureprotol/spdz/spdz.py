@@ -38,7 +38,7 @@ class SPDZ(object):
     def has_instance(cls):
         return cls.__instance is not None
 
-    def __init__(self, q_field, name="ss", local_party=None, all_parties=None):
+    def __init__(self, name="ss", q_field=2 << 60, local_party=None, all_parties=None):
         self._name_service = naming.NamingService(name)
         self._prev_name_service = None
         self._pre_instance = None

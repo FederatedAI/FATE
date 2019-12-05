@@ -72,7 +72,7 @@ def tensor_source(name, idx):
 def call(idx):
     init(idx)
 
-    with SPDZ(Q_FIELD) as spdz:
+    with SPDZ(q_field=Q_FIELD) as spdz:
         x = FixPointTensor.from_source("x", tensor_source("x", idx))
         y = FixPointTensor.from_source("y", tensor_source("y", idx))
         ret = x.einsum(y, einsum_expr)

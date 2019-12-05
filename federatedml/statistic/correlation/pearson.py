@@ -19,8 +19,8 @@ from arch.api import federation
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
-from federatedml.secureprotol.spdz.fix_point import FixPointEndec
-from federatedml.secureprotol.spdz.tensor import SPDZ
+from federatedml.secureprotol.spdz import SPDZ
+from federatedml.secureprotol.spdz.tensor.fix_point import FixPointTensor
 
 Q_FIELD = 2 << 60
 MODEL_META_NAME = "HeteroPearsonModelMeta"
@@ -82,25 +82,21 @@ class Pearson(ModelBase):
         data_instance = self._standardized(data_instance)
         tensor_source_dict, local_corr = self._prepare(data_instance)
 
-        endec = FixPointEndec(Q_FIELD)
-        for k, v in tensor_source_dict.items():
-            if isinstance(v, np.ndarray):
-                tensor_source_dict[k] = endec.encode(v)
-
         with SPDZ("a name") as spdz:
-            x = spdz.share("x", tensor_source_dict["x"])
-            y = spdz.share("y", tensor_source_dict["y"])
-            n1, m1 = x.shape()
-            n2, m2 = y.shape()
+            x = FixPointTensor.from_source("x", tensor_source_dict["x"])
+            y = FixPointTensor.from_source("y", tensor_source_dict["y"])
+            n1, m1 = x.shape
+            n2, m2 = y.shape
 
             if n1 != n2:
                 raise ValueError(f"shape miss matched, ({n1, m1}), ({n2, n2})")
             self.shapes.append(m1)
             self.shapes.append(m2)
 
-            c = spdz.tensor_dot(x, y, "ij,ik->jk").rescontruct()
-            self.corr = endec.decode(c) / n1
+            c = x.einsum(y, "ij,ik->jk").get()
+            self.corr = c / n1
             self.local_corr = local_corr / n1
+            print(self.corr)
         self._callback()
 
     @staticmethod
