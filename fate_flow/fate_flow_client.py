@@ -43,7 +43,7 @@ PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 def prettify(response, verbose=True):
     if verbose:
-        print(json.dumps(response, indent=4))
+        print(json.dumps(response, indent=4, ensure_ascii=False))
         print()
     return response
 
