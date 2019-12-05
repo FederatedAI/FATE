@@ -205,11 +205,15 @@ class ComponentProperties(object):
 
         result_data = None
         for data, name in zip(previews_data, name_list):
+            LOGGER.debug("before mapValues, one data: {}".format(data.first()))
             data = data.mapValues(lambda value: value + [name])
+            LOGGER.debug("after mapValues, one data: {}".format(data.first()))
+
             if result_data is None:
                 result_data = data
             else:
                 result_data = result_data.union(data)
+            LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         LOGGER.debug("union result: {}".format(result_data.first()))
         return result_data
