@@ -13,21 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import random
-
-import numpy as np
-
-
-class RandomDevice(object):
-    r = random.SystemRandom()
-
-    def __init__(self, q_field):
-        self._q_field = q_field
-
-    def rand(self, value):
-        shape = value.shape
-        ret = np.zeros(shape, dtype=np.int64)
-        view = ret.view().reshape(-1)
-        for i in range(ret.size):
-            view[i] = self.r.randint(1, self._q_field)
-        return ret
+from federatedml.secureprotol.spdz.utils.naming import NamingService
+from federatedml.secureprotol.spdz.utils.random_device import RandomDevice, rand_tensor

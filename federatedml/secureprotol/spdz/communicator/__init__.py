@@ -14,4 +14,4 @@
 #  limitations under the License.
 #
 
-from federatedml.secureprotol.spdz.spdz import SPDZ
+from federatedml.secureprotol.spdz.communicator.federation import Communicator

@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import pprint
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor
@@ -22,8 +21,9 @@ import numpy as np
 
 from arch.api import session, federation
 from arch.api.transfer import Party
-from federatedml.secureprotol.spdz.fix_point import FixPointEndec
-from federatedml.secureprotol.spdz.tensor import SPDZ
+from federatedml.secureprotol.spdz import SPDZ
+from federatedml.secureprotol.spdz.tensor.integer import IntegerTensor
+from federatedml.secureprotol.spdz.tensor.fix_point import FixPointEndec, FixPointTensor
 
 Q_BITS = 60
 Q_FIELD = 2 << Q_BITS
@@ -59,9 +59,8 @@ parties = [p1, p2]
 data = [0.5 - np.random.rand(569, 10),
         0.5 - np.random.rand(569, 20)]
 
-endec = FixPointEndec(Q_FIELD)
-xx = endec.encode(data[0])
-yy = endec.encode(data[1])
+xx = data[0]
+yy = data[1]
 
 
 def tensor_source(name, idx):
@@ -73,25 +72,11 @@ def tensor_source(name, idx):
 def call(idx):
     init(idx)
 
-    with SPDZ("a name") as spdz:
-        x = spdz.share("x", tensor_source("x", idx))
-        y = spdz.share("y", tensor_source("y", idx))
-        # z = spdz.share("z", tensor_source("z", idx))
-
-        ret = spdz.tensor_dot(x, y, einsum_expr)
-        return ret.rescontruct() % Q_FIELD
-
-
-def call_triplets(idx):
-    init(idx)
-
-    with SPDZ("a name") as spdz:
-        x = spdz.share("x", tensor_source("x", idx))
-        y = spdz.share("y", tensor_source("y", idx))
-        z = spdz.share("z", tensor_source("z", idx))
-
-        a, b, c = spdz.tensor_dot_triplets(x, y, "ij,jk->ik")
-        return a, b, c
+    with SPDZ(Q_FIELD) as spdz:
+        x = FixPointTensor.from_source("x", tensor_source("x", idx))
+        y = FixPointTensor.from_source("y", tensor_source("y", idx))
+        ret = x.einsum(y, einsum_expr)
+        return ret.get()
 
 
 func = call
@@ -107,14 +92,6 @@ while True:
     time.sleep(0.1)
 
 results = [r.result() for r in futures]
-# xxx = sum(map(lambda x: x[1], results)) % Q_FIELD
-# yyy = sum(map(lambda x: x[2], results)) % Q_FIELD
-# zzz = sum(map(lambda x: x[3], results)) % Q_FIELD
-# print((xxx @ yyy) % Q_FIELD)
-# print(zzz % Q_FIELD)
-
-calc = endec.decode(results[0] % Q_FIELD)
-# pprint.pprint(results[1] % Q_FIELD)
-# pprint.pprint(results[2] % Q_FIELD)
+calc = results[0]
 right = np.einsum(einsum_expr, data[0], data[1], optimize=True)
 print(np.max(np.abs(calc - right)))
