@@ -43,6 +43,7 @@ def send(channel):
     feature_data['fid2'] = 6.2
     feature_data['fid3'] = 7.6
     request_data['featureData'] = feature_data
+    request_data['sendToRemoteFeatureData'] = feature_data
 
     print(json.dumps(request_data, indent=4))
 
