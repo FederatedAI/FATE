@@ -103,6 +103,7 @@ class TaskManager(object):
 
     @staticmethod
     def start_task(cmd):
+        print('Start task: {}'.format(cmd))
         subp = subprocess.Popen(cmd,
                                 shell=False,
                                 stdout=subprocess.PIPE,
@@ -110,11 +111,14 @@ class TaskManager(object):
         stdout, stderr = subp.communicate()
         stdout = stdout.decode("utf-8")
         # print("start_task, stdout:" + str(stdout))
-        stdout = json.loads(stdout)
+        try:
+            stdout = json.loads(stdout)
+        except:
+            raise RuntimeError("start task error, return value: {}".format(stdout))
         return stdout
 
     def get_table_info(self, name, namespace):
-        cmd = ["python", fate_flow_path, "-f", "table_info", "-t", name, "-n", namespace]
+        cmd = ["python", fate_flow_path, "-f", "table_info", "-t", str(name), "-n", str(namespace)]
         table_info = self.start_task(cmd)
         print(table_info)
         return table_info
@@ -245,7 +249,8 @@ class TrainTask(TaskManager):
         upload_obj.run()
         guest_table_name = upload_obj.table_name
         guest_namespace = upload_obj.name_space
-        count = self.get_table_info(self.guest_table_name, self.guest_namespace)
+        table_info = self.get_table_info(guest_table_name, guest_namespace)
+        count = table_info['data']['count']
         if count != self.task_data_count:
             raise ValueError(
                 "[Failed] Test upload task error, upload data count is:{},"
@@ -279,7 +284,7 @@ class TrainTask(TaskManager):
         with open(config_path, "w") as fout:
             # print("path:{}".format(config_path))
             fout.write(config + "\n")
-        return config_dir_path
+        return config_path
 
     def _parse_dsl_components(self):
         with open(hetero_lr_dsl_file, 'r', encoding='utf-8') as f:
@@ -294,7 +299,7 @@ class TrainTask(TaskManager):
             status = stdout["retcode"]
             if status != 0:
                 return RUNNING
-            print("In _check_cpn_status, status: {}".format(status))
+            # print("In _check_cpn_status, status: {}".format(status))
             task_status = []
             check_data = stdout["data"]
 
