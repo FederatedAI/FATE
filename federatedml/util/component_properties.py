@@ -82,7 +82,9 @@ class ComponentProperties(object):
             self.has_model = True
         if "isometric_model" in args:
             self.has_isometric_model = True
-        data_sets = args["data"]
+        data_sets = args.get("data")
+        if data_sets is None:
+            return self
         for data_key in data_sets:
             if 'train_data' in data_sets[data_key]:
                 self.has_train_data = True
@@ -94,11 +96,12 @@ class ComponentProperties(object):
 
     @staticmethod
     def extract_input_data(args):
-        data_sets = args["data"]
+        data_sets = args.get("data")
         train_data = None
         eval_data = None
         data = {}
-
+        if data_sets is None:
+            return train_data, eval_data, data
         for data_key in data_sets:
             if data_sets[data_key].get("train_data", None):
                 train_data = data_sets[data_key]["train_data"]
