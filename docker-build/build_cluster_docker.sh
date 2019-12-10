@@ -18,16 +18,14 @@ source .env
 source ${WORKINGDIR}/../cluster-deploy/scripts/default_configurations.sh
 
 buildBase() {
-  [ -f ${source_code_dir}/docker-build/docker/base/pip-packages-fate-${python_version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/base/pip-packages-fate-${python_version}.tar.gz
   [ -f ${source_code_dir}/docker-build/docker/base/requirements.txt ] && rm ${source_code_dir}/docker-build/docker/base/requirements.txt
-  ln ${source_code_dir}/cluster-deploy/packages/pip-packages-fate-${python_version}.tar.gz ${source_code_dir}/docker-build/docker/base/pip-packages-fate-${python_version}.tar.gz
   ln ${source_code_dir}/requirements.txt ${source_code_dir}/docker-build/docker/base/requirements.txt
   echo "START BUILDING BASE IMAGE"
   cd ${WORKINGDIR}
 
   docker build -f docker/base/Dockerfile -t ${PREFIX}/base-image:${BASE_TAG} ${source_code_dir}/docker-build/docker/base
 
-  rm ${source_code_dir}/docker-build/docker/base/pip-packages-fate-${python_version}.tar.gz
+  rm ${source_code_dir}/docker-build/docker/base/requirements.txt
 
   echo "FINISH BUILDING BASE IMAGE"
 }
@@ -35,15 +33,16 @@ buildBase() {
 buildModule() {
   
   
-  [ -f ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/roll/eggroll-roll-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/roll/eggroll-roll-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/meta-service/eggroll-meta-service-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/meta-service/eggroll-meta-service-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/fateboard/fateboard-${fateboard_version}.jar ] && rm ${source_code_dir}/docker-build/docker/modules/fateboard/fateboard-${fateboard_version}.jar
-  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-${version}.tar.gz
-  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx-${version}.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/roll/eggroll-roll-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/roll/eggroll-roll-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/meta-service/eggroll-meta-service-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/meta-service/eggroll-meta-service-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/fateboard/fateboard-*.jar ] && rm ${source_code_dir}/docker-build/docker/modules/fateboard/fateboard-*.jar
+  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-*.tar.gz
+  [ -f ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx*.tar.gz
   [ -f ${source_code_dir}/docker-build/docker/modules/egg/third_party_eggrollv1.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/egg/third_party_eggrollv1.tar.gz
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/fate_flow ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/arch
@@ -53,7 +52,7 @@ buildModule() {
   [ -d ${source_code_dir}/docker-build/docker/modules/python/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   [ -d ${source_code_dir}/docker-build/docker/modules/python/federatedml ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
   [ -d ${source_code_dir}/docker-build/docker/modules/python/examples ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
-  [ -f ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
+   [ -f ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz
 
   ln ${source_code_dir}/cluster-deploy/packages/fate-federation-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/fate-proxy-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-${version}.tar.gz
@@ -69,10 +68,60 @@ buildModule() {
   cp -r ${source_code_dir}/arch ${source_code_dir}/docker-build/docker/modules/egg/arch
   cp -r ${source_code_dir}/federatedml ${source_code_dir}/docker-build/docker/modules/egg/federatedml
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-api-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz
+  ln ${source_code_dir}/cluster-deploy/packages/eggroll-conf-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-computing-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-egg-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-storage-service-cxx-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/third_party_eggrollv1.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/third_party_eggrollv1.tar.gz
+
+
+  # conf
+  # egg
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/egg/conf
+  cd ${source_code_dir}/docker-build/docker/modules/egg/
+  cp ${source_code_dir}/eggroll/framework/egg/src/main/resources/egg.properties ./conf
+  cp ${source_code_dir}/eggroll/framework/egg/src/main/resources/log4j2.properties ./conf
+  cp ${source_code_dir}/eggroll/framework/egg/src/main/resources/applicationContext-egg.xml ./conf
+  cp ${source_code_dir}/eggroll/framework/egg/src/main/resources/processor-starter.sh ./conf
+  
+  # meta-service
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/meta-service/conf
+  cd ${source_code_dir}/docker-build/docker/modules/meta-service/
+  cp  ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/meta-service.properties ./conf
+  cp  ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/log4j2.properties ./conf
+  cp  ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/applicationContext-meta-service.xml ./conf
+  
+  # roll
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/roll/conf
+  cd ${source_code_dir}/docker-build/docker/modules/roll/
+  cp  ${source_code_dir}/eggroll/framework/roll/src/main/resources/roll.properties ./conf
+  cp  ${source_code_dir}/eggroll/framework/roll/src/main/resources/log4j2.properties ./conf
+  cp  ${source_code_dir}/eggroll/framework/roll/src/main/resources/applicationContext-roll.xml ./conf
+  
+  # fateboard
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/fateboard/conf
+  cd ${source_code_dir}/docker-build/docker/modules/fateboard/
+  touch ./conf/ssh.properties
+  cp ${source_code_dir}/fateboard/src/main/resources/application.properties ./conf
+  
+  # proxy
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/proxy/conf
+  cd ${source_code_dir}/docker-build/docker/modules/proxy/
+  cp ${source_code_dir}/arch/networking/proxy/src/main/resources/applicationContext-proxy.xml ./conf
+  cp ${source_code_dir}/arch/networking/proxy/src/main/resources/log4j2.properties ./conf
+  cp ${source_code_dir}/arch/networking/proxy/src/main/resources/proxy.properties ./conf
+  cp ${source_code_dir}/arch/networking/proxy/src/main/resources/route_tables/route_table.json ./conf
+  
+  # federation
+  mkdir -p ${source_code_dir}/docker-build/docker/modules/federation/conf
+  cd ${source_code_dir}/docker-build/docker/modules/federation/
+  cp  ${source_code_dir}/arch/driver/federation/src/main/resources/federation.properties ./conf
+  cp  ${source_code_dir}/arch/driver/federation/src/main/resources/log4j2.properties ./conf
+  cp  ${source_code_dir}/arch/driver/federation/src/main/resources/applicationContext-federation.xml ./conf
+  
+  # fate_flow
+  # federatedml
+  cd ${source_code_dir}
 
   for module in "federation" "proxy" "roll" "meta-service" "fateboard" "egg" "python"
   do
@@ -83,13 +132,20 @@ buildModule() {
   done;
 
   rm ${source_code_dir}/docker-build/docker/modules/federation/fate-federation-${version}.tar.gz
+  rm -r ${source_code_dir}/docker-build/docker/modules/federation/conf
   rm ${source_code_dir}/docker-build/docker/modules/proxy/fate-proxy-${version}.tar.gz
+  rm -r ${source_code_dir}/docker-build/docker/modules/proxy/conf
   rm ${source_code_dir}/docker-build/docker/modules/roll/eggroll-roll-${version}.tar.gz
+  rm -r ${source_code_dir}/docker-build/docker/modules/roll/conf
   rm ${source_code_dir}/docker-build/docker/modules/meta-service/eggroll-meta-service-${version}.tar.gz
+  rm -r ${source_code_dir}/docker-build/docker/modules/meta-service/conf
   rm ${source_code_dir}/docker-build/docker/modules/fateboard/fateboard-${fateboard_version}.jar
+  rm -r ${source_code_dir}/docker-build/docker/modules/fateboard/conf
   rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz
+  rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-${version}.tar.gz
   rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz
   rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-egg-${version}.tar.gz
+  rm -r ${source_code_dir}/docker-build/docker/modules/egg/conf
   rm ${source_code_dir}/docker-build/docker/modules/egg/eggroll-storage-service-cxx-${version}.tar.gz
   rm ${source_code_dir}/docker-build/docker/modules/egg/third_party_eggrollv1.tar.gz
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
@@ -99,6 +155,7 @@ buildModule() {
   rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
   rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
+  rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
   echo ""
 }
 
