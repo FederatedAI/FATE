@@ -31,7 +31,7 @@ class HeteroBaseArbiter(BaseLinearModel):
 
         # attribute
         self.pre_loss = None
-
+        self.loss_history = []
         self.cipher = paillier_cipher.Arbiter()
         self.batch_generator = batch_generator.Arbiter()
         self.gradient_loss_operator = None

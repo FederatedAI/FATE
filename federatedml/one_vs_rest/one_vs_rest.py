@@ -273,6 +273,7 @@ class HeteroOneVsRest(OneVsRest):
                                                             idx=0)
 
     def _sync_class_host(self, class_set):
+        LOGGER.debug("Start to get aggregate classes")
         class_nums = self.transfer_variable.aggregate_classes.get(idx=0)
         self.classes = [x for x in range(class_nums)]
 

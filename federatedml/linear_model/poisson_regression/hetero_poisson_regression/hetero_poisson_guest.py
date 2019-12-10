@@ -129,18 +129,29 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Start predict ...")
 
         header = data_instances.schema.get("header")
+        LOGGER.debug("header: {}, one_data : {}".format(header, data_instances.first()[1].features))
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
 
+        LOGGER.debug("model weights: {}".format(self.model_weights.unboxed))
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        LOGGER.debug("After load_exposure, exposure: {} data_instances: {}".format(exposure.first(),
+                                                                                   data_instances.first()))
+
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+        LOGGER.debug("After load_instance: {}".format(data_instances.first()))
 
         data_features = self.transform(data_instances)
+        LOGGER.debug("After transform: {}".format(data_features.first()))
+
         pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
+        LOGGER.debug("pred_guest: {}".format(pred_guest.first()))
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
+        LOGGER.debug("pred_host: {}".format(pred_host.first()))
 
         LOGGER.info("Get prediction from Host")
 
         pred = pred_guest.join(pred_host, lambda g, h: g * h)
-        predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
+        LOGGER.debug("pred result: {}".format(pred.first()))
+        predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
+        LOGGER.debug("After poisson predict, predict result: {}".format(predict_result.first()))
         return predict_result

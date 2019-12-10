@@ -64,9 +64,10 @@ class FederationRuntime(Federation):
                                                     party.party_id)
             _status_table = _get_meta_table(STATUS_TABLE_NAME, self._session_id)
             if isinstance(obj, _DTable):
+                obj.set_gc_disable()
                 # noinspection PyProtectedMember
                 _status_table.put(_tagged_key, (obj._type, obj._name, obj._namespace, obj._partitions))
-                cleaner.add_table(object)
+                cleaner.add_table(obj)
                 cleaner.add_obj(_status_table, _tagged_key)
             else:
                 _table = _get_meta_table(OBJECT_STORAGE_NAME, self._session_id)
@@ -83,7 +84,7 @@ class FederationRuntime(Federation):
         self._get_side_auth(name=name, parties=parties)
 
         _status_table = _get_meta_table(STATUS_TABLE_NAME, self._session_id)
-        LOGGER.debug(f"[GET] {self._role} {self._party_id} getting remote object {tag} from {parties}")
+        LOGGER.debug(f"[GET] {self._local_party} getting {name}.{tag} from {parties}")
         tasks = []
 
         for party in parties:
@@ -91,11 +92,11 @@ class FederationRuntime(Federation):
                                                     self._party_id)
             tasks.append(check_status_and_get_value(_status_table, _tagged_key))
         results = self._loop.run_until_complete(asyncio.gather(*tasks))
-
         rtn = []
         cleaner = Cleaner()
         _object_table = _get_meta_table(OBJECT_STORAGE_NAME, self._session_id)
         for r in results:
+            LOGGER.debug(f"[GET] {self._local_party} getting {r} from {parties}")
             if isinstance(r, tuple):
                 _persistent = r[0] == StoreType.LMDB
                 table = Standalone.get_instance().table(name=r[1], namespace=r[2], persistent=_persistent,

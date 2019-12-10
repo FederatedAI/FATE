@@ -17,6 +17,7 @@ import abc
 from typing import Tuple, Union
 
 from arch.api.utils import file_utils
+from arch.api.utils.log_utils import getLogger
 
 __all__ = ["Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
 
@@ -25,6 +26,7 @@ TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.jso
 CONF_KEY_LOCAL = "local"
 CONF_KEY_FEDERATION = "federation"
 CONF_KEY_SERVER = "servers"
+LOGGER = getLogger()
 
 
 class Party(object):
@@ -60,6 +62,11 @@ class Cleaner(object):
     def __init__(self):
         self._tables = []
         self._kv = {}
+        self._cur_tag = None
+
+    def update_tag(self, tag):
+        self._cur_tag = tag
+        return self
 
     def add_table(self, table):
         self._tables.append(table)
@@ -77,19 +84,23 @@ class Cleaner(object):
         return self
 
     # noinspection PyBroadException
-    def clean(self):
-        for table in self._tables:
-            try:
-                table.destroy()
-            except:
-                pass
-
-        for _, (table, keys) in self._kv.items():
-            for key in keys:
+    def maybe_clean(self, tag):
+        if tag != self._cur_tag:
+            LOGGER.debug(f"[CLEAN] get new tag {tag}, clean prev table/object tagged by {self._cur_tag}")
+            for table in self._tables:
                 try:
-                    table.delete(key)
+                    LOGGER.debug(f"[CLEAN] try destroy table {table}")
+                    table.destroy()
                 except:
                     pass
+
+            for _, (table, keys) in self._kv.items():
+                for key in keys:
+                    try:
+                        LOGGER.debug(f"[CLEAN] try delete object keyed by {key} from table {table}")
+                        table.delete(key)
+                    except:
+                        pass
 
 
 class FederationWrapped(object):
