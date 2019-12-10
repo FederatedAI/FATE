@@ -46,24 +46,50 @@ class Pearson(ModelBase):
         super()._init_model(param)
         self.model_param = param
 
+    def _select_columns(self, data_instance):
+        col_names = data_instance.schema["header"]
+        if self.model_param.column_indexes == -1:
+            self.names = col_names
+            return data_instance.mapValues(lambda inst: inst.features)
+
+        name_to_idx = {col_names[i]: i for i in range(len(col_names))}
+        selected = set()
+        for name in self.model_param.column_names:
+            if name in name_to_idx:
+                selected.add([name_to_idx[name]])
+                continue
+            raise ValueError(f"{name} not found")
+        for idx in self.model_param.column_indexes:
+            if 0 <= idx < len(col_names):
+                selected.add(idx)
+                continue
+            raise ValueError(f"idx={idx} out of bound")
+        selected = sorted(list(selected))
+        if len(selected) == len(col_names):
+            self.names = col_names
+            return data_instance.mapValues(lambda inst: inst.features)
+
+        self.names = [col_names[i] for i in selected]
+        return data_instance.mapValues(lambda inst: inst.features[selected])
+
     @staticmethod
-    def _standardized(data_instance):
-        n = data_instance.count()
-        sum_x, sum_square_x = data_instance.mapValues(lambda inst: (inst.features, inst.features ** 2)) \
+    def _standardized(data):
+        n = data.count()
+        sum_x, sum_square_x = data.mapValues(lambda x: (x, x ** 2)) \
             .reduce(lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1]))
         mu = sum_x / n
         sigma = np.sqrt(sum_square_x / n - mu ** 2)
         if (sigma <= 0).any():
             raise ValueError(f"zero standard deviation detected, sigma={sigma}")
-        return data_instance.mapValues(lambda inst: (inst.features - mu) / sigma)
+        return n, data.mapValues(lambda x: (x - mu) / sigma)
 
     def fit(self, data_instance):
-        self.names = data_instance.schema["header"]
-        data_instance = self._standardized(data_instance)
-        self.local_corr = table_dot(data_instance, data_instance)
+        data = self._select_columns(data_instance)
+        n, normed = self._standardized(data)
+        self.local_corr = table_dot(data, data)
 
         with SPDZ("a name") as spdz:
-            source = [data_instance, self._other_party]
+            source = [normed, self._other_party]
             if self._local_party.role == "host":
                 source = source[::-1]
             x, y = TableTensor.from_source("x", source[0]), TableTensor.from_source("y", source[1])
@@ -73,13 +99,8 @@ class Pearson(ModelBase):
             self.shapes.append(m1)
             self.shapes.append(m2)
 
-            n1 = x.value.count()
-            n2 = y.value.count()
-            if n1 != n2:
-                raise ValueError(f"shape miss matched, ({n1, m1}), ({n2, n2})")
-
-            self.corr = x.dot(y, "corr").get() / n1
-            self.local_corr /= n1
+            self.corr = x.dot(y, "corr").get() / n
+            self.local_corr /= n
         self._callback()
 
     @staticmethod

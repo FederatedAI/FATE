@@ -38,8 +38,8 @@ class Variable(object):
         return self
 
     def clean(self):
-        self._get_cleaner.maybe_clean()
-        self._remote_cleaner.maybe_clean()
+        self._get_cleaner.maybe_clean(None)
+        self._remote_cleaner.maybe_clean(None)
 
     @staticmethod
     def roles_to_parties(roles):

@@ -33,6 +33,9 @@
         "output_format": [
           "dense"
         ]
+      },
+      "pearson_0": {
+        "column_indexes": [-1]
       }
     },
     "host": {
@@ -53,12 +56,10 @@
         "output_format": [
           "dense"
         ]
+      },
+      "pearson_0": {
+        "column_indexes": [-1]
       }
-    }
-  },
-  "algorithm_parameters": {
-    "pearson_0": {
-      "cols": "aaa"
     }
   }
 }

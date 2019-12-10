@@ -20,8 +20,8 @@ class Communicator(object):
 
     def __init__(self, local_party=None, all_parties=None):
         self._transfer_variable = SecretShareTransferVariable()
-        self._share_variable = self._transfer_variable.share.disable_auto_clean()
-        self._rescontruct_variable = self._transfer_variable.rescontruct
+        self._share_variable = self._transfer_variable.share
+        self._rescontruct_variable = self._transfer_variable.rescontruct.disable_auto_clean()
         self._mul_triplets_encrypted_variable = self._transfer_variable.multiply_triplets_encrypted
         self._mul_triplets_cross_variable = self._transfer_variable.multiply_triplets_cross
 
@@ -70,3 +70,10 @@ class Communicator(object):
 
     def get_encrypted_cross_tensors(self, tag):
         return self._mul_triplets_cross_variable.get_parties(parties=self._other_parties, suffix=tag)
+
+    def clean(self):
+        self._rescontruct_variable.clean()
+        self._share_variable.clean()
+        self._rescontruct_variable.clean()
+        self._mul_triplets_encrypted_variable.clean()
+        self._mul_triplets_cross_variable.clean()

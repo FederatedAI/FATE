@@ -22,9 +22,30 @@ from federatedml.param.base_param import BaseParam
 
 class PearsonParam(BaseParam):
 
-    def __init__(self, cols=""):
+    def __init__(self, column_names=None, column_indexes=None):
         super().__init__()
-        self.cols = cols
+        self.column_names = column_names
+        self.column_indexes = column_indexes
+        if column_names is None:
+            self.column_names = []
+        if column_indexes is None:
+            self.column_indexes = []
 
     def check(self):
-        pass
+        if not isinstance(self.column_names, list):
+            raise ValueError(f"type mismatch, column_names with type {type(self.column_names)}")
+        for name in self.column_names:
+            if not isinstance(name, str):
+                raise ValueError(f"type mismatch, column_names with element {name}(type is {type(name)})")
+
+        if isinstance(self.column_indexes, list):
+            for idx in self.column_indexes:
+                if not isinstance(idx, int):
+                    raise ValueError(f"type mismatch, column_indexes with element {idx}(type is {type(idx)})")
+
+        if isinstance(self.column_indexes, int) and self.column_indexes != -1:
+            raise ValueError(f"column_indexes with type int and value {self.column_indexes}(only -1 allowed)")
+
+        if isinstance(self.column_indexes, list) and isinstance(self.column_names, list):
+            if len(self.column_indexes) == 0 and len(self.column_names) == 0:
+                raise ValueError(f"provide at least one column")
