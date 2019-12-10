@@ -13,5 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.secureprotol.spdz.utils.naming import NamingService
-from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor
+import random
+
+import numpy as np
+
+from arch.api.table.table import Table
+
+
+def rand_tensor(q_field, tensor):
+    if isinstance(tensor, Table):
+        return tensor.mapValues(
+            lambda x: np.array([random.SystemRandom().randint(1, q_field) for _ in x], dtype=object))
+    if isinstance(tensor, np.ndarray):
+        arr = np.zeros(shape=tensor.shape, dtype=object)
+        view = arr.view().reshape(-1)
+        for i in range(arr.size):
+            view[i] = random.SystemRandom().randint(1, q_field)
+        return arr
+    raise NotImplementedError(f"type={type(tensor)}")

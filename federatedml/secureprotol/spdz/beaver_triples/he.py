@@ -15,11 +15,30 @@
 #
 import numpy as np
 
+from arch.api.table.table import Table
 from federatedml.secureprotol.spdz.communicator import Communicator
-from federatedml.secureprotol.spdz.utils.random_device import rand_tensor
+from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor
 
 
-def beaver_triplets(a_shape, b_shape, einsum_expr, q_field, he_key_pair, communicator: Communicator, name):
+def encrypt_tensor(tensor, public_key):
+    if isinstance(tensor, np.ndarray):
+        return np.vectorize(public_key.encrypt)(tensor)
+    elif isinstance(tensor, Table):
+        return tensor.mapValues(lambda x: np.vectorize(public_key.encrypt)(x))
+    else:
+        raise NotImplementedError(f"type={type(tensor)}")
+
+
+def decrypt_tensor(tensor, private_key, otypes):
+    if isinstance(tensor, np.ndarray):
+        return np.vectorize(private_key.decrypt, otypes)(tensor)
+    elif isinstance(tensor, Table):
+        return tensor.mapValues(lambda x: np.vectorize(private_key.decrypt, otypes)(x))
+    else:
+        raise NotImplementedError(f"type={type(tensor)}")
+
+
+def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator: Communicator, name):
     """
     a = a_1 + a_2 + ... + a_n
     b = b_1 + b_2 + ... + b_n
@@ -32,27 +51,24 @@ def beaver_triplets(a_shape, b_shape, einsum_expr, q_field, he_key_pair, communi
         c = a * b
     """
     public_key, private_key = he_key_pair
-    a = rand_tensor(q_field, a_shape).astype(object)
-    b = rand_tensor(q_field, b_shape).astype(object)
+    a = rand_tensor(q_field, a_tensor)
+    b = rand_tensor(q_field, b_tensor)
 
-    def _einsum(_a, _b):
-        return np.einsum(einsum_expr, _a, _b, optimize="optimize")
-
-    c = _einsum(a, b)
+    c = dot(a, b)
 
     # tensor dot of local share of a with encrypted remote share of b
     def _cross_terms(_b):
-        return _einsum(a, _b)
+        return dot(a, _b)
 
     # broadcast encrypted b
-    encrypted_b = np.vectorize(public_key.encrypt)(b)
+    encrypted_b = encrypt_tensor(b, public_key)
     communicator.remote_encrypted_tensor(encrypted=encrypted_b, tag=name)
 
     # get encrypted b
     parties, encrypted_b_list = communicator.get_encrypted_tensors(tag=name)
     for _b, _p in zip(encrypted_b_list, parties):
         cross = _cross_terms(_b)
-        r = rand_tensor(q_field, cross.shape).astype(object)
+        r = rand_tensor(q_field, cross)
         cross += r
         c -= r
         # remote cross terms
@@ -61,6 +77,6 @@ def beaver_triplets(a_shape, b_shape, einsum_expr, q_field, he_key_pair, communi
     # get cross terms
     crosses = communicator.get_encrypted_cross_tensors(tag=name)
     for cross in crosses:
-        c += np.vectorize(private_key.decrypt, otypes=[object])(cross)
+        c += decrypt_tensor(cross, private_key, [object])
 
     return a, b, c % q_field

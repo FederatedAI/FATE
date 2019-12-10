@@ -20,9 +20,8 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
-from federatedml.secureprotol.spdz.tensor.fix_point import FixPointTensor
+from federatedml.secureprotol.spdz.tensor.table_fix_point import TableTensor, table_dot
 
-Q_FIELD = 2 << 60
 MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
 
@@ -58,45 +57,29 @@ class Pearson(ModelBase):
             raise ValueError(f"zero standard deviation detected, sigma={sigma}")
         return data_instance.mapValues(lambda inst: (inst.features - mu) / sigma)
 
-    def _prepare(self, data_instance):
-
-        # collect tensor
-        normalized = list(data_instance.collect())
-        normalized.sort()
-        normalized = np.array([v for k, v in normalized])
-
-        local_corr = np.einsum("ij,ik->jk", normalized, normalized)
-
-        # source for x and y, assuming data tensor from guest is x, otherwise, y
-        tensor_dict = {}
-        if self._local_party.role == "guest":
-            tensor_dict["x"] = normalized
-            tensor_dict["y"] = self._other_party
-        elif self._local_party.role == "host":
-            tensor_dict["x"] = self._other_party
-            tensor_dict["y"] = normalized
-        return tensor_dict, local_corr
-
     def fit(self, data_instance):
         self.names = data_instance.schema["header"]
         data_instance = self._standardized(data_instance)
-        tensor_source_dict, local_corr = self._prepare(data_instance)
+        self.local_corr = table_dot(data_instance, data_instance)
 
         with SPDZ("a name") as spdz:
-            x = FixPointTensor.from_source("x", tensor_source_dict["x"])
-            y = FixPointTensor.from_source("y", tensor_source_dict["y"])
-            n1, m1 = x.shape
-            n2, m2 = y.shape
+            source = [data_instance, self._other_party]
+            if self._local_party.role == "host":
+                source = source[::-1]
+            x, y = TableTensor.from_source("x", source[0]), TableTensor.from_source("y", source[1])
 
-            if n1 != n2:
-                raise ValueError(f"shape miss matched, ({n1, m1}), ({n2, n2})")
+            m1 = len(x.value.first()[1])
+            m2 = len(x.value.first()[1])
             self.shapes.append(m1)
             self.shapes.append(m2)
 
-            c = x.einsum(y, "ij,ik->jk").get()
-            self.corr = c / n1
-            self.local_corr = local_corr / n1
-            print(self.corr)
+            n1 = x.value.count()
+            n2 = y.value.count()
+            if n1 != n2:
+                raise ValueError(f"shape miss matched, ({n1, m1}), ({n2, n2})")
+
+            self.corr = x.dot(y, "corr").get() / n1
+            self.local_corr /= n1
         self._callback()
 
     @staticmethod

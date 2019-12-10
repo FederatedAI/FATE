@@ -13,24 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import random
 
-import numpy as np
-
-system_random = random.SystemRandom()
+from federatedml.secureprotol.spdz.utils import NamingService
 
 
-class RandomDevice(object):
-    def __init__(self, q_field):
-        self._q_field = q_field
+class TensorBase(object):
+    __array_ufunc__ = None
 
-    def rand(self, shape):
-        ret = np.zeros(shape, dtype=np.int64)
-        view = ret.view().reshape(-1)
-        for i in range(ret.size):
-            view[i] = system_random.randint(1, self._q_field)
-        return ret
+    def __init__(self, q_field, tensor_name: str = None):
+        self.q_field = q_field
+        self.tensor_name = NamingService.get_instance().next() if tensor_name is None else tensor_name
 
-
-def rand_tensor(q_field, shape):
-    return np.random.randint(q_field, size=shape, dtype=np.int64)
+    @classmethod
+    def get_spdz(cls):
+        from federatedml.secureprotol.spdz import SPDZ
+        return SPDZ.get_instance()

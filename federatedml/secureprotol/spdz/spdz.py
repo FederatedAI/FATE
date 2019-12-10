@@ -17,7 +17,6 @@
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.spdz.communicator import Communicator
 from federatedml.secureprotol.spdz.utils import NamingService
-from federatedml.secureprotol.spdz.utils import RandomDevice
 from federatedml.secureprotol.spdz.utils import naming
 
 
@@ -39,7 +38,7 @@ class SPDZ(object):
         return cls.__instance is not None
 
     def __init__(self, name="ss", q_field=2 << 60, local_party=None, all_parties=None):
-        self._name_service = naming.NamingService(name)
+        self.name_service = naming.NamingService(name)
         self._prev_name_service = None
         self._pre_instance = None
 
@@ -50,11 +49,10 @@ class SPDZ(object):
         if len(self.other_parties) > 1:
             raise EnvironmentError("support 2-party secret share only")
         self.public_key, self.private_key = PaillierKeypair.generate_keypair(1024)
-        self.r_device = RandomDevice(q_field)
         self.q_field = q_field
 
     def __enter__(self):
-        self._prev_name_service = NamingService.set_instance(self._name_service)
+        self._prev_name_service = NamingService.set_instance(self.name_service)
         self._pre_instance = self.set_instance(self)
         return self
 

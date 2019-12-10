@@ -22,8 +22,7 @@ import numpy as np
 from arch.api import session, federation
 from arch.api.transfer import Party
 from federatedml.secureprotol.spdz import SPDZ
-from federatedml.secureprotol.spdz.tensor.integer import IntegerTensor
-from federatedml.secureprotol.spdz.tensor.fix_point import FixPointEndec, FixPointTensor
+from federatedml.secureprotol.spdz.tensor.numpy_fix_point import FixPointTensor
 
 Q_BITS = 60
 Q_FIELD = 2 << Q_BITS
@@ -59,13 +58,15 @@ parties = [p1, p2]
 data = [0.5 - np.random.rand(569, 10),
         0.5 - np.random.rand(569, 20)]
 
-xx = data[0]
-yy = data[1]
+
+# session.init(job_id)
+# xx = session.parallelize(enumerate(data[0]), include_key=True)
+# yy = session.parallelize(enumerate(data[1]), include_key=True)
 
 
 def tensor_source(name, idx):
-    d = {'x': (0, xx),
-         'y': (1, yy)}
+    d = {'x': (0, data[0]),
+         'y': (1, data[1])}
     return parties[d[name][0]] if d[name][0] != idx else d[name][1]
 
 
@@ -73,8 +74,12 @@ def call(idx):
     init(idx)
 
     with SPDZ(q_field=Q_FIELD) as spdz:
-        x = FixPointTensor.from_source("x", tensor_source("x", idx))
-        y = FixPointTensor.from_source("y", tensor_source("y", idx))
+        if idx == 0:
+            x = FixPointTensor.from_source("x", data[0])
+            y = FixPointTensor.from_source("y", parties[1])
+        else:
+            x = FixPointTensor.from_source("x", parties[0])
+            y = FixPointTensor.from_source("y", data[1])
         ret = x.einsum(y, einsum_expr)
         return ret.get()
 
