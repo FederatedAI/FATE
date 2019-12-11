@@ -19,10 +19,12 @@
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt,FakeEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import consts
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+from federatedml.framework.hetero.procedure import paillier_cipher, fake_cipher
+
 
 class HeteroLRBase(BaseLogisticRegression):
     def __init__(self):
@@ -37,13 +39,12 @@ class HeteroLRBase(BaseLogisticRegression):
         self.gradient_loss_operator = None
         self.converge_procedure = None
         self.model_param = HeteroLogisticParam()
-
+    
     def _init_model(self, params):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
-        self.cipher_operator = PaillierEncrypt()
+
         self.transfer_variable = HeteroLRTransferVariable()
-        self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
@@ -103,6 +104,7 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj
+
 
 
 

@@ -58,6 +58,8 @@ class EncryptParam(BaseParam):
                 self.method = consts.PAILLIER
             elif user_input == "iterativeaffine":
                 self.method = consts.ITERATIVEAFFINE
+            elif user_input == "fake":
+                self.method == "Fake"
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))

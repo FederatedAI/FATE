@@ -174,9 +174,9 @@ class LogisticParam(BaseParam):
                     " 'diff' or 'abs'")
 
         self.encrypt_param.check()
-        if self.encrypt_param.method not in [consts.PAILLIER, None]:
+        if self.encrypt_param.method not in [consts.PAILLIER,consts.FAKE, None]:
             raise ValueError(
-                "logistic_param's encrypted method support 'Paillier' or None only")
+                "logistic_param's encrypted method support 'Paillier' 'Fake' or None only")
 
         if type(self.decay).__name__ not in ["int", 'float']:
             raise ValueError(
@@ -270,6 +270,7 @@ class HeteroLogisticParam(LogisticParam):
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
-        if self.encrypt_param.method != consts.PAILLIER:
-            raise ValueError("Hetero LR support Paillier encryption mode only")
+        if self.encrypt_param.method != consts.PAILLIER and self.encrypt_param.method != consts.FAKE:
+            raise ValueError("Hetero LR support Paillier or Fake encryption mode only")
         return True
+

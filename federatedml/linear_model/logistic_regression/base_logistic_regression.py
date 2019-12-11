@@ -24,6 +24,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.util import consts
+from federatedml.feature.sparse_vector import SparseVector
 
 LOGGER = log_utils.getLogger()
 
@@ -50,9 +51,20 @@ class BaseLogisticRegression(BaseLinearModel):
     #     if params.multi_class == 'ovr':
     #         self.need_one_vs_rest = True
 
-    def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
+    def vec_dot(self, x, w):
+        new_data = 0
+        if isinstance(x, SparseVector):
+            for idx, v in x.get_all_data():
+                if idx < len(w):
+                    new_data += v * w[idx]
+        else:
+            new_data = np.dot(x, w)
+        return new_data
 
+    def compute_wx(self, data_instances, coef_, intercept_=0):
+        #return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
+        return data_instances.mapValues(lambda v: self.vec_dot(v.features,coef_) + intercept_)
+        
     def get_single_model_param(self):
         weight_dict = {}
         LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(

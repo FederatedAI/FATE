@@ -27,6 +27,7 @@ from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.feature.sparse_vector import SparseVector
 
 LOGGER = log_utils.getLogger()
 
@@ -46,6 +47,16 @@ class BasePoissonRegression(BaseLinearModel):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.exposure_colname = params.exposure_colname
+
+    def vec_dot(self, x, w):
+        new_data = 0
+        if isinstance(x, SparseVector):
+            for idx, v in x.get_all_data():
+                if idx < len(w):
+                    new_data += v * w[idx]
+        else:
+            new_data = np.dot(x, w)
+        return new_data
 
     def get_exposure_index(self, header, exposure_colname):
         try:
@@ -90,11 +101,11 @@ class BasePoissonRegression(BaseLinearModel):
     def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:
             mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
+                lambda v: np.exp(self.vec_dot(v.features, coef_) + intercept_ ))
         else:
             offset = exposure.mapValues(lambda v: self.safe_log(v))
             mu = data_instances.join(offset,
-                lambda v, m: np.exp(np.dot(v.features, coef_) + intercept_ + m))
+                lambda v, m: self.vec_dot(np.dot(v.features, coef_) + intercept_ + m))
 
         return mu
 

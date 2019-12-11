@@ -27,6 +27,7 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 PAILLIER = 'Paillier'
+FAKE = 'Fake'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
 AFFINE = 'Affine'

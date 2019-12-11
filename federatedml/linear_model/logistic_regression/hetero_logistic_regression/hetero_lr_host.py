@@ -18,13 +18,13 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, fake_cipher
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import consts
-
+from federatedml.secureprotol import PaillierEncrypt,FakeEncrypt
 LOGGER = log_utils.getLogger()
 
 
@@ -35,11 +35,24 @@ class HeteroLRHost(HeteroLRBase):
         self.batch_index_list = []
         self.role = consts.HOST
 
-        self.cipher = paillier_cipher.Host()
+#        self.cipher = paillier_cipher.Host()
         self.batch_generator = batch_generator.Host()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
         self.encrypted_calculator = None
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        if params.encrypt_param.method == consts.PAILLIER:
+            self.cipher = paillier_cipher.Host()
+            self.cipher_operator = PaillierEncrypt()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+            # self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        elif params.encrypt_param.method == consts.FAKE:
+            self.cipher = fake_cipher.Host()
+            self.cipher_operator = FakeEncrypt()
+            self.cipher.register_fake_cipher(self.transfer_variable)
+            # self.cipher_operator = self.cipher.gen_fake_cipher_operator()
 
     def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
         """
@@ -97,7 +110,11 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        #self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        if isinstance(self.cipher , paillier_cipher.Host):
+            self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        elif isinstance(self.cipher , fake_cipher.Host):
+            self.cipher_operator = self.cipher.gen_fake_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
 
@@ -123,8 +140,7 @@ class HeteroLRHost(HeteroLRBase):
                 LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
-                    batch_index)
+                    batch_feat_inst, self.model_weights,self.encrypted_calculator, self.optimizer, self.n_iter_, batch_index)
                 LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}

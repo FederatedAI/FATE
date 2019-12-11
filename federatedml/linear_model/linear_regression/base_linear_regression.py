@@ -27,6 +27,7 @@ from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.feature.sparse_vector import SparseVector
 
 LOGGER = log_utils.getLogger()
 
@@ -56,10 +57,20 @@ class BaseLinearRegression(BaseLinearModel):
     def _init_model(self, params):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
+        
+    def vec_dot(self, x, w):
+        new_data = 0
+        if isinstance(x, SparseVector):
+            for idx, v in x.get_all_data():
+                if idx < len(w):
+                    new_data += v * w[idx]
+        else:
+            new_data = np.dot(x, w)
+        return new_data
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(
-            lambda v: np.dot(v.features, coef_) + intercept_)
+            lambda v: self.vec_dot(v.features, coef_) + intercept_)
 
     def _get_meta(self):
         meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,

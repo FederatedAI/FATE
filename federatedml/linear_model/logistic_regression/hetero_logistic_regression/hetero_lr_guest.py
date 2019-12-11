@@ -16,12 +16,12 @@
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, fake_cipher
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
-
+from federatedml.secureprotol import PaillierEncrypt,FakeEncrypt
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -33,12 +33,25 @@ class HeteroLRGuest(HeteroLRBase):
         self.data_batch_count = []
         # self.guest_forward = None
         self.role = consts.GUEST
-        self.cipher = paillier_cipher.Guest()
+#        self.cipher = paillier_cipher.Guest()
         self.batch_generator = batch_generator.Guest()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         self.encrypted_calculator = None
         # self.need_one_vs_rest = None
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        if params.encrypt_param.method == consts.PAILLIER:
+            self.cipher = paillier_cipher.Guest()
+            self.cipher_operator = PaillierEncrypt()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+            # self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        elif params.encrypt_param.method == consts.FAKE:
+            self.cipher = fake_cipher.Guest()
+            self.cipher_operator = FakeEncrypt()
+            self.cipher.register_fake_cipher(self.transfer_variable)
+            # self.cipher_operator = self.cipher.gen_fake_cipher_operator()
 
     @staticmethod
     def load_data(data_instance):
@@ -81,8 +94,12 @@ class HeteroLRGuest(HeteroLRBase):
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
-
+        #self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        if isinstance(self.cipher , paillier_cipher.Guest):
+            self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        elif isinstance(self.cipher , fake_cipher.Guest):
+            self.cipher_operator = self.cipher.gen_fake_cipher_operator()
+        
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
 

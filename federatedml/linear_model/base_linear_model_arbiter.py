@@ -16,11 +16,11 @@
 
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, fake_cipher
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import consts
 from federatedml.util import fate_operator
-
+from federatedml.secureprotol import PaillierEncrypt,FakeEncrypt
 LOGGER = log_utils.getLogger()
 
 
@@ -36,6 +36,17 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.batch_generator = batch_generator.Arbiter()
         self.gradient_loss_operator = None
         self.converge_procedure = convergence.Arbiter()
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        if params.encrypt_param.method == consts.PAILLIER:
+            self.cipher = paillier_cipher.Arbiter()
+            self.cipher_operator = PaillierEncrypt()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+        elif params.encrypt_param.method == consts.FAKE:
+            self.cipher = fake_cipher.Arbiter()
+            self.cipher_operator = FakeEncrypt()
+            self.cipher.register_fake_cipher(self.transfer_variable)
 
     def perform_subtasks(self, **training_info):
         """
@@ -77,8 +88,11 @@ class HeteroBaseArbiter(BaseLinearModel):
         """
 
         LOGGER.info("Enter hetero linear model arbiter fit")
-
-        self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
+        if isinstance(self.cipher , paillier_cipher.Arbiter):
+            self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
+        elif isinstance(self.cipher , fake_cipher.Arbiter):
+            self.cipher_operator = self.cipher.fake_keygen(self.model_param.encrypt_param.key_length)
+        #self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
         validation_strategy = self.init_validation_strategy()
 
