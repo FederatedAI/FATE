@@ -15,6 +15,7 @@
 #
 from collections import defaultdict
 import functools
+import numpy as np
 
 from arch.api import session
 from arch.api.utils import log_utils
@@ -48,7 +49,7 @@ class RepeatedIDIntersect(object):
         final_id_map = {}
 
         for _data in local_data:
-            all_id_map[str(int(_data[1]))].append(_data[0])
+            all_id_map[str(_data[1])].append(_data[0])
 
         for k, v in all_id_map.items():
             if len(v) >= 2:
@@ -88,7 +89,8 @@ class RepeatedIDIntersect(object):
             one_feature = data.first()
             if isinstance(one_feature[1], Instance):
                 data = data.mapValues(
-                    lambda v: Instance(features=v.features[1:], label=v.label, inst_id=v.inst_id, weight=v.weight))
+                    lambda v: Instance(features=np.array(v.features[1:], dtype=np.float), label=v.label,
+                                       inst_id=v.inst_id, weight=v.weight))
             else:
                 data = data.mapValues(lambda v: v[1:])
             data.schema = original_schema
