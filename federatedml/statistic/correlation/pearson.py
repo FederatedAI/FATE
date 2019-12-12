@@ -95,7 +95,7 @@ class Pearson(ModelBase):
             else:
                 y, x = TableTensor.from_source("y", source[0]), TableTensor.from_source("x", source[1])
             m1 = len(x.value.first()[1])
-            m2 = len(x.value.first()[1])
+            m2 = len(y.value.first()[1])
             self.shapes.append(m1)
             self.shapes.append(m2)
 
