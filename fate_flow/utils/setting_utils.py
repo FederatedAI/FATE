@@ -65,8 +65,10 @@ class CenterConfig(object):
             zk.start()
             model_host = 'http://{}:{}/v1/model/transfer'.format(get_lan_ip(), fate_flow_port)
             fate_flow_zk_path = '{}/{}'.format(fate_flow_zk_path, parse.quote(model_host, safe=' '))
-            zk.delete(fate_flow_zk_path)
-            zk.create(fate_flow_zk_path, makepath=True)
+            try:
+                zk.create(fate_flow_zk_path, makepath=True)
+            except:
+                pass
             zk.stop()
 
 
