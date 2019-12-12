@@ -4,6 +4,8 @@
 * Add union component which support data merging. 
 * Support indicating partial columns in Onehot Encoder
 * Support intermediate data cleanup after the task ends
+* Accelerated Intersection
+* Optimizing the deployment process
 
 
 ## Bug Fixes

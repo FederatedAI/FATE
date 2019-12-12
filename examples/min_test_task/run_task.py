@@ -2,6 +2,7 @@ import json
 import os
 import random
 import subprocess
+import sys
 import time
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
@@ -21,7 +22,7 @@ guest_id = 9999
 host_id = 10000
 arbiter_id = 10000
 
-work_mode = 1
+work_mode = 0
 
 intersect_output_name = ''
 intersect_output_namespace = ''
@@ -76,11 +77,12 @@ class TaskManager(object):
             stdout, stderr = subp.communicate()
             stdout = stdout.decode("utf-8")
             if not stdout:
-                end_time = time.time()
-                if end_time - start_time >= max_waiting_time:
+                waited_time = time.time() - start_time
+                if waited_time >= max_waiting_time:
                     # raise ValueError(
                     #     "[obtain_component_output] task:{} failed stdout:{}".format(task_type, stdout))
                     return None
+                print("job cmd: {}, waited time: {}".format(cmd, waited_time))
                 time.sleep(STATUS_CHECKER_TIME)
             else:
                 break
@@ -88,25 +90,38 @@ class TaskManager(object):
         return stdout
 
     @staticmethod
+    def start_block_func(run_func, params, exit_func, max_waiting_time=OTHER_TASK_TIME):
+        start_time = time.time()
+        while True:
+            result = run_func(*params)
+            if exit_func(result):
+                return result
+            end_time = time.time()
+            if end_time - start_time >= max_waiting_time:
+                return None
+            time.sleep(STATUS_CHECKER_TIME)
+
+    @staticmethod
     def start_task(cmd):
+        print('Start task: {}'.format(cmd))
         subp = subprocess.Popen(cmd,
                                 shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
         stdout, stderr = subp.communicate()
         stdout = stdout.decode("utf-8")
-        print("start_task, stdout:" + str(stdout))
-        stdout = json.loads(stdout)
+        # print("start_task, stdout:" + str(stdout))
+        try:
+            stdout = json.loads(stdout)
+        except:
+            raise RuntimeError("start task error, return value: {}".format(stdout))
         return stdout
 
-    @staticmethod
-    def get_table_count(name, namespace):
-        from arch.api import session
-        session.init(job_id="get_intersect_output", mode=work_mode)
-        table = session.table(name=name, namespace=namespace)
-        count = table.count()
-        del session
-        return count
+    def get_table_info(self, name, namespace):
+        cmd = ["python", fate_flow_path, "-f", "table_info", "-t", str(name), "-n", str(namespace)]
+        table_info = self.start_task(cmd)
+        print(table_info)
+        return table_info
 
 
 class UploadTask(TaskManager):
@@ -148,7 +163,7 @@ class UploadTask(TaskManager):
                 "upload data exec fail, status:{}, stdout:{}".format(status, stdout))
         print("Upload output is {}".format(stdout))
         time.sleep(6)
-        count = self.get_table_count(self.table_name, self.name_space)
+        count = self.get_table_info(self.table_name, self.name_space)
         print("Upload Data, role: {}, count: {}".format(self.role, count))
         if self.role == HOST:
             print("The table name and namespace is needed by GUEST. To start a modeling task, please inform "
@@ -210,7 +225,22 @@ class TrainTask(TaskManager):
 
         components = self._parse_dsl_components()
         for cpn in components:
-            self._check_cpn_status(jobid, cpn)
+            params = [jobid, cpn]
+            if "intersect" in cpn:
+                max_time = MAX_INTERSECT_TIME
+            elif 'lr' in cpn:
+                max_time = MAX_TRAIN_TIME
+            else:
+                max_time = OTHER_TASK_TIME
+            job_status = self.start_block_func(self._check_cpn_status, params,
+                                               exit_func=self._check_exit, max_waiting_time=max_time)
+            print("component name: {}, job_status: {}".format(cpn, job_status))
+
+        auc = self._get_auc(jobid)
+        if auc < self.task_hetero_lr_base_auc:
+            print("[Warning]  The auc: {} is lower than expect value: {}".format(auc, self.task_hetero_lr_base_auc))
+        else:
+            print("[Train] train auc:{}".format(auc))
 
     def _upload_data(self):
         upload_obj = UploadTask()
@@ -219,7 +249,8 @@ class TrainTask(TaskManager):
         upload_obj.run()
         guest_table_name = upload_obj.table_name
         guest_namespace = upload_obj.name_space
-        count = self.get_table_count(self.guest_table_name, self.guest_namespace)
+        table_info = self.get_table_info(guest_table_name, guest_namespace)
+        count = table_info['data']['count']
         if count != self.task_data_count:
             raise ValueError(
                 "[Failed] Test upload task error, upload data count is:{},"
@@ -253,7 +284,7 @@ class TrainTask(TaskManager):
         with open(config_path, "w") as fout:
             # print("path:{}".format(config_path))
             fout.write(config + "\n")
-        return config_dir_path
+        return config_path
 
     def _parse_dsl_components(self):
         with open(hetero_lr_dsl_file, 'r', encoding='utf-8') as f:
@@ -263,12 +294,60 @@ class TrainTask(TaskManager):
 
     def _check_cpn_status(self, job_id, component_name):
         check_cmd = ['python', fate_flow_path, "-f", "query_task", "-j", job_id, "-cpn", component_name]
-        if "intersect" in component_name:
-            max_waiting_time = MAX_INTERSECT_TIME
-        elif 'lr' in component_name:
-            max_waiting_time = MAX_TRAIN_TIME
-        else:
-            max_waiting_time = OTHER_TASK_TIME
-        stdout = self.start_block_task(check_cmd, MAX_INTERSECT_TIME)
-        if stdout is None:
-            pass
+        stdout = self.start_task(check_cmd)
+        try:
+            status = stdout["retcode"]
+            if status != 0:
+                return RUNNING
+            # print("In _check_cpn_status, status: {}".format(status))
+            task_status = []
+            check_data = stdout["data"]
+
+            # Collect all party status
+            for component_stats in check_data:
+                status = component_stats['f_status']
+                task_status.append(status)
+
+            print("Current task status: {}".format(task_status))
+
+            if any([s == FAIL for s in task_status]):
+                return FAIL
+            if any([s == RUNNING for s in task_status]):
+                return RUNNING
+        except:
+            return None
+        return SUCCESS
+
+    @staticmethod
+    def _check_exit(status):
+        if status is None:
+            return True
+
+        if status in [RUNNING, START]:
+            return False
+        return True
+
+    def _get_auc(self, jobid):
+        cmd = ["python", fate_flow_path, "-f", "component_metric_all", "-j", jobid, "-p", str(guest_id), "-r",
+               GUEST, "-cpn", evaluation_component_name]
+        eval_res = self.start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME)
+        eval_results = eval_res['data']['train'][train_component_name]['data']
+        auc = 0
+        for metric_name, metric_value in eval_results:
+            if metric_name == 'auc':
+                auc = metric_value
+        return auc
+
+
+class DeleteTableTask(TaskManager):
+    def _parse_argv(self, argv):
+        pass
+
+
+if __name__ == "__main__":
+    method = sys.argv[1]
+    if method == "upload":
+        task_obj = UploadTask(sys.argv)
+    else:
+        task_obj = TrainTask(sys.argv)
+    task_obj.run()

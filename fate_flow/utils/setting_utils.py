@@ -16,6 +16,7 @@
 from urllib import parse
 
 from kazoo.client import KazooClient
+from kazoo.security import make_digest_acl
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import get_lan_ip
@@ -26,6 +27,8 @@ class CenterConfig(object):
     USE_CONFIGURATION_CENTER = False
     SERVERS = None
     SERVINGS_ZK_PATH = None
+    ZK_USERNAME = 'fate'
+    ZK_PASSWORD = 'fate'
 
     @staticmethod
     def get_settings(path, servings_zk_path=None):
@@ -60,7 +63,9 @@ class CenterConfig(object):
         if not use_configuation_center:
             CenterConfig.SERVERS = CenterConfig.get_settings('/servers/servings')
         else:
-            zk = KazooClient(hosts=hosts)
+            default_acl = make_digest_acl(CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD, all=True)
+            zk = KazooClient(hosts=hosts, default_acl=[default_acl], auth_data=[("digest", "{}:{}".format(
+                CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD))])
             zk.start()
             model_host = 'http://{}:{}/v1/model/transfer'.format(get_lan_ip(), fate_flow_port)
             fate_flow_zk_path = '{}/{}'.format(fate_flow_zk_path, parse.quote(model_host, safe=' '))
