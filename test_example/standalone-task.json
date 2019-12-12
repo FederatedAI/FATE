@@ -1,14 +1,18 @@
 {
   "homo_nn": {
-      "host":"../examples/federatedml-1.x-examples/homo_nn/upload_data_host.json",
-      "guest":"../examples/federatedml-1.x-examples/homo_nn/upload_data_guest.json",
-      "conf":"../examples/federatedml-1.x-examples/homo_nn/test_homo_dnn_multi_label.json",
-      "dsl":"../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.dsl"
-   },
+    "data": [
+      "../examples/federatedml-1.x-examples/homo_nn/upload_data_host.json",
+      "../examples/federatedml-1.x-examples/homo_nn/upload_data_guest.json"
+    ],
+    "conf": "../examples/federatedml-1.x-examples/homo_nn/test_homo_dnn_multi_label.json",
+    "dsl": "../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.dsl"
+  },
   "task2": {
-      "host":"../examples/federatedml-1.x-examples/homo_nn/upload_data_host.json",
-      "guest":"../examples/federatedml-1.x-examples/homo_nn/upload_data_guest.json",
-      "conf":"../examples/federatedml-1.x-examples/homo_nn/test_homo_dnn_multi_label.json",
-      "dsl":"../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.dsl"
-   }
+    "data": [
+      "../examples/federatedml-1.x-examples/homo_nn/upload_data_host.json",
+      "../examples/federatedml-1.x-examples/homo_nn/upload_data_guest.json"
+    ],
+    "conf": "../examples/federatedml-1.x-examples/homo_nn/test_homo_dnn_multi_label.json",
+    "dsl": "../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.dsl"
+  }
 }
