@@ -49,11 +49,12 @@ class DTable(Table):
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
         from arch.api import RuntimeInstance
         persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
-        return self._dtable.save_as(name=name,
-                                    namespace=namespace,
-                                    partition=partition,
-                                    use_serialize=use_serialize,
-                                    persistent_engine=persistent_engine)
+        saved_table = self._dtable.save_as(name=name,
+                                           namespace=namespace,
+                                           partition=partition,
+                                           use_serialize=use_serialize,
+                                           persistent_engine=persistent_engine)
+        return self.from_dtable(self._session_id, saved_table)
 
     def put(self, k, v, use_serialize=True, maybe_large_value=False):
         if not maybe_large_value:
@@ -145,4 +146,5 @@ class DTable(Table):
 
     @log_elapsed
     def flatMap(self, func, **kwargs):
-        return DTable(self._dtable.flatMap(func), session_id=self._session_id)
+        _temp_table = self.from_dtable(self._session_id, self._dtable.flatMap(func))
+        return _temp_table.save_as(name=f"{_temp_table._name}.save_as", namespace=_temp_table._namespace)
