@@ -1,6 +1,6 @@
 import json
 import os
-
+import argparse
 from test_example import submit
 
 
@@ -13,13 +13,19 @@ def submit_task(task_data, task_conf, task_dsl):
             submitter.run_upload(upload_path=data)
     job_id = submitter.submit_job(conf_temperate_path=task_conf, dsl_path=task_dsl)
     ret = submitter.await_finish(job_id)
-    return ret
+    return job_id+ret
 
 
 if __name__ == "__main__":
-
-    with open("standalone-task.json") as f:
-        configs = json.loads(f.read())
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("task_file", type=str, help="please input your task config file")
+    arg_parser.add_argument("result_file", type=str, help="please input the filename to receive results")
+    args = arg_parser.parse_args()
+    task_file=args.task_file
+    result_file=args.result_file
+    if task_file:
+       with open(task_file) as f:
+            configs = json.loads(f.read())
     result = {}
     fate_home = os.path.abspath(f"{os.getcwd()}/../")
     submitter = submit.Submitter() \
@@ -39,8 +45,8 @@ if __name__ == "__main__":
                 f.write("===========")
                 f.write(json.dumps(e.args))
                 f.write("\n")
-    with open("result.txt", "w") as f:
+    with open(result_file, "w") as f:
         f.write("task\tstatus\n")
-        f.write("_____________\n")
+        f.write("____________________________\n")
         for task_name, task_status in result.items():
             f.write(f"{task_name}\t{task_status}\n")
