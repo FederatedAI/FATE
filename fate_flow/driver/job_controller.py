@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api import session
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
@@ -113,6 +114,12 @@ class JobController(object):
             kill_status = False
             try:
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
+                job_conf_dict = job_utils.get_job_conf(job_id)
+                runtime_conf = job_conf_dict['job_runtime_conf_path']
+                session.init(job_id='{}_{}_{}'.format(task.f_task_id, role, party_id),
+                             mode=runtime_conf.get('job_parameters').get('work_mode'),
+                             backend=runtime_conf.get('job_parameters').get('backend', 0))
+                session.stop()
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:
