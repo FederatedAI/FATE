@@ -20,20 +20,17 @@ from kazoo.security import make_digest_acl
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import get_lan_ip
-from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 class CenterConfig(object):
-    USE_CONFIGURATION_CENTER = False
     SERVERS = None
-    SERVINGS_ZK_PATH = None
     ZK_USERNAME = 'fate'
     ZK_PASSWORD = 'fate'
 
     @staticmethod
-    def get_settings(path, servings_zk_path=None):
-        if servings_zk_path and CenterConfig.USE_CONFIGURATION_CENTER:
-            return CenterConfig.get_servings_from_zookeeper(servings_zk_path)
+    def get_settings(path, servings_zk_path=None, use_zk=False, hosts=None):
+        if servings_zk_path and use_zk:
+            return CenterConfig.get_servings_from_zookeeper(servings_zk_path, hosts)
         return CenterConfig.get_settings_from_file(path)
 
     @staticmethod
@@ -45,24 +42,23 @@ class CenterConfig(object):
         return data
 
     @staticmethod
-    def update_servings(event):
-        nodes = RuntimeConfig.ZK.get_children(CenterConfig.SERVINGS_ZK_PATH)
-        CenterConfig.SERVERS = nodes_unquote(nodes)
-
-    @staticmethod
-    def get_servings_from_zookeeper(path):
-        try:
-            zk = RuntimeConfig.ZK
-            nodes = zk.get_children(path, watch=CenterConfig.update_servings)
-            return nodes_unquote(nodes)
-        except Exception as e:
-            raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
-
-    @staticmethod
-    def init(hosts, use_configuation_center, servings_zk_path, fate_flow_zk_path, fate_flow_port):
-        if not use_configuation_center:
-            CenterConfig.SERVERS = CenterConfig.get_settings('/servers/servings')
+    def get_servings_from_zookeeper(path, hosts):
+        if CenterConfig.SERVERS:
+            return CenterConfig.SERVERS
         else:
+            try:
+                zk = KazooClient(hosts=hosts)
+                zk.start()
+                nodes = zk.get_children(path)
+                CenterConfig.SERVERS = nodes_unquote(nodes)
+                zk.stop()
+                return CenterConfig.SERVERS
+            except Exception as e:
+                raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
+
+    @staticmethod
+    def init(hosts, use_configuation_center, fate_flow_zk_path, fate_flow_port):
+        if use_configuation_center:
             default_acl = make_digest_acl(CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD, all=True)
             zk = KazooClient(hosts=hosts, default_acl=[default_acl], auth_data=[("digest", "{}:{}".format(
                 CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD))])
@@ -71,10 +67,7 @@ class CenterConfig(object):
             fate_flow_zk_path = '{}/{}'.format(fate_flow_zk_path, parse.quote(model_host, safe=' '))
             zk.delete(fate_flow_zk_path)
             zk.create(fate_flow_zk_path, makepath=True)
-            RuntimeConfig.init_config(ZK=zk)
-            CenterConfig.USE_CONFIGURATION_CENTER = True
-            CenterConfig.SERVINGS_ZK_PATH = servings_zk_path
-            CenterConfig.SERVERS = CenterConfig.get_servings_from_zookeeper(servings_zk_path)
+            zk.stop()
 
 
 def nodes_unquote(nodes):
