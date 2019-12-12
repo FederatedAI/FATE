@@ -108,20 +108,17 @@ multiple() {
 }
 
 getpid() {
-	if [ ! -f "${module}/${module}_pid" ];then
+   	if [ ! -f "${module}/${module}_pid" ];then
 		echo "" > ${module}/${module}_pid
 	fi
-	module_pid=`cat ${module}/${module}_pid`         	
-        if [[ -n ${module_pid} ]]; then              
-           pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
-           if [[ -n ${pid} ]]; then
-              return 0
-           else
-              return 1
-           fi
-        else
-           echo "service not running"
-        fi
+	module_pid=`cat ${module}/${module}_pid`
+	pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
+	
+    if [[ -n ${pid} ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 status() {
@@ -165,6 +162,9 @@ stop() {
         `ps aux | grep ${pid} | grep -v grep`"
         kill -9 ${pid}
 		getpid
+        if [[ "$module" == "storage-service-cxx" ]]; then
+           echo "" > ${module}/${module}_pid
+        fi
         if [[ $? -eq 1 ]]; then
             echo "killed"
         else
