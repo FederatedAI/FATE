@@ -31,3 +31,4 @@ __pycache__
 /jobs/
 /audit/
 .vscode/*
+/eggroll/

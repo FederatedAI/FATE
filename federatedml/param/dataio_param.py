@@ -37,6 +37,9 @@ class DataIOParam(BaseParam):
     data_type : str, the data type of data input, accepted 'float','float64','int','int64','str','long'
                "default: "float64"
 
+    exclusive_data_type : dict, the key of dict is col_name, the value is data_type, use to specified special data type
+                          of some features.
+
     tag_with_value: bool, use if input_format is 'tag', if tag_with_value is True,
                     input column data format should be tag[delimitor]value, otherwise is tag only
 
@@ -83,6 +86,7 @@ class DataIOParam(BaseParam):
     """
 
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
+                 exclusive_data_type=None,
                  tag_with_value=False, tag_value_delimitor=":",
                  missing_fill=True, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
@@ -92,6 +96,7 @@ class DataIOParam(BaseParam):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
+        self.exclusive_data_type = exclusive_data_type
         self.tag_with_value = tag_with_value
         self.tag_value_delimitor = tag_value_delimitor
         self.missing_fill = missing_fill
@@ -146,5 +151,8 @@ class DataIOParam(BaseParam):
             self.label_type = self.check_and_change_lower(self.label_type,
                                                           ["int", "int64", "float", "float64", "str", "long"],
                                                           descr)
+
+        if self.exclusive_data_type is not None and not isinstance(self.exclusive_data_type, dict):
+            raise ValueError("exclusive_data_type is should be None or a dict")
 
         return True

@@ -126,6 +126,12 @@ def get_metric_all_data(tracker, metric_namespace, metric_name):
         return [], {}
 
 
+@manager.route('/component/metric/delete', methods=['post'])
+def component_metric_delete():
+    sql = Tracking.delete_metric_data(request.json)
+    return get_json_result(retcode=0, retmsg='success', data=sql)
+
+
 @manager.route('/component/parameters', methods=['post'])
 def component_parameters():
     request_data = request.json
@@ -218,9 +224,11 @@ def component_output_data():
 def component_output_data_download():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)
+    limit = request_data.get('limit', -1)
     if not output_data_table:
         return error_response(response_code=500, retmsg='no data')
-
+    if limit <= 0:
+        return error_response(response_code=500, retmsg='limit needs to be greater than 0')
     output_data_count = 0
     have_data_label = False
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))
@@ -232,6 +240,8 @@ def component_output_data_download():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
             fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
             output_data_count += 1
+            if output_data_count == limit:
+                break
 
     if output_data_count:
         # get meta

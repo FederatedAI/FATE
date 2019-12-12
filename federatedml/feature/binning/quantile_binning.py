@@ -19,7 +19,7 @@
 import functools
 
 from federatedml.feature.binning.base_binning import Binning
-from federatedml.feature.quantile_summaries import QuantileSummaries, SparseQuantileSummaries
+from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.statistic import data_overview
 
 
@@ -41,8 +41,8 @@ class QuantileBinning(Binning):
     optimizations).
     """
 
-    def __init__(self, params, party_name='Base', abnormal_list=None):
-        super(QuantileBinning, self).__init__(params, party_name, abnormal_list)
+    def __init__(self, params, abnormal_list=None):
+        super(QuantileBinning, self).__init__(params, abnormal_list)
         self.summary_dict = None
 
     def fit_split_points(self, data_instances):
@@ -65,7 +65,9 @@ class QuantileBinning(Binning):
                             ...]                         # Other features
 
         """
-        self._init_cols(data_instances)
+        header = data_overview.get_header(data_instances)
+        self._default_setting(header)
+        # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
 
         # calculate the split points
@@ -74,10 +76,10 @@ class QuantileBinning(Binning):
         is_sparse = data_overview.is_sparse_data(data_instances)
 
         if self.summary_dict is None:
-            f = functools.partial(self.approxiQuantile,
+            f = functools.partial(self.approxi_quantile,
                                   params=self.params,
                                   abnormal_list=self.abnormal_list,
-                                  cols_dict=self.cols_dict,
+                                  cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
             summary_dict = data_instances.mapPartitions(f)
@@ -90,19 +92,20 @@ class QuantileBinning(Binning):
             self.summary_dict = summary_dict
         else:
             summary_dict = self.summary_dict
-        split_points = {}
+        # split_points = {}
         for col_name, summary in summary_dict.items():
             split_point = []
             for percen_rate in percentile_rate:
                 s_p = summary.query(percen_rate)
                 if s_p not in split_point:
                     split_point.append(s_p)
-            split_points[col_name] = split_point
-        self.split_points = split_points
-        return split_points
+            self.bin_results.put_col_split_points(col_name, split_point)
+
+        self.fit_category_features(data_instances)
+        return self.bin_results.all_split_points
 
     @staticmethod
-    def approxiQuantile(data_instances, params, cols_dict, abnormal_list, header, is_sparse):
+    def approxi_quantile(data_instances, params, cols_dict, abnormal_list, header, is_sparse):
         """
         Calculates each quantile information
 
@@ -137,28 +140,19 @@ class QuantileBinning(Binning):
         """
 
         summary_dict = {}
-        if not is_sparse:
-            # feature_nums = len(one_piece.features)
-            for col_name, col_index in cols_dict.items():
-                quantile_summaries = QuantileSummaries(compress_thres=params.compress_thres,
-                                                       head_size=params.head_size,
-                                                       error=params.error,
-                                                       abnormal_list=abnormal_list)
-                summary_dict[col_name] = quantile_summaries
-        else:
 
-            for col_name, col_index in cols_dict.items():
-                quantile_summaries = SparseQuantileSummaries(compress_thres=params.compress_thres,
-                                                             head_size=params.head_size,
-                                                             error=params.error,
-                                                             abnormal_list=abnormal_list)
-                # quantile_summaries.set_zeros_num(total_len)
-                summary_dict[col_name] = quantile_summaries
+        summary_param = {'compress_thres': params.compress_thres,
+                         'head_size': params.head_size,
+                         'error': params.error,
+                         'abnormal_list': abnormal_list}
+
+        for col_name, col_index in cols_dict.items():
+            quantile_summaries = quantile_summary_factory(is_sparse=is_sparse, param_dict=summary_param)
+            summary_dict[col_name] = quantile_summaries
 
         QuantileBinning.insert_datas(data_instances, summary_dict, cols_dict, header, is_sparse)
         for _, summary_obj in summary_dict.items():
             summary_obj.compress()
-
         return summary_dict
 
     @staticmethod
@@ -197,13 +191,13 @@ class QuantileBinning(Binning):
         return new_dict
 
     def query_quantile_point(self, data_instances, cols, query_points):
-        self.cols = cols
-        self._init_cols(data_instances)
+        # self.cols = cols
+        # self._init_cols(data_instances)
 
         is_sparse = data_overview.is_sparse_data(data_instances)
         if self.summary_dict is None:
-            f = functools.partial(self.approxiQuantile,
-                                  cols_dict=self.cols_dict,
+            f = functools.partial(self.approxi_quantile,
+                                  cols_dict=self.bin_inner_param.bin_cols_map,
                                   params=self.params,
                                   header=self.header,
                                   abnormal_list=self.abnormal_list,

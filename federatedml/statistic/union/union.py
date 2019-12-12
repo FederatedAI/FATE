@@ -36,7 +36,6 @@ class Union(ModelBase):
 
     def _init_model(self, params):
         self.model_param = params
-        self.need_run = params.need_run
         self.allow_missing = params.allow_missing
         self.feature_count = 0
         self.is_data_instance = False

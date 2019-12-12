@@ -25,18 +25,21 @@
 # HeteroSecureBoostingHost 
 # =============================================================================
 
+from numpy import random
+
+from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
-from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.tree import BoostingTree
-from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
-from federatedml.util import consts
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-from numpy import random
-from arch.api.utils import log_utils
+from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import \
+    HeteroSecureBoostingTreeTransferVariable
+from federatedml.tree import BoostingTree
+from federatedml.tree import HeteroDecisionTreeHost
+from federatedml.util import consts
+
 LOGGER = log_utils.getLogger()
 
 
@@ -44,7 +47,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def __init__(self):
         super(HeteroSecureBoostingTreeHost, self).__init__()
 
-        self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
+        self.transfer_variable = HeteroSecureBoostingTreeTransferVariable()
         # self.flowid = 0
         self.tree_dim = None
         self.feature_num = None
@@ -53,7 +56,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.bin_split_points = None
         self.bin_sparse_points = None
         self.data_bin = None
-        self.runtime_idx = 0
         self.role = consts.HOST
 
     def convert_feature_to_bin(self, data_instance):
@@ -80,32 +82,19 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
             valid_features[fid] = True
         return valid_features
 
-    def set_runtime_idx(self, runtime_idx):
-        self.runtime_idx = runtime_idx
-
     def generate_flowid(self, round_num, tree_num):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))
         return ".".join(map(str, [self.flowid, round_num, tree_num]))
 
     def sync_tree_dim(self):
         LOGGER.info("sync tree dim from guest")
-        self.tree_dim = self.transfer_inst.tree_dim.get(idx=0)
-        """
-        self.tree_dim = federation.get(name=self.transfer_inst.tree_dim.name,
-                                       tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree_dim),
-                                       idx=0)
-        """
+        self.tree_dim = self.transfer_variable.tree_dim.get(idx=0)
         LOGGER.info("tree dim is %d" % (self.tree_dim))
 
     def sync_stop_flag(self, num_round):
         LOGGER.info("sync stop flag from guest, boosting round is {}".format(num_round))
-        stop_flag = self.transfer_inst.stop_flag.get(idx=0,
-                                                     suffix=(num_round,))
-        """
-        stop_flag = federation.get(name=self.transfer_inst.stop_flag.name,
-                                   tag=self.transfer_inst.generate_transferid(self.transfer_inst.stop_flag, num_round),
-                                   idx=0)
-        """
+        stop_flag = self.transfer_variable.stop_flag.get(idx=0,
+                                                         suffix=(num_round,))
         return stop_flag
 
     def fit(self, data_inst, validate_data=None):
@@ -117,7 +106,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.sync_tree_dim()
 
         validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-        
+
         for i in range(self.num_trees):
             # n_tree = []
             for tidx in range(self.tree_dim):
@@ -128,7 +117,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
                 valid_features = self.sample_valid_features()
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
-                tree_inst.set_runtime_idx(self.runtime_idx)
+                tree_inst.set_runtime_idx(self.component_properties.local_partyid)
                 tree_inst.set_valid_features(valid_features)
 
                 tree_inst.fit()
@@ -161,7 +150,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
                 # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
-                tree_inst.set_runtime_idx(self.runtime_idx)
+                tree_inst.set_runtime_idx(self.component_properties.local_partyid)
 
                 tree_inst.predict(data_inst)
 
@@ -172,8 +161,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         model_meta.tree_meta.CopyFrom(self.tree_meta)
         model_meta.num_trees = self.num_trees
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
-        # model_meta.tree_dim = self.tree_dim
-        # model_meta.need_run = self.need_run
 
         meta_name = "HeteroSecureBoostingTreeHostMeta"
 
@@ -183,7 +170,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.tree_meta = model_meta.tree_meta
         self.num_trees = model_meta.num_trees
         self.bin_num = model_meta.quantile_meta.bin_num
-        # self.tree_dim = model_meta.tree_dim
 
     def get_model_param(self):
         model_param = BoostingTreeModelParam()
@@ -200,6 +186,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
         self.tree_dim = model_param.tree_dim
+        self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
     def export_model(self):
         if self.need_cv:
@@ -213,7 +200,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
         return self.model_output
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         LOGGER.info("load model")
         model_param = None
         model_meta = None
@@ -226,28 +213,3 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
-
-    def run(self, component_parameters=None, args=None):
-        local_role = component_parameters["local"]["role"]
-        local_partyid = component_parameters["local"]["party_id"]
-        # runtime_idx = component_parameters["role"][local_role].index(local_partyid)
-        self.set_runtime_idx(local_partyid)
-        
-        self._init_runtime_parameters(component_parameters)
-        LOGGER.debug("component_parameter: {}".format(component_parameters))
-
-        LOGGER.debug('need_cv : {}'.format(self.need_cv))
-        if self.need_cv:
-            stage = 'cross_validation'
-        elif "model" in args:
-            self._load_model(args)
-            stage = "transform"
-        else:
-            stage = "fit"
-
-        if args.get("data", None) is None:
-            return
-
-        self._run_data(args["data"], stage)
-
-

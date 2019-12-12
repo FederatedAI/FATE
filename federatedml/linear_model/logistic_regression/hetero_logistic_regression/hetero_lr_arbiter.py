@@ -40,6 +40,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.mode = consts.HETERO
 
     def fit(self, data_instances=None, validate_data=None):
+        LOGGER.debug("Has loss_history: {}".format(hasattr(self, 'loss_history')))
         LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
         if len(classes) > 2:

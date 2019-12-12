@@ -53,6 +53,7 @@ jupyter-core==4.4.0
 jupyter-highlight-selected-word==0.2.0
 jupyter-latex-envs==1.4.4
 jupyter-nbextensions-configurator==0.4.0
+kazoo==2.6.1
 Keras==2.2.4
 Keras-Applications==1.0.6
 Keras-Preprocessing==1.0.5
@@ -136,5 +137,4 @@ Werkzeug==0.15.3
 widgetsnbextension==3.4.0
 xlrd==1.1.0
 apsw==3.9.2.post1
-kazoo==2.6.1
 deprecated==1.2.7
