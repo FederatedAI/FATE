@@ -1,3 +1,5 @@
+"""Paillier encryption library for partially homomorphic encryption."""
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,12 +16,10 @@
 #  limitations under the License.
 #
 
-"""Paillier encryption library for partially homomorphic encryption."""
-
-import random
-
-from federatedml.secureprotol import gmpy_math
+from collections.abc import Mapping
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
+from federatedml.secureprotol import gmpy_math
+import random
 
 
 class PaillierKeypair(object):
@@ -68,7 +68,7 @@ class PaillierPublicKey(object):
         return hash(self.n)
 
     def apply_obfuscator(self, ciphertext, random_value=None):
-        """ 
+        """
         """
         r = random_value or random.SystemRandom().randrange(1, self.n)
         obfuscator = gmpy_math.powmod(r, self.n, self.nsquare)
@@ -153,7 +153,7 @@ class PaillierPrivateKey(object):
         return (x - 1) // p
 
     def crt(self, mp, mq):
-        """the Chinese Remainder Theorem as needed for decryption. 
+        """the Chinese Remainder Theorem as needed for decryption.
            return the solution modulo n=pq.
        """
         u = (mp - mq) * self.q_inverse % self.p
@@ -272,7 +272,7 @@ class PaillierEncryptedNumber(object):
         return PaillierEncryptedNumber(self.public_key, ciphertext, exponent)
 
     def increase_exponent_to(self, new_exponent):
-        """return PaillierEncryptedNumber: 
+        """return PaillierEncryptedNumber:
            new PaillierEncryptedNumber with same value but having great exponent.
         """
         if new_exponent < self.exponent:
@@ -337,3 +337,4 @@ class PaillierEncryptedNumber(object):
         ciphertext = e_x * e_y % self.public_key.nsquare
 
         return PaillierEncryptedNumber(self.public_key, ciphertext, exponent)
+
