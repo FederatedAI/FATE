@@ -5,7 +5,7 @@ We present a real-world image dataset, reflecting the characteristic real-world 
 
 ## Resources
 * Dataset: [dataset.fedai.org](https://dataset.fedai.org)
-* Paper: ["Real-World Image Datasets for Federated Learning"]()
+* Paper: ["Real-World Image Datasets for Federated Learning"](https://arxiv.org/abs/1910.11089)
 
 ### Street_Dataset
 * Overview: Image Dataset
@@ -51,3 +51,14 @@ We implemented two mainstream object detection algorithms (YOLOv3 and Faster R-C
     ```bash
     sh ./stop.sh street_5 yolo
     ```
+
+### Citation
+If you use this code or dataset for your research, please kindly cite our paper:
+```bash
+@article{luo2019real,
+  title={Real-World Image Datasets for Federated Learning},
+  author={Luo, Jiahuan and Wu, Xueyang and Luo, Yun and Huang, Anbu and Huang, Yunfeng and Liu, Yang and Yang, Qiang},
+  journal={arXiv preprint arXiv:1910.11089},
+  year={2019}
+}
+```
