@@ -17,14 +17,15 @@ import numpy as np
 
 from arch.api.table.table import Table
 from federatedml.secureprotol.spdz.communicator import Communicator
-from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor
+from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor, urand_tensor
 
 
 def encrypt_tensor(tensor, public_key):
+    encrypted_zero = public_key.encrypt(0)
     if isinstance(tensor, np.ndarray):
-        return np.vectorize(public_key.encrypt)(tensor)
+        return np.vectorize(lambda e: encrypted_zero + e)(tensor)
     elif isinstance(tensor, Table):
-        return tensor.mapValues(lambda x: np.vectorize(public_key.encrypt)(x))
+        return tensor.mapValues(lambda x: np.vectorize(lambda e: encrypted_zero + e)(x))
     else:
         raise NotImplementedError(f"type={type(tensor)}")
 
@@ -68,7 +69,7 @@ def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator:
     parties, encrypted_b_list = communicator.get_encrypted_tensors(tag=name)
     for _b, _p in zip(encrypted_b_list, parties):
         cross = _cross_terms(_b)
-        r = rand_tensor(q_field, cross)
+        r = urand_tensor(q_field, cross)
         cross += r
         c -= r
         # remote cross terms

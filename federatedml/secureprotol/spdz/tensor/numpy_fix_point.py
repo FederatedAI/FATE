@@ -19,7 +19,7 @@ from arch.api.table.table import Table
 from arch.api.transfer import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
-from federatedml.secureprotol.spdz.utils import rand_tensor
+from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 
 
 class FixPointEndec(object):
@@ -76,6 +76,9 @@ class FixPointTensor(TensorBase):
     def shape(self):
         return self.value.shape
 
+    def dot(self, other, target_name=None):
+        return self.einsum(other, "ij,ik->jk", target_name)
+
     @classmethod
     def from_source(cls, tensor_name, source, **kwargs):
         spdz = cls.get_spdz()
@@ -88,10 +91,10 @@ class FixPointTensor(TensorBase):
             encoder = FixPointEndec(q_field, base, frac)
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
-            _pre = rand_tensor(q_field, source)
+            _pre = urand_tensor(q_field, source)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
-                r = rand_tensor(q_field, source)
+                r = urand_tensor(q_field, source)
                 spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
                 _pre = r
             share = source - _pre

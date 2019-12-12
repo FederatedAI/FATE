@@ -88,18 +88,18 @@ class Pearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(data, data)
 
-        with SPDZ("a name") as spdz:
+        with SPDZ("pearson") as spdz:
             source = [normed, self._other_party]
-            if self._local_party.role == "host":
-                source = source[::-1]
-            x, y = TableTensor.from_source("x", source[0]), TableTensor.from_source("y", source[1])
-
+            if self._local_party.role == "guest":
+                x, y = TableTensor.from_source("x", source[0]), TableTensor.from_source("y", source[1])
+            else:
+                y, x = TableTensor.from_source("y", source[0]), TableTensor.from_source("x", source[1])
             m1 = len(x.value.first()[1])
             m2 = len(x.value.first()[1])
             self.shapes.append(m1)
             self.shapes.append(m2)
 
-            self.corr = x.dot(y, "corr").get() / n
+            self.corr = spdz.dot(x, y, "corr").get() / n
             self.local_corr /= n
         self._callback()
 
@@ -118,13 +118,22 @@ class Pearson(ModelBase):
         from federatedml.protobuf.generated import pearson_model_param_pb2
         param_pb = pearson_model_param_pb2.PearsonModelParam()
         param_pb.party = f"({self._local_party.role},{self._local_party.party_id})"
-        for party in self._parties:
-            param_pb.parties.append(f"({party.role},{party.party_id})")
-        param_pb.shape = self.local_corr.shape[0]
-        for shape in self.shapes:
+        for shape, party in zip(self.shapes, self._parties):
             param_pb.shapes.append(shape)
-        for name in self.names:
+            param_pb.parties.append(f"({party.role},{party.party_id})")
+            _names = param_pb.all_names.add()
+            if party == self._local_party:
+                for name in self.names:
+                    _names.names.append(name)
+            else:
+                for i in range(shape):
+                    _names.names.append(f"{party.role}_{party.party_id}_{i}")
+        param_pb.shape = self.local_corr.shape[0]
+        for idx, name in enumerate(self.names):
             param_pb.names.append(name)
+            anonymous = param_pb.anonymous_map.add()
+            anonymous.name = name
+            anonymous.anonymous = f"{self._local_party.role}_{self._local_party.party_id}_{idx}"
         for v in self.corr.reshape(-1):
             param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
         for v in self.local_corr.reshape(-1):
@@ -134,6 +143,7 @@ class Pearson(ModelBase):
     def export_model(self):
         return self._build_model_dict(meta=self._get_meta(), param=self._get_param())
 
+    # noinspection PyTypeChecker
     def _callback(self):
 
         self.tracker.set_metric_meta(metric_namespace="statistic",

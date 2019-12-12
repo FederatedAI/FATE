@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import abc
 
 from federatedml.secureprotol.spdz.utils import NamingService
 
@@ -28,3 +29,7 @@ class TensorBase(object):
     def get_spdz(cls):
         from federatedml.secureprotol.spdz import SPDZ
         return SPDZ.get_instance()
+
+    @abc.abstractmethod
+    def dot(self, other, target_name=None):
+        pass

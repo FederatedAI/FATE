@@ -66,3 +66,7 @@ class SPDZ(object):
     def partial_rescontruct(self):
         # todo: partial parties gets rescontructed tensor
         pass
+
+    @classmethod
+    def dot(cls, left, right, target_name=None):
+        return left.dot(right, target_name)

@@ -23,6 +23,16 @@ from arch.api.table.table import Table
 def rand_tensor(q_field, tensor):
     if isinstance(tensor, Table):
         return tensor.mapValues(
+            lambda x: np.random.randint(1, q_field, len(x)).astype(object))
+    if isinstance(tensor, np.ndarray):
+        arr = np.random.randint(1, q_field, tensor.shape).astype(object)
+        return arr
+    raise NotImplementedError(f"type={type(tensor)}")
+
+
+def urand_tensor(q_field, tensor):
+    if isinstance(tensor, Table):
+        return tensor.mapValues(
             lambda x: np.array([random.SystemRandom().randint(1, q_field) for _ in x], dtype=object))
     if isinstance(tensor, np.ndarray):
         arr = np.zeros(shape=tensor.shape, dtype=object)

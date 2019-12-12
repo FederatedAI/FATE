@@ -22,7 +22,8 @@ from arch.api.transfer import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.tensor.numpy_fix_point import FixPointTensor, FixPointEndec
-from federatedml.secureprotol.spdz.utils import NamingService, rand_tensor
+from federatedml.secureprotol.spdz.utils import NamingService
+from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 
 
 def _table_binary_op(x, y, q_field, op):
@@ -108,10 +109,10 @@ class TableTensor(TensorBase):
             encoder = FixPointEndec(q_field, base, frac)
         if isinstance(source, Table):
             source = encoder.encode(source)
-            _pre = rand_tensor(spdz.q_field, source)
+            _pre = urand_tensor(spdz.q_field, source)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
-                r = rand_tensor(spdz.q_field, source)
+                r = urand_tensor(spdz.q_field, source)
                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r
