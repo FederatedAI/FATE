@@ -15,37 +15,37 @@
 #
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.stepwise import BaseStepwise
+from federatedml.model_selection.stepwise import Stepwise
 
 LOGGER = log_utils.getLogger()
 
 
-class Step(BaseStepwise):
+class Step(Stepwise):
     def __init__(self):
         super(Step, self).__init__()
         self.model_param = None
         self.forward = False
         self.backward = False
+        self.best_list = []
 
-    def _init_model(self, param):
-        self.model_param = param
-        self.mode = param.mode
-        self.role = param.role
-        self.criteria = param.criteria
-        self.direction = param.direction
-        self.p_enter = param.p_enter
-        self.p_exit = param.p_exit
+    def slice_data_instance(self, data_instance, feature_list):
+        """
+        return data_instance with features at given indices
+        Parameters
+        ----------
+        data_instance: data Instance object, input data
+        feature_list: list of desired indices
+        """
+        data_instance.features = data_instance.features[feature_list]
+        return data_instance
 
-    def _get_direction(self):
-        if self.direction == "forward":
-            self.forward = True
-        elif self.direction == "backward":
-            self.backward = True
-        elif self.direction == "both":
-            self.forward = True
-            self.backward = True
-        else:
-            LOGGER.warning("Wrong stepwise direction given.")
-            return
+    def run(self, stepwise_param, train_data, validate_data, model):
+        #@TODO: drop_one & add_one for each step
+        return
+
+
+
+
+
     
 

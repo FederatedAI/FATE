@@ -131,6 +131,11 @@ class BaseLinearModel(ModelBase):
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
 
+    def _get_stepwise_param(self):
+        self.model_param.stepwise_param.role = self.role
+        self.model_param.stepwise_param.mode = self.mode
+        return self.model_param.stepwise_param
+
     def set_schema(self, data_instance, header=None):
         if header is None:
             self.schema["header"] = self.header

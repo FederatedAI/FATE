@@ -17,23 +17,23 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.step import Step
+from federatedml.model_selection.stepwise import Stepwise
 
 LOGGER = log_utils.getLogger()
 
 
-def _get_cv_param(model):
-    model.model_param.cv_param.role = model.role
-    model.model_param.cv_param.mode = model.mode
+def _get_stepwise_param(model):
+    model.model_param.stepwise_param.role = model.role
+    model.model_param.stepwise_param.mode = model.mode
     return model.model_param.cv_param
 
 
-def run(model, data_instances):
+def run(model, train_data, validate_data):
     if not model.need_run:
-        return data_instances
-    step_obj = Step()
-    cv_param = _get_cv_param(model)
-    step_obj.run(cv_param, data_instances, model)
+        return train_data
+    step_obj = Stepwise()
+    stepwise_param = _get_stepwise_param(model)
+    step_obj.run(stepwise_param, train_data, validate_data, model)
     LOGGER.info("Finish Stepwise run")
-    return data_instances
+    return train_data
 
