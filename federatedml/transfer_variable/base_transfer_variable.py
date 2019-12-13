@@ -144,8 +144,11 @@ class BaseTransferVariables(object):
 
     def __init__(self, flowid=0):
         self.flowid = str(flowid)
-        if self.__class__.__name__ not in self.__instance:
-            self.__instance[self.__class__.__name__] = self
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__name__ not in cls.__instance:
+            cls.__instance[cls.__name__] = object.__new__(cls)
+        return cls.__instance[cls.__name__]
 
     @classmethod
     def get_or_create(cls, **kwargs):
@@ -160,7 +163,7 @@ class BaseTransferVariables(object):
         self.flowid = flowid
 
     def _create_variable(self, name):
-        return Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self)
+        return getattr(self, name, Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self))
 
     @staticmethod
     def all_parties():
