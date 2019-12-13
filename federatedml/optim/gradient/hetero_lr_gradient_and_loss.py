@@ -21,7 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
-from federatedml.util.fate_operator import reduce_add
+from federatedml.util.fate_operator import reduce_add, vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -47,7 +47,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         """
         half_wx = data_instances.mapValues(
-            lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = half_wx
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
 
@@ -112,7 +112,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         """
         forwards = wx
         """
-        wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
     def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index):
@@ -160,3 +160,4 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)
         return de_loss_list
+
