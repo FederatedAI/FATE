@@ -8,6 +8,7 @@ COPY  fate_flow /data/projects/fate/python/fate_flow
 COPY  arch /data/projects/fate/python/arch
 COPY  federatedml /data/projects/fate/python/federatedml
 COPY  eggroll-api-1.1.tar.gz /data/projects/fate/python
+COPY  examples /data/projects/fate/python/examples
 
 RUN cd /data/projects/fate/python && \
     mkdir -p eggroll/api && tar -C eggroll/api -xvf eggroll-api-1.1.tar.gz && \

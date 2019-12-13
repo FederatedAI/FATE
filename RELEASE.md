@@ -1,3 +1,19 @@
+# Release 1.1.1
+## Major Features and Improvements
+* Add cluster deployment support based on ubuntu operating system。
+* Add union component which support data merging. 
+* Support indicating partial columns in Onehot Encoder
+* Support intermediate data cleanup after the task ends
+* Accelerated Intersection
+* Optimizing the deployment process
+
+
+## Bug Fixes
+* Fix a bug of secureboost' early stop 
+* Fix a bug in download api
+* Fix bugs of spark-backend
+
+
 # Release 1.1
 ## Major Features and Improvements
 >FederatedML

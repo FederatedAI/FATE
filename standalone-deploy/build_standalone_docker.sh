@@ -82,11 +82,20 @@ cd ${fatepath}
 init() {
     cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
     docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
-    mkdir -p ${basepath}/fateboard
+    if [ ! -d "${basepath}/fateboard" ];then
+       mkdir -p ${basepath}/fateboard
+    fi
     cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
     cd ${basepath}/fateboard
-    ln -s fateboard-$version.jar fateboard.jar
-    mkdir conf ssh
+    if [ ! -f "fateboard.jar" ];then
+       ln -s fateboard-$version.jar fateboard.jar
+    fi
+    if [ ! -d "conf" ];then
+       mkdir conf
+    fi 
+    if [ ! -d "ssh" ];then
+       mkdir ssh
+    fi
     cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
     touch ./ssh/ssh.properties
 
