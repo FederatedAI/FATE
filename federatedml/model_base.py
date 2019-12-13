@@ -55,6 +55,10 @@ class ModelBase(object):
     def need_run(self):
         return self.component_properties.need_run
 
+    @need_run.setter
+    def need_run(self, value: bool):
+        self.component_properties.need_run = value
+
     def _init_model(self, model):
         pass
 
