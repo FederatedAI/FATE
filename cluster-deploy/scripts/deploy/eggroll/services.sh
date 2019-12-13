@@ -17,11 +17,11 @@
 #
 
 eval action=\$$#
-installdir=
-export JAVA_HOME=
+installdir=/data/kube/test/eggroll
+export JAVA_HOME=/data/kube/test/common/jdk/jdk-8u192
 export PATH=$JAVA_HOME/bin:$PATH
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
-export PYTHONPATH=
+export PYTHONPATH=/data/kube/test/python:/data/kube/test/eggroll/python
 modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
@@ -112,8 +112,10 @@ getpid() {
 		echo "" > ${module}/${module}_pid
 	fi
 	module_pid=`cat ${module}/${module}_pid`
-	pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
-	
+        pid=""
+        if [[ -n ${module_pid} ]]; then
+           pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
+	fi
     if [[ -n ${pid} ]]; then
         return 0
     else
