@@ -7,18 +7,18 @@
 | :------: | ------------------------------------------------------------ |
 |   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
-| 操作系统 | CentOS linux 7.2及以上                                       |
-|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel <br />libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy <br />snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
+| 操作系统 | CentOS linux 7.2及以上/Ubuntu 16.04 以上                     |
+|  依赖包  | （可以使用初始化脚本env.sh安装）                             |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
 2.集群规划
 ==========
 
-| party  | 主机名        | IP地址      | 操作系统   |
-| ------ | ------------- | ----------- | ---------- |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2 |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2 |
+| party  | 主机名        | IP地址      | 操作系统                |
+| ------ | ------------- | ----------- | ----------------------- |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 |
 
 3.基础环境配置
 ==============
@@ -71,11 +71,19 @@ vim /etc/security/limits.conf
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
+如果是Centos系统：
+
 systemctl disable firewalld.service
 
 systemctl stop firewalld.service
 
 systemctl status firewalld.service
+
+如果是Ubuntu系统：
+
+ufw disable
+
+ufw status
 
 3.5 软件环境初始化
 ------------------
@@ -153,8 +161,8 @@ ssh app\@192.168.0.2
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.tar.gz
-tar -xf FATE_install_v1.1.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.2.tar.gz
+tar -xf FATE_install_v1.2.tar.gz
 ```
 
 4.2 配置文件修改和示例
@@ -340,13 +348,13 @@ python run_toy_example.py 9999 10000 1
 
 在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
 
-该文件在/data/projects/fate/python/examples/min_test_task /目录下。
+该文件在/data/projects/fate/python/examples/min_test_task/目录下。
 
 **在Host节点192.168.0.1上运行：**
 
 ```
 source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task /
+cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh host fast
 ```
 
@@ -369,4 +377,4 @@ sh run.sh guest fast $ {host_table} $ {host_namespace}
 7.4. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问http://192.168.0.1:8080和http://192.168.0.2:8080来查看任务信息。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。

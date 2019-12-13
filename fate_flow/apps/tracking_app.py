@@ -224,16 +224,17 @@ def component_output_data():
 def component_output_data_download():
     request_data = request.json
     output_data_table = get_component_output_data_table(task_data=request_data)
+    limit = request_data.get('limit', -1)
     if not output_data_table:
         return error_response(response_code=500, retmsg='no data')
-
+    if limit <= 0:
+        return error_response(response_code=500, retmsg='limit needs to be greater than 0')
     output_data_count = 0
     have_data_label = False
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
-    limit = request_data.get('limit', -1)
     with open(output_data_file_path, 'w') as fw:
         for k, v in output_data_table.collect():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)

@@ -68,9 +68,6 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         channel.close()
         json_body = json.loads(_return.body.value)
         return json_body
-    except grpc.RpcError as e:
-        err = rpc_error_type(e)
-        raise Exception(err.format("", e))
     except Exception as e:
         raise Exception('rpc request error: {}'.format(e))
 

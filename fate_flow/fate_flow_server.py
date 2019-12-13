@@ -94,7 +94,7 @@ if __name__ == '__main__':
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     PrivilegeAuth.init()
-    CenterConfig.init(ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, SERVINGS_ZK_PATH, FATE_FLOW_ZK_PATH, HTTP_PORT)
+    CenterConfig.init(ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, FATE_FLOW_ZK_PATH, HTTP_PORT)
     # start job detector
     job_detector.JobDetector(interval=5 * 1000).start()
     # start scheduler

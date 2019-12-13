@@ -198,5 +198,6 @@ class LinearParam(BaseParam):
                 )
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
+        self.sqn_param.check()
 
         return True

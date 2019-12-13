@@ -48,10 +48,9 @@ class RsaModel(ModelBase):
         key_pair = {"d": self.model_param.rsa_key_d, "n": self.model_param.rsa_key_n}
         self.data_processed = self.encrypt_data_using_rsa(data_inst, key_pair)
 
-        self.save_data()
+        self._save_data()
 
-    def save_data(self):
-        #LOGGER.debug("save data: data_inst={}, count={}".format(self.data_processed, self.data_processed.count()))
+    def _save_data(self):
         persistent_table = self.data_processed.save_as(namespace=self.model_param.save_out_table_namespace, name=self.model_param.save_out_table_name)
         LOGGER.info("save data to namespace={}, name={}".format(persistent_table._namespace, persistent_table._name))
     
@@ -61,7 +60,11 @@ class RsaModel(ModelBase):
         
         version_log = "[AUTO] save data at %s." % datetime.datetime.now()
         version_control.save_version(name=persistent_table._name, namespace=persistent_table._namespace, version_log=version_log)
+
         return None
+
+    def save_data(self):
+        return self.data_processed
 
 
     @staticmethod
@@ -76,5 +79,6 @@ class RsaModel(ModelBase):
                 RsaModel.hash(gmpy_math.powmod(int(RsaModel.hash(k), 16), key_pair["d"], key_pair["n"])), k)
         )
 
+        data_processed_pair.schema["header"] = ["original_sid"]
         return data_processed_pair
 

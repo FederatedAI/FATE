@@ -28,5 +28,6 @@ message DataIOMeta {
    ImputerMeta imputer_meta = 10;
    OutlierMeta outlier_meta = 11;
    bool need_run = 12;
+   map<string, string> exclusive_data_type = 13;
 }
 
