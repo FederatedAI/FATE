@@ -66,8 +66,6 @@ def load_model(config_data):
 
 def bind_model_service(config_data):
     service_id = config_data.get('service_id')
-    if not service_id:
-        service_id = get_fate_uuid()
     initiator_role = config_data['initiator']['role']
     initiator_party_id = config_data['initiator']['party_id']
     model_id = config_data['job_parameters']['model_id']
