@@ -140,8 +140,21 @@ class Variable(object):
 
 
 class BaseTransferVariables(object):
+    __instance = {}
+
     def __init__(self, flowid=0):
         self.flowid = str(flowid)
+        if self.__class__.__name__ not in self.__instance:
+            self.__instance[self.__class__.__name__] = self
+
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        if cls.__name__ in cls.__instance:
+            return cls.__instance[cls.__name__]
+        else:
+            inst = cls.__call__(**kwargs)
+            cls.__instance[cls.__name__] = inst
+            return inst
 
     def set_flowid(self, flowid):
         self.flowid = flowid
