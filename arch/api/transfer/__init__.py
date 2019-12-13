@@ -20,7 +20,7 @@ from typing import Tuple, Union
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import getLogger
 
-__all__ = ["Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
+__all__ = ["Rubbish", "Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
 
 ROLES = ["arbiter", "guest", "host"]
 TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.json"
@@ -59,15 +59,20 @@ class Party(object):
         return federation_pb2.Party(partyId=f"{self.party_id}", name=self.role)
 
 
-class Cleaner(object):
-    def __init__(self):
+class Rubbish(object):
+    """
+    a collection collects all tables / objects in federation tagged by `tag`.
+    """
+
+    def __init__(self, name, tag):
+        self._name = name
+        self._tag = tag
         self._tables = []
         self._kv = {}
-        self._cur_tag = None
 
-    def update_tag(self, tag):
-        self._cur_tag = tag
-        return self
+    @property
+    def tag(self):
+        return self._tag
 
     def add_table(self, table):
         self._tables.append(table)
@@ -75,33 +80,75 @@ class Cleaner(object):
     # noinspection PyProtectedMember
     def add_obj(self, table, key):
         if (table._name, table._namespace) not in self._kv:
-            self._kv[(table._name, table._namespace)] = (table, [])
+            self._kv[(table._name, table._namespace)] = (table, [key])
         else:
             self._kv[(table._name, table._namespace)][1].append(key)
 
-    def extend(self, other: 'Cleaner'):
-        self._tables.extend(other._tables)
-        self._kv.update(other._kv)
+    def merge(self, rubbish: 'Rubbish'):
+        self._tables.extend(rubbish._tables)
+        for k, v in rubbish._kv:
+            if k in self._kv:
+                self._kv[k].extend(v)
+            else:
+                self._kv[k] = v
+        # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
+        rubbish.empty()
         return self
 
+    def empty(self):
+        self._tables = []
+        self._kv = {}
+
     # noinspection PyBroadException
-    def maybe_clean(self, tag):
-        if tag != self._cur_tag:
-            LOGGER.debug(f"[CLEAN] get new tag {tag}, clean prev table/object tagged by {self._cur_tag}")
-            for table in self._tables:
+    def clean(self):
+        LOGGER.debug(f"[CLEAN] {self._name} cleaning rubbishes tagged by {self._tag}")
+        for table in self._tables:
+            try:
+                LOGGER.debug(f"[CLEAN] try destroy table {table}")
+                table.destroy()
+            except:
+                pass
+
+        for _, (table, keys) in self._kv.items():
+            for key in keys:
                 try:
-                    LOGGER.debug(f"[CLEAN] try destroy table {table}")
-                    table.destroy()
+                    LOGGER.debug(f"[CLEAN] try delete object with key={key} from table={table}")
+                    table.delete(key)
                 except:
                     pass
 
-            for _, (table, keys) in self._kv.items():
-                for key in keys:
-                    try:
-                        LOGGER.debug(f"[CLEAN] try delete object keyed by {key} from table {table}")
-                        table.delete(key)
-                    except:
-                        pass
+    def __del__(self):
+        self.clean()
+
+
+class Cleaner(object):
+    def __init__(self):
+        self._ashcan: deque[Rubbish] = deque()
+
+    def push(self, rubbish):
+        """
+        append `rubbish`
+        :param rubbish: a rubbish instance
+        :return:
+        """
+        if self.is_latest_tag(rubbish.tag):
+            self._ashcan[-1].merge(rubbish)
+        else:
+            self._ashcan.append(rubbish)
+        return self
+
+    def is_latest_tag(self, tag):
+        return len(self._ashcan) > 0 and self._ashcan[-1].tag == tag
+
+    def keep_latest_n(self, n):
+        while len(self._ashcan) > n:
+            # self._ashcan.popleft().clean()  # clean explicit
+            self._ashcan.popleft()
+
+    def clean_all(self):
+        # while len(self._ashcan) > 0:
+        #     self._ashcan.popleft().clean()
+        self._ashcan.clear()
 
 
 class FederationWrapped(object):
@@ -230,7 +277,7 @@ class Federation(object):
                 raise PermissionError(f"try to remote obj to {role}, with variable named {name}")
 
     @abc.abstractmethod
-    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Cleaner:
+    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
         """
         remote object or dtable to parties identified by `parties`,
         through transfer_variable identified by name and tag.
@@ -244,7 +291,7 @@ class Federation(object):
         pass
 
     @abc.abstractmethod
-    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
         """
          get object or dtable from parties identified by `parties`,
          through transfer_variable identified by name and tag.
