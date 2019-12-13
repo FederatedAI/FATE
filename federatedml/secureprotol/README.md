@@ -84,8 +84,8 @@ g^{r1 r2} (mod p) is the share key.
 >>> import random
 >>> r1 = random.randint(1, 10000000)
 >>> r2 = random.randint(1, 10000000)
->>> key1 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r1), r2, p)
->>> key2 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, p, r2), r1, p)
+>>> key1 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, r1, p), r2, p)
+>>> key2 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, r2, p), r1, p)
 >>> assert key1 == key2
 ```
 
