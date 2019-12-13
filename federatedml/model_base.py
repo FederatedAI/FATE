@@ -84,7 +84,7 @@ class ModelBase(object):
                     real_param = [saved_result, params]
                 else:
                     real_param = saved_result
-                LOGGER.debug("func: {}, params: {}".format(func, real_param))
+                LOGGER.debug("func: {}".format(func))
                 this_data_output = func(*real_param)
                 saved_result = []
             else:
