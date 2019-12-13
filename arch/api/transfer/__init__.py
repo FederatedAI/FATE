@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import abc
+from collections import deque
 from typing import Tuple, Union
 
 from arch.api.utils import file_utils
