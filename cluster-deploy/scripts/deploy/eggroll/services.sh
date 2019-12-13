@@ -153,6 +153,12 @@ start() {
             echo "service start failed"
         fi
     else
+       if [[ "$module" == "storage-service-cxx" ]]; then
+           ps aux | grep ${pid} | grep ${module} | grep -v $0 | grep -v grep
+           if [[ $? -eq 1 ]]; then
+              echo "" > ${module}/${module}_pid
+           fi
+       fi
         echo "service already started. pid: ${pid}"
     fi
 }
