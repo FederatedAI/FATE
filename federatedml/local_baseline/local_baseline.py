@@ -21,7 +21,6 @@ from arch.api import session
 
 import copy
 
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
