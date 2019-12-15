@@ -119,6 +119,9 @@ class HeteroNNParam(BaseParam):
                 raise ValueError(
                     " {} not supported, should be larger than 10 or -1 represent for all data".format(self.batch_size))
 
+        if self.early_stop != "diff":
+            raise  ValueError("early stop should be diff in this version")
+
         self.predict_param.check()
         self.random_param.check()
 
