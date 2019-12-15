@@ -214,7 +214,7 @@ class HomoNNClient(HomoNNBase):
                                                    pred[1][pred[0]] / sum(pred[1]),
                                                    {"raw_predict": pred[1]}])
 
-    def load_model(self, model_dict):
+    def _load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = _extract_param(model_dict)
         meta_obj = _extract_meta(model_dict)

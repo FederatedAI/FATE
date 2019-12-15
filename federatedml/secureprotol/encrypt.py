@@ -74,6 +74,10 @@ class Encrypt(object):
         # decrypt a np.array with arbitrary dimension
 
     def recursive_decrypt(self, A):
+        original_shape = None
+        if isinstance(A, np.ndarray):
+            original_shape = A.shape
+
         if not isinstance(A, np.ndarray) and not isinstance(A, list):
             data_dict = A.collect()
             data_dict = dict(data_dict)
@@ -93,9 +97,14 @@ class Encrypt(object):
             else:
                 decrypted_term = self.decrypt_list(row)
                 decrypt_row.append(decrypted_term)
-        return np.array(decrypt_row, dtype=np.float64)
+
+        return np.array(decrypt_row, dtype=np.float64).reshape(original_shape)
 
     def recursive_encrypt(self, A):
+        original_shape = None
+        if isinstance(A, np.ndarray):
+            original_shape = A.shape
+
         if not isinstance(A, np.ndarray) and not isinstance(A, list):
             data_dict = A.collect()
             data_dict = dict(data_dict)
@@ -114,7 +123,7 @@ class Encrypt(object):
             else:
                 encrypted_term = self.encrypt_list(row)
                 encrypt_row.append(encrypted_term)
-        return np.array(encrypt_row, dtype=np.float64)
+        return np.array(encrypt_row).reshape(original_shape)
 
 
 class RsaEncrypt(Encrypt):
