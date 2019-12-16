@@ -111,14 +111,17 @@ getpid() {
 	if [ ! -f "${module}/${module}_pid" ];then
 		echo "" > ${module}/${module}_pid
 	fi
-	module_pid=`cat ${module}/${module}_pid`
-	pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
-	
-    if [[ -n ${pid} ]]; then
-        return 0
-    else
-        return 1
-    fi
+	module_pid=`cat ${module}/${module}_pid`         	
+        if [[ -n ${module_pid} ]]; then              
+           pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
+           if [[ -n ${pid} ]]; then
+              return 0
+           else
+              return 1
+           fi
+        else
+           echo "service not running"
+        fi
 }
 
 status() {

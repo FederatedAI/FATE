@@ -25,12 +25,14 @@ from arch.api.table.table import Table
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.profile_util import log_elapsed
+from eggroll.api import StoreType
 
 
 # noinspection PyProtectedMember
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
-         backend: typing.Union[int, Backend] = Backend.EGGROLL):
+         backend: typing.Union[int, Backend] = Backend.EGGROLL,
+         persistent_engine: StoreType = StoreType.LMDB):
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):

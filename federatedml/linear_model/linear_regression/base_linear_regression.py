@@ -93,7 +93,7 @@ class BaseLinearRegression(BaseLinearModel):
                                                                  header=header)
         return param_protobuf_obj
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         result_obj = list(model_dict.get('model').values())[0].get(
             self.model_param_name)
 

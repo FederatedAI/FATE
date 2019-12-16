@@ -69,7 +69,8 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         json_body = json.loads(_return.body.value)
         return json_body
     except grpc.RpcError as e:
-        raise Exception('rpc request error: {}'.format(e))
+        err = rpc_error_type(e)
+        raise Exception(err.format("", e))
     except Exception as e:
         raise Exception('rpc request error: {}'.format(e))
 
@@ -101,3 +102,14 @@ def request_execute_server(request, execute_host):
         return get_json_result(retcode=999, retmsg='please start execute server: {}'.format(execute_host))
     except Exception as e:
         raise Exception('local request error: {}'.format(e))
+
+
+def rpc_error_type(e):
+    err = 'rpc request error {}:\n{}'
+    if "UNKNOWN" in str(e):
+        err = err.format("(server internal error)", e)
+    elif "UNAVAILABLE" in str(e):
+        err = err.format("(proxy service not started)", e)
+    elif "INTERNAL" in str(e):
+        err = err.format("(protocol buffer parsing failed, please check the configuration file)", e)
+    return err

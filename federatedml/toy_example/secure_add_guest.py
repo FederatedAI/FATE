@@ -25,12 +25,14 @@ from federatedml.model_base import ModelBase
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
 from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
     SecureAddExampleTransferVariable
+from federatedml.util.param_extract import ParamExtract
 
 LOGGER = log_utils.getLogger()
 
 
 class SecureAddGuest(ModelBase):
     def __init__(self):
+        super(SecureAddGuest, self).__init__()
         self.x = None
         self.x1 = None
         self.x2 = None
@@ -44,6 +46,12 @@ class SecureAddGuest(ModelBase):
         self.data_output = None
         self.model_output = None
 
+    def _init_runtime_parameters(self, component_parameters):
+        param_extracter = ParamExtract()
+        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        self._init_model(param)
+        return param
+    
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
         self.partition = model_param.partition
@@ -80,29 +88,13 @@ class SecureAddGuest(ModelBase):
         self.transfer_inst.guest_share.remote(self.x2,
                                               role="host",
                                               idx=0)
-        """
-        federation.remote(obj=self.x2,
-                          name=self.transfer_inst.guest_share.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.guest_share),
-                          role="host",
-                          idx=0)
-        """
 
     def recv_share_from_host(self):
         self.y1 = self.transfer_inst.host_share.get(idx=0)
-        """
-        self.y1 = federation.get(name=self.transfer_inst.host_share.name,
-                                 tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_share),
-                                 idx=0)
-        """
 
     def recv_host_sum_from_host(self):
         host_sum = self.transfer_inst.host_sum.get(idx=0)
-        """
-        host_sum = federation.get(name=self.transfer_inst.host_sum.name,
-                                  tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_sum),
-                                  idx=0)
-        """
+        
         return host_sum
 
     def run(self, component_parameters=None, args=None):

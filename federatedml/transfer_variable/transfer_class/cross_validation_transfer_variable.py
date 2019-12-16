@@ -23,12 +23,12 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class CrossValidationTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.train_sid = Variable(name='CrossValidationTransferVariable.train_sid', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.test_sid = Variable(name='CrossValidationTransferVariable.test_sid', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        pass
+class CrossValidationTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.test_sid = self._create_variable(name='test_sid')
+        self.train_sid = self._create_variable(name='train_sid')
