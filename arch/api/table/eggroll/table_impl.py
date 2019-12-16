@@ -47,7 +47,13 @@ class DTable(Table):
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
-        return self._dtable.save_as(name=name, namespace=namespace, partition=partition, use_serialize=use_serialize)
+        from arch.api import RuntimeInstance
+        persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
+        return self._dtable.save_as(name=name,
+                                    namespace=namespace,
+                                    partition=partition,
+                                    use_serialize=use_serialize,
+                                    persistent_engine=persistent_engine)
 
     def put(self, k, v, use_serialize=True, maybe_large_value=False):
         if not maybe_large_value:

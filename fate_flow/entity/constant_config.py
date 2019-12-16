@@ -37,10 +37,10 @@ class JobStatus(object):
     RUNNING = 'running'
     SUCCESS = 'success'
     FAILED = 'failed'
-    PARTIAL = 'partial'
-    DELETED = 'deleted'
     TIMEOUT = 'timeout'
     CANCELED = 'canceled'
+    PARTIAL = 'partial'
+    DELETED = 'deleted'
 
 
 class TaskStatus(object):

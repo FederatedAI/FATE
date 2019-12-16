@@ -80,7 +80,7 @@ class Submitter(object):
             f.flush()
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path= os.path.join(self._fate_home,"../init_env.sh")
+                env_path = os.path.join(self._fate_home, "../init_env.sh")
                 print(scp_out)
                 upload_cmd = " && ".join([f"source {env_path}"
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
@@ -89,7 +89,6 @@ class Submitter(object):
                 print(upload_out)
             else:
                 self.submit(["-f", "upload", "-c", f.name])
-
 
     def delete_table(self, namespace, name):
         pass
@@ -102,7 +101,7 @@ class Submitter(object):
             f.flush()
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path= os.path.join(self._fate_home,"../init_env.sh")
+                env_path = os.path.join(self._fate_home, "../init_env.sh")
                 print(scp_out)
                 upload_cmd = " && ".join([f"source {env_path}"
                                           f"python {self._flow_client_path} -f upload -c {f.name}",

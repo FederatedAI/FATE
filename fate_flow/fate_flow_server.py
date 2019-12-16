@@ -41,12 +41,14 @@ from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.manager import queue_manager
-from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, MAX_CONCURRENT_JOB_RUN, stat_logger, \
-    API_VERSION
+from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
+    MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION, ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, SERVINGS_ZK_PATH, \
+    FATE_FLOW_ZK_PATH, HTTP_PORT
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
+from fate_flow.utils.setting_utils import CenterConfig
 
 '''
 Initialize the manager
@@ -92,6 +94,7 @@ if __name__ == '__main__':
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     PrivilegeAuth.init()
+    CenterConfig.init(ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, SERVINGS_ZK_PATH, FATE_FLOW_ZK_PATH, HTTP_PORT)
     # start job detector
     job_detector.JobDetector(interval=5 * 1000).start()
     # start scheduler
