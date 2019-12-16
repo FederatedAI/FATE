@@ -115,11 +115,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
         data_instances:DTable of Instance, input data
         """
         LOGGER.info("Start predict ...")
-        LOGGER.debug("one_data : {}".format(data_instances.first()[1].features))
         data_features = self.transform(data_instances)
         pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
-        LOGGER.debug("pred_host: {}".format(pred_host.first()))
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
-        # self.transfer_variable.host_partial_prediction.remote([1,2,3], role=consts.GUEST, idx=0)
 
         LOGGER.info("Remote partial prediction to Guest")
