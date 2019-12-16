@@ -17,11 +17,11 @@
 #
 
 eval action=\$$#
-installdir=/data/kube/FATE/cluster-deploy/scripts/allinone/eggroll
-export JAVA_HOME=/data/kube/FATE/cluster-deploy/scripts/allinone/common/jdk/jdk-8u192
+installdir=
+export JAVA_HOME=
 export PATH=$JAVA_HOME/bin:$PATH
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
-export PYTHONPATH=/data/kube/FATE/cluster-deploy/scripts/allinone/python:/data/kube/FATE/cluster-deploy/scripts/allinone/eggroll/python
+export PYTHONPATH=
 modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
