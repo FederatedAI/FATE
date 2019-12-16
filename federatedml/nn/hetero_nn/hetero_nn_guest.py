@@ -159,7 +159,7 @@ class HeteroNNGuest(HeteroNNBase):
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         param = model_dict.get(MODELPARAM)
         meta = model_dict.get(MODELMETA)
