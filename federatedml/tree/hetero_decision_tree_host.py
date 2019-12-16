@@ -61,8 +61,8 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.privakey = None
         self.tree_id = None
         self.encrypted_grad_and_hess = None
-        # self.transfer_inst = HeteroDecisionTreeTransferVariable()
-        self.transfer_inst = HeteroDecisionTreeTransferVariable.get_or_create()
+        self.transfer_inst = HeteroDecisionTreeTransferVariable()
+        # self.transfer_inst = HeteroDecisionTreeTransferVariable.get_or_create()
         self.tree_node_queue = None
         self.cur_split_nodes = None
         self.split_maskdict = {}
