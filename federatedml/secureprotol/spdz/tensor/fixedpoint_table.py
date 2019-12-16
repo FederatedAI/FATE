@@ -21,7 +21,7 @@ from arch.api.table.table import Table
 from arch.api.transfer import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
-from federatedml.secureprotol.spdz.tensor.numpy_fix_point import FixPointTensor, FixPointEndec
+from federatedml.secureprotol.spdz.tensor.fixedpoint_numpy import FixedPointTensor, FixedPointEndec
 from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 
@@ -66,7 +66,7 @@ def table_dot_mod(a_table, b_table, q_field):
         .reduce(lambda x, y: x if y is None else y if x is None else x + y)
 
 
-class TableTensor(TensorBase):
+class FixedPointTensor(TensorBase):
     """
     a table based tensor
     """
@@ -78,7 +78,7 @@ class TableTensor(TensorBase):
         self.endec = endec
         self.tensor_name = NamingService.get_instance().next() if tensor_name is None else tensor_name
 
-    def dot(self, other: 'TableTensor', target_name=None):
+    def dot(self, other: 'FixedPointTensor', target_name=None):
         spdz = self.get_spdz()
         if target_name is None:
             target_name = NamingService.get_instance().next()
@@ -94,7 +94,7 @@ class TableTensor(TensorBase):
             cross += table_dot_mod(x_add_a, y_add_b, self.q_field)
         cross = cross % self.q_field
         cross = self.endec.truncate(cross, self.get_spdz().party_idx)
-        share = FixPointTensor(cross, self.q_field, self.endec, target_name)
+        share = FixedPointTensor(cross, self.q_field, self.endec, target_name)
         return share
 
     @classmethod
@@ -106,7 +106,7 @@ class TableTensor(TensorBase):
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
             q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-            encoder = FixPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(q_field, base, frac)
         if isinstance(source, Table):
             source = encoder.encode(source)
             _pre = urand_tensor(spdz.q_field, source)
@@ -121,7 +121,7 @@ class TableTensor(TensorBase):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
-        return TableTensor(share, spdz.q_field, encoder, tensor_name)
+        return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
 
     def get(self, tensor_name=None):
         return self.rescontruct(tensor_name)
@@ -153,7 +153,7 @@ class TableTensor(TensorBase):
         return self._boxed(value=self.value, tensor_name=tensor_name)
 
     def __add__(self, other):
-        if isinstance(other, TableTensor):
+        if isinstance(other, FixedPointTensor):
             other = other.value
         z_value = _table_binary_op(self.value, other, self.q_field, operator.add)
         return self._boxed(z_value)
@@ -173,4 +173,4 @@ class TableTensor(TensorBase):
         return self._boxed(_table_scalar_op(self.value, other, operator.mod))
 
     def _boxed(self, value, tensor_name=None):
-        return TableTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+        return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)

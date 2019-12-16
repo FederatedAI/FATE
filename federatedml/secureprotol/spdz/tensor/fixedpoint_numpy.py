@@ -22,7 +22,7 @@ from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 
 
-class FixPointEndec(object):
+class FixedPointEndec(object):
 
     def __init__(self, field: int, base: int, precision_fractional: int):
         self.field = field
@@ -64,7 +64,7 @@ class FixPointEndec(object):
             return integer_tensor // (self.base ** self.precision_fractional)
 
 
-class FixPointTensor(TensorBase):
+class FixedPointTensor(TensorBase):
     __array_ufunc__ = None
 
     def __init__(self, value, q_field, endec, tensor_name: str = None):
@@ -88,7 +88,7 @@ class FixPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixPointEndec(q_field, base, frac)
+            encoder = FixedPointEndec(q_field, base, frac)
         if isinstance(source, np.ndarray):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source)
@@ -102,9 +102,9 @@ class FixPointTensor(TensorBase):
             share = spdz.communicator.get_share(tensor_name=tensor_name, party=source)[0]
         else:
             raise ValueError(f"type={type(source)}")
-        return FixPointTensor(share, spdz.q_field, encoder, tensor_name)
+        return FixedPointTensor(share, spdz.q_field, encoder, tensor_name)
 
-    def einsum(self, other: 'FixPointTensor', einsum_expr, target_name=None):
+    def einsum(self, other: 'FixedPointTensor', einsum_expr, target_name=None):
         spdz = self.get_spdz()
         target_name = target_name or spdz.name_service.next()
 
@@ -150,11 +150,11 @@ class FixPointTensor(TensorBase):
         return share_val
 
     def _boxed(self, value, tensor_name=None):
-        return FixPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
+        return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
     @classmethod
     def _unboxed(cls, other):
-        if isinstance(other, FixPointTensor):
+        if isinstance(other, FixedPointTensor):
             other = other.value
         return other
 
