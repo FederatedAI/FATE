@@ -93,7 +93,7 @@ class HeteroNNParam(BaseParam):
 
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
-        supported_config_type = ["nn", "keras"]
+        supported_config_type = ["keras"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
 
