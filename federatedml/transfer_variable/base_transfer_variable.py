@@ -28,10 +28,6 @@ class Variable(object):
         self._auto_clean = True
         self._preserve_num = 2
 
-    def __getstate__(self):
-        #  variable should not be transferred
-        return None
-
     def set_preserve_num(self, n):
         self._preserve_num = n
         return self
@@ -154,19 +150,6 @@ class BaseTransferVariables(object):
         if cls.__name__ not in cls.__instance:
             cls.__instance[cls.__name__] = object.__new__(cls)
         return cls.__instance[cls.__name__]
-
-    def __getstate__(self):
-        #  transfer_variables should not be transferred
-        return None
-
-    @classmethod
-    def get_or_create(cls, **kwargs):
-        if cls.__name__ in cls.__instance:
-            return cls.__instance[cls.__name__]
-        else:
-            inst = cls.__call__(**kwargs)
-            cls.__instance[cls.__name__] = inst
-            return inst
 
     def set_flowid(self, flowid):
         self.flowid = flowid
