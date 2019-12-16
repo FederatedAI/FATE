@@ -30,6 +30,7 @@ class Stepwise(object):
         self.backward = False
         self.best_list = []
         self.n_step = 0
+        self.has_validate = False
 
     def _init_model(self, param):
         self.model_param = param
@@ -56,6 +57,10 @@ class Stepwise(object):
 
     def run(self, component_parameters, train_data, validate_data, model):
         self._init_model(component_parameters)
+        if self.role != consts.ARBITER and validate_data is not None:
+            self.has_validate = True
+        if
+
 
 
 

@@ -70,7 +70,7 @@ class StepwiseParam(BaseParam):
 
     def check(self):
         model_param_descr = "stepwise param's "
-        self.check_and_change_lower(self.score, ["aic", "bic", "pvalue"], model_param_descr)
+        self.check_and_change_lower(self.score, ["aic", "bic"], model_param_descr)
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)

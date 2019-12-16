@@ -15,7 +15,8 @@
 #
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.stepwise import Stepwise
+from federatedml.model_selection.stepwise.stepwise import Stepwise
+from federatedml.util  import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -23,10 +24,16 @@ LOGGER = log_utils.getLogger()
 class Step(Stepwise):
     def __init__(self):
         super(Step, self).__init__()
-        self.model_param = None
-        self.forward = False
-        self.backward = False
-        self.best_list = []
+
+    def get_new_header(self, header, feature_list):
+        """
+        Make new header, called by Host or Guest
+        :param header: old header
+        :param feature_list: list of feature indices to be included in model
+        :return: a new header with desired features
+        """
+        new_header = [header[i] for i in range(len(header)) if i in feature_list]
+        return new_header
 
     def slice_data_instance(self, data_instance, feature_list):
         """
@@ -39,14 +46,20 @@ class Step(Stepwise):
         data_instance.features = data_instance.features[feature_list]
         return data_instance
 
-    def get_new_header(self, header, feature_list):
-        new_header = [header[i] for i in range(len(header)) if i in feature_list]
-        return new_header
 
     def run(self, stepwise_param, train_data, validate_data, model):
         #@TODO: drop_one & add_one for each step
         #@TODO use "map" to make new dTable
+        if self.role == consts.ARBITER:
+            self._arbiter_run(stepwise_param, model)
         return
+
+    def _arbiter_run(self, stepwise_param, model):
+        #@TODO: add calculate AIC/BIC here, return calculate value
+
+
+
+
 
 
 
