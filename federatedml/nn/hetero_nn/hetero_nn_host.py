@@ -95,7 +95,7 @@ class HeteroNNHost(HeteroNNBase):
 
         self.set_partition(data_inst)
 
-    def _load_data(self, data_inst):
+    def load_data(self, data_inst):
         batch_x = []
         for key, inst in data_inst.collect():
             batch_x.append(inst.features)
