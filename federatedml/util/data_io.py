@@ -373,7 +373,7 @@ class SparseFeatureReader(object):
         self.output_format = data_io_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = "label"
+        self.label_name = self.label_name = data_io_param.label_name
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
@@ -533,7 +533,7 @@ class SparseTagReader(object):
         self.output_format = data_io_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = None
+        self.label_name = self.label_name = data_io_param.label_name
 
     @staticmethod
     def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):
