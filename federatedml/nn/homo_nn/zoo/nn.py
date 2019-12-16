@@ -23,7 +23,8 @@ from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequenti
 
 def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
                    is_supported_layer=has_builder,
-                   default_layer=None) -> KerasNNModel:
+                   default_layer=None,
+                   sess=None) -> KerasNNModel:
     model = Sequential()
     is_first_layer = True
     for layer_config in nn_define:
@@ -42,7 +43,8 @@ def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
     return from_keras_sequential_model(model=model,
                                        loss=loss,
                                        optimizer=optimizer,
-                                       metrics=metrics)
+                                       metrics=metrics,
+                                       sess=sess)
 
 
 def restore_nn_model(model_bytes):
