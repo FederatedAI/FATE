@@ -19,6 +19,7 @@
 
 from types import SimpleNamespace
 
+import uuid
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import gradients
@@ -39,7 +40,7 @@ class DenseModel(object):
         self.layer_config = None
         self.sess = None
         self.role = "host"
-        self.activation_placeholder_name = "activation_placeholder"
+        self.activation_placeholder_name = "activation_placeholder" + str(uuid.uuid1())
         self.activation_gradient_func = None
         self.activation_func = None
         self.is_empty_model = False

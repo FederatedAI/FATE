@@ -54,7 +54,7 @@ class RandomParam(BaseParam):
 class HeteroNNParam(BaseParam):
     def __init__(self,
                  task_type='binary',
-                 config_type="nn",
+                 config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
                  interactive_layer_define=None,
@@ -103,7 +103,7 @@ class HeteroNNParam(BaseParam):
         if not isinstance(self.epochs, int) or self.epochs <= 0:
             raise ValueError("epochs should be a positive integer")
 
-        if not self.bottom_nn_define or not isinstance(self.bottom_nn_define, dict):
+        if self.bottom_nn_define and not isinstance(self.bottom_nn_define, dict):
             raise ValueError("bottom_nn_define should be a dict defining the structure of neural network")
 
         if self.top_nn_define and not isinstance(self.top_nn_define, dict):

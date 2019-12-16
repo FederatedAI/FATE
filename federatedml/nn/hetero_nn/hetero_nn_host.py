@@ -43,10 +43,13 @@ class HeteroNNHost(HeteroNNBase):
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
-        self.model = model_builder("host", self.hetero_nn_param)
-        self.model.set_transfer_variable(self.transfer_variable)
+        # self.model = model_builder("host", self.hetero_nn_param)
+        # self.model.set_transfer_variable(self.transfer_variable)
 
     def export_model(self):
+        if self.model is None:
+            return
+
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
 
@@ -55,8 +58,13 @@ class HeteroNNHost(HeteroNNBase):
         param = model_dict.get(MODELPARAM)
         meta = model_dict.get(MODELMETA)
 
+        self._build_model()
         self._restore_model_meta(meta)
         self._restore_model_param(param)
+
+    def _build_model(self):
+        self.model = model_builder("host", self.hetero_nn_param)
+        self.model.set_transfer_variable(self.transfer_variable)
 
     def predict(self, data_inst):
         test_x = self._load_data(data_inst)
@@ -64,6 +72,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
+        self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
 
         cur_epoch = 0
@@ -95,7 +104,7 @@ class HeteroNNHost(HeteroNNBase):
 
         self.set_partition(data_inst)
 
-    def load_data(self, data_inst):
+    def _load_data(self, data_inst):
         batch_x = []
         for key, inst in data_inst.collect():
             batch_x.append(inst.features)

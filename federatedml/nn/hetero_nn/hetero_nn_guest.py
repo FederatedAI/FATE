@@ -59,6 +59,10 @@ class HeteroNNGuest(HeteroNNBase):
 
         self.task_type = hetero_nn_param.task_type
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
+        # self.model = model_builder("guest", self.hetero_nn_param)
+        # self.model.set_transfer_variable(self.transfer_variable)
+
+    def _build_model(self):
         self.model = model_builder("guest", self.hetero_nn_param)
         self.model.set_transfer_variable(self.transfer_variable)
 
@@ -70,6 +74,7 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
+        self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
             self.model.set_empty()
@@ -148,14 +153,18 @@ class HeteroNNGuest(HeteroNNBase):
         return result
 
     def export_model(self):
+        if self.model is None:
+            return
+
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
 
-    def load_model(self, model_dict):
+    def _load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         param = model_dict.get(MODELPARAM)
         meta = model_dict.get(MODELMETA)
 
+        self._build_model()
         self._restore_model_meta(meta)
         self._restore_model_param(param)
 

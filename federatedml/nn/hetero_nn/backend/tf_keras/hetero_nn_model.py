@@ -135,7 +135,6 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         model_param.top_saved_model_bytes = self.top_model.export_model()
         model_param.interactive_layer_param.CopyFrom(self.interactive_model.export_model())
 
-        # model_param.interactive_save_model_bytes = self.interactive_model.export_model(self.model_builder)
         model_param.bottom_model_input_shape = self.bottom_model_input_shape
         model_param.top_model_input_shape = self.top_model_input_shape
 
@@ -182,7 +181,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
         return model_meta
 
-    def set_herero_nn_model_meta(self, model_meta):
+    def set_hetero_nn_model_meta(self, model_meta):
         self.config_type = model_meta.config_type
 
         if self.config_type == "nn":
@@ -206,7 +205,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
             self.metrics.append(metric)
 
         self.optimizer.optimizer = model_meta.optimizer_param.optimizer
-        self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwards)
+        self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable

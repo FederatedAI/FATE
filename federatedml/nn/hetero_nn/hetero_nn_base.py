@@ -19,6 +19,7 @@
 from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.model_selection import start_cross_validation
 
 
 class HeteroNNBase(ModelBase):
@@ -96,3 +97,7 @@ class HeteroNNBase(ModelBase):
     def set_partition(self, data_inst):
         self.partition = data_inst._partitions
         self.model.set_partition(self.partition)
+
+    def cross_validation(self, data_instances):
+        return start_cross_validation.run(self, data_instances)
+
