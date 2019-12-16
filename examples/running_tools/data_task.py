@@ -34,7 +34,7 @@ PARTITION_NUM = 10
 
 TRAIN_RATIO = 0.8  # Ratio of training set, test set will be 1 - TRAIN_RATIO
 GUEST_RATIO = 0.5  # For hetero, means feature number ratio, for homo means sample ratio.
-HOST_RATIOS = [0.5]
+HOST_RATIOS = [0.2, 0.3]
 
 need_generate_data = True
 
@@ -42,13 +42,14 @@ need_generate_data = True
 class DataTask(BaseTask):
     @staticmethod
     def get_file_names():
-        guest_file_name = '_'.join([MODE, DATA_SET, 'train', 'guest'])
-        # for idx, _ in enumerate(HOST_RATIOS):
-
-        host_file_name = '_'.join([MODE, DATA_SET, 'train', 'host'])
+        final_file_names = ['_'.join([MODE, DATA_SET, 'train', 'guest'])]
+        for idx, _ in enumerate(HOST_RATIOS):
+            final_file_names.append('_'.join([MODE, DATA_SET, 'train', 'host', str(idx)]))
         test_guest_file_name = '_'.join([MODE, DATA_SET, 'test', 'guest'])
         test_host_file_name = '_'.join([MODE, DATA_SET, 'test', 'host'])
-        return guest_file_name, host_file_name, test_guest_file_name, test_host_file_name
+        final_file_names.append(test_guest_file_name)
+        final_file_names.append(test_host_file_name)
+        return final_file_names
 
     @staticmethod
     def __write_upload_conf(json_info, file_name):
@@ -74,11 +75,14 @@ class DataTask(BaseTask):
         with open(original_upload_conf, 'r', encoding='utf-8') as f:
             json_info = json.loads(f.read())
 
-        guest_file_name, host_file_name, test_guest_file_name, test_host_file_name = self.get_file_names()
-        config_paths = [self.__write_upload_conf(json_info, guest_file_name),
-                        self.__write_upload_conf(json_info, host_file_name),
-                        self.__write_upload_conf(json_info, test_guest_file_name),
-                        self.__write_upload_conf(json_info, test_host_file_name)]
+        # guest_file_name, host_file_name, test_guest_file_name, test_host_file_name = self.get_file_names()
+        file_names = self.get_file_names()
+        # config_paths = [self.__write_upload_conf(json_info, guest_file_name),
+        #                 self.__write_upload_conf(json_info, host_file_name),
+        #                 self.__write_upload_conf(json_info, test_guest_file_name),
+        #                 self.__write_upload_conf(json_info, test_host_file_name)]
+        config_paths = [self.__write_upload_conf(json_info, x) for x in file_names]
+
         return config_paths
 
     def generate_data_files(self):
@@ -86,7 +90,7 @@ class DataTask(BaseTask):
         total_data_df = pd.read_csv(data_path, index_col=0)
         file_names = self.get_file_names()
         if MODE == 'hetero':
-            self.__split_two_party_hetero(total_data_df, file_names)
+            self.__split_hetero(total_data_df, file_names)
         else:
             self.__split_two_party_homo(total_data_df, file_names)
 
