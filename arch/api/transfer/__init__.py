@@ -86,11 +86,11 @@ class Rubbish(object):
 
     def merge(self, rubbish: 'Rubbish'):
         self._tables.extend(rubbish._tables)
-        for k, v in rubbish._kv:
-            if k in self._kv:
-                self._kv[k].extend(v)
+        for tk, (t, k) in rubbish._kv.items():
+            if tk in self._kv:
+                self._kv[tk][1].extend(k)
             else:
-                self._kv[k] = v
+                self._kv[k] = (t, k)
         # # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
         # rubbish.empty()
         return self
