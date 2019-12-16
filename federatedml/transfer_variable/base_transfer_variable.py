@@ -28,6 +28,10 @@ class Variable(object):
         self._auto_clean = True
         self._preserve_num = 2
 
+    def __getstate__(self):
+        #  variable should not be transferred
+        return None
+
     def set_preserve_num(self, n):
         self._preserve_num = n
         return self

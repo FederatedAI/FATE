@@ -91,8 +91,8 @@ class Rubbish(object):
                 self._kv[k].extend(v)
             else:
                 self._kv[k] = v
-        # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
-        rubbish.empty()
+        # # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
+        # rubbish.empty()
         return self
 
     def empty(self):
@@ -101,7 +101,8 @@ class Rubbish(object):
 
     # noinspection PyBroadException
     def clean(self):
-        LOGGER.debug(f"[CLEAN] {self._name} cleaning rubbishes tagged by {self._tag}")
+        if self._tables or self._kv:
+            LOGGER.debug(f"[CLEAN] {self._name} cleaning rubbishes tagged by {self._tag}")
         for table in self._tables:
             try:
                 LOGGER.debug(f"[CLEAN] try destroy table {table}")
@@ -117,8 +118,8 @@ class Rubbish(object):
                 except:
                     pass
 
-    def __del__(self):
-        self.clean()
+    # def __del__(self):  # this is error prone, please call `clean` explicit
+    #     self.clean()
 
 
 class Cleaner(object):
@@ -142,13 +143,11 @@ class Cleaner(object):
 
     def keep_latest_n(self, n):
         while len(self._ashcan) > n:
-            # self._ashcan.popleft().clean()  # clean explicit
-            self._ashcan.popleft()
+            self._ashcan.popleft().clean()  # clean explicit
 
     def clean_all(self):
-        # while len(self._ashcan) > 0:
-        #     self._ashcan.popleft().clean()
-        self._ashcan.clear()
+        while len(self._ashcan) > 0:
+            self._ashcan.popleft().clean()
 
 
 class FederationWrapped(object):
