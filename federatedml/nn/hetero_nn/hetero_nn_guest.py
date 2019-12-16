@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
+from arch.api import session
+from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.framework.hetero.procedure import batch_generator
+from federatedml.nn.hetero_nn.backend.model_builder import model_builder
+from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -17,18 +26,9 @@
 #  limitations under the License.
 #
 from federatedml.optim.convergence import converge_func_factory
-from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
-from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
-from federatedml.nn.hetero_nn.backend.model_builder import model_builder
 from federatedml.util import consts
-from arch.api.utils import log_utils
-from arch.api import session
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
-import numpy as np
-
 
 LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNGuestMeta"
@@ -125,14 +125,15 @@ class HeteroNNGuest(HeteroNNBase):
         predict_tb = session.parallelize(zip(keys, preds), include_key=True)
         if self.task_type == "regression":
             result = data_inst.join(predict_tb,
-                                    lambda inst, predict: [inst.label, predict[0], predict[0], {"label": predict[0]}])
+                                    lambda inst, predict: [inst.label, float(predict[0]), float(predict[0]),
+                                                           {"label": float(predict[0])}])
         else:
             if self.num_label > 2:
                 result = data_inst.join(predict_tb,
                                         lambda inst, predict: [inst.label,
-                                                               np.argmax(predict),
-                                                               np.max(predict),
-                                                               dict([(str(idx), predict[idx]) for idx in
+                                                               int(np.argmax(predict)),
+                                                               float(np.max(predict)),
+                                                               dict([(str(idx), float(predict[idx])) for idx in
                                                                      range(predict.shape[0])])])
 
             else:
@@ -140,9 +141,9 @@ class HeteroNNGuest(HeteroNNBase):
                 result = data_inst.join(predict_tb,
                                         lambda inst, predict: [inst.label,
                                                                1 if predict[0] > threshold else 0,
-                                                               predict[0],
-                                                               {"0": 1 - predict[0],
-                                                                "1": predict[0]}])
+                                                               float(predict[0]),
+                                                               {"0": 1 - float(predict[0]),
+                                                                "1": float(predict[0])}])
 
         return result
 
