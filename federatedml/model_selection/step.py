@@ -39,8 +39,13 @@ class Step(Stepwise):
         data_instance.features = data_instance.features[feature_list]
         return data_instance
 
+    def get_new_header(self, header, feature_list):
+        new_header = [header[i] for i in range(len(header)) if i in feature_list]
+        return new_header
+
     def run(self, stepwise_param, train_data, validate_data, model):
         #@TODO: drop_one & add_one for each step
+        #@TODO use "map" to make new dTable
         return
 
 
