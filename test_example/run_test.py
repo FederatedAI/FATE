@@ -1,7 +1,7 @@
-import json
 import os
-import argparse
+import json
 from test_example import submit
+import argparse
 
 
 def submit_task(task_data, task_conf, task_dsl):
@@ -26,6 +26,7 @@ if __name__ == "__main__":
     if task_file:
        with open(task_file) as f:
             configs = json.loads(f.read())
+
     result = {}
     fate_home = os.path.abspath(f"{os.getcwd()}/../")
     submitter = submit.Submitter() \
