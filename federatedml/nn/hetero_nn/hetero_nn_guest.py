@@ -69,7 +69,7 @@ class HeteroNNGuest(HeteroNNBase):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-    def fit(self, data_inst, validate_data):
+    def fit(self, data_inst, validate_data=None):
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
             self.model.set_empty()

@@ -63,7 +63,7 @@ class HeteroNNHost(HeteroNNBase):
 
         self.model.predict(test_x)
 
-    def fit(self, data_inst, validate_data):
+    def fit(self, data_inst, validate_data=None):
         self.prepare_batch_data(self.batch_generator, data_inst)
 
         cur_epoch = 0
