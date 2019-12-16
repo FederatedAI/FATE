@@ -69,8 +69,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.tree_node_num = 0
         self.split_maskdict = {}
         self.missing_dir_maskdict = {}
-        #self.transfer_inst = HeteroDecisionTreeTransferVariable()
-        self.transfer_inst = HeteroDecisionTreeTransferVariable.get_or_create()
+        self.transfer_inst = HeteroDecisionTreeTransferVariable()
+        # self.transfer_inst = HeteroDecisionTreeTransferVariable.get_or_create()
         self.predict_weights = None
         self.host_party_idlist = []
         self.runtime_idx = 0
