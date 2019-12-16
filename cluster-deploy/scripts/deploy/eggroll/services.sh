@@ -17,11 +17,11 @@
 #
 
 eval action=\$$#
-installdir=
-export JAVA_HOME=
+installdir=/data/kube/FATE/cluster-deploy/scripts/allinone/eggroll
+export JAVA_HOME=/data/kube/FATE/cluster-deploy/scripts/allinone/common/jdk/jdk-8u192
 export PATH=$JAVA_HOME/bin:$PATH
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION='python'
-export PYTHONPATH=
+export PYTHONPATH=/data/kube/FATE/cluster-deploy/scripts/allinone/python:/data/kube/FATE/cluster-deploy/scripts/allinone/eggroll/python
 modules=(meta-service egg roll storage-service-cxx)
 
 if ! test -e $installdir/logs/storage-service-cxx;then
@@ -153,13 +153,12 @@ start() {
             echo "service start failed"
         fi
     else
-       if [[ "$module" == "storage-service-cxx" ]]; then
-           ps aux | grep ${pid} | grep ${module} | grep -v $0 | grep -v grep
-           if [[ $? -eq 1 ]]; then
-              echo "" > ${module}/${module}_pid
-           fi
-       fi
-        echo "service already started. pid: ${pid}"
+        ps aux | grep ${pid} | grep ${module} | grep -v $0 | grep -v grep
+        if [[ $? -eq 1 ]]; then
+            echo "" > ${module}/${module}_pid
+        else
+           echo "service already started. pid: ${pid}"
+        fi
     fi
 }
 
@@ -170,9 +169,7 @@ stop() {
         `ps aux | grep ${pid} | grep -v grep`"
         kill -9 ${pid}
 		getpid
-        if [[ "$module" == "storage-service-cxx" ]]; then
-           echo "" > ${module}/${module}_pid
-        fi
+        echo "" > ${module}/${module}_pid
         if [[ $? -eq 1 ]]; then
             echo "killed"
         else
