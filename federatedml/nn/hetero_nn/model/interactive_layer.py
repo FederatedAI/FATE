@@ -71,13 +71,13 @@ class InterActiveGuestDenseLayer(object):
     def set_partition(self, partition):
         self.partitions = partition
 
-    def __build_model(self):
+    def __build_model(self, restore_stage=False):
         self.host_model = HostDenseModel()
-        self.host_model.build(self.host_input_shape, self.layer_config, self.sess, self.model_builder)
+        self.host_model.build(self.host_input_shape, self.layer_config, self.sess, self.model_builder, restore_stage)
         self.host_model.set_learning_rate(self.learning_rate)
 
         self.guest_model = GuestDenseModel()
-        self.guest_model.build(self.guest_input_shape, self.layer_config, self.sess, self.model_builder)
+        self.guest_model.build(self.guest_input_shape, self.layer_config, self.sess, self.model_builder, restore_stage)
         self.guest_model.set_learning_rate(self.learning_rate)
 
     def forward(self, guest_input, epoch=0, batch=0):
@@ -218,7 +218,7 @@ class InterActiveGuestDenseLayer(object):
         self.host_input_shape = interactive_layer_param.host_input_shape
         self.guest_input_shape = interactive_layer_param.guest_input_shape
 
-        self.__build_model()
+        self.__build_model(restore_stage=True)
         self.guest_model.restore_model(interactive_layer_param.interactive_guest_saved_model_bytes)
         self.host_model.restore_model(interactive_layer_param.interactive_host_saved_model_bytes)
 

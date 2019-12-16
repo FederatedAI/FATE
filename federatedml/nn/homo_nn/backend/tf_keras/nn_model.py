@@ -126,13 +126,11 @@ def restore_keras_nn_model(model_bytes, sess=None):
 
 
 class KerasNNModel(NNModel):
-    def __init__(self, sess, model, restore_model=False):
+    def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
         self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
-
-        if not restore_model:
-            self._sess.run(tf.initialize_all_variables())
+        self._initialize_all_variables = False
 
     @staticmethod
     def _trim_device_str(name):
@@ -152,6 +150,9 @@ class KerasNNModel(NNModel):
         self._model.layers[layer_idx].set_weights(weights)
 
     def get_input_gradients(self, X, y):
+        if not self._initialize_all_variables:
+            self._sess.run(tf.initialize_all_variables())
+
         from federatedml.nn.hetero_nn.backend.tf_keras import losses
 
         y_true = tf.placeholder(shape=self._model.output.shape,
@@ -211,7 +212,7 @@ class KerasNNModel(NNModel):
                 warnings.warn('loading the model as SavedModel is still in experimental stages. '
                               'trying tf.keras.experimental.load_from_saved_model...')
                 model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
-        return KerasNNModel(sess, model, restore_model=True)
+        return KerasNNModel(sess, model)
 
     def export_optimizer_config(self):
         return self._model.optimizer.get_config()

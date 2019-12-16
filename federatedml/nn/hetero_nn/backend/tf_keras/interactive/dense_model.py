@@ -58,7 +58,7 @@ class DenseModel(object):
     def set_sess(self, sess):
         self.sess = sess
 
-    def build(self, input_shape=None, layer_config=None, sess=None, model_builder=None):
+    def build(self, input_shape=None, layer_config=None, sess=None, model_builder=None, restore_stage=False):
         if not input_shape:
             if self.role == "host":
                 raise ValueError("host input is empty!")
@@ -79,8 +79,8 @@ class DenseModel(object):
                                    sess=sess)
 
         dense_layer = self.model.get_layer_by_index(0)
-        # self.model = _build_model(input_shape, layer_config, self.sess)
-        self._init_model_weight(dense_layer)
+        if not restore_stage:
+            self._init_model_weight(dense_layer)
 
         if self.role == "host":
             self.activation_func = dense_layer.activation
@@ -95,7 +95,6 @@ class DenseModel(object):
             layer_weights.append(self.bias)
 
         self.model.set_layer_weights_by_index(0, layer_weights)
-        # self.model._model.layers[0].set_weights(layer_weights)
         return self.model.export_model()
 
     def restore_model(self, model_bytes):
@@ -104,9 +103,12 @@ class DenseModel(object):
 
         LOGGER.debug("model_bytes is {}".format(model_bytes))
         self.model = self.model.restore_model(model_bytes, self.sess)
-        self._init_model_weight(self.model.get_layer_by_index(0))
+        self._init_model_weight(self.model.get_layer_by_index(0), restore_stage=True)
 
-    def _init_model_weight(self, dense_layer):
+    def _init_model_weight(self, dense_layer, restore_stage=False):
+        if not restore_stage:
+            self.sess.run(tf.initialize_all_variables())
+
         trainable_weights = self.sess.run(dense_layer.trainable_weights)
         self.model_weight = trainable_weights[0]
         self.model_shape = dense_layer.get_weights()[0].shape
