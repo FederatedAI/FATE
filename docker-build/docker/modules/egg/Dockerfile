@@ -17,7 +17,10 @@ COPY eggroll-egg-*.tar.gz ./
 COPY eggroll-storage-service-cxx-*.tar.gz  ./
 COPY third_party_eggrollv1.tar.gz ./
 COPY federatedml ./python/federatedml
-COPY arch ./python/arch
+COPY arch/api ./python/arch/api
+COPY arch/conf ./python/arch/conf
+COPY arch/core ./python/arch/core
+COPY arch/proto ./python/arch/proto
 COPY fate_flow ./python/fate_flow
 COPY conf ./egg/conf
 
