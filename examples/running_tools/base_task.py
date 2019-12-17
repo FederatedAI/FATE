@@ -88,3 +88,8 @@ class BaseTask(object):
         table_info = self.start_task(cmd)
         print(table_info)
         return table_info
+
+    def read_json_file(self, file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            result_json = json.loads(f.read())
+        return result_json

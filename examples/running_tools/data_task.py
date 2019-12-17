@@ -18,6 +18,7 @@
 
 import argparse
 import json
+import math
 import sys
 import time
 import traceback
@@ -42,14 +43,14 @@ need_generate_data = True
 class DataTask(BaseTask):
     @staticmethod
     def get_file_names():
-        final_file_names = ['_'.join([MODE, DATA_SET, 'train', 'guest'])]
+        train_file_names = ['_'.join([MODE, DATA_SET, 'train', 'guest'])]
         for idx, _ in enumerate(HOST_RATIOS):
-            final_file_names.append('_'.join([MODE, DATA_SET, 'train', 'host', str(idx)]))
-        test_guest_file_name = '_'.join([MODE, DATA_SET, 'test', 'guest'])
-        test_host_file_name = '_'.join([MODE, DATA_SET, 'test', 'host'])
-        final_file_names.append(test_guest_file_name)
-        final_file_names.append(test_host_file_name)
-        return final_file_names
+            train_file_names.append('_'.join([MODE, DATA_SET, 'train', 'host', str(idx)]))
+        test_file_names = ['_'.join([MODE, DATA_SET, 'test', 'guest'])]
+        for idx, _ in enumerate(HOST_RATIOS):
+            test_file_names.append('_'.join([MODE, DATA_SET, 'test', 'host', str(idx)]))
+
+        return train_file_names, test_file_names
 
     @staticmethod
     def __write_upload_conf(json_info, file_name):
@@ -75,61 +76,55 @@ class DataTask(BaseTask):
         with open(original_upload_conf, 'r', encoding='utf-8') as f:
             json_info = json.loads(f.read())
 
-        # guest_file_name, host_file_name, test_guest_file_name, test_host_file_name = self.get_file_names()
-        file_names = self.get_file_names()
-        # config_paths = [self.__write_upload_conf(json_info, guest_file_name),
-        #                 self.__write_upload_conf(json_info, host_file_name),
-        #                 self.__write_upload_conf(json_info, test_guest_file_name),
-        #                 self.__write_upload_conf(json_info, test_host_file_name)]
-        config_paths = [self.__write_upload_conf(json_info, x) for x in file_names]
+        train_file_names, test_file_names = self.get_file_names()
+        config_paths = [self.__write_upload_conf(json_info, x) for x in train_file_names + test_file_names]
 
         return config_paths
 
     def generate_data_files(self):
         data_path = run_config.DATA_PATH + DATA_SET + '.csv'
         total_data_df = pd.read_csv(data_path, index_col=0)
-        file_names = self.get_file_names()
+        train_file_names, test_file_names = self.get_file_names()
+        train_data, test_data = self.__split_train_test(total_data_df)
+
         if MODE == 'hetero':
-            self.__split_hetero(total_data_df, file_names)
+            self.__split_hetero(train_data, train_file_names)
+            self.__split_hetero(test_data, test_file_names)
         else:
-            self.__split_two_party_homo(total_data_df, file_names)
+            self.__split_homo(train_data, train_file_names)
+            self.__split_homo(test_data, test_file_names)
 
     @staticmethod
-    def __split_two_party_homo(total_train_df, file_names):
-        # print(total_num)
-        train_data, test_data = DataTask.__split_train_test(total_train_df)
-        guest_num = int(train_data.shape[0] * GUEST_RATIO)
-        guest_train = train_data[0: guest_num]
-        host_train = train_data[guest_num:]
+    def __split_homo(total_train_df, file_names):
+        guest_num = math.floor(total_train_df.shape[0] * GUEST_RATIO)
+        guest_df = total_train_df[0: guest_num]
+        guest_df.to_csv(run_config.TEMP_DATA_PATH + file_names[0] + '.csv')
 
-        guest_test_num = int(test_data.shape[0] * GUEST_RATIO)
-        guest_test = test_data[0: guest_test_num]
-        host_test = test_data[guest_test_num:]
-
-        guest_train.to_csv(run_config.TEMP_DATA_PATH + file_names[0] + '.csv')
-        host_train.to_csv(run_config.TEMP_DATA_PATH + file_names[1] + '.csv')
-        guest_test.to_csv(run_config.TEMP_DATA_PATH + file_names[2] + '.csv')
-        host_test.to_csv(run_config.TEMP_DATA_PATH + file_names[3] + '.csv')
-        print("After split, guest_train shape: {}, host_train shape: {}, guest_test shape: {},"
-              " host_test shape: {}".format(guest_train.shape, host_train.shape, guest_test.shape, host_test.shape))
+        last_num = guest_num
+        for idx, host_ratio in enumerate(HOST_RATIOS[: -1]):
+            host_num = math.floor(total_train_df.shape[0] * host_ratio)
+            host_df = total_train_df[last_num: last_num + host_num]
+            host_df.to_csv(run_config.TEMP_DATA_PATH + file_names[idx + 1] + '.csv')
+            last_num += host_num
+        last_host_df = total_train_df.iloc[last_num:]
+        last_host_df.to_csv(run_config.TEMP_DATA_PATH + file_names[-1] + '.csv')
 
     @staticmethod
     def __split_hetero(total_train_df, file_names):
-        train_data, test_data = DataTask.__split_train_test(total_train_df)
         feature_nums = total_train_df.shape[1]
-        guest_feature_nums = int(feature_nums * GUEST_RATIO)
+        guest_feature_nums = math.floor(feature_nums * GUEST_RATIO)
 
-        guest_train = train_data.iloc[:, :guest_feature_nums]
-        host_train = train_data.iloc[:, guest_feature_nums:]
-        guest_test = test_data.iloc[:, :guest_feature_nums]
-        host_test = test_data.iloc[:, guest_feature_nums:]
+        guest_df = total_train_df.iloc[:, :guest_feature_nums]
+        guest_df.to_csv(run_config.TEMP_DATA_PATH + file_names[0] + '.csv')
 
-        guest_train.to_csv(run_config.TEMP_DATA_PATH + file_names[0] + '.csv')
-        host_train.to_csv(run_config.TEMP_DATA_PATH + file_names[1] + '.csv')
-        guest_test.to_csv(run_config.TEMP_DATA_PATH + file_names[2] + '.csv')
-        host_test.to_csv(run_config.TEMP_DATA_PATH + file_names[3] + '.csv')
-        print("After split, guest_train shape: {}, host_train shape: {}, guest_test shape: {},"
-              " host_test shape: {}".format(guest_train.shape, host_train.shape, guest_test.shape, host_test.shape))
+        last_num = guest_feature_nums
+        for idx, host_ratio in enumerate(HOST_RATIOS[: -1]):
+            host_feature_nums = math.floor(feature_nums * host_ratio)
+            host_df = total_train_df.iloc[:, last_num: last_num + host_feature_nums]
+            host_df.to_csv(run_config.TEMP_DATA_PATH + file_names[idx + 1] + '.csv')
+            last_num += host_feature_nums
+        last_host_df = total_train_df.iloc[:, last_num:]
+        last_host_df.to_csv(run_config.TEMP_DATA_PATH + file_names[-1] + '.csv')
 
     @staticmethod
     def __split_train_test(total_train_df):
@@ -201,10 +196,11 @@ class DataTask(BaseTask):
         with open(saved_result_path, "w") as fout:
             fout.write(config + "\n")
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-f', '--func', required=False, type=str, help="role",
+    parser.add_argument('-f', '--func', required=False, type=str, help="run function",
                         choices=('upload', 'check', 'destroy'), default='upload'
                         )
 
