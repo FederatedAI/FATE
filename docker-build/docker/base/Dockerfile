@@ -25,6 +25,7 @@ RUN set -eux; \
     rm -f ./Miniconda3-*-Linux-x86_64.sh;
 
 RUN set -eux; \
+    cd /data/projects/python/ ; \
     curl https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-${python_version}.tar.gz > ./pip-packages-fate-${python_version}.tar.gz; \
     tar -xvf pip-packages-fate-${python_version}.tar.gz; \
     rm pip-packages-fate-${python_version}.tar.gz ; \
