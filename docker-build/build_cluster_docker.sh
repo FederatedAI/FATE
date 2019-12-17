@@ -161,6 +161,7 @@ package() {
   echo "START PACKAGING"
   source .env
   packages_dir=${source_code_dir}/cluster-deploy/packages
+  rm -f ${source_code_dir}/cluster-deploy/packages/*
   mkdir -p ${packages_dir}
 
   cd ${source_code_dir}
