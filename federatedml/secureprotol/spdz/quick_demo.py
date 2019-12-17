@@ -22,7 +22,7 @@ import numpy as np
 from arch.api import session, federation
 from arch.api.transfer import Party
 from federatedml.secureprotol.spdz import SPDZ
-from federatedml.secureprotol.spdz.tensor.numpy_fix_point import FixPointTensor
+from federatedml.secureprotol.spdz.tensor.fixedpoint_numpy import FixedPointTensor
 
 Q_BITS = 60
 Q_FIELD = 2 << Q_BITS
@@ -75,11 +75,11 @@ def call(idx):
 
     with SPDZ(q_field=Q_FIELD) as spdz:
         if idx == 0:
-            x = FixPointTensor.from_source("x", data[0])
-            y = FixPointTensor.from_source("y", parties[1])
+            x = FixedPointTensor.from_source("x", data[0])
+            y = FixedPointTensor.from_source("y", parties[1])
         else:
-            x = FixPointTensor.from_source("x", parties[0])
-            y = FixPointTensor.from_source("y", data[1])
+            x = FixedPointTensor.from_source("x", parties[0])
+            y = FixedPointTensor.from_source("y", data[1])
         ret = x.einsum(y, einsum_expr)
         return ret.get()
 

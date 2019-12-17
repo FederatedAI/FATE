@@ -17,7 +17,7 @@ import asyncio
 from typing import Union, Tuple
 
 from arch.api import StoreType
-from arch.api.transfer import Cleaner, Party, Federation
+from arch.api.transfer import Rubbish, Party, Federation
 from arch.api.utils.log_utils import getLogger
 from eggroll.api.standalone.eggroll import Standalone
 # noinspection PyProtectedMember
@@ -53,12 +53,12 @@ class FederationRuntime(Federation):
 
         self._loop = asyncio.get_event_loop()
 
-    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Cleaner:
+    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
         if isinstance(parties, Party):
             parties = [parties]
         self._remote_side_auth(name=name, parties=parties)
 
-        cleaner = Cleaner()
+        rubbish = Rubbish(name, tag)
         for party in parties:
             _tagged_key = self.__remote__object_key(self._session_id, name, tag, self._role, self._party_id, party.role,
                                                     party.party_id)
@@ -67,18 +67,18 @@ class FederationRuntime(Federation):
                 obj.set_gc_disable()
                 # noinspection PyProtectedMember
                 _status_table.put(_tagged_key, (obj._type, obj._name, obj._namespace, obj._partitions))
-                cleaner.add_table(obj)
-                cleaner.add_obj(_status_table, _tagged_key)
+                rubbish.add_table(obj)
+                rubbish.add_obj(_status_table, _tagged_key)
             else:
                 _table = _get_meta_table(OBJECT_STORAGE_NAME, self._session_id)
                 _table.put(_tagged_key, obj)
                 _status_table.put(_tagged_key, _tagged_key)
-                cleaner.add_obj(_table, _tagged_key)
-                cleaner.add_obj(_status_table, _tagged_key)
+                rubbish.add_obj(_table, _tagged_key)
+                rubbish.add_obj(_status_table, _tagged_key)
             LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
-        return cleaner
+        return rubbish
 
-    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
         if isinstance(parties, Party):
             parties = [parties]
         self._get_side_auth(name=name, parties=parties)
@@ -93,7 +93,7 @@ class FederationRuntime(Federation):
             tasks.append(check_status_and_get_value(_status_table, _tagged_key))
         results = self._loop.run_until_complete(asyncio.gather(*tasks))
         rtn = []
-        cleaner = Cleaner()
+        rubbish = Rubbish(name, tag)
         _object_table = _get_meta_table(OBJECT_STORAGE_NAME, self._session_id)
         for r in results:
             LOGGER.debug(f"[GET] {self._local_party} getting {r} from {parties}")
@@ -102,11 +102,11 @@ class FederationRuntime(Federation):
                 table = Standalone.get_instance().table(name=r[1], namespace=r[2], persistent=_persistent,
                                                         partition=r[3])
                 rtn.append(table)
-                cleaner.add_table(table)
+                rubbish.add_table(table)
 
             else:  # todo: should standalone mode split large object?
                 obj = _object_table.get(r)
                 rtn.append(obj)
-                cleaner.add_obj(_object_table, r)
-                cleaner.add_obj(_status_table, r)
-        return rtn, cleaner
+                rubbish.add_obj(_object_table, r)
+                rubbish.add_obj(_status_table, r)
+        return rtn, rubbish
