@@ -26,7 +26,7 @@ MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
 
 
-class Pearson(ModelBase):
+class HeteroPearson(ModelBase):
 
     def __init__(self):
         super().__init__()
