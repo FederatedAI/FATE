@@ -25,8 +25,6 @@ buildBase() {
 
   docker build -f docker/base/Dockerfile -t ${PREFIX}/base-image:${BASE_TAG} ${source_code_dir}/docker-build/docker/base
 
-  rm ${source_code_dir}/docker-build/docker/base/requirements.txt
-
   echo "FINISH BUILDING BASE IMAGE"
 }
 
@@ -164,7 +162,6 @@ package() {
   source .env
   packages_dir=${source_code_dir}/cluster-deploy/packages
   mkdir -p ${packages_dir}
-  source ../cluster-deploy/scripts/default_configurations.sh
 
   cd ${source_code_dir}
   eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
@@ -192,6 +189,50 @@ package() {
   else
       git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
   fi
+
+  cd ${source_code_dir}
+  fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+  fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+  echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
+  if [[ -e "fateboard" ]];then
+      while [[ true ]];do
+          read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
+          case ${input} in
+          [yY]*)
+                  echo "[INFO] Delete the original fateboard"
+                  rm -rf fateboard
+                  git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+                  break
+                  ;;
+          [nN]*)
+                  echo "[INFO] Use the original fateboard"
+                  break
+                  ;;
+          *)
+                  echo "Just enter y or n, please."
+                  ;;
+          esac
+      done
+  else
+      git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+  fi
+  
+  
+  egg_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+  meta_service_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+  roll_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+  federation_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
+  proxy_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
+  fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ${source_code_dir}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
+ 
+  sed -i "s/egg_version=.*/egg_version=${egg_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i "s/meta_service_version=.*/meta_service_version=${meta_service_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i "s/roll_version=.*/roll_version=${roll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i "s/federation_version=.*/federation_version=${federation_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i "s/proxy_version=.*/proxy_version=${proxy_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+
+  source ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 
   eggroll_source_code_dir=${source_code_dir}/eggroll
   cd ${eggroll_source_code_dir}
@@ -235,33 +276,6 @@ package() {
   tar czf eggroll-storage-service-cxx-${version}.tar.gz *
   mv eggroll-storage-service-cxx-${version}.tar.gz ${packages_dir}/
   echo "[INFO] Package eggroll done"
-
-  cd ${source_code_dir}
-  fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
-  fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
-  echo "[INFO] Git clone fateboard submodule source code from ${fateboard_git_url} branch ${fateboard_git_branch}"
-  if [[ -e "fateboard" ]];then
-      while [[ true ]];do
-          read -p "The fateboard directory already exists, delete and re-download? [y/n] " input
-          case ${input} in
-          [yY]*)
-                  echo "[INFO] Delete the original fateboard"
-                  rm -rf fateboard
-                  git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
-                  break
-                  ;;
-          [nN]*)
-                  echo "[INFO] Use the original fateboard"
-                  break
-                  ;;
-          *)
-                  echo "Just enter y or n, please."
-                  ;;
-          esac
-      done
-  else
-      git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
-  fi
 
   echo "[INFO] Compiling fate"
   cd ${source_code_dir}/fateboard/
