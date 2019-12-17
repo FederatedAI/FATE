@@ -2,7 +2,7 @@ FROM centos:centos7.2.1511
 
 ENV venv_dir /data/projects/python/venv
 ENV miniconda3_dir /data/projects/python/miniconda3
-ENV python_version 1.1
+ENV python_version 1.2
 
 COPY requirements.txt /data/projects/python/
 
