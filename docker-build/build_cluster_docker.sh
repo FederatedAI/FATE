@@ -298,7 +298,6 @@ package() {
 
   echo "[INFO] Packaging base module"
   get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1.tar.gz
-  get_module_package ${source_code_dir} "python" pip-packages-fate-${python_version}.tar.gz
   echo "[INFO] Package base module done"
   echo "[INFO] Package fate done"
   echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"

@@ -15,14 +15,16 @@ RUN set -eux; \
     automake libtool libffi-devel snappy snappy-devel zlib zlib-devel \
     bzip2 bzip2-devel lz4-devel libasan lsof \
     ;\
-    yum clean all;\
-    \
+    yum clean all;
+
+RUN set -eux; \
     cd /data/projects/python/ ; \
     curl https://repo.continuum.io/miniconda/Miniconda3-4.5.4-Linux-x86_64.sh > /data/projects/python/Miniconda3-4.5.4-Linux-x86_64.sh ; \
     \
     sh ./Miniconda3-*-Linux-x86_64.sh -b -p ${miniconda3_dir} ; \
-    rm -f ./Miniconda3-*-Linux-x86_64.sh; \
-    \
+    rm -f ./Miniconda3-*-Linux-x86_64.sh;
+
+RUN set -eux; \
     curl https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-${python_version}.tar.gz > ./pip-packages-fate-${python_version}.tar.gz; \
     tar -xvf pip-packages-fate-${python_version}.tar.gz; \
     rm pip-packages-fate-${python_version}.tar.gz ; \
