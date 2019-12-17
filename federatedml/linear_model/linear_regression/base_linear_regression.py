@@ -27,6 +27,7 @@ from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -59,7 +60,7 @@ class BaseLinearRegression(BaseLinearModel):
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(
-            lambda v: np.dot(v.features, coef_) + intercept_)
+            lambda v: vec_dot(v.features, coef_) + intercept_)
 
     def _get_meta(self):
         meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,

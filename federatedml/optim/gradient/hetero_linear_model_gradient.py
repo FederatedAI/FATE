@@ -22,6 +22,8 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.util import consts
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
@@ -43,26 +45,50 @@ def __compute_partition_gradient(data, fit_intercept=True):
     """
     feature = []
     fore_gradient = []
-
+    issparsevec = 0
     for key, value in data:
-        feature.append(value[0])
-        fore_gradient.append(value[1])
-    feature = np.array(feature)
-    fore_gradient = np.array(fore_gradient)
+        if isinstance(value[0], SparseVector):
+            issparsevec = 1
+            feature_num = value[0].get_shape()
+        break
 
-    gradient = []
-    if feature.shape[0] <= 0:
-        return 0
-    for j in range(feature.shape[1]):
-        feature_col = feature[:, j]
-        gradient_j = fate_operator.dot(feature_col, fore_gradient)
-        gradient.append(gradient_j)
+    if issparsevec:
+        row_num = 0
+        gradient = [0] * feature_num
+        for key, value in data:
+            fore_gradient.append(value[1])
+            for idx, v in value[0].get_all_data():
+                tmp = value[1] * v
+                gradient[idx] = gradient[idx] + tmp
+            row_num += 1
 
-    if fit_intercept:
-        bias_grad = np.sum(fore_gradient)
-        gradient.append(bias_grad)
-    return np.array(gradient)
+        for i in range(feature_num):
+            if gradient[i] == 0 :
+                if isinstance(fore_gradient[0], PaillierEncryptedNumber):
+                    gradient[i] = 0 * fore_gradient[0]    
+        if row_num <= 0:
+            return 0
 
+        if fit_intercept:
+            bias_grad = np.sum(fore_gradient)
+            gradient.append(bias_grad)
+        return np.array(gradient)
+    else:
+        for key, value in data:
+            feature.append(value[0])
+            fore_gradient.append(value[1])
+        feature = np.array(feature)
+        fore_gradient = np.array(fore_gradient)
+        gradient = []
+        if feature.shape[0] <= 0:
+            return 0
+
+        gradient = fate_operator.dot(feature.transpose(),fore_gradient)
+        gradient = gradient.tolist()
+        if fit_intercept:
+            bias_grad = np.sum(fore_gradient)
+            gradient.append(bias_grad)
+        return np.array(gradient)
 
 def compute_gradient(data_instances, fore_gradient, fit_intercept):
     """

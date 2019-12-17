@@ -27,6 +27,7 @@ from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -90,11 +91,11 @@ class BasePoissonRegression(BaseLinearModel):
     def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:
             mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
+                lambda v: np.exp(vec_dot(v.features, coef_) + intercept_ ))
         else:
             offset = exposure.mapValues(lambda v: self.safe_log(v))
             mu = data_instances.join(offset,
-                lambda v, m: np.exp(np.dot(v.features, coef_) + intercept_ + m))
+                lambda v, m: np.exp(vec_dot(v.features, coef_) + intercept_ + m))
 
         return mu
 

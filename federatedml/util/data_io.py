@@ -346,6 +346,7 @@ class SparseFeatureReader(object):
     def __init__(self, data_io_param):
         self.delimitor = data_io_param.delimitor
         self.data_type = data_io_param.data_type
+        self.with_label = data_io_param.with_label
         self.label_type = data_io_param.label_type
         self.output_format = data_io_param.output_format
         self.header = None
@@ -356,11 +357,15 @@ class SparseFeatureReader(object):
         if line.strip() == '':
             raise ValueError("find an empty line, please check!!!")
 
-        cols = line.split(delimitor, -1)
-        if len(cols) <= 1:
-            return -1
+        cols = line.strip().split(delimitor, -1)
 
-        return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[1:]])
+        if self.with_label:
+            if len(cols) <= 1:
+                return -1
+            
+            return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[1:]])
+        else:
+            return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[0:]])
 
     def generate_header(self, max_feature):
         self.header = [str(i) for i in range(max_feature + 1)]
@@ -403,7 +408,7 @@ class SparseFeatureReader(object):
     def gen_data_instance(self, input_data, max_feature):
         params = [self.delimitor, self.data_type,
                   self.label_type,
-                  self.output_format, max_feature]
+                  self.output_format, max_feature, self.with_label]
 
         to_instance_with_param = functools.partial(self.to_instance, params)
         data_instance = input_data.mapValues(to_instance_with_param)
@@ -417,29 +422,45 @@ class SparseFeatureReader(object):
         label_type = param_list[2]
         output_format = param_list[3]
         max_fid = param_list[4]
+        with_label = param_list[5]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
 
-        cols = value.split(delimitor, -1)
+        cols = value.strip().split(delimitor, -1)
 
-        label = cols[0]
-        if label_type == 'int':
-            label = int(label)
-        elif label_type in ["float", "float64"]:
-            label = float(label)
+        if with_label:
+            label = cols[0]
+            if label_type == 'int':
+                label = int(label)
+            elif label_type in ["float", "float64"]:
+                label = float(label)
+        else:
+            label = None
 
         fid_value = []
-        for i in range(1, len(cols)):
-            fid, val = cols[i].split(":", -1)
+        if with_label:
+            for i in range(1, len(cols)):
+                fid, val = cols[i].split(":", -1)
 
-            fid = int(fid)
-            if data_type in ["float", "float64"]:
-                val = float(val)
-            elif data_type in ["int", "int64"]:
-                val = int(val)
+                fid = int(fid)
+                if data_type in ["float", "float64"]:
+                    val = float(val)
+                elif data_type in ["int", "int64"]:
+                    val = int(val)
 
-            fid_value.append((fid, val))
+                fid_value.append((fid, val))
+        else:
+            for i in range(0, len(cols)):
+                fid, val = cols[i].split(":", -1)
+
+                fid = int(fid)
+                if data_type in ["float", "float64"]:
+                    val = float(val)
+                elif data_type in ["int", "int64"]:
+                    val = int(val)
+
+                fid_value.append((fid, val))
 
         if output_format == "dense":
             features = [0 for i in range(max_fid + 1)]
