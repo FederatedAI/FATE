@@ -6,10 +6,13 @@ FROM ${PREFIX}/base-image:${BASE_TAG}
 WORKDIR /data/projects/fate/python
 
 COPY  fate_flow ./fate_flow
-COPY  arch ./arch
+COPY  arch/api ./arch/api
+COPY  arch/conf ./arch/conf
+COPY  arch/core ./arch/core
+COPY  arch/proto ./arch/proto
 COPY  federatedml ./federatedml
 COPY  examples/ ./examples
-COPY  eggroll-api-*.tar.gz /data/projects/fate/python
+COPY  eggroll-api-*.tar.gz ./
 
 RUN mkdir -p eggroll/api && tar -C eggroll/api -xvf eggroll-api-*.tar.gz && \
     rm eggroll-api-*.tar.gz
