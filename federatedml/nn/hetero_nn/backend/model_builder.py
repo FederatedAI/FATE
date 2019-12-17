@@ -15,8 +15,8 @@
 #
 
 
-from federatedml.nn.hetero_nn.backend.tf_keras.hetero_nn_model import HeteroNNKerasGuestModel
-from federatedml.nn.hetero_nn.backend.tf_keras.hetero_nn_model import HeteroNNKerasHostModel
+from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasGuestModel
+from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasHostModel
 
 
 def model_builder(role="guest", hetero_nn_param=None, backend="keras"):

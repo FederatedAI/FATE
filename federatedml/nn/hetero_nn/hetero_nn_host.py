@@ -43,8 +43,6 @@ class HeteroNNHost(HeteroNNBase):
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
-        # self.model = model_builder("host", self.hetero_nn_param)
-        # self.model.set_transfer_variable(self.transfer_variable)
 
     def export_model(self):
         if self.model is None:

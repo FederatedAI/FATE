@@ -35,9 +35,8 @@ LOGGER = log_utils.getLogger()
 
 class InterActiveGuestDenseLayer(object):
 
-    def __init__(self, params=None, layer_config=None, sess=None, model_builder=None):
+    def __init__(self, params=None, layer_config=None, model_builder=None):
         self.nn_define = layer_config
-        # self.layer_config = layer_config.get("config").get("layers")[0]
         self.layer_config = layer_config
 
         self.host_input_shape = None
@@ -51,7 +50,6 @@ class InterActiveGuestDenseLayer(object):
         self.transfer_variable = None
         self.learning_rate = params.interactive_layer_lr
         self.encrypted_host_dense_output = None
-        self.sess = sess
 
         self.encrypted_host_input = None
         self.guest_input = None
@@ -73,11 +71,11 @@ class InterActiveGuestDenseLayer(object):
 
     def __build_model(self, restore_stage=False):
         self.host_model = HostDenseModel()
-        self.host_model.build(self.host_input_shape, self.layer_config, self.sess, self.model_builder, restore_stage)
+        self.host_model.build(self.host_input_shape, self.layer_config, self.model_builder, restore_stage)
         self.host_model.set_learning_rate(self.learning_rate)
 
         self.guest_model = GuestDenseModel()
-        self.guest_model.build(self.guest_input_shape, self.layer_config, self.sess, self.model_builder, restore_stage)
+        self.guest_model.build(self.guest_input_shape, self.layer_config, self.model_builder, restore_stage)
         self.guest_model.set_learning_rate(self.learning_rate)
 
     def forward(self, guest_input, epoch=0, batch=0):

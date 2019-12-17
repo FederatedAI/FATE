@@ -23,15 +23,13 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroNNBottomModel(object):
-    def __init__(self, input_shape=None, sess=None, optimizer="SGD", model_builder=None, layer_config=None):
+    def __init__(self, input_shape=None, optimizer="SGD", model_builder=None, layer_config=None):
         loss = "keep_predict_loss"
-        self.sess = sess
         self._model = model_builder(input_shape=input_shape,
                                     nn_define=layer_config,
                                     optimizer=optimizer,
                                     loss=loss,
-                                    metrics=None,
-                                    sess=sess)
+                                    metrics=None)
 
         self.data_converter = None
 
@@ -58,4 +56,4 @@ class HeteroNNBottomModel(object):
         return self._model.export_model()
 
     def restore_model(self, model_bytes):
-        self._model = self._model.restore_model(model_bytes, self.sess)
+        self._model = self._model.restore_model(model_bytes)
