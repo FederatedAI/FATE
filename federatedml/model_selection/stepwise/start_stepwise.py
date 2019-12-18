@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.stepwise import Stepwise
+from federatedml.model_selection.stepwise.stepwise import Stepwise
 
 LOGGER = log_utils.getLogger()
 
@@ -28,12 +28,12 @@ def _get_stepwise_param(model):
     return model.model_param.cv_param
 
 
-def run(model, train_data, validate_data):
+def run(model, train_data, test_data):
     if not model.need_run:
         return train_data
     step_obj = Stepwise()
     stepwise_param = _get_stepwise_param(model)
-    step_obj.run(stepwise_param, train_data, validate_data, model)
+    step_obj.run(stepwise_param, train_data, test_data, model)
     LOGGER.info("Finish Stepwise run")
     return train_data
 

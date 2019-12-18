@@ -1007,7 +1007,7 @@ class IC(object):
     """
     Compute Information Criterion with a given dTable and loss
         When k = 2, result is genuine AIC;
-        when k = log(n), results is what called BIC.
+        when k = log(n), results is BIC, also called SBC, SIC, SBIC.
         Note that for linear regression, the loss is computed by MSE/2, so the absolute value of IC will be relatively small.
     """
     def compute(self, k, n, dfe, loss):

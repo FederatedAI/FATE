@@ -44,10 +44,10 @@
       ]
     },
     "host_loss_regular": {
-    "src": "host",
-    "dst": [
+      "src": "host",
+      "dst": [
         "guest"
-    ]
+      ]
     },
     "loss": {
       "src": "guest",

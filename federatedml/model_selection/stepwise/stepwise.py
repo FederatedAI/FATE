@@ -14,9 +14,17 @@
 #  limitations under the License.
 #
 
-import numpy as np
-from federatedml.util import consts
+
 from arch.api.utils import log_utils
+from federatedml.evaluation.evaluation import IC
+from federatedml.statistic import data_overview
+from federatedml.model_selection.stepwise.step import Step
+from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
+from federatedml.util import consts
+
+import itertools
+
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -28,9 +36,11 @@ class Stepwise(object):
         self.role = None
         self.forward = False
         self.backward = False
+        self.step_direction = ""
         self.best_list = []
         self.n_step = 0
-        self.has_validate = False
+        self.has_test = False
+        self.n_count = 0
 
     def _init_model(self, param):
         self.model_param = param
@@ -41,6 +51,7 @@ class Stepwise(object):
         self.p_enter = param.p_enter
         self.p_remove = param.p_remove
         self.max_step = param.max_step
+        self.score = param.score
         self._get_direction()
 
     def _get_direction(self):
@@ -55,11 +66,109 @@ class Stepwise(object):
             LOGGER.warning("Wrong stepwise direction given.")
             return
 
-    def run(self, component_parameters, train_data, validate_data, model):
+    def _get_k(self):
+        """
+        Helper function only called by Arbiter, get the penalty coefficient for AIC/BIC calculation.
+        """
+        if self.score == "aic":
+            self.k = 2
+        elif self.score == "bic":
+            self.k = np.log(self.n_count)
+        else:
+            raise ValueError("wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score))
+
+    def _get_dfe(self, host_list, guest_list):
+        if self.mode == consts.HETERO:
+            return len(host_list) + len(guest_list)
+        elif self.mode == consts.HOMO:
+            assert(len(host_list) == guest_list), "Host & Guest have receive feature lists of different lengths under HOMO mode."
+            return len(host_list)
+        else:
+            LOGGER.warn("Unknown mode {}. Must be one of 'HETERO' or 'HOMO' ".format(self.mode))
+
+    def dropone(self, host_list, guest_list):
+        host_lists, guest_lists = [], []
+        for i in range(len(host_list)):
+            #@TODO: make sure host list will only have immutable ints
+            new_host_list = list(host_list)
+            del new_host_list[i]
+            host_lists.append(new_host_list)
+            guest_lists.append(guest_list)
+        for i in range(len(host_list)):
+            new_guest_list = list(guest_list)
+            del new_guest_list[i]
+            guest_lists.append(new_guest_list)
+            host_lists.append(host_list)
+
+        return host_lists, guest_lists
+
+    def _arbiter_run(self, model):
+        transfer_variable = StepwiseTransferVariable()
+        host_data_info = transfer_variable.host_data_info
+        guest_data_info = transfer_variable.guest_data_info
+        host_feature_list = transfer_variable.host_feature_list
+        guest_feature_list = transfer_variable.guest_feature_list
+        n_host, j_host = host_data_info.get(idx=0)
+        n_guest, j_guest = guest_data_info.get(idx=0)
+        if self.mode == consts.HOMO:
+            self.n_count = n_host + n_guest
+            j = j_host
+        elif self.mode == consts.HETERO:
+            self.n_count = n_host
+            j = j_host + j_guest
+        else:
+            LOGGER.warn("Unknwon mode {} for stepwise.".format(self.mode))
+        self._get_k()
+
+        while self.n_step < self.max_step:
+            if self.backward:
+                n_model = 0
+                if self.n_step == 0 and n_model == 0:
+                    #@TODO: decide if full list should be step 0 or before
+                    host_lists = [list(range(j_host))]
+                    guest_lists = [list(range(j_guest))]
+                else:
+                    host_lists, guest_lists = self.dropone(host_list, guest_list)
+                    #@TODO: write dropone function: make H & G feature lists based on self.mode; use generator / yield
+                for i in range(len(host_list)):
+                    host_list, guest_list = host_lists[i], guest_lists[i]
+                    host_feature_list.remote(host_list, idx=0)
+                    guest_feature_list.remote(guest_list, idx=0)
+                    curr_step = Step()
+                    curr_step._set_step_info(self.n_step, n_model, self.step_direction)
+                    curr_step.run(self.model_param, None, None, model)
+                    IC_computer = IC()
+                    dfe = self._get_dfe(host_list, guest_list)
+                    if model.param.fit_intercept:
+                        dfe += 1
+                    IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+                    n_model += 1
+            if self.forward:
+                if self.n_step == 0 and n_model == 0:
+                    host_list = [0]
+                    guest_list = [0]
+
+    def run(self, component_parameters, train_data, test_data, model):
         self._init_model(component_parameters)
-        if self.role != consts.ARBITER and validate_data is not None:
-            self.has_validate = True
-        if
+        if self.forward:
+            self.step_direction = "forward"
+        if self.role == consts.ARBITER:
+            self._arbiter_run(model)
+        elif self.role == consts.HOST:
+            transfer_variable = StepwiseTransferVariable()
+            host_data_info = transfer_variable.host_data_info
+            n, j = train_data.count(), data_overview.get_features_shape(train_data)
+            host_data_info.remote((n, j), idx=0)
+        elif self.role == consts.GUEST:
+            transfer_variable = StepwiseTransferVariable()
+            guest_data_info = transfer_variable.guest_data_info
+            n, j = train_data.count(), data_overview.get_features_shape(train_data)
+            guest_data_info.remote((n, j), idx=0)
+
+        # @TODO: at each model, initialize step and call set_step_info, then step.run() to train model & predict
+        # @TODO: drop_one & add_one for each step
+        # @TODO use "map" to make new dTable
+
 
 
 

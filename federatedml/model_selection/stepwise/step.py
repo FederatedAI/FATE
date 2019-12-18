@@ -15,15 +15,24 @@
 #
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.stepwise.stepwise import Stepwise
+import copy
+
 from federatedml.util  import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class Step(Stepwise):
+class Step():
     def __init__(self):
-        super(Step, self).__init__()
+        self.feature_list = []
+        self.step_direction = ""
+        self.n_step = 0
+        self.n_model = 0
+
+    def _set_step_info(self, n_step, n_model, step_direction):
+        self.n_step = n_step
+        self.n_model = n_model
+        self.self_direction = step_direction
 
     def get_new_header(self, header, feature_list):
         """
@@ -47,15 +56,27 @@ class Step(Stepwise):
         return data_instance
 
 
-    def run(self, stepwise_param, train_data, validate_data, model):
-        #@TODO: drop_one & add_one for each step
-        #@TODO use "map" to make new dTable
-        if self.role == consts.ARBITER:
-            self._arbiter_run(stepwise_param, model)
+    def run(self, stepwise_param, train_data, test_data, original_model, feature_list):
+        if stepwise_param.role == consts.ARBITER:
+            return self._arbiter_run(original_model)
+        model = copy.deepcopy(original_model)
+        this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+        model.set_flowid(this_flowid)
+        curr_train_data = train_data.map(lambda k, v: (k, self.slice_data_instance(v, feature_list)))
+        model.fit(curr_train_data)
         return
 
-    def _arbiter_run(self, stepwise_param, model):
-        #@TODO: add calculate AIC/BIC here, return calculate value
+    def _arbiter_run(self, original_model):
+        model = copy.deepcopy(original_model)
+        this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+        model.set_flowid(this_flowid)
+        model.fit(None)
+        if original_model.model_param.early_stop != 'loss':
+            raise ValueError("Stepwise only accepts 'loss' as early stop criteria.")
+        #@TODO: (in future) use valdiaton data for calcualtion if needed
+        # get final loss from loss history for criteria calculation
+        loss = model.loss_history[-1]
+        return loss
 
 
 
