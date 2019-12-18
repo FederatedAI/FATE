@@ -80,7 +80,7 @@ class Submitter(object):
             f.flush()
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path= os.path.join(self._fate_home,"../init_env.sh")
+                env_path = os.path.join(self._fate_home, "../init_env.sh")
                 print(scp_out)
                 upload_cmd = " && ".join([f"source {env_path}"
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
@@ -90,21 +90,29 @@ class Submitter(object):
             else:
                 self.submit(["-f", "upload", "-c", f.name])
 
-
     def delete_table(self, namespace, name):
         pass
 
-    def run_upload(self, upload_path, remote_host=None):
-        data = open(upload_path)
-        res = json.loads(data.read())
+    def run_upload(self, data_path, config, remote_host=None):
+        conf = dict(
+            file=data_path,
+            head=config["head"],
+            partition=config["partition"],
+            work_mode=self._work_mode,
+            table_name=config["table_name"],
+            namespace=config["namespace"]
+        )
         with tempfile.NamedTemporaryFile("w") as f:
-            json.dump(res, f)
+            json.dump(conf, f)
             f.flush()
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path= os.path.join(self._fate_home,"../init_env.sh")
-                print(scp_out)
-                upload_cmd = " && ".join([f"source {env_path}"
+                env_path = os.path.join(self._fate_home, "../init_env.sh")
+                # print(scp_out)
+                print(env_path)
+                print(f.name)
+                print(self._flow_client_path)
+                upload_cmd = " && ".join([f"source {env_path}",
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
                 upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
@@ -118,13 +126,36 @@ class Submitter(object):
             json.dump(conf, f)
             f.flush()
             stdout = self.submit(["-f", "submit_job", "-c", f.name, "-d", dsl_path])
+        result = {}
+        result['jobId'] = stdout["jobId"]
+        result['model_info'] = stdout["data"]["model_info"]
+        return result
+
+    def submit_pre_job(self, conf_temperate_path, model_info, **substitutes):
+        conf = self.model_render(conf_temperate_path, model_info, **substitutes)
+        with tempfile.NamedTemporaryFile("w") as f:
+            json.dump(conf, f)
+            f.flush()
+            stdout = self.submit(["-f", "submit_job", "-c", f.name])
         return stdout["jobId"]
+
+    def fix_config(self, file_path, **substitutes):
+        pass
 
     def render(self, conf_temperate_path, **substitutes):
         temp = open(conf_temperate_path).read()
         substituted = Template(temp).substitute(**substitutes)
         d = json.loads(substituted)
         d['job_parameters']['work_mode'] = self._work_mode
+        return d
+
+    def model_render(self, conf_temperate_path, model_info, **substitutes):
+        temp = open(conf_temperate_path).read()
+        substituted = Template(temp).substitute(**substitutes)
+        d = json.loads(substituted)
+        d['job_parameters']['work_mode'] = self._work_mode
+        d['job_parameters']['model_id'] = model_info['model_id']
+        d['job_parameters']['model_version'] = model_info['model_version']
         return d
 
     def await_finish(self, job_id, timeout=sys.maxsize, check_interval=10):

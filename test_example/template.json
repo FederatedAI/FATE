@@ -1,0 +1,43 @@
+{
+  "env": {
+    "role": {
+        "guest": [10000],
+        "host": [9999],
+        "arbiter": [10000]
+    },
+    "ip_map": {
+        "9999": "172.16.153.134",
+        "10000": -1
+    }
+  },
+  "tasks": {
+    "lr": {
+      "data": [
+        {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_b",
+          "namespace": "hetero_breast_guest",
+          "role": "guest_0"
+        },
+        {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_0"
+        }
+      ],
+      "conf": "../predicttask/conf.json",
+      "dsl": "../predicttask/dsl.json",
+      "type": "train"
+    },
+    "lr-predict": {
+      "conf": "../predicttask/predict.json",
+      "task": "lr",
+      "type": "predict"
+    }
+  }
+}
