@@ -23,13 +23,13 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class SecureAddExampleTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.guest_share = Variable(name='SecureAddExampleTransferVariable.guest_share', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.host_share = Variable(name='SecureAddExampleTransferVariable.host_share', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.host_sum = Variable(name='SecureAddExampleTransferVariable.host_sum', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        pass
+class SecureAddExampleTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.guest_share = self._create_variable(name='guest_share')
+        self.host_share = self._create_variable(name='host_share')
+        self.host_sum = self._create_variable(name='host_sum')

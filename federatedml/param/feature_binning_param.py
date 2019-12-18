@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,8 +15,13 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
+
+from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 class TransformParam(BaseParam):
@@ -32,21 +34,29 @@ class TransformParam(BaseParam):
         Specify which columns need to be transform. If column index is None, None of columns will be transformed.
         If it is -1, it will use same columns as cols in binning module.
 
-    transform_type: str, 'bin_num'or None default: None
-        Specify which value these columns going to replace. If it is set as None, nothing will be replaced.
+    transform_names: list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
+
+    transform_type: str, 'bin_num'or 'woe' or None default: 'bin_num'
+        Specify which value these columns going to replace.
+         1. bin_num: Transfer original feature value to bin index in which this value belongs to.
+         2. woe: This is valid for guest party only. It will replace original value to its woe value
+         3. None: nothing will be replaced.
     """
 
-    def __init__(self, transform_cols=-1, transform_type="bin_num"):
+    def __init__(self, transform_cols=-1, transform_names=None, transform_type="bin_num"):
         super(TransformParam, self).__init__()
         self.transform_cols = transform_cols
+        self.transform_names = transform_names
         self.transform_type = transform_type
 
     def check(self):
         descr = "Transform Param's "
         if self.transform_cols is not None and self.transform_cols != -1:
             self.check_defined_type(self.transform_cols, descr, ['list'])
-        self.check_defined_type(self.transform_type, descr, ['bin_num', None])
+        self.check_defined_type(self.transform_names, descr, ['list', "NoneType"])
+        self.check_valid_value(self.transform_type, descr, ['bin_num', 'woe', None])
 
 
 class FeatureBinningParam(BaseParam):
@@ -74,13 +84,26 @@ class FeatureBinningParam(BaseParam):
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
 
-    cols : list of int or int, default: -1
-        Specify which columns need to calculated. -1 represent for all columns. If you need to indicate specific
+    bin_indexes : list of int or int, default: -1
+        Specify which columns need to be binned. -1 represent for all columns. If you need to indicate specific
         cols, provide a list of header index instead of -1.
+
+    bin_names : list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
-        a bin.
+        a bin. Please note that this parameter will NOT take effect for setting in host.
+
+    category_indexes : list of int or int, default: []
+        Specify which columns are category features. -1 represent for all columns. List of int indicate a set of
+        such features. For category features, bin_obj will take its original values as split_points and treat them
+        as have been binned. If this is not what you expect, please do NOT put it into this parameters.
+
+        The number of categories should not exceed bin_num set above.
+
+    category_names : list of string, default: []
+        Use column names to specify category features. Each element in the list represent for a column name in header.
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
@@ -97,9 +120,9 @@ class FeatureBinningParam(BaseParam):
                  compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
-                 bin_num=consts.G_BIN_NUM, cols=-1, adjustment_factor=0.5,
+                 bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(),
-                 local_only=False,
+                 local_only=False, category_indexes=None, category_names=None,
                  need_run=True):
         super(FeatureBinningParam, self).__init__()
         self.method = method
@@ -108,7 +131,10 @@ class FeatureBinningParam(BaseParam):
         self.error = error
         self.adjustment_factor = adjustment_factor
         self.bin_num = bin_num
-        self.cols = cols
+        self.bin_indexes = bin_indexes
+        self.bin_names = bin_names
+        self.category_indexes = category_indexes
+        self.category_names = category_names
         self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
         self.need_run = need_run
@@ -122,6 +148,9 @@ class FeatureBinningParam(BaseParam):
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)
         self.check_positive_integer(self.bin_num, descr)
-        self.check_defined_type(self.cols, descr, ['list', 'int', 'RepeatedScalarContainer'])
+        self.check_defined_type(self.bin_indexes, descr, ['list', 'int', 'RepeatedScalarContainer', "NoneType"])
+        self.check_defined_type(self.bin_names, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
+        self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
-
+        self.transform_param.check()

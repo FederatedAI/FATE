@@ -161,9 +161,6 @@ class BoostingTree(ModelBase):
     def predict_proba(self, data_inst):
         pass
 
-    def load_model(self):
-        pass
-
     def save_data(self):
         return self.data_output
 

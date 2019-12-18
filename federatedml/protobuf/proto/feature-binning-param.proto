@@ -40,11 +40,13 @@ message IVParam {
 
 message FeatureBinningResult {
     map<string, IVParam> binning_result = 1;
+    string role = 2;
+    string party_id = 3;
 }
 
 
 message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
-    map<string, FeatureBinningResult> host_results = 2;
+    repeated FeatureBinningResult host_results = 2;
     repeated string header = 3;
 }
