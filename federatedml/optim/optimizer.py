@@ -257,3 +257,60 @@ def optimizer_factory(param):
         return _AdaGradOptimizer(*init_params)
     else:
         raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
+
+
+def optimizer_factory_w(param):
+    try:
+        optimizer_type = param.optimizer
+        learning_rate = param.learning_rate
+        alpha = param.alpha_w
+        penalty = param.penalty
+        decay = param.decay
+        decay_sqrt = param.decay_sqrt
+        init_params = [learning_rate, alpha, penalty, decay, decay_sqrt]
+    except AttributeError:
+        raise AttributeError("Optimizer parameters has not been totally set")
+
+    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {},"
+                 "decay: {}, decay_sqrt: {}".format(optimizer_type, *init_params))
+
+    if optimizer_type == 'sgd':
+        return _SgdOptimizer(*init_params)
+    elif optimizer_type == 'nesterov_momentum_sgd':
+        return _NesterovMomentumSGDOpimizer(*init_params)
+    elif optimizer_type == 'rmsprop':
+        return _RMSPropOptimizer(*init_params)
+    elif optimizer_type == 'adam':
+        return _AdamOptimizer(*init_params)
+    elif optimizer_type == 'adagrad':
+        return _AdaGradOptimizer(*init_params)
+    else:
+        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
+
+def optimizer_factory_v(param):
+    try:
+        optimizer_type = param.optimizer
+        learning_rate = param.learning_rate
+        alpha = param.alpha_v
+        penalty = param.penalty
+        decay = param.decay
+        decay_sqrt = param.decay_sqrt
+        init_params = [learning_rate, alpha, penalty, decay, decay_sqrt]
+    except AttributeError:
+        raise AttributeError("Optimizer parameters has not been totally set")
+
+    LOGGER.debug("in optimizer_factory, optimizer_type: {}, learning_rate: {}, alpha: {}, penalty: {},"
+                 "decay: {}, decay_sqrt: {}".format(optimizer_type, *init_params))
+
+    if optimizer_type == 'sgd':
+        return _SgdOptimizer(*init_params)
+    elif optimizer_type == 'nesterov_momentum_sgd':
+        return _NesterovMomentumSGDOpimizer(*init_params)
+    elif optimizer_type == 'rmsprop':
+        return _RMSPropOptimizer(*init_params)
+    elif optimizer_type == 'adam':
+        return _AdamOptimizer(*init_params)
+    elif optimizer_type == 'adagrad':
+        return _AdaGradOptimizer(*init_params)
+    else:
+        raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))

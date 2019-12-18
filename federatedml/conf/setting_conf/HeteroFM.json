@@ -1,0 +1,21 @@
+{
+    "module_path":  "federatedml/linear_model/fm/hetero_fm",
+    "default_runtime_conf": "fm_param.json",
+    "param_class" : "federatedml/param/fm_param.py/HeteroFMParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_fm_guest.py/HeteroFMGuest"
+        },
+        "host":
+        {
+            "program": "hetero_fm_host.py/HeteroFMHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_fm_arbiter.py/HeteroFMArbiter"
+        }
+    }
+}
+

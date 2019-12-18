@@ -43,12 +43,19 @@ class Initializer(object):
         return inits
 
     def random_normal(self, data_shape):
-        inits = np.random.randn(data_shape)
+        if isinstance(data_shape, int):
+            inits = np.random.randn(data_shape)
+        else :
+            inits = np.random.randn(*data_shape)
         return inits
 
     def random_uniform(self, data_shape):
-        inits = np.random.rand(data_shape)
+        if isinstance(data_shape, int):
+            inits = np.random.rand(data_shape)
+        else :
+            inits = np.random.rand(*data_shape)
         return inits
+
 
     def constant(self, data_shape, const):
 

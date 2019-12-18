@@ -21,6 +21,7 @@ import numpy as np
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from arch.api.utils import log_utils
+from federatedml.feature.sparse_vector import SparseVector
 
 LOGGER = log_utils.getLogger()
 
@@ -59,6 +60,34 @@ def dot(value, w):
         res = np.dot(X, w)
 
     return res
+
+def vec_dot( x, w ):
+    new_data = 0
+    if isinstance(x, SparseVector):
+        for idx, v in x.get_all_data():
+            new_data += v * w[idx]
+    else:
+        new_data = np.dot(x, w)
+    return new_data
+
+
+def _one_dimension_add(v1, v2):
+    res = []
+    for i in range(len(v1)):
+        tmp = v1[i] + v2[i]
+        res.append(tmp)
+    return np.array(res)
+
+def add(v1, v2):
+    if np.ndim(v1) == np.ndim(v2) == 1:
+        return _one_dimension_add(v1, v2)
+
+def scalar_mul_array(v1 , v2):
+    res = []
+    for i in range(len(v2)):
+        tmp = v1 * v2[i]
+        res.append(tmp)
+    return np.array(res)
 
 
 def reduce_add(x, y):

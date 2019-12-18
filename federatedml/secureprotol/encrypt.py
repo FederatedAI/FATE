@@ -62,6 +62,12 @@ class Encrypt(object):
     def decrypt_list(self, values):
         result = [self.decrypt(msg) for msg in values]
         return result
+    def decrypt_2d_array(self, values):
+        result = []
+        for value in values :
+            tmp = [self.decrypt(msg) for msg in value]
+            result.append(tmp)
+        return result
 
     def distribute_decrypt(self, X):
         decrypt_table = X.mapValues(lambda x: self.decrypt(x))
