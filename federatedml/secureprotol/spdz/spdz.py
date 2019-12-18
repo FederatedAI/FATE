@@ -58,7 +58,7 @@ class SPDZ(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         NamingService.set_instance(self._pre_instance)
-        self.communicator.clean()
+        # self.communicator.clean()
 
     def __reduce__(self):
         raise PermissionError("it's unsafe to transfer this")

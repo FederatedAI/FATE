@@ -21,7 +21,7 @@ from arch.api.table.table import Table
 from arch.api.transfer import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
-from federatedml.secureprotol.spdz.tensor.fixedpoint_numpy import FixedPointTensor, FixedPointEndec
+from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
 
@@ -94,7 +94,7 @@ class FixedPointTensor(TensorBase):
             cross += table_dot_mod(x_add_a, y_add_b, self.q_field)
         cross = cross % self.q_field
         cross = self.endec.truncate(cross, self.get_spdz().party_idx)
-        share = FixedPointTensor(cross, self.q_field, self.endec, target_name)
+        share = fixedpoint_numpy.FixedPointTensor(cross, self.q_field, self.endec, target_name)
         return share
 
     @classmethod
@@ -106,7 +106,7 @@ class FixedPointTensor(TensorBase):
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
             q_field = kwargs['q_field'] if 'q_field' in kwargs else spdz.q_field
-            encoder = FixedPointEndec(q_field, base, frac)
+            encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
         if isinstance(source, Table):
             source = encoder.encode(source)
             _pre = urand_tensor(spdz.q_field, source)
