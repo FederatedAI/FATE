@@ -122,6 +122,7 @@ class HeteroNNGuest(HeteroNNBase):
 
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         preds = self.model.predict(test_x)
 

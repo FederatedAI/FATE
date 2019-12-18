@@ -42,10 +42,7 @@ class InterActiveGuestDenseLayer(object):
         self.host_input_shape = None
         self.guest_input_shape = None
         self.model = None
-        self.rng_generator = random_number_generator.RandomNumberGenerator(method=params.random_param.method,
-                                                                           seed=params.random_param.seed,
-                                                                           loc=params.random_param.loc,
-                                                                           scale=params.random_param.scale)
+        self.rng_generator = random_number_generator.RandomNumberGenerator()
         self.model_builder = model_builder
         self.transfer_variable = None
         self.learning_rate = params.interactive_layer_lr
@@ -79,6 +76,7 @@ class InterActiveGuestDenseLayer(object):
         self.guest_model.set_learning_rate(self.learning_rate)
 
     def forward(self, guest_input, epoch=0, batch=0):
+        LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch))
         encrypted_host_input = HeteroNNTensor(tb_obj=self.get_host_encrypted_forward_from_host(epoch, batch))
 
         if not self.partitions:
@@ -88,6 +86,7 @@ class InterActiveGuestDenseLayer(object):
         self.guest_input = guest_input
 
         if self.guest_model is None:
+            LOGGER.info("building interactive layers' training model")
             self.host_input_shape = encrypted_host_input.shape[1]
             self.guest_input_shape = guest_input.shape[1] if guest_input is not None else 0
             self.__build_model()
@@ -106,15 +105,19 @@ class InterActiveGuestDenseLayer(object):
         self.guest_output = guest_output
         self.host_output = host_output
 
+        LOGGER.info("start to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch))
         activation_out = self.host_model.forward_activation(self.dense_output_data.to_numpy_array())
+        LOGGER.info("end to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch))
 
         return activation_out
 
     def backward(self, output_gradient, epoch, batch):
+        LOGGER.debug("interactive layer start backward propagation of epoch {} batch {}".format(epoch, batch))
         activation_backward = self.host_model.backward_activation()[0]
 
         activation_gradient = output_gradient * activation_backward
 
+        LOGGER.debug("interactive layer update guest weight of epoch {} batch {}".format(epoch, batch))
         guest_input_gradient = self.update_guest(activation_gradient)
 
         host_weight_gradient, acc_noise = self.backward_interactive(activation_gradient, epoch, batch)
@@ -149,6 +152,7 @@ class InterActiveGuestDenseLayer(object):
         return input_gradient
 
     def forward_interactive(self, encrypted_host_input, epoch, batch):
+        LOGGER.info("get encrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
         encrypted_dense_output = self.host_model.forward_dense(encrypted_host_input)
 
         self.encrypted_host_dense_output = encrypted_dense_output
@@ -160,11 +164,13 @@ class InterActiveGuestDenseLayer(object):
 
         self.send_guest_encrypted_forward_output_with_noise_to_host(encrypted_dense_output.get_obj(), epoch, batch)
 
+        LOGGER.info("get decrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
         decrypted_dense_output = self.get_guest_decrypted_forward_from_host(epoch, batch)
 
         return HeteroNNTensor(tb_obj=decrypted_dense_output) - guest_forward_noise
 
     def backward_interactive(self, activation_gradient, epoch, batch):
+        LOGGER.info("get encrypted weight gradient of epoch {} batch {}".format(epoch, batch))
         encrypted_weight_gradient = self.host_model.get_weight_gradient(activation_gradient)
 
         noise_w = self.rng_generator.generate_random_number(encrypted_weight_gradient.shape)
@@ -173,6 +179,7 @@ class InterActiveGuestDenseLayer(object):
                                                                       idx=-1,
                                                                       suffix=(epoch, batch,))
 
+        LOGGER.info("get decrypted weight graident of epoch {} batch {}".format(epoch, batch))
         decrypted_weight_gradient = self.transfer_variable.decrypted_guest_weight_gradient.get(idx=0,
                                                                                                suffix=(epoch, batch,))
 
@@ -230,10 +237,7 @@ class InteractiveHostDenseLayer(object):
         self.partitions = 1
         self.input_shape = None
         self.output_unit = None
-        self.rng_generator = random_number_generator.RandomNumberGenerator(method=param.random_param.method,
-                                                                           seed=param.random_param.seed,
-                                                                           loc=param.random_param.loc,
-                                                                           scale=param.random_param.scale)
+        self.rng_generator = random_number_generator.RandomNumberGenerator()
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
@@ -242,6 +246,7 @@ class InteractiveHostDenseLayer(object):
         self.partitions = partition
 
     def forward(self, host_input, epoch=0, batch=0):
+        LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch))
         host_input = HeteroNNTensor(ori_data=host_input, partitions=self.partitions)
         encrypted_host_input = host_input.encrypt(self.encrypter)
         self.send_host_encrypted_forward_to_guest(encrypted_host_input.get_obj(), epoch, batch)
@@ -264,6 +269,7 @@ class InteractiveHostDenseLayer(object):
     def backward(self, epoch, batch):
         encrypted_guest_weight_gradient = self.get_guest_encrypted_weight_gradient_from_guest(epoch, batch)
 
+        LOGGER.info("decrypt weight gradient of epoch {} batch {}".format(epoch, batch))
         decrypted_guest_weight_gradient = self.encrypter.recursive_decrypt(encrypted_guest_weight_gradient)
 
         noise_weight_gradient = self.rng_generator.generate_random_number((self.input_shape, self.output_unit))
@@ -272,6 +278,7 @@ class InteractiveHostDenseLayer(object):
 
         self.send_guest_decrypted_weight_gradient_to_guest(decrypted_guest_weight_gradient, epoch, batch)
 
+        LOGGER.info("encrypt acc_noise of epoch {} batch {}".format(epoch, batch))
         encrypted_acc_noise = self.encrypter.recursive_encrypt(self.acc_noise)
         self.send_encrypted_acc_noise_to_guest(encrypted_acc_noise, epoch, batch)
 

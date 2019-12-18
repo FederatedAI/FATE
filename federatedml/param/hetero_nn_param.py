@@ -53,7 +53,7 @@ class RandomParam(BaseParam):
 
 class HeteroNNParam(BaseParam):
     def __init__(self,
-                 task_type='binary',
+                 task_type='classification',
                  config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
@@ -94,6 +94,10 @@ class HeteroNNParam(BaseParam):
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
         supported_config_type = ["keras"]
+
+        if self.task_type not in ["classification", "regression"]:
+            raise  ValueError("config_type should be classification or regression")
+
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
 

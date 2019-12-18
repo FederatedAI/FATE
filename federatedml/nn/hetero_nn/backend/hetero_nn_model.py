@@ -199,6 +199,11 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
 
+    def set_partition(self, partition=1):
+        self.partition = partition
+        if self.interactive_model is not None:
+            self.interactive_model.set_partition(self.partition)
+
     def _build_bottom_model(self):
         self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
                                                 optimizer=self.optimizer,
@@ -281,6 +286,7 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         self.interactive_model = InteractiveHostDenseLayer(self.hetero_nn_param)
 
         self.interactive_model.set_transfer_variable(self.transfer_variable)
+        self.interactive_model.set_partition(self.partition)
 
     def _restore_interactive_model(self, interactive_layer_param):
         self._build_interactive_model()
@@ -288,6 +294,13 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
+
+    def set_partition(self, partition=1):
+        self.partition = partition
+        if self.interactive_model is not None:
+            self.interactive_model.set_partition(self.partition)
+
+        LOGGER.debug("set_partition, partition num is {}".format(self.partition))
 
     def get_hetero_nn_model_meta(self):
         model_meta = HeteroNNModelMeta()

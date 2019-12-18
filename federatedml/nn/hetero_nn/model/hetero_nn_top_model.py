@@ -38,6 +38,7 @@ class HeteroNNTopModel(object):
         self.data_converter = data_converter
 
     def train_and_get_backward_gradient(self, x, y):
+        LOGGER.debug("top model start to forward propagation")
         input_gradients = self._model.get_input_gradients(x, y)
 
         data = self.data_converter.convert_data(x, y)
@@ -47,6 +48,7 @@ class HeteroNNTopModel(object):
         return input_gradients[0]
 
     def predict(self, input_data):
+        LOGGER.debug("top model start to backward propagation")
         output_data = self._model.predict(input_data)
 
         return output_data

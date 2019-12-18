@@ -19,6 +19,9 @@
 import numpy as np
 
 from arch.api import session
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def to_ndarray(tensor_obj):
@@ -53,6 +56,8 @@ class HeteroNNTensor(object):
             self._ori_data = None
             self._partitions = tb_obj._partitions
             self._obj = tb_obj
+
+        LOGGER.debug("tensor's partition is {}".format(self._partitions))
 
     def __add__(self, other):
         if isinstance(other, HeteroNNTensor):

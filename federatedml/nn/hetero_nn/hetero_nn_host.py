@@ -66,6 +66,7 @@ class HeteroNNHost(HeteroNNBase):
 
     def predict(self, data_inst):
         test_x = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         self.model.predict(test_x)
 
