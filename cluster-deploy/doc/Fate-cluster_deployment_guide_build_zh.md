@@ -277,7 +277,7 @@ cd FATE/cluster-deploy/scripts
 如果需要部署所有组件，执行：
 
 ```
-bash deploy_cluster_multinode.sh build all 
+bash deploy_cluster_multinode.sh build all
 ```
 
 如果只部署部分组件：

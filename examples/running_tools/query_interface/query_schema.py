@@ -32,7 +32,9 @@ feature_idx = -1
 
 class QuerySchema(BaseTask):
 
-    def query_component_output_data(self, job_id, cpn):
+    def query_component_output_data(self, job_id, cpn, this_feature_idx=None):
+        if this_feature_idx is None:
+            this_feature_idx = feature_idx
         cmd = ['python', run_config.FATE_FLOW_PATH, "-f", "component_output_data", "-j", job_id,
                '-cpn', cpn, '-r', ROLE, '-p', str(PARTY_ID), '-o', run_config.TEMP_DATA_PATH, '-l', '10']
         stdout = self.start_task(cmd)
@@ -43,7 +45,7 @@ class QuerySchema(BaseTask):
         header = meta_json.get('header')
         result = []
         for idx, header_name in enumerate(header[1:]):
-            if feature_idx == -1 or idx in feature_idx:
+            if this_feature_idx == -1 or idx in this_feature_idx:
                 result.append((idx, header_name))
         print("Queried header is {}".format(result))
         return result
