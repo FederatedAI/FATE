@@ -11,7 +11,7 @@
       10000
     ],
     "host": [
-      10000
+      9999
     ],
     "arbiter": [
       10000
@@ -69,9 +69,9 @@
       "optimizer": "sgd",
       "tol": 1e-3,
       "alpha": 0.01,
-      "max_iter": 20,
+      "max_iter": 2,
       "early_stop": "weight_diff",
-      "batch_size": -1,
+      "batch_size": 100,
       "learning_rate": 0.15,
       "decay": 0.0,
       "decay_sqrt": false,

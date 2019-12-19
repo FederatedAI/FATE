@@ -23,15 +23,15 @@
         "data": {
           "train_data": [
             {
-              "name": "dvisits_b",
-              "namespace": "dvisits"
+              "name": "motor_mini_b",
+              "namespace": "motor_mini"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["doctorco"],
+        "label_name": ["motor_speed"],
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -39,7 +39,7 @@
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
-        "need_run": [false]
+        "need_run": [true]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -92,8 +92,8 @@
         "data": {
           "train_data": [
             {
-              "name": "dvisits_a",
-              "namespace": "dvisits"
+              "name": "motor_mini_a",
+              "namespace": "motor_mini"
             }
           ]
         }
@@ -105,7 +105,7 @@
       },
       "feature_scale_0": {
         "method": ["standard_scale"],
-        "need_run": [false]
+        "need_run": [true]
       },
       "hetero_feature_binning_0": {
         "method": ["quantile"],
@@ -159,7 +159,7 @@
       "optimizer": "rmsprop",
       "tol": 1e-3,
       "alpha": 1e2,
-      "max_iter": 20,
+      "max_iter": 2,
       "early_stop": "weight_diff",
       "decay": 0.0,
       "decay_sqrt": false,

@@ -29,7 +29,7 @@ import numpy as np
 LOGGER = log_utils.getLogger()
 
 
-class Stepwise(object):
+class HeteroStepwise(object):
 
     def __init__(self):
         self.mode = None
@@ -80,26 +80,8 @@ class Stepwise(object):
     def _get_dfe(self, host_list, guest_list):
         if self.mode == consts.HETERO:
             return len(host_list) + len(guest_list)
-        elif self.mode == consts.HOMO:
-            assert(len(host_list) == guest_list), "Host & Guest have receive feature lists of different lengths under HOMO mode."
-            return len(host_list)
         else:
             LOGGER.warn("Unknown mode {}. Must be one of 'HETERO' or 'HOMO' ".format(self.mode))
-
-    def dropone_list(self, host_list, guest_list):
-        host_lists, guest_lists = [], []
-        for i in range(len(host_list)):
-            new_host_list = list(host_list)
-            del new_host_list[i]
-            host_lists.append(new_host_list)
-            guest_lists.append(guest_list)
-        for i in range(len(host_list)):
-            new_guest_list = list(guest_list)
-            del new_guest_list[i]
-            guest_lists.append(new_guest_list)
-            host_lists.append(host_list)
-
-        return host_lists, guest_lists
 
     def drop_one(self, to_drop):
        for i in range(len(to_drop)):
@@ -120,10 +102,7 @@ class Stepwise(object):
         guest_feature_list = transfer_variable.guest_feature_list
         n_host, j_host = host_data_info.get(idx=0)
         n_guest, j_guest = guest_data_info.get(idx=0)
-        if self.mode == consts.HOMO:
-            self.n_count = n_host + n_guest
-            j = j_host
-        elif self.mode == consts.HETERO:
+        if self.mode == consts.HETERO:
             self.n_count = n_host
             j = j_host + j_guest
         else:
@@ -138,33 +117,32 @@ class Stepwise(object):
                     host_lists = [list(range(j_host))]
                     guest_lists = [list(range(j_guest))]
                 else:
-                    if self.mode == consts.HETERO:
-                        host_list, guest_list = list(range(j_host)), list(range(j_host))
-                        host_list_generator = self.drop_one(host_list)
-                        guest_list_generator = self.drop_one(guest_list)
-                        for host_list in host_list_generator:
-                            dfe = self._get_dfe(host_list, guest_list)
-                            host_feature_list.remote(host_list, idx=0)
-                            guest_feature_list.remote(guest_list, idx=0)
-                            curr_step = Step()
-                            curr_step._set_step_info(self.n_step, n_model, self.step_direction)
-                            loss = curr_step.run(self.model_param, model, None, None, [])
-                            IC_computer = IC()
-                            if model.param.fit_intercept:
-                                dfe += 1
-                            IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
-                        for guest_list in guest_list_generator:
-                            dfe = self._get_dfe(host_list, guest_list)
-                            host_feature_list.remote(host_list, idx=0)
-                            guest_feature_list.remote(guest_list, idx=0)
-                            curr_step = Step()
-                            curr_step._set_step_info(self.n_step, n_model, self.step_direction)
-                            loss = curr_step.run(self.model_param, model, None, None, [])
-                            IC_computer = IC()
-                            if model.param.fit_intercept:
-                                dfe += 1
-                            IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
-                            n_model += 1
+                    host_list, guest_list = list(range(j_host)), list(range(j_host))
+                    host_lists = self.drop_one(host_list)
+                    guest_lists = self.drop_one(guest_list)
+                    for host_list in host_lists:
+                        dfe = self._get_dfe(host_list, guest_list)
+                        host_feature_list.remote(host_list, idx=0)
+                        guest_feature_list.remote(guest_list, idx=0)
+                        curr_step = Step()
+                        curr_step._set_step_info(self.n_step, n_model, self.step_direction)
+                        loss = curr_step.run(self.model_param, model, None, None, [])
+                        IC_computer = IC()
+                        if model.param.fit_intercept:
+                            dfe += 1
+                        IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+                    for guest_list in guest_lists:
+                        dfe = self._get_dfe(host_list, guest_list)
+                        host_feature_list.remote(host_list, idx=0)
+                        guest_feature_list.remote(guest_list, idx=0)
+                        curr_step = Step()
+                        curr_step._set_step_info(self.n_step, n_model, self.step_direction)
+                        loss = curr_step.run(self.model_param, model, None, None, [])
+                        IC_computer = IC()
+                        if model.param.fit_intercept:
+                            dfe += 1
+                        IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+                        n_model += 1
             if self.forward:
                 if self.n_step == 0 and n_model == 0:
                     host_list = [0]

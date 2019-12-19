@@ -56,7 +56,7 @@ class Step():
         return data_instance
 
 
-    def run(self, stepwise_param, train_data, test_data, original_model, feature_list):
+    def run(self, stepwise_param, original_model, train_data, test_data, feature_list):
         if stepwise_param.role == consts.ARBITER:
             return self._arbiter_run(original_model)
         model = copy.deepcopy(original_model)
