@@ -35,13 +35,13 @@
   ],
   "tasks": {
     "local_baseline": {
-      "conf": "../federatedml-1.x-examples/local_baseline/test_local_baseline_job_conf.json",
-      "dsl": "../federatedml-1.x-examples/local_baseline/test_local_baseline_job_dsl.json",
+      "conf": "examples/federatedml-1.x-examples/local_baseline/test_local_baseline_job_conf.json",
+      "dsl": "examples/federatedml-1.x-examples/local_baseline/test_local_baseline_job_dsl.json",
       "type": "train"
     },
     "local_baseline-homo": {
-      "conf": "../federatedml-1.x-examples/local_baseline/test_local_baseline_homo_job_conf.json",
-      "dsl": "../federatedml-1.x-examples/local_baseline/test_local_baseline_homo_job_dsl.json",
+      "conf": "examples/federatedml-1.x-examples/local_baseline/test_local_baseline_homo_job_conf.json",
+      "dsl": "examples/federatedml-1.x-examples/local_baseline/test_local_baseline_homo_job_dsl.json",
       "type": "train"
     }
   }

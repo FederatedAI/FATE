@@ -19,13 +19,13 @@
   ],
   "tasks": {
     "union": {
-      "conf": "../federatedml-1.x-examples/union/test_union_job_conf.json",
-      "dsl": "../federatedml-1.x-examples/union/test_union_job_dsl.json",
+      "conf": "examples/federatedml-1.x-examples/union/test_union_job_conf.json",
+      "dsl": "examples/federatedml-1.x-examples/union/test_union_job_dsl.json",
       "type": "train"
     },
     "union-basic": {
-      "conf": "../federatedml-1.x-examples/union/test_union_basic_job_conf.json",
-      "dsl": "../federatedml-1.x-examples/union/test_union_basic_job_dsl.json",
+      "conf": "examples/federatedml-1.x-examples/union/test_union_basic_job_conf.json",
+      "dsl": "examples/federatedml-1.x-examples/union/test_union_basic_job_dsl.json",
       "type": "train"
     }
   }
