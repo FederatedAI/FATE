@@ -20,10 +20,10 @@ class Communicator(object):
 
     def __init__(self, local_party=None, all_parties=None):
         self._transfer_variable = SecretShareTransferVariable()
-        self._share_variable = self._transfer_variable.share
-        self._rescontruct_variable = self._transfer_variable.rescontruct.disable_auto_clean()
-        self._mul_triplets_encrypted_variable = self._transfer_variable.multiply_triplets_encrypted
-        self._mul_triplets_cross_variable = self._transfer_variable.multiply_triplets_cross
+        self._share_variable = self._transfer_variable.share.disable_auto_clean()
+        self._rescontruct_variable = self._transfer_variable.rescontruct.set_preserve_num(3)
+        self._mul_triplets_encrypted_variable = self._transfer_variable.multiply_triplets_encrypted.set_preserve_num(3)
+        self._mul_triplets_cross_variable = self._transfer_variable.multiply_triplets_cross.set_preserve_num(3)
 
         self._local_party = self._transfer_variable.local_party() if local_party is None else local_party
         self._all_parties = self._transfer_variable.all_parties() if all_parties is None else all_parties
