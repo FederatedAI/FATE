@@ -22,7 +22,7 @@ guest_id = 9999
 host_id = 10000
 arbiter_id = 10000
 
-work_mode = 0
+work_mode = 1
 
 intersect_output_name = ''
 intersect_output_namespace = ''

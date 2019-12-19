@@ -23,8 +23,8 @@ import grpc
 
 from arch.api.proto import federation_pb2, federation_pb2_grpc
 from arch.api.proto.federation_pb2 import TransferMeta, TransferDataDesc
-from arch.api.transfer import Cleaner
 from arch.api.transfer import Party, Federation
+from arch.api.transfer import Rubbish
 from arch.api.utils import eggroll_serdes
 from arch.api.utils.log_utils import getLogger
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
@@ -164,11 +164,11 @@ class FederationRuntime(Federation):
         # init object storage tables
         _fill_cache(self.all_parties, self.local_party, self._session_id)
 
-    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Cleaner:
+    def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
         if isinstance(parties, Party):
             parties = [parties]
         self._remote_side_auth(name=name, parties=parties)
-        cleaner = Cleaner()
+        rubbish = Rubbish(name, tag)
 
         # if obj is a dtable, remote it
         if isinstance(obj, _DTable):
@@ -176,10 +176,10 @@ class FederationRuntime(Federation):
             for party in parties:
                 log_msg = f"src={self.local_party}, dst={party}, name={name}, tag={tag}, session_id={self._session_id}"
                 LOGGER.debug(f"[REMOTE] sending table: {log_msg}")
-                self._send(transfer_type=federation_pb2.DTABLE, name=name, tag=tag, dst_party=party, cleaner=cleaner,
+                self._send(transfer_type=federation_pb2.DTABLE, name=name, tag=tag, dst_party=party, rubbish=rubbish,
                            table=obj)
                 LOGGER.debug(f"[REMOTE] table done: {log_msg}")
-            return cleaner
+            return rubbish
 
         # if obj is object, put it in specified dtable, then remote the dtable
         first, fragments = maybe_split_object(obj)
@@ -195,7 +195,7 @@ class FederationRuntime(Federation):
             obj_table = _cache_remote_obj_storage_table[party]
 
             # remote object or remote fragment header
-            self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=tag, dst_party=party, cleaner=cleaner,
+            self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=tag, dst_party=party, rubbish=rubbish,
                        table=obj_table, obj=first)
             if not fragments:
                 LOGGER.debug(f"[REMOTE] object done: {log_msg}")
@@ -206,17 +206,17 @@ class FederationRuntime(Federation):
                 LOGGER.debug(f"[REMOTE] sending fragment table: {log_msg}")
                 # noinspection PyUnboundLocalVariable
                 self._send(transfer_type=federation_pb2.DTABLE, name=name, tag=f"{tag}.fragments_table",
-                           dst_party=party, cleaner=cleaner, table=fragment_storage_table)
+                           dst_party=party, rubbish=rubbish, table=fragment_storage_table)
                 LOGGER.debug(f"[REMOTE] done fragment table: {log_msg}")
             # impl 2
             elif not REMOTE_FRAGMENT_OBJECT_USE_D_TABLE:
                 for fragment_index, fragment in fragments:
                     LOGGER.debug(f"[REMOTE] sending fragment({fragment_index}/{num_fragment}): {log_msg}")
                     self._send(transfer_type=federation_pb2.OBJECT, name=name, tag=_fragment_tag(tag, fragment_index),
-                               dst_party=party, cleaner=cleaner, table=obj_table, obj=fragment)
+                               dst_party=party, rubbish=rubbish, table=obj_table, obj=fragment)
                     LOGGER.debug(f"[REMOTE] done fragment({fragment_index}/{num_fragment}): {log_msg}")
 
-        return cleaner
+        return rubbish
 
     def _check_get_status_async(self, name: str, tag: str, parties: list) -> dict:
         self._get_side_auth(name=name, parties=parties)
@@ -229,45 +229,45 @@ class FederationRuntime(Federation):
         return futures
 
     def async_get(self, name: str, tag: str, parties: list) -> typing.Generator:
-        cleaner = Cleaner()
+        rubbish = Rubbish(name, tag)
         futures = self._check_get_status_async(name, tag, parties)
         for future in as_completed(futures):
             party = futures[future]
             obj, head, frags = future.result()
             if isinstance(obj, _DTable):
-                cleaner.add_table(obj)
+                rubbish.add_table(obj)
                 yield (party, obj)
             else:
                 table, key = head
-                cleaner.add_obj(table, key)
+                rubbish.add_obj(table, key)
                 if not is_split_head(obj):
                     yield (party, obj)
                 else:
                     frag_table, frag_keys = frags
-                    cleaner.add_table(frag_table)
+                    rubbish.add_table(frag_table)
                     fragments = [frag_table.get(key) for key in frag_keys]
                     yield (party, split_get(fragments))
-        yield (None, cleaner)
+        yield (None, rubbish)
 
-    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Cleaner]:
+    def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
         if isinstance(parties, Party):
             parties = [parties]
         rtn = {}
-        cleaner = None
+        rubbish = None
         for p, v in self.async_get(name, tag, parties):
             if p is not None:
                 rtn[p] = v
             else:
-                cleaner = v
-        return [rtn[p] for p in parties], cleaner
+                rubbish = v
+        return [rtn[p] for p in parties], rubbish
 
-    def _send(self, transfer_type, name: str, tag: str, dst_party: Party, cleaner: Cleaner, table: _DTable, obj=None):
+    def _send(self, transfer_type, name: str, tag: str, dst_party: Party, rubbish: Rubbish, table: _DTable, obj=None):
         tagged_key = f"{name}-{tag}"
         if transfer_type == federation_pb2.OBJECT:
             table.put(tagged_key, obj)
-            cleaner.add_obj(table, tagged_key)
+            rubbish.add_obj(table, tagged_key)
         else:
-            cleaner.add_table(table)
+            rubbish.add_table(table)
         data_desc = TransferDataDesc(transferDataType=transfer_type,
                                      storageLocator=_get_storage_locator(table),
                                      taggedVariableName=_ser_des.serialize(tagged_key))

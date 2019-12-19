@@ -509,13 +509,6 @@ class Binning(object):
 
         """
         result_sum = {}
-        # for col_name in cols_dict:
-        #     result_col_sum = []
-        #     split_point = split_points.get(col_name)
-        #     for bin_index in range(len(split_point)):
-        #         result_col_sum.append([0, 0])
-        #     result_sum[col_name] = result_col_sum  # {'x1': [[0, 0], [0, 0] ... ],...}
-
         for _, datas in data_bin_with_table:
             bin_idx_dict = datas[0]
             y_combo = datas[1]
@@ -527,9 +520,6 @@ class Binning(object):
                 col_sum = result_sum[col_name]
                 while bin_idx >= len(col_sum):
                     col_sum.append([0, 0])
-                LOGGER.debug("in add_label_in_partition, col_sum: {}, bin_idx: {}".format(
-                    col_sum, bin_idx
-                ))
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y
                 label_sum[1] = label_sum[1] + inverse_y
