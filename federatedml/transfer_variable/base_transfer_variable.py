@@ -16,16 +16,24 @@
 from typing import Union
 
 from arch.api import RuntimeInstance
-from arch.api.transfer import Party
+from arch.api.transfer import Party, Cleaner
 
 
 class Variable(object):
-    def __init__(self, name, transfer_variables):
+    def __init__(self, name: str, transfer_variables: 'BaseTransferVariables'):
         self.name = name
         self._transfer_variable = transfer_variables
-        self._get_cleaner = None
-        self._remote_cleaner = None
+        self._get_cleaner = Cleaner()
+        self._remote_cleaner = Cleaner()
         self._auto_clean = True
+        self._preserve_num = 2
+
+    def set_preserve_num(self, n):
+        self._preserve_num = n
+        return self
+
+    def get_preserve_num(self):
+        return self._preserve_num
 
     def generate_tag(self, *suffix):
         tag = self._transfer_variable.flowid
@@ -38,8 +46,8 @@ class Variable(object):
         return self
 
     def clean(self):
-        self._get_cleaner.maybe_clean()
-        self._remote_cleaner.maybe_clean()
+        self._get_cleaner.clean_all()
+        self._remote_cleaner.clean_all()
 
     @staticmethod
     def roles_to_parties(roles):
@@ -58,38 +66,31 @@ class Variable(object):
             suffix = (suffix,)
         obj = RuntimeInstance.TABLE_WRAPPER.unboxed(obj)
         tag = self.generate_tag(*suffix)
-        cleaner = RuntimeInstance.FEDERATION.remote(obj=obj,
+        rubbish = RuntimeInstance.FEDERATION.remote(obj=obj,
                                                     name=self.name,
                                                     tag=tag,
                                                     parties=parties)
-        if self._remote_cleaner:
-            if self._auto_clean:
-                self._remote_cleaner.maybe_clean(tag)
-                self._remote_cleaner = cleaner.update_tag(tag)
-            else:
-                self._remote_cleaner.extend(cleaner)
-        else:
-            self._remote_cleaner = cleaner.update_tag(tag)
+        self._remote_cleaner.push(rubbish)
+        if self._auto_clean:
+            self._remote_cleaner.keep_latest_n(self._preserve_num)
 
     def get_parties(self, parties: Union[list, Party], suffix=tuple()):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
         tag = self.generate_tag(*suffix)
 
-        if self._get_cleaner and self._auto_clean:
-            self._get_cleaner.maybe_clean(tag)
-        rtn, cleaner = RuntimeInstance.FEDERATION.get(name=self.name,
+        if self._auto_clean:
+            if self._get_cleaner.is_latest_tag(tag):
+                self._get_cleaner.keep_latest_n(self._preserve_num)
+            else:
+                self._get_cleaner.keep_latest_n(self._preserve_num - 1)
+
+        rtn, rubbish = RuntimeInstance.FEDERATION.get(name=self.name,
                                                       tag=self.generate_tag(*suffix),
                                                       parties=parties)
         rtn = [RuntimeInstance.TABLE_WRAPPER.boxed(value) for idx, value in enumerate(rtn)]
 
-        if self._get_cleaner:
-            if self._auto_clean:
-                self._get_cleaner = cleaner.update_tag(tag)
-            else:
-                self._get_cleaner.extend(cleaner)
-        else:
-            self._get_cleaner = cleaner.update_tag(tag)
+        self._get_cleaner.push(rubbish)
         return rtn
 
     def remote(self, obj, role=None, idx=-1, suffix=tuple()):
@@ -140,14 +141,21 @@ class Variable(object):
 
 
 class BaseTransferVariables(object):
+    __instance = {}
+
     def __init__(self, flowid=0):
         self.flowid = str(flowid)
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__name__ not in cls.__instance:
+            cls.__instance[cls.__name__] = object.__new__(cls)
+        return cls.__instance[cls.__name__]
 
     def set_flowid(self, flowid):
         self.flowid = flowid
 
     def _create_variable(self, name):
-        return Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self)
+        return getattr(self, name, Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self))
 
     @staticmethod
     def all_parties():

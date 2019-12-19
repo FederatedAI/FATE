@@ -55,6 +55,10 @@ class ModelBase(object):
     def need_run(self):
         return self.component_properties.need_run
 
+    @need_run.setter
+    def need_run(self, value: bool):
+        self.component_properties.need_run = value
+
     def _init_model(self, model):
         pass
 
@@ -80,7 +84,7 @@ class ModelBase(object):
                     real_param = [saved_result, params]
                 else:
                     real_param = saved_result
-                LOGGER.debug("func: {}, params: {}".format(func, real_param))
+                LOGGER.debug("func: {}".format(func))
                 this_data_output = func(*real_param)
                 saved_result = []
             else:

@@ -8,6 +8,6 @@ Local Baseline currently only supports sklearn Logistic Regression model. It sup
 
 The module receives train and, if provided, validate data as specified in job config file. The data sets must be uploaded beforehand as with other federatedml models. sklearn model parameters may be specified in dict form in job config file. Any parameter unspecified will take the default value set in sklearn.
 
-Local Baseline has the same output as matching FATE model, and so its visualization on FATE Board will have the same format. Nonetheless, note that Local Baseline is run locally, so other parties will not show respective information like Logistic Regression module.
+Local Baseline has the same output as matching FATE model, and so its visualization on FATE Board will have the same format. Nonetheless, note that Local Baseline is run locally, so other parties will not show respective information like Logistic Regression module. In addition, note that loss history is not available for Guest when running homogeneous training.
 
 For examples of using Local Baseline module, please refer [here](../../examples/federatedml-1.x-examples/local_baseline).

@@ -93,7 +93,8 @@ BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
 if BOARD_HOST == 'localhost':
     BOARD_HOST = get_lan_ip()
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
-SERVINGS = CenterConfig.get_settings(path='/servers/servings', servings_zk_path=SERVINGS_ZK_PATH)
+SERVINGS = CenterConfig.get_settings(path='/servers/servings', servings_zk_path=SERVINGS_ZK_PATH,
+                                     use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)

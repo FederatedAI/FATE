@@ -44,7 +44,7 @@ class CrossValidationParam(BaseParam):
     random_seed: int, default: 1
         Specify the random seed for numpy shuffle
 
-    need_run: bool, default True
+    need_cv: bool, default True
         Indicate if this module needed to be run
 
     """
