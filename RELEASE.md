@@ -1,3 +1,14 @@
+# Release 1.2
+## Major Features and Improvements
+>FATE-Flow
+* Job supports adding remark information
+* Unified records of data and model table related information and added data filtering and cleaning CLI
+* Support query upload history information
+* Upload/download data amount information is stored in the output model
+* Support for getting server configuration from zookeeper
+* Refactoring Push Model
+
+
 # Release 1.1.1
 ## Major Features and Improvements
 * Add cluster deployment support based on ubuntu operating system。
