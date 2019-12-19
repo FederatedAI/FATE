@@ -1,3 +1,20 @@
+# Release 1.2
+## Major Features and Improvements
+>FederatedML
+* Add heterogeneous Deep Neural Network
+* Add SQN optimizer, available for Hetero-LR and Hetero-LinearRegression
+* Add Secret-Sharing Protocol SPDZ
+* Add heterogeneous Pearson Correlation Calculation
+* Supports intersection for expanding duplicate IDs
+* Support multi-host in heterogeneous feature binning
+* Support multi-host in feature selection
+* Support using sklearn's logistic regression for effect comparison
+* Support direct IV calculation for categorical features
+* Support federated feature binning transform features to WOE value
+* Add manual filters in federated feature selection
+* Add automatic execution scripts for submitting and running tasks
+
+
 # Release 1.1.1
 ## Major Features and Improvements
 * Add cluster deployment support based on ubuntu operating system。
