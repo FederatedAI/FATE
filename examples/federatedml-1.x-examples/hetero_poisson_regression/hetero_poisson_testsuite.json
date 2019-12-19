@@ -1,0 +1,37 @@
+{
+  "data": [
+      {
+          "file": "examples/data/dvisits_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "dvisits_b",
+          "namespace": "dvisits",
+          "role": "guest_0"
+        },
+      {
+          "file": "examples/data/dvisits_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "dvisits_a",
+          "namespace": "dvisits",
+          "role": "host_0"
+        }
+  ],
+  "tasks": {
+    "poisson": {
+      "conf": "../federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_train_job_conf.json",
+      "dsl": "../federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_train_job_dsl.json",
+      "type": "train"
+    },
+    "poisson-predict": {
+      "conf": "../federatedml-1.x-examples/hetero_poisson_regression/test_predict_conf.json",
+      "task": "poisson",
+      "type": "predict"
+    },
+    "poisson-cv": {
+      "conf": "../federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_cv_job_conf.json",
+      "dsl": "../federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_cv_job_dsl.json",
+      "type": "train"
+    }
+  }
+}
