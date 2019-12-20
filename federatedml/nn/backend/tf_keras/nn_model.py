@@ -21,8 +21,8 @@ import zipfile
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.backend import gradients
-from tensorflow.python.keras.backend import set_session
+from tensorflow.keras.backend import gradients
+from tensorflow.keras.backend import set_session
 
 from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
@@ -184,13 +184,13 @@ class KerasNNModel(NNModel):
 
     def export_model(self):
         with tempfile.TemporaryDirectory() as tmp_path:
-            try:
-                tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
-            except NotImplementedError:
-                import warnings
-                warnings.warn('Saving the model as SavedModel is still in experimental stages. '
-                              'trying tf.keras.experimental.export_saved_model...')
-                tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
+            # try:
+            #     tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
+            # except NotImplementedError:
+            #     import warnings
+            #     warnings.warn('Saving the model as SavedModel is still in experimental stages. '
+            #                   'trying tf.keras.experimental.export_saved_model...')
+            tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
 
             model_bytes = _zip_dir_as_bytes(tmp_path)
 
@@ -205,13 +205,13 @@ class KerasNNModel(NNModel):
                 with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as f:
                     f.extractall(tmp_path)
 
-            try:
-                model = tf.keras.models.load_model(filepath=tmp_path)
-            except IOError:
-                import warnings
-                warnings.warn('loading the model as SavedModel is still in experimental stages. '
-                              'trying tf.keras.experimental.load_from_saved_model...')
-                model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
+            # try:
+            #     model = tf.keras.models.load_model(filepath=tmp_path)
+            # except IOError:
+            #     import warnings
+            #     warnings.warn('loading the model as SavedModel is still in experimental stages. '
+            #                   'trying tf.keras.experimental.load_from_saved_model...')
+            model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
 
         return KerasNNModel(sess, model)
 
