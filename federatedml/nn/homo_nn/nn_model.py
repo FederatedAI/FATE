@@ -57,16 +57,16 @@ class DataConverter(object):
 
 
 def get_data_converter(config_type) -> DataConverter:
-    from federatedml.nn.homo_nn.backend.tf_keras.nn_model import KerasSequenceDataConverter
+    from federatedml.nn.backend.tf_keras.nn_model import KerasSequenceDataConverter
     return KerasSequenceDataConverter()
 
 
 def get_nn_builder(config_type):
     if config_type == "nn":
-        from federatedml.nn.homo_nn.zoo.nn import build_nn_model
+        from federatedml.nn.zoo.nn import build_nn_model
         return build_nn_model
     elif config_type == "keras":
-        from federatedml.nn.homo_nn.backend.tf_keras.nn_model import build_keras
+        from federatedml.nn.backend.tf_keras.nn_model import build_keras
         return build_keras
     else:
         raise ValueError(f"{config_type} is not supported")
@@ -74,5 +74,5 @@ def get_nn_builder(config_type):
 
 def restore_nn_model(config_type, model_bytes):
     if config_type:
-        from federatedml.nn.homo_nn.zoo.nn import restore_nn_model
+        from federatedml.nn.zoo import restore_nn_model
         return restore_nn_model(model_bytes)

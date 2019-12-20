@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 
-from federatedml.nn.homo_nn.backend.tf.nn_model import TFNNModel
+from federatedml.nn.backend import TFNNModel
 
 optimizer = tf.train.AdamOptimizer(1e-4)
 

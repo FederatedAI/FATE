@@ -23,11 +23,12 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.nn.hetero_nn.backend.ops import HeteroNNTensor
-from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import GuestDenseModel
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import HostDenseModel
+from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import InteractiveLayerParam
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -232,7 +233,10 @@ class InteractiveHostDenseLayer(object):
     def __init__(self, param):
         self.acc_noise = None
         self.learning_rate = param.interactive_layer_lr
+        self.encrypted_mode_calculator_param = param.encrypted_model_calculator_param
         self.encrypter = self.generate_encrypter(param)
+        self.train_encrypted_calculator = []
+        self.predict_encrypted_calculator = []
         self.transfer_variable = None
         self.partitions = 1
         self.input_shape = None
@@ -242,13 +246,23 @@ class InteractiveHostDenseLayer(object):
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
 
+    def generated_encrypted_calculator(self):
+        encrypted_calculator = EncryptModeCalculator(self.encrypter,
+                                                     self.encrypted_mode_calculator_param.mode,
+                                                     self.encrypted_mode_calculator_param.re_encrypted_rate)
+
+        return encrypted_calculator
+
     def set_partition(self, partition):
         self.partitions = partition
 
     def forward(self, host_input, epoch=0, batch=0):
+        if batch >= len(self.train_encrypted_calculator):
+            self.train_encrypted_calculator.append(self.generated_encrypted_calculator())
+
         LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch))
         host_input = HeteroNNTensor(ori_data=host_input, partitions=self.partitions)
-        encrypted_host_input = host_input.encrypt(self.encrypter)
+        encrypted_host_input = host_input.encrypt(self.train_encrypted_calculator[batch])
         self.send_host_encrypted_forward_to_guest(encrypted_host_input.get_obj(), epoch, batch)
 
         encrypted_guest_forward = HeteroNNTensor(tb_obj=self.get_guest_encrypted_forwrad_from_guest(epoch, batch))

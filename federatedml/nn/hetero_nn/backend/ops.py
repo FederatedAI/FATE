@@ -154,7 +154,8 @@ class HeteroNNTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.recursive_encrypt(val)))
+        return HeteroNNTensor(tb_obj=encrypt_tool.encrypt(self._obj))
+        # return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.encrypt(val)))
 
     def decrypt(self, decrypt_tool):
         return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))

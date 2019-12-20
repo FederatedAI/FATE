@@ -235,7 +235,7 @@ class HeteroNNGuest(HeteroNNBase):
             for batch_y in self.data_y:
                 new_batch_y = np.zeros((batch_y.shape[0], 1))
                 for idx in range(new_batch_y.shape[0]):
-                    new_batch_y[idx][0] = batch_y[idx]
+                    new_batch_y[idx] = batch_y[idx]
 
                 transform_y.append(new_batch_y)
 
@@ -245,7 +245,7 @@ class HeteroNNGuest(HeteroNNBase):
         for batch_y in self.data_y:
             new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
             for idx in range(new_batch_y.shape[0]):
-                y = new_batch_y[idx]
+                y = batch_y[idx]
                 new_batch_y[idx][y] = 1
 
             transform_y.append(new_batch_y)
