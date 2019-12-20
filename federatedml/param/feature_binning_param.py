@@ -56,6 +56,10 @@ class TransformParam(BaseParam):
         if self.transform_cols is not None and self.transform_cols != -1:
             self.check_defined_type(self.transform_cols, descr, ['list'])
         self.check_defined_type(self.transform_names, descr, ['list', "NoneType"])
+        if self.transform_names is not None:
+            for name in self.transform_names:
+                if not isinstance(name, str):
+                    raise ValueError("Elements in transform_names should be string type")
         self.check_valid_value(self.transform_type, descr, ['bin_num', 'woe', None])
 
 
