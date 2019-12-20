@@ -46,9 +46,14 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         Define (0.25 * wx - 0.5 * y) as fore_gradient
 
         """
+        one_data = data_instances.first()[1]
+        dot_result = np.dot(one_data.features, model_weights.coef_) + model_weights.intercept_
+        LOGGER.debug("one_data: {}, dot_result: {} coef_: {}, intercept_: {}"
+                     "".format(one_data.features, dot_result, model_weights.coef_, model_weights.intercept_))
         half_wx = data_instances.mapValues(
             lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = half_wx
+        LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
 
         for host_forward in self.host_forwards:
