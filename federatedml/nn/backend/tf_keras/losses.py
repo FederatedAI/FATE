@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,17 +17,15 @@
 #  limitations under the License.
 #
 
+from tensorflow.keras.losses import *
+from tensorflow.python.keras import backend as K
+from tensorflow.python.framework import ops
+from tensorflow.python.util.tf_export import keras_export
 
-from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasGuestModel
-from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasHostModel
 
+@keras_export('keras.losses.keep_predict_loss')
+def keep_predict_loss(y_true, y_pred):
+    y_pred = ops.convert_to_tensor(y_pred)
+    return K.sum(y_true * y_pred)
 
-def model_builder(role="guest", hetero_nn_param=None, backend="keras"):
-    if backend != "keras":
-        raise ValueError("Only support keras backend in this version!")
-
-    if role == "guest":
-        return HeteroNNKerasGuestModel(hetero_nn_param)
-    elif role == "host":
-        return HeteroNNKerasHostModel(hetero_nn_param)
 

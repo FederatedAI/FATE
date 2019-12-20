@@ -20,7 +20,7 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
-from federatedml.secureprotol.spdz.tensor.table_fix_point import TableTensor, table_dot
+from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor, table_dot
 
 MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
@@ -91,9 +91,9 @@ class Pearson(ModelBase):
         with SPDZ("pearson") as spdz:
             source = [normed, self._other_party]
             if self._local_party.role == "guest":
-                x, y = TableTensor.from_source("x", source[0]), TableTensor.from_source("y", source[1])
+                x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
             else:
-                y, x = TableTensor.from_source("y", source[0]), TableTensor.from_source("x", source[1])
+                y, x = FixedPointTensor.from_source("y", source[0]), FixedPointTensor.from_source("x", source[1])
             m1 = len(x.value.first()[1])
             m2 = len(y.value.first()[1])
             self.shapes.append(m1)

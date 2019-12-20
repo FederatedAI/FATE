@@ -43,8 +43,6 @@ class HeteroNNHost(HeteroNNBase):
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
-        # self.model = model_builder("host", self.hetero_nn_param)
-        # self.model.set_transfer_variable(self.transfer_variable)
 
     def export_model(self):
         if self.model is None:
@@ -68,6 +66,7 @@ class HeteroNNHost(HeteroNNBase):
 
     def predict(self, data_inst):
         test_x = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         self.model.predict(test_x)
 

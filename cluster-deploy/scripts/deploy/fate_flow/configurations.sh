@@ -1,8 +1,6 @@
 #!/bin/bash
 #fate_flow
 
-version=
-fateflow_version=
 source_code_dir=
 output_packages_dir=
 deploy_dir=

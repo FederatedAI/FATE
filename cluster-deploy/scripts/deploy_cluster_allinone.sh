@@ -189,8 +189,6 @@ config_redis() {
 
 packaging_fate_flow() {
     cp configurations.sh configurations.sh.tmp
-    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
-    sed -i.bak "s#fateflow_version=.*#fateflow_version=${fateflow_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp

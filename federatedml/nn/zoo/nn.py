@@ -16,15 +16,14 @@
 
 from tensorflow.keras import Sequential
 
-from federatedml.nn.homo_nn.backend.tf_keras.layers import get_builder, has_builder
-from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
+from federatedml.nn.backend.tf_keras.layers import get_builder, has_builder
+from federatedml.nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
     restore_keras_nn_model
 
 
 def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
                    is_supported_layer=has_builder,
-                   default_layer=None,
-                   sess=None) -> KerasNNModel:
+                   default_layer=None) -> KerasNNModel:
     model = Sequential()
     is_first_layer = True
     for layer_config in nn_define:

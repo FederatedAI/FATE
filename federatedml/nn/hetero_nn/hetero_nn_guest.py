@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import numpy as np
-
-from arch.api import session
-from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
-from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.nn.hetero_nn.backend.model_builder import model_builder
-from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -25,6 +16,15 @@ from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
+
+from arch.api import session
+from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.framework.hetero.procedure import batch_generator
+from federatedml.nn.hetero_nn.backend.model_builder import model_builder
+from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
@@ -59,8 +59,6 @@ class HeteroNNGuest(HeteroNNBase):
 
         self.task_type = hetero_nn_param.task_type
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
-        # self.model = model_builder("guest", self.hetero_nn_param)
-        # self.model.set_transfer_variable(self.transfer_variable)
 
     def _build_model(self):
         self.model = model_builder("guest", self.hetero_nn_param)
@@ -124,6 +122,7 @@ class HeteroNNGuest(HeteroNNBase):
 
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         preds = self.model.predict(test_x)
 
@@ -236,7 +235,7 @@ class HeteroNNGuest(HeteroNNBase):
             for batch_y in self.data_y:
                 new_batch_y = np.zeros((batch_y.shape[0], 1))
                 for idx in range(new_batch_y.shape[0]):
-                    new_batch_y[idx][0] = batch_y[idx]
+                    new_batch_y[idx] = batch_y[idx]
 
                 transform_y.append(new_batch_y)
 
@@ -246,7 +245,7 @@ class HeteroNNGuest(HeteroNNBase):
         for batch_y in self.data_y:
             new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
             for idx in range(new_batch_y.shape[0]):
-                y = new_batch_y[idx]
+                y = batch_y[idx]
                 new_batch_y[idx][y] = 1
 
             transform_y.append(new_batch_y)
