@@ -56,7 +56,7 @@ class HeteroPearson(ModelBase):
         selected = set()
         for name in self.model_param.column_names:
             if name in name_to_idx:
-                selected.add([name_to_idx[name]])
+                selected.add(name_to_idx[name])
                 continue
             raise ValueError(f"{name} not found")
         for idx in self.model_param.column_indexes:
