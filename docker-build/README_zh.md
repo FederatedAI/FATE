@@ -26,8 +26,8 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 用户在开始构建镜像之前需要配置“.env”，通过该文件，镜像在构建完毕后会被打上相应的标签以后续使用，例子如下：
 ```
   PREFIX=federatedai
-  BASE_TAG=1.1-release
-  TAG=1.1-release
+  BASE_TAG=1.2-release
+  TAG=1.2-release
 
   # PREFIX: 用于要推送的镜像仓库(Registry)以及其命名空间
   # BASE_TAG: 基础镜像的标签
@@ -47,14 +47,14 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 一个输出的例子如下：
 ```
   REPOSITORY                            TAG
-  federatedai/egg                       1.1-release
-  federatedai/fateboard                 1.1-release
-  federatedai/meta-service              1.1-release
-  federatedai/python                    1.1-release
-  federatedai/roll                      1.1-release
-  federatedai/proxy                     1.1-release
-  federatedai/federation                1.1-release
-  federatedai/base-image                1.1-release
+  federatedai/egg                       1.2-release
+  federatedai/fateboard                 1.2-release
+  federatedai/meta-service              1.2-release
+  federatedai/python                    1.2-release
+  federatedai/roll                      1.2-release
+  federatedai/proxy                     1.2-release
+  federatedai/federation                1.2-release
+  federatedai/base-image                1.2-release
 ```
 
 ## 把镜像推送到镜像仓库（可选）
