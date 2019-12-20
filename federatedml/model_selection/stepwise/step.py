@@ -29,7 +29,7 @@ class Step():
         self.n_step = 0
         self.n_model = 0
 
-    def _set_step_info(self, n_step, n_model, step_direction):
+    def _set_step_info(self, step_direction, n_step, n_model):
         self.n_step = n_step
         self.n_model = n_model
         self.self_direction = step_direction
@@ -39,7 +39,7 @@ class Step():
         Make new header, called by Host or Guest
         :param header: old header
         :param feature_list: list of feature indices to be included in model
-        :return: a new header with desired features
+        :return: a new header with de sired features
         """
         new_header = [header[i] for i in range(len(header)) if i in feature_list]
         return new_header

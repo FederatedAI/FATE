@@ -147,7 +147,7 @@ class Stepwise(object):
                             host_feature_list.remote(host_list, idx=0)
                             guest_feature_list.remote(guest_list, idx=0)
                             curr_step = Step()
-                            curr_step._set_step_info(self.n_step, n_model, self.step_direction)
+                            curr_step._set_step_info(self.step_direction, self.n_step, n_model)
                             loss = curr_step.run(self.model_param, model, None, None, [])
                             IC_computer = IC()
                             if model.param.fit_intercept:
@@ -158,7 +158,7 @@ class Stepwise(object):
                             host_feature_list.remote(host_list, idx=0)
                             guest_feature_list.remote(guest_list, idx=0)
                             curr_step = Step()
-                            curr_step._set_step_info(self.n_step, n_model, self.step_direction)
+                            curr_step._set_step_info(self.step_direction, self.n_step, n_model)
                             loss = curr_step.run(self.model_param, model, None, None, [])
                             IC_computer = IC()
                             if model.param.fit_intercept:
