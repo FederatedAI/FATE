@@ -21,12 +21,10 @@ import zipfile
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.backend import gradients
-from tensorflow.python.keras.backend import set_session
+from tensorflow.keras.backend import set_session
 
 from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
-from federatedml.nn.hetero_nn.backend.tf_keras import losses
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
 
 Logger = log_utils.getLogger()
@@ -50,9 +48,8 @@ def _zip_dir_as_bytes(path):
 
 def _compile_model(model, loss, optimizer, metrics):
     optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(**optimizer.kwargs)
-    # losses = getattr(tf.keras.losses, loss)
-    loss_fn = getattr(losses, loss)
-    model.compile(loss=loss_fn,
+    losses = getattr(tf.keras.losses, loss)
+    model.compile(loss=losses,
                   optimizer=optimizer_instance,
                   metrics=metrics)
     return model
@@ -69,39 +66,11 @@ def _load_model(nn_struct_json):
     return tf.keras.models.model_from_json(nn_struct_json, custom_objects={})
 
 
-def _modify_model_input_shape(nn_struct, input_shape):
-    import json
-    import copy
-
-    if not input_shape:
-        return json.dumps(nn_struct)
-
-    if isinstance(input_shape, int):
-        input_shape = [input_shape]
-    else:
-        input_shape = list(input_shape)
-
-    struct = copy.deepcopy(nn_struct)
-    if not struct.get("config") or not struct["config"].get("layers") or not struct["config"]["layers"][
-        0].get("config"):
-        return json.dumps(struct)
-
-    if struct["config"]["layers"][0].get("config"):
-        struct["config"]["layers"][0]["config"] ["batch_input_shape"] = [None] + input_shape
-
-        return json.dumps(struct)
-    else:
-        return json.dump(struct)
-
-
 def build_keras(nn_define, loss, optimizer, metrics, **kwargs):
-    nn_define_json = _modify_model_input_shape(nn_define, kwargs.get("input_shape", None))
+    import json
+    nn_define_json = json.dumps(nn_define)
 
-    if "sess" in kwargs:
-        sess = kwargs.get("sess")
-    else:
-        sess = _init_session()
-
+    sess = _init_session()
     model = _load_model(nn_struct_json=nn_define_json)
     model = _compile_model(model=model,
                            loss=loss,
@@ -110,10 +79,8 @@ def build_keras(nn_define, loss, optimizer, metrics, **kwargs):
     return KerasNNModel(sess, model)
 
 
-def from_keras_sequential_model(model, loss, optimizer, metrics, sess=None):
-    if not sess:
-        sess = _init_session()
-
+def from_keras_sequential_model(model, loss, optimizer, metrics):
+    sess = _init_session()
     model = _compile_model(model=model,
                            loss=loss,
                            optimizer=optimizer,
@@ -121,16 +88,15 @@ def from_keras_sequential_model(model, loss, optimizer, metrics, sess=None):
     return KerasNNModel(sess, model)
 
 
-def restore_keras_nn_model(model_bytes, sess=None):
-    return KerasNNModel.restore_model(model_bytes, sess=sess)
+def restore_keras_nn_model(model_bytes):
+    return KerasNNModel.restore_model(model_bytes)
 
 
 class KerasNNModel(NNModel):
     def __init__(self, sess, model):
-        self._sess: tf.Session = sess
-        self._model: tf.keras.Sequential = model
+        self._sess = sess
+        self._model = model
         self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
-        self._initialize_all_variables = False
 
     @staticmethod
     def _trim_device_str(name):
@@ -142,26 +108,6 @@ class KerasNNModel(NNModel):
     def set_model_weights(self, weights: Weights):
         unboxed = weights.unboxed
         self._sess.run([tf.assign(v, unboxed[name]) for name, v in self._trainable_weights.items()])
-
-    def get_layer_by_index(self, layer_idx):
-        return self._model.layers[layer_idx]
-
-    def set_layer_weights_by_index(self, layer_idx, weights):
-        self._model.layers[layer_idx].set_weights(weights)
-
-    def get_input_gradients(self, X, y):
-        if not self._initialize_all_variables:
-            self._sess.run(tf.initialize_all_variables())
-
-        from federatedml.nn.hetero_nn.backend.tf_keras import losses
-
-        y_true = tf.placeholder(shape=self._model.output.shape,
-                                dtype=self._model.output.dtype)
-
-        loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(y_true, self._model.output)
-        gradient = gradients(loss_fn, self._model.input)
-        return self._sess.run(gradient, feed_dict={self._model.input: X,
-                                                   y_true: y})
 
     def train(self, data: tf.keras.utils.Sequence, **kwargs):
         epochs = 1
@@ -184,34 +130,32 @@ class KerasNNModel(NNModel):
 
     def export_model(self):
         with tempfile.TemporaryDirectory() as tmp_path:
-            try:
-                tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
-            except NotImplementedError:
-                import warnings
-                warnings.warn('Saving the model as SavedModel is still in experimental stages. '
-                              'trying tf.keras.experimental.export_saved_model...')
-                tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
-
+            # try:
+            #     tf.keras.models.save_model(self._model, filepath=tmp_path, save_format="tf")
+            # except NotImplementedError:
+            #     import warnings
+            #     warnings.warn('Saving the model as SavedModel is still in experimental stages. '
+            #                   'trying tf.keras.experimental.export_saved_model...')
+            tf.keras.experimental.export_saved_model(self._model, saved_model_path=tmp_path)
             model_bytes = _zip_dir_as_bytes(tmp_path)
 
         return model_bytes
 
     @staticmethod
-    def restore_model(model_bytes, sess=None):  # todo: restore optimizer to support incremental learning
-        if not sess:
-            sess = _init_session()
+    def restore_model(model_bytes):  # todo: restore optimizer to support incremental learning
+        sess = _init_session()
         with tempfile.TemporaryDirectory() as tmp_path:
             with io.BytesIO(model_bytes) as bytes_io:
                 with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as f:
                     f.extractall(tmp_path)
 
-            try:
-                model = tf.keras.models.load_model(filepath=tmp_path)
-            except IOError:
-                import warnings
-                warnings.warn('loading the model as SavedModel is still in experimental stages. '
-                              'trying tf.keras.experimental.load_from_saved_model...')
-                model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
+            # try:
+            #     model = tf.keras.models.load_model(filepath=tmp_path)
+            # except Exception:
+            #     import warnings
+            #     warnings.warn('loading the model as SavedModel is still in experimental stages. '
+            #                   'trying tf.keras.experimental.load_from_saved_model...')
+            model = tf.keras.experimental.load_from_saved_model(saved_model_path=tmp_path)
         return KerasNNModel(sess, model)
 
     def export_optimizer_config(self):

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from tensorflow.python.keras import Sequential
+from tensorflow.keras import Sequential
 
 from federatedml.nn.homo_nn.backend.tf_keras.layers import get_builder, has_builder
 from federatedml.nn.homo_nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
@@ -43,8 +43,7 @@ def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
     return from_keras_sequential_model(model=model,
                                        loss=loss,
                                        optimizer=optimizer,
-                                       metrics=metrics,
-                                       sess=sess)
+                                       metrics=metrics)
 
 
 def restore_nn_model(model_bytes):
