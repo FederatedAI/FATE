@@ -45,9 +45,8 @@ class HeteroNNBottomModel(object):
 
     def backward(self, x, y):
         LOGGER.debug("bottom model start to backward propagation")
-        kwargs = {"batch_size": x.shape[0]}
         data = self.data_converter.convert_data(x, y / x.shape[0])
-        self._model.train(data, **kwargs)
+        self._model.train(data)
 
     def predict(self, x):
         data = self.data_converter.convert_data(x)

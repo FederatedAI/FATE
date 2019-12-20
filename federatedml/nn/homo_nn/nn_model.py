@@ -74,5 +74,5 @@ def get_nn_builder(config_type):
 
 def restore_nn_model(config_type, model_bytes):
     if config_type:
-        from federatedml.nn.zoo import restore_nn_model
+        from federatedml.nn.zoo.nn import restore_nn_model
         return restore_nn_model(model_bytes)

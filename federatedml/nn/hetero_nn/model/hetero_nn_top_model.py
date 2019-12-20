@@ -42,8 +42,7 @@ class HeteroNNTopModel(object):
         input_gradients = self._model.get_input_gradients(x, y)
 
         data = self.data_converter.convert_data(x, y)
-        kwargs = {"batch_size": x.shape[0]}
-        self._model.train(data, **kwargs)
+        self._model.train(data)
 
         return input_gradients[0]
 
