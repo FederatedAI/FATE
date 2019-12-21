@@ -86,7 +86,12 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
-        left_cols = {x: True for x in self.curt_select_properties.left_col_names}
+        LOGGER.debug("curt_select_properties.left_col_name: {}, completed_selection_result: {}".format(
+            self.curt_select_properties.left_col_names, self.completed_selection_result.all_left_col_names
+        ))
+        LOGGER.debug("Length of left cols: {}".format(len(self.completed_selection_result.all_left_col_names)))
+        # left_cols = {x: True for x in self.curt_select_properties.left_col_names}
+        left_cols = {x: True for x in self.completed_selection_result.all_left_col_names}
         final_left_cols = feature_selection_param_pb2.LeftCols(
             original_cols=self.completed_selection_result.get_select_col_names(),
             left_cols=left_cols
@@ -146,11 +151,17 @@ class BaseHeteroFeatureSelection(ModelBase):
             self.curt_select_properties.set_header(header)
             self.completed_selection_result.set_header(header)
             self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
-            for col_name, _ in dict(model_param.final_left_cols.left_cols):
+            self.curt_select_properties.add_select_col_names(header)
+
+            final_left_cols_names = dict(model_param.final_left_cols.left_cols)
+            LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
+            for col_name, _ in final_left_cols_names.items():
                 self.curt_select_properties.add_left_col_name(col_name)
             self.completed_selection_result.add_filter_results(filter_name='conclusion',
                                                                select_properties=self.curt_select_properties)
             self.update_curt_select_param()
+            LOGGER.debug("After load model, completed_selection_result.all_left_col_indexes: {}".format(
+                self.completed_selection_result.all_left_col_indexes))
 
         if 'isometric_model' in model_dict:
 
