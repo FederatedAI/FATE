@@ -48,7 +48,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.hetero_nn_param = None
         self.transfer_variable = None
         self.model_builder = None
-        self.bottom_model_input_shape = None
+        self.bottom_model_input_shape = 0
         self.top_model_input_shape = None
 
         self.is_empty = False
@@ -75,11 +75,13 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
             if self.bottom_model is None:
                 self.bottom_model_input_shape = x.shape[1]
                 self._build_bottom_model()
-                self._build_interactive_model()
 
             guest_bottom_output = self.bottom_model.forward(x)
         else:
             guest_bottom_output = None
+
+        if self.interactive_model is None:
+            self._build_interactive_model()
 
         interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch_idx)
 

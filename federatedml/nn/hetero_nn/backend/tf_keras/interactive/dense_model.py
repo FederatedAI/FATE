@@ -96,7 +96,7 @@ class DenseModel(object):
 
     def export_model(self):
         if self.is_empty_model:
-            return ''
+            return ''.encode()
 
         layer_weights = [self.model_weight]
         if self.bias is not None:
@@ -172,6 +172,9 @@ class GuestDenseModel(DenseModel):
         self.role = "guest"
 
     def forward_dense(self, x):
+        if self.empty:
+            return None
+
         self.input = x
 
         output = np.matmul(x, self.model_weight)

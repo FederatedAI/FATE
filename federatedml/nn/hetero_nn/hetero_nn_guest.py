@@ -215,7 +215,7 @@ class HeteroNNGuest(HeteroNNBase):
 
             if self.input_shape is None:
                 try:
-                    self.input_shape = inst.features.shape
+                    self.input_shape = inst.features.shape[0]
                 except AttributeError:
                     self.input_shape = 0
 
