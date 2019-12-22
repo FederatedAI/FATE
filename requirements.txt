@@ -119,8 +119,9 @@ sklearn==0.0
 socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
-tensorboard==1.14
+tensorboard==1.15
 tensorflow==1.15
+tensorflow-estimator=1.15.1
 termcolor==1.1.0
 terminado==0.8.1
 testpath==0.3.1
