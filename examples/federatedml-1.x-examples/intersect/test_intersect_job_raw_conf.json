@@ -63,6 +63,7 @@
           "join_role": "guest",
           "with_encode": true,
           "only_output_key": true,
+          "repeated_id_process": false,
           
           "encode_params":{
               "encode_method": "sha256",
