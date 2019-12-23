@@ -29,13 +29,18 @@ LOGGER = log_utils.getLogger()
 
 
 def fit_iv_values(binning_model, threshold, selection_param: SelectionProperties):
+    alternative_col_name = None
     for col_name, col_results in binning_model.bin_results.all_cols_results.items():
         if col_name not in selection_param.select_col_names:
             continue
+        alternative_col_name = col_name
         iv = col_results.iv
         if iv > threshold:
             selection_param.add_left_col_name(col_name)
         selection_param.add_feature_value(col_name, iv)
+    if len(selection_param.all_left_col_names) == 0:
+        assert alternative_col_name is not None
+        selection_param.add_left_col_name(alternative_col_name)
     return selection_param
 
 

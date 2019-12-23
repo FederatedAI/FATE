@@ -294,7 +294,8 @@ class OneHotEncoder(ModelBase):
         if self.model_output is not None:
             LOGGER.debug("Model output is : {}".format(self.model_output))
             return self.model_output
-
+        if self.inner_param is None:
+            self.inner_param = OneHotInnerParam()
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {

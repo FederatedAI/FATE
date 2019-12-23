@@ -90,7 +90,7 @@ class HeteroPearson(ModelBase):
     def fit(self, data_instance):
         data = self._select_columns(data_instance)
         n, normed = self._standardized(data)
-        self.local_corr = table_dot(data, data)
+        self.local_corr = table_dot(normed, normed)
 
         with SPDZ("pearson") as spdz:
             source = [normed, self._other_party]

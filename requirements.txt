@@ -120,7 +120,7 @@ socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
 tensorboard==1.14
-tensorflow==1.14
+tensorflow==1.15
 termcolor==1.1.0
 terminado==0.8.1
 testpath==0.3.1
