@@ -112,7 +112,7 @@ class ComponentProperties(object):
             if data_sets[data_key].get("data", None):
                 # data = data_sets[data_key]["data"]
                 data[data_key] = data_sets[data_key]["data"]
-
+        LOGGER.debug("args: {}, data_sets: {}, data: {}".format(args, data_sets, data))
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):

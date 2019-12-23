@@ -227,8 +227,8 @@ def component_output_data_download():
     limit = request_data.get('limit', -1)
     if not output_data_table:
         return error_response(response_code=500, retmsg='no data')
-    if limit <= 0:
-        return error_response(response_code=500, retmsg='limit needs to be greater than 0')
+    if limit == 0:
+        return error_response(response_code=500, retmsg='limit is 0')
     output_data_count = 0
     have_data_label = False
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))

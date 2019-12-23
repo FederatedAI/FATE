@@ -18,19 +18,19 @@
           "data0": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ],
           "data1": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ],
           "data2": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ]
         }

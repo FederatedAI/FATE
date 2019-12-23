@@ -293,8 +293,8 @@ class Arbiter(HeteroGradientBase):
 
         delta_grad = optimizer.apply_gradients(grad)
 
-        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
-            delta_grad
+        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}, sum is: {}".format(
+            delta_grad, np.sum(np.abs(delta_grad))
         ))
         separate_optim_gradient = self.separate(delta_grad, size_list)
         LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
