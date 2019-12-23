@@ -75,6 +75,20 @@ def query_job():
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
 
 
+@manager.route('/update', methods=['POST'])
+def job_update():
+    job_info = request.json
+    jobs = job_utils.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
+    if not jobs:
+        return get_json_result(retcode=101, retmsg='find job failed')
+    else:
+        job = jobs[0]
+        TaskScheduler.sync_job_status(job_id=job.f_job_id, roles={job.f_role: [job.f_party_id]},
+                                      work_mode=job.f_work_mode, initiator_party_id=job.f_party_id,
+                                      initiator_role=job.f_role, job_info={'f_description': job_info.get('notes', '')})
+        return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/config', methods=['POST'])
 def job_config():
     jobs = job_utils.query_job(**request.json)
@@ -116,3 +130,11 @@ def query_task():
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
+
+@manager.route('/data/view/query', methods=['POST'])
+def query_data_view():
+    data_views = job_utils.query_data_view(**request.json)
+    if not data_views:
+        return get_json_result(retcode=101, retmsg='find data view failed')
+    return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

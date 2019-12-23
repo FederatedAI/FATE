@@ -28,7 +28,7 @@
       },
       "dataio_0": {
         "with_label": [
-          true
+          false
         ],
         "output_format": [
           "dense"
@@ -63,6 +63,7 @@
           "join_role": "guest",
           "with_encode": true,
           "only_output_key": true,
+          "repeated_id_process": false,
           
           "encode_params":{
               "encode_method": "sha256",

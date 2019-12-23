@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/nn/hetero_nn",
+    "default_runtime_conf": "hetero_nn_param.json",
+    "param_class" : "federatedml/param/hetero_nn_param.py/HeteroNNParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_nn_guest.py/HeteroNNGuest"
+        },
+        "host":
+        {
+            "program": "hetero_nn_host.py/HeteroNNHost"
+        }
+    }
+}

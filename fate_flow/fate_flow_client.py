@@ -30,20 +30,20 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job']
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', "data_view_query"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
-TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metrics",
-                 "component_output_model", 'component_output_data']
-DATA_FUNC = ["download", "upload"]
-TABLE_FUNC = ["table_info"]
-MODEL_FUNC = ["load", "online", "version"]
+TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
+                 "component_output_model", "component_output_data"]
+DATA_FUNC = ["download", "upload", "upload_history"]
+TABLE_FUNC = ["table_info", "table_delete"]
+MODEL_FUNC = ["load", "bind", "version"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 
 def prettify(response, verbose=True):
     if verbose:
-        print(json.dumps(response, indent=4))
+        print(json.dumps(response, indent=4, ensure_ascii=False))
         print()
     return response
 
@@ -70,9 +70,14 @@ def call_fun(func, config_data, dsl_path, config_path):
             post_data = {'job_dsl': dsl_data,
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
-            if response.json()['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+            try:
+                if response.json()['retcode'] == 999:
+                    start_cluster_standalone_job_server()
+                    response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+            except:
+                pass
+        elif func == 'data_view_query':
+            response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
         else:
             if func != 'query_job':
                 detect_utils.check_config(config=config_data, required_arguments=['job_id'])
@@ -120,8 +125,9 @@ def call_fun(func, config_data, dsl_path, config_path):
     elif func in TASK_OPERATE_FUNC:
         response = requests.post("/".join([server_url, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
-        detect_utils.check_config(config=config_data,
-                                  required_arguments=['job_id', 'component_name', 'role', 'party_id'])
+        if func != 'component_metric_delete':
+            detect_utils.check_config(config=config_data,
+                                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         if func == 'component_output_data':
             detect_utils.check_config(config=config_data, required_arguments=['output_path'])
             tar_file_name = 'job_{}_{}_{}_{}_output_data.tar.gz'.format(config_data['job_id'],
@@ -143,13 +149,19 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func]), json=config_data)
-        if response.json()['retcode'] == 999:
-            start_cluster_standalone_job_server()
-            response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
+        try:
+            if response.json()['retcode'] == 999:
+                start_cluster_standalone_job_server()
+                response = requests.post("/".join([server_url, "data", func]), json=config_data)
+        except:
+            pass
     elif func in TABLE_FUNC:
-        detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
-        response = requests.post("/".join([server_url, "table", func]), json=config_data)
+        if func == "table_info":
+            detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
+            response = requests.post("/".join([server_url, "table", func]), json=config_data)
+        else:
+            response = requests.post("/".join([server_url, "table", func.lstrip('table_')]), json=config_data)
     elif func in MODEL_FUNC:
         if func == "version":
             detect_utils.check_config(config=config_data, required_arguments=['namespace'])
@@ -199,6 +211,8 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--work_mode', required=False, type=int, help="work mode")
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
+    parser.add_argument('-m', '--model', required=False, type=str, help="TrackingMetric model id")
+    parser.add_argument('-limit', '--limit', required=False, type=int, help="limit_number")
     parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src_party_id")
     parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src_role")
     parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege_role")
@@ -220,9 +234,13 @@ if __name__ == "__main__":
                 config_data['local']['party_id'] = args.party_id
             if args.role:
                 config_data['local']['role'] = args.role
-
+        if config_data.get('output_path'):
+            config_data['output_path'] = os.path.abspath(config_data["output_path"])
         response = call_fun(args.function, config_data, dsl_path, config_path)
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
         response = {'retcode': 100, 'retmsg': str(e), 'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
+        if 'Connection refused' in str(e):
+            response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
+            del response['traceback']
     response_dict = prettify(response)

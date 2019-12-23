@@ -55,20 +55,19 @@ def segment_transfer_enabled(max_part_size=0x1fffc00):
     return _attr_injected_meta_class(**{__FATE_BIG_OBJ_MAX_PART_SIZE: max_part_size})
 
 
-def split_remote(obj):
+def maybe_split_object(obj):
+    if not is_splitable_obj(obj):
+        return obj, ()
+
     obj_bytes = Pickle.dumps(obj, protocol=4)
     byte_size = len(obj_bytes)
     num_slice = num_split_parts(obj, byte_size)
     if num_slice <= 1:
-        return obj,
+        return obj, ()
     else:
         head = _SplitHead(num_slice)
         kv = [(i, obj_bytes[get_slice(obj, i)]) for i in range(num_slice)]
         return head, kv
-
-
-def split_table_tag(tag, k):
-    return f"{tag}.__frag__{k}"
 
 
 def is_split_head(obj):
@@ -81,11 +80,9 @@ def split_get(splits):
     return obj
 
 
-# noinspection PyProtectedMember
-def get_num_split(obj):
-    return obj._num_split
-
-
 class _SplitHead(object):
     def __init__(self, num_split):
         self._num_split = num_split
+
+    def num_split(self):
+        return self._num_split

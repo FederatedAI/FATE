@@ -17,6 +17,8 @@
 
 from enum import IntEnum, Enum
 
+from arch.api.transfer import FederationWrapped, Federation
+
 
 class WorkMode(IntEnum):
     STANDALONE = 0
@@ -43,7 +45,8 @@ class Backend(IntEnum):
 class RuntimeInstance(object):
     SESSION = None
     MODE: WorkMode = None
-    FEDERATION = None
+    FEDERATION: Federation = None
+    TABLE_WRAPPER: FederationWrapped = None
     Backend: Backend = None
 
 

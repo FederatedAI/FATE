@@ -71,7 +71,9 @@ class TestDenseFeatureReader(unittest.TestCase):
         reader.set_tracker(self.tracker)
         component_params = {"DataIOParam": 
                              {"input_format": "dense"
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args1)
         data = reader.save_data().collect()
@@ -94,7 +96,9 @@ class TestDenseFeatureReader(unittest.TestCase):
         component_params = {"DataIOParam": 
                              {"output_format": "sparse",
                               "input_format": "dense"
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args1)
         data = reader.save_data().collect()
@@ -116,7 +120,9 @@ class TestDenseFeatureReader(unittest.TestCase):
                               "missing_fill": True,
                               "missing_fill_method": "designated",
                               "data_type": "int"
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args2)
         data = reader.save_data().collect()
@@ -133,7 +139,9 @@ class TestDenseFeatureReader(unittest.TestCase):
                               "input_format": "dense",
                               "with_label": True,
                               "label_name": "x3"
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args1)
         data = reader.save_data().collect()
@@ -184,7 +192,9 @@ class TestSparseFeatureReader(unittest.TestCase):
                               "input_format": "sparse",
                               "delimitor": ' ',
                               "defualt_value": 2**30
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args)
         data = reader.save_data().collect()
@@ -205,7 +215,9 @@ class TestSparseFeatureReader(unittest.TestCase):
                              {"output_format": "dense",
                               "input_format": "sparse",
                               "delimitor": ' '
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args)
         insts = list(reader.save_data().collect()) 
@@ -231,7 +243,9 @@ class TestSparseFeatureReader(unittest.TestCase):
                              {"output_format": "sparse",
                               "input_format": "sparse",
                               "delimitor": ' '
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args)
         insts = list(reader.save_data().collect())
@@ -291,7 +305,9 @@ class TestSparseTagReader(unittest.TestCase):
                               "data_type": "int",
                               "with_label": False,
                               "tag_with_value": False
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args1)
         tag_insts = reader.save_data()
@@ -321,7 +337,9 @@ class TestSparseTagReader(unittest.TestCase):
                               "with_label": False,
                               "tag_with_value": True,
                               "tag_value_delimitor": ":"
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args2)
         tag_insts = reader.save_data()
@@ -354,7 +372,9 @@ class TestSparseTagReader(unittest.TestCase):
                               "delimitor": ' ',
                               "data_type": "int",
                               "with_label": False
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args1)
         tag_insts = reader.save_data()
@@ -385,7 +405,9 @@ class TestSparseTagReader(unittest.TestCase):
                               "data_type": "float",
                               "with_label": False,
                               "tag_with_value": True
-                             }
+                             },
+                             "role": {"guest": [9999], "host": [10000], "arbiter": [10000]},
+                             "local": {"role": "guest", "party_id": 9999}
                            }
         reader.run(component_params, self.args2)
         tag_insts = reader.save_data()
