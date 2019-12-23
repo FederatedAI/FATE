@@ -61,12 +61,13 @@ class HeteroStepwise(object):
         self.model_param = param
         self.mode = param.mode
         self.role = param.role
-        self.score = param.score
+        self.score_name = param.score_name
         self.direction = param.direction
         self.p_enter = param.p_enter
         self.p_remove = param.p_remove
         self.max_step = param.max_step
         self.score = param.score
+        self.transfer_variable = StepwiseTransferVariable()
         self._get_direction()
         self._make_table()
         # only used by Arbiter to fast filter model
@@ -85,7 +86,7 @@ class HeteroStepwise(object):
             return
 
     def _make_table(self):
-        #@TODO: decide if should use random number for name & namespace
+        # @TODO: decide if should use random number for name & namespace
         self.models = session.table("stepwise", self.role)
 
     def _put_value(self, key, value):
@@ -100,7 +101,7 @@ class HeteroStepwise(object):
         """
         return self.models.get(key)
 
-    def get_k(self):
+    def _get_k(self):
         """
         Helper function only called by Arbiter, get the penalty coefficient for AIC/BIC calculation.
         """
@@ -111,14 +112,11 @@ class HeteroStepwise(object):
         else:
             raise ValueError("wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score))
 
-    def get_dfe(self, model, host_list, guest_list):
-        if self.mode == consts.HETERO:
-            dfe = len(host_list) + len(guest_list)
-            if model.fit_intercept:
-                dfe += 1
-            return dfe 
-        else:
-            LOGGER.warn("Unknown mode {}. Must be one of 'HETERO' or 'HOMO' ".format(self.mode))
+    def get_dfe(self, model, list1,list2):
+        dfe = len(list1) + len(list2)
+        if model.fit_intercept:
+            dfe += 1
+        return dfe
 
     def _get_step_best(self, step_models):
         best_score = -1
@@ -143,23 +141,34 @@ class HeteroStepwise(object):
             added_list = original_list.append(to_add[i]).sort()
             yield added_list
 
-    def run_step(self, model, dropped_list, original_list):
-        # run this step 
-        dfe = self.get_dfe(model, dropped_list, original_list)
-        #@TODO: move step call into this function
+    def _arbiter_run_step(self, model, host_list, guest_list, n_model):
+        # run this step
+        dfe = self.get_dfe(model, host_list, guest_list)
+
+        host_feature_list = self.transfer_variable.host_feature_list
+        guest_feature_list = self.transfer_variable.guest_feature_list
+
+        host_feature_list.remote(host_list, idx=0)
+        guest_feature_list.remote(host_list, idx=0)
+
+        curr_step = Step()
+        curr_step._set_step_info(self.step_direction, self.n_step, n_model)
+        loss = curr_step.run(self.model_param, model, None, None, [])
+        IC_computer = IC()
+        IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+        return IC_val
         
     def _arbiter_run(self, model):
-        transfer_variable = StepwiseTransferVariable()
-        host_data_info = transfer_variable.host_data_info
-        guest_data_info = transfer_variable.guest_data_info
-        host_feature_list = transfer_variable.host_feature_list
-        guest_feature_list = transfer_variable.guest_feature_list
+        host_data_info = self.transfer_variable.host_data_info
+        guest_data_info = self.transfer_variable.guest_data_info
+        #host_feature_list = self.transfer_variable.host_feature_list
+        #guest_feature_list = self.transfer_variable.guest_feature_list
         n_host, j_host = host_data_info.get(idx=0)
         n_guest, j_guest = guest_data_info.get(idx=0)
         self.n_count = n_host
         j = j_host + j_guest
         host_to_drop, guest_to_drop = list(range(j_host)), list(range(j_host))
-        self.get_k()
+        self._get_k()
 
         while self.n_step < self.max_step:
             step_models = set()
@@ -172,12 +181,17 @@ class HeteroStepwise(object):
                     host_tup, guest_tup = tuple(host_list), tuple(guest_to_drop)
                     # add models to current step set, check all models from step models at the end, use the feature
                     # lists as keys to get corresponding score
-                    # from models_trained set; keep n_model as key maker to abstract out models at the end of stepwise 
+                    # from models_trained set; keep n_model as key maker to abstract out models at the end of stepwise
                     step_models.add((host_tup, guest_tup))
                     # skip this model if already trained and recorded
                     if (host_tup, guest_tup) in self.models_trained:
                         continue
-                    # self.run_step(model, host_list, guest_to_drop)
+                    IC_val = self._arbiter_run_step(model, host_list, guest_to_drop, n_model)
+                    # store model criteria value in dict for future references
+                    self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
+                                                                           IC_val)
+                    n_model += 1
+                    """
                     dfe = self.get_dfe(model, host_list, guest_to_drop)
                     host_feature_list.remote(host_list, idx=0)
                     guest_feature_list.remote(guest_to_drop, idx=0)
@@ -188,27 +202,26 @@ class HeteroStepwise(object):
                     IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
                     # store model criteria value in dict for future references
                     self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model, IC_val)
-                    n_model += 1
-                # only one model if initial step
-                if self.n_step == 0 and n_model == 0:
-                    continue
-                for guest_list in guest_lists: 
-                    dfe = self.get_dfe(model, host_to_drop, guest_list)
-                    host_feature_list.remote(host_to_drop, idx=0)
-                    guest_feature_list.remote(guest_list, idx=0)
-                    curr_step = Step()
-                    curr_step._set_step_info(self.step_direction, self.n_step, n_model)
-                    loss = curr_step.run(self.model_param, model, None, None, [])
-                    IC_computer = IC()
-                    IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+                    """
+                for guest_list in guest_lists:
+                    host_tup, guest_tup = tuple(host_to_drop), tuple(guest_list)
+                    step_models.add((host_tup, guest_tup))
+                    if (host_tup, guest_tup) in self.models_trained:
+                        continue
+                    IC_val = self._arbiter_run_step(model, host_to_drop, guest_list, n_model)
+                    self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
+                                                                           IC_val)
                     n_model += 1
             if self.forward:
                 n_model = 0
                 self.step_direction = "forward"
-                if self.n_step == 0:
+                if self.n_step == 0 and len(self.models_trained) == 0:
+                    # @TODO: initialize initial lists of one variable from each role
                     host_list = [0]
                     guest_list = [0]
-            #@TODO: select the best model based on criteria value, update to_drop & to_add lists
+                
+
+            # @TODO: select the best model based on criteria value, update to_drop & to_add lists
             host_step_best, guest_step_best = self._get_step_best(step_models)
             self.n_step += 1
         # @TODO: arbiter sends the best model lists to Host & Guest (use H & G lists transfer variable: guest/host feature_list)
@@ -222,13 +235,11 @@ class HeteroStepwise(object):
         if self.role == consts.ARBITER:
             self._arbiter_run(model)
         elif self.role == consts.HOST:
-            transfer_variable = StepwiseTransferVariable()
-            host_data_info = transfer_variable.host_data_info
+            host_data_info = self.transfer_variable.host_data_info
             n, j = train_data.count(), data_overview.get_features_shape(train_data)
             host_data_info.remote((n, j), idx=0)
         elif self.role == consts.GUEST:
-            transfer_variable = StepwiseTransferVariable()
-            guest_data_info = transfer_variable.guest_data_info
+            guest_data_info = self.transfer_variable.guest_data_info
             n, j = train_data.count(), data_overview.get_features_shape(train_data)
             guest_data_info.remote((n, j), idx=0)
 

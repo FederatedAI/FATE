@@ -27,7 +27,7 @@ class StepwiseParam(BaseParam):
 
     Parameters
     ----------
-    score: str, default: 'AIC'
+    score_name: str, default: 'AIC'
         Specify which model selection criterion to be used
 
     mode: str, default: 'Hetero'
@@ -56,10 +56,10 @@ class StepwiseParam(BaseParam):
 
     """
 
-    def __init__(self, score="AIC", mode=consts.HETERO, role=consts.GUEST, direction="both",
+    def __init__(self, score_name="AIC", mode=consts.HETERO, role=consts.GUEST, direction="both",
                  max_step=10, p_enter=0.05, p_remove=0.10, need_stepwise=False):
         super(StepwiseParam, self).__init__()
-        self.score = score
+        self.score_name = score_name
         self.mode = mode
         self.role = role
         self.direction = direction
@@ -70,7 +70,7 @@ class StepwiseParam(BaseParam):
 
     def check(self):
         model_param_descr = "stepwise param's "
-        self.check_and_change_lower(self.score, ["aic", "bic"], model_param_descr)
+        self.check_and_change_lower(self.score_name, ["aic", "bic"], model_param_descr)
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)
