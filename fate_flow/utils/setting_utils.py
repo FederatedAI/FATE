@@ -42,12 +42,19 @@ class CenterConfig(object):
         return data
 
     @staticmethod
+    def get_zk(hosts):
+        default_acl = make_digest_acl(CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD, all=True)
+        zk = KazooClient(hosts=hosts, default_acl=[default_acl], auth_data=[("digest", "{}:{}".format(
+            CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD))])
+        return zk
+
+    @staticmethod
     def get_servings_from_zookeeper(path, hosts):
         if CenterConfig.SERVERS:
             return CenterConfig.SERVERS
         else:
             try:
-                zk = KazooClient(hosts=hosts)
+                zk = CenterConfig.get_zk(hosts)
                 zk.start()
                 nodes = zk.get_children(path)
                 CenterConfig.SERVERS = nodes_unquote(nodes)
@@ -59,9 +66,7 @@ class CenterConfig(object):
     @staticmethod
     def init(hosts, use_configuation_center, fate_flow_zk_path, fate_flow_port):
         if use_configuation_center:
-            default_acl = make_digest_acl(CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD, all=True)
-            zk = KazooClient(hosts=hosts, default_acl=[default_acl], auth_data=[("digest", "{}:{}".format(
-                CenterConfig.ZK_USERNAME, CenterConfig.ZK_PASSWORD))])
+            zk = CenterConfig.get_zk(hosts)
             zk.start()
             model_host = 'http://{}:{}/v1/model/transfer'.format(get_lan_ip(), fate_flow_port)
             fate_flow_zk_path = '{}/{}'.format(fate_flow_zk_path, parse.quote(model_host, safe=' '))
