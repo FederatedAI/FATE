@@ -38,9 +38,6 @@ class PredictParam(BaseParam):
         self.threshold = threshold
 
     def check(self):
-        if type(self.with_proba).__name__ != "bool":
-            raise ValueError(
-                "predict param's with_proba {} not supported, should be bool type".format(self.with_proba))
 
         if type(self.threshold).__name__ not in ["float", "int"]:
             raise ValueError("predict param's predict_param {} not supported, should be float or int".format(

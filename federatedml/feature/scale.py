@@ -119,7 +119,7 @@ class Scale(ModelBase):
         return transform_data
 
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.header = list(model_obj.header)

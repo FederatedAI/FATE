@@ -14,14 +14,16 @@
 #  limitations under the License.
 #
 
+import copy
+
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
-import copy
 
 LOGGER = log_utils.getLogger()
 
@@ -70,7 +72,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        self.model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
@@ -129,15 +132,16 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
 
         exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+
         data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
 
         data_features = self.transform(data_instances)
+
         pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
         pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
         LOGGER.info("Get prediction from Host")
 
         pred = pred_guest.join(pred_host, lambda g, h: g * h)
-        predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
+        predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
         return predict_result

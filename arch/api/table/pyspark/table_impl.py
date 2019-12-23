@@ -275,8 +275,12 @@ class RDDTable(Table):
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs) -> 'RDDTable':
         partition = partition or self._partitions
+        from arch.api import RuntimeInstance
+        persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
         if self._dtable:
-            _dtable = self._dtable.save_as(name, namespace, partition, use_serialize=use_serialize)
+            _dtable = self._dtable.save_as(name, namespace, partition,
+                                           use_serialize=use_serialize,
+                                           persistent_engine=persistent_engine)
             return RDDTable.from_dtable(session_id=self._session_id, dtable=_dtable)
         else:
             from arch.api.table.pyspark.rdd_func import _save_as_func

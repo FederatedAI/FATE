@@ -53,6 +53,7 @@ jupyter-core==4.4.0
 jupyter-highlight-selected-word==0.2.0
 jupyter-latex-envs==1.4.4
 jupyter-nbextensions-configurator==0.4.0
+kazoo==2.6.1
 Keras==2.2.4
 Keras-Applications==1.0.6
 Keras-Preprocessing==1.0.5
@@ -70,7 +71,7 @@ nbconvert==5.3.1
 nbformat==4.4.0
 notebook==5.7.8
 numba==0.40.1
-numpy==1.15.2
+numpy==1.17.2
 opencv-python==3.2.0.7
 openpyxl==2.5.8
 pandas==0.23.4
@@ -119,7 +120,7 @@ socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
 tensorboard==1.14
-tensorflow==1.14
+tensorflow==1.15
 termcolor==1.1.0
 terminado==0.8.1
 testpath==0.3.1
@@ -136,3 +137,4 @@ Werkzeug==0.15.3
 widgetsnbextension==3.4.0
 xlrd==1.1.0
 apsw==3.9.2.post1
+deprecated==1.2.7

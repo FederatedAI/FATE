@@ -1,0 +1,49 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "HeteroNNModelMetaProto";
+
+message OptimizerParam {
+    string optimizer = 1;
+    string kwargs = 2;
+}
+
+message PredictParam {
+    double threshold = 1;
+}
+
+message HeteroNNModelMeta {
+    string config_type = 1;
+    repeated string bottom_nn_define = 2;
+    string interactive_layer_define = 3;
+    repeated string top_nn_define = 4;
+    repeated string metrics = 5;
+    OptimizerParam optimizer_param = 6;
+    string loss = 7;
+    double interactive_layer_lr = 8;
+}
+
+message HeteroNNMeta {
+    HeteroNNModelMeta hetero_nn_model_meta = 1;
+    string task_type = 2;
+    int32 batch_size = 3;
+    int32 epochs = 4;
+    string early_stop = 5;
+    double tol = 6;
+}

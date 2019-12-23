@@ -32,7 +32,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger
@@ -165,11 +165,20 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     return dsl_parser
 
 
-def get_job_configuration(job_id, role, party_id):
+def get_job_configuration(job_id, role, party_id, tasks=None):
     with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
-                                                                                         Job.f_role == role,
-                                                                                         Job.f_party_id == party_id)
+        if tasks:
+            jobs_run_conf = {}
+            for task in tasks:
+                jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
+                job = jobs[0]
+                jobs_run_conf[job.f_job_id] = json_loads(job.f_runtime_conf)["role_parameters"]["local"]["upload_0"]
+                jobs_run_conf[job.f_job_id]["notes"] = job.f_description
+            return jobs_run_conf
+        else:
+            jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+                                                                                             Job.f_role == role,
+                                                                                             Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
             return json_loads(job.f_dsl), json_loads(job.f_runtime_conf), json_loads(job.f_train_runtime_conf)
@@ -213,6 +222,20 @@ def query_task(**kwargs):
         else:
             tasks = Task.select()
         return [task for task in tasks]
+
+
+def query_data_view(**kwargs):
+    with DB.connection_context():
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(DataView, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
+        if filters:
+            data_views = DataView.select().where(*filters)
+        else:
+            data_views = []
+        return [data_view for data_view in data_views]
 
 
 def success_task_count(job_id):
