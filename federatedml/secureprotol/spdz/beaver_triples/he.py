@@ -40,17 +40,6 @@ def decrypt_tensor(tensor, private_key, otypes):
 
 
 def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator: Communicator, name):
-    """
-    a = a_1 + a_2 + ... + a_n
-    b = b_1 + b_2 + ... + b_n
-    c = c_1 + c_2 + ... + c_n
-    subject to
-        c_i = a_i * b_i
-            + sum([Dec(a_j * Enc(b_i) + r_{ij}) for j in range(n) if i != j])
-            - sum([r_{ji} for j in range(n) if j != i])
-        one has
-        c = a * b
-    """
     public_key, private_key = he_key_pair
     a = rand_tensor(q_field, a_tensor)
     b = rand_tensor(q_field, b_tensor)
