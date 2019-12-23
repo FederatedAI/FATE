@@ -85,8 +85,9 @@ class BinInnerParam(object):
 
         for idx in transform_indexes:
             if idx >= len(self.header):
-                LOGGER.warning("Adding a index that out of header's bound")
-                continue
+                raise ValueError("Adding a index that out of header's bound")
+                # LOGGER.warning("Adding a index that out of header's bound")
+                # continue
             if idx not in self.transform_bin_indexes:
                 self.transform_bin_indexes.append(idx)
                 self.transform_bin_names.append(self.header[idx])
@@ -97,8 +98,9 @@ class BinInnerParam(object):
         for bin_name in transform_names:
             idx = self.col_name_maps.get(bin_name)
             if idx is None:
-                LOGGER.warning("Adding a col_name that is not exist in header")
-                continue
+                raise ValueError("Adding a col_name that is not exist in header")
+                # LOGGER.warning("Adding a col_name that is not exist in header")
+                # continue
             if idx not in self.transform_bin_indexes:
                 self.transform_bin_indexes.append(idx)
                 self.transform_bin_names.append(self.header[idx])
