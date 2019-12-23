@@ -173,19 +173,20 @@ Command response example:
 ```json
 {
     "data": {
-        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=2019081718211974471912&role=guest&party_id=10000",
-        "job_dsl_path": "xxx/jobs/2019081718211974471912/job_dsl.json",
-        "job_runtime_conf_path": "xxx/jobs/2019081718211974471912/job_runtime_conf.json",
+        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=2019121910313566330118&role=guest&party_id=9999",
+        "job_dsl_path": "xxx/jobs/2019121910313566330118/job_dsl.json",
+        "job_runtime_conf_path": "xxx/jobs/2019121910313566330118/job_runtime_conf.json",
+        "logs_directory": "xxx/logs/2019121910313566330118",
         "model_info": {
-            "model_id": "arbiter-10000#guest-10000#host-10000#model",
-            "model_version": "2019081718211974471912"
+            "model_id": "arbiter-10000#guest-9999#host-10000#model",
+            "model_version": "2019121910313566330118"
         }
     },
-    "jobId": "2019081718211974471912",
-    "meta": null,
+    "jobId": "2019121910313566330118",
     "retcode": 0,
     "retmsg": "success"
 }
+
 ```
 Some of the following operations will use these response information.
 

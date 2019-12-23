@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 from arch.api.utils import log_utils
 from federatedml.protobuf.generated import feature_selection_param_pb2
 import operator
@@ -135,7 +136,7 @@ class CompletedSelectionResults(object):
         return [self.header[x] for x in self.all_left_col_indexes]
 
     def add_filter_results(self, filter_name, select_properties: SelectionProperties, host_select_properties=None):
-        self.all_left_col_indexes = select_properties.all_left_col_indexes
+        self.all_left_col_indexes = select_properties.all_left_col_indexes.copy()
         if filter_name == 'conclusion':
             return
 

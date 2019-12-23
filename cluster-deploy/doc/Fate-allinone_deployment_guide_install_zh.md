@@ -365,7 +365,7 @@ sh run.sh host fast
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast $ {host_table} $ {host_namespace} 
+sh run.sh guest fast ${host_table} ${host_namespace} 
 ```
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。

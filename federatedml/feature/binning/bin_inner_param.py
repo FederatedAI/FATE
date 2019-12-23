@@ -59,8 +59,9 @@ class BinInnerParam(object):
             return
         for idx in bin_indexes:
             if idx >= len(self.header):
-                LOGGER.warning("Adding a index that out of header's bound")
-                continue
+                # LOGGER.warning("Adding a index that out of header's bound")
+                # continue
+                raise ValueError("Adding a index that out of header's bound")
             if idx not in self.bin_indexes:
                 self.bin_indexes.append(idx)
                 self.bin_names.append(self.header[idx])

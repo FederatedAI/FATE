@@ -60,7 +60,7 @@ example:
           "port": 8889
         }
       ],
-      "manager": [
+      "fateflow": [
         {
           "ip": "127.0.0.1",
           "port": 9360

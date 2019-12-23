@@ -30,14 +30,14 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', 'cancel_job', "data_view_query"]
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', "data_view_query"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ['query_task']
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
                  "component_output_model", "component_output_data"]
 DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info", "table_delete"]
-MODEL_FUNC = ["load", "online", "version"]
+MODEL_FUNC = ["load", "bind", "version"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 
