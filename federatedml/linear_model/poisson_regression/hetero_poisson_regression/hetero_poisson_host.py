@@ -88,7 +88,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
                 self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights,
                                                          self.encrypted_calculator, self.optimizer,
-                                                         self.n_iter_, batch_index)
+                                                         self.n_iter_, batch_index, self.cipher_operator)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1

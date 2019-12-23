@@ -119,7 +119,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         return mu
 
     def compute_loss(self, data_instances, model_weights, encrypted_calculator,
-                     optimizer, n_iter_, batch_index):
+                     optimizer, n_iter_, batch_index, cipher_operator):
         '''
         Compute hetero poisson loss:
             h_loss = sum(exp(mu_h))
@@ -138,6 +138,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         batch_index: int, use to obtain current encrypted_calculator index
 
+        cipher_operator: cipher for encrypt intermediate loss and loss_regular
+
         '''
         current_suffix = (n_iter_, batch_index)
         self_wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
@@ -145,7 +147,11 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        self.remote_loss_regular(loss_regular, suffix=current_suffix)
+        if loss_regular is None:
+            en_loss_regular = loss_regular
+        else:
+            en_loss_regular = cipher_operator.encrypt(loss_regular)
+        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
