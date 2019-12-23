@@ -31,18 +31,17 @@ def send(channel):
     stub = inference_service_pb2_grpc.InferenceServiceStub(channel)
     request = inference_service_pb2.InferenceMessage()
     request_data = dict()
-    request_data['appid'] = '9999'
+    request_data['serviceId'] = 'xxxxxxxxx'
     # request_data['modelId'] = 'arbiter-10000#guest-10000#host-10000#model'  #  You can specify the model id this way
     # request_data['modelVersion'] = 'acd3e1807a1211e9969aacde48001122' #  You can specify the model version this way
     request_data['caseid'] = uuid.uuid1().hex
 
     feature_data = dict()
-    feature_data['device_id'] = '867920041242112'
-    feature_data['phone_num'] = '15013033489'
     feature_data['fid1'] = 5.1
     feature_data['fid2'] = 6.2
     feature_data['fid3'] = 7.6
     request_data['featureData'] = feature_data
+    request_data['sendToRemoteFeatureData'] = feature_data
 
     print(json.dumps(request_data, indent=4))
 

@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from collections import defaultdict
 import functools
 import numpy as np
@@ -28,6 +29,10 @@ LOGGER = log_utils.getLogger()
 
 
 class RepeatedIDIntersect(object):
+    """
+    This will support repeated ID intersection using ID expanding.
+    """
+
     def __init__(self, repeated_id_owner: str, role: str):
         self.repeated_id_owner = repeated_id_owner
         self.transfer_variable = RepeatedIDIntersectTransferVariable()

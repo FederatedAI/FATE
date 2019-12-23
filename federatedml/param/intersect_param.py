@@ -167,7 +167,7 @@ class IntersectParam(BaseParam):
                     self.repeated_id_process))
 
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
-                                                             [consts.GUEST, consts.HOST],
+                                                             [consts.GUEST],
                                                              descr)
 
         self.encode_params.check()

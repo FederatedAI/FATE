@@ -21,7 +21,7 @@ LOGGER = log_utils.getLogger()
 
 class HeteroNNModel(object):
     def __init__(self):
-        self.partition =1
+        self.partition = 1
 
     def load_model(self):
         pass
@@ -44,8 +44,8 @@ class HeteroNNModel(object):
     def set_hetero_nn_model_param(self, model_param):
         pass
 
-    def set_partition(self, partition=1):
-        setattr(self, "partition", partition)
+    def set_partition(self, partition):
+        pass
 
 
 class HeteroNNHostModel(HeteroNNModel):
