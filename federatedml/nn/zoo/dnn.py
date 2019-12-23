@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.nn.homo_nn.backend.tf_keras.layers import has_builder, DENSE, DROPOUT
-from federatedml.nn.homo_nn.backend.tf_keras.nn_model import KerasNNModel
-from federatedml.nn.homo_nn.zoo import nn
+from federatedml.nn.backend.tf_keras.layers import has_builder, DENSE, DROPOUT
+from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
+from federatedml.nn.zoo import nn
 
 
 def is_dnn_supported_layer(layer):

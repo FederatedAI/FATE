@@ -23,16 +23,14 @@ LOGGER = log_utils.getLogger()
 
 
 class HeteroNNTopModel(object):
-    def __init__(self, input_shape=None, sess=None, loss=None, optimizer="SGD", metrics=None, model_builder=None,
+    def __init__(self, input_shape=None, loss=None, optimizer="SGD", metrics=None, model_builder=None,
                  layer_config=None):
-        self.sess = sess
 
         self._model = model_builder(input_shape=input_shape,
                                     nn_define=layer_config,
                                     optimizer=optimizer,
                                     loss=loss,
-                                    metrics=metrics,
-                                    sess=sess)
+                                    metrics=metrics)
 
         self.data_converter = None
 
@@ -40,15 +38,16 @@ class HeteroNNTopModel(object):
         self.data_converter = data_converter
 
     def train_and_get_backward_gradient(self, x, y):
+        LOGGER.debug("top model start to forward propagation")
         input_gradients = self._model.get_input_gradients(x, y)
 
         data = self.data_converter.convert_data(x, y)
-        kwargs = {"batch_size": x.shape[0]}
-        self._model.train(data, **kwargs)
+        self._model.train(data)
 
         return input_gradients[0]
 
     def predict(self, input_data):
+        LOGGER.debug("top model start to backward propagation")
         output_data = self._model.predict(input_data)
 
         return output_data
@@ -62,4 +61,4 @@ class HeteroNNTopModel(object):
         return self._model.export_model()
 
     def restore_model(self, model_bytes):
-        self._model = self._model.restore_model(model_bytes, self.sess)
+        self._model = self._model.restore_model(model_bytes)
