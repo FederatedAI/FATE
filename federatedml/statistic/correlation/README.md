@@ -15,7 +15,7 @@ then,
 
 #### Implementation Detail
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation Coefficient calculation. 
-For more detail examination, one can refer to [README](../../secureprotol/spdz/README.md).
+For more details, one can refer to [README](../../secureprotol/spdz/README.md).
 
 #### How to Use
 - params
