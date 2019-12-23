@@ -88,7 +88,7 @@ Combine multiple data tables into one.
 
 - Corresponding module name: Union
 - Data Input: Input DTable(s).
-- Model Output: one DTable with combined values from input DTables.
+- Data Output: one DTable with combined values from input DTables.
 
 
 #### 9. [Hetero-LR](./linear_model/logistic_regression/README.md)
@@ -104,7 +104,7 @@ Wrapper that runs sklearn Logistic Regression model with local data.
 
 - Corresponding module name: LocalBaseline
 - Data Input: Input DTable.
-- Model Output: Prediction Results.
+- Model Output: Logistic Regression.
 
 
 #### 11. [Hetero-LinR](./linear_model/linear_regression/README.md)
