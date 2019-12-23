@@ -27,7 +27,6 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
-
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward_dict,
                                      transfer_variables.fore_gradient,
@@ -119,7 +118,6 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
 
 class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
-
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.host_forward_dict,
                                      transfer_variables.fore_gradient,
@@ -137,7 +135,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
-    def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index):
+    def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index, cipher_operator):
         """
         Compute hetero-lr loss for:
         loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
@@ -149,16 +147,15 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         """
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
+        en_wx_square = cipher_operator.encrypt(self_wx_square)
+        self.remote_loss_intermediate(en_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(lr_weights)
-        self.remote_loss_regular(loss_regular, suffix=current_suffix)
-
-
+        en_loss_regular = cipher_operator.encrypt(loss_regular)
+        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
-
     def register_gradient_procedure(self, transfer_variables):
         self._register_gradient_sync(transfer_variables.guest_gradient,
                                      transfer_variables.host_gradient,
