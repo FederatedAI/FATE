@@ -53,12 +53,12 @@ def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator:
         communicator.remote_encrypted_tensor(encrypted=encrypted_a, tag=f"{name}_a")
         communicator.remote_encrypted_tensor(encrypted=encrypted_b, tag=f"{name}_b")
 
-    # get encrypted b
+    # get encrypted a and b
     if communicator.party_idx == 1:
+        r = urand_tensor(q_field, c)
         _p, encrypted_a_list = communicator.get_encrypted_tensors(tag=f"{name}_a")
         _, encrypted_b_list = communicator.get_encrypted_tensors(tag=f"{name}_b")
         cross = dot(encrypted_a_list[0], b) + dot(a, encrypted_b_list[0])
-        r = urand_tensor(q_field, cross)
         cross += r
         c -= r
         communicator.remote_encrypted_cross_tensor(encrypted=cross, parties=_p, tag=name)
