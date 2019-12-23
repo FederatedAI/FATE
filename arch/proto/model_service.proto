@@ -25,6 +25,7 @@ message PublishRequest{
     LocalInfo local = 1;
     map<string, Party> role = 2;
     map<string, RoleModelInfo> model = 3;
+    string serviceId = 4;
 }
 
 message PublishResponse{
@@ -37,5 +38,5 @@ message PublishResponse{
 
 service ModelService{
     rpc publishLoad(PublishRequest) returns (PublishResponse);
-    rpc publishOnline(PublishRequest) returns (PublishResponse);
+    rpc publishBind(PublishRequest) returns (PublishResponse);
 }

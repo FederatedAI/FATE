@@ -23,22 +23,22 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroDecisionTreeTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.encrypted_grad_and_hess = Variable(name='HeteroDecisionTreeTransferVariable.encrypted_grad_and_hess', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.tree_node_queue = Variable(name='HeteroDecisionTreeTransferVariable.tree_node_queue', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.node_positions = Variable(name='HeteroDecisionTreeTransferVariable.node_positions', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.encrypted_splitinfo_host = Variable(name='HeteroDecisionTreeTransferVariable.encrypted_splitinfo_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.federated_best_splitinfo_host = Variable(name='HeteroDecisionTreeTransferVariable.federated_best_splitinfo_host', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.final_splitinfo_host = Variable(name='HeteroDecisionTreeTransferVariable.final_splitinfo_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.dispatch_node_host = Variable(name='HeteroDecisionTreeTransferVariable.dispatch_node_host', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.dispatch_node_host_result = Variable(name='HeteroDecisionTreeTransferVariable.dispatch_node_host_result', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.tree = Variable(name='HeteroDecisionTreeTransferVariable.tree', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.predict_data = Variable(name='HeteroDecisionTreeTransferVariable.predict_data', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.predict_data_by_host = Variable(name='HeteroDecisionTreeTransferVariable.predict_data_by_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.predict_finish_tag = Variable(name='HeteroDecisionTreeTransferVariable.predict_finish_tag', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        pass
+class HeteroDecisionTreeTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.dispatch_node_host = self._create_variable(name='dispatch_node_host')
+        self.dispatch_node_host_result = self._create_variable(name='dispatch_node_host_result')
+        self.encrypted_grad_and_hess = self._create_variable(name='encrypted_grad_and_hess')
+        self.encrypted_splitinfo_host = self._create_variable(name='encrypted_splitinfo_host')
+        self.federated_best_splitinfo_host = self._create_variable(name='federated_best_splitinfo_host')
+        self.final_splitinfo_host = self._create_variable(name='final_splitinfo_host')
+        self.node_positions = self._create_variable(name='node_positions')
+        self.predict_data = self._create_variable(name='predict_data')
+        self.predict_data_by_host = self._create_variable(name='predict_data_by_host')
+        self.predict_finish_tag = self._create_variable(name='predict_finish_tag')
+        self.tree = self._create_variable(name='tree')
+        self.tree_node_queue = self._create_variable(name='tree_node_queue')

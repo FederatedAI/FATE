@@ -153,11 +153,10 @@ class Evaluation(ModelBase):
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
             if res is not None:
-                LOGGER.debug("res:{}".format(res))
                 try:
                     if math.isinf(res):
                         res = float(-9999999)
-                        LOGGER.debug("res is inf, set to {}".format(res))
+                        LOGGER.info("res is inf, set to {}".format(res))
                 except:
                     pass
                    
@@ -733,6 +732,10 @@ class Evaluation(ModelBase):
             return acc_operator.compute(labels, pred_scores, normalize)
         else:
             logging.warning("error:can not find classification type:".format(self.eval_type))
+
+    @staticmethod
+    def extract_data(data: dict):
+        return data
 
 
 class Lift(object):

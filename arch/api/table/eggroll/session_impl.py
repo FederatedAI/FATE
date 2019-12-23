@@ -17,6 +17,7 @@
 from typing import Iterable
 
 from arch.api.table import eggroll_util
+from eggroll.api import StoreType
 # noinspection PyProtectedMember
 from arch.api.table.eggroll.table_impl import DTable
 from arch.api.table.session import FateSession as TableManger
@@ -28,10 +29,14 @@ class FateSessionImpl(TableManger):
     manage DTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session, work_mode):
+    def __init__(self, eggroll_session, work_mode, persistent_engine=StoreType.LMDB):
         self._eggroll = eggroll_util.build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
         self._session_id = eggroll_session.get_session_id()
+        self._persistent_engine = persistent_engine
         TableManger.set_instance(self)
+
+    def get_persistent_engine(self):
+        return self._persistent_engine
 
     def table(self,
               name,
@@ -43,7 +48,8 @@ class FateSessionImpl(TableManger):
               error_if_exist):
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
-                                     create_if_missing=create_if_missing, error_if_exist=error_if_exist)
+                                     create_if_missing=create_if_missing, error_if_exist=error_if_exist,
+                                     persistent_engine=self._persistent_engine)
         return DTable(dtable=dtable, session_id=self._session_id)
 
     def parallelize(self,
@@ -66,7 +72,8 @@ class FateSessionImpl(TableManger):
                                            chunk_size=chunk_size,
                                            in_place_computing=in_place_computing,
                                            create_if_missing=create_if_missing,
-                                           error_if_exist=error_if_exist)
+                                           error_if_exist=error_if_exist,
+                                           persistent_engine=self._persistent_engine)
 
         rdd_inst = DTable(dtable, session_id=self._session_id)
 

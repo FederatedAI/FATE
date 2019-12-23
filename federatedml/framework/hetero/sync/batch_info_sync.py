@@ -24,8 +24,8 @@ LOGGER = log_utils.getLogger()
 
 class Guest(object):
     def _register_batch_data_index_transfer(self, batch_data_info_transfer, batch_data_index_transfer):
-        self.batch_data_info_transfer = batch_data_info_transfer
-        self.batch_data_index_transfer = batch_data_index_transfer
+        self.batch_data_info_transfer = batch_data_info_transfer.disable_auto_clean()
+        self.batch_data_index_transfer = batch_data_index_transfer.disable_auto_clean()
 
     def sync_batch_info(self, batch_info, suffix=tuple()):
         self.batch_data_info_transfer.remote(obj=batch_info,
@@ -44,8 +44,8 @@ class Guest(object):
 
 class Host(object):
     def _register_batch_data_index_transfer(self, batch_data_info_transfer, batch_data_index_transfer):
-        self.batch_data_info_transfer = batch_data_info_transfer
-        self.batch_data_index_transfer = batch_data_index_transfer
+        self.batch_data_info_transfer = batch_data_info_transfer.disable_auto_clean()
+        self.batch_data_index_transfer = batch_data_index_transfer.disable_auto_clean()
 
     def sync_batch_info(self, suffix=tuple()):
         LOGGER.debug("In sync_batch_info, suffix is :{}".format(suffix))
@@ -66,8 +66,8 @@ class Host(object):
 
 class Arbiter(object):
     def _register_batch_data_index_transfer(self, batch_data_info_transfer, batch_data_index_transfer):
-        self.batch_data_info_transfer = batch_data_info_transfer
-        self.batch_data_index_transfer = batch_data_index_transfer
+        self.batch_data_info_transfer = batch_data_info_transfer.disable_auto_clean()
+        self.batch_data_index_transfer = batch_data_index_transfer.disable_auto_clean()
 
     def sync_batch_info(self, suffix=tuple()):
         batch_info = self.batch_data_info_transfer.get(idx=0,

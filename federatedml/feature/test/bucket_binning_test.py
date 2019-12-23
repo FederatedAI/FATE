@@ -56,7 +56,7 @@ class TestBucketBinning(unittest.TestCase):
         self.cols = [1, 2]
 
     def test_bucket_binning(self):
-        bin_param = FeatureBinningParam(bin_num=self.bin_num, cols=self.cols)
+        bin_param = FeatureBinningParam(bin_num=self.bin_num, bin_indexes=self.cols)
         bucket_bin = BucketBinning(bin_param)
         split_points = bucket_bin.fit_split_points(self.table)
         split_point = list(split_points.values())[0]

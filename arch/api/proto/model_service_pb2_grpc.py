@@ -34,8 +34,8 @@ class ModelServiceStub(object):
         request_serializer=model__service__pb2.PublishRequest.SerializeToString,
         response_deserializer=model__service__pb2.PublishResponse.FromString,
         )
-    self.publishOnline = channel.unary_unary(
-        '/com.webank.ai.fate.api.mlmodel.manager.ModelService/publishOnline',
+    self.publishBind = channel.unary_unary(
+        '/com.webank.ai.fate.api.mlmodel.manager.ModelService/publishBind',
         request_serializer=model__service__pb2.PublishRequest.SerializeToString,
         response_deserializer=model__service__pb2.PublishResponse.FromString,
         )
@@ -52,7 +52,7 @@ class ModelServiceServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
-  def publishOnline(self, request, context):
+  def publishBind(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -67,8 +67,8 @@ def add_ModelServiceServicer_to_server(servicer, server):
           request_deserializer=model__service__pb2.PublishRequest.FromString,
           response_serializer=model__service__pb2.PublishResponse.SerializeToString,
       ),
-      'publishOnline': grpc.unary_unary_rpc_method_handler(
-          servicer.publishOnline,
+      'publishBind': grpc.unary_unary_rpc_method_handler(
+          servicer.publishBind,
           request_deserializer=model__service__pb2.PublishRequest.FromString,
           response_serializer=model__service__pb2.PublishResponse.SerializeToString,
       ),
