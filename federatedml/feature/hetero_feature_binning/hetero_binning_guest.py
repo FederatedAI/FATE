@@ -47,8 +47,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         is_binary_data = data_overview.is_binary_labels(data_instances)
         if not is_binary_data:
-            LOGGER.warning("Iv calculation support binary-data only in this version.")
-            return data_instances
+            # LOGGER.warning("Iv calculation support binary-data only in this version.")
+            raise ValueError("Iv calculation support binary-data only in this version.")
+            # return data_instances
 
         data_instances = data_instances.mapValues(self.load_data)
         self.set_schema(data_instances)

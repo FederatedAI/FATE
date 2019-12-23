@@ -25,7 +25,7 @@ class EncryptedModeCalculatorParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, support 'strict', 'fast', 'balance' only, default: strict
+    mode: str, support 'strict', 'fast', 'balance', 'confusion_opt', ' only, default: strict
 
     re_encrypted_rate: float or int, numeric number in [0, 1], use when mode equals to 'balance, default: 1
 
@@ -38,15 +38,14 @@ class EncryptedModeCalculatorParam(BaseParam):
     def check(self):
         descr = "encrypted_mode_calculator param"
         self.mode = self.check_and_change_lower(self.mode,
-                                                ["strict", "fast", "balance"],
+                                                ["strict", "fast", "balance", "confusion_opt", "confusion_opt_balance"],
                                                 descr)
 
-        if self.mode == "balance":
+        if self.mode in ["balance", "confusion_opt_balance"]:
             if type(self.re_encrypted_rate).__name__ not in ["int", "long", "float"]:
                 raise ValueError("re_encrypted_rate should be a numeric number")
 
-            if not (self.re_encrypted_rate >= 0.0 and self.re_encrypted_rate <= 1):
-                raise ValueError("r_encrypted_rate should  in [0, 1]")
+            if not 0.0 <= self.re_encrypted_rate <= 1:
+                raise ValueError("re_encrypted_rate should  in [0, 1]")
 
         return True
-

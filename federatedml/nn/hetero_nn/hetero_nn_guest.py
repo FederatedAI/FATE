@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import numpy as np
-
-from arch.api import session
-from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
-from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.nn.hetero_nn.backend.model_builder import model_builder
-from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -25,6 +16,15 @@ from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
+
+from arch.api import session
+from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.framework.hetero.procedure import batch_generator
+from federatedml.nn.hetero_nn.backend.model_builder import model_builder
+from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
@@ -59,8 +59,6 @@ class HeteroNNGuest(HeteroNNBase):
 
         self.task_type = hetero_nn_param.task_type
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
-        # self.model = model_builder("guest", self.hetero_nn_param)
-        # self.model.set_transfer_variable(self.transfer_variable)
 
     def _build_model(self):
         self.model = model_builder("guest", self.hetero_nn_param)
@@ -74,6 +72,7 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
+        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
@@ -107,6 +106,9 @@ class HeteroNNGuest(HeteroNNBase):
 
             self.history_loss.append(epoch_loss)
 
+            if validation_strategy:
+                validation_strategy.validate(self, cur_epoch)
+
             is_converge = self.converge_func.is_converge(epoch_loss)
             self.transfer_variable.is_converge.remote(is_converge,
                                                       role=consts.HOST,
@@ -124,6 +126,7 @@ class HeteroNNGuest(HeteroNNBase):
 
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         preds = self.model.predict(test_x)
 
@@ -216,7 +219,7 @@ class HeteroNNGuest(HeteroNNBase):
 
             if self.input_shape is None:
                 try:
-                    self.input_shape = inst.features.shape
+                    self.input_shape = inst.features.shape[0]
                 except AttributeError:
                     self.input_shape = 0
 
@@ -236,7 +239,7 @@ class HeteroNNGuest(HeteroNNBase):
             for batch_y in self.data_y:
                 new_batch_y = np.zeros((batch_y.shape[0], 1))
                 for idx in range(new_batch_y.shape[0]):
-                    new_batch_y[idx][0] = batch_y[idx]
+                    new_batch_y[idx] = batch_y[idx]
 
                 transform_y.append(new_batch_y)
 
@@ -246,7 +249,7 @@ class HeteroNNGuest(HeteroNNBase):
         for batch_y in self.data_y:
             new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
             for idx in range(new_batch_y.shape[0]):
-                y = new_batch_y[idx]
+                y = batch_y[idx]
                 new_batch_y[idx][y] = 1
 
             transform_y.append(new_batch_y)

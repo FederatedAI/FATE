@@ -43,8 +43,6 @@ class HeteroNNHost(HeteroNNBase):
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
-        # self.model = model_builder("host", self.hetero_nn_param)
-        # self.model.set_transfer_variable(self.transfer_variable)
 
     def export_model(self):
         if self.model is None:
@@ -68,10 +66,12 @@ class HeteroNNHost(HeteroNNBase):
 
     def predict(self, data_inst):
         test_x = self._load_data(data_inst)
+        self.set_partition(data_inst)
 
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
+        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
 
@@ -84,6 +84,9 @@ class HeteroNNHost(HeteroNNBase):
                 self.reset_flowid()
                 self.model.evaluate(self.data_x[batch_idx], cur_epoch, batch_idx)
                 self.recovery_flowid()
+
+            if validation_strategy:
+                validation_strategy.validate(self, cur_epoch)
 
             is_converge = self.transfer_variable.is_converge.get(idx=0,
                                                                  suffix=(cur_epoch,))

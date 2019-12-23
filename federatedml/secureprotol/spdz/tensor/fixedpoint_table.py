@@ -31,7 +31,7 @@ def _table_binary_op(x, y, q_field, op):
 
 
 def _table_scalar_op(x, d, op):
-    return x.mapValues(lambda a: op(a * d))
+    return x.mapValues(lambda a: op(a, d))
 
 
 def _table_dot_mod_func(it, q_field):

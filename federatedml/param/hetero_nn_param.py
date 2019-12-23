@@ -17,43 +17,20 @@
 #  limitations under the License.
 #
 import copy
+import collections
 from types import SimpleNamespace
-
-from numpy import random
 
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
+from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
 
-class RandomParam(BaseParam):
-    def __init__(self, method="normal", loc=0, scale=1.0, seed=None):
-        self.method = method
-        self.loc = loc
-        self.scale = scale
-        self.seed = seed
-
-    def check(self):
-        try:
-            func = getattr(random, self.method)()
-        except AttributeError:
-            raise ValueError("method not supported".format(self.method))
-
-        if self.seed is not None and not isinstance(self.seed, int):
-            raise ValueError("seed should be None or integer")
-
-        if not isinstance(self.loc, (int, float)):
-            raise ValueError("loc should be numeric")
-
-        if not isinstance(self.scale, (int, float)):
-            raise ValueError("scale should be numeric")
-
-
 class HeteroNNParam(BaseParam):
     def __init__(self,
-                 task_type='binary',
+                 task_type='classification',
                  config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
@@ -67,9 +44,10 @@ class HeteroNNParam(BaseParam):
                  early_stop="diff",
                  tol=1e-5,
                  encrypt_param=EncryptParam(),
+                 encrypted_mode_calculator_param = EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(),
-                 random_param=RandomParam(),
-                 cv_param=CrossValidationParam()):
+                 cv_param=CrossValidationParam(),
+                 validation_freqs=None):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -85,15 +63,20 @@ class HeteroNNParam(BaseParam):
         self.metrics = metrics
         self.optimizer = optimizer
         self.loss = loss
+        self.validation_freqs = validation_freqs
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
+        self.encrypted_model_calculator_param = encrypted_mode_calculator_param
         self.predict_param = copy.deepcopy(predict_param)
-        self.random_param = copy.deepcopy(random_param)
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
         self.optimizer = self._parse_optimizer(self.optimizer)
         supported_config_type = ["keras"]
+
+        if self.task_type not in ["classification", "regression"]:
+            raise  ValueError("config_type should be classification or regression")
+
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
 
@@ -122,8 +105,17 @@ class HeteroNNParam(BaseParam):
         if self.early_stop != "diff":
             raise  ValueError("early stop should be diff in this version")
 
+        if self.validation_freqs is None:
+            pass
+        elif isinstance(self.validation_freqs, int):
+            if self.validation_freqs < 1:
+                raise ValueError("validation_freqs should be larger than 0 when it's integer")
+        elif not isinstance(self.validation_freqs, collections.Container):
+            raise ValueError("validation_freqs should be None or positive integer or container")
+
+        self.encrypt_param.check()
+        self.encrypted_model_calculator_param.check()
         self.predict_param.check()
-        self.random_param.check()
 
     @staticmethod
     def _parse_optimizer(opt):
