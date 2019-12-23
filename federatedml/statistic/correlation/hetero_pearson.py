@@ -50,13 +50,17 @@ class HeteroPearson(ModelBase):
         col_names = data_instance.schema["header"]
         if self.model_param.column_indexes == -1:
             self.names = col_names
+            name_set = set(self.names)
+            for name in self.model_param.column_names:
+                if name not in name_set:
+                    raise ValueError(f"name={name} not found in header")
             return data_instance.mapValues(lambda inst: inst.features)
 
         name_to_idx = {col_names[i]: i for i in range(len(col_names))}
         selected = set()
         for name in self.model_param.column_names:
             if name in name_to_idx:
-                selected.add([name_to_idx[name]])
+                selected.add(name_to_idx[name])
                 continue
             raise ValueError(f"{name} not found")
         for idx in self.model_param.column_indexes:
@@ -86,7 +90,7 @@ class HeteroPearson(ModelBase):
     def fit(self, data_instance):
         data = self._select_columns(data_instance)
         n, normed = self._standardized(data)
-        self.local_corr = table_dot(data, data)
+        self.local_corr = table_dot(normed, normed)
 
         with SPDZ("pearson") as spdz:
             source = [normed, self._other_party]

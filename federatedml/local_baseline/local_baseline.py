@@ -79,12 +79,10 @@ class LocalBaseline(ModelBase):
 
     def _get_param(self):
         header = self.header
-        LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
             return param_protobuf_obj
         result = self._get_model_param()
-        LOGGER.debug("in _get_param, result: {}".format(result))
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**result)
         return param_protobuf_obj
 
@@ -106,7 +104,6 @@ class LocalBaseline(ModelBase):
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
         predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1][1], {"0": x[1][0], "1": x[1][1]}])
-        LOGGER.debug("pred_result is {}".format(list(predict_result.collect())))
         return predict_result
 
     def fit(self, data_instances, validate_data=None):

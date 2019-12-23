@@ -14,6 +14,21 @@
 * Add manual filters in federated feature selection
 * Add automatic execution scripts for submitting and running tasks
 
+>FATE-FLOW
+* Add data management module which unifiedly record data table that generated in upload modules and modeling task with query and clean up CLI provided. 
+* Support registration center which make FATE-serving instances automatically discoverable and reduce deploy difficuties.
+* Restruct model release logic. FATE_Flow, the only bridge between offline and online architectures, can push model to FATE-Serving directly. Decouple FATE-Serving and Eggroll
+* Provide CLI to query data upload record
+* Upload and download data support progress statistics by line
+* Add some abnormal diagnosis tips
+* Support adding note information to job
+* Fix bugs with occasional stop job failures
+
+>Deploy
+* fix bugs in EggRoll startup script, add mysql, redis startup options.
+* Add mysql service to disable host name resolution configuration.
+* The version number of each module of the software packaging script is updated to the automatic acquisition mode.
+
 
 # Release 1.1.1
 ## Major Features and Improvements
