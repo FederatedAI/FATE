@@ -19,6 +19,9 @@
 import numpy as np
 
 from arch.api import session
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def to_ndarray(tensor_obj):
@@ -53,6 +56,8 @@ class HeteroNNTensor(object):
             self._ori_data = None
             self._partitions = tb_obj._partitions
             self._obj = tb_obj
+
+        LOGGER.debug("tensor's partition is {}".format(self._partitions))
 
     def __add__(self, other):
         if isinstance(other, HeteroNNTensor):
@@ -149,7 +154,8 @@ class HeteroNNTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.recursive_encrypt(val)))
+        return HeteroNNTensor(tb_obj=encrypt_tool.encrypt(self._obj))
+        # return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.encrypt(val)))
 
     def decrypt(self, decrypt_tool):
         return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))

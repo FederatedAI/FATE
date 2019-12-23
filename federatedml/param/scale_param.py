@@ -29,19 +29,20 @@ class ScaleParam(BaseParam):
 
     Parameters
     ----------
-        method : str, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
+        method : str, like scale in sklearn, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
                  Default None, which will do nothing for scale
 
-        mode: str, for method is "min_max_scale" and for "standard_scale" it is useless, the mode just support "normal" now, and will support "cap" mode in the furture.
-              for mode is "min_max_scale", the feat_upper and feat_lower is the normal value and for "cap", feat_upper and
+        mode: str, the mode support "normal" and "cap". for mode is "normal", the feat_upper and feat_lower is the normal value like "10" or "3.1" and for "cap", feat_upper and
               feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
 
-        area: str, for method is "min_max_scale" and for "standard_scale" it is useless. It supports "all" and "col". For "all",
-            feat_upper/feat_lower will act on all data column, so it will just be a value, and for "col", it just acts
-            on one column they corresponding to, so feat_lower/feat_upper will be a list, which size will equal to the number of columns
+        area: str, It supports "all" and "col". For "all", it will scale all data column, and for "col",
+        it just scale ths columns which parameter "cale_column_idx" corresponding to, so "scale_column_idx" will be a list, which including the column idx to be scaled.
+        Default "all"
 
-        feat_upper: int or float, used for "min_max_scale", the upper limit in the column. If the scaled value is larger than feat_upper, it will be set to feat_upper. Default None.
-        feat_lower: int or float, used for "min_max_scale", the lower limit in the column. If the scaled value is less than feat_lower, it will be set to feat_lower. Default None.
+        feat_upper: int or float, the upper limit in the column. If the scaled value is larger than feat_upper, it will be set to feat_upper. Default None.
+        feat_lower: int or float, the lower limit in the column. If the scaled value is less than feat_lower, it will be set to feat_lower. Default None.
+
+        scale_column_idx: list, while parameter "area" is "col", the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
 
         with_mean: bool, used for "standard_scale". Default False.
         with_std: bool, used for "standard_scale". Default False.
@@ -84,26 +85,6 @@ class ScaleParam(BaseParam):
         self.area = self.check_and_change_lower(self.area,
                                                 [consts.ALL, consts.COL],
                                                 descr)
-        # if self.area == consts.ALL:
-        #     if self.feat_lower is not None:
-        #         if type(self.feat_lower).__name__ not in ["float", "int"]:
-        #             raise ValueError(
-        #                 "scale param's feat_lower {} not supported, should be float or int type".format(
-        #                     self.feat_lower))
-        #
-        #     if self.feat_upper is not None:
-        #         if type(self.feat_upper).__name__ not in ["float", "int"]:
-        #             raise ValueError(
-        #                 "scale param's feat_upper {} not supported, should be float or int type".format(
-        #                     self.feat_upper))
-        #
-        # elif self.area == consts.COL:
-        #     descr = "scale param's feat_lower"
-        #     self.check_defined_type(self.feat_lower, descr, ['list'])
-        #
-        #     descr = "scale param's feat_upper"
-        #     self.check_defined_type(self.feat_upper, descr, ['list'])
-
 
         self.check_boolean(self.with_mean, "scale_param with_mean")
         self.check_boolean(self.with_std, "scale_param with_std")

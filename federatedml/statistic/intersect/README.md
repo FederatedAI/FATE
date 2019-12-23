@@ -30,12 +30,40 @@ Figure 2 multi-hosts Intersection</div>
 See in Figure 2, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get intersective IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
 guest will send common IDs to every host if necessary.
 
+#### Repeated ID intersection
+We support repeated id intersection for some applications. For this case, one should provide the mask id which map to the repeated ids.   
+For instances, in Guest, your data is
+> mask_id, id, value  
+alice_1, alice, 2  
+alice_2, alice, 3  
+bob, bob, 4
+
+In Host, you data is
+> id, value  
+alice, 5  
+bob, 6
+
+After intersecting, guest will get the intersection results:  
+>mask_id, value  
+alice_1, 2  
+alice_2, 3  
+bob, 4      
+
+And in host:
+> id, value  
+alice_1, 5  
+alice_2, 5  
+bob, 4
+
+This switch is "repeated_id_process" in the parameter of intersection, set it to true if you want to use this function.
+
 ### Quick Start
 You can refer to *example/intersect/README.md* to quickly start running intersection in standalone mode and cluster mode. 
 
 ### Feature
 Both RSA and RAW intersection supports the following features:
 1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located [Here](../../../doc/dsl_conf_setting_guide.md)
+2. Repeated ID intersection using ID expanding. 
 
 RSA intersection support the following extra features:
 1. RSA support cache to speed up.

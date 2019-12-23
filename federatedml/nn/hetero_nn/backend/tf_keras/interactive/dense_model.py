@@ -23,10 +23,19 @@ import uuid
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import gradients
+from tensorflow.python.keras.backend import set_session
 
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
+
+
+def _init_session():
+    from tensorflow.python.keras import backend
+    sess = backend.get_session()
+    tf.get_default_graph()
+    set_session(sess)
+    return sess
 
 
 class DenseModel(object):
@@ -38,7 +47,7 @@ class DenseModel(object):
         self.model = None
         self.lr = 1.0
         self.layer_config = None
-        self.sess = None
+        self.sess = _init_session()
         self.role = "host"
         self.activation_placeholder_name = "activation_placeholder" + str(uuid.uuid1())
         self.activation_gradient_func = None
@@ -59,7 +68,7 @@ class DenseModel(object):
     def set_sess(self, sess):
         self.sess = sess
 
-    def build(self, input_shape=None, layer_config=None, sess=None, model_builder=None, restore_stage=False):
+    def build(self, input_shape=None, layer_config=None, model_builder=None, restore_stage=False):
         if not input_shape:
             if self.role == "host":
                 raise ValueError("host input is empty!")
@@ -67,7 +76,6 @@ class DenseModel(object):
                 self.is_empty_model = True
                 return
 
-        self.sess = sess
         self.model_builder = model_builder
 
         self.layer_config = layer_config
@@ -76,8 +84,7 @@ class DenseModel(object):
                                    nn_define=layer_config,
                                    optimizer=SimpleNamespace(optimizer="SGD", kwargs={}),
                                    loss="keep_predict_loss",
-                                   metrics=None,
-                                   sess=sess)
+                                   metrics=None)
 
         dense_layer = self.model.get_layer_by_index(0)
         if not restore_stage:
@@ -89,7 +96,7 @@ class DenseModel(object):
 
     def export_model(self):
         if self.is_empty_model:
-            return ''
+            return ''.encode()
 
         layer_weights = [self.model_weight]
         if self.bias is not None:
@@ -103,7 +110,7 @@ class DenseModel(object):
             return
 
         LOGGER.debug("model_bytes is {}".format(model_bytes))
-        self.model = self.model.restore_model(model_bytes, self.sess)
+        self.model = self.model.restore_model(model_bytes)
         self._init_model_weight(self.model.get_layer_by_index(0), restore_stage=True)
 
     def _init_model_weight(self, dense_layer, restore_stage=False):
@@ -165,6 +172,9 @@ class GuestDenseModel(DenseModel):
         self.role = "guest"
 
     def forward_dense(self, x):
+        if self.empty:
+            return None
+
         self.input = x
 
         output = np.matmul(x, self.model_weight)
