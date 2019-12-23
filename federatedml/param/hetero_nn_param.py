@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 import copy
+import collections
 from types import SimpleNamespace
 
 from federatedml.param.base_param import BaseParam
@@ -45,7 +46,8 @@ class HeteroNNParam(BaseParam):
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param = EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(),
-                 cv_param=CrossValidationParam()):
+                 cv_param=CrossValidationParam(),
+                 validation_freqs=None):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -61,6 +63,7 @@ class HeteroNNParam(BaseParam):
         self.metrics = metrics
         self.optimizer = optimizer
         self.loss = loss
+        self.validation_freqs = validation_freqs
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
@@ -101,6 +104,14 @@ class HeteroNNParam(BaseParam):
 
         if self.early_stop != "diff":
             raise  ValueError("early stop should be diff in this version")
+
+        if self.validation_freqs is None:
+            pass
+        elif isinstance(self.validation_freqs, int):
+            if self.validation_freqs < 1:
+                raise ValueError("validation_freqs should be larger than 0 when it's integer")
+        elif not isinstance(self.validation_freqs, collections.Container):
+            raise ValueError("validation_freqs should be None or positive integer or container")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

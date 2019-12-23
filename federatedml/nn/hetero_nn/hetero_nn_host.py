@@ -71,6 +71,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
+        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
 
@@ -83,6 +84,9 @@ class HeteroNNHost(HeteroNNBase):
                 self.reset_flowid()
                 self.model.evaluate(self.data_x[batch_idx], cur_epoch, batch_idx)
                 self.recovery_flowid()
+
+            if validation_strategy:
+                validation_strategy.validate(self, cur_epoch)
 
             is_converge = self.transfer_variable.is_converge.get(idx=0,
                                                                  suffix=(cur_epoch,))
