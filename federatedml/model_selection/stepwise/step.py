@@ -60,7 +60,8 @@ class Step():
         if stepwise_param.role == consts.ARBITER:
             return self._arbiter_run(original_model)
         model = copy.deepcopy(original_model)
-        this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+       # this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+        this_flowid = 'train.' + str(self.n_step) + '.' + str(self.n_model)
         model.set_flowid(this_flowid)
         curr_train_data = train_data.map(lambda k, v: (k, self.slice_data_instance(v, feature_list)))
         model.fit(curr_train_data)
@@ -68,7 +69,8 @@ class Step():
 
     def _arbiter_run(self, original_model):
         model = copy.deepcopy(original_model)
-        this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+        # this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
+        this_flowid = 'train.' + str(self.n_step) + '.' + str(self.n_model)
         model.set_flowid(this_flowid)
         model.fit(None)
         if original_model.model_param.early_stop != 'loss':

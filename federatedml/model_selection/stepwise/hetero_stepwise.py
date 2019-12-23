@@ -142,14 +142,14 @@ class HeteroStepwise(object):
             yield added_list
 
     def _arbiter_run_step(self, model, host_list, guest_list, n_model):
-        # run this step
         dfe = self.get_dfe(model, host_list, guest_list)
+        current_suffix = (self.n_step, n_model)
 
         host_feature_list = self.transfer_variable.host_feature_list
         guest_feature_list = self.transfer_variable.guest_feature_list
 
-        host_feature_list.remote(host_list, idx=0)
-        guest_feature_list.remote(host_list, idx=0)
+        host_feature_list.remote(host_list, idx=0, suffix=current_suffix)
+        guest_feature_list.remote(host_list, idx=0, suffix=current_suffix)
 
         curr_step = Step()
         curr_step._set_step_info(self.step_direction, self.n_step, n_model)
@@ -172,8 +172,8 @@ class HeteroStepwise(object):
 
         while self.n_step < self.max_step:
             step_models = set()
+            n_model = 0
             if self.backward:
-                n_model = 0
                 self.step_direction = "backward"
                 host_lists = self.drop_one(host_to_drop)
                 guest_lists = self.drop_one(guest_to_drop)
@@ -191,18 +191,7 @@ class HeteroStepwise(object):
                     self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
                                                                            IC_val)
                     n_model += 1
-                    """
-                    dfe = self.get_dfe(model, host_list, guest_to_drop)
-                    host_feature_list.remote(host_list, idx=0)
-                    guest_feature_list.remote(guest_to_drop, idx=0)
-                    curr_step = Step()
-                    curr_step._set_step_info(self.step_direction, self.n_step, n_model)
-                    loss = curr_step.run(self.model_param, model, None, None, [])
-                    IC_computer = IC()
-                    IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
-                    # store model criteria value in dict for future references
-                    self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model, IC_val)
-                    """
+
                 for guest_list in guest_lists:
                     host_tup, guest_tup = tuple(host_to_drop), tuple(guest_list)
                     step_models.add((host_tup, guest_tup))
@@ -213,19 +202,19 @@ class HeteroStepwise(object):
                                                                            IC_val)
                     n_model += 1
             if self.forward:
-                n_model = 0
                 self.step_direction = "forward"
                 if self.n_step == 0 and len(self.models_trained) == 0:
                     # @TODO: initialize initial lists of one variable from each role
                     host_list = [0]
                     guest_list = [0]
-                
 
             # @TODO: select the best model based on criteria value, update to_drop & to_add lists
-            host_step_best, guest_step_best = self._get_step_best(step_models)
+            host_to_drop, guest_to_drop = self._get_step_best(step_models)
             self.n_step += 1
-        # @TODO: arbiter sends the best model lists to Host & Guest (use H & G lists transfer variable: guest/host feature_list)
-        # @TODO: make sure table should be manually destroyed
+
+        current_suffix = (-1, -1)
+        self.transfer_variable.host_feature_list.remote(host_to_drop, idx=0, suffix=current_suffix)
+        self.transfer_variable.guest_feature_list.remote(guest_to_drop, idx=0, suffix=current_suffix)
         self.models.destroy()
 
     def run(self, component_parameters, train_data, test_data, model):
@@ -243,14 +232,25 @@ class HeteroStepwise(object):
             n, j = train_data.count(), data_overview.get_features_shape(train_data)
             guest_data_info.remote((n, j), idx=0)
 
-        # @TODO: at each model, initialize step and call set_step_info, then step.run() to train model & predict
-        # @TODO: drop_one & add_one for each step
-        # @TODO use "map" to make new dTable
+        while self.n_step < self.max_step:
+            # @TODO: should Guest & Host beware of current step number? How?
+            n_model = 0
+            current_suffix = (self.n_step, n_model)
+            if self.role == consts.HOST:
+                feature_list = self.transfer_variable.host_feature_list.get(suffix=current_suffix)
+            else:
+                feature_list = self.transfer_variable.guest_feature_list.get(suffix=current_suffix)
+            curr_step = Step()
+            curr_step._set_step_info(self.step_direction, self.n_step, n_model)
+            curr_step.run(self.model_param, model, train_data, test_data, feature_list)
+            # @TODO: save which model info in eggroll table
+            self._put_value(current_suffix, model)
+            n_model += 1
+
+        # @TODO: receive best model list & look up info of that model
+        current_suffix = (-1, -1)
+        best_feature_list = self.transfer_variable.host_feature_list.get(suffix=current_suffix)
 
 
-
-
-
-
-
+        self.models.destroy()
 
