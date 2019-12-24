@@ -37,3 +37,40 @@ tasks配置需要执行的任务，目前支持训练任务和预测任务，格
   lr（任务名）     201912241035408383043（job_id）success（状态）<br>
   一个失败的任务结果示例<br>
   lr-predict      201912241039146131304failed
+
+Instructions of test tools
+=================
+1.Use 
+------
+Execute commands<br>
+cd examples/test<br>
+python run_test.py env.json result.txt <br>
+
+run_test.py  search and execute tasks defined by users <br>
+env.json environment configs based on users' running environment <br>
+result.txt an output file to query task execution results <br>
+
+2.Tips
+------
+The script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a "testsuite.json" suffix<br>
+An example task file is given in examples/test/temp_testsuite.json including a training and a prediction task. <br>
+
+3.Config files
+------
+env.json <br>
+Please set role id in "role", including host, guest, and arbiter <br>
+Please build the relationship between roles and ip in "ip_map",where -1 stands for local,and remote host will be given ip address <br>
+
+testsuite.json <br>
+You can submit data for many tasks once in "data",and each has a series of configs in a dict.<br>
+"role" parameter describes the location of the data defined in env.json.For example, "guest_0" represents the data located in the first guest defined in the guest list of env.json. <br>
+You can define your own tasks in "tasks".Training tasks and prediction tasks are supported now. There is some difference between them.<br>
+A prediction task needs to state the task name of the training task which it depends on. <br>
+Please name different tasks with different names,if two tasks share the same name,you the execute result of the letter defined. <br>
+
+4.Examples of results
+------
+a successful task<br>
+lr (task name) 201912241035408383043 (job_id) success (status) <br>
+a failed task<br>
+lr-predict 201912241039146131304 failed
