@@ -183,8 +183,8 @@ class TaskScheduler(object):
                                       initiator_role=job_initiator['role'],
                                       job_info=job_utils.update_job_progress(job_id=job_id, dag=dag,
                                                                              current_task_id=task_id).to_json())
+        TaskScheduler.stop(job_id=job_id, component_name=component_name)
         if task_success:
-            TaskScheduler.stop(job_id=job_id, component_name=component_name)
             next_components = dag.get_next_components(component_name)
             schedule_logger(job_id).info('job {} component {} next components is {}'.format(job_id, component_name,
                                                                                     [next_component.get_name() for
