@@ -1,4 +1,4 @@
-进入examples/test文件夹<br>
+#进入examples/test文件夹<br>
 执行命令python run_test.py env.json result.txt<br>
 run_test.py测试文件，搜寻并执行测试任务<br>
 env.json环境文件，指明所需要的环境配置，与conf文件类似<br>  
@@ -38,9 +38,9 @@ role字段注明角色，以及在环境配置文件中的对应关系，guest_0
 
     "lr": {
 
-      "conf": "../predicttask/conf.json",
+      "conf": "train_job_conf.json",
 
-      "dsl": "../predicttask/dsl.json",
+      "dsl": "train_job_dsl.json",
 
       "type": "train"
 
@@ -48,7 +48,7 @@ role字段注明角色，以及在环境配置文件中的对应关系，guest_0
 
     "lr-predict": {
 
-      "conf": "../predicttask/predict.json",
+      "conf": "predict_conf.json",
 
       "task": "lr",
 
