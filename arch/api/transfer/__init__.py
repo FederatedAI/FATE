@@ -90,7 +90,7 @@ class Rubbish(object):
             if tk in self._kv:
                 self._kv[tk][1].extend(k)
             else:
-                self._kv[k] = (t, k)
+                self._kv[tk] = (t, k)
         # # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
         # rubbish.empty()
         return self

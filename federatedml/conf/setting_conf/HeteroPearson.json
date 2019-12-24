@@ -6,7 +6,7 @@
     {
         "guest|host":
         {
-            "program": "pearson.py/Pearson"
+            "program": "hetero_pearson.py/HeteroPearson"
         }
     }
 }

@@ -40,44 +40,33 @@ def decrypt_tensor(tensor, private_key, otypes):
 
 
 def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator: Communicator, name):
-    """
-    a = a_1 + a_2 + ... + a_n
-    b = b_1 + b_2 + ... + b_n
-    c = c_1 + c_2 + ... + c_n
-    subject to
-        c_i = a_i * b_i
-            + sum([Dec(a_j * Enc(b_i) + r_{ij}) for j in range(n) if i != j])
-            - sum([r_{ji} for j in range(n) if j != i])
-        one has
-        c = a * b
-    """
     public_key, private_key = he_key_pair
     a = rand_tensor(q_field, a_tensor)
     b = rand_tensor(q_field, b_tensor)
 
     c = dot(a, b)
 
-    # tensor dot of local share of a with encrypted remote share of b
-    def _cross_terms(_b):
-        return dot(a, _b)
+    # broadcast encrypted a and encrypted b
+    if communicator.party_idx == 0:
+        encrypted_a = encrypt_tensor(a, public_key)
+        encrypted_b = encrypt_tensor(b, public_key)
+        communicator.remote_encrypted_tensor(encrypted=encrypted_a, tag=f"{name}_a")
+        communicator.remote_encrypted_tensor(encrypted=encrypted_b, tag=f"{name}_b")
 
-    # broadcast encrypted b
-    encrypted_b = encrypt_tensor(b, public_key)
-    communicator.remote_encrypted_tensor(encrypted=encrypted_b, tag=name)
-
-    # get encrypted b
-    parties, encrypted_b_list = communicator.get_encrypted_tensors(tag=name)
-    for _b, _p in zip(encrypted_b_list, parties):
-        cross = _cross_terms(_b)
-        r = urand_tensor(q_field, cross)
+    # get encrypted a and b
+    if communicator.party_idx == 1:
+        r = urand_tensor(q_field, c)
+        _p, encrypted_a_list = communicator.get_encrypted_tensors(tag=f"{name}_a")
+        _, encrypted_b_list = communicator.get_encrypted_tensors(tag=f"{name}_b")
+        cross = dot(encrypted_a_list[0], b) + dot(a, encrypted_b_list[0])
         cross += r
         c -= r
-        # remote cross terms
         communicator.remote_encrypted_cross_tensor(encrypted=cross, parties=_p, tag=name)
 
-    # get cross terms
-    crosses = communicator.get_encrypted_cross_tensors(tag=name)
-    for cross in crosses:
-        c += decrypt_tensor(cross, private_key, [object])
+    if communicator.party_idx == 0:
+        # get cross terms
+        crosses = communicator.get_encrypted_cross_tensors(tag=name)
+        for cross in crosses:
+            c += decrypt_tensor(cross, private_key, [object])
 
     return a, b, c % q_field

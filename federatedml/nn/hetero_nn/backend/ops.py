@@ -19,26 +19,9 @@
 import numpy as np
 
 from arch.api import session
+from arch.api.utils import log_utils
 
-
-def to_ndarray(tensor_obj):
-    buf = []
-    for key, value in tensor_obj.collect():
-        buf.append(value)
-
-    return np.array(buf, dtype=buf[0].dtype)
-
-
-def to_fate_hetero_nn_tensor(data, partitions=1):
-    if not isinstance(data, np.ndarray):
-        raise ValueError("Only support numpy'ndarray to hetero nn tensor")
-
-    return HeteroNNTensor(data, partitions)
-
-
-def mean(tensor_obj, axis=-1):
-    if axis == -1:
-        return tensor_obj.mean(axis=-1)
+LOGGER = log_utils.getLogger()
 
 
 class HeteroNNTensor(object):
@@ -53,6 +36,8 @@ class HeteroNNTensor(object):
             self._ori_data = None
             self._partitions = tb_obj._partitions
             self._obj = tb_obj
+
+        LOGGER.debug("tensor's partition is {}".format(self._partitions))
 
     def __add__(self, other):
         if isinstance(other, HeteroNNTensor):
@@ -149,7 +134,8 @@ class HeteroNNTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.recursive_encrypt(val)))
+        return HeteroNNTensor(tb_obj=encrypt_tool.encrypt(self._obj))
+        # return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.encrypt(val)))
 
     def decrypt(self, decrypt_tool):
         return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
