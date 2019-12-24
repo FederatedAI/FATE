@@ -19,73 +19,16 @@ examples/test/temp_testsuite.json<br>
 
 3.文件说明
 -----------
-{
-    "role": {
-      "guest": [
-        10000
-      ],
-      "host": [
-        10000
-      ],
-      "arbiter": [
-        10000
-      ]
-    },
-    "ip_map": {
-      "9999": "192.168.xxx.xxx",
-      "10000": -1
-    }
-  
-}
+env.json
 "role"指明角色id，包括host，guest，以及arbiter<br>
 "ip_map"构建角色与实际ip的映射，本地为-1，远程的主机为实际的ip地址<br>
 
 testsuite.json<br>
-  "data": [
-
-       {
-          "file": "examples/data/breast_b.csv",
-
-          "head": 1,
-
-          "partition": 10,
-
-          "table_name": "hetero_breast_b",
-
-          "namespace": "hetero_breast_guest",
-
-          "role": "guest_0"
-
-        }
- ]
 data字段支持多个任务，在列表中可以一次性上传多个以字典形式配置的数据。<br>
 其中role字段建立与env.json的联系，guest_0代表数据在env.json中配置的guest列表中的第一个主机上。<br>
-  "tasks": {
-
-    "lr": {
-
-      "conf": "train_job_conf.json",
-
-      "dsl": "train_job_dsl.json",
-
-      "type": "train"
-
-    },
-
-    "lr-predict": {
-
-      "conf": "predict_conf.json",
-
-      "task": "lr",
-
-      "type": "predict"
-
-    }
-
-  }
-  tasks配置需要执行的任务，目前支持训练任务和预测任务，格式略有区别。<br>
-  预测任务需要在task字段指明产生模型的训练任务名。<br>
-  请用不同的名字命名不同的任务，重复名字的任务，只会得到最后配置的任务结果。<br>
+tasks配置需要执行的任务，目前支持训练任务和预测任务，格式略有区别。<br>
+预测任务需要在task字段指明产生模型的训练任务名。<br>
+请用不同的名字命名不同的任务，重复名字的任务，只会得到最后配置的任务结果。<br>
   
  4.结果示例
  -----------
