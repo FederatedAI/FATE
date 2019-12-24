@@ -19,12 +19,12 @@
   ],
   "tasks": {
     "lr": {
-      "conf": "../predicttask/conf.json",
-      "dsl": "../predicttask/dsl.json",
+      "conf": "train_job_conf.json",
+      "dsl": "train_job_dsl.json",
       "type": "train"
     },
     "lr-predict": {
-      "conf": "../predicttask/predict.json",
+      "conf": "predict_conf.json",
       "task": "lr",
       "type": "predict"
     }
