@@ -363,7 +363,7 @@ def task_killed_detector(job_id, role, party_id, component_name):
             pid = f.read()
         while True:
             kill_process(int(pid), only_child=True)
-            sys.exit(1)
+            os.kill(int(pid), 9)
             kill_process(int(pid), only_child=False)
     threading.Timer(0.25, task_killed_detector, args=[job_id, role, party_id, component_name]).start()
 
