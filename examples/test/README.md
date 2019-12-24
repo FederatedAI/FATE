@@ -4,6 +4,7 @@
 1.使用方法
 ------
 进入examples/test文件夹<br>
+
 执行命令python run_test.py env.json result.txt<br>
 
 run_test.py执行测试文件，搜寻并执行测试任务<br>
@@ -19,7 +20,7 @@ examples/test/temp_testsuite.json<br>
 
 3.文件说明
 -----------
-env.json
+env.json<br>
 "role"指明角色id，包括host，guest，以及arbiter<br>
 "ip_map"构建角色与实际ip的映射，本地为-1，远程的主机为实际的ip地址<br>
 
