@@ -184,6 +184,7 @@ class TaskScheduler(object):
                                       job_info=job_utils.update_job_progress(job_id=job_id, dag=dag,
                                                                              current_task_id=task_id).to_json())
         if task_success:
+            TaskScheduler.stop(job_id=job_id, component_name=component_name)
             next_components = dag.get_next_components(component_name)
             schedule_logger(job_id).info('job {} component {} next components is {}'.format(job_id, component_name,
                                                                                     [next_component.get_name() for
@@ -216,7 +217,7 @@ class TaskScheduler(object):
                 end_status = JobStatus.TIMEOUT
             else:
                 end_status = JobStatus.FAILED
-            TaskScheduler.stop_job(job_id=job_id, end_status=end_status)
+            TaskScheduler.stop(job_id=job_id, end_status=end_status)
             return False
 
     @staticmethod
@@ -425,8 +426,8 @@ class TaskScheduler(object):
         schedule_logger(job_id, delete=True)
 
     @staticmethod
-    def stop_job(job_id, end_status=JobStatus.FAILED):
-        schedule_logger(job_id).info('get {} job {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id))
+    def stop(job_id, end_status=JobStatus.FAILED, component_name=''):
+        schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         cancel_success = False
         is_cancel = (end_status == JobStatus.CANCELED)
@@ -438,10 +439,11 @@ class TaskScheduler(object):
             initiator_party_id = initiator_job.f_party_id
 
             # set status first
-            TaskScheduler.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
-                                          initiator_role=initiator_job.f_role,
-                                          work_mode=job_work_mode,
-                                          job_info=job_info)
+            if not component_name:
+                TaskScheduler.sync_job_status(job_id=job_id, roles=roles, initiator_party_id=initiator_party_id,
+                                              initiator_role=initiator_job.f_role,
+                                              work_mode=job_work_mode,
+                                              job_info=job_info)
             for role, partys in roles.items():
                 for party_id in partys:
                     response = federated_api(job_id=job_id,
@@ -458,26 +460,29 @@ class TaskScheduler(object):
                                              src_role=initiator_job.f_role,
                                              json_body={'job_initiator': {'party_id': initiator_job.f_party_id,
                                                                           'role': initiator_job.f_role},
-                                                        'timeout': end_status == JobStatus.TIMEOUT
+                                                        'timeout': end_status == JobStatus.TIMEOUT,
+                                                        'component_name': component_name
                                                         },
                                              work_mode=job_work_mode)
                     if response['retcode'] == 0:
                         cancel_success = True
                         schedule_logger(job_id).info(
-                            'send {} {} {} job {} command successfully'.format(role, party_id, "cancel" if is_cancel else "kill", job_id))
+                            'send {} {} {} job {} {} command successfully'.format(role, party_id, "cancel" if is_cancel else "kill",
+                                                                                  job_id, component_name))
                         if is_cancel:
                             break
                     else:
                         schedule_logger(job_id).info(
-                            'send {} {} {} job {} command failed: {}'.format(role, party_id, "cancel" if is_cancel else "kill", job_id, response['retmsg']))
+                            'send {} {} {} job {} {} command failed: {}'.format(role, party_id, "cancel" if is_cancel else "kill",
+                                                                                job_id, component_name, response['retmsg']))
             if is_cancel:
                 return cancel_success
         else:
-            schedule_logger(job_id).info('send {} job {} command failed'.format("cancel" if is_cancel else "kill", job_id))
+            schedule_logger(job_id).info('send {} job {} {} command failed'.format("cancel" if is_cancel else "kill", job_id, component_name))
             raise Exception('can not found job: {}'.format(job_id))
 
     @staticmethod
     def job_handler(*args, **kwargs):
         job_id = args[0]
         schedule_logger(job_id).info('job {} running timeout, start stop job'.format(job_id))
-        TaskScheduler.stop_job(job_id, end_status=JobStatus.TIMEOUT)
+        TaskScheduler.stop(job_id, end_status=JobStatus.TIMEOUT)
