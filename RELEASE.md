@@ -1,33 +1,35 @@
-# Release 1.2
+# Release 1.2.0
 ## Major Features and Improvements
->FederatedML
+FederatedML
 * Add heterogeneous Deep Neural Network
-* Add SQN optimizer, available for Hetero-LR and Hetero-LinearRegression
-* Add Secret-Sharing Protocol SPDZ
-* Add heterogeneous Pearson Correlation Calculation
+* Add Secret-Sharing Protocol-SPDZ
+* Add heterogeneous feature correlation algorithm with SPDZ and support heterogeneous Pearson Correlation Calculation 
+* Add heterogeneous SQN optimizer, available for Hetero-LogisticRegression and Hetero-LinearRegression, which can reduce communication costs significantly 
 * Supports intersection for expanding duplicate IDs
 * Support multi-host in heterogeneous feature binning
-* Support multi-host in feature selection
-* Support using sklearn's logistic regression for effect comparison
-* Support direct IV calculation for categorical features
-* Support federated feature binning transform features to WOE value
-* Add manual filters in federated feature selection
-* Add automatic execution scripts for submitting and running tasks
+* Support multi-host in heterogeneous feature selection
+* Support IV calculation for categorical features in heterogeneous feature binning
+* Support transform raw feature value to WOE in heterogeneous feature binning 
+* Add manual filters in heterogeneous feature selection
+* Support performance comparison with sklearn's logistic regression
+* Automatic object/table clean in training iteration procedure in Federation
+* Improve transfer performance for large object
+* Add automatic scripts for submitting and running tasks
 
->FATE-FLOW
-* Add data management module which unifiedly record data table that generated in upload modules and modeling task with query and clean up CLI provided. 
-* Support registration center which make FATE-serving instances automatically discoverable and reduce deploy difficuties.
-* Restruct model release logic. FATE_Flow, the only bridge between offline and online architectures, can push model to FATE-Serving directly. Decouple FATE-Serving and Eggroll
+FATE-Flow
+* Add data management module for recording the uploaded data tables and the outputs of the model in the job running, and for querying and cleaning up CLI. 
+* Support registration center for simplifying communication configuration between FATEFlow and FATEServing
+* Restruct model release logic, FATE_Flow pushes model directly to FATE-Serving. Decouple FATE-Serving and Eggroll, and the offline and online architectures are connected only by FATE-Flow.
 * Provide CLI to query data upload record
 * Upload and download data support progress statistics by line
 * Add some abnormal diagnosis tips
 * Support adding note information to job
-* Fix bugs with occasional stop job failures
 
->Deploy
-* fix bugs in EggRoll startup script, add mysql, redis startup options.
-* Add mysql service to disable host name resolution configuration.
-* The version number of each module of the software packaging script is updated to the automatic acquisition mode.
+>Native Deploy
+* Fix bugs in EggRoll startup script, add mysql, redis startup options.
+* Disable host name resolution configuration for mysql service.
+* The version number of each module of the software packaging script is updated using the automatic acquisition mode.
+
 
 
 # Release 1.1.1
