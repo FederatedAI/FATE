@@ -189,6 +189,7 @@ class HeteroNNGuest(HeteroNNBase):
         model_param = HeteroNNParam()
         model_param.iter_epoch = self.iter_epoch
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
+        model_param.num_label = self.num_label
 
         for loss in self.history_loss:
             model_param.history_loss.append(loss)
@@ -258,3 +259,4 @@ class HeteroNNGuest(HeteroNNBase):
 
     def _restore_model_param(self, param):
         super(HeteroNNGuest, self)._restore_model_param(param)
+        self.num_label = param.num_label

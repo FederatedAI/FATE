@@ -96,7 +96,8 @@ Corresponding module name: HeteroLR
 Data Input: Input DTable.\
 Model Output: Logistic Regression model.
 
-### 10. Local Baseline
+
+### 10. Local-Baseline
 Wrapper that runs sklearn Logistic Regression model with local data.
 
 Corresponding module name: LocalBaseline

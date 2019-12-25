@@ -24,26 +24,6 @@ from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
-def to_ndarray(tensor_obj):
-    buf = []
-    for key, value in tensor_obj.collect():
-        buf.append(value)
-
-    return np.array(buf, dtype=buf[0].dtype)
-
-
-def to_fate_hetero_nn_tensor(data, partitions=1):
-    if not isinstance(data, np.ndarray):
-        raise ValueError("Only support numpy'ndarray to hetero nn tensor")
-
-    return HeteroNNTensor(data, partitions)
-
-
-def mean(tensor_obj, axis=-1):
-    if axis == -1:
-        return tensor_obj.mean(axis=-1)
-
-
 class HeteroNNTensor(object):
     def __init__(self, ori_data=None, tb_obj=None, partitions=1):
         if ori_data is not None:

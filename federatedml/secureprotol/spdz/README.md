@@ -28,7 +28,7 @@ with SPDZ() as spdz:
     ...
 ```
 #### create tenser
-We currently provide two implement of fixed point tensor:
+We currently provide two implementations of fixed point tensor:
 
 1. one is based on numpy's array for non-distributed use:
     ```python
@@ -81,7 +81,7 @@ x.get() # array([[1, 2, 3],[4, 5, 6]])
 y.get() # array([[3, 2, 1],[6, 5, 4]])
 ```
 
-#### add/miue
+#### add/minus
 You can add or subtract tensors
 
 ```python

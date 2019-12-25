@@ -43,5 +43,6 @@ message HeteroNNParam {
     repeated double history_loss = 3;
     bool is_converged = 4;
     repeated string header = 5;
+	int32 num_label = 6;
 }
 
