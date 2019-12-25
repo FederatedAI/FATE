@@ -154,5 +154,11 @@ Output the model evaluation metrics for user.
 - Corresponding module name: Evaluation
 
 
+#### 17. [Hetero Pearson](./statistic/correlation/README.md)
+Calculate hetero correlation of features from different parties.
+
+- Corresponding module name: HeteroPearson
+
+
 
 More available algorithms are coming soon.
