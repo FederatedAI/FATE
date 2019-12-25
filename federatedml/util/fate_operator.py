@@ -18,10 +18,10 @@ from collections import Iterable
 
 import numpy as np
 
-from federatedml.feature.instance import Instance
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from arch.api.utils import log_utils
+from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 
 LOGGER = log_utils.getLogger()
 
@@ -61,15 +61,17 @@ def dot(value, w):
 
     return res
 
+
 def vec_dot(x, w):
     new_data = 0
     if isinstance(x, SparseVector):
         for idx, v in x.get_all_data():
-            if idx < len(w):
-                new_data += v * w[idx]
+            # if idx < len(w):
+            new_data += v * w[idx]
     else:
         new_data = np.dot(x, w)
     return new_data
+
 
 def reduce_add(x, y):
     if x is None and y is None:
