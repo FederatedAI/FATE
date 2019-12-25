@@ -17,8 +17,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统                |
 | ------ | ------------- | ----------- | ----------------------- |
-| PartyA | VM_0_1_centos | 1.2.0.168.0.1 | CentOS 7.2/Ubuntu 16.04 |
-| PartyB | VM_0_2_centos | 1.2.0.168.0.2 | CentOS 7.2/Ubuntu 16.04 |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 |
 
 3.基础环境配置
 ==============
@@ -28,28 +28,28 @@
 
 **1）修改主机名**
 
-**在1.2.0.168.0.1 root用户下执行：**
+**在192.168.0.1 root用户下执行：**
 
 hostnamectl set-hostname VM_0_1_centos
 
-**在1.2.0.168.0.2 root用户下执行：**
+**在192.168.0.2 root用户下执行：**
 
 hostnamectl set-hostname VM_0_2_centos
 
 **2）加入主机映射**
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行：**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
 vim /etc/hosts
 
-1.2.0.168.0.1 VM_0_1_centos
+192.168.0.1 VM_0_1_centos
 
-1.2.0.168.0.2 VM_0_2_centos
+192.168.0.2 VM_0_2_centos
 
 3.2 关闭selinux(可选)
 ---------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行：**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
 sed -i '/\^SELINUX/s/=.\*/=disabled/' /etc/selinux/config
 
@@ -58,7 +58,7 @@ setenforce 0
 3.3 修改Linux最大打开文件数
 ---------------------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行：**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
 vim /etc/security/limits.conf
 
@@ -69,7 +69,7 @@ vim /etc/security/limits.conf
 3.4 关闭防火墙(可选)
 --------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
 如果是Centos系统：
 
@@ -90,7 +90,7 @@ ufw status
 
 **1）创建用户**
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
 ```
 groupadd -g 6000 apps
@@ -100,7 +100,7 @@ passwd app
 
 **2）配置sudo**
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）root用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
 vim /etc/sudoers.d/app
 
@@ -112,7 +112,7 @@ Defaults !env_reset
 
 **3）配置ssh无密登录**
 
-**a. 在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行**
+**a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 su app
 
@@ -124,28 +124,28 @@ chmod 600 \~/.ssh/authorized_keys
 
 **b.合并id_rsa_pub文件**
 
-拷贝1.2.0.168.0.1的authorized_keys 到1.2.0.168.0.2
-\~/.ssh目录下,追加到1.2.0.168.0.2的id_rsa.pub到authorized_keys，然后再拷贝到1.2.0.168.0.1
+拷贝192.168.0.1的authorized_keys 到192.168.0.2
+\~/.ssh目录下,追加到192.168.0.2的id_rsa.pub到authorized_keys，然后再拷贝到192.168.0.1
 
-**在1.2.0.168.0.1 app用户下执行**
+**在192.168.0.1 app用户下执行**
 
-scp \~/.ssh/authorized_keys app\@1.2.0.168.0.2:/home/app/.ssh
+scp \~/.ssh/authorized_keys app\@192.168.0.2:/home/app/.ssh
 
 输入密码
 
-**在1.2.0.168.0.2 app用户下执行**
+**在192.168.0.2 app用户下执行**
 
 cat \~/.ssh/id_rsa.pub \>\> /home/app/.ssh/authorized_keys
 
-scp \~/.ssh/authorized_keys app\@1.2.0.168.0.1:/home/app/.ssh
+scp \~/.ssh/authorized_keys app\@192.168.0.1:/home/app/.ssh
 
 覆盖之前的文件
 
-**c. 在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行ssh 测试**
+**c. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行ssh 测试**
 
-ssh app\@1.2.0.168.0.1
+ssh app\@192.168.0.1
 
-ssh app\@1.2.0.168.0.2
+ssh app\@192.168.0.2
 
 4.项目部署
 ==========
@@ -155,7 +155,7 @@ ssh app\@1.2.0.168.0.2
 4.1 获取项目
 ------------
 
-在目标服务器（1.2.0.168.0.1 具备外网环境）app用户下执行
+在目标服务器（192.168.0.1 具备外网环境）app用户下执行
 
 进入执行节点的/data/projects/目录，执行：
 
@@ -168,7 +168,7 @@ tar -xf FATE_install_v1.2.0.tar.gz
 4.2 配置文件修改和示例
 ----------------
 
-**在目标服务器（1.2.0.168.0.1）app用户下执行**
+**在目标服务器（192.168.0.1）app用户下执行**
 
 进入到FATE目录下的FATE/cluster-deploy/scripts目录下，修改配置文件multinode_cluster_configurations.sh.
 
@@ -183,15 +183,15 @@ tar -xf FATE_install_v1.2.0.tar.gz
 | db_auth                      | metaservice Jdbc连接数据库配置               | metaservice服务jdbc配置，填写数据库用户名和密码（此用户需要具有create database权限） | 两个party配置相同。                                          |
 | redis_password               | Redis密码                                    | 默认 : fate_dev                                              | 使用默认值，两个party配置相同。                              |
 | cxx_compile_flag             | 用于Storage-Service-cxx节点complie方法的切换 | 默认：false                                                  | 如果服务器系统不满足Storage-Service-cxx节点的编译要求，请尝试使用true。 |
-| a_mysql /b_mysql             | 部署mysql主机                                | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_redis/b_redis              | 部署redis主机                                | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_fateboard /b_fateboard     | 部署fateboard模块主机                        | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_fate_flow /b_fate_flow     | 部署fate_flow模块主机                        | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_federation /b_federation   | 部署federation模块主机                       | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_proxy /b_proxy             | 部署proxy模块主机                            | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_roll /b_roll               | 部署roll模块主机                             | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_metaservice /b_metaservice | 部署metaservice模块主机                      | 主机IP，只能填写一个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
-| a_egg /b_egg                 | 部署egg模块主机                              | 主机IP，可以填写多个IP                                       | 1.2.0.168.0.1/1.2.0.168.0.2                                      |
+| a_mysql /b_mysql             | 部署mysql主机                                | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_redis/b_redis              | 部署redis主机                                | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_fateboard /b_fateboard     | 部署fateboard模块主机                        | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_fate_flow /b_fate_flow     | 部署fate_flow模块主机                        | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_federation /b_federation   | 部署federation模块主机                       | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_proxy /b_proxy             | 部署proxy模块主机                            | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_roll /b_roll               | 部署roll模块主机                             | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_metaservice /b_metaservice | 部署metaservice模块主机                      | 主机IP，只能填写一个IP                                       | 192.168.0.1/192.168.0.2                                      |
+| a_egg /b_egg                 | 部署egg模块主机                              | 主机IP，可以填写多个IP                                       | 192.168.0.1/192.168.0.2                                      |
 
 **1）两台主机partyA+partyB同时部署****
 
@@ -210,29 +210,29 @@ cxx_compile_flag=false
 
 *services for a
 
-a_mysql=1.2.0.168.0.1
-a_redis=1.2.0.168.0.1
-a_fate_flow=1.2.0.168.0.1
-a_fateboard=1.2.0.168.0.1
-a_federation=1.2.0.168.0.1
-a_proxy=1.2.0.168.0.1
-a_roll=1.2.0.168.0.1
-a_metaservice=1.2.0.168.0.1
-a_egg=(1.2.0.168.0.1)
-备注：如果是多台主机，此处egg可配置为a_egg=(1.2.0.168.0.1 1.2.0.168.0.3 1.2.0.168.0.4)
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.1 192.168.0.3 192.168.0.4)
 
 *services for b
 
-b_mysql=1.2.0.168.0.2
-b_redis=1.2.0.168.0.2
-b_fate_flow=1.2.0.168.0.2
-b_fateboard=1.2.0.168.0.2
-b_federation=1.2.0.168.0.2
-b_proxy=1.2.0.168.0.2
-b_roll=1.2.0.168.0.2
-b_metaservice=1.2.0.168.0.2
-b_egg=(1.2.0.168.0.2)
-备注：如果是多台主机，此处egg可配置为a_egg=(1.2.0.168.0.2 1.2.0.168.0.5 1.2.0.168.0.6)
+b_mysql=192.168.0.2
+b_redis=192.168.0.2
+b_fate_flow=192.168.0.2
+b_fateboard=192.168.0.2
+b_federation=192.168.0.2
+b_proxy=192.168.0.2
+b_roll=192.168.0.2
+b_metaservice=192.168.0.2
+b_egg=(192.168.0.2)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.2 192.168.0.5 192.168.0.6)
 ```
 
 **2）只部署一个party**
@@ -250,16 +250,16 @@ cxx_compile_flag=false
 
 *services for a
 
-a_mysql=1.2.0.168.0.1
-a_redis=1.2.0.168.0.1
-a_fate_flow=1.2.0.168.0.1
-a_fateboard=1.2.0.168.0.1
-a_federation=1.2.0.168.0.1
-a_proxy=1.2.0.168.0.1
-a_roll=1.2.0.168.0.1
-a_metaservice=1.2.0.168.0.1
-a_egg=(1.2.0.168.0.1)
-备注：如果是多台主机，此处egg可配置为a_egg=(1.2.0.168.0.1 1.2.0.168.0.2 1.2.0.168.0.3)
+a_mysql=192.168.0.1
+a_redis=192.168.0.1
+a_fate_flow=192.168.0.1
+a_fateboard=192.168.0.1
+a_federation=192.168.0.1
+a_proxy=192.168.0.1
+a_roll=192.168.0.1
+a_metaservice=192.168.0.1
+a_egg=(192.168.0.1)
+备注：如果是多台主机，此处egg可配置为a_egg=(192.168.0.1 192.168.0.2 192.168.0.3)
 ```
 
 4.3 部署
@@ -294,7 +294,7 @@ bash deploy_cluster_multinode.sh binary fate_flow
 6.1 启动服务
 ------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 2) 每个节点是根据参数设定来部署模块，所以没设置则此模块不会部署和启动，启动的时候会提示此模块不能启动，请忽略。
 
@@ -319,7 +319,7 @@ sh services.sh proxy start
 6.2 检查服务状态
 ----------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 查看各个服务进程是否启动成功：
 
@@ -342,7 +342,7 @@ sh services.sh proxy status
 6.3 关机服务
 ------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 若要关闭服务则使用：
 
@@ -368,7 +368,7 @@ sh services.sh proxy stop
 7.1 单机测试
 ------------
 
-**在目标服务器（1.2.0.168.0.1 1.2.0.168.0.2）app用户下执行**
+**在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 ```
 source /data/projects/fate/init_env.sh
@@ -383,7 +383,7 @@ sh ./federatedml/test/run_test.sh
 
 此测试您需要设置3个参数：guest_partyid，host_partyid，work_mode。
 
-此测试只需在guest方egg节点执行，选定9999为guest方，在1.2.0.168.0.2上执行：
+此测试只需在guest方egg节点执行，选定9999为guest方，在192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh
@@ -402,7 +402,7 @@ python run_toy_example.py 9999 10000 1
 
 该文件在/data/projects/fate/python/examples/min_test_task/目录下。
 
-**在Host节点1.2.0.168.0.1上运行：**
+**在Host节点192.168.0.1上运行：**
 
 ```
 source /data/projects/fate/init_env.sh
@@ -412,7 +412,7 @@ sh run.sh host fast
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
-**在Guest节点1.2.0.168.0.2上运行：**
+**在Guest节点192.168.0.2上运行：**
 
 ```
 source /data/projects/fate/init_env.sh
@@ -429,4 +429,4 @@ sh run.sh guest fast ${host_table} ${host_namespace}
 7.4. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://1.2.0.168.0.1:8080 和 http://1.2.0.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。

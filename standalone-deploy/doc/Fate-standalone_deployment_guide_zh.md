@@ -16,7 +16,7 @@
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.2.04.0)，docker建议版本为18.09，docker-compose建议版本为1.2.04.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
 3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
@@ -88,7 +88,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.2.04.0)，docker建议版本为18.09，docker-compose建议版本为1.2.04.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
 3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
