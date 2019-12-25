@@ -44,6 +44,7 @@ status() {
 }
 
 start() {
+    sleep 4
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir

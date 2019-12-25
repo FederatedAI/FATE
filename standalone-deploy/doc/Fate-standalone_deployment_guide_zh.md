@@ -16,7 +16,7 @@
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.2.04.0)，docker建议版本为18.09，docker-compose建议版本为1.2.04.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
 3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
@@ -27,11 +27,11 @@
 
 ```
 #获取安装包
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.2.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.2.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.2.0.tar.gz
+FATE $tar -xvf docker_standalone-fate-1.2.0.tar.gz
 
 #执行部署
-FATE $ cd docker_standalone-fate-1.2
+FATE $ cd docker_standalone-fate-1.2.0
 FATE $ bash install_standalone_docker.sh
 
 #验证和测试
@@ -60,21 +60,21 @@ FATE $ bash ./federatedml/test/run_test.sh
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.2.tar.gz
-   tar -xvf  standalone-fate-master-1.2.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.2.0.tar.gz
+   tar -xvf  standalone-fate-master-1.2.0.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
 
    ```
-   cd standalone-fate-master-1.2
+   cd standalone-fate-master-1.2.0
    source init.sh init
    ```
 
 4. 执行测试.
 
    ```
-   cd standalone-fate-master-1.2
+   cd standalone-fate-master-1.2.0
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -88,7 +88,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 
-2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.2.04.0)，docker建议版本为18.09，docker-compose建议版本为1.2.04.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
 3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
 
