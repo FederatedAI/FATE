@@ -288,9 +288,8 @@
 
 #### /v1/model/load
 - request structure
-    * initiator: Optional,Object: job initiator information
+    * initiator: Required,Object: job initiator information
     * role: Required,Object: role information
-    * gen_table_info: Optional,Boolean: tag table information   
     * model: Requied,Object: model information
 - response structure
     * job_id:job id, String
@@ -319,6 +318,17 @@
     * data: version history,Array
     
     
+    
+#### /v1/model/transfer
+- request structure
+    * name: Requied,String: data table name
+    * namespace: Requied,String: data table namespace
+- response structure
+    * retcode: return code, Integer
+    * retmsg: return code description, String
+    * data: model data, Object
+    
+ 
     
 ## Table
 
