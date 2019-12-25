@@ -60,7 +60,7 @@
       "intersect_0": {
           "intersect_method": "raw",
           "sync_intersect_ids": true,
-          "join_role": "guest",
+          "join_role": "host",
           "with_encode": true,
           "only_output_key": true,
           "repeated_id_process": false,
