@@ -107,8 +107,12 @@ class JobController(object):
                {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
 
     @staticmethod
-    def kill_job(job_id, role, party_id, job_initiator, timeout=False):
-        schedule_logger(job_id).info('{} {} get kill job {} command'.format(role, party_id, job_id))
+    def kill_job(job_id, role, party_id, job_initiator, timeout=False, component_name=''):
+        schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
+        if component_name:
+            tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
+            job_utils.stop_executor(tasks[0])
+            return
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False
