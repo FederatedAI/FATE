@@ -73,7 +73,7 @@ def run_testsuite(submitter, env, file_name, err_name):
                 check("task", task_config)
                 pre_task = task_config["task"]
                 temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task])
-                result[task_name] = f"{temp['output']['jobId']}\t{temp['status']}"
+                result[task_name] = f"{temp['job_id']}\t{temp['status']}"
         except Exception as e:
             result[task_name] = "\tsubmit_fail"
             with open(f"{err_name}.err", "a") as f:
