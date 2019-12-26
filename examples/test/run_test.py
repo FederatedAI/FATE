@@ -4,11 +4,11 @@ from examples.test_example import submit
 import argparse
 
 
-def search_task(file_dir):
+def search_task(file_dir,suffix="testsuite.json"):
     task = []
     for root, dirs, files in os.walk(file_dir):
         for li in files:
-            if li.endswith("testsuite.json"):
+            if li.endswith(suffix):
                 path = os.path.join(root, li)
                 print(path)
                 task.append(path)
@@ -47,6 +47,7 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("env_file", type=str, help="please input your env config file")
     arg_parser.add_argument("result_file", type=str, help="please input the filename to receive results")
+    arg_parser.add_argument("--name", type=str, help="please input the task name")
     args = arg_parser.parse_args()
     env_file = args.env_file
     result_file = args.result_file
@@ -60,8 +61,11 @@ if __name__ == "__main__":
     if env_file:
         with open(env_file) as e:
             env = json.loads(e.read())
-
-    task = search_task(os.path.join(fate_home, "federatedml-1.x-examples"))
+            
+    if args.name:
+        task = search_task(os.path.join(fate_home, "federatedml-1.x-examples"),suffix=args.name)
+    else:
+        task = search_task(os.path.join(fate_home, "federatedml-1.x-examples"))
 
     for task_file in task:
         if task_file:
