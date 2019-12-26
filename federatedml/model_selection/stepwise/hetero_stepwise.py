@@ -22,12 +22,13 @@ from federatedml.model_selection.stepwise.step import Step
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
 from federatedml.util import consts
 
+import copy
 import itertools
-
 import numpy as np
 
 LOGGER = log_utils.getLogger()
 session.init("stepwise")
+
 
 class ModelInfo(object):
     def __init__(self, step_direction, n_step, n_model, score):
@@ -35,15 +36,16 @@ class ModelInfo(object):
         self.n_step = n_step
         self.n_model = n_model
         self.step_direction = step_direction
-        
+
     def get_key(self):
         """
         get key to obtain model info from models table
         """
-        return "{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
+        return (self.step_direction, self.n_step, self.n_model)
 
     def get_score(self):
         return self.score 
+
 
 class HeteroStepwise(object):
     def __init__(self):
@@ -56,6 +58,8 @@ class HeteroStepwise(object):
         self.n_step = 0
         self.has_test = False
         self.n_count = 0
+        self.stop_stepwise = False
+        self.models = None
 
     def _init_model(self, param):
         self.model_param = param
@@ -69,7 +73,7 @@ class HeteroStepwise(object):
         self.score = param.score
         self.transfer_variable = StepwiseTransferVariable()
         self._get_direction()
-        self._make_table()
+        self.make_table()
         # only used by Arbiter to fast filter model
         self.models_trained = {}
 
@@ -82,11 +86,9 @@ class HeteroStepwise(object):
             self.forward = True
             self.backward = True
         else:
-            LOGGER.warning("Wrong stepwise direction given.")
-            return
+            raise ValueError("Wrong stepwise direction given.")
 
-    def _make_table(self):
-        # @TODO: decide if should use random number for name & namespace
+    def make_table(self):
         self.models = session.table("stepwise", self.role)
 
     def _put_value(self, key, value):
@@ -97,11 +99,11 @@ class HeteroStepwise(object):
 
     def _get_value(self, key):
         """
-        wrapper to get value of a given key from models table 
+        wrapper to get value of a given key from models table
         """
         return self.models.get(key)
 
-    def _get_k(self):
+    def _set_k(self):
         """
         Helper function only called by Arbiter, get the penalty coefficient for AIC/BIC calculation.
         """
@@ -112,13 +114,21 @@ class HeteroStepwise(object):
         else:
             raise ValueError("wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score))
 
-    def get_dfe(self, model, list1,list2):
+    @staticmethod
+    def get_dfe_list(model, list1, list2):
         dfe = len(list1) + len(list2)
         if model.fit_intercept:
             dfe += 1
         return dfe
 
-    def _get_step_best(self, step_models):
+    @staticmethod
+    def get_dfe(model, mask1, mask2):
+        dfe = sum(mask1) + sum(mask2)
+        if model.fit_intercept:
+            dfe += 1
+        return dfe
+
+    def get_step_best(self, step_models):
         best_score = -1
         best_model = ()
         for model in step_models:
@@ -128,129 +138,358 @@ class HeteroStepwise(object):
                 best_score = score
                 best_model = model
         return best_model
-           
-    def drop_one(self, to_drop):
-       for i in range(-1, len(to_drop)):
-            dropped_list = list(to_drop)
-            if i > -1:
-                del dropped_list[i]
-            yield dropped_list
+    '''
+    # @TODO: improve efficiency
+    def drop_one_list(self, host_list, guest_list):
+        host_lists, guest_lists = [], []
+        for i in range(len(host_list)):
+            new_host_list = list(host_list)
+            del new_host_list[i]
+            if len(new_host_list) == 0:
+                break
+            host_lists.append(new_host_list)
+            guest_lists.append(guest_list)
+        for i in range(len(host_list)):
+            new_guest_list = list(guest_list)
+            del new_guest_list[i]
+            if len(new_guest_list) == 0:
+                break
+            guest_lists.append(new_guest_list)
+            host_lists.append(host_list)
+        return host_lists, guest_lists
 
-    def add_one(self, to_add, original_list):
-       for i in range(len(to_add)):
-            added_list = original_list.append(to_add[i]).sort()
-            yield added_list
+    def add_one_list(self, host_list, guest_list, host_to_add, guest_to_add):
+        host_lists, guest_lists = [], []
+        # initial step
+        if len(host_list) == 0 and len(guest_list) == 0:
+            p = list(itertools.product(host_to_add, guest_to_add))
+            host_lists = [[x[0]] for x in p]
+            guest_lists = [[x[1]] for x in p]
+            return host_lists, guest_lists
+        for feature in host_to_add:
+            new_host_list = list(host_list)
+            new_host_list.append(feature)
+            new_host_list.sort()
+            host_lists.append(new_host_list)
+            guest_lists.append(guest_list)
+        for feature in guest_to_add:
+            new_guest_list = list(guest_list)
+            new_guest_list.append(feature)
+            new_guest_list.sort()
+            guest_lists.append(new_guest_list)
+            host_lists.append(host_list)
+        return host_lists, guest_lists
+    '''
+    def drop_one(self, host_mask, guest_mask):
+        host_masks, guest_masks = [], []
+        for i in np.where(host_mask > 0)[0]:
+            new_host_mask = np.copy(host_mask)
+            new_host_mask[i] = 0
+            if sum(new_host_mask) == 0:
+                break
+            host_masks.append(new_host_mask)
+            guest_masks.append(np.copy(guest_mask))
+        for i in np.where(guest_mask > 0)[0]:
+            new_guest_mask = np.copy(guest_mask)
+            new_guest_mask[i] = 0
+            if sum(new_guest_mask) == 0:
+                break
+            guest_masks.append(new_guest_mask)
+            host_masks.append(np.copy(host_mask))
+        return host_masks, guest_masks
 
-    def _arbiter_run_step(self, model, host_list, guest_list, n_model):
-        dfe = self.get_dfe(model, host_list, guest_list)
-        current_suffix = (self.n_step, n_model)
+    def add_one(self, host_mask, guest_mask):
+        host_masks, guest_masks = [], []
+        # initial step
+        if sum(host_mask) == 0 and sum(guest_mask) == 0:
+            host_masks = np.eye(host_mask.size, host_mask.size)
+            host_masks = np.repeat(host_masks, guest_mask.size, axis=0)
+            guest_masks = np.eye(guest_mask.size, guest_mask.size)
+            guest_masks = np.tile(guest_masks, (host_mask.size, 1))
+            return list(host_masks), list(guest_masks)
 
-        host_feature_list = self.transfer_variable.host_feature_list
-        guest_feature_list = self.transfer_variable.guest_feature_list
+        for i in np.where(host_mask < 1):
+            new_host_mask = np.copy(host_mask)
+            new_host_mask[i] = 1
+            host_masks.append(new_host_mask)
+            guest_masks.append(np.copy(guest_mask))
+        for i in np.where(guest_mask < 1)[0]:
+            new_guest_mask = np.copy(guest_mask)
+            new_guest_mask[i] = 0
+            guest_masks.append(new_guest_mask)
+            host_masks.append(np.copy(host_mask))
+        return host_masks, guest_masks
+    '''
+    def filter_feature_lists(self, host_lists, guest_lists):
+        filtered_host_lists, filtered_guest_lists = map(list, zip(*([h, g] for h, g in zip(host_lists, guest_lists)
+                                                                    if (tuple(h), tuple(g)) not in self.models_trained)))
+        return filtered_host_lists, filtered_guest_lists
 
-        host_feature_list.remote(host_list, idx=0, suffix=current_suffix)
-        guest_feature_list.remote(host_list, idx=0, suffix=current_suffix)
+    def record_step_models_list(self, step_models, host_lists, guest_lists):
+        for model_list in list((tuple(h), tuple(g)) for h, g in zip(host_lists, guest_lists)):
+            step_models.add(model_list)
+    '''
 
-        curr_step = Step()
-        curr_step._set_step_info(self.step_direction, self.n_step, n_model)
-        loss = curr_step.run(self.model_param, model, None, None, [])
+    def filter_feature_masks(self, host_masks, guest_masks):
+        filtered_host_masks, filtered_guest_masks = map(list, zip(*((h, g) for h, g in zip(host_masks, guest_masks)
+                                                                    if (tuple(h), tuple(g)) not in self.models_trained)))
+        return filtered_host_masks, filtered_guest_masks
+
+    def record_step_models(self, step_models, host_masks, guest_masks):
+        for model_mask in list((tuple(h), tuple(g)) for h, g in zip(host_masks, guest_masks)):
+            step_models.add(model_mask)
+
+    def get_new_to_add(self, new_to_drop, k_count):
+        new_to_add = list(filter(lambda x: x not in range(k_count), new_to_drop))
+        return new_to_add
+    '''
+    def check_best_list(self, new_host_to_drop, new_guest_to_drop, host_to_drop, guest_to_drop, j_host, j_guest):
+        # if model not updated
+        if new_host_to_drop == host_to_drop and new_guest_to_drop == guest_to_drop:
+            return True
+        # if full model is the best
+        elif len(new_guest_to_drop) == j_host and len(new_guest_to_drop) == j_guest:
+            return True
+        return False
+    '''
+    def check_best(self, new_host_mask, new_guest_mask, host_mask, guest_mask, j_host, j_guest):
+        # if model not updated
+        if new_host_mask == host_mask and new_guest_mask == guest_mask:
+            return True
+        # if full model is the best
+        elif sum(new_guest_mask) == j_host and sum(new_guest_mask) == j_guest:
+            return True
+        return False
+
+    def _arbiter_run_step(self, model, host_mask, guest_mask, n_model):
+        dfe = self.get_dfe(model, host_mask, guest_mask)
+        current_key = (self.step_direction, self.n_step, n_model)
+        current_step = Step()
+        current_step.set_step_info(current_key)
+        trained_model = current_step.run(model, None, None, None)
+        # get final loss from loss history for criteria calculation
+        loss = trained_model.loss_history[-1]
         IC_computer = IC()
-        IC_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
-        return IC_val
-        
-    def _arbiter_run(self, model):
-        host_data_info = self.transfer_variable.host_data_info
-        guest_data_info = self.transfer_variable.guest_data_info
-        #host_feature_list = self.transfer_variable.host_feature_list
-        #guest_feature_list = self.transfer_variable.guest_feature_list
-        n_host, j_host = host_data_info.get(idx=0)
-        n_guest, j_guest = guest_data_info.get(idx=0)
-        self.n_count = n_host
-        j = j_host + j_guest
-        host_to_drop, guest_to_drop = list(range(j_host)), list(range(j_host))
-        self._get_k()
+        ic_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
+        if np.isinf(ic_val):
+            raise ValueError("Loss value of infinity obtained. Stepwise stopped.")
+        host_tup, guest_tup = tuple(host_mask), tuple(guest_mask)
+        self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
+                                                               ic_val)
+        current_key = self.make_key(self.step_direction, self.n_step, n_model)
+        self._put_value(current_key, trained_model)
 
+    def arbiter_sync_stop_stepwise(self):
+        self.transfer_variable.stop_stepwise.remote(self.stop_stepwise, role=consts.HOST, suffix=(self.n_step,))
+        self.transfer_variable.stop_stepwise.remote(self.stop_stepwise, role=consts.GUEST, suffix=(self.n_step,))
+
+    def client_sync_stop_stepwise(self):
+        self.stop_stepwise = self.transfer_variable.stop_stepwise.get(suffix=(self.n_step,))
+    '''
+    def arbiter_sync_step_info_list(self, host_lists, guest_lists):
+        self.transfer_variable.host_step_info.remote((self.step_direction, self.n_step, host_lists))
+        self.transfer_variable.guest_step_info.remote((self.step_direction, self.n_step, guest_lists))
+    '''
+    def arbiter_sync_step_info(self, host_masks, guest_masks):
+        self.transfer_variable.host_step_info.remote((self.step_direction, self.n_step, host_masks))
+        self.transfer_variable.guest_step_info.remote((self.step_direction, self.n_step, guest_masks))
+
+    def client_sync_step_info(self):
+        if self.role == consts.HOST:
+            return self.transfer_variable.host_step_info.get()
+        elif self.role == consts.GUEST:
+            return self.transfer_variable.guest_step_info.get()
+        else:
+            raise ValueError("unknown role {} encountered!".format(self.role))
+
+    def make_key(self, step_direction, n_step, n_model):
+        """
+        make key for models table
+        """
+        return (step_direction, n_step, n_model)
+    '''
+    def _arbiter_run_list(self, model):
+        n_host, j_host = self.host_data_info_transfer.get(idx=0)
+        n_guest, j_guest = self.guest_data_info_transfer.get(idx=0)
+        self.n_count = n_host
+        if self.backward:
+            host_to_drop, guest_to_drop = list(range(j_host)), list(range(j_guest))
+            host_to_add, guest_to_add = [], []
+        else:
+            host_to_drop, guest_to_drop = [], []
+            host_to_add, guest_to_add = list(range(j_host)), list(range(j_guest))
+        self._set_k()
         while self.n_step < self.max_step:
             step_models = set()
             n_model = 0
             if self.backward:
                 self.step_direction = "backward"
-                host_lists = self.drop_one(host_to_drop)
-                guest_lists = self.drop_one(guest_to_drop)
-                for host_list in host_lists:
-                    host_tup, guest_tup = tuple(host_list), tuple(guest_to_drop)
-                    # add models to current step set, check all models from step models at the end, use the feature
-                    # lists as keys to get corresponding score
-                    # from models_trained set; keep n_model as key maker to abstract out models at the end of stepwise
-                    step_models.add((host_tup, guest_tup))
-                    # skip this model if already trained and recorded
-                    if (host_tup, guest_tup) in self.models_trained:
-                        continue
-                    IC_val = self._arbiter_run_step(model, host_list, guest_to_drop, n_model)
-                    # store model criteria value in dict for future references
-                    self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
-                                                                           IC_val)
-                    n_model += 1
-
-                for guest_list in guest_lists:
-                    host_tup, guest_tup = tuple(host_to_drop), tuple(guest_list)
-                    step_models.add((host_tup, guest_tup))
-                    if (host_tup, guest_tup) in self.models_trained:
-                        continue
-                    IC_val = self._arbiter_run_step(model, host_to_drop, guest_list, n_model)
-                    self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.step_direction, self.n_step, n_model,
-                                                                           IC_val)
+                host_lists, guest_lists = self.drop_one(host_to_drop, guest_to_drop)
+                # add all models of current step into step_models
+                self.record_step_models(step_models, host_lists, guest_lists)
+                # filter out models already trained
+                host_lists, guest_lists = self.filter_feature_lists(host_lists, guest_lists)
+                self.arbiter_sync_step_info(host_lists, guest_lists)
+                for i in range(len(host_lists)):
+                    host_list, guest_list = host_lists[i], guest_lists[i]
+                    self._arbiter_run_step(model, host_list, guest_list, n_model)
                     n_model += 1
             if self.forward:
+                n_model = 0
                 self.step_direction = "forward"
-                if self.n_step == 0 and len(self.models_trained) == 0:
-                    # @TODO: initialize initial lists of one variable from each role
-                    host_list = [0]
-                    guest_list = [0]
-
-            # @TODO: select the best model based on criteria value, update to_drop & to_add lists
-            host_to_drop, guest_to_drop = self._get_step_best(step_models)
+                host_lists, guest_lists = self.add_one(host_to_drop, guest_to_drop, host_to_add, guest_to_add)
+                # add all models of current step into step_models
+                self.record_step_models(step_models, host_lists, guest_lists)
+                # filter out models already trained
+                host_lists, guest_lists = self.filter_feature_lists(host_lists, guest_lists)
+                self.arbiter_sync_step_info(host_lists, guest_lists)
+                for i in range(len(host_lists)):
+                    host_list, guest_list = host_lists[i], guest_lists[i]
+                    self._arbiter_run_step(model, host_list, guest_list, n_model)
+                    n_model += 1
+            new_host_to_drop_tup, new_guest_to_drop_tup = self.get_step_best(step_models)
+            new_host_to_drop, new_guest_to_drop = list(new_host_to_drop_tup), list(new_guest_to_drop_tup)
+            host_to_add = self.get_new_to_add(new_host_to_drop, j_host)
+            guest_to_add = self.get_new_to_add(new_guest_to_drop, j_guest)
+            self.stop_stepwise = self.check_best(new_host_to_drop, new_guest_to_drop,
+                                                 host_to_drop, guest_to_drop, j_host, j_guest)
+            self.arbiter_sync_stop_stepwise()
+            # for prettify output format, skip add extra 1 for self.n_step
+            if self.stop_stepwise:
+                break
+            host_to_drop, guest_to_drop = new_host_to_drop, new_guest_to_drop
             self.n_step += 1
 
-        current_suffix = (-1, -1)
-        self.transfer_variable.host_feature_list.remote(host_to_drop, idx=0, suffix=current_suffix)
-        self.transfer_variable.guest_feature_list.remote(guest_to_drop, idx=0, suffix=current_suffix)
+        best_model = self.models_trained[(tuple(host_to_drop), tuple(guest_to_drop))]
+        best_model_key = best_model.get_key()
+        self.transfer_variable.host_best_model.remote(best_model_key, idx=0)
+        self.transfer_variable.guest_best_model.remote(best_model_key, idx=0)
+        best_model = copy.deepcopy(self._get_value(best_model_key))
+        model.load_model(best_model)
         self.models.destroy()
+    '''
+    def _arbiter_run(self, model):
+        n_host, j_host = self.host_data_info_transfer.get(idx=0)
+        n_guest, j_guest = self.guest_data_info_transfer.get(idx=0)
+        self.n_count = n_host
+        if self.backward:
+            host_mask, guest_mask = np.ones(j_host), np.ones(j_guest)
+        else:
+            host_mask, guest_mask = np.zeros(j_host), np.zeros(j_guest)
+        self._set_k()
+        while self.n_step < self.max_step:
+            step_models = set()
+            n_model = 0
+            if self.backward:
+                self.step_direction = "backward"
+                host_masks, guest_masks = self.drop_one(host_mask, guest_mask)
+                # add all models of current step into step_models
+                self.record_step_models(step_models, host_masks, guest_masks)
+                # filter out models already trained
+                host_masks, guest_masks = self.filter_feature_masks(host_masks, guest_masks)
+                self.arbiter_sync_step_info(host_masks, guest_masks)
+                for i in range(len(host_masks)):
+                    host_mask, guest_mask = host_masks[i], guest_masks[i]
+                    self._arbiter_run_step(model, host_mask, guest_mask, n_model)
+                    n_model += 1
+            if self.forward:
+                n_model = 0
+                self.step_direction = "forward"
+                host_masks, guest_masks = self.add_one(host_mask, guest_mask)
+                # add all models of current step into step_models
+                self.record_step_models(step_models, host_masks, guest_masks)
+                # filter out models already trained
+                host_masks, guest_masks = self.filter_feature_masks(host_masks, guest_masks)
+                self.arbiter_sync_step_info(host_masks, guest_masks)
+                for i in range(len(host_masks)):
+                    host_mask, guest_mask = host_masks[i], guest_masks[i]
+                    self._arbiter_run_step(model, host_mask, guest_mask, n_model)
+                    n_model += 1
+            new_host_mask_tup, new_guest_mask_tup = self.get_step_best(step_models)
+            new_host_mask, new_guest_mask = np.array(new_host_mask_tup), np.array(new_guest_mask_tup)
+            #host_to_add = self.get_new_to_add(new_host_to_drop, j_host)
+            #guest_to_add = self.get_new_to_add(new_guest_to_drop, j_guest)
+            self.stop_stepwise = self.check_best(new_host_mask, new_guest_mask,
+                                                 host_mask, guest_mask, j_host, j_guest)
+            self.arbiter_sync_stop_stepwise()
+            # for prettify output format, skip add extra 1 for self.n_step
+            if self.stop_stepwise:
+                break
+            host_mask, guest_mask = new_host_mask, new_guest_mask
+            self.n_step += 1
 
-    def run(self, component_parameters, train_data, test_data, model):
+        best_model = self.models_trained[(tuple(host_mask), tuple(guest_mask))]
+        best_model_key = best_model.get_key()
+        self.transfer_variable.host_best_model.remote(best_model_key, idx=0)
+        self.transfer_variable.guest_best_model.remote(best_model_key, idx=0)
+        best_model = copy.deepcopy(self._get_value(best_model_key))
+        model.load_model(best_model)
+        self.models.destroy()
+    '''
+    def run_list(self, component_parameters, train_data, test_data, model):
         self._init_model(component_parameters)
-        if self.forward:
-            self.step_direction = "forward"
         if self.role == consts.ARBITER:
             self._arbiter_run(model)
-        elif self.role == consts.HOST:
-            host_data_info = self.transfer_variable.host_data_info
-            n, j = train_data.count(), data_overview.get_features_shape(train_data)
-            host_data_info.remote((n, j), idx=0)
+            return
+        n, j = train_data.count(), data_overview.get_features_shape(train_data)
+        if self.role == consts.HOST:
+            self.host_data_info_transfer = self.transfer_variable.host_data_info
+            self.host_data_info_transfer.remote((n, j), idx=0)
         elif self.role == consts.GUEST:
-            guest_data_info = self.transfer_variable.guest_data_info
-            n, j = train_data.count(), data_overview.get_features_shape(train_data)
-            guest_data_info.remote((n, j), idx=0)
-
-        while self.n_step < self.max_step:
-            # @TODO: should Guest & Host beware of current step number? How?
+            self.guest_data_info_transfer = self.transfer_variable.guest_data_info
+            self.guest_data_info_transfer.remote((n, j), idx=0)
+        while not self.stop_stepwise:
+            step_direction, n_step, feature_lists = self.client_sync_step_info()
+            self.step_direction, self.n_step = step_direction, n_step
             n_model = 0
-            current_suffix = (self.n_step, n_model)
-            if self.role == consts.HOST:
-                feature_list = self.transfer_variable.host_feature_list.get(suffix=current_suffix)
-            else:
-                feature_list = self.transfer_variable.guest_feature_list.get(suffix=current_suffix)
-            curr_step = Step()
-            curr_step._set_step_info(self.step_direction, self.n_step, n_model)
-            curr_step.run(self.model_param, model, train_data, test_data, feature_list)
-            # @TODO: save which model info in eggroll table
-            self._put_value(current_suffix, model)
-            n_model += 1
-
-        # @TODO: receive best model list & look up info of that model
-        current_suffix = (-1, -1)
-        best_feature_list = self.transfer_variable.host_feature_list.get(suffix=current_suffix)
-
-
+            for feature_list in feature_lists:
+                current_key = self.make_key(self.step_direction, self.n_step, n_model)
+                current_step = Step()
+                current_step.set_step_info(current_key)
+                model = current_step.run(model, train_data, test_data, feature_list)
+                self._put_value(current_key, model)
+                n_model += 1
+            self.client_sync_stop_stepwise()
+            self.n_step += 1
+        if self.role == consts.HOST:
+            best_model_key = self.transfer_variable.host_best_model.get()
+        else:
+            best_model_key = self.transfer_variable.guest_best_model.get()
+        # @TODO: use load_model to copy information from best model to original model; need to decide if best model need to be deep copied
+        best_model = copy.deepcopy(self._get_value(best_model_key))
+        model.load_model(best_model)
         self.models.destroy()
-
+    '''
+    def run(self, component_parameters, train_data, test_data, model):
+        self._init_model(component_parameters)
+        if self.role == consts.ARBITER:
+            self._arbiter_run(model)
+            return
+        n, j = train_data.count(), data_overview.get_features_shape(train_data)
+        if self.role == consts.HOST:
+            self.host_data_info_transfer = self.transfer_variable.host_data_info
+            self.host_data_info_transfer.remote((n, j), idx=0)
+        elif self.role == consts.GUEST:
+            self.guest_data_info_transfer = self.transfer_variable.guest_data_info
+            self.guest_data_info_transfer.remote((n, j), idx=0)
+        while not self.stop_stepwise:
+            step_direction, n_step, feature_masks = self.client_sync_step_info()
+            self.step_direction, self.n_step = step_direction, n_step
+            n_model = 0
+            for feature_mask in feature_masks:
+                current_key = self.make_key(self.step_direction, self.n_step, n_model)
+                current_step = Step()
+                current_step.set_step_info(current_key)
+                model = current_step.run(model, train_data, test_data, feature_mask)
+                self._put_value(current_key, model)
+                n_model += 1
+            self.client_sync_stop_stepwise()
+            self.n_step += 1
+        if self.role == consts.HOST:
+            best_model_key = self.transfer_variable.host_best_model.get()
+        else:
+            best_model_key = self.transfer_variable.guest_best_model.get()
+        # @TODO: use load_model to copy information from best model to original model; need to decide if best model need to be deep copied
+        best_model = copy.deepcopy(self._get_value(best_model_key))
+        model.load_model(best_model)
+        self.models.destroy()

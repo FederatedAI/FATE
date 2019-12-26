@@ -15,26 +15,32 @@
 #
 
 from arch.api.utils import log_utils
-import copy
+from federatedml.util import consts
 
-from federatedml.util  import consts
+import copy
 
 LOGGER = log_utils.getLogger()
 
 
-class Step():
+class Step(object):
     def __init__(self):
         self.feature_list = []
         self.step_direction = ""
         self.n_step = 0
         self.n_model = 0
 
-    def _set_step_info(self, step_direction, n_step, n_model):
+    def set_step_info(self, step_info):
+        step_direction, n_step, n_model = step_info
         self.n_step = n_step
         self.n_model = n_model
         self.self_direction = step_direction
 
-    def get_new_header(self, header, feature_list):
+    def get_flowid(self):
+        flowid = "train.{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
+        return flowid
+
+    @staticmethod
+    def get_new_header(header, feature_list):
         """
         Make new header, called by Host or Guest
         :param header: old header
@@ -44,7 +50,8 @@ class Step():
         new_header = [header[i] for i in range(len(header)) if i in feature_list]
         return new_header
 
-    def slice_data_instance(self, data_instance, feature_list):
+    @staticmethod
+    def slice_data_instance_list(data_instance, feature_list):
         """
         return data_instance with features at given indices
         Parameters
@@ -55,38 +62,28 @@ class Step():
         data_instance.features = data_instance.features[feature_list]
         return data_instance
 
+    @staticmethod
+    def slice_data_instance(data_instance, feature_mask):
+        """
+        return data_instance with features at given indices
+        Parameters
+        ----------
+        data_instance: data Instance object, input data
+        feature_mask: mask to filter data_instance
+        """
+        new_data_instance = copy.deepcopy(data_instance)
+        new_data_instance.features = new_data_instance.features[feature_mask > 0]
+        return new_data_instance
 
-    def run(self, stepwise_param, original_model, train_data, test_data, feature_list):
-        if stepwise_param.role == consts.ARBITER:
-            return self._arbiter_run(original_model)
-        model = copy.deepcopy(original_model)
-       # this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
-        this_flowid = 'train.' + str(self.n_step) + '.' + str(self.n_model)
-        model.set_flowid(this_flowid)
-        curr_train_data = train_data.map(lambda k, v: (k, self.slice_data_instance(v, feature_list)))
-        model.fit(curr_train_data)
-        return
-
-    def _arbiter_run(self, original_model):
-        model = copy.deepcopy(original_model)
-        # this_flowid = 'train.' + self.step_direction + '.' + str(self.n_step) + '.' + str(self.n_model)
-        this_flowid = 'train.' + str(self.n_step) + '.' + str(self.n_model)
-        model.set_flowid(this_flowid)
-        model.fit(None)
+    def run(self, original_model, train_data, test_data, feature_mask):
         if original_model.model_param.early_stop != 'loss':
             raise ValueError("Stepwise only accepts 'loss' as early stop criteria.")
-        #@TODO: (in future) use valdiaton data for calcualtion if needed
-        # get final loss from loss history for criteria calculation
-        loss = model.loss_history[-1]
-        return loss
-
-
-
-
-
-
-
-
-
-    
-
+        model = copy.deepcopy(original_model)
+        current_flowid = self.get_flowid()
+        model.set_flowid(current_flowid)
+        if original_model.role != consts.ARBITER:
+            curr_train_data = train_data.map(lambda k, v: (k, self.slice_data_instance(v, feature_mask)))
+        else:
+            curr_train_data = train_data
+        model.fit(curr_train_data)
+        return model

@@ -17,7 +17,8 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.model_selection.stepwise.stepwise import Stepwise
+from federatedml.model_selection.stepwise.hetero_stepwise import HeteroStepwise
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -31,9 +32,11 @@ def _get_stepwise_param(model):
 def run(model, train_data, test_data):
     if not model.need_run:
         return train_data
-    step_obj = Stepwise()
+    if model.mode == consts.HETERO:
+        step_obj = HeteroStepwise()
+    else:
+        raise ValueError("stepwise currently only support Hetero mode.")
     stepwise_param = _get_stepwise_param(model)
     step_obj.run(stepwise_param, train_data, test_data, model)
-    LOGGER.info("Finish Stepwise run")
+    LOGGER.info("Finish running Stepwise")
     return train_data
-

@@ -12,13 +12,32 @@
         "arbiter"
       ]
     },
-    "host_feature_list": {
+    "host_step_info": {
       "src": "arbiter",
       "dst": [
         "host"
       ]
     },
-    "guest_feature_list": {
+    "guest_step_info": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "stop_stepwise": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "host_best_model": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_best_model": {
       "src": "arbiter",
       "dst": [
         "guest"
