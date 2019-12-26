@@ -19,8 +19,6 @@
 export PYTHONPATH=
 log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
 venv=
-# FATE deployment suggested path
-# venv=/data/projects/cos/allinone/common/python/venv
 
 module=fate_flow_server.py
 
