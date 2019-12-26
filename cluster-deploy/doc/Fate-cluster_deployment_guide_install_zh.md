@@ -52,8 +52,11 @@ vim /etc/hosts
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
 确认是否已安装selinux
+
 centos系统执行：rpm -qa | grep selinux
+
 ubuntu系统执行：apt list --installed | grep selinux
+
 如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux最大打开文件数
@@ -278,7 +281,7 @@ cd FATE/cluster-deploy/scripts
 bash deploy_cluster_multinode.sh binary all 
 ```
 
-如果只部署部分组件：
+如果只部署部分组件(可选：jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)：
 
 ```
 bash deploy_cluster_multinode.sh binary fate_flow
@@ -309,7 +312,7 @@ cd /data/projects/fate
 sh services.sh all start
 ```
 
-启动单个模块：
+启动单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy start
@@ -334,7 +337,7 @@ cd /data/projects/fate
 sh services.sh all status
 ```
 
-查看单个模块：
+查看单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy status
@@ -357,7 +360,7 @@ cd /data/projects/fate
 sh services.sh all stop
 ```
 
-关闭单个模块：
+关闭单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy stop

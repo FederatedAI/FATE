@@ -87,7 +87,7 @@ class DenseFeatureReader(object):
         header = input_data.get_meta("header")
         sid_name = input_data.get_meta("sid")
         LOGGER.debug("header is {}".format(header))
-        LOGGER.debug("sid_name is {}".format(self.sid_name))
+        LOGGER.debug("sid_name is {}".format(sid_name))
 
         if not header and not sid_name:
             raise ValueError("dense input-format should have header schema")
