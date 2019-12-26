@@ -36,17 +36,17 @@
   "tasks": {
     "single_layer": {
       "conf": "./test_homo_dnn_single_layer.json",
-      "dsl": "./test_homo_nn_train_then_predict.dsl.json",
+      "dsl": "./test_homo_nn_train_then_predict.json",
       "type": "train"
     },
     "multi_layer": {
       "conf": "./test_homo_dnn_multi_layer.json",
-      "task": "./test_homo_nn_train_then_predict.dsl.json",
+      "task": "./test_homo_nn_train_then_predict.json",
       "type": "train"
     },
     "multi_label": {
       "conf": "./test_homo_dnn_multi_label.json",
-      "task": "./test_homo_nn_train_then_predict.dsl.json",
+      "task": "./test_homo_nn_train_then_predict.json",
       "type": "train"
     }
   }
