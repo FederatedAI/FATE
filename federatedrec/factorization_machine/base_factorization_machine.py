@@ -23,13 +23,14 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
+from federatedml.framework.weights import Weights
+from federatedml.optim.initialize import Initializer
+from federatedml.optim.optimizer import optimizer_factory
+from federatedml.protobuf.generated import fm_model_param_pb2
 from federatedml.model_selection import start_cross_validation
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.util.validation_strategy import ValidationStrategy
-from federatedml.optim.initialize import Initializer
-from federatedml.optim.optimizer import optimizer_factory
-from federatedrec.protobuf.generated import fm_model_param_pb2
 from federatedrec.factorization_machine.fm_model_weight import FactorizationMachineWeights
 
 LOGGER = log_utils.getLogger()
@@ -236,7 +237,8 @@ class BaseFactorizationMachine(ModelBase):
         if self.fit_intercept:
             intercept_ = single_model_obj.intercept
         self.model_weights = \
-            FactorizationMachineWeights(coef_, embed_, intercept_, fit_intercept=self.fit_intercept)
+            FactorizationMachineWeights(Weights(coef_), Weights(embed_), intercept_,
+                                        fit_intercept=self.fit_intercept)
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
