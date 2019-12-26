@@ -28,7 +28,7 @@
       },
       "dataio_0": {
         "with_label": [
-          true
+          false
         ],
         "output_format": [
           "dense"
@@ -60,9 +60,10 @@
       "intersect_0": {
           "intersect_method": "raw",
           "sync_intersect_ids": true,
-          "join_role": "guest",
+          "join_role": "host",
           "with_encode": true,
           "only_output_key": true,
+          "repeated_id_process": false,
           
           "encode_params":{
               "encode_method": "sha256",

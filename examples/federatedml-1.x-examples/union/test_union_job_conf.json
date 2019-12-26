@@ -21,13 +21,13 @@
           "data0": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ],
           "data1": [
             {
               "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
@@ -56,13 +56,13 @@
           "data0": [
             {
               "name": "hetero_breast_a",
-              "namespace": "hetero_host_breast"
+              "namespace": "hetero_breast_host"
             }
           ],
           "data1": [
             {
               "name": "hetero_breast_a",
-              "namespace": "hetero_host_breast"
+              "namespace": "hetero_breast_host"
             }
           ]
         }

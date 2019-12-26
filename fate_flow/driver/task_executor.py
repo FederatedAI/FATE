@@ -16,6 +16,8 @@
 import argparse
 import importlib
 import os
+import signal
+import time
 import traceback
 
 from arch.api import federation
@@ -35,6 +37,7 @@ from fate_flow.entity.constant_config import TaskStatus
 class TaskExecutor(object):
     @staticmethod
     def run_task():
+        # signal.signal(signal.SIGTERM, job_utils.onsignal_term)
         task = Task()
         task.f_create_time = current_timestamp()
         try:
@@ -58,6 +61,7 @@ class TaskExecutor(object):
             task_id = args.task_id
             role = args.role
             party_id = int(args.party_id)
+            job_utils.task_killed_detector(job_id, role, party_id, component_name)
             task_config = file_utils.load_json_conf(args.config)
             job_parameters = task_config['job_parameters']
             job_initiator = task_config['job_initiator']
@@ -129,7 +133,6 @@ class TaskExecutor(object):
         finally:
             sync_success = False
             try:
-                session.stop()
                 task.f_end_time = current_timestamp()
                 task.f_elapsed = task.f_end_time - task.f_start_time
                 task.f_update_time = current_timestamp()
@@ -145,6 +148,10 @@ class TaskExecutor(object):
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
+        while True:
+            schedule_logger().info(
+                'Waiting for the other party to end job {} component {}'.format(job_id, component_name))
+            time.sleep(0.5)
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):

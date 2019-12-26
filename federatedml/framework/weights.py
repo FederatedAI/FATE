@@ -16,12 +16,13 @@
 
 import abc
 import operator
-from arch.api.utils import log_utils
 
 import numpy as np
 
+from arch.api.utils import log_utils
 from arch.api.utils.splitable import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
+
 LOGGER = log_utils.getLogger()
 
 
@@ -96,8 +97,13 @@ class Weights(object):
 
     def __add__(self, other):
         LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
-
         return self.binary_op(other, operator.add, inplace=False)
+
+    def __isub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=True)
+
+    def __sub__(self, other):
+        return self.binary_op(other, operator.sub, inplace=False)
 
     def __truediv__(self, other):
         return self.map_values(lambda x: x / other, inplace=False)
@@ -150,14 +156,11 @@ class ListWeights(Weights):
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(self._weights[k], other._weights[k])
-            LOGGER.debug("In binary_op1, _w: {}".format(self._weights))
-            LOGGER.debug("In binary_op1, self: {}".format(self))
             return self
         else:
             _w = []
             for k, v in enumerate(self._weights):
                 _w.append(func(self._weights[k], other._weights[k]))
-            LOGGER.debug("In binary_op2, _w: {}".format(_w))
             return ListWeights(_w)
 
     def axpy(self, a, y: 'ListWeights'):
@@ -218,7 +221,7 @@ class OrderDictWeights(Weights):
             _w = dict()
             for k in self.walking_order:
                 _w[k] = func(self._weights[k])
-            return DictWeights(_w)
+            return OrderDictWeights(_w)
 
     def binary_op(self, other: 'OrderDictWeights', func, inplace):
         if inplace:
@@ -229,7 +232,7 @@ class OrderDictWeights(Weights):
             _w = dict()
             for k in self.walking_order:
                 _w[k] = func(other._weights[k], self._weights[k])
-            return DictWeights(_w)
+            return OrderDictWeights(_w)
 
     def axpy(self, a, y: 'OrderDictWeights'):
         for k in self.walking_order:
@@ -251,20 +254,20 @@ class NumpyWeights(Weights):
         else:
             vec_func = np.vectorize(func)
             weights = vec_func(self._weights)
-            return DictWeights(weights)
+            return NumpyWeights(weights)
 
     def binary_op(self, other: 'NumpyWeights', func, inplace):
         if inplace:
             size = self._weights.size
             view = self._weights.view().reshape(size)
-            view_other = other._weights.view.reshpae(size)
+            view_other = other._weights.view().reshpae(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
             return self
         else:
             vec_func = np.vectorize(func)
             weights = vec_func(self._weights, other._weights)
-            return DictWeights(weights)
+            return NumpyWeights(weights)
 
     def axpy(self, a, y: 'NumpyWeights'):
         size = self._weights.size

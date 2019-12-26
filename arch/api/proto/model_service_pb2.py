@@ -34,7 +34,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.mlmodel.manager',
   syntax='proto3',
   serialized_options=_b('B\021ModelServiceProto'),
-  serialized_pb=_b('\n\x13model_service.proto\x12&com.webank.ai.fate.api.mlmodel.manager\"\x18\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x03(\t\"*\n\tLocalInfo\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\"1\n\tModelInfo\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\"\xd9\x01\n\rRoleModelInfo\x12_\n\rroleModelInfo\x18\x01 \x03(\x0b\x32H.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo.RoleModelInfoEntry\x1ag\n\x12RoleModelInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.ModelInfo:\x02\x38\x01\"\xb5\x03\n\x0ePublishRequest\x12@\n\x05local\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.LocalInfo\x12N\n\x04role\x18\x02 \x03(\x0b\x32@.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.RoleEntry\x12P\n\x05model\x18\x03 \x03(\x0b\x32\x41.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.ModelEntry\x1aZ\n\tRoleEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12<\n\x05value\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.mlmodel.manager.Party:\x02\x38\x01\x1a\x63\n\nModelEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x44\n\x05value\x18\x02 \x01(\x0b\x32\x35.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo:\x02\x38\x01\"S\n\x0fPublishResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x32\x91\x02\n\x0cModelService\x12~\n\x0bpublishLoad\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12\x80\x01\n\rpublishOnline\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponseB\x13\x42\x11ModelServiceProtob\x06proto3')
+  serialized_pb=_b('\n\x13model_service.proto\x12&com.webank.ai.fate.api.mlmodel.manager\"\x18\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x03(\t\"*\n\tLocalInfo\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\"1\n\tModelInfo\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\"\xd9\x01\n\rRoleModelInfo\x12_\n\rroleModelInfo\x18\x01 \x03(\x0b\x32H.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo.RoleModelInfoEntry\x1ag\n\x12RoleModelInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.ModelInfo:\x02\x38\x01\"\xc8\x03\n\x0ePublishRequest\x12@\n\x05local\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.LocalInfo\x12N\n\x04role\x18\x02 \x03(\x0b\x32@.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.RoleEntry\x12P\n\x05model\x18\x03 \x03(\x0b\x32\x41.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.ModelEntry\x12\x11\n\tserviceId\x18\x04 \x01(\t\x1aZ\n\tRoleEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12<\n\x05value\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.mlmodel.manager.Party:\x02\x38\x01\x1a\x63\n\nModelEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x44\n\x05value\x18\x02 \x01(\x0b\x32\x35.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo:\x02\x38\x01\"S\n\x0fPublishResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x32\x8e\x02\n\x0cModelService\x12~\n\x0bpublishLoad\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12~\n\x0bpublishBind\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponseB\x13\x42\x11ModelServiceProtob\x06proto3')
 )
 
 
@@ -248,8 +248,8 @@ _PUBLISHREQUEST_ROLEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=651,
-  serialized_end=741,
+  serialized_start=670,
+  serialized_end=760,
 )
 
 _PUBLISHREQUEST_MODELENTRY = _descriptor.Descriptor(
@@ -285,8 +285,8 @@ _PUBLISHREQUEST_MODELENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=743,
-  serialized_end=842,
+  serialized_start=762,
+  serialized_end=861,
 )
 
 _PUBLISHREQUEST = _descriptor.Descriptor(
@@ -317,6 +317,13 @@ _PUBLISHREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='serviceId', full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.serviceId', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -330,7 +337,7 @@ _PUBLISHREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=405,
-  serialized_end=842,
+  serialized_end=861,
 )
 
 
@@ -381,8 +388,8 @@ _PUBLISHRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=844,
-  serialized_end=927,
+  serialized_start=863,
+  serialized_end=946,
 )
 
 _ROLEMODELINFO_ROLEMODELINFOENTRY.fields_by_name['value'].message_type = _MODELINFO
@@ -481,8 +488,8 @@ _MODELSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=930,
-  serialized_end=1203,
+  serialized_start=949,
+  serialized_end=1219,
   methods=[
   _descriptor.MethodDescriptor(
     name='publishLoad',
@@ -494,8 +501,8 @@ _MODELSERVICE = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
-    name='publishOnline',
-    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.publishOnline',
+    name='publishBind',
+    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.publishBind',
     index=1,
     containing_service=None,
     input_type=_PUBLISHREQUEST,

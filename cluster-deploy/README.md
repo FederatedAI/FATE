@@ -4,10 +4,11 @@
 
 The Cluster version provides four deployment methods, which can be selected according to your actual situation:
 
-- Install Cluster [Chinese guide](./doc/Fate-V1.1cluster部署指南(install).md) 
-- Build Cluster from Source [Chinese guide](./doc/Fate-V1.1cluster部署指南(build).md) 
-- Install AllinOne [Chinese guide](./doc/Fate-V1.1allinone部署指南(install).md)
-- Build AllinOne from Source [Chinese guide](./doc/Fate-V1.1allinone部署指南(build).md)
+- Install Cluster [Chinese guide](./doc/Fate-cluster_deployment_guide_install_zh.md) 
+- Build Cluster from Source [Chinese guide](./doc/Fate-cluster_deployment_guide_build_zh.md) 
+- Install AllinOne [Chinese guide](./doc/Fate-allinone_deployment_guide_install_zh.md)
+- Build AllinOne from Source [Chinese guide](./doc/Fate-allinone_deployment_guide_build_zh.md)
+- Build Exchange from Source [Chinese guide](./doc/Fate-exchange_deployment_guide_zh.md)
 
 thirdparty：
 
@@ -149,24 +150,24 @@ This script file puts each module and configuration file into the FATE/cluster-d
 
 ```
 packages
-|-- eggroll-api-1.1.tar.gz
-|-- eggroll-computing-1.1.tar.gz
-|-- eggroll-conf-1.1.tar.gz
-|-- eggroll-egg-1.1.jar
-|-- eggroll-egg-1.1.tar.gz
-|-- eggroll-meta-service-1.1.tar.gz
-|-- eggroll-roll-1.1.tar.gz
-|-- eggroll-storage-service-cxx-1.1.tar.gz
-|-- fateboard-1.1.jar
-|-- fate-federation-1.1.tar.gz
-|-- fate-proxy-1.1.tar.gz
-|-- __init__.py
-|-- jdk-8u192-linux-x64.tar.gz
-|-- Miniconda3-4.5.4-Linux-x86_64.sh
-|-- mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
-|-- pip-packages-fate-5548239776e18466e0d59835d489952f.tar.gz
-|-- redis-5.0.2.tar.gz
-`-- third_party_eggrollv1.tar.gz
+├── eggroll-api-1.2.0.tar.gz
+├── eggroll-computing-1.2.0.tar.gz
+├── eggroll-conf-1.2.0.tar.gz
+├── eggroll-egg-1.2.0.tar.gz
+├── eggroll-meta-service-1.2.0.tar.gz
+├── eggroll-roll-1.2.0.tar.gz
+├── eggroll-storage-service-cxx-1.2.0.tar.gz
+├── fateboard-1.2.0.jar
+├── fate-federation-1.2.0.tar.gz
+├── fate-proxy-1.2.0.tar.gz
+├── __init__.py
+├── jdk-8u192-linux-x64.tar.gz
+├── Miniconda3-4.5.4-Linux-x86_64.sh
+├── mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
+├── pip-packages-fate-1.2.0.tar.gz
+├── redis-5.0.2.tar.gz
+├── third_party_eggrollv1.tar.gz
+└── third_party_eggrollv1_ubuntu.tar.gz
 ```
 
 ### **4.2. Modify Configuration File and Example****

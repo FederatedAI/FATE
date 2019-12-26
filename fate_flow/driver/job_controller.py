@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api import session
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
@@ -106,13 +107,24 @@ class JobController(object):
                {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
 
     @staticmethod
-    def kill_job(job_id, role, party_id, job_initiator, timeout=False):
-        schedule_logger(job_id).info('{} {} get kill job {} command'.format(role, party_id, job_id))
+    def kill_job(job_id, role, party_id, job_initiator, timeout=False, component_name=''):
+        schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
+        if component_name:
+            tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
+            job_utils.stop_executor(tasks[0])
+            return
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
             kill_status = False
             try:
-                kill_status = job_utils.kill_process(int(task.f_run_pid))
+                kill_status = job_utils.stop_executor(task)
+                # kill_status = job_utils.kill_process(int(task.f_run_pid))
+                # job_conf_dict = job_utils.get_job_conf(job_id)
+                # runtime_conf = job_conf_dict['job_runtime_conf_path']
+                # session.init(job_id='{}_{}_{}'.format(task.f_task_id, role, party_id),
+                #              mode=runtime_conf.get('job_parameters').get('work_mode'),
+                #              backend=runtime_conf.get('job_parameters').get('backend', 0))
+                # session.stop()
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:
@@ -145,6 +157,7 @@ class JobController(object):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id)
         job_info['f_run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if create:
+            job_tracker.job_quantity_constraint()
             dsl = json_loads(job_info['f_dsl'])
             runtime_conf = json_loads(job_info['f_runtime_conf'])
             train_runtime_conf = json_loads(job_info['f_train_runtime_conf'])

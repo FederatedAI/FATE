@@ -14,8 +14,9 @@
 #  limitations under the License.
 #
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import Variable
 import types
+
+from federatedml.transfer_variable.base_transfer_variable import Variable
 
 
 class Arbiter(object):

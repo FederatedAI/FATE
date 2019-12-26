@@ -31,7 +31,7 @@ class TestInitialize(unittest.TestCase):
                                    fit_intercept=False
                                    )
         model = initializer.init_model(model_shape=data_shape, init_params=init_param_obj)
-        model_shape = np.array(model.unboxed).shape
+        model_shape = np.array(model).shape
         self.assertTrue(model_shape == (10,))
 
 

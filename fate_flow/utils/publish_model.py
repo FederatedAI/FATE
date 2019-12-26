@@ -13,11 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import base64
 
 import grpc
 
+from arch.api import session
+from arch.api.model_manager.manager import get_model_table_partition_count
 from arch.api.proto import model_service_pb2
 from arch.api.proto import model_service_pb2_grpc
+from arch.api.utils.core import get_fate_uuid
 from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
 
@@ -63,16 +67,18 @@ def load_model(config_data):
     return success
 
 
-def publish_online(config_data):
+def bind_model_service(config_data):
+    service_id = config_data.get('service_id')
     initiator_role = config_data['initiator']['role']
     initiator_party_id = config_data['initiator']['party_id']
     model_id = config_data['job_parameters']['model_id']
     model_version = config_data['job_parameters']['model_version']
-    success = True
+    status = True
     for serving in config_data.get('servings'):
         with grpc.insecure_channel(serving) as channel:
             stub = model_service_pb2_grpc.ModelServiceStub(channel)
             publish_model_request = model_service_pb2.PublishRequest()
+            publish_model_request.serviceId = service_id
             for role_name, role_party in config_data.get("role").items():
                 publish_model_request.role[role_name].partyId.extend(role_party)
 
@@ -83,8 +89,19 @@ def publish_online(config_data):
             publish_model_request.local.role = initiator_role
             publish_model_request.local.partyId = initiator_party_id
             stat_logger.info(publish_model_request)
-            response = stub.publishOnline(publish_model_request)
+            response = stub.publishBind(publish_model_request)
             stat_logger.info(response)
             if response.statusCode != 0:
-                success = False
-    return success
+                status = False
+    return status, service_id
+
+
+def download_model(request_data):
+    pipeline_model_table = session.table(name=request_data.get('name'), namespace=request_data.get('namespace'),
+                                         partition=get_model_table_partition_count(),
+                                         create_if_missing=False, error_if_exist=False)
+    model_data = {}
+    for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False):
+        model_data[storage_key] = base64.b64encode(buffer_object_bytes).decode()
+    return model_data
+

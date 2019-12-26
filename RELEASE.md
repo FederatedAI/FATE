@@ -1,9 +1,45 @@
+# Release 1.2.0
+## Major Features and Improvements
+FederatedML
+* Add heterogeneous Deep Neural Network
+* Add Secret-Sharing Protocol-SPDZ
+* Add heterogeneous feature correlation algorithm with SPDZ and support heterogeneous Pearson Correlation Calculation 
+* Add heterogeneous SQN optimizer, available for Hetero-LogisticRegression and Hetero-LinearRegression, which can reduce communication costs significantly 
+* Supports intersection for expanding duplicate IDs
+* Support multi-host in heterogeneous feature binning
+* Support multi-host in heterogeneous feature selection
+* Support IV calculation for categorical features in heterogeneous feature binning
+* Support transform raw feature value to WOE in heterogeneous feature binning 
+* Add manual filters in heterogeneous feature selection
+* Support performance comparison with sklearn's logistic regression
+* Automatic object/table clean in training iteration procedure in Federation
+* Improve transfer performance for large object
+* Add automatic scripts for submitting and running tasks
+
+FATE-Flow
+* Add data management module for recording the uploaded data tables and the outputs of the model in the job running, and for querying and cleaning up CLI. 
+* Support registration center for simplifying communication configuration between FATEFlow and FATEServing
+* Restruct model release logic, FATE_Flow pushes model directly to FATE-Serving. Decouple FATE-Serving and Eggroll, and the offline and online architectures are connected only by FATE-Flow.
+* Provide CLI to query data upload record
+* Upload and download data support progress statistics by line
+* Add some abnormal diagnosis tips
+* Support adding note information to job
+
+>Native Deploy
+* Fix bugs in EggRoll startup script, add mysql, redis startup options.
+* Disable host name resolution configuration for mysql service.
+* The version number of each module of the software packaging script is updated using the automatic acquisition mode.
+
+
+
 # Release 1.1.1
 ## Major Features and Improvements
 * Add cluster deployment support based on ubuntu operating system。
 * Add union component which support data merging. 
 * Support indicating partial columns in Onehot Encoder
 * Support intermediate data cleanup after the task ends
+* Accelerated Intersection
+* Optimizing the deployment process
 
 
 ## Bug Fixes

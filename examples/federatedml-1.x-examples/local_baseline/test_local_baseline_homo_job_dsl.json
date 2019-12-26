@@ -1,0 +1,64 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train_data"],
+                "model": ["dataio"]
+            }
+         },
+        "homo_lr_0": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "train_data": ["dataio_0.train_data"]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["homolr"]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["homo_lr_0.train"]
+                }
+            },
+            "output": {
+                "data": ["evaluate"]
+            }
+        },
+        "local_baseline_0": {
+            "module": "LocalBaseline",
+            "input": {
+                "data": {
+                    "train_data": ["dataio_0.train_data"]
+                }
+            },
+            "output": {
+                "data": ["local_baseline_data"],
+                "model": ["local_baseline"]
+            }
+        },
+        "evaluation_1": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["local_baseline_0.local_baseline_data"]
+                }
+            },
+            "output": {
+                "data": ["evaluate"]
+            }
+        }
+    }
+}

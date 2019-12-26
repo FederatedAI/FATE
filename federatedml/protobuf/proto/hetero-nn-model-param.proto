@@ -1,0 +1,48 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "HeteroNNModelParamProto";
+
+
+message InteractiveLayerParam {
+    bytes acc_noise = 1;
+    bytes interactive_guest_saved_model_bytes = 2;
+    bytes interactive_host_saved_model_bytes = 3;
+    int32 host_input_shape = 4;
+    int32 guest_input_shape= 5;
+}
+
+message HeteroNNModelParam {
+    bytes bottom_saved_model_bytes = 1;
+    InteractiveLayerParam interactive_layer_param = 2;
+    bytes top_saved_model_bytes = 3;
+    bool is_empty = 4;
+    int32 bottom_model_input_shape = 5;
+    int32 top_model_input_shape = 6;
+}
+
+message HeteroNNParam {
+    HeteroNNModelParam hetero_nn_model_param = 1;
+    int32 iter_epoch = 2;
+    repeated double history_loss = 3;
+    bool is_converged = 4;
+    repeated string header = 5;
+	int32 num_label = 6;
+}
+
