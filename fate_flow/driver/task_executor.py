@@ -17,6 +17,7 @@ import argparse
 import importlib
 import os
 import signal
+import time
 import traceback
 
 from arch.api import federation
@@ -132,10 +133,6 @@ class TaskExecutor(object):
         finally:
             sync_success = False
             try:
-                try:
-                    session.stop()
-                except:
-                    pass
                 task.f_end_time = current_timestamp()
                 task.f_elapsed = task.f_end_time - task.f_start_time
                 task.f_update_time = current_timestamp()
@@ -151,6 +148,10 @@ class TaskExecutor(object):
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
+        while True:
+            schedule_logger().info(
+                'Waiting for the other party to end job {} component {}'.format(job_id, component_name))
+            time.sleep(0.5)
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):

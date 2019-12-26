@@ -51,9 +51,10 @@ vim /etc/hosts
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-sed -i '/\^SELINUX/s/=.\*/=disabled/' /etc/selinux/config
-
-setenforce 0
+确认是否已安装selinux
+centos系统执行：rpm -qa | grep selinux
+ubuntu系统执行：apt list --installed | grep selinux
+如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux最大打开文件数
 ---------------------------
@@ -161,8 +162,8 @@ ssh app\@192.168.0.2
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.2.tar.gz
-tar -xf FATE_install_v1.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.2.0.tar.gz
+tar -xf FATE_install_v1.2.0.tar.gz
 ```
 
 4.2 配置文件修改和示例
