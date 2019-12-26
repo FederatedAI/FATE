@@ -113,7 +113,8 @@ class Submitter(object):
                                           f"rm {f.name}"])
                 upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
             else:
-                return self.submit(["-f", "upload", "-c", f.name])
+                stdout = self.submit(["-f", "upload", "-c", f.name])
+                return stdout["jobId"]
 
     def submit_job(self, conf_temperate_path, dsl_path, **substitutes):
         conf = self.render(conf_temperate_path, **substitutes)
@@ -150,14 +151,15 @@ class Submitter(object):
         d['job_parameters']['model_version'] = model_info['model_version']
         return d
 
-    def await_finish(self, job_id, timeout=sys.maxsize, check_interval=10):
+    def await_finish(self, job_id, timeout=sys.maxsize, check_interval=3):
         deadline = time.time() + timeout
         start = time.time()
         while True:
-            stdout = self.submit(["-f", "query_job", "-j", job_id, "-r", "guest"])
+            stdout = self.submit(["-f", "query_job", "-j", job_id])
             status = stdout["data"][0]["f_status"]
-            if status == "running" and time.time() < deadline:
-                print(f"running {job_id}, used seconds: {int(time.time() - start)}", end="\r")
+            if (status == "running" or status == "waiting") and time.time() < deadline:
+                print(f"[{time.strftime('%Y-%m-%d %X')}]{job_id} {status}, used seconds: {int(time.time() - start)}",
+                      end="\r")
                 time.sleep(check_interval)
                 continue
             else:

@@ -1,14 +1,12 @@
 import argparse
 import json
 import os
-import pprint
-import traceback
 import time
+import traceback
 
 from examples.test import submit
 
 TEST_SUITE_SUFFIX = "testsuite.json"
-EXAMPLE_PATH = "federatedml-1.x-examples"
 
 
 def search_testsuite(file_dir, suffix=TEST_SUITE_SUFFIX):
@@ -27,34 +25,36 @@ def role_map(env, role):
     return env["ip_map"][str(loc)]
 
 
-def data_upload(submitter, env, task_data):
+def data_upload(submitter, env, task_data, check_interval=3):
     for data in task_data:
         host = role_map(env, data["role"])
         remote_host = None if host == -1 else host
-        print(f"[{time.strftime('%Y-%m-%d %X')}]uploading...")
-        pprint.pprint(data)
-        submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
-        print(f"[{time.strftime('%Y-%m-%d %X')}]upload done\n")
+        format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
+        print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}]")
+        job_id = submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
+        submitter.await_finish(job_id, check_interval=check_interval)
+        print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
 
 
-def train_task(submitter, task_conf, task_dsl, task_name):
-    print(f"[{time.strftime('%Y-%m-%d %X')}]submitting task {task_name}")
+def train_task(submitter, task_conf, task_dsl, task_name, check_interval=3):
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
     output = submitter.submit_job(conf_temperate_path=task_conf, dsl_path=task_dsl)
     job_id = output['jobId']
-    print(f"[{time.strftime('%Y-%m-%d %X')}]submit task {task_name} done, job_id={job_id}")
-    ret = submitter.await_finish(job_id)
-    return dict(job_id=output, status=ret)
+    model_info = output['model_info']
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
+    status = submitter.await_finish(job_id, check_interval=check_interval)
+    return dict(job_id=job_id, status=status, model_info=model_info)
 
 
-def predict_task(submitter, task_conf, model, task_name):
-    print(f"[{time.strftime('%Y-%m-%d %X')}]submitting task {task_name}")
+def predict_task(submitter, task_conf, model, task_name, check_interval=3):
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
     job_id = submitter.submit_pre_job(conf_temperate_path=task_conf, model_info=model)
-    print(f"[{time.strftime('%Y-%m-%d %X')}]submit task {task_name} done, job_id={job_id}")
-    ret = submitter.await_finish(job_id)
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
+    ret = submitter.await_finish(job_id, check_interval=check_interval)
     return dict(job_id=job_id, status=ret)
 
 
-def run_testsuite(submitter, env, file_name, err_name):
+def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_data=False):
     result = {}
     model = {}
     testsuite_base_path = os.path.dirname(file_name)
@@ -66,7 +66,8 @@ def run_testsuite(submitter, env, file_name, err_name):
     with open(file_name) as f:
         configs = json.loads(f.read())
 
-    data_upload(submitter=submitter, env=env, task_data=configs["data"])
+    if not skip_data:
+        data_upload(submitter=submitter, env=env, task_data=configs["data"], check_interval=check_interval)
 
     for task_name, task_config in configs["tasks"].items():
         # noinspection PyBroadException
@@ -77,28 +78,31 @@ def run_testsuite(submitter, env, file_name, err_name):
             if task_type == "train":
                 check("dsl", task_config)
                 dsl = os.path.join(testsuite_base_path, task_config["dsl"])
-                temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl, task_name=task_name)
+                temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl, task_name=task_name,
+                                  check_interval=check_interval)
                 job_id = temp['job_id']
                 status = temp['status']
+                model_info = temp["model_info"]
                 result[task_name] = f"{job_id}\t{status}"
-                model[task_name] = temp["output"]["model_info"]
+                model[task_name] = model_info
             elif task_type == "predict":
                 check("task", task_config)
                 pre_task = task_config["task"]
-                temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task], task_name=task_name)
+                temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task], task_name=task_name,
+                                    check_interval=check_interval)
                 job_id = temp['job_id']
                 status = temp['status']
                 result[task_name] = f"{job_id}\t{status}"
             else:
                 raise ValueError(f"task type {task_type} unknown")
-            print(f"[{time.strftime('%Y-%m-%d %X')}]task {task_name} {status}, job_id={job_id}")
+            print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]running status: {status}, job_id={job_id}")
 
         except Exception:
-            print(f"[{time.strftime('%Y-%m-%d %X')}]task {task_name} fail")
+            print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
             err_msg = traceback.format_exc()
             print(err_msg)
             result[task_name] = "\tsubmit_fail"
-            with open(f"{err_name}.err", "a") as f:
+            with open(f"{err_name}", "a") as f:
                 f.write(f"{task_name}\n")
                 f.write("===========\n")
                 f.write(err_msg)
@@ -107,35 +111,49 @@ def run_testsuite(submitter, env, file_name, err_name):
 
 
 def main():
+    fate_home = os.path.abspath(f"{os.getcwd()}/../")
+    example_path = "federatedml-1.x-examples"
+
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("env_file", type=str, help="please input your env config file")
-    arg_parser.add_argument("result_file", type=str, help="please input the filename to receive results")
-    arg_parser.add_argument("--name", type=str, help="please input the task name")
+    arg_parser.add_argument("env_conf", type=str, help="file to read env config")
+    arg_parser.add_argument("-o", "--output", type=str, help="file to save result, defaults to `test_result`",
+                            default="test_result")
+    arg_parser.add_argument("-e", "--error", type=str, help="file to save error")
+    group = arg_parser.add_mutually_exclusive_group()
+    group.add_argument("-d", "--dir", type=str, help="dir to find testsuites",
+                       default=os.path.join(fate_home, example_path))
+    group.add_argument("-s", "--suite", type=str, help="testsuite to run")
+    arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 3",
+                            default=3)
+    arg_parser.add_argument("--skip_data", help="skip data upload", action="store_false")
     args = arg_parser.parse_args()
 
-    env_file = args.env_file
-    result_file = args.result_file
-    fate_home = os.path.abspath(f"{os.getcwd()}/../")
+    env_conf = args.env_conf
+    output_file = args.output
+    err_output = args.error or f"{output_file}.err"
+    testsuites_dir = args.dir
+    suite = args.suite
+    interval = args.interval
+    skip_data = args.skip_data
+
     submitter = submit.Submitter(fate_home=fate_home, work_mode=0)
 
     try:
-        with open(env_file) as e:
+        with open(env_conf) as e:
             env = json.loads(e.read())
     except:
-        raise ValueError(f"invalid env file: {env_file}")
-
-    if args.name is not None:
-        testsuites = [args.name]
-    else:
-        testsuites = search_testsuite(os.path.join(fate_home, EXAMPLE_PATH))
+        raise ValueError(f"invalid env conf: {env_conf}")
+    testsuites = suite or search_testsuite(testsuites_dir)
 
     for file_name in testsuites:
         print("===========================================")
         print(f"[{time.strftime('%Y-%m-%d %X')}]running testsuite {file_name}")
         print("===========================================")
-        result = run_testsuite(submitter, env, file_name, result_file)
+        result = run_testsuite(submitter, env, file_name, err_output,
+                               check_interval=interval,
+                               skip_data=skip_data)
 
-        with open(result_file, "w") as f:
+        with open(output_file, "w") as f:
             f.write("===========================================\n")
             f.write(f"{file_name}\n")
             f.write("===========================================\n")
