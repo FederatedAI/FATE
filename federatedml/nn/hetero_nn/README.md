@@ -14,7 +14,7 @@ The following figure shows the proposed Federated Heterogeneous Neural Network f
 <div style="text-align:center" align=center>
 <img src="./images/hetero_nn_framework.png" alt="framework" width="500" height="250" />
 <br/>
-Figure 1: Framework of Federated Heterogeneous Neural Network/div>
+Figure 1: Framework of Federated Heterogeneous Neural Network</div>
 
 Active Party: We define the active party as the data provider who holds both a data matrix and the class label. Since the class label information is indispensable for supervised learning, there must be an active party with access to the label y.
 The active party naturally takes the responsibility as a dominating server in federated learning. 
