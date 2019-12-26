@@ -23,8 +23,9 @@ buildBase() {
   echo "START BUILDING BASE IMAGE"
   cd ${WORKINGDIR}
 
-  docker build -f docker/base/Dockerfile -t ${PREFIX}/base-image:${BASE_TAG} ${source_code_dir}/docker-build/docker/base
+  docker build --build-arg python_version=${python_version} -f docker/base/Dockerfile -t ${PREFIX}/base-image:${BASE_TAG} ${source_code_dir}/docker-build/docker/base
 
+  rm ${source_code_dir}/docker-build/docker/base/requirements.txt
   echo "FINISH BUILDING BASE IMAGE"
 }
 
