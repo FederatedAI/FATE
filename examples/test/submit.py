@@ -58,8 +58,10 @@ class Submitter(object):
     def submit(self, cmd):
         full_cmd = ["python", self._flow_client_path]
         full_cmd.extend(cmd)
+
+        print(f"submitting: {full_cmd}")
         stdout = self.run_cmd(full_cmd)
-        print(str(stdout))
+        print(f"submit done: {full_cmd}")
         try:
             stdout = json.loads(stdout)
             status = stdout["retcode"]
@@ -84,13 +86,10 @@ class Submitter(object):
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                print(env_path)
-                print(scp_out)
                 upload_cmd = " && ".join([f"source {env_path}"
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
                 upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
-                print(upload_out)
             else:
                 self.submit(["-f", "upload", "-c", f.name])
 
@@ -112,7 +111,6 @@ class Submitter(object):
             if remote_host:
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                # print(scp_out)
                 upload_cmd = " && ".join([f"source {env_path}",
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
