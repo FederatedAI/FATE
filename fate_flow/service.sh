@@ -17,10 +17,10 @@
 #
 
 export PYTHONPATH=
-log_dir="${PYTHONPATH}/logs"
+log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
 venv=
 # FATE deployment suggested path
-# venv=/data/projects/fate/venv/
+# venv=/data/projects/cos/allinone/common/python/venv
 
 module=fate_flow_server.py
 
@@ -44,18 +44,18 @@ status() {
 }
 
 start() {
-    sleep 4
+    sleep 8
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
-        nohup python fate_flow_server.py > ${log_dir}/console.log 2>&1 &
+        nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         sleep 2
         getpid
         if [[ -n ${pid} ]]; then 
            echo "service start sucessfully. pid: ${pid}"
         else
-           echo "service start failed, please check ../logs/console.log"
+           echo "service start failed, please check ../logs/console.log and ../logs/error.log"
         fi
     else
         echo "service already started. pid: ${pid}"
