@@ -22,7 +22,7 @@ import random
 import numpy as np
 
 from arch.api import session
-from federatedml.nn.hetero_nn.backend.ops import HeteroNNTensor
+from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 
 BITS = 10
 
@@ -50,4 +50,4 @@ class RandomNumberGenerator(object):
 
         tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:]))
 
-        return HeteroNNTensor(tb_obj=tb)
+        return PaillierTensor(tb_obj=tb)

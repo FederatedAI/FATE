@@ -61,27 +61,6 @@ class EncryptModeCalculator(object):
         else:
             return obj + enc_zero
 
-    """
-    def encrypt_row(self, row):
-        if type(row).__name__ == "ndarray":
-            return np.array([self.encrypter.encrypt(val) for val in row])
-        elif isinstance(row, Iterable):
-            return type(row)(self.encrypter.encrypt(val) for val in row)
-        else:
-            return self.encrypter.encrypt(row)
-    """
-
-    def encrypt_obj(self, obj):
-        if isinstance(obj, np.ndarray):
-            if len(obj.shape) == 1:
-                return np.reshape([self.encrypter.encrypt(val) for val in obj], obj.shape)
-            else:
-                return np.reshape([self.encrypt_obj(o) for o in obj], obj.shape)
-        elif isinstance(obj, Iterable):
-            return type(obj)(self.encrypt_obj(o) if isinstance(o, Iterable) else self.encrypter.encrypt(o) for o in obj)
-        else:
-            return self.encrypter.encrypt(obj)
-
     @staticmethod
     def gen_random_number():
         return random.random()
@@ -113,7 +92,7 @@ class EncryptModeCalculator(object):
         else:
             if self.prev_data is None or self.prev_data.count() != input_data.count() or self.mode == "strict" \
                     or (self.mode == "balance" and self.should_re_encrypted()):
-                new_data = input_data.mapValues(self.encrypt_obj)
+                new_data = input_data.mapValues(self.encrypter.recursive_encrypt)
             else:
                 diff_data = input_data.join(self.prev_data, self.get_difference)
                 new_data = diff_data.join(self.prev_encrypted_data, self.add_difference)
