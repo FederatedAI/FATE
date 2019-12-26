@@ -254,7 +254,7 @@ class HeteroStepwise(object):
     '''
     def check_best(self, new_host_mask, new_guest_mask, host_mask, guest_mask, j_host, j_guest):
         # if model not updated
-        if new_host_mask == host_mask and new_guest_mask == guest_mask:
+        if np.array_equal(new_host_mask, host_mask) and np.array_equal(new_guest_mask, guest_mask) :
             return True
         # if full model is the best
         elif sum(new_guest_mask) == j_host and sum(new_guest_mask) == j_guest:
@@ -373,9 +373,9 @@ class HeteroStepwise(object):
         n_guest, j_guest = self.guest_data_info_transfer.get(idx=0)
         self.n_count = n_host
         if self.backward:
-            host_mask, guest_mask = np.ones(j_host), np.ones(j_guest)
+            host_mask, guest_mask = np.ones(j_host, dtype=bool), np.ones(j_guest)
         else:
-            host_mask, guest_mask = np.zeros(j_host), np.zeros(j_guest)
+            host_mask, guest_mask = np.zeros(j_host, dtype=bool), np.zeros(j_guest)
         self._set_k()
         while self.n_step < self.max_step:
             step_models = set()
