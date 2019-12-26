@@ -56,7 +56,7 @@ The following figure shows the forward propagation of Federated Heterogeneous Ne
 <div style="text-align:center" align=center>
 <img src="./images/hetero_nn_forward_propagation.png" alt="forward propagation" width="500" height="250" />
 <br/>
-Figure 2: Forward Propagation of Federated Heterogeneous Neural Network/div>
+Figure 2: Forward Propagation of Federated Heterogeneous Neural Network</div>
 
 
 ## 3. Backward Propagation of Federated Heterogeneous Neural Network 
@@ -84,7 +84,7 @@ The following figure shows the backward propagation of Federated Heterogeneous N
 <div style="text-align:center" align=center>
 <img src="./images/hetero_nn_backward_propagation.png" alt="forward propagation" width="500" height="250" />
 <br/>
-Figure 3: Backward Propagation of Federated Heterogeneous Neural Network/div>
+Figure 3: Backward Propagation of Federated Heterogeneous Neural Network</div>
    
   
 
