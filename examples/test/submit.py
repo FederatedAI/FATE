@@ -25,15 +25,17 @@ from string import Template
 
 class Submitter(object):
 
-    def __init__(self):
-        self._fate_home = ""
-        self._flow_client_path = ""
-        self._work_mode = 0
-        self._backend = 0
+    def __init__(self, fate_home="", work_mode=0, backend=0):
+        self._fate_home = fate_home
+        self._work_mode = work_mode
+        self._backend = backend
+
+    @property
+    def _flow_client_path(self):
+        return os.path.join(self._fate_home, "../fate_flow/fate_flow_client.py")
 
     def set_fate_home(self, path):
         self._fate_home = path
-        self._flow_client_path = os.path.join(path, "../fate_flow/fate_flow_client.py")
         return self
 
     def set_work_mode(self, mode):
@@ -42,6 +44,7 @@ class Submitter(object):
 
     def set_backend(self, backend):
         self._backend = backend
+        return self
 
     @staticmethod
     def run_cmd(cmd):
@@ -110,14 +113,10 @@ class Submitter(object):
                 scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
                 # print(scp_out)
-                print(env_path)
-                print(f.name)
-                print(self._flow_client_path)
                 upload_cmd = " && ".join([f"source {env_path}",
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
                 upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
-                print(upload_out)
             else:
                 self.submit(["-f", "upload", "-c", f.name])
 
