@@ -6,14 +6,17 @@
 进入examples/test文件夹。<br>
 
 执行命令python run_test.py env.json result.txt<br>
+或者python run_test.py env.json result.txt --name xxx<br>
 
 run_test.py执行测试文件，搜寻并执行测试任务。<br>
 env.json环境文件，根据用户实际情况指明所需要的环境配置。<br>  
 result.txt输出文件，指明查看结果的位置。<br>
+--name可选参数，用于指定执行某个任务或某些任务，形式为任务名称或某些任务的后缀<br>
 
 2.执行规则
 ---------
-测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以testsuite.json为后缀的任务文件。<br>
+在没有指定name参数的情况下，测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以testsuite.json为后缀的任务文件。<br>
+指定后，测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以name参数为后缀的任务文件。<br>
 一个testsuite.json任务文件样例已经给出。<br>
 examples/test/temp_testsuite.json<br>
 在temp_testsuite.json中包括一个训练和一个预测任务。<br>
@@ -49,10 +52,12 @@ python run_test.py env.json result.txt <br>
 run_test.py  search and execute tasks defined by users. <br>
 env.json environment configs based on users' running environment. <br>
 result.txt an output file to query task execution results. <br>
+--name optional parameter,used to be a task name or a suffix for some tasks
 
 2.Tips
 ------
-The script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a "testsuite.json" suffix.<br>
+If name is not given,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a "testsuite.json" suffix.<br>
+If there is a name parameter,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a suffix given by name.
 An example task file is given in examples/test/temp_testsuite.json including a training and a prediction task. <br>
 
 3.Config files
