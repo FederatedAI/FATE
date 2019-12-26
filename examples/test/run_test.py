@@ -1,6 +1,9 @@
 import argparse
 import json
 import os
+import pprint
+import traceback
+import time
 
 from examples.test import submit
 
@@ -28,17 +31,25 @@ def data_upload(submitter, env, task_data):
     for data in task_data:
         host = role_map(env, data["role"])
         remote_host = None if host == -1 else host
+        print(f"[{time.strftime('%Y-%m-%d %X')}]uploading...")
+        pprint.pprint(data)
         submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
+        print(f"[{time.strftime('%Y-%m-%d %X')}]upload done\n")
 
 
-def train_task(submitter, task_conf, task_dsl):
+def train_task(submitter, task_conf, task_dsl, task_name):
+    print(f"[{time.strftime('%Y-%m-%d %X')}]submitting task {task_name}")
     output = submitter.submit_job(conf_temperate_path=task_conf, dsl_path=task_dsl)
-    ret = submitter.await_finish(output["jobId"])
-    return dict(output=output, status=ret)
+    job_id = output['jobId']
+    print(f"[{time.strftime('%Y-%m-%d %X')}]submit task {task_name} done, job_id={job_id}")
+    ret = submitter.await_finish(job_id)
+    return dict(job_id=output, status=ret)
 
 
-def predict_task(submitter, task_conf, model=None):
+def predict_task(submitter, task_conf, model, task_name):
+    print(f"[{time.strftime('%Y-%m-%d %X')}]submitting task {task_name}")
     job_id = submitter.submit_pre_job(conf_temperate_path=task_conf, model_info=model)
+    print(f"[{time.strftime('%Y-%m-%d %X')}]submit task {task_name} done, job_id={job_id}")
     ret = submitter.await_finish(job_id)
     return dict(job_id=job_id, status=ret)
 
@@ -58,28 +69,39 @@ def run_testsuite(submitter, env, file_name, err_name):
     data_upload(submitter=submitter, env=env, task_data=configs["data"])
 
     for task_name, task_config in configs["tasks"].items():
+        # noinspection PyBroadException
         try:
             check("conf", task_config)
             conf = os.path.join(testsuite_base_path, task_config["conf"])
             task_type = task_config.get("type", "train")
-
             if task_type == "train":
                 check("dsl", task_config)
                 dsl = os.path.join(testsuite_base_path, task_config["dsl"])
-                temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl)
-                result[task_name] = f"{temp['output']['jobId']}\t{temp['status']}"
+                temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl, task_name=task_name)
+                job_id = temp['job_id']
+                status = temp['status']
+                result[task_name] = f"{job_id}\t{status}"
                 model[task_name] = temp["output"]["model_info"]
             elif task_type == "predict":
                 check("task", task_config)
                 pre_task = task_config["task"]
-                temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task])
-                result[task_name] = f"{temp['job_id']}\t{temp['status']}"
-        except Exception as e:
+                temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task], task_name=task_name)
+                job_id = temp['job_id']
+                status = temp['status']
+                result[task_name] = f"{job_id}\t{status}"
+            else:
+                raise ValueError(f"task type {task_type} unknown")
+            print(f"[{time.strftime('%Y-%m-%d %X')}]task {task_name} {status}, job_id={job_id}")
+
+        except Exception:
+            print(f"[{time.strftime('%Y-%m-%d %X')}]task {task_name} fail")
+            err_msg = traceback.format_exc()
+            print(err_msg)
             result[task_name] = "\tsubmit_fail"
             with open(f"{err_name}.err", "a") as f:
                 f.write(f"{task_name}\n")
                 f.write("===========\n")
-                f.write(json.dumps(e.args))
+                f.write(err_msg)
                 f.write("\n")
     return result
 
@@ -108,6 +130,9 @@ def main():
         testsuites = search_testsuite(os.path.join(fate_home, EXAMPLE_PATH))
 
     for file_name in testsuites:
+        print("===========================================")
+        print(f"[{time.strftime('%Y-%m-%d %X')}]running testsuite {file_name}")
+        print("===========================================")
         result = run_testsuite(submitter, env, file_name, result_file)
 
         with open(result_file, "w") as f:

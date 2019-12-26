@@ -58,10 +58,7 @@ class Submitter(object):
     def submit(self, cmd):
         full_cmd = ["python", self._flow_client_path]
         full_cmd.extend(cmd)
-
-        print(f"submitting: {full_cmd}")
         stdout = self.run_cmd(full_cmd)
-        print(f"submit done: {full_cmd}")
         try:
             stdout = json.loads(stdout)
             status = stdout["retcode"]
@@ -116,7 +113,7 @@ class Submitter(object):
                                           f"rm {f.name}"])
                 upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
             else:
-                self.submit(["-f", "upload", "-c", f.name])
+                return self.submit(["-f", "upload", "-c", f.name])
 
     def submit_job(self, conf_temperate_path, dsl_path, **substitutes):
         conf = self.render(conf_temperate_path, **substitutes)
@@ -155,11 +152,13 @@ class Submitter(object):
 
     def await_finish(self, job_id, timeout=sys.maxsize, check_interval=10):
         deadline = time.time() + timeout
+        start = time.time()
         while True:
-            time.sleep(check_interval)
             stdout = self.submit(["-f", "query_job", "-j", job_id, "-r", "guest"])
             status = stdout["data"][0]["f_status"]
             if status == "running" and time.time() < deadline:
+                print(f"running {job_id}, used seconds: {int(time.time() - start)}", end="\r")
+                time.sleep(check_interval)
                 continue
             else:
                 return status
