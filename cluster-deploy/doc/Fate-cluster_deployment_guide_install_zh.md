@@ -360,7 +360,7 @@ cd /data/projects/fate
 sh services.sh all stop
 ```
 
-关闭单个模块：
+关闭单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy stop
