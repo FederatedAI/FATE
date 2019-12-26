@@ -19,28 +19,28 @@
   ],
   "tasks": {
     "linr": {
-      "conf": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_train_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_train_job_dsl.json",
+      "conf": "test_hetero_linr_train_job_conf.json",
+      "dsl": "test_hetero_linr_train_job_dsl.json",
       "type": "train"
     },
     "linr-predict": {
-      "conf": "examples/federatedml-1.x-examples/hetero_linear_regression/test_predict_conf.json",
+      "conf": "test_predict_conf.json",
       "task": "linr",
       "type": "predict"
     },
     "linr-cv": {
-      "conf": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_cv_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_cv_job_dsl.json",
+      "conf": "test_hetero_linr_cv_job_conf.json",
+      "dsl": "test_hetero_linr_cv_job_dsl.json",
       "type": "train"
     },
     "linr-multi-host": {
-      "conf": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_multi_host_train_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_multi_host_train_job_dsl.json",
+      "conf": "test_hetero_linr_multi_host_train_job_conf.json",
+      "dsl": "test_hetero_linr_multi_host_train_job_dsl.json",
       "type": "train"
     },
     "linr-multi-host-cv": {
-      "conf": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_multi_host_cv_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_linear_regression/test_hetero_linr_multi_host_cv_job_dsl.json",
+      "conf": "test_hetero_linr_multi_host_cv_job_conf.json",
+      "dsl": "test_hetero_linr_multi_host_cv_job_dsl.json",
       "type": "train"
     }
   }
