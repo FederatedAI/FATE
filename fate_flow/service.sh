@@ -48,7 +48,7 @@ start() {
         mklogsdir
         source ${venv}/bin/activate
         nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
-        sleep 3
+        sleep 6
         getpid
         if [[ -n ${pid} ]]; then 
            echo "service start sucessfully. pid: ${pid}"
