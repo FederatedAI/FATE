@@ -131,6 +131,7 @@ class HeteroStepwise(object):
 
     def drop_one(self, host_mask, guest_mask):
         host_masks, guest_masks = [], []
+        # initial step, add full model to comparison
         if sum(host_mask) == host_mask.size and sum(guest_mask) == guest_mask.size:
             host_masks.append(np.copy(host_mask))
             guest_masks.append(np.copy(guest_mask))
@@ -152,11 +153,11 @@ class HeteroStepwise(object):
 
     def add_one(self, host_mask, guest_mask):
         host_masks, guest_masks = [], []
-        # initial step
+        # initial masks, one feature on each side
         if sum(host_mask) == 0 and sum(guest_mask) == 0:
-            host_masks = np.eye(host_mask.size, host_mask.size)
+            host_masks = np.eye(host_mask.size, host_mask.size, dtype=bool)
             host_masks = np.repeat(host_masks, guest_mask.size, axis=0)
-            guest_masks = np.eye(guest_mask.size, guest_mask.size)
+            guest_masks = np.eye(guest_mask.size, guest_mask.size, dtype=bool)
             guest_masks = np.tile(guest_masks, (host_mask.size, 1))
             return list(host_masks), list(guest_masks)
 
