@@ -2,7 +2,9 @@ FROM mcr.microsoft.com/java/jre:8u192-zulu-alpine
 
 WORKDIR /data/projects/fate/fateboard/
 
-COPY fateboard-*.jar ./
+ARG fateboard_version
+
+COPY fateboard-${fateboard_version}.jar ./
 COPY conf ./conf
 RUN ln -s fateboard-*.jar fateboard.jar
 EXPOSE 8080

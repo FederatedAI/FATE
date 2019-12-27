@@ -2,11 +2,13 @@ FROM mcr.microsoft.com/java/jre:8u192-zulu-alpine
 
 WORKDIR /data/projects/fate/proxy/
 
-COPY fate-proxy-*.tar.gz ./
+ARG version
+
+COPY fate-proxy-${version}.tar.gz ./
 COPY conf ./conf
 
-RUN tar -xzf fate-proxy-*.tar.gz && \
-    rm fate-proxy-*.tar.gz && \
+RUN tar -xzf fate-proxy-${version}.tar.gz && \
+    rm fate-proxy-${version}.tar.gz && \
     ln -s fate-proxy-*.jar fate-proxy.jar
 
 EXPOSE 9370

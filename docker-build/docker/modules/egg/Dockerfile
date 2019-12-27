@@ -10,11 +10,14 @@ RUN set -eux; \
 
 WORKDIR /data/projects/fate/eggroll/
 
-COPY eggroll-computing-*.tar.gz ./
-COPY eggroll-api-*.tar.gz ./
-COPY eggroll-conf-*.tar.gz ./
-COPY eggroll-egg-*.tar.gz ./
-COPY eggroll-storage-service-cxx-*.tar.gz  ./
+ARG version
+
+
+COPY eggroll-computing-${version}.tar.gz ./
+COPY eggroll-api-${version}.tar.gz ./
+COPY eggroll-conf-${version}.tar.gz ./
+COPY eggroll-egg-${version}.tar.gz ./
+COPY eggroll-storage-service-cxx-${version}.tar.gz  ./
 COPY third_party_eggrollv1.tar.gz ./
 COPY federatedml ./python/federatedml
 COPY arch/api ./python/arch/api
@@ -28,11 +31,11 @@ RUN set -eux; \
     \
     cd /data/projects/fate/eggroll/; \
     mkdir -p egg python/eggroll/api python/eggroll/computing storage-service-cxx ; \
-    tar -C ./egg -xvf eggroll-egg-*.tar.gz && rm eggroll-egg-*.tar.gz ; \
-    tar -C ./python/eggroll/computing -xvf eggroll-computing-*.tar.gz && rm eggroll-computing-*.tar.gz ; \
-    tar -C ./python/eggroll/api -xvf eggroll-api-*.tar.gz && rm eggroll-api-*.tar.gz ; \
-    tar -C ./python/eggroll/conf -xvf eggroll-conf-*.tar.gz && rm eggroll-conf-*.tar.gz ; \
-    tar -C ./storage-service-cxx -xvf eggroll-storage-service-cxx-*.tar.gz && rm eggroll-storage-service-cxx-*.tar.gz ; \
+    tar -C ./egg -xvf eggroll-egg-${version}.tar.gz && rm eggroll-egg-${version}.tar.gz ; \
+    tar -C ./python/eggroll/computing -xvf eggroll-computing-${version}.tar.gz && rm eggroll-computing-${version}.tar.gz ; \
+    tar -C ./python/eggroll/api -xvf eggroll-api-${version}.tar.gz && rm eggroll-api-${version}.tar.gz ; \
+    tar -C ./python/eggroll/conf -xvf eggroll-conf-${version}.tar.gz && rm eggroll-conf-${version}.tar.gz ; \
+    tar -C ./storage-service-cxx -xvf eggroll-storage-service-cxx-${version}.tar.gz && rm eggroll-storage-service-cxx-${version}.tar.gz ; \
     tar -C ./storage-service-cxx -xvf third_party_eggrollv1.tar.gz && rm third_party_eggrollv1.tar.gz ; \
     cd storage-service-cxx ; \
     sed -i "20s#-I. -I.*#-I. -I/data/projects/fate/eggroll/storage-service-cxx/third_party/include#g" ./Makefile ; \

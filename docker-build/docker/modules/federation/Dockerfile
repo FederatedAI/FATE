@@ -2,11 +2,13 @@ FROM mcr.microsoft.com/java/jre:8u192-zulu-alpine
 
 WORKDIR /data/projects/fate/federation/
 
-COPY fate-federation-*.tar.gz ./
+ARG version
+
+COPY fate-federation-${version}.tar.gz ./
 COPY conf ./conf
 
-RUN tar -xzf fate-federation-*.tar.gz && \
-    rm fate-federation-*.tar.gz && \
+RUN tar -xzf fate-federation-${version}.tar.gz && \
+    rm fate-federation-${version}.tar.gz && \
     ln -s fate-federation-*.jar fate-federation.jar
 EXPOSE 9394
 
