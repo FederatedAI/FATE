@@ -37,8 +37,8 @@ and component images have the below naming format:
 A sample of `.env` is as follows:
 ```bash
 PREFIX=federatedai
-BASE_TAG=1.1-release
-TAG=1.1-release
+BASE_TAG=1.2-release
+TAG=1.2-release
 ```
 **NOTE:** 
 If the FATE images will be pushed to a registry server, the above configuration assumes the use of Docker Hub. If a local registry (e.g. Harbor) is used for storing images, change the `PREFIX` as follows:
@@ -56,14 +56,14 @@ $ bash build_cluster_docker.sh all
 The command creates the base images and then the component images. After the command finishes, all images of FATE should be created. Use `docker images` to check the newly generated images:
 ```
 REPOSITORY                            TAG  
-federatedai/egg                       1.1-release
-federatedai/fateboard                 1.1-release
-federatedai/meta-service              1.1-release
-federatedai/python                    1.1-release
-federatedai/roll                      1.1-release
-federatedai/proxy                     1.1-release
-federatedai/federation                1.1-release
-federatedai/base-image                1.1-release
+federatedai/egg                       1.2-release
+federatedai/fateboard                 1.2-release
+federatedai/meta-service              1.2-release
+federatedai/python                    1.2-release
+federatedai/roll                      1.2-release
+federatedai/proxy                     1.2-release
+federatedai/federation                1.2-release
+federatedai/base-image                1.2-release
 ```
 
 ##### Pushing images to a registry (optional)
