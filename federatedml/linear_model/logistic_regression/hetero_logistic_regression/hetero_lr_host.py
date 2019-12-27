@@ -154,7 +154,7 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     def predict(self, data_instances):
-
+        self.transfer_variable.host_prob.disable_auto_clean()
         LOGGER.info("Start predict ...")
         if self.need_one_vs_rest:
             self.one_vs_rest_obj.predict(data_instances)
