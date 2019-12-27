@@ -23,14 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
-            }
-          ],
-          "eval_data": [
-            {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "hetero_default_credit_b",
+              "namespace": "hetero_guest_default_credit"
             }
           ]
         }
@@ -53,14 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
-            }
-          ],
-          "eval_data": [
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "hetero_default_credit_a",
+              "namespace": "hetero_host_default_credit"
             }
           ]
         }
@@ -78,15 +66,17 @@
   "algorithm_parameters": {
     "hetero_lr_0": {
       "penalty": "L2",
-      "optimizer": "nesterov_momentum_sgd",
+      "optimizer": "sqn",
       "tol": 1e-4,
-      "alpha": 0.01,
+      "alpha": 0.00001,
       "max_iter": 30,
-      "early_stop": "weight_diff",
-      "batch_size": -1,
+      "early_stop": "diff",
+      "batch_size": 5000,
       "learning_rate": 0.15,
+      "decay": 0.3,
+      "decay_sqrt": true,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       },
       "sqn_param": {
         "update_interval_L": 3,

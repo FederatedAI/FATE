@@ -150,21 +150,21 @@ This script file puts each module and configuration file into the FATE/cluster-d
 
 ```
 packages
-├── eggroll-api-1.1.1.tar.gz
-├── eggroll-computing-1.1.1.tar.gz
-├── eggroll-conf-1.1.1.tar.gz
-├── eggroll-egg-1.1.1.tar.gz
-├── eggroll-meta-service-1.1.1.tar.gz
-├── eggroll-roll-1.1.1.tar.gz
-├── eggroll-storage-service-cxx-1.1.1.tar.gz
-├── fateboard-1.1.jar
-├── fate-federation-1.1.1.tar.gz
-├── fate-proxy-1.1.1.tar.gz
+├── eggroll-api-1.2.0.tar.gz
+├── eggroll-computing-1.2.0.tar.gz
+├── eggroll-conf-1.2.0.tar.gz
+├── eggroll-egg-1.2.0.tar.gz
+├── eggroll-meta-service-1.2.0.tar.gz
+├── eggroll-roll-1.2.0.tar.gz
+├── eggroll-storage-service-cxx-1.2.0.tar.gz
+├── fateboard-1.2.0.jar
+├── fate-federation-1.2.0.tar.gz
+├── fate-proxy-1.2.0.tar.gz
 ├── __init__.py
 ├── jdk-8u192-linux-x64.tar.gz
 ├── Miniconda3-4.5.4-Linux-x86_64.sh
 ├── mysql-8.0.13-linux-glibc2.12-x86_64.tar.xz
-├── pip-packages-fate-1.1.tar.gz
+├── pip-packages-fate-1.2.0.tar.gz
 ├── redis-5.0.2.tar.gz
 ├── third_party_eggrollv1.tar.gz
 └── third_party_eggrollv1_ubuntu.tar.gz
