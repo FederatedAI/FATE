@@ -17,7 +17,8 @@ COPY  examples/ ./examples
 COPY  eggroll-api-${version}.tar.gz ./
 
 RUN mkdir -p eggroll/api && tar -C eggroll/api -xvf eggroll-api-${version}.tar.gz && \
-    rm eggroll-api-${version}.tar.gz
+    rm eggroll-api-${version}.tar.gz && \
+    echo "source /data/projects/python/venv/bin/activate" >> ~/.bashrc
 
 ENV PYTHONPATH=/data/projects/fate/python
 CMD sleep 5; source /data/projects/python/venv/bin/activate && cd ./fate_flow && \
