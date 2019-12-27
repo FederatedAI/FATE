@@ -215,8 +215,9 @@ class ComponentProperties(object):
             if result_data is None:
                 result_data = data
             else:
+                LOGGER.debug(f"Before union, t1 count: {result_data.count()}, t2 count: {data.count()}")
                 result_data = result_data.union(data)
+                LOGGER.debug(f"After union, result count: {result_data.count()}")
             LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
-        LOGGER.debug("union result: {}".format(result_data.first()))
         return result_data
