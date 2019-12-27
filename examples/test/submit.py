@@ -84,7 +84,7 @@ class Submitter(object):
             if remote_host:
                 self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                upload_cmd = " && ".join([f"source {env_path}"
+                upload_cmd = " && ".join([f"source {env_path}",
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
                 stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
