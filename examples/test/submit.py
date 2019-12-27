@@ -102,8 +102,8 @@ class Submitter(object):
     def delete_table(self, namespace, name):
         pass
 
-    def submit_job(self, conf_path, submit_type="train", dsl_path=None, model_info=None, substitute=None):
-        conf = self.render(conf_path, model_info, substitute)
+    def submit_job(self, conf_path, roles, submit_type="train", dsl_path=None, model_info=None, substitute=None):
+        conf = self.render(conf_path, roles, model_info, substitute)
         result = {}
         with tempfile.NamedTemporaryFile("w") as f:
             json.dump(conf, f)
@@ -116,12 +116,17 @@ class Submitter(object):
             result['jobId'] = stdout["jobId"]
         return result
 
-    def render(self, conf_path, model_info=None, substitute=None):
+    def render(self, conf_path, roles, model_info=None, substitute=None):
         with open(conf_path) as f:
             d = json.load(f)
         if substitute is not None:
             d = recursive_update(d, substitute)
         d['job_parameters']['work_mode'] = self._work_mode
+        d['initiator']['party_id'] = roles["guest"][0]
+        for r in ["guest", "host", "arbiter"]:
+            if r in d['role']:
+                for idx in range(len(d['role'][r])):
+                    d['role'][r][idx] = roles[r][idx]
         if model_info is not None:
             d['job_parameters']['model_id'] = model_info['model_id']
             d['job_parameters']['model_version'] = model_info['model_version']

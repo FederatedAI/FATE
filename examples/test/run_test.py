@@ -25,10 +25,20 @@ def role_map(env, role):
     return env["ip_map"][str(loc)]
 
 
+def get_party_id(env, role, idx):
+    return env["role"][role][idx]
+
+
+def get_ip(env, party_id):
+    ip = env["ip_map"][party_id]
+    return None if ip == -1 else ip
+
+
 def data_upload(submitter, env, task_data, check_interval=3):
     for data in task_data:
-        host = role_map(env, data["role"])
-        remote_host = None if host == -1 else host
+        role, idx = data["role"].split("_", 1)
+        party_id = get_party_id(env, role, int(idx))
+        host_ip = get_ip(env, str(party_id))
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
         print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}")
         stdout = submitter.upload(data_path=data["file"],
@@ -36,16 +46,16 @@ def data_upload(submitter, env, task_data, check_interval=3):
                                   name=data["table_name"],
                                   partition=data["partition"],
                                   head=data["head"],
-                                  remote_host=remote_host)
+                                  remote_host=host_ip)
         job_id = stdout["jobId"]
-        if not remote_host:
+        if not host_ip:
             submitter.await_finish(job_id, check_interval=check_interval)
         else:
             print("warning: not check remote uploading status!!!")
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
 
 
-def run_task(submitter, conf, submit_type, err_name, task_name, check_interval,
+def run_task(submitter, conf, party_ids, submit_type, err_name, task_name, check_interval,
              dsl=None,
              model_info=None,
              substitute=None):
@@ -54,10 +64,11 @@ def run_task(submitter, conf, submit_type, err_name, task_name, check_interval,
     try:
         print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
         if submit_type == "train":
-            output = submitter.submit_job(conf, submit_type=submit_type, dsl_path=dsl, substitute=substitute)
+            output = submitter.submit_job(conf, party_ids, submit_type=submit_type, dsl_path=dsl, substitute=substitute)
             model = output['model_info']
         else:
-            output = submitter.submit_job(conf, submit_type=submit_type, model_info=model_info, substitute=substitute)
+            output = submitter.submit_job(conf, party_ids, submit_type=submit_type, model_info=model_info,
+                                          substitute=substitute)
         job_id = output['jobId']
         print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
 
@@ -83,6 +94,8 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
     models = {}
     testsuite_base_path = os.path.dirname(file_name)
 
+    party_ids = env["role"]
+
     def check(field_name, config):
         if field_name not in config:
             raise ValueError(f"{field_name} not specified in {task_name}@{file_name}")
@@ -106,7 +119,7 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
             if dep_task is None:
                 check("dsl", task_config)
                 dsl = os.path.join(testsuite_base_path, task_config["dsl"])
-                result, model = run_task(submitter, conf, "train", err_name, sub_task_name, check_interval,
+                result, model = run_task(submitter, conf, party_ids, "train", err_name, sub_task_name, check_interval,
                                          dsl=dsl,
                                          substitute=substitute)
                 models[sub_task_name] = model
@@ -114,7 +127,7 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
                 if dep_task not in models:
                     results.append(f"{sub_task_name}\t{dep_task} not found")
                     continue
-                result, _ = run_task(submitter, conf, "predict", err_name, sub_task_name, check_interval,
+                result, _ = run_task(submitter, conf, party_ids, "predict", err_name, sub_task_name, check_interval,
                                      model_info=models[dep_task])
             results.append(result)
     return results
@@ -146,7 +159,7 @@ def main():
     suite = args.suite
     interval = args.interval
     skip_data = args.skip_data
-    work_mode = args.work_mode
+    work_mode = args.mode
 
     submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode)
 
