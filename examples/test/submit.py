@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from datetime import timedelta
 from string import Template
 
 
@@ -151,16 +152,23 @@ class Submitter(object):
         d['job_parameters']['model_version'] = model_info['model_version']
         return d
 
-    def await_finish(self, job_id, timeout=sys.maxsize, check_interval=3):
+    def await_finish(self, job_id, timeout=sys.maxsize, check_interval=3, task_name=None):
         deadline = time.time() + timeout
         start = time.time()
         while True:
             stdout = self.submit(["-f", "query_job", "-j", job_id])
             status = stdout["data"][0]["f_status"]
+            elapse_seconds = int(time.time() - start)
+            date = time.strftime('%Y-%m-%d %X')
+            if task_name:
+                log_msg = f"[{date}][{task_name}]{status}, elapse: {timedelta(seconds=elapse_seconds)}"
+            else:
+                log_msg = f"[{date}]{job_id} {status}, elapse: {timedelta(seconds=elapse_seconds)}"
             if (status == "running" or status == "waiting") and time.time() < deadline:
-                print(f"[{time.strftime('%Y-%m-%d %X')}]{job_id} {status}, used seconds: {int(time.time() - start)}",
-                      end="\r")
+                print(log_msg, end="\r")
                 time.sleep(check_interval)
                 continue
             else:
+                print(" " * 60, end="\r")  # clean line
+                print(log_msg)
                 return status

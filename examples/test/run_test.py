@@ -30,7 +30,7 @@ def data_upload(submitter, env, task_data, check_interval=3):
         host = role_map(env, data["role"])
         remote_host = None if host == -1 else host
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
-        print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}]")
+        print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}")
         job_id = submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
         if not remote_host:
             submitter.await_finish(job_id, check_interval=check_interval)
@@ -45,7 +45,7 @@ def train_task(submitter, task_conf, task_dsl, task_name, check_interval=3):
     job_id = output['jobId']
     model_info = output['model_info']
     print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
-    status = submitter.await_finish(job_id, check_interval=check_interval)
+    status = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
     return dict(job_id=job_id, status=status, model_info=model_info)
 
 
@@ -53,7 +53,7 @@ def predict_task(submitter, task_conf, model, task_name, check_interval=3):
     print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
     job_id = submitter.submit_pre_job(conf_temperate_path=task_conf, model_info=model)
     print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
-    ret = submitter.await_finish(job_id, check_interval=check_interval)
+    ret = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
     return dict(job_id=job_id, status=ret)
 
 
@@ -94,7 +94,6 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
                 job_id = temp['job_id']
                 status = temp['status']
                 result[task_name] = f"{job_id}\t{status}"
-            print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]running status: {status}, job_id={job_id}")
 
         except Exception:
             print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
