@@ -137,6 +137,11 @@ class HeteroFMGuest(HeteroFMBase):
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
 
+                # clip gradient
+                if self.model_param.clip_gradient and self.model_param.clip_gradient > 0:
+                    optim_guest_gradient = np.maximum(optim_guest_gradient, -self.model_param.clip_gradient)
+                    optim_guest_gradient = np.minimum(optim_guest_gradient, self.model_param.clip_gradient)
+
                 _model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 self.model_weights.update(_model_weights)
                 batch_index += 1

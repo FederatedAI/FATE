@@ -96,7 +96,7 @@ class FactorizationParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None
+                 multi_class='ovr', validation_freqs=None, clip_gradient=None
                  ):
         super(FactorizationParam, self).__init__()
         self.penalty = penalty
@@ -115,6 +115,7 @@ class FactorizationParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
         self.validation_freqs = validation_freqs
+        self.clip_gradient = clip_gradient
 
     def check(self):
         descr = "factorization_param's"
@@ -133,6 +134,10 @@ class FactorizationParam(BaseParam):
         if not isinstance(self.tol, (int, float)):
             raise ValueError(
                 "factorization_param's tol {} not supported, should be float type".format(self.tol))
+
+        if not isinstance(self.clip_gradient, (int, float, None)):
+            raise ValueError(
+                "factorization_param's clip_gradient {} not supported, should be float type".format(self.clip_gradient))
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
@@ -216,7 +221,8 @@ class HomoFactorizationParam(FactorizationParam):
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 aggregate_iters=1, multi_class='ovr', validation_freqs=None
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
+                 clip_gradient=None
                  ):
         super(HomoFactorizationParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -225,7 +231,8 @@ class HomoFactorizationParam(FactorizationParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                decay=decay, decay_sqrt=decay_sqrt)
+                                                decay=decay, decay_sqrt=decay_sqrt,
+                                                clip_gradient=clip_gradient)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
@@ -261,7 +268,7 @@ class HeteroFactorizationParam(FactorizationParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None
+                 multi_class='ovr', validation_freqs=None,clip_gradient=None
                  ):
         super(HeteroFactorizationParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -270,7 +277,8 @@ class HeteroFactorizationParam(FactorizationParam):
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   decay=decay,
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                  validation_freqs=validation_freqs)
+                                                  validation_freqs=validation_freqs,
+                                                  clip_gradient=clip_gradient)
         self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
 
     def check(self):

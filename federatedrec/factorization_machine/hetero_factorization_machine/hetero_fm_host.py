@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.util import consts
@@ -109,6 +110,11 @@ class HeteroFMHost(HeteroFMBase):
                 LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
                 self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer, self.n_iter_, batch_index)
+
+                # clip gradient
+                if self.model_param.clip_gradient and self.model_param.clip_gradient > 0:
+                    optim_host_gradient = np.maximum(optim_host_gradient, -self.model_param.clip_gradient)
+                    optim_host_gradient = np.minimum(optim_host_gradient, self.model_param.clip_gradient)
 
                 _model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 self.model_weights.update(_model_weights)

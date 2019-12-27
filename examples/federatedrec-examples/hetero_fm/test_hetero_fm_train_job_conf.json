@@ -162,6 +162,7 @@
       "converge_func": "diff",
       "batch_size": -1,
       "learning_rate": 0.015,
+      "clip_gradient": 1.5,
       "init_param": {
         "init_method": "random_uniform",
         "embed_size": 10
