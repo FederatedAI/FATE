@@ -155,18 +155,18 @@
   "algorithm_parameters": {
     "hetero_fm_0": {
       "penalty": "L2",
-      "optimizer": "sgd",
-      "eps": 1e-5,
-      "alpha": 0.01,
-      "max_iter": 10,
-      "converge_func": "diff",
-      "batch_size": -1,
-      "learning_rate": 0.015,
-      "clip_gradient": 1.5,
-      "init_param": {
-        "init_method": "random_uniform",
-        "embed_size": 10
-      },
+        "optimizer": "rmsprop",
+        "eps": 1e-5,
+        "alpha": 0.01,
+        "max_iter": 30,
+        "converge_func": "diff",
+        "batch_size": 128,
+        "learning_rate": 0.015,
+        "clip_gradient": 0.1,
+        "init_param": {
+          "init_method": "random_uniform",
+          "embed_size": 10
+        },
       "cv_param": {
         "n_splits": 5,
         "shuffle": false,
