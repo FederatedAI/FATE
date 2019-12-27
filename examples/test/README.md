@@ -66,14 +66,14 @@ run_test.py  search and execute tasks defined by users. <br>
 env.json environment configs based on users' running environment. <br>
 
 Optional parameters
- "-o", "--output", "file to save result, defaults to `test_result`"
- "-e", "--error", "file to save error")
- "-i", "--interval", "check job status every i seconds, defaults to 3"
- "--skip_data", "skip data upload, used to be false if not use
+ "-o", "--output", "file to save result, defaults to `test_result`" <br>
+ "-e", "--error", "file to save error" <br>
+ "-i", "--interval", "check job status every i seconds, defaults to 3" <br>
+ "--skip_data", "skip data upload, used to be false if not use <br>
  
- mutually_exclusive_group include:
- "-d", "--dir", "dir to find testsuites",
- "-s", "--suite","a single testsuite to run"
+ mutually_exclusive_group include: <br>
+ "-d", "--dir", "dir to find testsuites", <br>
+ "-s", "--suite","a single testsuite to run" <br>
 
 
 2.Tips
