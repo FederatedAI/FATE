@@ -5,13 +5,26 @@
 ------
 进入examples/test文件夹。<br>
 
-执行命令python run_test.py env.json result.txt<br>
-或者python run_test.py env.json result.txt --name xxx<br>
+执行命令python run_test.py env.json <br>
 
 run_test.py执行测试文件，搜寻并执行测试任务。<br>
 env.json环境文件，根据用户实际情况指明所需要的环境配置。<br>  
-result.txt输出文件，指明查看结果的位置。<br>
---name可选参数，用于指定执行某个任务或某些任务，形式为任务名称或某些任务的后缀<br>
+
+可选参数
+
+ "-o" 指定输出结果文件，默认为 `test_result`",
+
+ "-e",指定错误记录文件
+    
+ "-i", "--interval" 指定查询任务状态间隔
+ 
+ "--skip_data", 跳过数据上传，默认为false
+
+互斥可选参数
+ 
+  "-d", "--dir"  指定多个任务所在的根目录
+
+  "-s", "--suite" 指定执行某个任务文件
 
 2.执行规则
 ---------
@@ -47,12 +60,21 @@ Instructions of test tools
 ------
 Execute commands<br>
 cd examples/test<br>
-python run_test.py env.json result.txt <br>
+python run_test.py env.json<br>
 
 run_test.py  search and execute tasks defined by users. <br>
 env.json environment configs based on users' running environment. <br>
-result.txt an output file to query task execution results. <br>
---name optional parameter,used to be a task name or a suffix for some tasks
+
+Optional parameters
+ "-o", "--output", "file to save result, defaults to `test_result`"
+ "-e", "--error", "file to save error")
+ "-i", "--interval", "check job status every i seconds, defaults to 3"
+ "--skip_data", "skip data upload, used to be false if not use
+ 
+ mutually_exclusive_group include:
+ "-d", "--dir", "dir to find testsuites",
+ "-s", "--suite","a single testsuite to run"
+
 
 2.Tips
 ------
