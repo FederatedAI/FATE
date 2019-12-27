@@ -20,13 +20,11 @@
   "tasks": {
     "union": {
       "conf": "test_union_job_conf.json",
-      "dsl": "test_union_job_dsl.json",
-      "type": "train"
+      "dsl": "test_union_job_dsl.json"
     },
     "union-basic": {
       "conf": "test_union_basic_job_conf.json",
-      "dsl": "test_union_basic_job_dsl.json",
-      "type": "train"
+      "dsl": "test_union_basic_job_dsl.json"
     }
   }
 }

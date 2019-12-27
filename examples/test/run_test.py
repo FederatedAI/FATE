@@ -32,7 +32,10 @@ def data_upload(submitter, env, task_data, check_interval=3):
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
         print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}]")
         job_id = submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
-        submitter.await_finish(job_id, check_interval=check_interval)
+        if not remote_host:
+            submitter.await_finish(job_id, check_interval=check_interval)
+        else:
+            print("warning: not check remote uploading status!!!")
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
 
 
@@ -74,8 +77,8 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
         try:
             check("conf", task_config)
             conf = os.path.join(testsuite_base_path, task_config["conf"])
-            task_type = task_config.get("type", "train")
-            if task_type == "train":
+            dep_task = task_config.get("deps", None)
+            if dep_task is None:
                 check("dsl", task_config)
                 dsl = os.path.join(testsuite_base_path, task_config["dsl"])
                 temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl, task_name=task_name,
@@ -85,16 +88,12 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
                 model_info = temp["model_info"]
                 result[task_name] = f"{job_id}\t{status}"
                 model[task_name] = model_info
-            elif task_type == "predict":
-                check("task", task_config)
-                pre_task = task_config["task"]
-                temp = predict_task(submitter=submitter, task_conf=conf, model=model[pre_task], task_name=task_name,
+            else:
+                temp = predict_task(submitter=submitter, task_conf=conf, model=model[dep_task], task_name=task_name,
                                     check_interval=check_interval)
                 job_id = temp['job_id']
                 status = temp['status']
                 result[task_name] = f"{job_id}\t{status}"
-            else:
-                raise ValueError(f"task type {task_type} unknown")
             print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]running status: {status}, job_id={job_id}")
 
         except Exception:
@@ -123,9 +122,9 @@ def main():
     group.add_argument("-d", "--dir", type=str, help="dir to find testsuites",
                        default=os.path.join(fate_home, example_path))
     group.add_argument("-s", "--suite", type=str, help="testsuite to run")
-    arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 3",
-                            default=3)
-    arg_parser.add_argument("--skip_data", help="skip data upload", action="store_false")
+    arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 1",
+                            default=1)
+    arg_parser.add_argument("--skip_data", help="skip data upload", action="store_true")
     args = arg_parser.parse_args()
 
     env_conf = args.env_conf
@@ -143,7 +142,7 @@ def main():
             env = json.loads(e.read())
     except:
         raise ValueError(f"invalid env conf: {env_conf}")
-    testsuites = suite or search_testsuite(testsuites_dir)
+    testsuites = [suite] if suite else search_testsuite(testsuites_dir)
 
     for file_name in testsuites:
         print("===========================================")

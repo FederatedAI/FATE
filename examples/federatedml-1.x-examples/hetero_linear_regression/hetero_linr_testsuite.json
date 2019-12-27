@@ -20,28 +20,23 @@
   "tasks": {
     "linr": {
       "conf": "test_hetero_linr_train_job_conf.json",
-      "dsl": "test_hetero_linr_train_job_dsl.json",
-      "type": "train"
+      "dsl": "test_hetero_linr_train_job_dsl.json"
     },
     "linr-predict": {
       "conf": "test_predict_conf.json",
-      "task": "linr",
-      "type": "predict"
+      "deps": "linr"
     },
     "linr-cv": {
       "conf": "test_hetero_linr_cv_job_conf.json",
-      "dsl": "test_hetero_linr_cv_job_dsl.json",
-      "type": "train"
+      "dsl": "test_hetero_linr_cv_job_dsl.json"
     },
     "linr-multi-host": {
       "conf": "test_hetero_linr_multi_host_train_job_conf.json",
-      "dsl": "test_hetero_linr_multi_host_train_job_dsl.json",
-      "type": "train"
+      "dsl": "test_hetero_linr_multi_host_train_job_dsl.json"
     },
     "linr-multi-host-cv": {
       "conf": "test_hetero_linr_multi_host_cv_job_conf.json",
-      "dsl": "test_hetero_linr_multi_host_cv_job_dsl.json",
-      "type": "train"
+      "dsl": "test_hetero_linr_multi_host_cv_job_dsl.json"
     }
   }
 }
