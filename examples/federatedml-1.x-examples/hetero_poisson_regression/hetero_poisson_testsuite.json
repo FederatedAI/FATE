@@ -23,7 +23,7 @@
       "dsl": "test_hetero_poisson_train_job_dsl.json"
     },
     "poisson-predict": {
-      "conf": "hetero_poisson_regression/test_predict_conf.json",
+      "conf": "test_predict_conf.json",
       "deps": "poisson"
     },
     "poisson-cv": {

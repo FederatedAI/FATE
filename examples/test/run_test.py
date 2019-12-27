@@ -39,27 +39,42 @@ def data_upload(submitter, env, task_data, check_interval=3):
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
 
 
-def train_task(submitter, task_conf, task_dsl, task_name, check_interval=3):
-    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
-    output = submitter.submit_job(conf_temperate_path=task_conf, dsl_path=task_dsl)
-    job_id = output['jobId']
-    model_info = output['model_info']
-    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
-    status = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
-    return dict(job_id=job_id, status=status, model_info=model_info)
+def run_task(submitter, conf, submit_type, err_name, task_name, check_interval,
+             dsl=None,
+             model_info=None,
+             substitute=None):
+    model = None
+    # noinspection PyBroadException
+    try:
+        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
+        if submit_type == "train":
+            output = submitter.submit_job(conf, submit_type=submit_type, dsl_path=dsl, substitute=substitute)
+            model = output['model_info']
+        else:
+            output = submitter.submit_job(conf, submit_type=submit_type, model_info=model_info, substitute=substitute)
+        job_id = output['jobId']
+        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
 
+        status = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
+        result = f"{task_name}\t{status}\t{job_id}"
 
-def predict_task(submitter, task_conf, model, task_name, check_interval=3):
-    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
-    job_id = submitter.submit_pre_job(conf_temperate_path=task_conf, model_info=model)
-    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
-    ret = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
-    return dict(job_id=job_id, status=ret)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
+        print(err_msg)
+        result = f"{task_name}\tsubmit_fail\t"
+        with open(f"{err_name}", "a") as f:
+            f.write(f"{task_name}\n")
+            f.write("===========\n")
+            f.write(err_msg)
+            f.write("\n")
+
+    return result, model
 
 
 def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_data=False):
-    result = {}
-    model = {}
+    results = []
+    models = {}
     testsuite_base_path = os.path.dirname(file_name)
 
     def check(field_name, config):
@@ -73,39 +88,30 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
         data_upload(submitter=submitter, env=env, task_data=configs["data"], check_interval=check_interval)
 
     for task_name, task_config in configs["tasks"].items():
-        # noinspection PyBroadException
-        try:
-            check("conf", task_config)
-            conf = os.path.join(testsuite_base_path, task_config["conf"])
-            dep_task = task_config.get("deps", None)
+        check("conf", task_config)
+        conf = os.path.join(testsuite_base_path, task_config["conf"])
+        dep_task = task_config.get("deps", None)
+        sub_tasks = task_config.get("substitutes", {})
+        substitute_map = {task_name: None}
+        for sub_name, substitute in sub_tasks.items():
+            substitute_map[f"{task_name}.{sub_name}"] = substitute
+
+        for sub_task_name, substitute in substitute_map.items():
             if dep_task is None:
                 check("dsl", task_config)
                 dsl = os.path.join(testsuite_base_path, task_config["dsl"])
-                temp = train_task(submitter=submitter, task_conf=conf, task_dsl=dsl, task_name=task_name,
-                                  check_interval=check_interval)
-                job_id = temp['job_id']
-                status = temp['status']
-                model_info = temp["model_info"]
-                result[task_name] = f"{job_id}\t{status}"
-                model[task_name] = model_info
+                result, model = run_task(submitter, conf, "train", err_name, sub_task_name, check_interval,
+                                         dsl=dsl,
+                                         substitute=substitute)
+                models[sub_task_name] = model
             else:
-                temp = predict_task(submitter=submitter, task_conf=conf, model=model[dep_task], task_name=task_name,
-                                    check_interval=check_interval)
-                job_id = temp['job_id']
-                status = temp['status']
-                result[task_name] = f"{job_id}\t{status}"
-
-        except Exception:
-            print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
-            err_msg = traceback.format_exc()
-            print(err_msg)
-            result[task_name] = "\tsubmit_fail"
-            with open(f"{err_name}", "a") as f:
-                f.write(f"{task_name}\n")
-                f.write("===========\n")
-                f.write(err_msg)
-                f.write("\n")
-    return result
+                if dep_task not in models:
+                    results.append(f"{sub_task_name}\t{dep_task} not found")
+                    continue
+                result, _ = run_task(submitter, conf, "predict", err_name, sub_task_name, check_interval,
+                                     model_info=models[dep_task])
+            results.append(result)
+    return results
 
 
 def main():
@@ -144,19 +150,22 @@ def main():
     testsuites = [suite] if suite else search_testsuite(testsuites_dir)
 
     for file_name in testsuites:
-        print("===========================================")
         print(f"[{time.strftime('%Y-%m-%d %X')}]running testsuite {file_name}")
-        print("===========================================")
-        result = run_testsuite(submitter, env, file_name, err_output,
-                               check_interval=interval,
-                               skip_data=skip_data)
+        print("====================================================================\n")
+        try:
+            results = run_testsuite(submitter, env, file_name, err_output,
+                                    check_interval=interval,
+                                    skip_data=skip_data)
 
-        with open(output_file, "w") as f:
-            f.write("===========================================\n")
-            f.write(f"{file_name}\n")
-            f.write("===========================================\n")
-            for task_name, task_status in result.items():
-                f.write(f"{task_name}\t{task_status}\n")
+            with open(output_file, "w") as f:
+                f.write(f"{file_name}\n")
+                f.write("====================================================================\n")
+                for result in results:
+                    f.write(f"{result}\n")
+                f.write("\n")
+        except Exception as e:
+            print(f"errors in {file_name}, {e.args}")
+        print("\n")
 
 
 if __name__ == "__main__":

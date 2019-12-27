@@ -40,11 +40,11 @@
     },
     "multi_layer": {
       "conf": "./test_homo_dnn_multi_layer.json",
-      "task": "./test_homo_nn_train_then_predict.json"
+      "dsl": "./test_homo_nn_train_then_predict.json"
     },
     "multi_label": {
       "conf": "./test_homo_dnn_multi_label.json",
-      "task": "./test_homo_nn_train_then_predict.json"
+      "dsl": "./test_homo_nn_train_then_predict.json"
     }
   }
 }
