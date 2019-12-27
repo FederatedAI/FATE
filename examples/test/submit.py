@@ -82,40 +82,25 @@ class Submitter(object):
             json.dump(conf, f)
             f.flush()
             if remote_host:
-                scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
+                self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
                 upload_cmd = " && ".join([f"source {env_path}"
                                           f"python {self._flow_client_path} -f upload -c {f.name}",
                                           f"rm {f.name}"])
-                upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
+                stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
+                try:
+                    stdout = json.loads(stdout)
+                    status = stdout["retcode"]
+                except json.decoder.JSONDecodeError:
+                    raise ValueError(f"[submit_job]fail, stdout:{stdout}")
+                if status != 0:
+                    raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
+                return stdout
             else:
-                self.submit(["-f", "upload", "-c", f.name])
+                return self.submit(["-f", "upload", "-c", f.name])
 
     def delete_table(self, namespace, name):
         pass
-
-    def run_upload(self, data_path, config, remote_host=None):
-        conf = dict(
-            file=data_path,
-            head=config["head"],
-            partition=config["partition"],
-            work_mode=self._work_mode,
-            table_name=config["table_name"],
-            namespace=config["namespace"]
-        )
-        with tempfile.NamedTemporaryFile("w") as f:
-            json.dump(conf, f)
-            f.flush()
-            if remote_host:
-                scp_out = self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                upload_cmd = " && ".join([f"source {env_path}",
-                                          f"python {self._flow_client_path} -f upload -c {f.name}",
-                                          f"rm {f.name}"])
-                upload_out = self.run_cmd(["ssh", remote_host, upload_cmd])
-            else:
-                stdout = self.submit(["-f", "upload", "-c", f.name])
-                return stdout["jobId"]
 
     def submit_job(self, conf_path, submit_type="train", dsl_path=None, model_info=None, substitute=None):
         conf = self.render(conf_path, model_info, substitute)

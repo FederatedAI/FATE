@@ -31,7 +31,13 @@ def data_upload(submitter, env, task_data, check_interval=3):
         remote_host = None if host == -1 else host
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
         print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}")
-        job_id = submitter.run_upload(data_path=data["file"], config=data, remote_host=remote_host)
+        stdout = submitter.upload(data_path=data["file"],
+                                  namespace=data["namespace"],
+                                  name=data["table_name"],
+                                  partition=data["partition"],
+                                  head=data["head"],
+                                  remote_host=remote_host)
+        job_id = stdout["jobId"]
         if not remote_host:
             submitter.await_finish(job_id, check_interval=check_interval)
         else:
