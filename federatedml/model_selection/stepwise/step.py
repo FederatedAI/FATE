@@ -51,18 +51,6 @@ class Step(object):
         return new_header
 
     @staticmethod
-    def slice_data_instance_list(data_instance, feature_list):
-        """
-        return data_instance with features at given indices
-        Parameters
-        ----------
-        data_instance: data Instance object, input data
-        feature_list: list of desired indices
-        """
-        data_instance.features = data_instance.features[feature_list]
-        return data_instance
-
-    @staticmethod
     def slice_data_instance(data_instance, feature_mask):
         """
         return data_instance with features at given indices
@@ -72,7 +60,7 @@ class Step(object):
         feature_mask: mask to filter data_instance
         """
         new_data_instance = copy.deepcopy(data_instance)
-        new_data_instance.features = new_data_instance.features[feature_mask > 0]
+        new_data_instance.features = new_data_instance.features[feature_mask]
         return new_data_instance
 
     def run(self, original_model, train_data, test_data, feature_mask):
@@ -82,7 +70,7 @@ class Step(object):
         current_flowid = self.get_flowid()
         model.set_flowid(current_flowid)
         if original_model.role != consts.ARBITER:
-            curr_train_data = train_data.map(lambda k, v: (k, self.slice_data_instance(v, feature_mask)))
+            curr_train_data = train_data.map(lambda k, v: (k, Step.slice_data_instance(v, feature_mask)))
         else:
             curr_train_data = train_data
         model.fit(curr_train_data)
