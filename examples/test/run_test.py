@@ -4,7 +4,7 @@ import os
 import time
 import traceback
 
-from examples.test import submit
+import submit
 
 TEST_SUITE_SUFFIX = "testsuite.json"
 
