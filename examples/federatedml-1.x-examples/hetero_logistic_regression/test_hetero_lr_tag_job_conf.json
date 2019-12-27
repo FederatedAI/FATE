@@ -26,12 +26,6 @@
               "name": "hetero_breast_b",
               "namespace": "hetero_breast_guest"
             }
-          ],
-          "eval_data": [
-            {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
-            }
           ]
         }
       },
@@ -53,19 +47,15 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
-            }
-          ],
-          "eval_data": [
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "hetero_ditu_a",
+              "namespace": "hetero_host_ditu"
             }
           ]
         }
       },
       "dataio_0": {
+        "input_format": ["tag"],
+        "tag_with_value": [true],
         "with_label": [false],
         "output_format": ["dense"],
         "outlier_replace": [true]
