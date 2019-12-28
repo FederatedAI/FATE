@@ -3,6 +3,7 @@ import json
 import os
 import time
 import traceback
+from atexit import register
 
 import submit
 
@@ -55,37 +56,24 @@ def data_upload(submitter, env, task_data, check_interval=3):
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
 
 
-def run_task(submitter, conf, party_ids, submit_type, err_name, task_name, check_interval,
+def run_task(submitter, conf, party_ids, submit_type, task_name, check_interval,
              dsl=None,
              model_info=None,
              substitute=None):
     model = None
     # noinspection PyBroadException
-    try:
-        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
-        if submit_type == "train":
-            output = submitter.submit_job(conf, party_ids, submit_type=submit_type, dsl_path=dsl, substitute=substitute)
-            model = output['model_info']
-        else:
-            output = submitter.submit_job(conf, party_ids, submit_type=submit_type, model_info=model_info,
-                                          substitute=substitute)
-        job_id = output['jobId']
-        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submitting...")
+    if submit_type == "train":
+        output = submitter.submit_job(conf, party_ids, submit_type=submit_type, dsl_path=dsl, substitute=substitute)
+        model = output['model_info']
+    else:
+        output = submitter.submit_job(conf, party_ids, submit_type=submit_type, model_info=model_info,
+                                      substitute=substitute)
+    job_id = output['jobId']
+    print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]submit done, job_id={job_id}")
 
-        status = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
-        result = f"{task_name}\t{status}\t{job_id}"
-
-    except Exception:
-        err_msg = traceback.format_exc()
-        print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
-        print(err_msg)
-        result = f"{task_name}\tsubmit_fail\t"
-        with open(f"{err_name}", "a") as f:
-            f.write(f"{task_name}\n")
-            f.write("===========\n")
-            f.write(err_msg)
-            f.write("\n")
-
+    status = submitter.await_finish(job_id, check_interval=check_interval, task_name=task_name)
+    result = f"{task_name}\t{status}\t{job_id}"
     return result, model
 
 
@@ -96,10 +84,6 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
 
     party_ids = env["role"]
 
-    def check(field_name, config):
-        if field_name not in config:
-            raise ValueError(f"{field_name} not specified in {task_name}@{file_name}")
-
     with open(file_name) as f:
         configs = json.loads(f.read())
 
@@ -107,7 +91,22 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
         data_upload(submitter=submitter, env=env, task_data=configs["data"], check_interval=check_interval)
 
     for task_name, task_config in configs["tasks"].items():
-        check("conf", task_config)
+        try:
+            if "conf" not in task_config:
+                raise ValueError(f"conf not specified in {task_name}@{file_name}")
+        except Exception:
+            err_msg = traceback.format_exc()
+            print(f"[{time.strftime('%Y-%m-%d %X')}][{task_name}]task fail")
+            print(err_msg)
+            result = f"{task_name}\tsubmit_fail\t"
+            with open(f"{err_name}", "a") as f:
+                f.write(f"{task_name}\n")
+                f.write("===========\n")
+                f.write(err_msg)
+                f.write("\n")
+            continue
+        # todo: sub_task_structure
+
         conf = os.path.join(testsuite_base_path, task_config["conf"])
         dep_task = task_config.get("deps", None)
         sub_tasks = task_config.get("substitutes", {})
@@ -116,19 +115,33 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
             substitute_map[f"{task_name}.{sub_name}"] = substitute
 
         for sub_task_name, substitute in substitute_map.items():
-            if dep_task is None:
-                check("dsl", task_config)
-                dsl = os.path.join(testsuite_base_path, task_config["dsl"])
-                result, model = run_task(submitter, conf, party_ids, "train", err_name, sub_task_name, check_interval,
-                                         dsl=dsl,
-                                         substitute=substitute)
-                models[sub_task_name] = model
-            else:
-                if dep_task not in models:
-                    results.append(f"{sub_task_name}\t{dep_task} not found")
-                    continue
-                result, _ = run_task(submitter, conf, party_ids, "predict", err_name, sub_task_name, check_interval,
-                                     model_info=models[dep_task])
+            # noinspection PyBroadException
+            try:
+                if dep_task is None:
+                    if "dsl" not in task_config:
+                        raise ValueError(f"dsl not specified in {sub_task_name}@{file_name}, skip")
+                    dsl = os.path.join(testsuite_base_path, task_config["dsl"])
+                    result, model = run_task(submitter, conf, party_ids, "train", sub_task_name,
+                                             check_interval,
+                                             dsl=dsl,
+                                             substitute=substitute)
+                    models[sub_task_name] = model
+                else:
+                    if dep_task not in models:
+                        results.append(f"{sub_task_name}\t{dep_task} not found")
+                        raise ValueError("deps not found!, skip!")
+                    result, _ = run_task(submitter, conf, party_ids, "predict", sub_task_name, check_interval,
+                                         model_info=models[dep_task])
+            except Exception:
+                err_msg = traceback.format_exc()
+                print(f"[{time.strftime('%Y-%m-%d %X')}][{sub_task_name}]task fail")
+                print(err_msg)
+                result = f"{sub_task_name}\tsubmit_fail\t"
+                with open(f"{err_name}", "a") as f:
+                    f.write(f"{sub_task_name}\n")
+                    f.write("===========\n")
+                    f.write(err_msg)
+                    f.write("\n")
             results.append(result)
     return results
 
@@ -163,13 +176,26 @@ def main():
 
     submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode)
 
+    @register
+    def _on_exit():
+        msg = f"""
+=======================================================================
+Test Application Exit
+Please Check: result >> {output_file}, error >>{err_output}
+Have Fun!
+======================================================================="""
+        print(msg)
+
     try:
         with open(env_conf) as e:
             env = json.loads(e.read())
     except:
         raise ValueError(f"invalid env conf: {env_conf}")
     testsuites = [suite] if suite else search_testsuite(testsuites_dir)
-
+    print("====================================================================")
+    print("testsuites:")
+    print("\n".join(testsuites))
+    print("====================================================================")
     for file_name in testsuites:
         print(f"[{time.strftime('%Y-%m-%d %X')}]running testsuite {file_name}")
         print("====================================================================\n")
@@ -178,7 +204,7 @@ def main():
                                     check_interval=interval,
                                     skip_data=skip_data)
 
-            with open(output_file, "w") as f:
+            with open(output_file, "a") as f:
                 f.write(f"{file_name}\n")
                 f.write("====================================================================\n")
                 for result in results:
@@ -186,7 +212,6 @@ def main():
                 f.write("\n")
         except Exception as e:
             print(f"errors in {file_name}, {e.args}")
-        print("\n")
 
 
 if __name__ == "__main__":
