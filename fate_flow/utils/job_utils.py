@@ -322,7 +322,7 @@ def kill_process(pid, only_child=False):
     try:
         if not pid:
             return False
-        stat_logger.info("terminating process pid:{}".format(pid))
+        stat_logger.info("try to stop process pid:{}".format(pid))
         if not check_job_process(pid):
             return True
         p = psutil.Process(int(pid))
@@ -355,17 +355,14 @@ def onsignal_term(signum, frame):
         pass
 
 
-def task_killed_detector(job_id, role, party_id, component_name):
+def task_killed_detector(job_id, role, party_id, component_name, pid):
     kill_path = os.path.join(get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
     if os.path.exists(kill_path):
         session.stop()
-        with open(kill_path.replace('kill', 'pid'), 'r') as f:
-            pid = f.read()
-        while True:
-            kill_process(int(pid), only_child=True)
-            os.kill(int(pid), 9)
-            kill_process(int(pid), only_child=False)
-    threading.Timer(0.25, task_killed_detector, args=[job_id, role, party_id, component_name]).start()
+        kill_process(int(pid), only_child=True)
+        os.kill(int(pid), 9)
+        kill_process(int(pid), only_child=False)
+    threading.Timer(0.25, task_killed_detector, args=[job_id, role, party_id, component_name, pid]).start()
 
 
 def gen_all_party_key(all_party):

@@ -61,7 +61,8 @@ class TaskExecutor(object):
             task_id = args.task_id
             role = args.role
             party_id = int(args.party_id)
-            job_utils.task_killed_detector(job_id, role, party_id, component_name)
+            executor_pid = os.getpid()
+            job_utils.task_killed_detector(job_id, role, party_id, component_name, executor_pid)
             task_config = file_utils.load_json_conf(args.config)
             job_parameters = task_config['job_parameters']
             job_initiator = task_config['job_initiator']
@@ -100,7 +101,7 @@ class TaskExecutor(object):
                                module_name=module_name)
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
-            task.f_run_pid = os.getpid()
+            task.f_run_pid = executor_pid
             run_class_paths = parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
             run_class_name = run_class_paths[-1]
@@ -152,6 +153,9 @@ class TaskExecutor(object):
             schedule_logger().info(
                 'Waiting for the other party to end job {} component {}'.format(job_id, component_name))
             time.sleep(0.5)
+            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
+            if os.path.exists(kill_path):
+                break
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):

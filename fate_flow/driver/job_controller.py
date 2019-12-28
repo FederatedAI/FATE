@@ -111,7 +111,8 @@ class JobController(object):
         schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
         if component_name:
             tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
-            job_utils.stop_executor(tasks[0])
+            if tasks:
+                job_utils.stop_executor(tasks[0])
             return
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
