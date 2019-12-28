@@ -88,6 +88,12 @@
       "init_param": {
         "init_method": "random_uniform"
       },
+      "sqn_param": {
+        "update_interval_L": 3,
+        "memory_M": 5,
+        "sample_size": 5000,
+        "random_seed": null
+      },
       "cv_param": {
         "n_splits": 5,
         "shuffle": false,

@@ -24,27 +24,7 @@ from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 
-def to_ndarray(tensor_obj):
-    buf = []
-    for key, value in tensor_obj.collect():
-        buf.append(value)
-
-    return np.array(buf, dtype=buf[0].dtype)
-
-
-def to_fate_hetero_nn_tensor(data, partitions=1):
-    if not isinstance(data, np.ndarray):
-        raise ValueError("Only support numpy'ndarray to hetero nn tensor")
-
-    return HeteroNNTensor(data, partitions)
-
-
-def mean(tensor_obj, axis=-1):
-    if axis == -1:
-        return tensor_obj.mean(axis=-1)
-
-
-class HeteroNNTensor(object):
+class PaillierTensor(object):
     def __init__(self, ori_data=None, tb_obj=None, partitions=1):
         if ori_data is not None:
             self._ori_data = ori_data
@@ -60,52 +40,52 @@ class HeteroNNTensor(object):
         LOGGER.debug("tensor's partition is {}".format(self._partitions))
 
     def __add__(self, other):
-        if isinstance(other, HeteroNNTensor):
-            return HeteroNNTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 + v2))
+        if isinstance(other, PaillierTensor):
+            return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 + v2))
         else:
-            return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda v: v + other))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda v: v + other))
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, HeteroNNTensor):
-            return HeteroNNTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 - v2))
+        if isinstance(other, PaillierTensor):
+            return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 - v2))
         else:
-            return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda v: v - other))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda v: v - other))
 
     def __rsub__(self, other):
         return self.__sub__(other)
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
-            return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
         elif isinstance(other, np.ndarray):
-            return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: np.matmul(val, other)))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.matmul(val, other)))
 
         try:
-            _other = other.to_numpy_array()
+            _other = other.numpy()
         except AttributeError:
             raise ValueError("multiply does not support")
 
-        ret = self.to_numpy_array() * _other
+        ret = self.numpy() * _other
 
-        return HeteroNNTensor(ori_data=ret, partitions=max(self.partitions, other.partitions))
+        return PaillierTensor(ori_data=ret, partitions=max(self.partitions, other.partitions))
 
     def multiply(self, other):
-        if not isinstance(other, HeteroNNTensor):
+        if not isinstance(other, PaillierTensor):
             raise ValueError("multiply operator of HeteroNNTensor should between to HeteroNNTensor")
 
-        return HeteroNNTensor(tb_obj=self._obj.join(other._obj, lambda val1, val2: np.multiply(val1, val2)),
+        return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda val1, val2: np.multiply(val1, val2)),
                               partitions=self._partitions)
 
     @property
     def T(self):
         if self._ori_data is None:
-            self._ori_data = self.to_numpy_array()
+            self._ori_data = self.numpy()
 
         new_data = self._ori_data.T
-        return HeteroNNTensor(new_data, self.partitions)
+        return PaillierTensor(new_data, self.partitions)
 
     @property
     def partitions(self):
@@ -138,9 +118,9 @@ class HeteroNNTensor(object):
         else:
             ret_obj = self._obj.mapValues(lambda val: np.mean(val, axis - 1))
 
-            return HeteroNNTensor(tb_obj=ret_obj)
+            return PaillierTensor(tb_obj=ret_obj)
 
-    def to_numpy_array(self):
+    def numpy(self):
         if self._ori_data is not None:
             return self._ori_data
 
@@ -154,17 +134,16 @@ class HeteroNNTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return HeteroNNTensor(tb_obj=encrypt_tool.encrypt(self._obj))
-        # return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: encrypt_tool.encrypt(val)))
+        return PaillierTensor(tb_obj=encrypt_tool.encrypt(self._obj))
 
     def decrypt(self, decrypt_tool):
-        return HeteroNNTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
+        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
 
     @staticmethod
-    def vector_mul(kv_iters):
+    def _vector_mul(kv_iters):
         ret_mat = None
         for k, v in kv_iters:
-            tmp_mat = np.matmul(v[0].reshape(-1, 1), v[1].reshape(1, -1))
+            tmp_mat = np.tensordot(v[0], v[1], [[], []])
 
             if ret_mat is not None:
                 ret_mat += tmp_mat
@@ -179,10 +158,10 @@ class HeteroNNTensor(object):
         Their result is a matrix of (n, k)
         """
         if isinstance(other, np.ndarray):
-            mat_tensor = HeteroNNTensor(ori_data=other, partitions=self.partitions)
+            mat_tensor = PaillierTensor(ori_data=other, partitions=self.partitions)
             return self.fast_matmul_2d(mat_tensor)
 
-        func = self.vector_mul
+        func = self._vector_mul
         ret_mat = self._obj.join(other.get_obj(), lambda vec1, vec2: (vec1, vec2)).mapPartitions(func).reduce(
             lambda mat1, mat2: mat1 + mat2)
 

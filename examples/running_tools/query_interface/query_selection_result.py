@@ -27,40 +27,11 @@ import json
 
 ROLE = 'guest'
 PARTY_ID = 9999
-COMPONENT_NAME = 'hetero_feature_binning_0'
+COMPONENT_NAME = 'hetero_feature_selection_0'
 
-# GUEST_FEATURE_NAMES = []
-GUEST_FEATURE_NAMES = -1
-HOST_FEATURE_INDICES = [[1, 2, 3]]
+SHOW_DETAIL_FILTERS = True
 
-# Support 'iv', 'woe_array', 'is_woe_monotonic', 'split_points'
-RESULT_LIST = ['iv', 'woe_array', 'is_woe_monotonic']
-
-DESCENDING = True
 WRITE_RESULT = False
-
-
-def decode_col_name(encoded_name: str):
-    try:
-        col_index = int(encoded_name.split('.')[1])
-    except IndexError or ValueError:
-        raise RuntimeError("Trying to decode an invalid col_name.")
-    return col_index
-
-
-class FeatureResult(object):
-    def __init__(self, name, info_dict):
-        self.name = name
-        self.iv = -1
-        self.woe_array = None
-        self.is_woe_monotonic = False
-        self.split_points = None
-        self._parse_(info_dict)
-
-    def _parse_(self, info_dict):
-        self.iv = info_dict.get('iv')
-        self.woe_array = info_dict.get('woeArray')
-        self.is_woe_monotonic = info_dict.get('isWoeMonotonic')
 
 
 class QuerySelectionResult(base_task.BaseTask):
@@ -70,49 +41,32 @@ class QuerySelectionResult(base_task.BaseTask):
         self.host_results = []
         self.host_party_ids = []
 
-    def query_binning_result(self, job_id, role, party_id, cpn):
+    def query_cpn_result(self, job_id, role, party_id, cpn):
 
         cmd = ['python', run_config.FATE_FLOW_PATH, "-f", "component_output_model", "-j", job_id,
                '-cpn', cpn, '-r', role, '-p', str(party_id)]
         result_json = self.start_task(cmd)
+        # self.write_json_file(result_json, run_config.TEMP_DATA_PATH + '/selection_result.json')
         return result_json
 
     def parse_result(self, result_json):
-        bin_results = result_json['data']['binningResult']['binningResult']
-        feature_objs = []
-        for feature_name, feature_info in bin_results.items():
-            if GUEST_FEATURE_NAMES == -1 or feature_name in GUEST_FEATURE_NAMES:
-                feature_objs.append(FeatureResult(feature_name, feature_info))
-        self.feature_objs = feature_objs
-
-        for host_idx, host_result in enumerate(result_json['data']['hostResults']):
-            this_host_feature_obj = []
-            host_feature_idx = HOST_FEATURE_INDICES[host_idx]
-            self.host_party_ids.append(host_result.get('partyId'))
-            for feature_name, feature_info in host_result.get('binningResult').items():
-                if host_feature_idx == -1 or feature_name in host_feature_idx:
-                    this_host_feature_obj.append(FeatureResult(feature_name, feature_info))
-            self.host_results.append(this_host_feature_obj)
-
-    def generated_results(self):
-        result = {}
-        sort_result = sorted(self.feature_objs, key=lambda obj: obj.iv, reverse=DESCENDING)
-        for result_name in RESULT_LIST:
-            result_key = '_'.join([result_name, 'result'])
-            result[result_key] = [(obj.name, getattr(obj, result_name)) for obj in sort_result]
-
-        for host_idx, host_result in enumerate(self.host_results):
-            party_id = self.host_party_ids[host_idx]
-            host_result = {}
-            host_sorted_result = sorted(self.host_results[host_idx], key=lambda obj: obj.iv, reverse=DESCENDING)
-            for result_name in RESULT_LIST:
-                result_key = '_'.join([result_name, 'result'])
-                host_result[result_key] = [(obj.name, getattr(obj, result_name)) for obj in host_sorted_result]
-            result['_'.join(['host', party_id])] = host_result
-
+        final_left_cols = [x for x, _ in result_json['data']['finalLeftCols']['leftCols'].items()]
+        left_col_nums = len(final_left_cols)
+        result = {'final_left_cols': final_left_cols,
+                  "left_col_nums": left_col_nums}
+        if SHOW_DETAIL_FILTERS:
+            filter_results = result_json['data']['results']
+            detail_results = {}
+            for f_r in filter_results:
+                _left_cols = [x for x, _ in f_r['leftCols']['leftCols'].items()]
+                detail_results[f_r['filterName']] = {
+                    "left_cols": _left_cols,
+                    "left_cols_nums": len(_left_cols)
+                }
+            result['filter_results'] = detail_results
         print("Result is {}".format(result))
         if WRITE_RESULT:
-            self.write_json_file(result, run_config.TEMP_DATA_PATH + 'feature_binning_results.json')
+            self.write_json_file(result, run_config.TEMP_DATA_PATH + 'feature_selection_results.json')
 
 
 if __name__ == '__main__':
@@ -127,11 +81,12 @@ if __name__ == '__main__':
 
     try:
         args = parser.parse_args()
-        task_obj = QueryBinningResult()
-        result_json = task_obj.query_binning_result(args.job_id, args.role, args.party_id, args.component_name)
+        task_obj = QuerySelectionResult()
+        result_json = task_obj.query_cpn_result(args.job_id, args.role, args.party_id, args.component_name)
+
         # print("query bin result: {}".format(result_json))
         task_obj.parse_result(result_json)
-        task_obj.generated_results()
+        # task_obj.generated_results()
 
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()

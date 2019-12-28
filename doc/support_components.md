@@ -155,3 +155,16 @@ Model Output: SecureBoost Model, consists of model-meta and model-param
 Output the model evaluation metrics for user.
 
 Corresponding module name: Evaluation
+
+### 17. Hetero Pearson
+
+Calculate hetero correlation of features from different parties.
+
+Corresponding module name: HeteroPearson
+
+### 18. Hetero-NN
+Build hetero neural network module.
+
+Corresponding module name: HeteroNN
+Data Input: Input DTable.
+Model Output: hetero neural network model.
