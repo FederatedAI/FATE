@@ -140,7 +140,7 @@ Build homo neural network module through multiple parties.
 
 
 #### 15. [Hetero Secure Boosting](./tree/README.md)
-Build hetero secure boosting model through multiple parties.
+Build hetero secure boosting module through multiple parties.
 
 Corresponding module name: HeteroSecureBoost
 
@@ -160,5 +160,9 @@ Calculate hetero correlation of features from different parties.
 - Corresponding module name: HeteroPearson
 
 
+#### 18. [Hetero-NN](./nn/hetero_nn/README.md)
+Build hetero neural network module.
 
-More available algorithms are coming soon.
+- Corresponding module name: HeteroNN
+- Data Input: Input DTable.
+- Model Output: hetero neural network model.
