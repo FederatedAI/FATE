@@ -87,7 +87,7 @@ def get_lan_ip():
             return socket.inet_ntoa(
                 fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
 
-    ip = socket.gethostbyname(socket.gethostname())
+    ip = socket.gethostbyname(socket.getfqdn())
     if ip.startswith("127.") and os.name != "nt":
         interfaces = [
             "bond1",
