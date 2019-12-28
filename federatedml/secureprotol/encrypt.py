@@ -179,7 +179,7 @@ class FakeEncrypt(Encrypt):
         return value
 
 
-class SymmetricEncrypt(object):
+class SymmetricEncrypt(Encrypt):
     def __init__(self):
         self.key = None
 
