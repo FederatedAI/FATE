@@ -65,11 +65,11 @@
         "role": "host_0"
       },
       {
-        "file": "examples/data/ditu_1000_140.csv",
+        "file": "examples/data/tag_value_1000_140.csv",
         "head": 0,
         "partition": 10,
-        "table_name": "hetero_ditu_a",
-        "namespace": "hetero_host_ditu",
+        "table_name": "hetero_tag_value_a",
+        "namespace": "hetero_host_tag_value",
         "role": "host_0"
       }
   ],
