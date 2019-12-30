@@ -29,6 +29,32 @@ from federatedml.util import consts
 
 
 class HeteroNNParam(BaseParam):
+    """
+    Parameters used for Homo Neural Network.
+
+    Args:
+        task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
+        config_type: str, accept "keras" only.
+        bottom_nn_define: a dict represents the structure of bottom neural network.
+        interactive_layer_define: a dict represents the structure of interactive layer.
+        interactive_layer_lr: float, the learning rate of interactive layer.
+        top_nn_define: a dict represents the structure of top neural network.
+        optimizer: optimizer method, accept following types:
+            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+            2. a dict, with a required key-value pair keyed by "optimizer",
+                with optional key-value pairs such as learning rate.
+            defaults to "SGD"
+        loss:  str, a string to define loss function used
+        metrics: list object, evaluation metrics
+        epochs: int, the maximum iteration for aggregation in training.
+        batch_size : int, batch size when updating model.
+            -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+            defaults to -1.
+        early_stop : str, accept 'diff' only in this version, default: 'diff'
+            Method used to judge converge or not.
+                a)	diff： Use difference of loss between two iterations to judge whether converge.
+    """
+
     def __init__(self,
                  task_type='classification',
                  config_type="keras",
