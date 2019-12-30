@@ -58,7 +58,7 @@ def go_fast(a):  # Function is compiled and runs in machine code
 class TestHomoLRGradient(unittest.TestCase):
     def setUp(self):
         home_dir = os.path.split(os.path.realpath(__file__))[0]
-        data_dir = home_dir + '/../../../../examples/data/credit_data.csv'
+        data_dir = home_dir + '/../../../../examples/data/breast.csv'
         data_df = pd.read_csv(data_dir)
         self.X = np.array(data_df.iloc[:, 2:])
         self.Y = np.array(data_df.iloc[:, 1])
