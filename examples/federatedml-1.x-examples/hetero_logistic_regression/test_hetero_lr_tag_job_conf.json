@@ -47,8 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_ditu_a",
-              "namespace": "hetero_host_ditu"
+              "name": "hetero_tag_value_a",
+              "namespace": "hetero_host_tag_value"
             }
           ]
         }

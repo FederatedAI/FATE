@@ -115,8 +115,8 @@ class FixedPointTensor(TensorBase):
                                   q_field=self.q_field, he_key_pair=(spdz.public_key, spdz.private_key),
                                   communicator=spdz.communicator, name=target_name)
 
-        x_add_a = (self + a).rescontruct(f"{target_name}_confuse_x")
-        y_add_b = (other + b).rescontruct(f"{target_name}_confuse_y")
+        x_add_a = self._raw_add(a).rescontruct(f"{target_name}_confuse_x")
+        y_add_b = other._raw_add(b).rescontruct(f"{target_name}_confuse_y")
         cross = c - _dot_func(a, y_add_b) - _dot_func(x_add_a, b)
         if spdz.party_idx == 0:
             cross += _dot_func(x_add_a, y_add_b)
@@ -152,43 +152,49 @@ class FixedPointTensor(TensorBase):
     def _boxed(self, value, tensor_name=None):
         return FixedPointTensor(value=value, q_field=self.q_field, endec=self.endec, tensor_name=tensor_name)
 
-    @classmethod
-    def _unboxed(cls, other):
-        if isinstance(other, FixedPointTensor):
-            other = other.value
-        return other
-
     def __str__(self):
         return f"{self.tensor_name}: {self.value}"
 
     def __repr__(self):
         return self.__str__()
 
+    def _raw_add(self, other):
+        z_value = (self.value + other) % self.q_field
+        return self._boxed(z_value)
+
+    def _raw_sub(self, other):
+        z_value = (self.value - other) % self.q_field
+        return self._boxed(z_value)
+
     def __add__(self, other):
-        z_value = (self.value + self._unboxed(other)) % self.q_field
+        if isinstance(other, FixedPointTensor):
+            return self._raw_add(other.value)
+        z_value = (self.value + self.endec.encode(other / 2)) % self.q_field
         return self._boxed(z_value)
 
     def __radd__(self, other):
-        z_value = (self._unboxed(other) + self.value) % self.q_field
+        z_value = (self.endec.encode(other / 2) + self.value) % self.q_field
         return self._boxed(z_value)
 
     def __sub__(self, other):
-        z_value = (self.value - self._unboxed(other)) % self.q_field
+        if isinstance(other, FixedPointTensor):
+            return self._raw_sub(other.value)
+        z_value = (self.value - self.endec.encode(other / 2)) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
-        z_value = (self._unboxed(other) - self.value) % self.q_field
+        z_value = (self.endec.encode(other / 2) - self.value) % self.q_field
         return self._boxed(z_value)
 
     def __mul__(self, other):
         if not isinstance(other, (int, np.integer)):
             raise NotImplementedError("__mul__ support integer only")
-        return self._unboxed(self.value * other)
+        return self._boxed(self.value * other)
 
     def __rmul__(self, other):
         if not isinstance(other, (int, np.integer)):
             raise NotImplementedError("__rmul__ support integer only")
-        return self._unboxed(self.value * other)
+        return self._boxed(self.value * other)
 
     def __matmul__(self, other):
         return self.einsum(other, "ij,jk->ik")

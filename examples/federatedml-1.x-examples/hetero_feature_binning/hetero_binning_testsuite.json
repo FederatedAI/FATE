@@ -1,0 +1,34 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_b",
+          "namespace": "hetero_breast_guest",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_b",
+          "namespace": "hetero_breast_host",
+          "role": "host_0"
+      }
+  ],
+  "tasks": {
+    "binning": {
+      "conf": "./test_hetero_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "multi_host_binning": {
+      "conf": "./multi_hosts_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "woe_binning": {
+      "conf": "./binning_transform_woe_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    }
+  }
+}
