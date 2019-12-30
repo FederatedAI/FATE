@@ -150,8 +150,6 @@ class TaskExecutor(object):
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         while True:
-            schedule_logger().info(
-                'Waiting for the other party to end job {} component {}'.format(job_id, component_name))
             time.sleep(0.5)
             kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
             if os.path.exists(kill_path):
