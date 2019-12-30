@@ -21,10 +21,6 @@
                         "dataio_0.data"
                     ]
                 }
-            },
-            "output": {
-                "data": ["intersect_data"],
-                "model": ["intersect_results"]
             }
         }
     }
