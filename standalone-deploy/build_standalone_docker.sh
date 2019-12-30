@@ -82,11 +82,20 @@ cd ${fatepath}
 init() {
     cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
     docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
-    mkdir -p ${basepath}/fateboard
+    if [ ! -d "${basepath}/fateboard" ];then
+       mkdir -p ${basepath}/fateboard
+    fi
     cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
     cd ${basepath}/fateboard
-    ln -s fateboard-$version.jar fateboard.jar
-    mkdir conf ssh
+    if [ ! -f "fateboard.jar" ];then
+       ln -s fateboard-$version.jar fateboard.jar
+    fi
+    if [ ! -d "conf" ];then
+       mkdir conf
+    fi 
+    if [ ! -d "ssh" ];then
+       mkdir ssh
+    fi
     cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
     touch ./ssh/ssh.properties
 
@@ -105,9 +114,9 @@ init() {
     fi
     cp -r ./fate_flow/* /var/lib/fate/data
 
-    sed -i"" "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
-    sed -i"" "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
-    sed -i"" "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
+    sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
+    sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+    sed -i.bak "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
     tar -cf ./docker/fateboard/fateboard.tar fateboard
 
     docker-compose -f ./docker/docker-compose-build.yml up -d

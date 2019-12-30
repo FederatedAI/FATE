@@ -174,10 +174,14 @@ class OneHotEncoder(ModelBase):
         LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
 
     def _init_params(self, data_instances):
+        if len(self.schema) == 0:
+            self.schema = data_instances.schema
+
         if self.inner_param is not None:
             return
         self.inner_param = OneHotInnerParam()
-        self.schema = data_instances.schema
+        # self.schema = data_instances.schema
+        LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
         self.inner_param.set_header(header)
 

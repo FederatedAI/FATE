@@ -8,7 +8,7 @@
 |   数量   | 1 or 2                                                       |
 |   配置   | 8 core /16GB memory / 500GB硬盘/10M带宽                      |
 | 操作系统 | CentOS linux 7.2及以上                                       |
-|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel<br /> libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy <br />snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
+|  依赖包  | yum源： gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel <br />libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy <br />snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan <br />（可以使用初始化脚本env.sh安装） |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 
@@ -80,7 +80,17 @@ systemctl status firewalld.service
 3.5 软件环境初始化
 ------------------
 
-**1）配置sudo**
+**1）创建用户**
+
+**在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
+
+```
+groupadd -g 6000 apps
+useradd -s /bin/bash -g apps -d /home/app app
+passwd app
+```
+
+**2）配置sudo**
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
@@ -92,7 +102,7 @@ app ALL=(ALL) NOPASSWD: ALL
 
 Defaults !env_reset
 
-**2）配置ssh无密登录**
+**3）配置ssh无密登录**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -134,23 +144,18 @@ ssh app\@192.168.0.2
 
 注：此指导安装目录默认为/data/projects/，执行用户为app，安装时根据具体实际情况修改。
 
-4.1 代码获取和打包
+4.1 获取项目
 ------------
 
-**在目标服务器（192.168.0.1 具备外网环境）app用户下执行**:
-
-**注意：服务器需已安装好git和maven 3.5+**
+**在目标服务器（192.168.0.1 具备外网环境）app用户下执行**
 
 进入执行节点的/data/projects/目录，执行：
 
 ```
 cd /data/projects/
-git clone https://github.com/FederatedAI/FATE.git
-cd FATE/cluster-deploy/scripts
-bash packaging.sh
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.1.1.tar.gz
+tar -xf FATE_install_v1.1.1.tar.gz
 ```
-
-构建好的包会放在FATE/cluster-deploy/packages目录下。
 
 4.2 配置文件修改和示例
 ----------------
@@ -185,21 +190,7 @@ redis_password=fate_dev
 cxx_compile_flag=false
 ```
 
-**2）一台主机partyA+partyB同时部署****
-
-```
-#!/bin/bash
-
-user=app
-deploy_dir=/data/projects/fate
-party_list=(10000 9999)
-node_list=(192.168.0.1)
-db_auth=(fate_dev fate_dev)
-redis_password=fate_dev
-cxx_compile_flag=false
-```
-
-**3）只部署一个party**
+**2）只部署一个party**
 
 ```
 #!/bin/bash
@@ -225,13 +216,13 @@ cd FATE/cluster-deploy/scripts
 如果需要部署所有组件，执行：
 
 ```
-bash deploy_cluster_allinone.sh build all
+bash deploy_cluster_allinone.sh binary all 
 ```
 
 如果只部署部分组件：
 
 ```
-bash deploy_cluster_allinone.sh build fate_flow
+bash deploy_cluster_allinone.sh binary fate_flow
 ```
 
 5.配置检查
@@ -251,7 +242,7 @@ bash deploy_cluster_allinone.sh build fate_flow
 cd /data/projects/fate
 ```
 
-启动所有模块：
+启动所有：
 
 ```
 sh services.sh all start
@@ -263,7 +254,7 @@ sh services.sh all start
 sh services.sh proxy start
 ```
 
-如果逐个启动模块，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
+如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
 
 6.2 检查服务状态
 ----------------
@@ -355,7 +346,7 @@ python run_toy_example.py 9999 10000 1
 
 ```
 source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task /
+cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh host fast
 ```
 
@@ -378,4 +369,4 @@ sh run.sh guest fast $ {host_table} $ {host_namespace}
 7.4. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问http://192.168.0.1:8080和http://192.168.0.2:8080来查看任务信息。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。

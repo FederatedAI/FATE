@@ -37,8 +37,6 @@ def send(channel):
     request_data['caseid'] = uuid.uuid1().hex
 
     feature_data = dict()
-    feature_data['device_id'] = '867920041242112'
-    feature_data['phone_num'] = '15013033489'
     feature_data['fid1'] = 5.1
     feature_data['fid2'] = 6.2
     feature_data['fid3'] = 7.6
