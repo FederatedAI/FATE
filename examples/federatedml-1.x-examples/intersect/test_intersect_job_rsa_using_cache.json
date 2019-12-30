@@ -1,14 +1,14 @@
 {
   "initiator": {
     "role": "guest",
-    "party_id": 9999
+    "party_id": 10000
   },
   "job_parameters": {
-    "work_mode": 1
+    "work_mode": 0
   },
   "role": {
     "guest": [
-      9999
+      10000
     ],
     "host": [
       10000
@@ -20,8 +20,8 @@
         "data": {
           "data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "name": "breast_b_intersect",
+              "namespace": "hetero"
             }
         ]
         }
@@ -40,8 +40,8 @@
         "data": {
           "data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_guest_breast"
+              "name": "breast_a_intersect",
+              "namespace": "hetero"
             }
         ]
         }
