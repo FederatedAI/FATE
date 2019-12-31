@@ -381,7 +381,10 @@ def onsignal_term(signum, frame):
 def task_killed_detector(job_id, role, party_id, component_name, pid):
     kill_path = os.path.join(get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
     if os.path.exists(kill_path):
-        session.stop()
+        try:
+            session.stop()
+        except Exception as e:
+            stat_logger.exception(e)
         kill_process(int(pid), only_child=True)
         os.kill(int(pid), 9)
         kill_process(int(pid), only_child=False)
