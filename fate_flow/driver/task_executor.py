@@ -156,7 +156,7 @@ class TaskExecutor(object):
                 try:
                     session.stop()
                 except Exception as e:
-                    schedule_logger(job_id).exception(e)
+                    pass
                 break
 
     @staticmethod
