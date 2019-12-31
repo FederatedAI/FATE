@@ -8,7 +8,7 @@
 执行命令python run_test.py default_env.json <br>
 
 run_test.py执行测试文件，搜寻并执行测试任务。<br>
-env.json环境文件，根据用户实际情况指明所需要的环境配置。<br>  
+default_env.json环境文件，根据用户实际情况指明所需要的环境配置。<br>  
 
 可选参数
 
@@ -36,13 +36,13 @@ examples/test/temp_testsuite.json<br>
 
 3.文件说明
 -----------
-env.json<br>
+default_env.json<br>
 "role"指明角色id，包括host，guest，以及arbiter。<br>
 "ip_map"构建角色与实际ip的映射，本地为-1，远程的主机为实际的ip地址。<br>
 
 testsuite.json<br>
 data字段支持多个任务，在列表中可以一次性上传多个以字典形式配置的数据。<br>
-其中role字段建立与env.json的联系，guest_0代表数据在env.json中配置的guest列表中的第一个主机上。<br>
+其中role字段建立与default_env.json的联系，guest_0代表数据在default_env.json中配置的guest列表中的第一个主机上。<br>
 tasks配置需要执行的任务，目前支持训练任务和预测任务，格式略有区别。<br>
 预测任务需要在task字段指明产生模型的训练任务名。<br>
 请用不同的名字命名不同的任务，重复名字的任务，只会得到最后配置的任务结果。<br>
@@ -67,7 +67,7 @@ cd examples/test<br>
 python run_test.py default_env.json<br>
 
 run_test.py  search and execute tasks defined by users. <br>
-env.json environment configs based on users' running environment. <br>
+default_env.json environment configs based on users' running environment. <br>
 
 Optional parameters
  "-o", "--output", "file to save result, defaults to `test_result`" <br>
@@ -88,13 +88,13 @@ An example task file is given in examples/test/temp_testsuite.json including a t
 
 3.Config files
 ------
-env.json <br>
+default_env.json <br>
 Please set role id in "role", including host, guest, and arbiter.<br>
 Please build the relationship between roles and ip in "ip_map",where -1 stands for local,and remote host will be given ip address. <br>
 
 testsuite.json <br>
 You can submit data for many tasks once in "data",and each has a series of configs in a dict.<br>
-"role" parameter describes the location of the data defined in env.json.For example, "guest_0" represents the data located in the first guest defined in the guest list of env.json. <br>
+"role" parameter describes the location of the data defined in default_env.json.For example, "guest_0" represents the data located in the first guest defined in the guest list of default_env.json. <br>
 You can define your own tasks in "tasks".Training tasks and prediction tasks are supported now. There is some difference between them.<br>
 A prediction task needs to state the task name of the training task which it depends on. <br>
 Please name different tasks with different names,if two tasks share the same name,you will get the execution result of the letter defined. <br>
