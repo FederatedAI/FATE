@@ -36,9 +36,8 @@ stdout:{
     "retmsg": "success"
 }
 
-
 Please check your task in fate-board, url is : http://localhost:8080/index.html#/dashboard?job_id=20190815211211735986134&role=guest&party_id=10000
-The log info is located in ${your install path}/examples/federatedml-1.0-examples/../../logs/20190815211211735986134
+The log info is located in ${your install path}/examples/federatedml-1.x-examples/../../logs/20190815211211735986134
 ```
 
 You can view the job on the url above or check out the log through the log file path.
@@ -133,21 +132,7 @@ We have provided several example dsl files located in the corresponding algorith
 #### Field Specification
 1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-   FATE-1.0 supports 11 usable algorithm module.
-
-   > DataIO: transform input-data into Instance Object for later components
-   > Intersection: find the intersection of data-set different parties, mainly used in hetero scene modeling.
-   > FederatedSample: sample module for making data-set balance, supports both federated and standalone mode.
-   > FeatureScale: module for feature scaling and standardization.
-   > HeteroFeatureBinning: With binning input data, calculates each column's iv and woe and transform data according to the binned information.
-   > HeteroFeatureSelection: feature selection module, supports both federated and standalone.
-   > OneHotEncoder: feature encoding module, mostly used to encode the binning result.
-   > HeteroLR: hetero logistic regression module.
-   > HeteroLinR: hetero linear regression module.
-   > HeteroPoisson: hetero poisson regression module.
-   > HomoLR: homo logistic regression module.
-   > HeteroSecureBoost: hetero secure-boost module.
-   > Evaluation: evaluation module. support metrics for binary, multi-class and regression.
+   The supported algorithms can be referred to [here](../../federatedml/README.md)
 
 3. input: There are two type of input, data and model.
     1. data: There are three possible data_input type:
@@ -156,7 +141,7 @@ We have provided several example dsl files located in the corresponding algorith
         3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
     2. model: There are two possible model-input type:
         1. model: This is a model input by same type of component, used in prediction\transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
-        2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.0. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
+        2. isometric_model: This is used to specify the model input from upstream components, only used by HeteroFeatureSelection module in FATE-1.x. HeteroFeatureSelection can take the model output of HetereFeatureBinning and use information value calculated as filter criterion.
 4. output: Same as input, two type of output may occur which are data and model.
     1. data: Specify the output data name
     2. model: Specify the output model name
@@ -224,13 +209,13 @@ FATE now provide "FATE-BOARD" for showing modeling log-metrics and evaluation re
 Use your browser to open a website: http://{Your fate-board ip}:{your fate-board port}/index.html#/history.
 
 <div style="text-align:center", align=center>
-<img src="../image/JobList.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/JobList.png" alt="samples" height="250" /><br/>
 Figure 1： Job List</div>
 
 There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
 
 <div style="text-align:center", align=center>
-<img src="../image/JobOverview.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/JobOverview.png" alt="samples" height="250" /><br/>
 Figure 2： Job Overview</div>
 
 In the task page, all the components will be shown as a DAG. We use different color to indicate their running status.
@@ -242,13 +227,13 @@ In the task page, all the components will be shown as a DAG. We use different co
  You can click each component to get their running parameters on the right side. Below those parameters, there exist a **View the outputs** button. You may check out model output, data output and logs for this component.
 
 <div style="text-align:center", align=center>
-<img src="../image/ComponentOutput.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/Component_Output.png" alt="samples" height="250" /><br/>
 Figure 3： Component Output</div>
 
 If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
 
 <div style="text-align:center", align=center>
-<img src="../image/DashBoard.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/DashBoard.png" alt="samples" height="250" /><br/>
 Figure 4： Dash Board</div>
 
 1. Left window: showing data set used for each party in this task.
@@ -276,7 +261,7 @@ party_id:your mechine's party_id, such as 10000
 
 role:"guest" or "host" or "arbiter"
  
-component_name: the component name which you want to get, such as component_name "hetero_lr_0" in {your_fate_path}/examples/federatedml-1.0-examples/hetero_logistic_regression/test_hetero_lr_train_job_dsl.json
+component_name: the component name which you want to get, such as component_name "hetero_lr_0" in {your_fate_path}/examples/federatedml-1.x-examples/hetero_logistic_regression/test_hetero_lr_train_job_dsl.json
 
 output_dir: the output directory
 
