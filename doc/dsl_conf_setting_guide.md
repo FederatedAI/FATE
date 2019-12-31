@@ -10,9 +10,9 @@ We use json file which is actually a dict as a dsl config file. The first level 
 
     {
     "components" : {
-        ...
+            ...
+        }
     }
-}
 
 Then each component should be defined in second level. Here is an example of setting a component:
 
