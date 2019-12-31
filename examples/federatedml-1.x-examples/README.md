@@ -209,13 +209,13 @@ FATE now provide "FATE-BOARD" for showing modeling log-metrics and evaluation re
 Use your browser to open a website: http://{Your fate-board ip}:{your fate-board port}/index.html#/history.
 
 <div style="text-align:center", align=center>
-<img src="../image/JobList.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/JobList.png" alt="samples" height="250" /><br/>
 Figure 1： Job List</div>
 
 There will be all your job history list here. Your latest job will be list in the first page. Use JOBID to find out the modeling task you want to check.
 
 <div style="text-align:center", align=center>
-<img src="../image/JobOverview.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/JobOverview.png" alt="samples" height="250" /><br/>
 Figure 2： Job Overview</div>
 
 In the task page, all the components will be shown as a DAG. We use different color to indicate their running status.
@@ -227,13 +227,13 @@ In the task page, all the components will be shown as a DAG. We use different co
  You can click each component to get their running parameters on the right side. Below those parameters, there exist a **View the outputs** button. You may check out model output, data output and logs for this component.
 
 <div style="text-align:center", align=center>
-<img src="../image/Component_Output.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/Component_Output.png" alt="samples" height="250" /><br/>
 Figure 3： Component Output</div>
 
 If you want a big picture of the whole task, there is a **dashboard** button on the right upper corner. Get in the Dashboard, there list three windows showing different information.
 
 <div style="text-align:center", align=center>
-<img src="../image/DashBoard.png" alt="samples" width="500" height="250" /><br/>
+<img src="../image/DashBoard.png" alt="samples" height="250" /><br/>
 Figure 4： Dash Board</div>
 
 1. Left window: showing data set used for each party in this task.
