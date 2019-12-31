@@ -37,7 +37,7 @@ examples/test/temp_testsuite.json<br>
 3.文件说明
 -----------
 env.json<br>
-"role"指明角色id，包括host，guest，以及arbiter.<br>
+"role"指明角色id，包括host，guest，以及arbiter。<br>
 "ip_map"构建角色与实际ip的映射，本地为-1，远程的主机为实际的ip地址。<br>
 
 testsuite.json<br>
