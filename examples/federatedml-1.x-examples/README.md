@@ -133,21 +133,22 @@ We have provided several example dsl files located in the corresponding algorith
 #### Field Specification
 1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-   FATE-1.0 supports 11 usable algorithm module.
+   FATE-1.2 supports 12 usable algorithm module.
 
-   > DataIO: transform input-data into Instance Object for later components
-   > Intersection: find the intersection of data-set different parties, mainly used in hetero scene modeling.
-   > FederatedSample: sample module for making data-set balance, supports both federated and standalone mode.
-   > FeatureScale: module for feature scaling and standardization.
-   > HeteroFeatureBinning: With binning input data, calculates each column's iv and woe and transform data according to the binned information.
-   > HeteroFeatureSelection: feature selection module, supports both federated and standalone.
-   > OneHotEncoder: feature encoding module, mostly used to encode the binning result.
-   > HeteroLR: hetero logistic regression module.
-   > HeteroLinR: hetero linear regression module.
-   > HeteroPoisson: hetero poisson regression module.
-   > HomoLR: homo logistic regression module.
-   > HeteroSecureBoost: hetero secure-boost module.
-   > Evaluation: evaluation module. support metrics for binary, multi-class and regression.
+   - DataIO: transform input-data into Instance Object for later components
+   - Intersection: find the intersection of data-set different parties, mainly used in hetero scene modeling.
+   - FederatedSample: sample module for making data-set balance, supports both federated and standalone mode.
+   - FeatureScale: module for feature scaling and standardization.
+   - HeteroFeatureBinning: With binning input data, calculates each column's iv and woe and transform data according to the binned information.
+   - HeteroFeatureSelection: feature selection module, supports both federated and standalone.
+   - OneHotEncoder: feature encoding module, mostly used to encode the binning result.
+   - HeteroLR: hetero logistic regression module.
+   - HeteroLinR: hetero linear regression module.
+   - HeteroPoisson: hetero poisson regression module.
+   - HomoLR: homo logistic regression module.
+   - HeteroSecureBoost: hetero secure-boost module.
+   - HeteroPearson: hetero pearson correlation module.
+   - Evaluation: evaluation module. support metrics for binary, multi-class and regression.
 
 3. input: There are two type of input, data and model.
     1. data: There are three possible data_input type:
