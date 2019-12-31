@@ -14,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 *  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
 
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki/FATE-FAQ).  
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
 
 *  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
 
@@ -116,8 +116,6 @@ We provided functions such as tracking component output models or logs etc. thro
 FATE provides some API documents in [doc-api](./doc/api/), including federatedml, eggroll, federation.
 ### Develop Guide doc
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
-### Chinese Version FAQ
-Solve all kinds of problem in practical experience. Please refer to [this folder](./doc/FAQ). English Version is coming soon.
 ### Other doc
 FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
 ### License

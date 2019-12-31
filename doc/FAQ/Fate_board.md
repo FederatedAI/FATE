@@ -1,11 +1,3 @@
-1. **请问fate_flow需要在所有的节点上启动，还是只在host上就行?**
-所有参与方均需要一个
+1. **按照命令行提供的url打开浏览器，输入url无法显示任何东西？**
+请参考文档https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.x-examples#step5-check-out-results 原因应该是没有部署fate_board，要么部署一下，要么可以看接下来的fate_flow的文档，利用fate_flow接口获取结果
 
-2. **运行启动fate_flow服务得到以下结果:
-service start sucessfully. pid: 13146
-status: app       13146  0.0  0.0 188948 12476 pts/1    R+   02:02   0:00 python fate_flow_server.py
-但是，再查看fate_flow状态，显示：service not running**
-可以查看PYTHONPATH/logs/fate_flow/fate_flow_stat.log排查问题
-
-3. **FATE flow提交任务的时候显示成功了，在dashboard页面任务却是失败状态?**
-FATE flow的submit job只是提交任务，success代表提交成功，实际执行的任务失败了需要看日志。可以通过board来看日志
